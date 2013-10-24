@@ -1,1 +1,1 @@
-var foo = 'ar'
+var foo = 'ar';
