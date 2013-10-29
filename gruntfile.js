@@ -21,6 +21,25 @@ module.exports = function(grunt) {
         }
       }
     },
+    less: {
+      development: {
+        options: {
+          paths: ['src/**/*.less']
+        },
+        files: {
+          "dist/css/result.css": "src/**/*.less"
+        }
+      },
+      production: {
+        options: {
+          paths: ['src/**/*.less'],
+          cleancss: true
+        },
+        files: {
+          "dist/css/result.css": "src/**/*.less"
+        }
+      }
+    },
     jshint: {
       files: ['Gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
       options: {
@@ -42,8 +61,8 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ['<%= jshint.files %>'],
-      tasks: ['jshint', 'mochaTest']
+      files: ['<%= jshint.files %>', 'src/**/*.less'],
+      tasks: ['jshint', 'mochaTest', 'less:development']
     }
   });
 
@@ -53,8 +72,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-less');
 
   grunt.registerTask('test', ['jshint', 'mochaTest']);
 
-  grunt.registerTask('default', ['jshint', 'mochaTest', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'mochaTest', 'less:production', 'concat', 'uglify']);
 };
