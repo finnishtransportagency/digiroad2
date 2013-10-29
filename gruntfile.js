@@ -23,25 +23,21 @@ module.exports = function(grunt) {
     },
     less: {
       development: {
-        options: {
-          paths: ['src/**/*.less']
-        },
         files: {
-          "dist/css/result.css": "src/**/*.less"
+          "dist/css/result.css": "UI/src/**/*.less"
         }
       },
       production: {
         options: {
-          paths: ['src/**/*.less'],
           cleancss: true
         },
         files: {
-          "dist/css/result.css": "src/**/*.less"
+          "dist/css/result.css": "UI/src/**/*.less"
         }
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
+      files: ['Gruntfile.js', 'UI/src/**/*.js', 'UI/test/**/*.js'],
       options: {
         // options here to override JSHint defaults
         globals: {
@@ -61,7 +57,7 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ['<%= jshint.files %>', 'src/**/*.less'],
+      files: ['<%= jshint.files %>', 'UI/src/**/*.less'],
       tasks: ['jshint', 'mochaTest', 'less:development']
     }
   });
