@@ -21,6 +21,14 @@ module.exports = function(grunt) {
         }
       }
     },
+    connect: {
+      server: {
+        options: {
+          port: 9001,
+          base: 'UI/'
+        }
+      }
+    },
     less: {
       development: {
         files: {
@@ -69,6 +77,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-less');
+  grunt.loadNpmTasks('grunt-contrib-connect');
 
   grunt.registerTask('test', ['jshint', 'mochaTest']);
 
