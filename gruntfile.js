@@ -25,7 +25,7 @@ module.exports = function(grunt) {
       server: {
         options: {
           port: 9001,
-          base: 'UI/'
+          base: ['dist', 'UI']
         }
       }
     },
@@ -65,8 +65,11 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ['<%= jshint.files %>', 'UI/src/**/*.less'],
-      tasks: ['jshint', 'mochaTest', 'less:development']
+      files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
+      tasks: ['jshint', 'mochaTest', 'less:development'],
+      options: {
+        livereload: true
+      }
     }
   });
 
