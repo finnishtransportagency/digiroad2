@@ -8,6 +8,9 @@ describe('Array', function(){
       assert.equal(-1, [1,2,3].indexOf(5));
       assert.equal(-1, [1,2,3].indexOf(0));
       assert.equal('Bacon Strips', skillet.publicProperty);
+    });
+
+    it('should test another scenario', function(){
       assert.equal(1, skillet.publicMethod());
     });
   });

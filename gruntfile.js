@@ -57,6 +57,23 @@ module.exports = function(grunt) {
         }
       }
     },
+    mocha: {
+      ci: {
+        options: {
+          // mocha options
+          mocha: {
+            ignoreLeaks: false
+          },
+
+          // URLs passed through as options
+          urls: ['http://127.0.0.1:9001/test/test-runner.html'],
+
+          // Indicates whether 'mocha.run()' should be executed in
+          // 'bridge.js'
+          run: true
+        }
+      }
+    },
     mochaTest: {
       test: {
         options: {
@@ -84,7 +101,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
 
-  grunt.registerTask('test', ['jshint', 'mochaTest']);
+  grunt.registerTask('test', ['jshint', 'mochaTest', 'connect', 'mocha']);
 
-  grunt.registerTask('default', ['jshint', 'mochaTest', 'clean', 'less:production', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'mochaTest', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
 };

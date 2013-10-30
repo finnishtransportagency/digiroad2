@@ -6,9 +6,11 @@
 </head>
 <body>
 <div id="mocha"></div>
-<script src="../chai/chai.js"></script>
 <script src="../mocha/mocha.js"></script>
-<script>mocha.setup('bdd')</script>
+<script src="../chai/chai.js"></script>
+<script>
+  mocha.ui('bdd');
+  mocha.reporter('html');</script>
 <script src="../src/test.js"></script>
 <script src="../test/test_spec.js"></script>
 <script>
