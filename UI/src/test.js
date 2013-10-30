@@ -1,23 +1,20 @@
-(function(skillet) {
+(function(exports) {
   //Private Property
-  var isHot = true;
+  var isPrivate = true;
 
   //Public Property
-  skillet.ingredient = "Bacon Strips";
+  exports.publicProperty = "Bacon Strips";
 
   //Public Method
-  skillet.fry = function() {
-    var oliveOil;
-
-    addItem( "\t\n Butter \n\t" );
-    addItem( oliveOil );
-    console.log( "Frying " + skillet.ingredient );
+  exports.publicMethod = function() {
+    return 1;
   };
 
   //Private Method
-  function addItem( item ) {
+  function privateMethod( item ) {
     if ( item !== undefined ) {
       console.log( "Adding " + $.trim(item) );
     }
   }
-}(this));
+// }(window.skillet = window.skillet || {}));
+}(typeof exports === "undefined" ? (this.skillet = {}) : exports));
