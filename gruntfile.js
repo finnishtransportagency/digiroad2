@@ -7,8 +7,8 @@ module.exports = function(grunt) {
         separator: ';'
       },
       dist: {
-        src: ['src/**/*.js'],
-        dest: 'dist/<%= pkg.name %>.js'
+        src: ['UI/src/**/*.js'],
+        dest: 'dist/js/<%= pkg.name %>.js'
       }
     },
     uglify: {
@@ -17,10 +17,11 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+          'dist/js/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
         }
       }
     },
+    clean: ['dist'],
     connect: {
       server: {
         options: {
@@ -81,8 +82,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-clean');
 
   grunt.registerTask('test', ['jshint', 'mochaTest']);
 
-  grunt.registerTask('default', ['jshint', 'mochaTest', 'less:production', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'mochaTest', 'clean', 'less:production', 'concat', 'uglify']);
 };
