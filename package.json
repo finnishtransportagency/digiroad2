@@ -34,10 +34,10 @@
     "karma-phantomjs-launcher": "~0.1.0",
     "karma-script-launcher": "~0.1.0",
     "matchdep": "~0.1.2",
-    "sinon": "~1.7.3"
+    "sinon": "~1.7.3",
+    "bower": "~1.2.7"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "engines": {
     "node": ">=0.8.0"
   },

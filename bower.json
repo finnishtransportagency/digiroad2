@@ -1,0 +1,16 @@
+{
+  "name": "digi-road-2",
+  "version": "0.0.1",
+  "main": "css/digiroad2.css",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "underscore": "~1.5.2",
+    "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.15"
+  }
+}

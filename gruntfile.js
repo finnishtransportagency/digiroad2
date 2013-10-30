@@ -26,14 +26,14 @@ module.exports = function(grunt) {
       server: {
         options: {
           port: 9001,
-          base: ['dist', 'UI']
+          base: ['dist', 'bower_components', 'UI']
         }
       }
     },
     less: {
       development: {
         files: {
-          "dist/css/result.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/**/*.less"
         }
       },
       production: {
@@ -41,7 +41,7 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist/css/result.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/**/*.less"
         }
       }
     },
