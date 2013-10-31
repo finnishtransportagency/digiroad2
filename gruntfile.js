@@ -46,7 +46,7 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'UI/src/**/*.js', 'UI/test/**/*.js'],
+      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js'],
       options: {
         // options here to override JSHint defaults
         globals: {
@@ -74,17 +74,9 @@ module.exports = function(grunt) {
         }
       }
     },
-    mochaTest: {
-      test: {
-        options: {
-          reporter: 'spec'
-        },
-        src: ['<%= jshint.files %>']
-      }
-    },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'mochaTest', 'less:development'],
+      tasks: ['jshint', 'mocha', 'less:development'],
       options: {
         livereload: true
       }
@@ -94,14 +86,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-mocha');
-  grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
 
-  grunt.registerTask('test', ['jshint', 'mochaTest', 'connect', 'mocha']);
+  grunt.registerTask('test', ['jshint', 'connect', 'mocha']);
 
-  grunt.registerTask('default', ['jshint', 'mochaTest', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
 };
