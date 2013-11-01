@@ -11,7 +11,11 @@ Ympäristön pystytys
 
 1. Kloonaa repo. 
 2. Asenna node ja npm (oletettavasti nämä on sinulla jo valmiiksi)
-3. Rankaise npm ja boweria:
+3. Asenna bower
+```
+npm install -g bower
+```
+4. Rankaise npm ja boweria:
 ```
 npm install && bower install
 ```
