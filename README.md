@@ -9,9 +9,21 @@ digi-road-2
 Ympäristön pystytys
 ===================
 
-1. Kloonaa repo. 
-2. Asenna node ja npm (oletettavasti nämä on sinulla jo valmiiksi)
-3. Rankaise npm ja boweria:
+1. Kloonaa digiroad2-repo omalle koneellesi
+
+```
+git clone https://github.com/finnishtransportagency/digi-road-2.git
+```
+
+2. [Asenna node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu [npm](https://npmjs.org/))
+3. Asenna [bower](https://github.com/bower/bower)
+
+```
+npm install -g bower
+```
+
+4. Hae ja asenna projektin tarvitsemat riippuvuudet
+
 ```
 npm install && bower install
 ```
