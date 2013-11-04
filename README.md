@@ -28,6 +28,12 @@ npm install -g bower
 npm install && bower install
 ```
 
+5. Asenna [grunt](http://gruntjs.com/getting-started)
+
+```
+npm install -g grunt-cli
+```
+
 Ajaminen
 ========
 
