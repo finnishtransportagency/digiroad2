@@ -1,7 +1,10 @@
-language: node_js
-node_js:
-  - 0.10
+language: scala
+scala:
+   - 2.10.2
 before_script:
   - npm install -g grunt-cli
   - npm install -g bower
   - bower install
+  - npm install grunt
+
+script: npm install && grunt && sbt ++$TRAVIS_SCALA_VERSION test
