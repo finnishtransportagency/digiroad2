@@ -240,47 +240,7 @@
       "instanceProps": {
 
       },
-      "title": "Omat tiedot",
-      "bundleinstancename": "personaldata",
-      "fi": "personaldata",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "personaldata",
-      "metadata": {
-         "Import-Bundle": {
-            "personaldata": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Karttajulkaisu",
-      "bundleinstancename": "publisher",
-      "fi": "jquery",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "publisher",
-      "metadata": {
-         "Import-Bundle": {
-            "publisher": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Koordinaattin�ytt�",
+      "title": "Koordinaattinäyttö",
       "bundleinstancename": "coordinatedisplay",
       "fi": "coordinatedisplay",
       "sv": "?",
@@ -300,46 +260,6 @@
       "instanceProps": {
 
       },
-      "title": "UserGuide",
-      "bundleinstancename": "userguide",
-      "fi": "userguide",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "userguide",
-      "metadata": {
-         "Import-Bundle": {
-            "userguide": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Metadata Flyout",
-      "bundleinstancename": "metadataflyout",
-      "fi": "metadataflyout",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "metadataflyout",
-      "metadata": {
-         "Import-Bundle": {
-            "metadataflyout": {
-               "bundlePath": "oskari.org/packages/catalogue/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
       "title": "Featuredata",
       "bundleinstancename": "featuredata",
       "fi": "Kohdetiedot",
@@ -349,46 +269,6 @@
       "metadata": {
          "Import-Bundle": {
             "featuredata": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "My places",
-      "bundleinstancename": "myplaces2",
-      "fi": "Kohteet",
-      "sv": "Platsar",
-      "en": "Places",
-      "bundlename": "myplaces2",
-      "metadata": {
-         "Import-Bundle": {
-            "myplaces2": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Guided Tour",
-      "bundleinstancename": "guidedtour",
-      "fi": "Guided Tour",
-      "sv": "Guided Tour",
-      "en": "Guided Tour",
-      "bundlename": "guidedtour",
-      "metadata": {
-         "Import-Bundle": {
-            "guidedtour": {
                "bundlePath": "oskari.org/packages/framework/bundle/"
             }
          },
