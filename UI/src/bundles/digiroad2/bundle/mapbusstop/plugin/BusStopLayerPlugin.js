@@ -223,21 +223,25 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return;
             }
 
+            var size = new OpenLayers.Size(37,34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+            var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
-            var busStop = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
+            var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
 
-            this._map.addLayer(busStop);
-            me._layer[layer.getId()] = busStop;
+            this._map.addLayer(busStops);
+            me._layer[layer.getId()] = busStops;
+
+
+            var AutoSizeAnchoredMinSize = OpenLayers.Class(OpenLayers.Popup.Anchored, {
+                'autoSize': true,
+                'minSize': new OpenLayers.Size(400,400)
+            });
 
             // TODO: url usage layer.getLayerUrls()[0];
             jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
-                for(var i=0; i<data.length; i++) {
-
-                    var size = new OpenLayers.Size(37,34);
-                    var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-                    var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
-
-                    busStop.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(data[i].lon, data[i].lat), icon));
+                for(var i=0; i < data.length; i++) {
+                    me._addBusStop(busStops, new OpenLayers.LonLat(data[i].lon, data[i].lat), icon.clone(), data[i].featureData);
                 }
 
             })
@@ -247,6 +251,44 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             //this._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
 
+
+        },
+        //TODO: jsdoc
+        _addBusStop: function(busStops, ll, icon, data) {
+
+            var me = this;
+            var busStop = new OpenLayers.Marker(ll, icon);
+            busStops.addMarker(busStop);
+            var popupId = "busStop";
+
+            var htmlContent ="<h3>Dösäpysäkki</h3>";
+
+            for (var i = 0; i < data.length; i++) {
+                htmlContent += data[i].name + "=" + data[i].value + '<br>';
+            }
+
+            var contentItem = {
+                html : htmlContent,
+                actions : {}
+            };
+            var content = [contentItem];
+
+            contentItem.actions.Close = function() {
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
+                var request = requestBuilder(popupId);
+                me._sandbox.request(me.getName(), request);
+            };
+
+
+            var markerClick = function (evt) {
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
+                var request = requestBuilder(popupId, "Dösäpysäkin ominaisuustiedot", content, ll, true);
+                me._sandbox.request(me.getName(), request);
+                OpenLayers.Event.stop(evt);
+            };
+            busStop.events.register("mousedown", busStops, markerClick);
+
+            busStops.addMarker(busStop);
 
         },
 
