@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       server: {
         options: {
           port: 9001,
-          base: ['dist', 'bower_components', 'UI']
+          base: ['dist', '.', 'UI']
         }
       }
     },

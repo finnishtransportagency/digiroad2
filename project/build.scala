@@ -1,6 +1,9 @@
 import sbt._
 import sbt.Keys._
 import org.scalatra.sbt._
+import sbtassembly.Plugin.AssemblyKeys._
+import sbtassembly.Plugin.MergeStrategy
+import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
@@ -14,7 +17,9 @@ object Digiroad2Build extends Build {
   lazy val project = Project (
     "digiroad2",
     file("."),
-    settings = Defaults.defaultSettings ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
+    settings = Defaults.defaultSettings
+      ++ assemblySettings
+      ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
       organization := Organization,
       name := Name,
       version := Version,
@@ -27,9 +32,19 @@ object Digiroad2Build extends Build {
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
-        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container",
+        "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" / "local" /  env
     )
+  )
+
+  val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
+    mainClass in assembly := Some("fi.liikennevirasto.digiroad2.DigiroadServer"),
+    test in assembly := {},
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+    {
+      case x if x.endsWith("about.html") => MergeStrategy.discard
+      case x => old(x)
+    } }
   )
 }
