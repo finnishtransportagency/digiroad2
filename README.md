@@ -71,4 +71,4 @@ Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "d
 ```
 
 Ympäristön mukaan build yrittää sisällyttää "local.properties" -nimisen tiedoston sovelluspakettiin seuraavasta polusta:
-<project root>/conf/local/<env>/local.properties
+(project root)/conf/local/(env)/local.properties
