@@ -52,3 +52,23 @@ Kehitysserverin pystytys:
 grunt connect watch
 ```
 Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
+
+
+Palvelin-build
+==============
+
+API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt. Esim.
+
+```
+./sbt test
+```
+
+Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
+Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test" tai "prod"). Esim.
+
+```
+./sbt -Ddigiroad2.nodatabase=true -Ddigiroad2.env=dev test
+```
+
+Ympäristön mukaan build yrittää sisällyttää "local.properties" -nimisen tiedoston sovelluspakettiin seuraavasta polusta:
+<project root>/conf/local/<env>/local.properties
