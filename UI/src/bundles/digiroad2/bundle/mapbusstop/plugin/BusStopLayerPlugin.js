@@ -232,11 +232,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: url usage layer.getLayerUrls()[0];
             jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
                 for(var i=0; i<data.length; i++) {
-                    busStop.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(data[i].lon, data[i].lat)));
+
+                    var size = new OpenLayers.Size(37,34);
+                    var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+                    var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+
+                    busStop.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(data[i].lon, data[i].lat), icon));
                 }
 
             })
-            .fail(function(data) {
+            .fail(function() {
                 console.log( "error" );
             });
 
