@@ -12,13 +12,13 @@
       "metadata": {
          "Import-Bundle": {
             "openlayers-default-theme": {
-               "bundlePath": "oskari.org/packages/openlayers/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/openlayers/bundle/"
             },
             "openlayers-single-full": {
-               "bundlePath": "oskari.org/packages/openlayers/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/openlayers/bundle/"
             },
             "oskariui": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -38,61 +38,61 @@
       "metadata": {
          "Import-Bundle": {
             "mapwmts": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "mapwfs": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
              "mapbusstop": {
                  "bundlePath": "src/packages/digiroad2/bundle/"
             },
             "service-base": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "event-map-layer": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "request-map-layer": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "mapmodule-plugin": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "event-base": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "mapfull": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "core-base": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "request-base": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "domain": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "core-map": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "oskariui": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "request-map": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "sandbox-base": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "service-map": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "sandbox-map": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
             "event-map": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -112,7 +112,7 @@
       "metadata": {
          "Import-Bundle": {
             "divmanazer": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -132,7 +132,7 @@
       "metadata": {
          "Import-Bundle": {
             "toolbar": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -152,7 +152,7 @@
       "metadata": {
          "Import-Bundle": {
             "statehandler": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -172,7 +172,7 @@
       "metadata": {
          "Import-Bundle": {
             "infobox": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -192,7 +192,7 @@
       "metadata": {
          "Import-Bundle": {
             "search": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -212,7 +212,7 @@
       "metadata": {
          "Import-Bundle": {
             "layerselector2": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -232,7 +232,7 @@
       "metadata": {
          "Import-Bundle": {
             "layerselection2": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -243,7 +243,6 @@
       "instanceProps": {
 
       },
-      "title": "Koordinaattinäyttö",
       "bundleinstancename": "coordinatedisplay",
       "fi": "coordinatedisplay",
       "sv": "?",
@@ -252,7 +251,7 @@
       "metadata": {
          "Import-Bundle": {
             "coordinatedisplay": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
@@ -272,7 +271,7 @@
       "metadata": {
          "Import-Bundle": {
             "featuredata": {
-               "bundlePath": "oskari.org/packages/framework/bundle/"
+               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
          "Require-Bundle-Instance": [
