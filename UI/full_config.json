@@ -76,6 +76,9 @@
                "id":"Oskari.mapframework.bundle.mapwfs.plugin.wfslayer.WfsLayerPlugin"
             },
             {
+               "id":"Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin"
+            },
+            {
                "id":"Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
             },
             {
@@ -89,6 +92,18 @@
             }
          ],
          "layers":[
+             {
+                 "wmsName":"bussit",
+                 "type":"busstoplayer",
+                 "id":555,
+                 "minScale":5000000,
+                 "wmsUrl":"/data/dummy/busstops.json",
+                 "url":"/data/dummy/busstops.json",
+                 "maxScale":1 ,
+                 "orgName":"testi",
+                 "inspire":"testi",
+                  "name" : "Pysäkit"
+            },
             {
                "type":"base",
                "id":"base_35",
@@ -187,7 +202,7 @@
                "inspire":"Taustakartta"
              }
          ],
-         "imageLocation":"/Oskari/resources",
+         "imageLocation":"/oskari.org/resources",
          "user":{
             "lastName":"",
             "nickName":"",

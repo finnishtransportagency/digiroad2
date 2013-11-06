@@ -43,6 +43,9 @@
             "mapwfs": {
                "bundlePath": "oskari.org/packages/framework/bundle/"
             },
+             "mapbusstop": {
+                 "bundlePath": "src/packages/digiroad2/bundle/"
+            },
             "service-base": {
                "bundlePath": "oskari.org/packages/framework/bundle/"
             },
