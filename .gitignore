@@ -6,3 +6,4 @@ target/
 bower_components
 .DS_Store
 lib/ojdbc6.jar
+conf/local
