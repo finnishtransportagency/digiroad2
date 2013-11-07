@@ -4,7 +4,7 @@ import org.scalatra.test.scalatest._
 import org.scalatest.FunSuite
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import fi.liikennevirasto.digiroad2.geo.BusStop
+import fi.liikennevirasto.digiroad2.feature.BusStop
 
 class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
