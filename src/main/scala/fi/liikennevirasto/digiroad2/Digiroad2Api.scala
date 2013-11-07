@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import org.scalatra._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
-import fi.liikennevirasto.digiroad2.map.BusStop
+import fi.liikennevirasto.digiroad2.geo.BusStop
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats

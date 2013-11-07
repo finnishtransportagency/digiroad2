@@ -7,21 +7,33 @@ import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"
-  val Name = "digiroad2"
+  val Digiroad2Name = "digiroad2"
+  val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.10.2"
   val ScalatraVersion = "2.2.1"
   val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
 
+  lazy val geoJar = Project (
+    Digiroad2GeoName,
+    file(Digiroad2GeoName),
+    settings = Defaults.defaultSettings ++ Seq(
+      organization := Organization,
+      name := Digiroad2GeoName,
+      version := Version,
+      scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases
+    )
+  )
 
-  lazy val project = Project (
-    "digiroad2",
+  lazy val warProject = Project (
+    Digiroad2Name,
     file("."),
     settings = Defaults.defaultSettings
       ++ assemblySettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
       organization := Organization,
-      name := Name,
+      name := Digiroad2Name,
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
@@ -36,7 +48,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" / "local" /  env
     )
-  )
+  ) dependsOn(geoJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.DigiroadServer"),
