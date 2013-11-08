@@ -7,7 +7,7 @@ case class BusStop(id: String, lat: Double, lon: Double, features: Map[String, S
   BusStop
 }
 object BusStop {
-  def apply(id: String, point: Point, features: Map[String, String] = Map()) = {
+  def apply(id: String, point: Point, features: Map[String, String]) = {
     new BusStop(id, point.lat, point.lon, features)
   }
 }
