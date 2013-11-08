@@ -6,4 +6,7 @@ target/
 bower_components
 .DS_Store
 lib/ojdbc6.jar
+lib/sdoapi.jar
+lib/sdoutl.jar
+lib/xmlparserv2.jar
 conf/local
