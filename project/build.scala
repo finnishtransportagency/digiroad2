@@ -26,6 +26,21 @@ object Digiroad2Build extends Build {
     )
   )
 
+  val Digiroad2OracleName = "digiroad2-oracle"
+  lazy val oracleJar = Project (
+    Digiroad2OracleName,
+    file(Digiroad2OracleName),
+    settings = Defaults.defaultSettings ++ Seq(
+      organization := Organization,
+      name := Digiroad2OracleName,
+      version := Version,
+      scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases,
+      libraryDependencies ++= Seq(
+        "org.scalatest" % "scalatest_2.10" % "2.0" % "test")
+    )
+  ) dependsOn(geoJar)
+
   lazy val warProject = Project (
     Digiroad2Name,
     file("."),
@@ -48,7 +63,7 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" / "local" /  env
     )
-  ) dependsOn(geoJar)
+  ) dependsOn(geoJar, oracleJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.DigiroadServer"),
