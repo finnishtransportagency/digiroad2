@@ -1,0 +1,3 @@
+[submodule "digiroad2-oracle"]
+	path = digiroad2-oracle
+	url = git@github.com:finnishtransportagency/digiroad2-oracle.git
