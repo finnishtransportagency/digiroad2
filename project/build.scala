@@ -37,7 +37,8 @@ object Digiroad2Build extends Build {
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
       libraryDependencies ++= Seq(
-        "org.scalatest" % "scalatest_2.10" % "2.0" % "test")
+        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+        "com.typesafe.slick" %% "slick" % "1.0.1")
     )
   ) dependsOn(geoJar)
 
