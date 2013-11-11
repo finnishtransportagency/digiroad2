@@ -16,6 +16,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._map = null;
         this._supportedFormats = {};
         this._layer = {};
+        this._localization = null;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -223,6 +224,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return;
             }
 
+
+            // TODO: those values from config
             var size = new OpenLayers.Size(37,34);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
             var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
@@ -233,17 +236,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             me._layer[layer.getId()] = busStops;
 
 
-            var AutoSizeAnchoredMinSize = OpenLayers.Class(OpenLayers.Popup.Anchored, {
-                'autoSize': true,
-                'minSize': new OpenLayers.Size(400,400)
-            });
-
             // TODO: url usage layer.getLayerUrls()[0];
             jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
-                for(var i=0; i < data.length; i++) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(data[i].lon, data[i].lat), icon.clone(), data[i].featureData);
-                }
-
+                _.each(data, function (eachData) {
+                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), icon.clone(), eachData.featureData);
+                });
             })
             .fail(function() {
                 console.log( "error" );
@@ -253,7 +250,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
 
         },
-        //TODO: jsdoc
+        //TODO: doc
         _addBusStop: function(busStops, ll, icon, data) {
 
             var me = this;
@@ -261,11 +258,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStops.addMarker(busStop);
             var popupId = "busStop";
 
-            var htmlContent ="<h3>Dösäpysäkki</h3>";
-
-            for (var i = 0; i < data.length; i++) {
-                htmlContent += data[i].name + "=" + data[i].value + '<br>';
-            }
+            var htmlContent = _.reduce(_.pairs(data), function(memo, item) {
+                return memo + '<li>' + item[0] + '<input type="text" name="' + item[0] + '" value="' + item[1] + '"/></li>';
+            }, "");
 
             var contentItem = {
                 html : htmlContent,
@@ -273,7 +268,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
             var content = [contentItem];
 
-            contentItem.actions.Close = function() {
+            contentItem.actions[me.getLocalization('close')] = function() {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(popupId);
                 me._sandbox.request(me.getName(), request);
@@ -282,7 +277,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             var markerClick = function (evt) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, "Dösäpysäkin ominaisuustiedot", content, ll, true);
+                var request = requestBuilder(popupId, me.getLocalization('title'), content, ll, true);
                 me._sandbox.request(me.getName(), request);
                 OpenLayers.Event.stop(evt);
             };
@@ -291,7 +286,27 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStops.addMarker(busStop);
 
         },
+        /**
+         * @method getLocalization
+         * Returns JSON presentation of bundles localization data for current language.
+         * If key-parameter is not given, returns the whole localization data.
+         *
+         * @param {String} key (optional) if given, returns the value for key
+         * @return {String/Object} returns single localization string or JSON object for complete data depending on localization structure and if parameter key is given
+         */
+        getLocalization : function(key) {
+            if(this._localization !== undefined) {
+                this._localization = Oskari.getLocalization(this.getName());
+            }
+            if(key) {
+                return this._localization[key];
+            }
+            return this._localization;
+        },
+        /*
+        _.map(rows, function(row){
 
+        });*/
         /**
          * @method _afterMapLayerRemoveEvent
          * Handle AfterMapLayerRemoveEvent
