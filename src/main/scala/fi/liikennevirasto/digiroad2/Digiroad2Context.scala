@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCP}
 import com.jolbox.bonecp
 import java.util.Properties
+import fi.liikennevirasto.digiroad2.feature.FeatureProvider
 
 object Digiroad2Context {
   lazy val properties: Properties = {
@@ -11,5 +12,5 @@ object Digiroad2Context {
     props
   }
 
-//  val featureProvider: FeatureProvider = Class.forName(properties.getProperty("digiroad2.featureProvider")).newInstance().asInstanceOf[FeatureProvider]
+  val featureProvider: FeatureProvider = Class.forName(properties.getProperty("digiroad2.featureProvider")).newInstance().asInstanceOf[FeatureProvider]
 }
