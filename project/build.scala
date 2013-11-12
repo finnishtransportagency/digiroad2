@@ -22,6 +22,7 @@ object Digiroad2Build extends Build {
       name := Digiroad2GeoName,
       version := Version,
       scalaVersion := ScalaVersion,
+      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers += Classpaths.typesafeReleases
     )
   )
@@ -36,6 +37,7 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
+      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       libraryDependencies ++= Seq(
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
@@ -55,6 +57,7 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
+      scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
