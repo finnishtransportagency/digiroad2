@@ -58,6 +58,8 @@ object Digiroad2Build extends Build {
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+      testOptions in Test ++= (
+        if (System.getProperty("nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
