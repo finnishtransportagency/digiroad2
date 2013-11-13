@@ -269,8 +269,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             //content
             var contentItem = this._makeContent(data);
 
-            //var contentItem = makeBusStopsFeatureContent(data);
-
             //close button
             contentItem.actions[me.getLocalization('close')] = function() {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
