@@ -1,6 +1,6 @@
 /**
  * @class Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin
- * Provides functionality to draw Stats layers on the map
+ * Provides functionality to draw bus stops on the map
  */
 Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin',
 
@@ -16,6 +16,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._map = null;
         this._supportedFormats = {};
         this._layer = {};
+        this._localization = null;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -87,6 +88,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (mapLayerService) {
                 mapLayerService.registerLayerModel('busstoplayer', 'Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer');
             }
+
+            var size = new OpenLayers.Size(37,34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+            this._busStopIcon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+
+
+            _.templateSettings = {
+                interpolate: /\{\{(.+?)\}\}/g
+            };
+            this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"</li>');
+
+
         },
         /**
          * @method startPlugin
@@ -223,9 +236,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return;
             }
 
-            var size = new OpenLayers.Size(37,34);
-            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-            var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
 
@@ -233,17 +243,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             me._layer[layer.getId()] = busStops;
 
 
-            var AutoSizeAnchoredMinSize = OpenLayers.Class(OpenLayers.Popup.Anchored, {
-                'autoSize': true,
-                'minSize': new OpenLayers.Size(400,400)
-            });
-
             // TODO: url usage layer.getLayerUrls()[0];
             jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
-                for(var i=0; i < data.length; i++) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(data[i].lon, data[i].lat), icon.clone(), data[i].featureData);
-                }
-
+                _.each(data, function (eachData) {
+                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData);
+                });
             })
             .fail(function() {
                 console.log( "error" );
@@ -253,45 +257,69 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
 
         },
-        //TODO: jsdoc
-        _addBusStop: function(busStops, ll, icon, data) {
-
+        //TODO: doc
+        _addBusStop: function(busStops, ll, data) {
             var me = this;
-            var busStop = new OpenLayers.Marker(ll, icon);
+
+            // new bus stop marker
+            var busStop = new OpenLayers.Marker(ll, this._busStopIcon.clone());
             busStops.addMarker(busStop);
             var popupId = "busStop";
 
-            var htmlContent ="<h3>Dösäpysäkki</h3>";
+            //content
+            var contentItem = this._makeContent(data);
 
-            for (var i = 0; i < data.length; i++) {
-                htmlContent += data[i].name + "=" + data[i].value + '<br>';
-            }
-
-            var contentItem = {
-                html : htmlContent,
-                actions : {}
-            };
-            var content = [contentItem];
-
-            contentItem.actions.Close = function() {
+            //close button
+            contentItem.actions[me.getLocalization('close')] = function() {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(popupId);
                 me._sandbox.request(me.getName(), request);
             };
 
-
-            var markerClick = function (evt) {
+            // click
+            var busstopClick = function (evt) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, "Dösäpysäkin ominaisuustiedot", content, ll, true);
+                var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], ll, true);
                 me._sandbox.request(me.getName(), request);
                 OpenLayers.Event.stop(evt);
             };
-            busStop.events.register("mousedown", busStops, markerClick);
+            busStop.events.register("mousedown", busStops, busstopClick);
 
             busStops.addMarker(busStop);
 
         },
+        _makeContent: function(data) {
+            var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
+            var htmlContent = _.map(tmplItems, this._featureDataTemplate);
 
+            var contentItem = {
+                html : htmlContent,
+                actions : {}
+            };
+            return contentItem;
+
+        },
+        /**
+         * @method getLocalization
+         * Returns JSON presentation of bundles localization data for current language.
+         * If key-parameter is not given, returns the whole localization data.
+         *
+         * @param {String} key (optional) if given, returns the value for key
+         * @return {String/Object} returns single localization string or JSON object for complete data depending on localization structure and if parameter key is given
+         */
+        getLocalization : function(key) {
+            if(this._localization !== undefined) {
+                this._localization = Oskari.getLocalization(this.getName());
+            }
+            if(key) {
+                return this._localization[key];
+            }
+            return this._localization;
+        },
+        /*
+        _.map(rows, function(row){
+
+        });*/
         /**
          * @method _afterMapLayerRemoveEvent
          * Handle AfterMapLayerRemoveEvent
