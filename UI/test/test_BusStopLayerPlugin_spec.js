@@ -1,16 +1,20 @@
 
 var assert = chai.assert;
 
-describe('Array', function(){
-  describe('#indexOf()', function(){
-    it('should return -1 when the value is not present', function(){
-      assert.equal(-1, [1,2,3].indexOf(5));
-      assert.equal(-1, [1,2,3].indexOf(0));
-      assert.equal('Bacon Strips', skillet.publicProperty);
+describe('BusStopLayerPlugin', function(){
+  describe('#makeContent()', function(){
+    it('should return one row', function(){
+
+        /*
+        _.templateSettings = {
+            interpolate: /\{\{(.+?)\}\}/g
+        };
+      var data =  {"nimi1" :" arvo 1"};
+      var testHtml =  ['<li>nimi1<input type="text" name="nimi1" value=" arvo 1"></li>'];
+      assert.equal(testHtml[0],makeBusStopsFeatureContent(data).html[0]);
+      */
+
     });
 
-    it('should test another scenario', function(){
-      assert.equal(1, skillet.publicMethod());
-    });
   });
 });
