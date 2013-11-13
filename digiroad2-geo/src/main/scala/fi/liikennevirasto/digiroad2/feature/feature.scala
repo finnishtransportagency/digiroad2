@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.feature
 import fi.liikennevirasto.digiroad2.geo.Point
 
 abstract sealed class Feature
-case class BusStop(id: String, lat: Double, lon: Double, features: Map[String, String] = Map()) extends Feature {
+case class BusStop(id: String, lat: Double, lon: Double, featureData: Map[String, String] = Map()) extends Feature {
   BusStop
 }
 object BusStop {
