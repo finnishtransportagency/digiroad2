@@ -1,6 +1,6 @@
 /**
  * @class Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin
- * Provides functionality to draw Stats layers on the map
+ * Provides functionality to draw bus stops on the map
  */
 Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin',
 
@@ -88,6 +88,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (mapLayerService) {
                 mapLayerService.registerLayerModel('busstoplayer', 'Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer');
             }
+
+            var size = new OpenLayers.Size(37,34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+            this._busStopIcon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+
+
+            _.templateSettings = {
+                interpolate: /\{\{(.+?)\}\}/g
+            };
+            this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"</li>');
+
+
         },
         /**
          * @method startPlugin
@@ -225,11 +237,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
 
 
-            // TODO: those values from config
-            var size = new OpenLayers.Size(37,34);
-            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-            var icon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
-
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
 
             this._map.addLayer(busStops);
@@ -239,7 +246,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: url usage layer.getLayerUrls()[0];
             jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
                 _.each(data, function (eachData) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), icon.clone(), eachData.featureData);
+                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData);
                 });
             })
             .fail(function() {
@@ -251,39 +258,47 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(busStops, ll, icon, data) {
-
+        _addBusStop: function(busStops, ll, data) {
             var me = this;
-            var busStop = new OpenLayers.Marker(ll, icon);
+
+            // new bus stop marker
+            var busStop = new OpenLayers.Marker(ll, this._busStopIcon.clone());
             busStops.addMarker(busStop);
             var popupId = "busStop";
 
-            var htmlContent = _.reduce(_.pairs(data), function(memo, item) {
-                return memo + '<li>' + item[0] + '<input type="text" name="' + item[0] + '" value="' + item[1] + '"/></li>';
-            }, "");
+            //content
+            var contentItem = this._makeContent(data);
 
-            var contentItem = {
-                html : htmlContent,
-                actions : {}
-            };
-            var content = [contentItem];
+            //var contentItem = makeBusStopsFeatureContent(data);
 
+            //close button
             contentItem.actions[me.getLocalization('close')] = function() {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(popupId);
                 me._sandbox.request(me.getName(), request);
             };
 
-
-            var markerClick = function (evt) {
+            // click
+            var busstopClick = function (evt) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, me.getLocalization('title'), content, ll, true);
+                var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], ll, true);
                 me._sandbox.request(me.getName(), request);
                 OpenLayers.Event.stop(evt);
             };
-            busStop.events.register("mousedown", busStops, markerClick);
+            busStop.events.register("mousedown", busStops, busstopClick);
 
             busStops.addMarker(busStop);
+
+        },
+        _makeContent: function(data) {
+            var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
+            var htmlContent = _.map(tmplItems, this._featureDataTemplate);
+
+            var contentItem = {
+                html : htmlContent,
+                actions : {}
+            };
+            return contentItem;
 
         },
         /**

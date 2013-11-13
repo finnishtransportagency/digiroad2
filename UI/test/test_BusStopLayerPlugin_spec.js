@@ -1,5 +1,4 @@
-var chai = typeof exports !== "undefined" && exports !== null ? require('chai') : this.chai;
-var skillet = typeof exports !== "undefined" && exports !== null ? require("../src/test") : this.skillet;
+
 var assert = chai.assert;
 
 describe('Array', function(){
