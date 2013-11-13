@@ -1,15 +1,15 @@
 [
-    {"id": "1", "lon" : 385637, "lat" : 6675353,
-        "featureData" : {"nimi1" :" arvo 1" , "nimi2" :" arvo 2"}
+    {"id": "1", "lon" : 385637, "lat" : 6675353, "busStopType" :"2",
+        "featureData" : {"nimi1" :"arvo 1" , "nimi2" :"arvo 2"}
     },
-    {"id": "2", "lon" : 385537, "lat" : 6676353,
-        "featureData" :{"nimi3" :" arvo 3" , "nimi4" :" arvo 4", "nimi5" :" arvo 5"}
+    {"id": "2", "lon" : 385537, "lat" : 6676353, "busStopType" :"2",
+        "featureData" :{"nimi3" :"arvo 3" , "nimi4" :"arvo 4", "nimi5" :"arvo 5"}
     },
-    {"id": "3", "lon" : 385737, "lat" : 6677353,
-        "featureData" : {"nimi5":" arvo 5", "nimi6":" arvo 6"}
+    {"id": "3", "lon" : 385737, "lat" : 6677353, "busStopType" :"7",
+        "featureData" : {"nimi5":"arvo 5", "nimi6":"arvo 6"}
     },
-    {"id": "4", "lon" : 385137, "lat" : 6678353,
-        "featureData" : {"nimi6":" arvo 6", "nimi7":" arvo 7"}
+    {"id": "4", "lon" : 385137, "lat" : 6678353, "busStopType" :"2",
+        "featureData" : {"nimi6":"arvo 6", "nimi7":"arvo 7"}
     }
 
 ]

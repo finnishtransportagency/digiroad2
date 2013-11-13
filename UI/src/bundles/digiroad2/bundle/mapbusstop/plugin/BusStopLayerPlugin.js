@@ -98,7 +98,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 interpolate: /\{\{(.+?)\}\}/g
             };
             this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"</li>');
-
+            this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+            this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
+            this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
         },
         /**
@@ -247,7 +249,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: make API url configurable
             jQuery.getJSON( "http://localhost:8080/api/busstops", function(data) {
                 _.each(data, function (eachData) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData);
+                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType);
                 });
             })
             .fail(function() {
@@ -259,11 +261,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(busStops, ll, data) {
+        _addBusStop: function(busStops, ll, data, type) {
             var me = this;
 
             // new bus stop marker
-            var busStop = new OpenLayers.Marker(ll, this._busStopIcon.clone());
+            var busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
+
             busStops.addMarker(busStop);
             var popupId = "busStop";
 
