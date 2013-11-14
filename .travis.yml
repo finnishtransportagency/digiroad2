@@ -8,4 +8,4 @@ before_script:
   - npm install grunt
 git:
   submodules: false
-script: npm install && grunt && sbt ++$TRAVIS_SCALA_VERSION -Ddigiroad2.nodatabase=true test
+script: npm install && grunt && sbt ++$TRAVIS_SCALA_VERSION -Ddigiroad2.nodatabase=true -Ddigiroad2.env=ci test
