@@ -64,11 +64,10 @@ API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa ol
 ```
 
 Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
-Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test" tai "prod"). Esim.
+Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "digiroad2.env" (arvot "dev", "test", "prod" tai "ci"). Esim.
 
 ```
 ./sbt -Ddigiroad2.nodatabase=true -Ddigiroad2.env=dev test
 ```
 
-Ympäristön mukaan build yrittää sisällyttää "local.properties" -nimisen tiedoston sovelluspakettiin seuraavasta polusta:
-(project root)/conf/local/(env)/local.properties
+"digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
