@@ -247,7 +247,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
-            jQuery.getJSON( "http://localhost:8080/api/busstops", function(data) {
+            jQuery.getJSON( "/api/busstops", function(data) {
                 _.each(data, function (eachData) {
                     me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType);
                 });
