@@ -100,9 +100,9 @@
                  "wmsUrl":"/data/dummy/busstops.json",
                  "url":"/data/dummy/busstops.json",
                  "maxScale":1 ,
-                 "orgName":"testi",
-                 "inspire":"testi",
-                  "name" : "Pysäkit"
+                 "orgName":"Pysäkit",
+                 "inspire":"Pysäkit",
+                  "name" : "Kauniainen"
             },
             {
                "type":"base",
