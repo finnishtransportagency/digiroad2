@@ -17,6 +17,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._supportedFormats = {};
         this._layer = {};
         this._localization = null;
+        this._busStopIcon = [];
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -81,6 +82,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          */
         init: function (sandbox) {
 
+            var me = this;
             var sandboxName = (this.config ? this.config.sandbox : null) || 'sandbox';
 
             // register domain builder
@@ -89,30 +91,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 mapLayerService.registerLayerModel('busstoplayer', 'Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer');
             }
 
+            //this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"</li>');
+            me._initTemplates();
+
             var size = new OpenLayers.Size(37,34);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-            this._busStopIcon = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
-
-
-            //this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"</li>');
-            _initTemplates();
-            _initIcons();
+            this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+            this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
+            this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
 
         },
         _initTemplates: function () {
+            var me = this;
             _.templateSettings = {
                 interpolate: /\{\{(.+?)\}\}/g
             };
 
-            this._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
+            me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
 
-        },
-        _initIcons: function () {
-            this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
-            this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
-            this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
         },
         /**
          * @method startPlugin
