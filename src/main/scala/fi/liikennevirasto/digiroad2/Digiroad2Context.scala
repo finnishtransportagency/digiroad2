@@ -11,16 +11,6 @@ object Digiroad2Context {
   }
 
   lazy val featureProvider: FeatureProvider = {
-    try {
-      Class.forName(properties.getProperty("digiroad2.featureProvider")).newInstance().asInstanceOf[FeatureProvider]
-    } catch {
-      // TODO: fix missing class in CI test issue (config/injection if required), and return to fail-fast mode on config error
-      case e: Exception => {
-        e.printStackTrace
-        new FeatureProvider {
-          def getBusStops() = List()
-        }
-      }
-    }
+    Class.forName(properties.getProperty("digiroad2.featureProvider")).newInstance().asInstanceOf[FeatureProvider]
   }
 }
