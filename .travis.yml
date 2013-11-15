@@ -8,4 +8,6 @@ before_script:
   - npm install grunt
 git:
   submodules: false
+notifications:
+  flowdock: e0c9ef375865df6184c93b2348278b58
 script: npm install && grunt && sbt ++$TRAVIS_SCALA_VERSION -Ddigiroad2.nodatabase=true -Ddigiroad2.env=ci test
