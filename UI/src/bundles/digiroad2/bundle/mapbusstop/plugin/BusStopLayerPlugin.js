@@ -256,7 +256,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
-            jQuery.getJSON( "/api/busstops", function(data) {
+            jQuery.getJSON( "http://localhost:8080/api/busstops", function(data) {
                 _.each(data, function (eachData) {
                     me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType);
                 });
@@ -274,9 +274,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
 
             // new bus stop marker
-            var busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
+            var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
 
-            busStops.addMarker(busStop);
+            if (!type) {
+                busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
+            }
+
             var popupId = "busStop";
 
             //content
@@ -289,14 +292,51 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._sandbox.request(me.getName(), request);
             };
 
-            // click
+
             var busstopClick = function (evt) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], ll, true);
+                var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
                 OpenLayers.Event.stop(evt);
             };
-            busStop.events.register("mousedown", busStops, busstopClick);
+
+
+            var moveBusStop = function(evt) {
+                if (busStop.actionMouseDown) {
+                    var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
+                    var lonlat = me._map.getLonLatFromPixel(busStopCenter);
+                    busStop.lonlat = lonlat;
+                    busStops.redraw();
+                }
+                OpenLayers.Event.stop(evt);
+            };
+
+            var mouseUp = function(evt) {
+                busStop.actionMouseDown = false;
+                busStop.events.unregister("mousemove", busStops, moveBusStop);
+                busStop.events.unregister("mouseup", busStops, mouseUp);
+                if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {  // click
+                    busstopClick(evt);
+                } else { // after move mouse up
+                    console.log('position lon:' + busStop.lonlat.lon + ' lat:' +busStop.lonlat.lat);
+                }
+
+            };
+
+            var mouseDown = function(evt) {
+                busStop.actionMouseDown = true;
+                busStop.actionDownX = evt.clientX;
+                busStop.actionDownY = evt.clientY;
+                //register move and up
+                busStop.events.register("mousemove", busStops, moveBusStop);
+                busStop.events.register("mouseup", busStops, mouseUp);
+                OpenLayers.Event.stop(evt);
+            };
+
+
+
+            busStop.events.register("mousedown", busStops, mouseDown);
+
 
             busStops.addMarker(busStop);
 
