@@ -18,6 +18,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.getBusStops()
   }
 
+  get("/config") {
+    // todo read user specific properties from db
+    try {
+      getClass.getResourceAsStream("/full_config.json")
+    } catch {
+      case e: Exception => throw new RuntimeException("Can't load full_config.json for env: " + System.getProperty("env"), e)
+    }
+  }
+
   get("/ping") {
     "pong"
   }
