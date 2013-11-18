@@ -247,8 +247,63 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return;
             }
 
+            var styles = new OpenLayers.StyleMap({
+                "default": new OpenLayers.Style(null, {
+                    rules: [
+                        new OpenLayers.Rule({
+                            symbolizer: {
+                                "Line": {
+                                    strokeWidth: 3,
+                                    strokeOpacity: 1,
+                                    strokeColor: "#6666aa"
+                                }
+                            }
+                        })
+                    ]
+                }),
+                "select": new OpenLayers.Style(null, {
+                    rules: [
+                        new OpenLayers.Rule({
+                            symbolizer: {
+                                "Line": {
+                                    strokeWidth: 3,
+                                    strokeOpacity: 1,
+                                    strokeColor: "#0000ff"
+                                }
+                            }
+                        })
+                    ]
+                }),
+                "temporary": new OpenLayers.Style(null, {
+                    rules: [
+                        new OpenLayers.Rule({
+                            symbolizer: {
+                                "Line": {
+                                    strokeWidth: 3,
+                                    strokeOpacity: 1,
+                                    strokeColor: "#0000ff"
+                                }
+                            }
+                        })
+                    ]
+                })
+            });
+
+           //TODO: url need to be get from config
+            var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
+                strategies: [new OpenLayers.Strategy.Fixed()],
+                protocol: new OpenLayers.Protocol.HTTP({
+                    url: "/data/dummy/busstopsRoads.json",
+                    format: new OpenLayers.Format.GeoJSON()
+                }),
+                styleMap: styles
+            });
+
+            this._map.addLayer(busStopsRoads);
 
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
+
+            me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
 
             this._map.addLayer(busStops);
             me._layer[layer.getId()] = busStops;
@@ -257,8 +312,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
             jQuery.getJSON( "http://localhost:8080/api/busstops", function(data) {
+            //jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
+
                 _.each(data, function (eachData) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType);
+                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
                 });
             })
             .fail(function() {
@@ -270,8 +327,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(busStops, ll, data, type) {
+        _addBusStop: function(busStops, ll, data, type, lns) {
             var me = this;
+            var lines = lns;
 
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
@@ -293,7 +351,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
 
 
-            var busstopClick = function (evt) {
+            var busStopClick = function (evt) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
@@ -305,41 +363,150 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 if (busStop.actionMouseDown) {
                     var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
                     var lonlat = me._map.getLonLatFromPixel(busStopCenter);
+
+                    var nearestLine = me._findNearestLine(lines.features, lonlat.lon,lonlat.lat);
+                    var position = me._nearestPointOnLine(
+                        nearestLine.startX,
+                        nearestLine.startY,
+                        nearestLine.endX,
+                        nearestLine.endY,
+                        lonlat.lon,lonlat.lat);
+
+                    var distance = 20;
+
+
+                    if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
+                        lonlat.lon = position.x;
+                        lonlat.lat = position.y;
+                    }
+
                     busStop.lonlat = lonlat;
                     busStops.redraw();
+
                 }
                 OpenLayers.Event.stop(evt);
             };
 
+
             var mouseUp = function(evt) {
+                // Opacity back
+                busStop.setOpacity(1);
                 busStop.actionMouseDown = false;
+
+                // Not need listeners anymore
                 busStop.events.unregister("mousemove", busStops, moveBusStop);
                 busStop.events.unregister("mouseup", busStops, mouseUp);
-                if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {  // click
-                    busstopClick(evt);
-                } else { // after move mouse up
-                    console.log('position lon:' + busStop.lonlat.lon + ' lat:' +busStop.lonlat.lat);
+
+                // Not moved only click
+                if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {
+                    busStopClick(evt);
+                } else {
+                    //TODO: Bus stop moved. Send new position to server
+                    console.log('['+Math.round(busStop.lonlat.lon) + ', ' + Math.round(busStop.lonlat.lat)+']');
+
                 }
 
             };
 
             var mouseDown = function(evt) {
+                // push marker up
+                busStops.removeMarker(busStop);
+                busStops.addMarker(busStop);
+
+                // Opacity because we want know what is moving
+                busStop.setOpacity(0.6);
+
+                // Mouse need to be down until can be moved
                 busStop.actionMouseDown = true;
+
+                //Save orginal position
                 busStop.actionDownX = evt.clientX;
                 busStop.actionDownY = evt.clientY;
+
                 //register move and up
                 busStop.events.register("mousemove", busStops, moveBusStop);
                 busStop.events.register("mouseup", busStops, mouseUp);
+
                 OpenLayers.Event.stop(evt);
             };
 
-
-
             busStop.events.register("mousedown", busStops, mouseDown);
-
 
             busStops.addMarker(busStop);
 
+        },
+        _findNearestLine: function(features, x, y) {
+            var me = this;
+            var distance  = -1;
+            var nearest = {};
+            // TODO: ugly plz, use lodash
+            for(var i = 0; i < features.length; i++) {
+                for(var j = 0; j < features[i].geometry.components.length-1; j++) {
+                    var currentDistance = me._getDistance(
+                        features[i].geometry.components[j].x,
+                        features[i].geometry.components[j].y,
+                        features[i].geometry.components[j+1].x,
+                        features[i].geometry.components[j+1].y,
+                        x, y);
+                    if ( distance == -1 || distance > currentDistance) {
+                        nearest.startX = features[i].geometry.components[j].x;
+                        nearest.startY = features[i].geometry.components[j].y;
+                        nearest.endX = features[i].geometry.components[j+1].x;
+                        nearest.endY = features[i].geometry.components[j+1].y;
+                        distance = currentDistance;
+                    }
+                }
+            }
+            return nearest;
+        },
+        _getDistance: function(x1, y1, x2, y2, x3, y3) {
+            var px = x2-x1;
+            var py = y2-y1;
+
+            var something = px*px + py*py;
+
+            var u =  ((x3 - x1) * px + (y3 - y1) * py) / something;
+
+            if (u > 1) {
+                u = 1;
+            } else if (u < 0) {
+                u = 0;
+            }
+
+            x = x1 + u * px;
+            y = y1 + u * py;
+
+            dx = x - x3;
+            dy = y - y3;
+
+            dist = Math.sqrt(dx*dx + dy*dy);
+
+            return dist;
+
+        },
+        _nearestPointOnLine: function(ax, ay, bx, by, px, py) {
+
+            var apx = px - ax;
+            var apy = py - ay;
+            var abx = bx - ax;
+            var aby = by - ay;
+
+            var ab2 = abx * abx + aby * aby;
+            var ap_ab = apx * abx + apy * aby;
+            var t = ap_ab / ab2;
+
+
+            if (t < 0) {
+                t = 0;
+            } else if (t > 1) {
+                t = 1;
+            }
+
+            var position = {};
+            position.x = ax + abx * t;
+            position.y = ay + aby * t;
+
+            return position;
         },
         _makeContent: function(data) {
             var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
