@@ -22,14 +22,37 @@ module.exports = function(grunt) {
       }
     },
     clean: ['dist'],
-    connect: {
-      server: {
-        options: {
-          port: 9001,
-          base: ['dist', '.', 'UI']
-        }
-      }
-    },
+      connect: {
+          server: {
+              options: {
+                  port: 9001,
+                  base: ['dist', '.', 'UI'],
+                  middleware: function (connect, opts) {
+                      var config = [
+                          // Serve static files.
+                          connect.static(opts.base[0]),
+                          connect.static(opts.base[1]),
+                          connect.static(opts.base[2]),
+                          // Make empty directories browsable.
+                          connect.directory(opts.base[2])
+                      ];
+                      var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
+                      config.unshift(proxy);
+                      return config;
+                  }
+              },
+              proxies: [
+                  {
+                      context: '/api',
+                      host: '127.0.0.1',
+                      port: '8080',
+                      https: false,
+                      changeOrigin: false,
+                      xforward: false
+                  }
+              ]
+          }
+      },
     less: {
       development: {
         files: {
@@ -76,7 +99,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'mocha', 'less:development'],
+      tasks: ['jshint', 'mocha', 'less:development', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -91,6 +114,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-connect-proxy');
+
+  grunt.registerTask('server', ['configureProxies:server', 'connect', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'connect', 'mocha']);
 
