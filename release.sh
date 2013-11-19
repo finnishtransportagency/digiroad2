@@ -13,9 +13,9 @@ rsync -av --progress bower_components src/main/webapp/
 grunt && rsync -av dist/ src/main/webapp/ && ./sbt assembly
 
 tar -cvzf file.tar.gz target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar src/main/webapp/
-scp file.tar.gz karjalainenr@10.129.47.148:.
+scp file.tar.gz gateway:.
 
-ssh karjalainenr@10.129.47.148 'killall java'
-ssh karjalainenr@10.129.47.148 'tar -C release/ -xvzf file.tar.gz'
-ssh karjalainenr@10.129.47.148 'cp -r release/src .'
-ssh karjalainenr@10.129.47.148 'java -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar &'
+ssh gateway 'killall java'
+ssh gateway 'tar -C release/ -xvzf file.tar.gz'
+ssh gateway 'cp -r release/src .'
+ssh gateway 'java -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar &'
