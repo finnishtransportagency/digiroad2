@@ -19,7 +19,9 @@ scp file.tar.gz gateway:.
 
 git clean -d -f
 
-ssh gateway 'killall java'
-ssh gateway 'tar -C release/ -xvzf file.tar.gz'
-ssh gateway 'cp -r release/src .'
-ssh gateway 'java -javaagent:release/newrelic.jar -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar &'
+ssh gateway 'chmod 766 file.tar.gz && cp file.tar.gz /tmp/.'
+ssh -t gateway "su web -c 'killall java; cd ~;
+						   cp /tmp/file.tar.gz .;
+						   tar -C release/ -xvzf file.tar.gz;
+						   cp -r release/src .;
+						   nohup java -javaagent:release/newrelic.jar -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar > /dev/null 2>&1 & '"
