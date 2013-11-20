@@ -12,10 +12,14 @@ rsync -av --progress bower_components src/main/webapp/
 
 grunt && rsync -av dist/ src/main/webapp/ && ./sbt assembly
 
-tar -cvzf file.tar.gz target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar src/main/webapp/
+cp digiroad2-oracle/newrelic* .
+tar -cvzf file.tar.gz target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar src/main/webapp/ newrelic*
+
 scp file.tar.gz gateway:.
+
+git clean -d -f
 
 ssh gateway 'killall java'
 ssh gateway 'tar -C release/ -xvzf file.tar.gz'
 ssh gateway 'cp -r release/src .'
-ssh gateway 'java -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar &'
+ssh gateway 'java -javaagent:release/newrelic.jar -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar &'
