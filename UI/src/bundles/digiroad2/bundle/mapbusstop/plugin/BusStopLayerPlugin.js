@@ -311,7 +311,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
-            jQuery.getJSON( "http://localhost:8080/api/busstops", function(data) {
+            jQuery.getJSON( "/api/busstops", function(data) {
             //jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
 
                 _.each(data, function (eachData) {
@@ -351,9 +351,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
 
 
-            var busStopClick = function (evt) {
+            var busStopClick = function (evt, wgs84Point) {
+
+                var content = _.cloneDeep(contentItem);
+
+                //TODO: ugly
+                content.html=
+                   '<a target="_blank" href="http://maps.google.com/?cbll='+wgs84Point.y+','+wgs84Point.x + '&cbp=12,20.09,,0,5&layer=c">' +
+                   '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location='+wgs84Point.y+', '+wgs84Point.x + '&fov=110&heading=10&pitch=-10&sensor=false">' +
+                   '</a>'+ contentItem.html ;
+
+
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, me.getLocalization('title'), [contentItem], busStop.lonlat, true);
+                var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
                 OpenLayers.Event.stop(evt);
             };
@@ -399,11 +409,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                 // Not moved only click
                 if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {
-                    busStopClick(evt);
+                    var point = new OpenLayers.Geometry.Point(busStop.lonlat.lon, busStop.lonlat.lat);
+                    var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+                    busStopClick(evt, wgs84);
                 } else {
-                    //TODO: Bus stop moved. Send new position to server
                     console.log('['+Math.round(busStop.lonlat.lon) + ', ' + Math.round(busStop.lonlat.lat)+']');
-
                 }
 
             };
@@ -511,6 +521,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _makeContent: function(data) {
             var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
             var htmlContent = _.map(tmplItems, this._featureDataTemplate);
+
 
             var contentItem = {
                 html : htmlContent,
