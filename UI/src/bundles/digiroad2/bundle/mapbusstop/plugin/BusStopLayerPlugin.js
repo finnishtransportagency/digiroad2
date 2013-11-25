@@ -298,7 +298,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
                 strategies: [new OpenLayers.Strategy.Fixed()],
                 protocol: new OpenLayers.Protocol.HTTP({
-                    url: "/data/dummy/busstopsRoads.json",
+                    url: "/api/roadlinks",
                     format: new OpenLayers.Format.GeoJSON()
                 }),
                 styleMap: styles
