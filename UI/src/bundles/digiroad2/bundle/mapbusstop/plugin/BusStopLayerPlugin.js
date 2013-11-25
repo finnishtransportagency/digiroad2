@@ -110,6 +110,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
 
             me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
+            me._streetViewTemplate  =
+                _.template('<a target="_blank" href="http://maps.google.com/?cbll={{wgs84Y}}' +
+                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c">' +
+                           '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
+                           ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
 
         },
         /**
@@ -315,7 +320,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             //jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
 
                 _.each(data, function (eachData) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
                 });
             })
             .fail(function() {
@@ -327,7 +332,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(busStops, ll, data, type, lns) {
+        _addBusStop: function(id, busStops, ll, data, type, lns) {
             var me = this;
             var lines = lns;
 
@@ -355,12 +360,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                 var content = _.cloneDeep(contentItem);
 
-                //TODO: ugly
-                content.html=
-                   '<a target="_blank" href="http://maps.google.com/?cbll='+wgs84Point.y+','+wgs84Point.x + '&cbp=12,20.09,,0,5&layer=c">' +
-                   '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location='+wgs84Point.y+', '+wgs84Point.x + '&fov=110&heading=10&pitch=-10&sensor=false">' +
-                   '</a>'+ contentItem.html ;
-
+                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+
+                              contentItem.html.join('');
 
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
@@ -376,11 +377,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                     var nearestLine = me._findNearestLine(lines.features, lonlat.lon,lonlat.lat);
                     var position = me._nearestPointOnLine(
-                        nearestLine.startX,
-                        nearestLine.startY,
-                        nearestLine.endX,
-                        nearestLine.endY,
-                        lonlat.lon,lonlat.lat);
+                        nearestLine,
+                        lonlat);
 
                     var distance = 20;
 
@@ -388,6 +386,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
                         lonlat.lon = position.x;
                         lonlat.lat = position.y;
+                        busStop.roadLinkId = nearestLine.id;
                     }
 
                     busStop.lonlat = lonlat;
@@ -414,6 +413,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     busStopClick(evt, wgs84);
                 } else {
                     console.log('['+Math.round(busStop.lonlat.lon) + ', ' + Math.round(busStop.lonlat.lat)+']');
+                    console.dir(busStop);
+                    var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
+
+                    jQuery.ajax({
+                        type: "PUT",
+                        url: "/api/busstops/" + id  +"/", //TODO: get prefix from plugin config
+                        data: data,
+                        dataType:"json",
+                        success: function() {
+                            console.log("done");
+                        },
+                        error: function() {
+                            console.log("error");
+                        }
+                    });
                 }
 
             };
@@ -463,6 +477,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         nearest.startY = features[i].geometry.components[j].y;
                         nearest.endX = features[i].geometry.components[j+1].x;
                         nearest.endY = features[i].geometry.components[j+1].y;
+                        nearest.id = features[i].id;
                         distance = currentDistance;
                     }
                 }
@@ -494,12 +509,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return dist;
 
         },
-        _nearestPointOnLine: function(ax, ay, bx, by, px, py) {
+        _nearestPointOnLine: function(line, point) {
 
-            var apx = px - ax;
-            var apy = py - ay;
-            var abx = bx - ax;
-            var aby = by - ay;
+            var apx = point.lon - line.startX;
+            var apy = point.lat - line.startY;
+            var abx = line.endX - line.startX;
+            var aby = line.endY - line.startY;
 
             var ab2 = abx * abx + aby * aby;
             var ap_ab = apx * abx + apy * aby;
@@ -513,8 +528,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
 
             var position = {};
-            position.x = ax + abx * t;
-            position.y = ay + aby * t;
+            position.x = line.startX + abx * t;
+            position.y = line.startY + aby * t;
 
             return position;
         },
