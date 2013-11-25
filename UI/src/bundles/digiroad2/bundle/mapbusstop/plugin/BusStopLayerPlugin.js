@@ -320,7 +320,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             //jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
 
                 _.each(data, function (eachData) {
-                    me._addBusStop(busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
                 });
             })
             .fail(function() {
@@ -332,7 +332,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(busStops, ll, data, type, lns) {
+        _addBusStop: function(id, busStops, ll, data, type, lns) {
             var me = this;
             var lines = lns;
 
@@ -386,6 +386,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
                         lonlat.lon = position.x;
                         lonlat.lat = position.y;
+                        busStop.roadLinkId = nearestLine.id;
                     }
 
                     busStop.lonlat = lonlat;
@@ -412,6 +413,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     busStopClick(evt, wgs84);
                 } else {
                     console.log('['+Math.round(busStop.lonlat.lon) + ', ' + Math.round(busStop.lonlat.lat)+']');
+                    console.dir(busStop);
+                    var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
+
+                    jQuery.ajax({
+                        type: "PUT",
+                        url: "/api/busstops/" + id  +"/", //TODO: get prefix from plugin config
+                        data: data,
+                        dataType:"json",
+                        success: function() {
+                            console.log("done");
+                        },
+                        error: function() {
+                            console.log("error");
+                        }
+                    });
                 }
 
             };
@@ -461,6 +477,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         nearest.startY = features[i].geometry.components[j].y;
                         nearest.endX = features[i].geometry.components[j+1].x;
                         nearest.endY = features[i].geometry.components[j+1].y;
+                        nearest.id = features[i].id;
                         distance = currentDistance;
                     }
                 }
