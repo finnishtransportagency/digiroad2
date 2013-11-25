@@ -466,7 +466,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: ugly plz, use lodash
             for(var i = 0; i < features.length; i++) {
                 for(var j = 0; j < features[i].geometry.components.length-1; j++) {
-                    var currentDistance = me._getDistance(
+                    var currentDistance = geometrycalculator.getDistanceFromLine(
                         features[i].geometry.components[j].x,
                         features[i].geometry.components[j].y,
                         features[i].geometry.components[j+1].x,
