@@ -375,7 +375,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
                     var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
-                    var nearestLine = me._findNearestLine(lines.features, lonlat.lon,lonlat.lat);
+                    var nearestLine = me._findNearestLine(lines.features, lonlat.lon, lonlat.lat);
                     var position = me._nearestPointOnLine(
                         nearestLine,
                         lonlat);
@@ -466,12 +466,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: ugly plz, use lodash
             for(var i = 0; i < features.length; i++) {
                 for(var j = 0; j < features[i].geometry.components.length-1; j++) {
-                    var currentDistance = me._getDistance(
-                        features[i].geometry.components[j].x,
-                        features[i].geometry.components[j].y,
-                        features[i].geometry.components[j+1].x,
-                        features[i].geometry.components[j+1].y,
-                        x, y);
+                    var currentDistance = geometrycalculator.getDistanceFromLine(
+                        {
+                            start:
+                            {
+                                x: features[i].geometry.components[j].x,
+                                y: features[i].geometry.components[j].y
+                            },
+                            end: {
+
+                                x: features[i].geometry.components[j+1].x,
+                                y: features[i].geometry.components[j+1].y
+                            }
+                        },
+                        { x: x, y: y });
                     if ( distance == -1 || distance > currentDistance) {
                         nearest.startX = features[i].geometry.components[j].x;
                         nearest.startY = features[i].geometry.components[j].y;
@@ -483,31 +491,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             }
             return nearest;
-        },
-        _getDistance: function(x1, y1, x2, y2, x3, y3) {
-            var px = x2-x1;
-            var py = y2-y1;
-
-            var something = px*px + py*py;
-
-            var u =  ((x3 - x1) * px + (y3 - y1) * py) / something;
-
-            if (u > 1) {
-                u = 1;
-            } else if (u < 0) {
-                u = 0;
-            }
-
-            x = x1 + u * px;
-            y = y1 + u * py;
-
-            dx = x - x3;
-            dy = y - y3;
-
-            dist = Math.sqrt(dx*dx + dy*dy);
-
-            return dist;
-
         },
         _nearestPointOnLine: function(line, point) {
 
