@@ -1,0 +1,22 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {"type":"Feature", "id":"OpenLayers.Feature.Vector_1280", "properties":{}, "geometry":{"type":"LineString", "coordinates":[
+            [372794, 6678580],
+            [372987, 6678563],
+            [373109, 6678556],
+            [373512, 6678640],
+            [373631, 6678631],
+            [373867, 6678586]
+        ]}, "crs":{"type":"OGC", "properties":{"urn":"urn:ogc:def:crs:OGC:1.3:ETRS89"}}},
+        {"type":"Feature", "id":"OpenLayers.Feature.Vector_1281", "properties":{}, "geometry":{"type":"LineString", "coordinates":[
+            [372945 ,6678674],
+            [373044, 6678443]
+        ]}, "crs":{"type":"OGC", "properties":{"urn":"urn:ogc:def:crs:OGC:1.3:ETRS89"}}},
+        {"type":"Feature", "id":"OpenLayers.Feature.Vector_1282", "properties":{}, "geometry":{"type":"LineString", "coordinates":[
+            [373801, 6678599],
+            [373523, 6678660]
+        ]}, "crs":{"type":"OGC", "properties":{"urn":"urn:ogc:def:crs:OGC:1.3:ETRS89"}}}
+
+    ]
+}
