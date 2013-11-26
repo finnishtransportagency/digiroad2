@@ -376,12 +376,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
                     var nearestLine = me._findNearestLine(lines.features, lonlat.lon, lonlat.lat);
-                    var position = me._nearestPointOnLine(
+                    var position = geometrycalculator.nearestPointOnLine(
                         nearestLine,
-                        lonlat);
+                        { x: lonlat.lon, y: lonlat.lat});
 
                     var distance = 20;
-
 
                     if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
                         lonlat.lon = position.x;
@@ -460,9 +459,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         _findNearestLine: function(features, x, y) {
-            var me = this;
             var distance  = -1;
-            var nearest = {};
+            var nearest = { start: {}, end: {} };
             // TODO: ugly plz, use lodash
             for(var i = 0; i < features.length; i++) {
                 for(var j = 0; j < features[i].geometry.components.length-1; j++) {
@@ -481,40 +479,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         },
                         { x: x, y: y });
                     if ( distance == -1 || distance > currentDistance) {
-                        nearest.startX = features[i].geometry.components[j].x;
-                        nearest.startY = features[i].geometry.components[j].y;
-                        nearest.endX = features[i].geometry.components[j+1].x;
-                        nearest.endY = features[i].geometry.components[j+1].y;
+                        nearest.start.x = features[i].geometry.components[j].x;
+                        nearest.start.y = features[i].geometry.components[j].y;
+                        nearest.end.x = features[i].geometry.components[j+1].x;
+                        nearest.end.y = features[i].geometry.components[j+1].y;
                         nearest.id = features[i].id;
                         distance = currentDistance;
                     }
                 }
             }
             return nearest;
-        },
-        _nearestPointOnLine: function(line, point) {
-
-            var apx = point.lon - line.startX;
-            var apy = point.lat - line.startY;
-            var abx = line.endX - line.startX;
-            var aby = line.endY - line.startY;
-
-            var ab2 = abx * abx + aby * aby;
-            var ap_ab = apx * abx + apy * aby;
-            var t = ap_ab / ab2;
-
-
-            if (t < 0) {
-                t = 0;
-            } else if (t > 1) {
-                t = 1;
-            }
-
-            var position = {};
-            position.x = line.startX + abx * t;
-            position.y = line.startY + aby * t;
-
-            return position;
         },
         _makeContent: function(data) {
             var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
