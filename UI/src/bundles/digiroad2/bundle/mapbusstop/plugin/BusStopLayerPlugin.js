@@ -375,7 +375,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
                     var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
-                    var nearestLine = me._findNearestLine(lines.features, lonlat.lon, lonlat.lat);
+                    var nearestLine = geometrycalculator.findNearestLine(lines.features, lonlat.lon, lonlat.lat);
                     var position = geometrycalculator.nearestPointOnLine(
                         nearestLine,
                         { x: lonlat.lon, y: lonlat.lat});
@@ -457,39 +457,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.events.register("mousedown", busStops, mouseDown);
 
             busStops.addMarker(busStop);
-        },
-        _findNearestLine: function(features, x, y) {
-            var distance  = -1;
-            var nearest = { start: {}, end: {} };
-            // TODO: ugly plz, use lodash
-            for(var i = 0; i < features.length; i++) {
-                for(var j = 0; j < features[i].geometry.components.length-1; j++) {
-                    var currentDistance = geometrycalculator.getDistanceFromLine(
-                        {
-                            start:
-                            {
-                                x: features[i].geometry.components[j].x,
-                                y: features[i].geometry.components[j].y
-                            },
-                            end: {
-
-                                x: features[i].geometry.components[j+1].x,
-                                y: features[i].geometry.components[j+1].y
-                            }
-                        },
-                        { x: x, y: y });
-                    if ( distance == -1 || distance > currentDistance) {
-                        nearest.start.x = features[i].geometry.components[j].x;
-                        nearest.start.y = features[i].geometry.components[j].y;
-                        nearest.end.x = features[i].geometry.components[j+1].x;
-                        nearest.end.y = features[i].geometry.components[j+1].y;
-                        nearest.id = features[i].id;
-                        nearest.roadLinkId = features[i].attributes.roadLinkId;
-                        distance = currentDistance;
-                    }
-                }
-            }
-            return nearest;
         },
         _makeContent: function(data) {
             var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
