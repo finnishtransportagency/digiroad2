@@ -4,9 +4,11 @@ import org.scalatra._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.json4s.JsonAST.{JArray, JNull, JInt, JString}
+import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.feature.BusStop
+import org.json4s.JsonAST.JString
+import org.json4s.JsonAST.JInt
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -31,12 +33,21 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.getBusStops()
   }
 
+  put("/busstops/:id") {
+    // TODO: update optional/required fields in bus stop
+    val (lon, lat, roadLinkId) = ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double], (parsedBody \ "roadLinkId").extractOpt[Long])
+    val bs = BusStop(params("id"), lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, busStopType = "")
+    val ubs = featureProvider.updateBusStop(bs)
+    println("UPDATED: " + ubs)
+    ubs
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*");
     val rls = featureProvider.getRoadLinks()
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
-        ("type" -> "Feature") ~ ("id" -> rl.id) ~ ("properties" -> JNull) ~ ("geometry" ->
+        ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
           ("type" -> "LineString") ~ ("coordinates" -> rl.lonLat.map { ll =>
             List(ll._1, ll._2)
           }) ~ ("crs" -> ("type" -> "OGC") ~ ("properties" -> ("urn" -> "urn:ogc:def:crs:OGC:1.3:ETRS89")))
@@ -46,5 +57,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/ping") {
     "pong"
+  }
+
+  error {
+    // TODO: error logging / handling
+    case e => e.printStackTrace()
   }
 }
