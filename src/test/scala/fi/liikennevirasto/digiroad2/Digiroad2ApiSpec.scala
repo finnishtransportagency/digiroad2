@@ -42,7 +42,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     get("/roadlinks") {
       status should equal(200)
       val roadLinksJson = parse(body)
-      (roadLinksJson \ "features" \ "geometry").children.size should (be > 900)
+      (roadLinksJson \ "features" \ "geometry").children.size should (be > 500)
       val cs = (roadLinksJson \ "features" \ "geometry" \ "coordinates" \\ classOf[JDouble])
       cs.take(2) should equal (List(373157.883064084, 6678254.57532966))
     }

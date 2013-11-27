@@ -385,7 +385,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
                         lonlat.lon = position.x;
                         lonlat.lat = position.y;
-                        busStop.roadLinkId = nearestLine.id;
+                        busStop.roadLinkId = nearestLine.roadLinkId;
                     }
 
                     busStop.lonlat = lonlat;
@@ -416,9 +416,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
 
                     jQuery.ajax({
+                        contentType: "application/json",
                         type: "PUT",
-                        url: "/api/busstops/" + id  +"/", //TODO: get prefix from plugin config
-                        data: data,
+                        url: "/api/busstops/" + id, //TODO: get prefix from plugin config
+                        data: JSON.stringify(data),
                         dataType:"json",
                         success: function() {
                             console.log("done");
@@ -456,7 +457,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.events.register("mousedown", busStops, mouseDown);
 
             busStops.addMarker(busStop);
-
         },
         _findNearestLine: function(features, x, y) {
             var distance  = -1;
@@ -484,6 +484,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         nearest.end.x = features[i].geometry.components[j+1].x;
                         nearest.end.y = features[i].geometry.components[j+1].y;
                         nearest.id = features[i].id;
+                        nearest.roadLinkId = features[i].attributes.roadLinkId;
                         distance = currentDistance;
                     }
                 }
