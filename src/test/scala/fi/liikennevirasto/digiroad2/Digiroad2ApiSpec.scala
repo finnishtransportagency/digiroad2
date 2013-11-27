@@ -32,8 +32,8 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     get("/config") {
       status should equal(200)
       val responseJson = parse(body)
-      (responseJson \ "mapfull" \ "state" \ "zoom").values should equal(5)
-      (responseJson \ "mapfull" \ "state" \ "east").values should equal("123456")
+      (responseJson \ "mapfull" \ "state" \ "zoom").values should equal(8)
+      (responseJson \ "mapfull" \ "state" \ "east").values should equal("373560")
       (responseJson \ "mapfull" \ "state" \ "north").values should equal("6677676")
     }
   }
