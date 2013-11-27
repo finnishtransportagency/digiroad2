@@ -57,6 +57,16 @@ describe('Geometry calculations: nearest line', function(){
             components: [{ x: 0.0, y: 1.0 }, { x: 1.0, y: 2.0 },
                          { x: 2.0, y: 2.0 }, { x: 2.0, y: 3.0 } ] } };
 
+    it('perf', function(){
+        var tmp = [];
+        for(var i = 0; i < 1000; i++){
+            tmp.push(set1);
+        }
+        console.time('perf');
+        fut(tmp, 0.5, 0.5);
+        console.timeEnd('perf');
+    });
+
     it('should return correct line if in first set, first line', function(){
         assert.deepEqual({ id: 1, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
                            fut([set1, set2], 0.5, 0.5));
