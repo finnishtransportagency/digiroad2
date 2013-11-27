@@ -93,3 +93,18 @@ describe('Geometry calculations: nearest line', function(){
             fut([set1, set2], 1.8, 2.5));
     });
 });
+
+describe('Geometry detection is point in the circle', function(){
+    var fut = geometrycalculator.isInCircle;
+
+    it('should return true', function(){
+        assert.equal(true, fut(0,0,2,1,1));
+    });
+
+    it('should return false', function(){
+        assert.equal(false, fut(0,0,1,1,1));
+    });
+
+
+
+});

@@ -44,4 +44,9 @@
                 .omit('distance')
                 .value();
     };
+
+    geometrycalculator.isInCircle = function(centerX, centerY, radius, x, y) {
+        var squareDist = (centerX-x) * (centerX-x) + (centerY-y)*(centerY-y);
+        return squareDist <= radius*radius;
+    };
 }(window.geometrycalculator = window.geometrycalculator || {}));
