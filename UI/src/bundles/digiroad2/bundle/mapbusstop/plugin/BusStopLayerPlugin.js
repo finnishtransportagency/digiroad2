@@ -52,13 +52,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this.pluginName = mapModule.getName() + this.__name;
         },
         /**
-         * @method hasUI
-         * This plugin doesn't have an UI that we would want to ever hide so always returns false
-         * @return {Boolean}
-         */
-        hasUI: function () {
-            return false;
-        },
+* @method hasUI
+* This plugin doesn't have an UI that we would want to ever hide so always returns false
+* @return {Boolean}
+*/
+hasUI: function () {
+    return false;
+},
         /**
          * @method register
          * Interface method for the plugin protocol.
@@ -466,7 +466,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             var mouseDown = function(evt) {
                 me._selectedBusStop = busStop;
-                me._selectedLayer = busStops;
                 // push marker up
                 busStops.removeMarker(busStop);
                 busStops.addMarker(busStop);
