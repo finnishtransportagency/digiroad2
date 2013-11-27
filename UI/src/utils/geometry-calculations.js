@@ -32,7 +32,7 @@
                 var point_distance = calculatedistance({ start: start_point, end: end_point });
                 if(point_distance < min_distance) {
                     min_distance = point_distance;
-                    temp = { id: vector.id, start: start_point, end: end_point, distance: point_distance };
+                    temp = { id: vector.id, roadLinkId: vector.attributes.roadLinkId, start: start_point, end: end_point, distance: point_distance };
                 }
             }
             return temp;
