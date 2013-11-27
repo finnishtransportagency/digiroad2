@@ -305,6 +305,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             });
 
             this._map.addLayer(busStopsRoads);
+            me._layer["busStopsRoads_"+layer.getId()] = busStopsRoads;
 
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
 
@@ -317,8 +318,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
             jQuery.getJSON( "/api/busstops", function(data) {
-            //jQuery.getJSON( "/data/dummy/busstops.json", function(data) {
-
                 _.each(data, function (eachData) {
                     me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
                 });
@@ -356,6 +355,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
 
 
+            var busStopBlink = function() {
+
+                if (busStop.blink) {
+                    busStop.setOpacity(0.3);
+                    busStop.blink = false;
+                } else {
+                    busStop.setOpacity(0.9);
+                    busStop.blink = true;
+                }
+                busStops.redraw();
+
+            };
+
+            var blinking = false;
+            var blinkInterVal;
+
             var busStopClick = function (evt, wgs84Point) {
 
                 var content = _.cloneDeep(contentItem);
@@ -380,12 +395,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         nearestLine,
                         { x: lonlat.lon, y: lonlat.lat});
 
-                    var distance = 20;
+                    var radius =(13-me._map.getZoom())*4;
 
-                    if (Math.abs(lonlat.lon-position.x) + Math.abs(lonlat.lat-position.y) < distance) {
+                    if (me.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
                         lonlat.lon = position.x;
                         lonlat.lat = position.y;
                         busStop.roadLinkId = nearestLine.roadLinkId;
+                        if (blinking) {
+                            clearInterval(blinkInterVal);
+                            busStop.setOpacity(0.6);
+                            blinking = false;
+                        }
+
+                    } else if(!blinking) {
+                        //blink
+                        blinking = true;
+                        blinkInterVal = setInterval(function(){busStopBlink()}, 600);
                     }
 
                     busStop.lonlat = lonlat;
@@ -411,8 +436,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
                     busStopClick(evt, wgs84);
                 } else {
-                    console.log('['+Math.round(busStop.lonlat.lon) + ', ' + Math.round(busStop.lonlat.lat)+']');
-                    console.dir(busStop);
                     var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
 
                     jQuery.ajax({
@@ -457,6 +480,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.events.register("mousedown", busStops, mouseDown);
 
             busStops.addMarker(busStop);
+        },
+        isInCircle: function(centerX, centerY, radius, x, y) {
+            var squareDist = (centerX-x) * (centerX-x) + (centerY-y)*(centerY-y);
+            return squareDist <= radius*radius;
         },
         _makeContent: function(data) {
             var tmplItems = _.map(_.pairs(data), function(x) { return { name: x[0], value: x[1] };});
@@ -518,6 +545,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             /* This should free all memory */
             this._layer[layer.getId()].destroy();
+            this._layer["busStopsRoads_"+layer.getId()].destroy();
         },
         /**
          * @method getOLMapLayers
