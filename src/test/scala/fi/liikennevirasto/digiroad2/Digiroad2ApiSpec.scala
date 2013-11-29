@@ -17,7 +17,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       status should equal (200)
       val busStops = parse(body).extract[List[BusStop]]
       busStops.size should be (41)
-      busStops.head should equal (BusStop("10",373496.295384342,6676322.16437243,"2",Map("shelter_type" -> "1"),3130l))
+      busStops.head should equal (BusStop(10,373496.295384342,6676322.16437243,"2",Map("shelter_type" -> "1"),3130l))
     }
   }
 

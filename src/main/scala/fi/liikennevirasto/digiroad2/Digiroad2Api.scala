@@ -36,7 +36,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/busstops/:id") {
     // TODO: update optional/required fields in bus stop
     val (lon, lat, roadLinkId) = ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double], (parsedBody \ "roadLinkId").extractOpt[Long])
-    val bs = BusStop(params("id"), lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, busStopType = "")
+    val bs = BusStop(params("id").toLong, lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, busStopType = "")
     val ubs = featureProvider.updateBusStop(bs)
     println("UPDATED: " + ubs)
     ubs
