@@ -19,6 +19,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._localization = null;
         this._busStopIcon = [];
         this._selectedBusStop = null;
+        this._selectedBusStopLayer = null;
         this._roadStyles = null;
     }, {
         /** @static @property __name plugin name */
@@ -103,8 +104,6 @@ hasUI: function () {
             this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
             this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
             this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
-
-
         },
         _initTemplates: function () {
             var me = this;
@@ -130,32 +129,6 @@ hasUI: function () {
                                     strokeWidth: 3,
                                     strokeOpacity: 1,
                                     strokeColor: "#6666aa"
-                                }
-                            }
-                        })
-                    ]
-                }),
-                "select": new OpenLayers.Style(null, {
-                    rules: [
-                        new OpenLayers.Rule({
-                            symbolizer: {
-                                "Line": {
-                                    strokeWidth: 3,
-                                    strokeOpacity: 1,
-                                    strokeColor: "#0000ff"
-                                }
-                            }
-                        })
-                    ]
-                }),
-                "temporary": new OpenLayers.Style(null, {
-                    rules: [
-                        new OpenLayers.Rule({
-                            symbolizer: {
-                                "Line": {
-                                    strokeWidth: 3,
-                                    strokeOpacity: 1,
-                                    strokeColor: "#0000ff"
                                 }
                             }
                         })
@@ -315,12 +288,9 @@ hasUI: function () {
             me._layer["busStopsRoads_"+layer.getId()] = busStopsRoads;
 
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
-
             me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
-
-            this._map.addLayer(busStops);
+            me._map.addLayer(busStops);
             me._layer[layer.getId()] = busStops;
-
 
             // TODO: url usage layer.getLayerUrls()[0];
             // TODO: make API url configurable
@@ -333,14 +303,12 @@ hasUI: function () {
                 console.log( "error" );
             });
 
-            this._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
-
+            me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, lns) {
+        _addBusStop: function(id, busStops, ll, data, type, lines) {
             var me = this;
-            var lines = lns;
 
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
@@ -354,90 +322,71 @@ hasUI: function () {
             //content
             var contentItem = this._makeContent(data);
 
-            //close button
-            contentItem.actions[me.getLocalization('close')] = function() {
-                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
-                var request = requestBuilder(popupId);
-                me._sandbox.request(me.getName(), request);
-            };
+            //add close button
+            contentItem.actions[me.getLocalization('close')] = me._makeCloseButton(me.getName(), popupId);
 
+            busStop.blinking = false;
+            busStop.blinkInterVal = null;
 
-            var busStopBlink = function() {
+            var busStopClick = me._mouseClick(busStop, contentItem, popupId);
+            var moveBusStop = me._moveBusStop(busStop, busStops, lines);
+            var mouseUp = me._mouseUp(busStop, busStops, moveBusStop, busStopClick, id);
+            var mouseDown = me._mouseDown(busStop, busStops, moveBusStop, mouseUp);
 
-                if (busStop.blink) {
-                    busStop.setOpacity(0.3);
-                    busStop.blink = false;
-                } else {
-                    busStop.setOpacity(0.9);
-                    busStop.blink = true;
-                }
-                busStops.redraw();
+            busStop.events.register("mousedown", busStops, mouseDown);
 
-            };
+            busStops.addMarker(busStop);
+        },
+        _moveBusStop: function (busStop, busStops, lines) {
+           var me = this;
+           return function(evt) {
+               if (busStop.actionMouseDown) {
+                   var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
+                   var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
-            var blinking = false;
-            var blinkInterVal;
+                   var nearestLine = geometrycalculator.findNearestLine(lines.features, lonlat.lon, lonlat.lat);
+                   var position = geometrycalculator.nearestPointOnLine(
+                       nearestLine,
+                       { x: lonlat.lon, y: lonlat.lat});
 
-            var busStopClick = function (evt, wgs84Point) {
+                   var radius =(13-me._map.getZoom())*3.5;
 
-                var content = _.cloneDeep(contentItem);
+                   if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
+                       lonlat.lon = position.x;
+                       lonlat.lat = position.y;
+                       busStop.roadLinkId = nearestLine.roadLinkId;
 
-                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+
-                              contentItem.html.join('');
+                       if (busStop.blinking) {
+                           clearInterval(busStop.blinkInterVal);
+                           busStop.setOpacity(0.6);
+                           busStop.blinking = false;
+                       }
 
-                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-                var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
-                me._sandbox.request(me.getName(), request);
-                OpenLayers.Event.stop(evt);
-            };
+                   } else if(!busStop.blinking) {
+                       //blink
+                       busStop.blinking = true;
+                       busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop, busStops);}, 600);
+                   }
 
+                   busStop.lonlat = lonlat;
+                   busStops.redraw();
 
-            var moveBusStop = function(evt) {
-                if (busStop.actionMouseDown) {
-                    var busStopCenter = new OpenLayers.Pixel(evt.clientX - busStop.icon.size.w/4,evt.clientY + busStop.icon.size.h/4);
-                    var lonlat = me._map.getLonLatFromPixel(busStopCenter);
-
-                    var nearestLine = geometrycalculator.findNearestLine(lines.features, lonlat.lon, lonlat.lat);
-                    var position = geometrycalculator.nearestPointOnLine(
-                        nearestLine,
-                        { x: lonlat.lon, y: lonlat.lat});
-
-                    var radius =(13-me._map.getZoom())*4;
-
-                    if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
-                        lonlat.lon = position.x;
-                        lonlat.lat = position.y;
-                        busStop.roadLinkId = nearestLine.roadLinkId;
-
-                        if (blinking) {
-                            clearInterval(blinkInterVal);
-                            busStop.setOpacity(0.6);
-                            blinking = false;
-                        }
-
-                    } else if(!blinking) {
-                        //blink
-                        blinking = true;
-                        blinkInterVal = setInterval(function(){busStopBlink();}, 600);
-                    }
-
-                    busStop.lonlat = lonlat;
-                    busStops.redraw();
-
-                }
-                OpenLayers.Event.stop(evt);
-            };
-
-
-            var mouseUp = function(evt) {
+               }
+               OpenLayers.Event.stop(evt);
+           };
+        },
+        _mouseUp: function (busStop, busStops, moveBusStop, busStopClick, id) {
+            var me = this;
+            return function(evt) {
                 me._selectedBusStop = null;
+                me.__selectedBusStopLayer = null;
                 // Opacity back
                 busStop.setOpacity(1);
                 busStop.actionMouseDown = false;
 
                 // Not need listeners anymore
                 busStop.events.unregister("mousemove", busStops, moveBusStop);
-                busStop.events.unregister("mouseup", busStops, mouseUp);
+                busStop.events.unregister("mouseup", busStops, this);
 
                 // Not moved only click
                 if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {
@@ -446,26 +395,31 @@ hasUI: function () {
                     busStopClick(evt, wgs84);
                 } else {
                     var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
-
-                    jQuery.ajax({
-                        contentType: "application/json",
-                        type: "PUT",
-                        url: "/api/busstops/" + id, //TODO: get prefix from plugin config
-                        data: JSON.stringify(data),
-                        dataType:"json",
-                        success: function() {
-                            console.log("done");
-                        },
-                        error: function() {
-                            console.log("error");
-                        }
-                    });
+                    me._sendData(data, id);
                 }
 
             };
-
-            var mouseDown = function(evt) {
+        },
+        _sendData: function(data, id) {
+            jQuery.ajax({
+                contentType: "application/json",
+                type: "PUT",
+                url: "/api/busstops/" + id, //TODO: get prefix from plugin config
+                data: JSON.stringify(data),
+                dataType:"json",
+                success: function() {
+                    console.log("done");
+                },
+                error: function() {
+                    console.log("error");
+                }
+            });
+        },
+        _mouseDown: function(busStop, busStops, moveBusStop, mouseUp) {
+            var me = this;
+            return function (evt) {
                 me._selectedBusStop = busStop;
+                me._selectedBusStopLayer = busStops;
                 // push marker up
                 busStops.removeMarker(busStop);
                 busStops.addMarker(busStop);
@@ -486,19 +440,35 @@ hasUI: function () {
 
                 OpenLayers.Event.stop(evt);
             };
+        },
+        _mouseClick: function(busStop, contentItem, popupId) {
+            var me = this;
+            return function (evt, wgs84Point) {
 
-            busStop.events.register("mousedown", busStops, mouseDown);
+                var content = _.cloneDeep(contentItem);
+                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+contentItem.html.join('');
 
-            busStops.addMarker(busStop);
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
+                var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
+                me._sandbox.request(me.getName(), request);
+                OpenLayers.Event.stop(evt);
+            };
+        },
+        _makeCloseButton: function(name, popupId) {
+            var me = this;
+            return function() {
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
+                var request = requestBuilder(popupId);
+                me._sandbox.request(name, request);
+            };
         },
         _moveSelectedBusStop: function(evt) {
-
-
             if (this._selectedBusStop) {
                 var busStopCenter = new OpenLayers.Pixel(evt.getPageX() - this._busStopIcon['null'].size.w/4,evt.getPageY() + this._busStopIcon['null'].size.h/4);
                 var lonlat = this._map.getLonLatFromPixel(busStopCenter);
                 this._selectedBusStop.lonlat.lon = lonlat.lon;
                 this._selectedBusStop.lonlat.lat = lonlat.lat;
+                this._selectedBusStopLayer.redraw();
             }
         },
         _makeContent: function(data) {
@@ -511,6 +481,18 @@ hasUI: function () {
                 actions : {}
             };
             return contentItem;
+
+        },
+        _busStopBlink: function(busStop, busStops) {
+
+            if (busStop.blink) {
+                busStop.setOpacity(0.3);
+                busStop.blink = false;
+            } else {
+                busStop.setOpacity(0.9);
+                busStop.blink = true;
+            }
+            busStops.redraw();
 
         },
         /**
