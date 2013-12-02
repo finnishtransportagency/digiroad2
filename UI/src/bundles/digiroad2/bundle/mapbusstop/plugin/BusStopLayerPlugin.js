@@ -439,6 +439,10 @@ hasUI: function () {
                 var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
                 var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
+                var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+
+                this._selectedBusStop.icon.imageDiv.style.transform="rotate(" +angle+ "deg)";
+
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
                     { x: lonlat.lon, y: lonlat.lat});

@@ -50,8 +50,18 @@
         return squareDist <= radius*radius;
     };
 
-    geometrycalculator.getLineDirectionAngle = function(line) {
-        return Math.atan2(line.start.y - line.end.y, line.start.x - line.end.y);
+    geometrycalculator.getLineDirectionRadAngle = function(line) {
+
+        //return Math.atan2(line.start.y - line.end.y, - line.start.x - line.end.x);
+        return Math.atan2(line.start.x - line.end.x, line.start.y - line.end.y);
+    };
+
+    geometrycalculator.getLineDirectionDegAngle = function(line) {
+
+        var rad = geometrycalculator.getLineDirectionRadAngle(line);
+
+        return 180+geometrycalculator.rad2deg(rad);
+
     };
 
     geometrycalculator.rad2deg = function(angleRad) {
