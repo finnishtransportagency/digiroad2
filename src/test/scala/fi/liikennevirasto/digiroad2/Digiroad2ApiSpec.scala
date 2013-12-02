@@ -13,11 +13,18 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   addServlet(classOf[Digiroad2Api], "/*")
 
   test("get bus stops", Tag("db")) {
-    get("/busstops") {
+    get("/busstops?municipalityNumber=235") {
       status should equal (200)
       val busStops = parse(body).extract[List[BusStop]]
       busStops.size should be (41)
       busStops.head should equal (BusStop(10,373496.295384342,6676322.16437243,"2",Map("shelter_type" -> "1"),3130l))
+    }
+  }
+
+  test("missing bus stops", Tag("db")) {
+    get("/busstops?municipalityNumber=234") {
+      status should equal (200)
+      parse(body).extract[List[BusStop]].size should be (0)
     }
   }
 
@@ -39,7 +46,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   }
 
   test("get road links", Tag("db")) {
-    get("/roadlinks") {
+    get("/roadlinks?municipalityNumber=235") {
       status should equal(200)
       val roadLinksJson = parse(body)
       (roadLinksJson \ "features" \ "geometry").children.size should (be > 500)
