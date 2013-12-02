@@ -104,7 +104,28 @@ describe('Geometry detection is point in the circle', function(){
     it('should return false', function(){
         assert.equal(false, fut(0,0,1,1,1));
     });
+});
 
+describe('Geometry calculations: radian to degree', function(){
+    var fut = geometrycalculator.rad2deg;
+
+    it ('should return 180', function() {
+        assert.equal(180, fut(Math.PI));
+    });
+});
+
+describe('Geometry calculations: degree to radian', function(){
+    var fut = geometrycalculator.deg2rad;
+
+    it ('should return PI value', function() {
+        assert.equal(Math.PI, fut(180));
+    });
+});
+
+/*
+describe('Geometry calculations: line direction angle', function(){
+    var fut = geometrycalculator.getLineDirectionAngle;
 
 
 });
+*/

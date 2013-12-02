@@ -45,7 +45,7 @@
             {
                "id":"base_35"
             }, {
-                 "id":"555"
+                 "id":"235"
              }
          ],
          "zoom":2,
@@ -97,15 +97,29 @@
              {
                  "wmsName":"bussit",
                  "type":"busstoplayer",
-                 "id":555,
+                 "id":235,
                  "minScale":5000000,
                  "wmsUrl":"/data/dummy/busstops.json",
-                 "url":"/data/dummy/busstops.json",
+                 "url":"/api/busstops?municipalityNumber=235",
+                 "roadLinesUrl" :"/api/roadlinks?municipalityNumber=235",
                  "maxScale":1 ,
                  "orgName":"Pysäkit",
                  "inspire":"Pysäkit",
-                  "name" : "Kauniainen"
-            },
+                 "name" : "Kauniainen"
+             },
+             {
+                 "wmsName":"bussit",
+                 "type":"busstoplayer",
+                 "id":556,
+                 "minScale":5000000,
+                 "wmsUrl":"/data/dummy/busstops.json",
+                 "url":"/api/busstops?municipalityNumber=236",
+                 "roadLinesUrl" :"/api/roadlinks?municipalityNumber=236",
+                 "maxScale":1 ,
+                 "orgName":"Pysäkit",
+                 "inspire":"Pysäkit",
+                 "name" : "Espoo"
+             },
             {
                "type":"base",
                "id":"base_35",

@@ -103,6 +103,9 @@ hasUI: function () {
             this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
             this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
             this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
+
+            var layerModelBuilder = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayerModelBuilder', sandbox);
+            mapLayerService.registerLayerModelBuilder('busstoplayer', layerModelBuilder);
         },
         _initTemplates: function () {
             var me = this;
@@ -273,11 +276,10 @@ hasUI: function () {
                 return;
             }
 
-           //TODO: url need to be get from config
             var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
                 strategies: [new OpenLayers.Strategy.Fixed()],
                 protocol: new OpenLayers.Protocol.HTTP({
-                    url: "/api/roadlinks",
+                    url: layer.getRoadLinesUrl(),
                     format: new OpenLayers.Format.GeoJSON()
                 }),
                 styleMap: me._roadStyles
@@ -291,9 +293,8 @@ hasUI: function () {
             me._map.addLayer(busStops);
             me._layer[layer.getId()] = busStops;
 
-            // TODO: url usage layer.getLayerUrls()[0];
-            // TODO: make API url configurable
-            jQuery.getJSON( "/api/busstops", function(data) {
+
+            jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
                     me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
                 });
