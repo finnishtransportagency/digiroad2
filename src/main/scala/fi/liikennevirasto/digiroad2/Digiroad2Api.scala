@@ -11,6 +11,8 @@ import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport {
+  val MunicipalityNumber = "municipalityNumber"
+
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -30,7 +32,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/busstops") {
     response.setHeader("Access-Control-Allow-Headers", "*");
-    featureProvider.getBusStops()
+    featureProvider.getBusStops(params.get(MunicipalityNumber).flatMap(x => Some(x.toInt)))
   }
 
   put("/busstops/:id") {
@@ -44,7 +46,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = featureProvider.getRoadLinks()
+    val rls = featureProvider.getRoadLinks(params.get(MunicipalityNumber).flatMap(x => Some(x.toInt)))
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
