@@ -123,64 +123,35 @@ describe('Geometry calculations: degree to radian', function(){
     });
 });
 
-
 describe('Geometry calculations: line direction angle', function(){
     var fut = geometrycalculator.getLineDirectionRadAngle;
-
     var fut2 = geometrycalculator.getLineDirectionDegAngle;
 
-    var line = {};
-    line.start = { x: 0.0, y: 0.0 };
-    line.end = { x: 0.0, y: 1.0 };
-
-    var line2 = {};
-    line2.start = { x: 0.0, y: 0.0 };
-    line2.end = { x: 1.0, y: 1.0 };
-
-    var line3 = {};
-    line3.start = { x: 0.0, y: 0.0 };
-    line3.end = { x: 1.0, y: 0.0 };
-
-    var line4 = {};
-    line4.start = { x: 0.0, y: 0.0 };
-    line4.end = { x: 1.0, y: -1.0 };
-
-    var line5 = {};
-    line5.start = { x: 0.0, y: 0.0 };
-    line5.end = { x: 0.0, y: -1.0 };
-
-    var line6 = {};
-    line6.start = { x: 0.0, y: 0.0 };
-    line6.end = { x: -1.0, y: -1.0 };
-
-    var line7 = {};
-    line7.start = { x: 0.0, y: 0.0 };
-    line7.end = { x: -1.0, y: 0.0 };
-
-    var line8 = {};
-    line8.start = { x: 0.0, y: 0.0 };
-    line8.end = { x: -1.0, y: 1.0 };
-
+    var origin = { x: 0.0, y: 0.0 };
+    var line = { start: origin,  end: { x: 0.0, y: 1.0 } };
+    var line2 = { start: origin,  end: { x: 1.0, y: 1.0 } };
+    var line3 = { start: origin,  end: { x: 1.0, y: 0.0 } };
+    var line4 = { start: origin,  end: { x: 1.0, y: -1.0 } };
+    var line5 = { start: origin,  end: { x: 0.0, y: -1.0 } };
+    var line6 = { start: origin,  end: { x: -1.0, y: -1.0 } };
+    var line7 = { start: origin,  end: { x: -1.0, y: 0.0 } };
+    var line8 = { start: origin,  end: { x: -1.0, y: 1.0 } };
 
     it ('should return 3.14159265358979 radian value', function() {
         assert.equal(3.141592653589793, fut(line));
     });
 
-
     it ('should return 360 degree value', function() {
         assert.equal(360, fut2(line));
     });
 
-
     it ('should return -2.356194490192345 radian value', function() {
         assert.equal(-2.356194490192345, fut(line2));
-
     });
 
     it ('should return 45 degree value', function() {
         assert.equal(45, fut2(line2));
     });
-
 
     it ('should return -1.5707963267948966 radian value', function() {
         assert.equal(-1.5707963267948966, fut(line3));
@@ -190,7 +161,6 @@ describe('Geometry calculations: line direction angle', function(){
         assert.equal(90, fut2(line3));
     });
 
-
     it ('should return -0.7853981633974483 radian value', function() {
         assert.equal(-0.7853981633974483, fut(line4));
     });
@@ -199,14 +169,13 @@ describe('Geometry calculations: line direction angle', function(){
         assert.equal(135, fut2(line4));
     });
 
-
     it ('should return 0 radian value', function() {
         assert.equal(0, fut(line5));
     });
+
     it ('should return 180 degree value', function() {
         assert.equal(180, fut2(line5));
     });
-
 
     it ('should return 0.7853981633974483 radian value', function() {
         assert.equal(0.7853981633974483, fut(line6));
@@ -219,6 +188,7 @@ describe('Geometry calculations: line direction angle', function(){
     it ('should return 1.5707963267948966 radian value', function() {
         assert.equal(1.5707963267948966, fut(line7));
     });
+
     it ('should return 270 degree value', function() {
         assert.equal(270, fut2(line7));
     });
@@ -226,8 +196,8 @@ describe('Geometry calculations: line direction angle', function(){
     it ('should return 2.356194490192345 radian value', function() {
         assert.equal(2.356194490192345, fut(line8));
     });
+
     it ('should return 315 degree value', function() {
         assert.equal(315, fut2(line8));
     });
-
 });

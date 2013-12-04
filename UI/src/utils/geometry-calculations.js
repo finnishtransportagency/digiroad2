@@ -51,26 +51,19 @@
     };
 
     geometrycalculator.getLineDirectionRadAngle = function(line) {
-
-        //return Math.atan2(line.start.y - line.end.y, - line.start.x - line.end.x);
         return Math.atan2(line.start.x - line.end.x, line.start.y - line.end.y);
     };
 
     geometrycalculator.getLineDirectionDegAngle = function(line) {
-
         var rad = geometrycalculator.getLineDirectionRadAngle(line);
-
-        return 180+geometrycalculator.rad2deg(rad);
-
+        return 180 + geometrycalculator.rad2deg(rad);
     };
 
     geometrycalculator.rad2deg = function(angleRad) {
-        return angleRad * (180/Math.PI);
+        return angleRad * (180 / Math.PI);
     };
 
     geometrycalculator.deg2rad = function(angleDeg) {
-        return angleDeg * (Math.PI/180);
+        return angleDeg * (Math.PI / 180);
     };
-
-
 }(window.geometrycalculator = window.geometrycalculator || {}));
