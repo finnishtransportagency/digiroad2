@@ -17,7 +17,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       status should equal (200)
       val busStops = parse(body).extract[List[BusStop]]
       busStops.size should be (41)
-      busStops.head should equal (BusStop(10,373496.295384342,6676322.16437243,"2",Map("shelter_type" -> "1"),3130l))
+      busStops.head should equal (BusStop(1,374314.731173214,6676916.54122174,"2",Map("shelter_type" -> "2"),3315))
     }
   }
 
@@ -51,7 +51,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       val roadLinksJson = parse(body)
       (roadLinksJson \ "features" \ "geometry").children.size should (be > 500)
       val cs = (roadLinksJson \ "features" \ "geometry" \ "coordinates" \\ classOf[JDouble])
-      cs.take(2) should equal (List(373157.883064084, 6678254.57532966))
+      cs.take(2) should equal (List(373426.924263711, 6677127.53394753))
     }
   }
 }
