@@ -115,8 +115,8 @@ hasUI: function () {
 
             me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
             me._streetViewTemplate  =
-                _.template('<a target="_blank" href="http://maps.google.com/?cbll={{wgs84Y}}' +
-                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c">' +
+                _.template('<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}}' +
+                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
                            '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
                            ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
 
