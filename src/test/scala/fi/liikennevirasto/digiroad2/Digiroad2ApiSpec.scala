@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import org.scalatra.test.scalatest._
-import org.scalatest.{Tag, FunSuite}
+import org.scalatest.{FunSuite, Tag}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.feature.{PropertyValue, AssetType, Asset, Bu
 import fi.liikennevirasto.digiroad2.feature.{EnumeratedPropertyValue, AssetType, Asset, BusStop}
 import org.json4s.JsonDSL._
 
-class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
+class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestAssetId = 809
   val TestPropertyId = 764
