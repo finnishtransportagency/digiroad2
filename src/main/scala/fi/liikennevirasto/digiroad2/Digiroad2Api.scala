@@ -39,8 +39,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.getAssetTypes
   }
 
-  get("/assets") {
-    featureProvider.getAssets(10);
+  get("/assets/:assetTypeId") {
+    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).flatMap(x => Some(x.toLong)));
   }
 
   put("/busstops/:id") {

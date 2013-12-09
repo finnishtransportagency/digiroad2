@@ -21,7 +21,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   }
 
   test("get assets", Tag("db")) {
-    get("/assets") {
+    get("/assets/10?municipalityNumber=235") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(41)
     }
