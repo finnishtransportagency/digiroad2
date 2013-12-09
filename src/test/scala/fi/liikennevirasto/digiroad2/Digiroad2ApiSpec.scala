@@ -4,7 +4,7 @@ import org.scalatra.test.scalatest._
 import org.scalatest.{Tag, FunSuite}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import fi.liikennevirasto.digiroad2.feature.BusStop
+import fi.liikennevirasto.digiroad2.feature.{AssetType, Asset, BusStop}
 import org.json4s.JsonDSL._
 
 class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
@@ -17,6 +17,20 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       status should equal (200)
       val busStops = parse(body).extract[List[BusStop]]
       busStops.size should be (41)
+    }
+  }
+
+  test("get assets", Tag("db")) {
+    get("/assets") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(41)
+    }
+  }
+
+  test("get asset types", Tag("db")) {
+    get("/assetTypes") {
+      status should equal(200)
+      parse(body).extract[List[AssetType]].size should be(1)
     }
   }
 

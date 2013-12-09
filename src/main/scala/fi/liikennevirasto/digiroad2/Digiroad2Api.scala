@@ -35,6 +35,14 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.getBusStops(params.get(MunicipalityNumber).flatMap(x => Some(x.toInt)))
   }
 
+  get("/assetTypes") {
+    featureProvider.getAssetTypes
+  }
+
+  get("/assets") {
+    featureProvider.getAssets(10);
+  }
+
   put("/busstops/:id") {
     // TODO: update optional/required fields in bus stop
     val (lon, lat, roadLinkId) = ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double], (parsedBody \ "roadLinkId").extractOpt[Long])
