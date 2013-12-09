@@ -313,7 +313,7 @@ hasUI: function () {
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
 
-            if (!type) {
+            if (typeof type !== "undefined" && !type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
             }
 
