@@ -222,27 +222,6 @@ hasUI: function () {
             return this.eventHandlers[event.getName()].apply(this, [event]);
         },
         /**
-         * @method preselectLayers
-         * Adds given layers to map if of type WMS
-         * @param {Oskari.mapframework.domain.WmsLayer[]} layers
-         */
-        preselectLayers: function (layers) {
-
-            var sandbox = this._sandbox;
-            for (var i = 0; i < layers.length; i++) {
-                var layer = layers[i];
-                var layerId = layer.getId();
-
-                if (!layer.isLayerOfType(this._layerType)) {
-                    continue;
-                }
-                sandbox.printDebug("preselecting " + layerId);
-                this._addMapLayerToMap(layer, true, layer.isBaseLayer());
-            }
-
-        },
-
-        /**
          * Handle _afterMapMoveEvent
          * @private
          * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent}
@@ -441,7 +420,7 @@ hasUI: function () {
                 var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
-                this._selectedBusStop.icon.imageDiv.style.transform="rotate(" +angle+ "deg)";
+                //this._selectedBusStop.icon.imageDiv.style.transform="rotate(" +angle+ "deg)";
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,

@@ -258,25 +258,5 @@
 
          ]
       }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Featuredata",
-      "bundleinstancename": "featuredata",
-      "fi": "Kohdetiedot",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "featuredata",
-      "metadata": {
-         "Import-Bundle": {
-            "featuredata": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
    }]
 }
