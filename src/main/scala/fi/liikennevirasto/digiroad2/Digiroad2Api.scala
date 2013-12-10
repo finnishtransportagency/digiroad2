@@ -6,7 +6,7 @@ import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.feature.BusStop
+import fi.liikennevirasto.digiroad2.feature.{PropertyValue, BusStop}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 
@@ -67,6 +67,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
           }) ~ ("crs" -> ("type" -> "OGC") ~ ("properties" -> ("urn" -> "urn:ogc:def:crs:OGC:1.3:ETRS89")))
         )
       })
+  }
+
+  put("/assets/:assetId/properties/:propertyId/values") {
+    val propertyValues = parsedBody.extract[List[PropertyValue]]
+    featureProvider.updateAssetProperty(params("assetId").toLong, params("propertyId").toLong, propertyValues)
+  }
+
+  delete("/assets/:assetId/properties/:propertyId/values") {
+    featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId").toLong)
   }
 
   get("/ping") {
