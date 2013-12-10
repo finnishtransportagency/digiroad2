@@ -292,6 +292,7 @@ hasUI: function () {
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
             busStop.id = id;
+            busStop.content = data;
 
             if (!type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
@@ -398,7 +399,7 @@ hasUI: function () {
                 me._sandbox.request(me.getName(), request);
 
                 requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-                request = requestBuilder(busStop.id, contentItem.html);
+                request = requestBuilder(busStop.id, busStop.content);
                 me._sandbox.request(me.getName(), request);
 
                 OpenLayers.Event.stop(evt);
