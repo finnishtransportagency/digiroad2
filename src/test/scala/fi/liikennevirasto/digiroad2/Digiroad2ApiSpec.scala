@@ -7,6 +7,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
 import fi.liikennevirasto.digiroad2.feature.{PropertyValue, AssetType, Asset, BusStop}
+import fi.liikennevirasto.digiroad2.feature.{EnumeratedPropertyValue, AssetType, Asset, BusStop}
 import org.json4s.JsonDSL._
 
 class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
@@ -35,6 +36,13 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     get("/assetTypes") {
       status should equal(200)
       parse(body).extract[List[AssetType]].size should be(1)
+    }
+  }
+
+  test("get enumerated property values", Tag("db")) {
+    get("/enumeratedPropertyValues/10") {
+      status should equal(200)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(3)
     }
   }
 
@@ -92,7 +100,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     }
   }
 
-  test("delete and create asset property") {
+  test("delete and create asset property", Tag("db")) {
     val propBody = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
     delete("/assets/809/properties/760/values") {
       status should equal(200)
