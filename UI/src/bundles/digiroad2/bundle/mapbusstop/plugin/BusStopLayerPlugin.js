@@ -291,6 +291,7 @@ hasUI: function () {
 
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
+            busStop.id = id;
 
             if (!type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
@@ -390,11 +391,16 @@ hasUI: function () {
             return function (evt, wgs84Point) {
 
                 var content = _.cloneDeep(contentItem);
-                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+contentItem.html.join('');
+                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y});
 
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
+
+                requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
+                request = requestBuilder(busStop.id, contentItem.html);
+                me._sandbox.request(me.getName(), request);
+
                 OpenLayers.Event.stop(evt);
             };
         },

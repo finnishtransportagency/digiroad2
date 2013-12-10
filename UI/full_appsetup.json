@@ -258,5 +258,24 @@
 
          ]
       }
-   }]
+   }, {
+       "instanceProps": {
+
+       },
+       "bundleinstancename": "featureattributes",
+       "fi": "featureattributes",
+       "sv": "?",
+       "en": "?",
+       "bundlename": "featureattributes",
+       "metadata": {
+           "Import-Bundle": {
+               "featureattributes": {
+                   "bundlePath": "src/packages/digiroad2/bundle/"
+               }
+           },
+           "Require-Bundle-Instance": [
+
+           ]
+       }
+   } ]
 }
