@@ -92,7 +92,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     }
   }
 
-  test("delete and create asset property") {
+  test("delete and create asset property", Tag("db")) {
     val propBody = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
     delete("/assets/809/properties/760/values") {
       status should equal(200)
