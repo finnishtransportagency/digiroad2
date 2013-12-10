@@ -81,7 +81,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this)
             };
 
-            me._featureDataTemplate = _.template('<li>{{name}}<input class="featureattribute" type="text" name="{{name}}" value="{{value}}"></li>');
+            _.templateSettings = {
+                interpolate: /\{\{(.+?)\}\}/g
+            };
+
+            //me._featureDataTemplate = _.template('<li>{{name}}<input class="featureattribute" type="text" name="{{name}}" value="{{value}}"></li>');
+            me._featureDataTemplate = _.template('<li>{{propertyName}}{{propertyValue}}</li>');
+            me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattribute" type="text" name="{{propertyName}}" value="{{propertyValue}}"></li>');
+            me._featureDataTemplateChoice = _.template('<option value="{{propertyValue}}">{{propertyValue}}</option>');
+
+            //me._featureDataTemplateHeader = _.template('<h3>{{propertyName}}</h3>');
 
             return null;
         },
@@ -97,16 +106,66 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         _saveData: function(name, value) {
             console.log(name + ':' +  value);
         },
-        _makeContent: function(content) {
+        _makeContent: function(contents) {
+            var me = this;
+
+            /*
             var tmplItems = _.map(_.pairs(content), function(x) { return { name: x[0], value: x[1] };});
             var htmlContent = _.map(tmplItems, this._featureDataTemplate);
-
+              */
 
 
             //jQuery('.featureattributes').on('click', updateValue(this));
             //jQuery(htmlContent).on('click', updateValue(this));
 
-            return htmlContent;
+            var html = "";
+            //TODO: change map to list
+
+            /*var featureDataTemplate = _.template('<li>{{name}}<input class="featureattribute" type="text" name="{{name}}" value="{{value}}"></li>');
+            var tmplItems = _.map(_.pairs(contents[content]), function(x) { return { id: x[0], name: x[1] , type: x[2], value: x[3]};});
+            html = _.map(tmplItems, this._featureDataTemplate);
+              */
+            //for (var content in contents) {
+                //html += '<li>'+ contents[content].propertyName + '<input class="featureattribute" type="text" name="'+ contents[content].propertyName+ '" value="' +contents[content].propertyValue+'"></li>';
+            //}
+            var options = "";
+            _.forEach(contents,
+                function (feature) {
+                    if (feature.propertyType == "text") {
+                        feature.propertyValue = feature.values[0].propertyValue;
+                        html += me._featureDataTemplateText(feature);
+                    } else if (feature.propertyType == "single_choice") {
+                        options = "<select>";
+                        _.forEach(feature.values,
+                            function(optionValue) {
+                                options +=  me._featureDataTemplateChoice(optionValue);
+                            }
+                        );
+                        options +="</select>";
+                        feature.propertyValue = options;
+                        html += me._featureDataTemplate(feature);
+                    } else if (feature.propertyType == "multiple_choice") {
+                        options = "<select>";
+                        _.forEach(feature.values,
+                            function(optionValue) {
+                                options +=  me._featureDataTemplateChoice(optionValue);
+                            }
+                        );
+                        options +="</select>";
+                        feature.propertyValue = options;
+                        html += me._featureDataTemplate(feature);
+                    }  else {
+                        feature.propertyValue ="N/A";
+                        html += me._featureDataTemplate(feature);
+                    }
+                    console.log(feature);
+              }
+            );
+            console.log(html);
+
+
+
+            return html;
         },
         /**
          * @method onEvent

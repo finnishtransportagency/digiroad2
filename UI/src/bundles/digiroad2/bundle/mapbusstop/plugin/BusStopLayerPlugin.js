@@ -275,7 +275,7 @@ hasUI: function () {
 
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.propertyData, eachData.busStopType, busStopsRoads);
                 });
             })
             .fail(function() {
@@ -292,7 +292,7 @@ hasUI: function () {
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
             busStop.id = id;
-            busStop.content = data;
+            busStop.featureContent = data;
 
             if (typeof type !== "undefined" && !type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
@@ -399,7 +399,7 @@ hasUI: function () {
                 me._sandbox.request(me.getName(), request);
 
                 requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-                request = requestBuilder(busStop.id, busStop.content);
+                request = requestBuilder(busStop.id, busStop.featureContent);
                 me._sandbox.request(me.getName(), request);
 
                 OpenLayers.Event.stop(evt);
