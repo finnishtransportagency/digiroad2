@@ -91,4 +91,21 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       }
     }
   }
+
+  test("delete and create asset property") {
+    val propBody = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
+    delete("/assets/809/properties/760/values") {
+      status should equal(200)
+      get("/assets/10?municipalityNumber=235") {
+        val asset = parse(body).extract[List[Asset]].find(_.id == 809).get
+        asset.propertyData.find(_.propertyId == 760).get.values.size should be (0)
+        put("/assets/809/properties/760/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
+          status should equal(200)
+          get("/assets/10?municipalityNumber=235") {
+            parse(body).extract[List[Asset]].find(_.id == TestAssetId).get.propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
+          }
+        }
+      }
+    }
+  }
 }
