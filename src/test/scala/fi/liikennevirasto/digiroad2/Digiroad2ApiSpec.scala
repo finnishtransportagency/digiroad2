@@ -42,7 +42,7 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   test("get enumerated property values", Tag("db")) {
     get("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(12)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(3)
     }
   }
 
