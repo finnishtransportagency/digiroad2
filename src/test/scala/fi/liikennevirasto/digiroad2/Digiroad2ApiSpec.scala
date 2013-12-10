@@ -4,11 +4,15 @@ import org.scalatra.test.scalatest._
 import org.scalatest.{Tag, FunSuite}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import fi.liikennevirasto.digiroad2.feature.BusStop
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.write
+import fi.liikennevirasto.digiroad2.feature.{PropertyValue, AssetType, Asset, BusStop}
 import org.json4s.JsonDSL._
 
 class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
+  val TestAssetId = 809
+  val TestPropertyId = 764
 
   addServlet(classOf[Digiroad2Api], "/*")
 
@@ -17,6 +21,20 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       status should equal (200)
       val busStops = parse(body).extract[List[BusStop]]
       busStops.size should be (41)
+    }
+  }
+
+  test("get assets", Tag("db")) {
+    get("/assets/10?municipalityNumber=235") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(41)
+    }
+  }
+
+  test("get asset types", Tag("db")) {
+    get("/assetTypes") {
+      status should equal(200)
+      parse(body).extract[List[AssetType]].size should be(1)
     }
   }
 
@@ -51,6 +69,43 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
       (roadLinksJson \ "features" \ "geometry").children.size should (be > 500)
       val cs = (roadLinksJson \ "features" \ "geometry" \ "coordinates" \\ classOf[JDouble])
       cs.take(2) should equal (List(373426.924263711, 6677127.53394753))
+    }
+  }
+
+  test("update asset property", Tag("db")) {
+    val body1 = write(List(PropertyValue(3, "Linja-autojen kaukoliikenne")))
+    val body2 = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
+    put("/assets/809/properties/764/values", body1.getBytes, Map("Content-type" -> "application/json")) {
+      status should equal(200)
+      get("/assets/10?municipalityNumber=235") {
+        val asset = parse(body).extract[List[Asset]].find(_.id == TestAssetId).get
+        val prop = asset.propertyData.find(_.propertyId == TestPropertyId).get
+        prop.values.size should be (1)
+        prop.values.head.propertyValue should be (3)
+        put("/assets/809/properties/764/values", body2.getBytes, Map("Content-type" -> "application/json")) {
+          status should equal(200)
+          get("/assets/10?municipalityNumber=235") {
+            parse(body).extract[List[Asset]].find(_.id == TestAssetId).get.propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
+          }
+        }
+      }
+    }
+  }
+
+  test("delete and create asset property") {
+    val propBody = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
+    delete("/assets/809/properties/760/values") {
+      status should equal(200)
+      get("/assets/10?municipalityNumber=235") {
+        val asset = parse(body).extract[List[Asset]].find(_.id == 809).get
+        asset.propertyData.find(_.propertyId == 760).get.values.size should be (0)
+        put("/assets/809/properties/760/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
+          status should equal(200)
+          get("/assets/10?municipalityNumber=235") {
+            parse(body).extract[List[Asset]].find(_.id == TestAssetId).get.propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
+          }
+        }
+      }
     }
   }
 }

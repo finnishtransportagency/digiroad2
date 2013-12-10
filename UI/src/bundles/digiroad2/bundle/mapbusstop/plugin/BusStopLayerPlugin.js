@@ -115,8 +115,8 @@ hasUI: function () {
 
             me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
             me._streetViewTemplate  =
-                _.template('<a target="_blank" href="http://maps.google.com/?cbll={{wgs84Y}}' +
-                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c">' +
+                _.template('<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}}' +
+                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
                            '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
                            ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
 
@@ -294,7 +294,7 @@ hasUI: function () {
             busStop.id = id;
             busStop.content = data;
 
-            if (!type) {
+            if (typeof type !== "undefined" && !type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
             }
 
@@ -426,8 +426,7 @@ hasUI: function () {
 
                 var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-
-                //this._selectedBusStop.icon.imageDiv.style.transform="rotate(" +angle+ "deg)";
+                this._selectedBusStop.roadDirection = angle;
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
