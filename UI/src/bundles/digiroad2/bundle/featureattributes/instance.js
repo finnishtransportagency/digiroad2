@@ -134,10 +134,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue ="N/A";
                         html += me._featureDataTemplate(feature);
                     }
-                    console.log(feature);
                 }
             );
-            console.log(html);
 
             return html;
         },
