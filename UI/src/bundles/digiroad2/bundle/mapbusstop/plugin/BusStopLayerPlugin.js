@@ -364,6 +364,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     clearInterval(me._selectedBusStop.blinkInterVal);
                     busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
                 }
+                var bearing ="0";
+                if (me._selectedBusStop) {
+                    bearing = me._selectedBusStop.roadDirection;
+                }
                 me._selectedBusStop = null;
                 me._selectedBusStopLayer = null;
                 // Opacity back
@@ -380,7 +384,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     busStopClick(evt, wgs84);
                 } else {
                     // todo remove hardcoded asset type id
-                    var data = { "assetTypeId" : 10, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
+                    var data = { "assetTypeId" : 10, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
 
