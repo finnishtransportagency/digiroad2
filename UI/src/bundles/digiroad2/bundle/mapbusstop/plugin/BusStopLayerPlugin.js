@@ -21,6 +21,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedBusStop = null;
         this._selectedBusStopLayer = null;
         this._roadStyles = null;
+        this._roadLines = null;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -310,7 +311,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads, directionArrow, directionLayer);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, layer.getId(), directionArrow, directionLayer);
 
                 });
             })
@@ -322,7 +323,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, lines, directionArrow, directionLayer) {
+        _addBusStop: function(id, busStops, ll, data, type, layerId, directionArrow, directionLayer) {
             var me = this;
 
             // new bus stop marker
@@ -348,7 +349,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             busStop.events.register("mousedown", busStops, mouseDown);
 
-            busStop.lines = lines;
+            busStop.layerId = layerId;
 
             busStops.addMarker(busStop);
         },
@@ -432,6 +433,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
+
+                requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
+                request = requestBuilder(busStop.id, busStop.featureContent);
+                me._sandbox.request(me.getName(), request);
+
                 OpenLayers.Event.stop(evt);
             };
         },
@@ -454,7 +460,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
-                var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
+                var nearestLine = geometrycalculator.findNearestLine(me._layer["busStopsRoads_"+me._selectedBusStop.layerId].features, lonlat.lon, lonlat.lat);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
                 this._selectedBusStop.roadDirection = angle;
