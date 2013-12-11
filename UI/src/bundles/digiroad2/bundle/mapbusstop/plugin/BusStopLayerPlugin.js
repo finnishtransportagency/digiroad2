@@ -222,27 +222,6 @@ hasUI: function () {
             return this.eventHandlers[event.getName()].apply(this, [event]);
         },
         /**
-         * @method preselectLayers
-         * Adds given layers to map if of type WMS
-         * @param {Oskari.mapframework.domain.WmsLayer[]} layers
-         */
-        preselectLayers: function (layers) {
-
-            var sandbox = this._sandbox;
-            for (var i = 0; i < layers.length; i++) {
-                var layer = layers[i];
-                var layerId = layer.getId();
-
-                if (!layer.isLayerOfType(this._layerType)) {
-                    continue;
-                }
-                sandbox.printDebug("preselecting " + layerId);
-                this._addMapLayerToMap(layer, true, layer.isBaseLayer());
-            }
-
-        },
-
-        /**
          * Handle _afterMapMoveEvent
          * @private
          * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent}
@@ -296,7 +275,7 @@ hasUI: function () {
 
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, busStopsRoads);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.propertyData, eachData.busStopType, busStopsRoads);
                 });
             })
             .fail(function() {
@@ -312,6 +291,8 @@ hasUI: function () {
 
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
+            busStop.id = id;
+            busStop.featureContent = data;
 
             if (typeof type !== "undefined" && !type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
@@ -340,7 +321,7 @@ hasUI: function () {
             var me = this;
             return function(evt) {
 
-                if (me._selectedBusStop.blinking) {
+                if (me._selectedBusStop && me._selectedBusStop.blinking) {
                     clearInterval(me._selectedBusStop.blinkInterVal);
                     busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
                 }
@@ -412,11 +393,16 @@ hasUI: function () {
             return function (evt, wgs84Point) {
 
                 var content = _.cloneDeep(contentItem);
-                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+contentItem.html.join('');
+                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y});
 
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
+
+                requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
+                request = requestBuilder(busStop.id, busStop.featureContent);
+                me._sandbox.request(me.getName(), request);
+
                 OpenLayers.Event.stop(evt);
             };
         },
@@ -441,7 +427,6 @@ hasUI: function () {
 
                 var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-
                 this._selectedBusStop.roadDirection = angle;
 
                 var position = geometrycalculator.nearestPointOnLine(
