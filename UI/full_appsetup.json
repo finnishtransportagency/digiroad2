@@ -259,24 +259,23 @@
          ]
       }
    }, {
-      "instanceProps": {
+       "instanceProps": {
 
-      },
-      "title": "Featuredata",
-      "bundleinstancename": "featuredata",
-      "fi": "Kohdetiedot",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "featuredata",
-      "metadata": {
-         "Import-Bundle": {
-            "featuredata": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
+       },
+       "bundleinstancename": "featureattributes",
+       "fi": "featureattributes",
+       "sv": "?",
+       "en": "?",
+       "bundlename": "featureattributes",
+       "metadata": {
+           "Import-Bundle": {
+               "featureattributes": {
+                   "bundlePath": "src/packages/digiroad2/bundle/"
+               }
+           },
+           "Require-Bundle-Instance": [
 
-         ]
-      }
-   }]
+           ]
+       }
+   } ]
 }
