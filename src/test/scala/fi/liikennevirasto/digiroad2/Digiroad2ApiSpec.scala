@@ -26,9 +26,19 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
   }
 
   test("get assets", Tag("db")) {
-    get("/assets/10?municipalityNumber=235") {
+    get("/assets?assetTypeId=10&municipalityNumber=235") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(41)
+    }
+  }
+
+  test("get asset by id", Tag("db")) {
+    get("/assets/809") {
+      status should equal(200)
+      parse(body).extract[Asset].id should be (809)
+    }
+    get("/assets/9999999999999999") {
+      status should equal(404)
     }
   }
 
@@ -85,14 +95,14 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     val body2 = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
     put("/assets/809/properties/764/values", body1.getBytes, Map("Content-type" -> "application/json")) {
       status should equal(200)
-      get("/assets/10?municipalityNumber=235") {
+      get("/assets?assetTypeId=10&municipalityNumber=235") {
         val asset = parse(body).extract[List[Asset]].find(_.id == TestAssetId).get
         val prop = asset.propertyData.find(_.propertyId == TestPropertyId).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
         put("/assets/809/properties/764/values", body2.getBytes, Map("Content-type" -> "application/json")) {
           status should equal(200)
-          get("/assets/10?municipalityNumber=235") {
+          get("/assets?assetTypeId=10&municipalityNumber=235") {
             parse(body).extract[List[Asset]].find(_.id == TestAssetId).get.propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
           }
         }
@@ -104,12 +114,12 @@ class Digiroad2ApiSpec extends ScalatraSuite with FunSuite {
     val propBody = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
     delete("/assets/809/properties/760/values") {
       status should equal(200)
-      get("/assets/10?municipalityNumber=235") {
+      get("/assets?assetTypeId=10&municipalityNumber=235") {
         val asset = parse(body).extract[List[Asset]].find(_.id == 809).get
         asset.propertyData.find(_.propertyId == 760).get.values.size should be (0)
         put("/assets/809/properties/760/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
           status should equal(200)
-          get("/assets/10?municipalityNumber=235") {
+          get("/assets?assetTypeId=10&municipalityNumber=235") {
             parse(body).extract[List[Asset]].find(_.id == TestAssetId).get.propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
           }
         }
