@@ -12,12 +12,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         this.sandbox = null;
         this.started = false;
         this.mediator = null;
+        this._enumeratedPropertyValues = null;
     }, {
         /**
          * @static
          * @property __name
          */
-        __name : 'Infobox',
+        __name : 'FeatureAttributes',
 
         /**
          * @method getName
@@ -85,12 +86,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 interpolate: /\{\{(.+?)\}\}/g
             };
 
-            //me._featureDataTemplate = _.template('<li>{{name}}<input class="featureattribute" type="text" name="{{name}}" value="{{value}}"></li>');
             me._featureDataTemplate = _.template('<li>{{propertyName}}{{propertyValue}}</li>');
             me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattribute" type="text" name="{{propertyName}}" value="{{propertyValue}}"></li>');
-            me._featureDataTemplateChoice = _.template('<option value="{{propertyValue}}">{{propertyValue}}</option>');
-
-            //me._featureDataTemplateHeader = _.template('<h3>{{propertyName}}</h3>');
+            me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
+            me._getPropertyValues(); //TODO: fix this
 
             return null;
         },
@@ -99,73 +98,77 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             jQuery("#featureAttributes").html('<h2>' +title+ '</h2>'+ this._makeContent(content));
             jQuery("#featureAttributes li input").on("blur", function() {
                 var data = jQuery(this);
-                me._saveData(data.attr('name'), data.val());
+                me._saveTextData(data.attr('name'), data.val());
             });
 
         },
-        _saveData: function(name, value) {
+        _getPropertyValues: function() {
+            var me = this;
+            jQuery.getJSON("/api/enumeratedPropertyValues/10", function(data) {
+                 me._enumeratedPropertyValues = data;
+                 return data;
+                })
+                .fail(function() {
+                    console.log( "error" );
+                });
+        },
+        _saveTextData: function(name, value) {
             console.log(name + ':' +  value);
         },
         _makeContent: function(contents) {
             var me = this;
-
-            /*
-            var tmplItems = _.map(_.pairs(content), function(x) { return { name: x[0], value: x[1] };});
-            var htmlContent = _.map(tmplItems, this._featureDataTemplate);
-              */
-
-
-            //jQuery('.featureattributes').on('click', updateValue(this));
-            //jQuery(htmlContent).on('click', updateValue(this));
-
             var html = "";
-            //TODO: change map to list
 
-            /*var featureDataTemplate = _.template('<li>{{name}}<input class="featureattribute" type="text" name="{{name}}" value="{{value}}"></li>');
-            var tmplItems = _.map(_.pairs(contents[content]), function(x) { return { id: x[0], name: x[1] , type: x[2], value: x[3]};});
-            html = _.map(tmplItems, this._featureDataTemplate);
-              */
-            //for (var content in contents) {
-                //html += '<li>'+ contents[content].propertyName + '<input class="featureattribute" type="text" name="'+ contents[content].propertyName+ '" value="' +contents[content].propertyValue+'"></li>';
-            //}
-            var options = "";
             _.forEach(contents,
                 function (feature) {
                     if (feature.propertyType == "text") {
                         feature.propertyValue = feature.values[0].propertyValue;
                         html += me._featureDataTemplateText(feature);
                     } else if (feature.propertyType == "single_choice") {
-                        options = "<select>";
-                        _.forEach(feature.values,
-                            function(optionValue) {
-                                options +=  me._featureDataTemplateChoice(optionValue);
-                            }
-                        );
-                        options +="</select>";
-                        feature.propertyValue = options;
+                        feature.propertyValue = me._getSelect(feature.values, feature.propertyId, '');
                         html += me._featureDataTemplate(feature);
                     } else if (feature.propertyType == "multiple_choice") {
-                        options = "<select>";
-                        _.forEach(feature.values,
-                            function(optionValue) {
-                                options +=  me._featureDataTemplateChoice(optionValue);
-                            }
-                        );
-                        options +="</select>";
-                        feature.propertyValue = options;
+                        feature.propertyValue = me._getSelect(feature.values, feature.propertyId, 'multiple');
                         html += me._featureDataTemplate(feature);
                     }  else {
                         feature.propertyValue ="N/A";
                         html += me._featureDataTemplate(feature);
                     }
                     console.log(feature);
-              }
+                }
             );
             console.log(html);
 
-
-
             return html;
+        },
+        _getSelect: function(values, propertyId, multiple) {
+            var me = this;
+            var options = '<select ' + multiple +'>';
+            var valuesNro = _.map(values, function(x) { return x.propertyValue;});
+
+            var propertyValues = _.find(me._enumeratedPropertyValues,
+                function(property) {
+                    if (property.propertyId === propertyId) {
+                        return property;
+                    }
+                }
+            );
+
+            _.forEach(propertyValues.values,
+                function(optionValue) {
+                    var selectedValue ='';
+
+                    if (_.contains(valuesNro, optionValue.propertyValue)) {
+                        selectedValue = 'selected="true"';
+                    }
+
+                    optionValue.selectedValue = selectedValue;
+                    options +=  me._featureDataTemplateChoice(optionValue);
+                }
+            );
+
+            options +="</select>";
+            return options;
         },
         /**
          * @method onEvent
