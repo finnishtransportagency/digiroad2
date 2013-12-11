@@ -329,7 +329,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
 
-            if (type !== undefined && !type) {
+
+            busStop.id = id;
+            busStop.featureContent = data;
+
+            if (typeof type !== "undefined" && !type) {
                 busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
             }
 
