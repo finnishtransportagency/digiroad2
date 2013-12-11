@@ -364,6 +364,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     clearInterval(me._selectedBusStop.blinkInterVal);
                     busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
                 }
+                var bearing ="0";
+                if (me._selectedBusStop) {
+                    bearing = me._selectedBusStop.roadDirection;
+                }
                 me._selectedBusStop = null;
                 me._selectedBusStopLayer = null;
                 // Opacity back
@@ -379,7 +383,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
                     busStopClick(evt, wgs84);
                 } else {
-                    var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId };
+                    var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
 
