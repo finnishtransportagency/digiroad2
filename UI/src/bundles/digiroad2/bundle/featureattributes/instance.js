@@ -159,7 +159,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         _makeContent: function(contents) {
             var me = this;
             var html = "";
-            console.dir(contents);
             _.forEach(contents,
                 function (feature) {
                     if (feature.propertyType == "text") {
