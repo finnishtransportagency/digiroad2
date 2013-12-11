@@ -21,6 +21,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedBusStop = null;
         this._selectedBusStopLayer = null;
         this._roadStyles = null;
+        this._roadLines = null;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -53,13 +54,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this.pluginName = mapModule.getName() + this.__name;
         },
         /**
-* @method hasUI
-* This plugin doesn't have an UI that we would want to ever hide so always returns false
-* @return {Boolean}
-*/
-hasUI: function () {
-    return false;
-},
+         * @method hasUI
+         * This plugin doesn't have an UI that we would want to ever hide so always returns false
+         * @return {Boolean}
+         */
+        hasUI: function () {
+            return false;
+        },
         /**
          * @method register
          * Interface method for the plugin protocol.
@@ -116,10 +117,9 @@ hasUI: function () {
             me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>');
             me._streetViewTemplate  =
                 _.template('<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}}' +
-                           ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
-                           '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
-                           ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
-
+                    ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
+                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
+                    ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
         },
         _initRoadsStyles: function() {
             this._roadStyles = new OpenLayers.StyleMap({
@@ -222,6 +222,27 @@ hasUI: function () {
             return this.eventHandlers[event.getName()].apply(this, [event]);
         },
         /**
+         * @method preselectLayers
+         * Adds given layers to map if of type WMS
+         * @param {Oskari.mapframework.domain.WmsLayer[]} layers
+         */
+        preselectLayers: function (layers) {
+
+            var sandbox = this._sandbox;
+            for (var i = 0; i < layers.length; i++) {
+                var layer = layers[i];
+                var layerId = layer.getId();
+
+                if (!layer.isLayerOfType(this._layerType)) {
+                    continue;
+                }
+                sandbox.printDebug("preselecting " + layerId);
+                this._addMapLayerToMap(layer, true, layer.isBaseLayer());
+            }
+
+        },
+
+        /**
          * Handle _afterMapMoveEvent
          * @private
          * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent}
@@ -264,33 +285,50 @@ hasUI: function () {
                 styleMap: me._roadStyles
             });
 
+
+
+            var directionLayer = new OpenLayers.Layer.Vector("busStopsDirection_" + layer.getId());
+
+
             this._map.addLayer(busStopsRoads);
             me._layer["busStopsRoads_"+layer.getId()] = busStopsRoads;
 
             var busStops = new OpenLayers.Layer.Markers( "busStops_" + layer.getId() );
             me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
+            me._map.addLayer(directionLayer);
             me._map.addLayer(busStops);
             me._layer[layer.getId()] = busStops;
 
 
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.propertyData, eachData.busStopType, busStopsRoads);
+                    //Make the feature a plain OpenLayers marker
+                    var directionArrow = new OpenLayers.Feature.Vector(
+                        new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
+                        null,
+                        {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png', graphicHeight: 22, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-12, rotation: 0  }
+                    );
+                    directionLayer.addFeatures(directionArrow);
+
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, layer.getId(), directionArrow, directionLayer);
+
                 });
             })
-            .fail(function() {
-                console.log( "error" );
-            });
+                .fail(function() {
+                    console.log( "error" );
+                });
 
             me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, lines) {
+        _addBusStop: function(id, busStops, ll, data, type, layerId, directionArrow, directionLayer) {
             var me = this;
 
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
+
+
             busStop.id = id;
             busStop.featureContent = data;
 
@@ -306,14 +344,15 @@ hasUI: function () {
 
             busStop.blinking = false;
             busStop.blinkInterVal = null;
+            busStop.directionArrow = directionArrow;
 
             var busStopClick = me._mouseClick(busStop, contentItem, popupId);
             var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id);
-            var mouseDown = me._mouseDown(busStop, busStops, mouseUp);
+            var mouseDown = me._mouseDown(busStop, busStops, mouseUp, directionLayer);
 
             busStop.events.register("mousedown", busStops, mouseDown);
 
-            busStop.lines = lines;
+            busStop.layerId = layerId;
 
             busStops.addMarker(busStop);
         },
@@ -362,7 +401,7 @@ hasUI: function () {
                 }
             });
         },
-        _mouseDown: function(busStop, busStops, mouseUp) {
+        _mouseDown: function(busStop, busStops, mouseUp, directionLayer) {
             var me = this;
             return function (evt) {
 
@@ -393,7 +432,7 @@ hasUI: function () {
             return function (evt, wgs84Point) {
 
                 var content = _.cloneDeep(contentItem);
-                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y});
+                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+contentItem.html.join('');
 
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
@@ -425,9 +464,11 @@ hasUI: function () {
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = me._map.getLonLatFromPixel(busStopCenter);
 
-                var nearestLine = geometrycalculator.findNearestLine(me._selectedBusStop.lines.features, lonlat.lon, lonlat.lat);
+                var nearestLine = geometrycalculator.findNearestLine(me._layer["busStopsRoads_"+me._selectedBusStop.layerId].features, lonlat.lon, lonlat.lat);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+
                 this._selectedBusStop.roadDirection = angle;
+                this._selectedBusStop.directionArrow.style.rotation = angle+ (90 * -1);
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
@@ -438,6 +479,7 @@ hasUI: function () {
                 if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
                     lonlat.lon = position.x;
                     lonlat.lat = position.y;
+
                     this._selectedBusStop.roadLinkId = nearestLine.roadLinkId;
 
                     if (this._selectedBusStop.blinking) {
@@ -451,8 +493,8 @@ hasUI: function () {
                     this._selectedBusStop.blinking = true;
                     this._selectedBusStop.blinkInterVal = setInterval(function(){me._busStopBlink(me._selectedBusStop);}, 600);
                 }
-
                 me._selectedBusStop.lonlat = lonlat;
+                this._selectedBusStop.directionArrow.move(lonlat);
                 this._selectedBusStopLayer.redraw();
 
             }
@@ -495,9 +537,9 @@ hasUI: function () {
             return this._localization;
         },
         /*
-        _.map(rows, function(row){
+         _.map(rows, function(row){
 
-        });*/
+         });*/
         /**
          * @method _afterMapLayerRemoveEvent
          * Handle AfterMapLayerRemoveEvent
