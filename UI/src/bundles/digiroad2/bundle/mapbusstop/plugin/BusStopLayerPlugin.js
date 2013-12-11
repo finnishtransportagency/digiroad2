@@ -321,7 +321,7 @@ hasUI: function () {
             var me = this;
             return function(evt) {
 
-                if (me._selectedBusStop.blinking) {
+                if (me._selectedBusStop && me._selectedBusStop.blinking) {
                     clearInterval(me._selectedBusStop.blinkInterVal);
                     busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
                 }

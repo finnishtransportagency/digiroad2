@@ -98,38 +98,37 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         showAttributes : function(id, content) {
             var me = this;
             me._featureDataAssetId = id;
+            $.get("/api/assets/" + id, function(data) {
+                jQuery("#featureAttributes").html('<h2>' +id+ '</h2>'+ me._makeContent(data.propertyData));
+                jQuery(".featureattributeText").on("blur", function() {
+                    var data = jQuery(this);
 
-            jQuery("#featureAttributes").html('<h2>' +id+ '</h2>'+ this._makeContent(content));
+                    var propertyValue = [];
+                    propertyValue.push({
+                        "propertyValue" : 0,
+                        "propertyDisplayValue" : data.val()
+                    });
 
-            jQuery(".featureattributeText").on("blur", function() {
-                var data = jQuery(this);
-
-                var propertyValue = [];
-                propertyValue.push({
-                    "propertyValue" : 0,
-                    "propertyDisplayValue" : data.val()
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
 
-                me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                jQuery(".featureattributeChoice").on("change", function() {
+                    var data = jQuery(this);
+                    var propertyValue = [];
+                    var values = data.val();
+
+                    _.forEach(values,
+                        function(value) {
+                            propertyValue.push({
+                                "propertyValue" : Number(value),
+                                "propertyDisplayValue" : ""
+                            });
+                        }
+                    );
+
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
             });
-
-            jQuery(".featureattributeChoice").on("change", function() {
-                var data = jQuery(this);
-                var propertyValue = [];
-                var values = data.val();
-
-                _.forEach(values,
-                    function(value) {
-                        propertyValue.push({
-                            "propertyValue" : Number(value),
-                            "propertyDisplayValue" : ""
-                        });
-                    }
-                );
-
-                me._saveTextData(propertyValue, data.attr('data-propertyId'));
-            });
-
         },
         _getPropertyValues: function() {
             var me = this;
