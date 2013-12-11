@@ -13,6 +13,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         this.started = false;
         this.mediator = null;
         this._enumeratedPropertyValues = null;
+        this._featureDataAssetId = null;
     }, {
         /**
          * @static
@@ -87,18 +88,46 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             };
 
             me._featureDataTemplate = _.template('<li>{{propertyName}}{{propertyValue}}</li>');
-            me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattribute" type="text" name="{{propertyName}}" value="{{propertyValue}}"></li>');
+            me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattributeText" type="text"' +
+                ' data-propertyId="{{propertyId}}" name="{{propertyName}}" value="{{values[0].propertyDisplayValue}}"></li>');
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
-            me._getPropertyValues(); //TODO: fix this
+            me._getPropertyValues();
 
             return null;
         },
-        showAttributes : function(title, content, id) {
+        showAttributes : function(id, content) {
             var me = this;
-            jQuery("#featureAttributes").html('<h2>' +title+ '</h2>'+ this._makeContent(content));
-            jQuery("#featureAttributes li input").on("blur", function() {
+            me._featureDataAssetId = id;
+
+            jQuery("#featureAttributes").html('<h2>' +id+ '</h2>'+ this._makeContent(content));
+
+            jQuery(".featureattributeText").on("blur", function() {
                 var data = jQuery(this);
-                me._saveTextData(data.attr('name'), data.val());
+
+                var propertyValue = [];
+                propertyValue.push({
+                    "propertyValue" : 0,
+                    "propertyDisplayValue" : data.val()
+                });
+
+                me._saveTextData(propertyValue, data.attr('data-propertyId'));
+            });
+
+            jQuery(".featureattributeChoice").on("change", function() {
+                var data = jQuery(this);
+                var propertyValue = [];
+                var values = data.val();
+
+                _.forEach(values,
+                    function(value) {
+                        propertyValue.push({
+                            "propertyValue" : Number(value),
+                            "propertyDisplayValue" : ""
+                        });
+                    }
+                );
+
+                me._saveTextData(propertyValue, data.attr('data-propertyId'));
             });
 
         },
@@ -112,23 +141,34 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     console.log( "error" );
                 });
         },
-        _saveTextData: function(name, value) {
-            console.log(name + ':' +  value);
+        _saveTextData: function(propertyValue, propertyId) {
+            jQuery.ajax({
+                contentType: "application/json",
+                type: "PUT",
+                url: "/api/assets/"+this._featureDataAssetId+"/properties/"+propertyId+"/values",
+                data: JSON.stringify(propertyValue),
+                dataType:"json",
+                success: function() {
+                    console.log("done");
+                },
+                error: function() {
+                    console.log("error");
+                }
+            });
         },
         _makeContent: function(contents) {
             var me = this;
             var html = "";
-
             _.forEach(contents,
                 function (feature) {
                     if (feature.propertyType == "text") {
                         feature.propertyValue = feature.values[0].propertyValue;
                         html += me._featureDataTemplateText(feature);
                     } else if (feature.propertyType == "single_choice") {
-                        feature.propertyValue = me._getSelect(feature.values, feature.propertyId, '');
+                        feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
                         html += me._featureDataTemplate(feature);
                     } else if (feature.propertyType == "multiple_choice") {
-                        feature.propertyValue = me._getSelect(feature.values, feature.propertyId, 'multiple');
+                        feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, 'multiple');
                         html += me._featureDataTemplate(feature);
                     }  else {
                         feature.propertyValue ="N/A";
@@ -139,9 +179,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             return html;
         },
-        _getSelect: function(values, propertyId, multiple) {
+        _getSelect: function(name, values, propertyId, multiple) {
             var me = this;
-            var options = '<select ' + multiple +'>';
+            var options = '<select data-propertyId="'+propertyId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
 
             var propertyValues = _.find(me._enumeratedPropertyValues,
