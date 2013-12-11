@@ -383,7 +383,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
                     busStopClick(evt, wgs84);
                 } else {
-                    var data = {"lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
+                    // todo remove hardcoded asset type id
+                    var data = { "assetTypeId" : 10, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
 
@@ -393,7 +394,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
-                url: "/api/busstops/" + id, //TODO: get prefix from plugin config
+                url: "/api/assets/" + id, //TODO: get prefix from plugin config
                 data: JSON.stringify(data),
                 dataType:"json",
                 success: function() {
