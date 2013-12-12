@@ -5,9 +5,6 @@ import scala.xml.parsing.ConstructingParser
 import scala.io.Source
 import org.joda.time.format.DateTimeFormat
 
-case class MtkRoadLink(id: String, startDate: DateTime, endDate: Option[DateTime], municipalityCode: Int, points: Seq[Point])
-case class Point(x: Double, y: Double, z: Double)
-
 object MtkMessageParser {
   import scala.xml._
   val fmt = DateTimeFormat.forPattern("yyyy-MM-dd")
@@ -23,7 +20,7 @@ object MtkMessageParser {
     val endDate = (node \\ "loppupvm").text
     val municipalityCode = (node \\ "kuntatunnus").text
     val points = toPoint((node \\ "posList").text)
-    MtkRoadLink(id, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(DateTime.parse(endDate, fmt)), municipalityCode.toInt, points)
+    MtkRoadLink(id.toLong, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(DateTime.parse(endDate, fmt)), municipalityCode.toInt, points)
   }
 
   def parseMtkMessage(source: Source) = {

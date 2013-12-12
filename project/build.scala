@@ -23,7 +23,11 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
-      resolvers += Classpaths.typesafeReleases
+      resolvers += Classpaths.typesafeReleases,
+      libraryDependencies ++= Seq(
+        "org.joda" % "joda-convert" % "1.2",
+        "joda-time" % "joda-time" % "2.2"
+      )
     )
   )
 
@@ -43,7 +47,9 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
-        "com.typesafe.slick" %% "slick" % "1.0.1"
+        "com.typesafe.slick" %% "slick" % "1.0.1",
+        "org.joda" % "joda-convert" % "1.2",
+        "joda-time" % "joda-time" % "2.2"
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
     )
   ) dependsOn(geoJar)
@@ -66,13 +72,14 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
+        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
     )
-  ) dependsOn(geoJar, oracleJar)
+  ) dependsOn(geoJar, oracleJar) aggregate(oracleJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.DigiroadServer"),
