@@ -303,14 +303,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
                     //Make the feature a plain OpenLayers marker
+                    var angle = (eachData.bearing) ? eachData.bearing + (90 * -1): 0;
                     var directionArrow = new OpenLayers.Feature.Vector(
                         new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
                         null,
-                        {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png', graphicHeight: 22, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-12, rotation: 0  }
+                        {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
+                            graphicHeight: 22, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-12, rotation: angle }
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, layer.getId(), directionArrow, directionLayer);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer);
 
                 });
             })
@@ -322,12 +324,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, layerId, directionArrow, directionLayer) {
+        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer) {
             var me = this;
-
             // new bus stop marker
             var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
-
 
             busStop.id = id;
             busStop.featureContent = data;
@@ -345,6 +345,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.blinking = false;
             busStop.blinkInterVal = null;
             busStop.directionArrow = directionArrow;
+            busStop.roadDirection = bearing;
 
             var busStopClick = me._mouseClick(busStop, contentItem, popupId);
             var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id);
