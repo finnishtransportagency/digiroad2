@@ -312,7 +312,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, eachData.bearing, layer.getId(), directionArrow, directionLayer);
 
                 });
             })
