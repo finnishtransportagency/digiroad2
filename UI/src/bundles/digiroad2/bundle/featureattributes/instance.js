@@ -89,7 +89,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplate = _.template('<li>{{propertyName}}{{propertyValue}}</li>');
             me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattributeText" type="text"' +
-                ' data-propertyId="{{propertyId}}" name="{{propertyName}}" value="{{values[0].propertyDisplayValue}}"></li>');
+                ' data-propertyId="{{propertyId}}" name="{{propertyName}}" value="{{propertyDisplayValue}}"></li>');
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
             me._getPropertyValues();
 
@@ -161,7 +161,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             _.forEach(contents,
                 function (feature) {
                     if (feature.propertyType == "text") {
-                        feature.propertyValue = feature.values[0].propertyValue;
+                        feature.propertyValue = "";
+                        feature.propertyDisplayValue = "";
+                        if (feature.values[0]) {
+                            feature.propertyValue = feature.values[0].propertyValue;
+                            feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
+                        }
                         html += me._featureDataTemplateText(feature);
                     } else if (feature.propertyType == "single_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
