@@ -32,4 +32,4 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.event.FeatureAttr
         }
     }, {
         'protocol' : ['Oskari.mapframework.event.Event']
-    });
+});

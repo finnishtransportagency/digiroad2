@@ -265,7 +265,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
         },
         _featureAttributeChangedEvent: function(event){
-
             if (this._selectedBusStop) { // TODO: need check when direction changed!!!
                 this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection * -1;
                 this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
