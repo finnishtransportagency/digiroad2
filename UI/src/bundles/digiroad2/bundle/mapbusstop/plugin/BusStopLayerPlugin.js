@@ -209,6 +209,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             },
             'MouseHoverEvent': function (event) {
                 this._moveSelectedBusStop(event);
+            },
+            'featureattributes.FeatureAttributeChangedEvent': function (event) {
+                this._featureAttributeChangedEvent(event);
             }
         },
 
@@ -261,6 +264,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _afterMapLayerAddEvent: function (event) {
             this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
         },
+        _featureAttributeChangedEvent: function(event){
+
+            if (this._selectedBusStop) { // TODO: need check when direction changed!!!
+                this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection * -1;
+                this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
+                this._selectedBusStop.directionArrow.move(this._selectedBusStop.lonlat); // need because redraw();
+            }
+        },
         /**
          * @method _addMapLayerToMap
          * @private
@@ -303,7 +314,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
                     //Make the feature a plain OpenLayers marker
-                    var angle = (eachData.bearing) ? eachData.bearing + (90 * -1): 0;
+                    var angle = (eachData.bearing) ? eachData.bearing + (90 * -1): 90;
                     var directionArrow = new OpenLayers.Feature.Vector(
                         new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
                         null,
@@ -312,7 +323,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, eachData.bearing, layer.getId(), directionArrow, directionLayer);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer);
 
                 });
             })
@@ -346,6 +357,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.blinkInterVal = null;
             busStop.directionArrow = directionArrow;
             busStop.roadDirection = bearing;
+            busStop.effectDirection = -1; // 1 or -1
 
             var busStopClick = me._mouseClick(busStop, contentItem, popupId);
             var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id);
@@ -369,8 +381,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 if (me._selectedBusStop) {
                     bearing = me._selectedBusStop.roadDirection;
                 }
-                me._selectedBusStop = null;
-                me._selectedBusStopLayer = null;
+
                 // Opacity back
                 busStop.setOpacity(1);
                 busStop.actionMouseDown = false;
@@ -460,7 +471,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _moveSelectedBusStop: function(evt) {
             var me = this;
-            if (this._selectedBusStop) {
+            if (me._selectedBusStop && me._selectedBusStop.actionMouseDown) {
 
                 var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(evt.getLon(), evt.getLat()));
 
@@ -473,7 +484,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
                 this._selectedBusStop.roadDirection = angle;
-                this._selectedBusStop.directionArrow.style.rotation = angle+ (90 * -1);
+                this._selectedBusStop.directionArrow.style.rotation = angle+ (90 * this._selectedBusStop.effectDirection);
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,

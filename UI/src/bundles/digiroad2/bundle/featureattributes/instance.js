@@ -141,6 +141,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 });
         },
         _saveTextData: function(propertyValue, propertyId) {
+            var me = this;
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
@@ -148,6 +149,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 data: JSON.stringify(propertyValue),
                 dataType:"json",
                 success: function() {
+
+                    var eventBuilder = me.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
+                    var event = eventBuilder(propertyValue);
+                    me.getSandbox().notifyAll(event);
+
                     console.log("done");
                 },
                 error: function() {
