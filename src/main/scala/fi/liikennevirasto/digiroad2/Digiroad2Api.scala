@@ -89,11 +89,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/assets/:assetId/properties/:propertyId/values") {
     val propertyValues = parsedBody.extract[List[PropertyValue]]
-    featureProvider.updateAssetProperty(params("assetId").toLong, params("propertyId").toLong, propertyValues)
+    featureProvider.updateAssetProperty(params("assetId").toLong, params("propertyId"), propertyValues)
   }
 
   delete("/assets/:assetId/properties/:propertyId/values") {
-    featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId").toLong)
+    featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
   }
 
   get("/ping") {

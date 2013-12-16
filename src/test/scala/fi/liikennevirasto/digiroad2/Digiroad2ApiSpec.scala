@@ -13,7 +13,7 @@ import org.json4s.JsonDSL._
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestAssetId = 809
-  val TestPropertyId = 764
+  val TestPropertyId = "764"
 
   addServlet(classOf[Digiroad2Api], "/*")
 
@@ -116,7 +116,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
       status should equal(200)
       get("/assets/" + TestAssetId) {
         val asset = parse(body).extract[Asset]
-        asset.propertyData.find(_.propertyId == 760).get.values.size should be (0)
+        asset.propertyData.find(_.propertyId == "760").get.values.size should be (0)
         put("/assets/" + TestAssetId + "/properties/760/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
           status should equal(200)
           get("/assets/" + TestAssetId) {
