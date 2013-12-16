@@ -52,7 +52,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   test("get enumerated property values", Tag("db")) {
     get("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(3)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(4)
     }
   }
 
@@ -86,7 +86,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
       val roadLinksJson = parse(body)
       (roadLinksJson \ "features" \ "geometry").children.size should (be > 500)
       val cs = (roadLinksJson \ "features" \ "geometry" \ "coordinates" \\ classOf[JDouble])
-      cs.take(2) should equal (List(373426.924263711, 6677127.53394753))
+      cs.take(2) should equal (List(373426.924, 6677127.533))
     }
   }
 
