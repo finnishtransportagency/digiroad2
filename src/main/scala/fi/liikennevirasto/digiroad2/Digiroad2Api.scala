@@ -96,6 +96,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId").toLong)
   }
 
+  get("/images/:imageId") {
+    featureProvider.getImage(params("imageId").toLong)
+  }
+
   get("/ping") {
     "pong"
   }

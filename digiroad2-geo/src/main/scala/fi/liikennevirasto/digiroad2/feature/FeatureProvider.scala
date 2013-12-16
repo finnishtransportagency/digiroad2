@@ -10,4 +10,5 @@ trait FeatureProvider {
   def updateBusStop(busStop: BusStop): BusStop
   def updateAssetLocation(asset: Asset): Asset
   def getRoadLinks(municipalityNumber: Option[Int] = None): Seq[RoadLink]
+  def getImage(imageId: Long): Array[Byte]
 }

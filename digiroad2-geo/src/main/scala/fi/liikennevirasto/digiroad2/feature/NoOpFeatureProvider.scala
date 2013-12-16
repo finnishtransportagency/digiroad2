@@ -10,4 +10,5 @@ class NoOpFeatureProvider extends FeatureProvider {
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = List()
   def updateAssetLocation(asset: Asset): Asset = asset
+  def getImage(imageId: Long): Array[Byte] = new Array[Byte](0)
 }
