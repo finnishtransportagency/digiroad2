@@ -9,7 +9,7 @@ git clean -d -f || exit 1
 
 rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/ || exit 1
 rsync -a bower_components src/main/webapp/ || exit 1
-grunt && rsync -av dist/ src/main/webapp/ && ./sbt assembly || exit 1
+grunt && rsync -av dist/ src/main/webapp/ && ./sbt -Ddigiroad2.env=test assembly || exit 1
 cp digiroad2-oracle/newrelic* . || exit 1
 tar -cvzf file.tar.gz target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar src/main/webapp/ newrelic* || exit 1
 
