@@ -6,8 +6,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
-import fi.liikennevirasto.digiroad2.feature.{PropertyValue, AssetType, Asset, BusStop}
-import fi.liikennevirasto.digiroad2.feature.{EnumeratedPropertyValue, AssetType, Asset, BusStop}
+import fi.liikennevirasto.digiroad2.feature.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
 import org.json4s.JsonDSL._
 
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
@@ -16,14 +15,6 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   val TestPropertyId = "764"
 
   addServlet(classOf[Digiroad2Api], "/*")
-
-  test("get bus stops", Tag("db")) {
-    get("/busstops?municipalityNumber=235") {
-      status should equal (200)
-      val busStops = parse(body).extract[List[BusStop]]
-      busStops.size should be (41)
-    }
-  }
 
   test("get assets", Tag("db")) {
     get("/assets?assetTypeId=10&municipalityNumber=235") {
@@ -53,13 +44,6 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
     get("/enumeratedPropertyValues/10") {
       status should equal(200)
       parse(body).extract[List[EnumeratedPropertyValue]].size should be(4)
-    }
-  }
-
-  test("missing bus stops", Tag("db")) {
-    get("/busstops?municipalityNumber=234") {
-      status should equal (200)
-      parse(body).extract[List[BusStop]].size should be (0)
     }
   }
 
