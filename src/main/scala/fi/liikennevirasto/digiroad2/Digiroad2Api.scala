@@ -6,7 +6,7 @@ import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.feature.{Asset, PropertyValue, BusStop}
+import fi.liikennevirasto.digiroad2.feature.{Asset, PropertyValue}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 
@@ -30,11 +30,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     })
   }
 
-  get("/busstops") {
-    response.setHeader("Access-Control-Allow-Headers", "*");
-    featureProvider.getBusStops(params.get(MunicipalityNumber).flatMap(x => Some(x.toInt)))
-  }
-
   get("/assetTypes") {
     featureProvider.getAssetTypes
   }
@@ -53,15 +48,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/enumeratedPropertyValues/:assetTypeId") {
     featureProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
-  }
-
-  put("/busstops/:id") {
-    // TODO: update optional/required fields in bus stop
-    val (lon, lat, roadLinkId) = ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double], (parsedBody \ "roadLinkId").extractOpt[Long])
-    val bs = BusStop(params("id").toLong, lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, busStopType = "")
-    val ubs = featureProvider.updateBusStop(bs)
-    println("UPDATED: " + ubs)
-    ubs
   }
 
   // TODO: handle missing roadLinkId
