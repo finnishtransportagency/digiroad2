@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.feature
 
+import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
+
 class NoOpFeatureProvider extends FeatureProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
@@ -8,4 +10,5 @@ class NoOpFeatureProvider extends FeatureProvider {
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = List()
   def updateAssetLocation(asset: Asset): Asset = asset
+  def updateRoadLinks(roadlinks: Seq[MtkRoadLink]) { }
 }
