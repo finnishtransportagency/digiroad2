@@ -322,7 +322,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer);
+                    var imageIds = _.chain(eachData.propertyData)
+                        .pluck("values")
+                        .flatten()
+                        .reject(function(propertyValue) { return propertyValue.imageId == null || propertyValue.imageId == undefined })
+                        .map(function(propertyValue) { return propertyValue.imageId })
+                        .value()
+
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer, imageIds);
 
                 });
             })
@@ -334,17 +341,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer) {
+        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer, imageIds) {
             var me = this;
             // new bus stop marker
-            var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
+            var size = new OpenLayers.Size(37,34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+
+            icon = new OpenLayers.Icon("/api/images/" + imageIds[0], size, offset);
+            var busStop = new OpenLayers.Marker(ll, (icon).clone());
 
             busStop.id = id;
             busStop.featureContent = data;
-
-            if (typeof type !== "undefined" && !type) {
-                busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
-            }
 
             var popupId = "busStop";
             var contentItem = this._makeContent(data);
