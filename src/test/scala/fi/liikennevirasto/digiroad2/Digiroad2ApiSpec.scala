@@ -11,7 +11,7 @@ import org.json4s.JsonDSL._
 
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  val TestAssetId = 101
+  val TestAssetId = 105
   val TestPropertyId = "37"
   val TestPropertyId2 = "41"
 
