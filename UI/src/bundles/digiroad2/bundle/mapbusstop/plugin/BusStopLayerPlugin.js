@@ -327,7 +327,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         .flatten()
                         .reject(function(propertyValue) { return propertyValue.imageId == null || propertyValue.imageId == undefined })
                         .map(function(propertyValue) { return propertyValue.imageId })
-                        .value()
+                        .value();
 
                     me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer, imageIds);
 
