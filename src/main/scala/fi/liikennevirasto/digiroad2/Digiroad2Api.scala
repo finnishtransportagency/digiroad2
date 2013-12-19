@@ -92,10 +92,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     bytes
   }
 
-  get("/ping") {
-    "pong"
-  }
-
   error {
     // TODO: error logging / handling
     case e => e.printStackTrace()
