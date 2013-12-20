@@ -23,9 +23,7 @@ object MtkFileSlurper  {
   private lazy val schedule: Cancellable = {
     oracleFeatureProvider = featureProvider
     val pollingInterval = getProperty("digiroad2.mtkPollingInterval").toLong
-
-    val baseFolder = FileUtils.getFile(this.getClass.getClassLoader.getResource(".").getPath)
-    val pollingFolder = FileUtils.getFile(baseFolder.getParentFile.getParentFile.getParentFile.getAbsolutePath + getProperty("digiroad2.mtkPollingFolder"))
+    val pollingFolder = FileUtils.getFile(getProperty("digiroad2.mtkPollingFolder"))
     // TODO: replace with proper logger implementation
     println(s"Mtk message parser is watching directory $pollingFolder using $pollingInterval ms polling interval")
     import scala.concurrent.duration._
@@ -51,7 +49,11 @@ object MtkFileSlurper  {
   def addMissingItemsToQueue(params: (File, mutable.SynchronizedQueue[File])) = {
     val (directory, processingQueue) = params
     def addItemToQueue(file: File) {
-      if(processingQueue.find(x => x.getAbsolutePath == file.getAbsolutePath).isEmpty) processingQueue.enqueue(file)
+      if(processingQueue.find(x => x.getAbsolutePath == file.getAbsolutePath).isEmpty) {
+        // TODO:proper logger implementation
+        println(s"Adding $file to processing queue")
+        processingQueue.enqueue(file)
+      }
     }
     import scala.collection.JavaConversions._
     FileUtils.listFiles(directory, Array("xml"), false).foreach(addItemToQueue)
@@ -60,18 +62,29 @@ object MtkFileSlurper  {
 
   def moveFileToProcessed(fileOption: Option[File]) {
     fileOption.foreach(file => {
+      // TODO:proper logger implementation
+      println(s"Moving $file to processed")
       val processedFolder = FilenameUtils.getFullPath(file.getPath) + "processed" + File.separator
       FileUtils.moveFileToDirectory(file, new File(processedFolder), true)
     })
   }
 
   def storeMtkData(dataOption: Option[(File, Seq[MtkRoadLink])]) = {
-    dataOption.foreach(x => oracleFeatureProvider.updateRoadLinks(x._2))
+    dataOption.foreach(x =>
+      {
+        // TODO:proper logger implementation
+        println(s"Storing roadlinks to Oracle (amount ${x._2.size})")
+        oracleFeatureProvider.updateRoadLinks(x._2)
+      })
     dataOption.map(_._1)
   }
 
   def parseMtkMessage(fileOption: Option[File]) = {
-    fileOption.map(file => (file, MtkMessageParser.parseMtkMessage(Source.fromFile(file))))
+    fileOption.map(file =>  {
+      // TODO:proper logger implementation
+      println(s"Parsing file $file")
+      (file, MtkMessageParser.parseMtkMessage(Source.fromFile(file)))
+    })
   }
 
   def getFileFromQueue(queue: mutable.SynchronizedQueue[File]) = if(queue.isEmpty) None else Some(queue.dequeue())
