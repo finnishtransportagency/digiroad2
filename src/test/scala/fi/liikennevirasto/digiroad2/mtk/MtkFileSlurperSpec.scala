@@ -13,7 +13,7 @@ import org.joda.time.DateTime
 class MtkFileSlurperSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll
                           with MockitoSugar {
 
-  val tmpDir = FileUtils.getTempDirectoryPath + "MktFileSlurperSpec"
+  val tmpDir = FileUtils.getTempDirectoryPath + File.separator + "MktFileSlurperSpec"
   val mockedProvider = mock[FeatureProvider]
   var originalFeatureProvider = MtkFileSlurper.oracleFeatureProvider
 
