@@ -22,4 +22,4 @@ ssh -t gateway "su web -c 'killall java; cd ~;
 						   cp /tmp/file.tar.gz .;
 						   tar -C release/ -xvzf file.tar.gz;
 						   cp -r release/src .;
-						   nohup java -javaagent:release/newrelic.jar -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar > /dev/null 2>&1 & '"
+						   nohup java -javaagent:release/newrelic.jar -jar release/target/scala-2.10/digiroad2-assembly-0.1.0-SNAPSHOT.jar > output.log 2>&1 & '"
