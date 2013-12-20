@@ -339,10 +339,28 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer, imageIds) {
             var me = this;
             // new bus stop marker
-            var size = new OpenLayers.Size(37,34);
+            var size = new OpenLayers.Size(28, 16 * imageIds.length);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
 
-            icon = new OpenLayers.Icon("/api/images/" + imageIds[0], size, offset);
+            icon = new OpenLayers.Icon("", size, offset);
+            icon.imageDiv.className = "callout-wrapper";
+            icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
+            icon.imageDiv.setAttribute("style", "");
+            var callout = document.createElement("div");
+            callout.className = "callout";
+            var arrowContainer = document.createElement("div");
+            arrowContainer.className = "arrow-container";
+            var arrow = document.createElement("div");
+            arrow.className = "arrow";
+            icon.imageDiv.appendChild(callout);
+            _.each(imageIds, function (imageId) {
+                var img = document.createElement("img");
+                img.setAttribute("src", "/api/images/" + imageId);
+                callout.appendChild(img);
+            });
+            arrowContainer.appendChild(arrow);
+            callout.appendChild(arrowContainer);
+
             var busStop = new OpenLayers.Marker(ll, icon);
 
             busStop.id = id;
