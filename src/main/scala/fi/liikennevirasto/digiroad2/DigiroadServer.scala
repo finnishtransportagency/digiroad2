@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
+import fi.liikennevirasto.digiroad2.mtk.MtkFileSlurper
 
 object DigiroadServer extends App {
   val server = new Server(8080)
@@ -12,6 +13,7 @@ object DigiroadServer extends App {
   context.setParentLoaderPriority(true)
   context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
   server.setHandler(context)
+  MtkFileSlurper.startWatching()
   server.start()
   server.join()
 }
