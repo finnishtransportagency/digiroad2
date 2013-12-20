@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.feature
 
+import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
+
 trait FeatureProvider {
   def getAssetTypes: Seq[AssetType]
   def getAssets(assetTypeId: Long, municipalityNumber: Option[Long] = None, assetId: Option[Long] = None): Seq[Asset]
@@ -9,4 +11,5 @@ trait FeatureProvider {
   def updateAssetLocation(asset: Asset): Asset
   def getRoadLinks(municipalityNumber: Option[Int] = None): Seq[RoadLink]
   def getImage(imageId: Long): Array[Byte]
+  def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
 }

@@ -7,3 +7,10 @@ case class Property(propertyId: String, propertyName: String, propertyType: Stri
 case class PropertyValue(propertyValue: Long, propertyDisplayValue: String, imageId: String = null) extends Feature
 case class EnumeratedPropertyValue(propertyId: String, propertyName: String, propertyType: String, values: Seq[PropertyValue]) extends Feature
 case class RoadLink(id: Long, lonLat: Seq[(Double, Double)]) extends Feature
+
+object PropertyTypes {
+  val SingleChoice = "single_choice"
+  val MultipleChoice = "multiple_choice"
+  val Text = "text"
+  val Date = "date"
+}

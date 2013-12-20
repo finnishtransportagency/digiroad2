@@ -18,4 +18,13 @@ object Digiroad2Context {
   lazy val userProvider: UserProvider = {
     Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
+
+  val env = System.getProperty("env")
+  def getProperty(name: String) = {
+    val property = properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name for enviroment: $env")
+  }
 }
