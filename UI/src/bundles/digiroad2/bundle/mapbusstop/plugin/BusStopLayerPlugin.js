@@ -17,7 +17,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._supportedFormats = {};
         this._layer = {};
         this._localization = null;
-        this._busStopIcon = [];
         this._selectedBusStop = null;
         this._selectedBusStopLayer = null;
         this._roadStyles = null;
@@ -100,10 +99,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             var size = new OpenLayers.Size(37,34);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-
-            this._busStopIcon['7'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
-            this._busStopIcon['2'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstopLocal.png',size,offset);
-            this._busStopIcon['null'] = new OpenLayers.Icon('/src/resources/digiroad2/bundle/mapbusstop/images/busstop.png',size,offset);
 
             var layerModelBuilder = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayerModelBuilder', sandbox);
             mapLayerService.registerLayerModelBuilder('busstoplayer', layerModelBuilder);
@@ -322,7 +317,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     );
                     directionLayer.addFeatures(directionArrow);
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer);
+                    var imageIds = _.chain(eachData.propertyData)
+                        .pluck("values")
+                        .flatten()
+                        .reject(function(propertyValue) { return propertyValue.imageId === null || propertyValue.imageId === undefined; })
+                        .map(function(propertyValue) { return propertyValue.imageId; })
+                        .value();
+
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, angle, layer.getId(), directionArrow, directionLayer, imageIds);
 
                 });
             })
@@ -334,17 +336,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         },
         //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer) {
+        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer, imageIds) {
             var me = this;
             // new bus stop marker
-            var busStop = new OpenLayers.Marker(ll, (this._busStopIcon["2"]).clone());
+            var size = new OpenLayers.Size(37,34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+
+            icon = new OpenLayers.Icon("/api/images/" + imageIds[0], size, offset);
+            var busStop = new OpenLayers.Marker(ll, icon);
 
             busStop.id = id;
             busStop.featureContent = data;
-
-            if (typeof type !== "undefined" && !type) {
-                busStop = new OpenLayers.Marker(ll, (this._busStopIcon[type]).clone());
-            }
 
             var popupId = "busStop";
             var contentItem = this._makeContent(data);
@@ -474,7 +476,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                 var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(evt.getLon(), evt.getLat()));
 
-                pxPosition.y = pxPosition.y + this._busStopIcon['null'].size.h/2;
+                pxPosition.y = pxPosition.y + 34/2; // FIXME: read actual size from current asset
 
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = me._map.getLonLatFromPixel(busStopCenter);

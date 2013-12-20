@@ -9,9 +9,11 @@ import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.feature.{Asset, PropertyValue}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
+import org.joda.time.DateTime
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport {
   val MunicipalityNumber = "municipalityNumber"
+  val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
 
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -82,8 +84,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
   }
 
-  get("/ping") {
-    "pong"
+  get("/images/:imageId") {
+    val id = params("imageId").split("_").head // last modified date is appended with an underscore to image id in order to cache image when it has not been altered
+    val bytes = featureProvider.getImage(id.toLong)
+    response.setHeader("Expires", Never)
+    response.setContentType("application/octet-stream")
+    bytes
   }
 
   error {

@@ -10,5 +10,6 @@ trait FeatureProvider {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def updateAssetLocation(asset: Asset): Asset
   def getRoadLinks(municipalityNumber: Option[Int] = None): Seq[RoadLink]
+  def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
 }

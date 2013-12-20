@@ -48,13 +48,6 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
     }
   }
 
-  test("ping") {
-    get("/ping") {
-      status should equal (200)
-      body should equal ("pong")
-    }
-  }
-
   test("get map configuration") {
     get("/config") {
       status should equal(200)
@@ -107,6 +100,20 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
           }
         }
       }
+    }
+  }
+
+  test("load image by id", Tag("db")) {
+    get("/images/2") {
+      status should equal(200)
+      body.length should(be > 0)
+    }
+  }
+
+  test("load image by id and timestamp", Tag("db")) {
+    get("/images/1_123456789") {
+      status should equal(200)
+      body.length should(be > 0)
     }
   }
 }
