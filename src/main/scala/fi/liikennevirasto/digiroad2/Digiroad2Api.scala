@@ -10,8 +10,9 @@ import fi.liikennevirasto.digiroad2.feature.{Asset, PropertyValue}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.authentication.AuthenticationSupport
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport {
+class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
 
@@ -19,6 +20,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   before() {
     contentType = formats("json")
+    basicAuth
   }
 
   get("/config") {
