@@ -7,10 +7,10 @@ import scala.collection.mutable
 import java.io.File
 import scala.concurrent.ExecutionContext
 import akka.actor.Cancellable
-import fi.liikennevirasto.digiroad2.feature.FeatureProvider
+import fi.liikennevirasto.digiroad2.asset.AssetProvider
 
 object MtkFileSlurper  {
-  var oracleFeatureProvider: FeatureProvider = null
+  var oracleAssetProvider: AssetProvider = null
 
   def startWatching() {
     schedule
@@ -21,7 +21,7 @@ object MtkFileSlurper  {
   }
 
   private lazy val schedule: Cancellable = {
-    oracleFeatureProvider = featureProvider
+    oracleAssetProvider = featureProvider
     val pollingInterval = getProperty("digiroad2.mtkPollingInterval").toLong
     val pollingFolder = FileUtils.getFile(getProperty("digiroad2.mtkPollingFolder"))
     // TODO: replace with proper logger implementation
@@ -74,7 +74,7 @@ object MtkFileSlurper  {
       {
         // TODO:proper logger implementation
         println(s"Storing roadlinks to Oracle (amount ${x._2.size})")
-        oracleFeatureProvider.updateRoadLinks(x._2)
+        oracleAssetProvider.updateRoadLinks(x._2)
       })
     dataOption.map(_._1)
   }

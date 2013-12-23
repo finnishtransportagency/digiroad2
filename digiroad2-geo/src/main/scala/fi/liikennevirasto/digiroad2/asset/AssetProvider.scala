@@ -1,8 +1,8 @@
-package fi.liikennevirasto.digiroad2.feature
+package fi.liikennevirasto.digiroad2.asset
 
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 
-trait FeatureProvider {
+trait AssetProvider {
   def getAssetTypes: Seq[AssetType]
   def getAssets(assetTypeId: Long, municipalityNumber: Option[Long] = None, assetId: Option[Long] = None): Seq[Asset]
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue])

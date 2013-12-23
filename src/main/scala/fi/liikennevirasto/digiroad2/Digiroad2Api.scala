@@ -6,7 +6,7 @@ import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.feature.{Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 import org.joda.time.DateTime

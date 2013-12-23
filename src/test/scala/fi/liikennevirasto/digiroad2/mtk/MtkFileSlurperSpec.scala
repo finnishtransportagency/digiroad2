@@ -4,7 +4,7 @@ import org.scalatest._
 import org.apache.commons.io._
 import java.io.File
 import scala.collection.mutable
-import fi.liikennevirasto.digiroad2.feature.FeatureProvider
+import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -14,16 +14,16 @@ class MtkFileSlurperSpec extends FlatSpec with MustMatchers with BeforeAndAfter 
                           with MockitoSugar {
 
   val tmpDir = FileUtils.getTempDirectoryPath + File.separator + "MktFileSlurperSpec"
-  val mockedProvider = mock[FeatureProvider]
-  var originalFeatureProvider = MtkFileSlurper.oracleFeatureProvider
+  val mockedProvider = mock[AssetProvider]
+  var originalFeatureProvider = MtkFileSlurper.oracleAssetProvider
 
   before {
-    MtkFileSlurper.oracleFeatureProvider = mockedProvider
+    MtkFileSlurper.oracleAssetProvider = mockedProvider
   }
 
   override def afterAll() {
     FileUtils.forceDelete(new File(tmpDir))
-    MtkFileSlurper.oracleFeatureProvider = originalFeatureProvider
+    MtkFileSlurper.oracleAssetProvider = originalFeatureProvider
   }
 
   "MtkFileSlurper" must "add missing files to processing queue" in {

@@ -6,7 +6,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
-import fi.liikennevirasto.digiroad2.feature.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
 import org.json4s.JsonDSL._
 import org.apache.commons.codec.binary.Base64
 
