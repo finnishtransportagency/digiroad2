@@ -5,7 +5,7 @@ import org.scalatra.auth.strategy.BasicAuthStrategy
 import org.scalatra.ScalatraBase
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-class Digiroad2BasicAuthStrategy(protected override val app: ScalatraBase, realm: String)
+class HttpBasicAuthStrategy(protected override val app: ScalatraBase, realm: String)
   extends BasicAuthStrategy[User](app, realm) {
 
   protected def validate(userName: String, password: String)(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {

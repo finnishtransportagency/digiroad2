@@ -10,7 +10,10 @@ import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JInt
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.authentication.AuthenticationSupport
+import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
+import org.scalatra.auth.ScentryAuthStore.ScentryAuthStore
+import org.scalatra.auth.{Scentry, ScentryAuthStore}
+import fi.liikennevirasto.digiroad2.user.User
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
   val MunicipalityNumber = "municipalityNumber"
@@ -20,7 +23,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   before() {
     contentType = formats("json")
-    basicAuth
+    if (!isAuthenticated) {
+      throw new UnauthenticatedException()
+    }
   }
 
   get("/config") {
@@ -96,6 +101,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   error {
     // TODO: error logging / handling
+    case ue: UnauthenticatedException => Unauthorized("Not authenticated")
     case e => e.printStackTrace()
   }
 }
