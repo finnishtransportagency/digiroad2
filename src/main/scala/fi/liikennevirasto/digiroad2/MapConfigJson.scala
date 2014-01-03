@@ -1,4 +1,13 @@
-{
+package fi.liikennevirasto.digiroad2
+
+object MapConfigJson {
+  def mapConfig(userConfig: Map[String, String]): String = {
+    val zoom = BigInt(userConfig.get("zoom").getOrElse("2"))
+    val east = userConfig.get("east").getOrElse("390000")
+    val north = userConfig.get("north").getOrElse("6900000")
+    val municipalityNumber = userConfig.get("municipalityNumber").getOrElse("235")
+
+    s"""{
    "toolbar":{
       "state":{
 
@@ -48,9 +57,9 @@
                  "id":"235"
              }
          ],
-         "zoom":2,
-         "east":"390000",
-         "north":"6900000"
+         "zoom":${zoom},
+         "east":"${east}",
+         "north":"${north}"
       },
       "conf":{
 	     "size": {
@@ -100,8 +109,8 @@
                  "id":235,
                  "minScale":5000000,
                  "wmsUrl":"/data/dummy/busstops.json",
-                 "url":"/api/assets?assetTypeId=10&municipalityNumber=235",
-                 "roadLinesUrl" :"/api/roadlinks?municipalityNumber=235",
+                 "url":"/api/assets?assetTypeId=10&municipalityNumber=${municipalityNumber}",
+                 "roadLinesUrl" :"/api/roadlinks?municipalityNumber=${municipalityNumber}",
                  "maxScale":1 ,
                  "orgName":"LiVi",
                  "inspire":"Ominaisuustiedot",
@@ -295,4 +304,6 @@
 
       }
    }
+}"""
+  }
 }
