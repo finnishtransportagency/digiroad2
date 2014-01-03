@@ -4,16 +4,10 @@ import org.scalatra._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
-import org.json4s.JsonAST.JString
-import org.json4s.JsonAST.JInt
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
-import org.scalatra.auth.ScentryAuthStore.ScentryAuthStore
-import org.scalatra.auth.{Scentry, ScentryAuthStore}
-import fi.liikennevirasto.digiroad2.user.User
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
   val MunicipalityNumber = "municipalityNumber"
@@ -23,20 +17,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   before() {
     contentType = formats("json")
-    if (!isAuthenticated) {
-      throw new UnauthenticatedException()
+    userOption match {
+      case Some(user) => Digiroad2Context.userProvider.setThreadLocalUser(user)
+      case None => throw new UnauthenticatedException()
     }
   }
 
   get("/config") {
     // todo read user specific properties from db
-    val config = readJsonFromStream(getClass.getResourceAsStream("/map_base_config.json"))
-    val userConfig = userProvider.getUserConfiguration()
-    config.replace("mapfull" :: "state" :: Nil, (config \ "mapfull" \ "state").transformField {
-      case ("zoom", JInt(x)) => ("zoom", JInt(BigInt(userConfig.get("zoom").getOrElse(x.toString))))
-      case ("east", JString(x)) => ("east", JString(userConfig.get("east").getOrElse(x)))
-      case ("north", JString(x)) => ("north", JString(userConfig.get("north").getOrElse(x)))
-    })
+    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getUserConfiguration()))
   }
 
   get("/assetTypes") {

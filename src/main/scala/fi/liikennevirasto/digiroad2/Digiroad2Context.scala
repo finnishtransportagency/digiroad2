@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 
 object Digiroad2Context {
   lazy val properties: Properties = {
