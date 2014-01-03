@@ -5,6 +5,7 @@ import org.scalatra.ScalatraBase
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.scalatra.auth.ScentryStrategy
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 
 class UserPasswordAuthStrategy(protected override val app: ScalatraBase)(implicit request: HttpServletRequest, response: HttpServletResponse)
   extends ScentryStrategy[User] {
@@ -28,7 +29,7 @@ class UserPasswordAuthStrategy(protected override val app: ScalatraBase)(implici
 
     if(login == password && login != "") {
       logger.info("UserPasswordStrategy: login succeeded")
-      Some(User(login))
+      Digiroad2Context.userProvider.getUser(login)
     } else {
       logger.info("UserPasswordStrategy: login failed")
       None

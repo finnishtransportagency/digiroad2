@@ -13,8 +13,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
-
   before() {
     contentType = formats("json")
     userOption match {
@@ -25,7 +23,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/config") {
     // todo read user specific properties from db
-    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getUserConfiguration()))
+    userProvider.getThreadLocalUser() match {
+      case Some(user) => readJsonFromBody(MapConfigJson.mapConfig(user.configuration))
+      case _ => throw new UnauthenticatedException()
+    }
   }
 
   get("/assetTypes") {
