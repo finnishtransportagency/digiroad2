@@ -1,3 +1,3 @@
 package fi.liikennevirasto.digiroad2.user
 
-case class User(id: String) {}
+case class User(id: Long, username: String, password: String, configuration: Map[String, String] = Map()) {}
