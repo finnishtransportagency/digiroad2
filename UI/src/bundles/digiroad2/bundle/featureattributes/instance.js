@@ -95,8 +95,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._streetViewTemplate  = _.template(
                 '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
-                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=360x228&location={{wgs84Y}}' +
-                    ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false">' +
+                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=360x180&location={{wgs84Y}}' +
+                    ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
 
             me._featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
@@ -123,7 +123,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             $.get("/api/assets/" + id, function(data) {
 
                 var featureData = me._makeContent(data.propertyData);
-                var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y});
+                var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
+                console.log("steetView", streetView);
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });
 
                 jQuery("#featureAttributes").html(featureAttributes);
@@ -145,12 +146,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var data = jQuery(this);
                     var propertyValue = [];
                     var values = data.val();
+                    var name = data.attr('name');
 
                     _.forEach(values,
                         function(value) {
                             propertyValue.push({
                                 "propertyValue" : Number(value),
-                                "propertyDisplayValue" : ""
+                                "propertyDisplayValue" : name
                             });
                         }
                     );
