@@ -1,0 +1,107 @@
+#featureAttributes {
+    float: left;
+    background-color: rgb( 45, 45, 45 );
+    box-shadow: 0px 0px 3px 0px rgb( 0, 0, 0 );
+    width : 20%;
+    height: 100%;
+
+}
+
+.featureAttributesHeader {
+    font-size: 14px;
+    font-family: "Arial";
+    color: rgb( 255, 255, 255 );
+    line-height: 1.286;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border: 0px solid #000000;
+    border-bottom-width: 1px;
+    padding-left: 10px;
+    background-image: -moz-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+    background-image: -webkit-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+    background-image: -ms-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+}
+
+.featureAttributesWrapper {
+    padding: 10px;
+}
+
+.streetView {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.featureAttributeText {
+    border: 1px solid rgb(75, 75, 75);
+    border-radius: 2px;
+    background-color: rgb( 51, 51, 51 );
+    width: 213px;
+    height: 21px;
+}
+
+.featureattributeChoice {
+    border: 1px solid rgb(75, 75, 75);
+    border-radius: 2px;
+    background-color: rgb( 51, 51, 51 );
+    color: rgb( 230, 230, 230 );
+    width: 213px;
+}
+
+
+
+.formContent {
+    font-size: 12px;
+    font-family: "Arial";
+    color: rgb( 255, 255, 255 );
+    line-height:2.5;
+    text-align: left;
+    padding-top: 10px;
+}
+
+.formLabels {
+    font-size: 12px;
+    font-family: "Arial";
+    color: rgb( 230, 230, 230 );
+    line-height: 2.5;
+    text-align: right;
+    float: left;
+    width:140px;
+    padding-right: 10px;
+    vertical-align: middle;
+
+}
+
+.formAttributeContent {
+   float:left;
+   margin-bottom: 5px;
+   margin-top: 5px;
+}
+
+.formAttributeContentRow {
+    clear:both;
+}
+
+.formDescriptor {
+    font-size: 10px;
+    font-family: "Arial";
+    color: rgb( 132, 132, 132 );
+}
+
+.sidebarContainer {
+    background-color: rgb( 45, 45, 45 );
+    box-shadow: 0px 0px 3px 0px rgb( 0, 0, 0 );
+}
+
+
+
+.formInputStyle {
+    border-color: rgb( 75, 75, 75 ); background-color: rgb( 51, 51, 51 );
+}
+
+.formInputStyle:active {
+    border-color: rgb( 51, 51, 51 ); background-color: rgb( 75, 75, 75 );
+}
+
+.formInputStyleError {
+    border-color: rgb( 115, 52, 52 ); background-color: rgb( 184, 133, 133 );
+}

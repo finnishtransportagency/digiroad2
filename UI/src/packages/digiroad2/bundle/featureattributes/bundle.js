@@ -37,6 +37,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             },{
                 "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/featureattributes/event/FeatureAttributeChangedEvent.js"
+            },{
+                "type" : "text/css",
+                "src" : "../../../../resources/digiroad2/bundle/featureattributes/css/style.css"
             }],
             "locales" : []
         },

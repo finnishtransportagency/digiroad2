@@ -464,17 +464,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _mouseClick: function(busStop, contentItem, popupId) {
             var me = this;
-            return function (evt, wgs84Point) {
+            return function (evt, point) {
 
                 var content = _.cloneDeep(contentItem);
-                content.html= me._streetViewTemplate({ "wgs84X":wgs84Point.x, "wgs84Y":wgs84Point.y})+contentItem.html.join('');
+                content.html= me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y})+contentItem.html.join('');
 
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
                 var request = requestBuilder(popupId, me.getLocalization('title'), [content], busStop.lonlat, true);
                 me._sandbox.request(me.getName(), request);
 
                 requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-                request = requestBuilder(busStop.id, busStop.featureContent);
+                request = requestBuilder(busStop.id, point);
                 me._sandbox.request(me.getName(), request);
 
                 OpenLayers.Event.stop(evt);
