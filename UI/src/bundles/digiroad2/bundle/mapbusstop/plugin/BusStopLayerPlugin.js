@@ -106,11 +106,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
 
             me._featureDataTemplate = _.template('<li>{{name}}<input type="text" name="{{name}}" value="{{value}}"></li>'); //TODO: remove
-            me._streetViewTemplate  = //TODO :remove
-                _.template('<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}}' +
-                    ',{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
-                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=340x100&location={{wgs84Y}}' +
-                    ', {{wgs84X}}&fov=110&heading=10&pitch=-10&sensor=false"></a>');
             me._popupInfoTemplate = _.template('<div class="popupInfoBusStopsIcons">{{busStopsIons}}</div>' +
                                                '<div class="popupInfoChangeDirection">' +
                                                     '<div class="changeDirectionButton">{{changeDirectionButton}}</div>' +
@@ -310,14 +305,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._sandbox.request(this.getName(), request);
         },
         _directionChange:function(id, point) {
+            this._changeDirection();
             var me = this;
-            var value = (this._selectedBusStop.effectDirection = 1) ? 2:3;
-            var propertyValues = [
-                {
-                    propertyDisplayValue: '',
-                    propertyValue : value
-                }
-            ];
+            var value = (this._selectedBusStop.effectDirection == 1) ? 2:3;
+            var propertyValues = [{propertyValue : value, propertyDisplayValue: "Vaikutussuunta"}];
 
             jQuery.ajax({
                 contentType: "application/json",
@@ -330,7 +321,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
                     var request = requestBuilder(id, point);
                     me._sandbox.request(me.getName(), request);
-                    me._changeDirection();
                     console.log("done");
                 },
                 error: function() {
@@ -339,7 +329,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             });
         },
         _changeDirection: function() {
-            this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection * -1;
+            this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection == 1 ? -1 : 1;
             this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
             this._selectedBusStop.directionArrow.move(this._selectedBusStop.lonlat); // need because redraw();
         },
@@ -368,26 +358,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             });
 
             var directionLayer = new OpenLayers.Layer.Vector("busStopsDirection_" + layer.getId());
-
             this._map.addLayer(busStopsRoads);
-
             var busStops = new OpenLayers.Layer.Markers("busStops_" + layer.getId() );
             me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
             me._map.addLayer(directionLayer);
             me._map.addLayer(busStops);
 
-
             layers.push(busStopsRoads);
             layers.push(directionLayer);
             layers.push(busStops);
-
             me._layer[layer.getId()] = layers;
-
 
             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
+
+                    var validityDirectionProperty = _.find(eachData.propertyData, function(property) {
+                        return property.propertyId == "validityDirection";
+                    });
+                    var validityDirection = (validityDirectionProperty.values[0].propertyValue == 2) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
-                    var angle = (eachData.bearing) ? eachData.bearing + (90 * -1): 90;
+                    var angle = (eachData.bearing) ? eachData.bearing + (90 * validityDirection): 90;
                     var directionArrow = new OpenLayers.Feature.Vector(
                         new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
                         null,
@@ -403,7 +393,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         .map(function(propertyValue) { return propertyValue.imageId; })
                         .value();
 
-                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat), eachData.featureData, eachData.busStopType, eachData.bearing, layer.getId(), directionArrow, directionLayer, imageIds);
+                    me._addBusStop(eachData.id, busStops, new OpenLayers.LonLat(eachData.lon, eachData.lat),
+                        eachData.featureData, eachData.bearing, layer.getId(), directionArrow, directionLayer, imageIds,
+                    eachData.assetTypeId, validityDirection);
 
                 });
             })
@@ -414,14 +406,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
 
         },
-        //TODO: doc
-        _addBusStop: function(id, busStops, ll, data, type, bearing, layerId, directionArrow, directionLayer, imageIds) {
+        _addBusStop: function(id, busStops, ll, data, bearing, layerId, directionArrow, directionLayer, imageIds, typeId,
+                              validityDirection ) {
             var me = this;
             // new bus stop marker
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
 
-            icon = new OpenLayers.Icon("", size, offset);
+            var icon = new OpenLayers.Icon("", size, offset);
             icon.imageDiv.className = "callout-wrapper";
             icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
             icon.imageDiv.setAttribute("style", "");
@@ -441,34 +433,27 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             callout.appendChild(arrowContainer);
 
             var busStop = new OpenLayers.Marker(ll, icon);
-
             busStop.id = id;
             busStop.featureContent = data;
-
             var popupId = "busStop";
             var contentItem = this._makePopupContent(imageIds);
-
 
             busStop.blinking = false;
             busStop.blinkInterVal = null;
             busStop.directionArrow = directionArrow;
             busStop.roadDirection = bearing;
-            busStop.effectDirection = -1; // 1 or -1
+            busStop.effectDirection = validityDirection; // 1 or -1
 
             var busStopClick = me._mouseClick(busStop, imageIds, popupId);
-            var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id);
+            var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id, typeId);
             var mouseDown = me._mouseDown(busStop, busStops, mouseUp, directionLayer);
-
             busStop.events.register("mousedown", busStops, mouseDown);
-
             busStop.layerId = layerId;
-
             busStops.addMarker(busStop);
         },
-        _mouseUp: function (busStop, busStops, busStopClick, id) {
+        _mouseUp: function (busStop, busStops, busStopClick, id, typeId) {
             var me = this;
             return function(evt) {
-
                 if (me._selectedBusStop && me._selectedBusStop.blinking) {
                     clearInterval(me._selectedBusStop.blinkInterVal);
                     busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
@@ -492,20 +477,30 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     busStopClick(evt, wgs84);
                 } else {
                     // todo remove hardcoded asset type id
-                    var data = { "assetTypeId" : 10, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
+                    var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
 
             };
+
         },
         _sendData: function(data, id) {
+            var me = this;
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
-                url: "/api/assets/" + id, //TODO: get prefix from plugin config
+                url: "/api/assets/" + id,
                 data: JSON.stringify(data),
                 dataType:"json",
                 success: function() {
+                    var tmpPoint = new OpenLayers.Geometry.Point(data.lon, data.lat);
+                    var point = OpenLayers.Projection.transform(tmpPoint, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+                    point.heading = data.bearing;
+
+                    point.heading = me._selectedBusStop.roadDirection+ (90  * me._selectedBusStop.effectDirection);
+                    var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
+                    var request = requestBuilder(id, point);
+                    me._sandbox.request(me.getName(), request);
                     console.log("done");
                 },
                 error: function() {

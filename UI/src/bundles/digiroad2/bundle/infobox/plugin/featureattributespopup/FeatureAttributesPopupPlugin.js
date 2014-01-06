@@ -193,8 +193,8 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
                 false);
             popup.moveTo = function (px) {
                 if ((px !== null && px !== undefined) && (this.div !== null && this.div !== undefined)) {
-                    this.div.style.left = (px.x - 100) + "px";
-                    var topy = px.y - 200;
+                    this.div.style.left = (px.x - 99) + "px";
+                    var topy = px.y - 136;
                     this.div.style.top = topy + "px";
                 }
             };

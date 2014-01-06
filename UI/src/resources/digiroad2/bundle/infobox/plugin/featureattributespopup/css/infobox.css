@@ -90,7 +90,7 @@ div.popupContent {
 
 .arrow_box {
     position: relative;
-    background: #696969;
+    background-color: #444444;
     border: 1px solid #000000;
     border-radius: 3px;
 }
@@ -107,7 +107,7 @@ div.popupContent {
 
 .arrow_box:after {
     border-color: rgba(105, 105, 105, 0);
-    border-top-color: #696969;
+    border-top-color: #444444;
     border-width: 20px;
     margin-left: -20px;
 }
@@ -145,6 +145,7 @@ div.popupContent {
     line-height: 1.286;
     text-align:center;
     margin-bottom: 10px;
+    background-color: #666666;
 }
 
 .changeDirectionButton {
