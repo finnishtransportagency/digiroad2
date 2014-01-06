@@ -266,9 +266,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @static
          */
         eventHandlers : {
+            'infobox.InfoBoxClosedEvent': function (event) {
+                this._closeFeatures(event);
+            }
 
         },
-
+        _closeFeatures: function (event) {
+            jQuery("#featureAttributes").html('');
+        },
         /**
          * @method stop
          * implements BundleInstance protocol stop method

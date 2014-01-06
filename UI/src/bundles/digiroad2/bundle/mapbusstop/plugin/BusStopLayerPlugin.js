@@ -558,14 +558,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 OpenLayers.Event.stop(evt);
             };
         },
-        _makeCloseButton: function(name, popupId) {
-            var me = this;
-            return function() {
-                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
-                var request = requestBuilder(popupId);
-                me._sandbox.request(name, request);
-            };
-        },
         _moveSelectedBusStop: function(evt) {
             var me = this;
             if (me._selectedBusStop && me._selectedBusStop.actionMouseDown) {

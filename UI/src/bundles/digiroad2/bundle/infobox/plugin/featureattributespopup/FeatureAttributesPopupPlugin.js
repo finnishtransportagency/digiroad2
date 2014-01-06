@@ -390,6 +390,10 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
          *      id for popup that we want to close (optional - if not given, closes all popups)
          */
         close: function (id) {
+
+            var eventBuilder = this._sandbox.getEventBuilder('infobox.InfoBoxClosedEvent');
+            var event = eventBuilder({});
+            this._sandbox.notifyAll(event);
             // destroys all if id not given
             // deletes reference to the same id will work next time also
             if (!id) {
