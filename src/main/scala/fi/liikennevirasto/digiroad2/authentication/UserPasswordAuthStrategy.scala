@@ -18,22 +18,12 @@ class UserPasswordAuthStrategy(protected override val app: ScalatraBase)(implici
   private def password = app.params.getOrElse("password", "")
 
   override def isValid(implicit request: HttpServletRequest) = {
-    // TODO: placeholder validation
-    logger.info("UserPasswordStrategy: determining isValid: " + (login == password).toString())
-    (login == password && login != "")
+    logger.info("UserPasswordAuthStrategy: determining isValid: " + (login == password).toString())
+    (login != "" && password != "")
   }
 
   def authenticate()(implicit request: HttpServletRequest, response: HttpServletResponse): Option[User] = {
-    // TODO: retrieve user data
-    logger.info("UserPasswordStrategy: attempting authentication")
-
-    if(login == password && login != "") {
-      logger.info("UserPasswordStrategy: login succeeded")
-      Digiroad2Context.userProvider.getUser(login)
-    } else {
-      logger.info("UserPasswordStrategy: login failed")
-      None
-    }
+    Digiroad2Context.userProvider.getAuthenticatedUser(login, password)
   }
 
   override def unauthenticated()(implicit request: HttpServletRequest, response: HttpServletResponse) {
