@@ -21,7 +21,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   addServlet(classOf[Digiroad2Api], "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
-  test("require authentication") {
+  test("require authentication", Tag("db")) {
     get("/assets?assetTypeId=10&municipalityNumber=235") {
       status should equal(401)
     }
@@ -64,7 +64,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
     }
   }
 
-  test("get map configuration") {
+  test("get map configuration", Tag("db")) {
     getWithUserAuth("/config") {
       status should equal(200)
       val responseJson = parse(body)
