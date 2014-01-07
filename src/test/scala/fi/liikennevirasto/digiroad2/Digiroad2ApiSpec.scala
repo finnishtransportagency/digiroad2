@@ -9,6 +9,8 @@ import org.json4s.jackson.Serialization.write
 import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
 import org.json4s.JsonDSL._
 import org.apache.commons.codec.binary.Base64
+import org.scalatra.auth.Scentry
+import fi.liikennevirasto.digiroad2.authentication.SessionApi
 
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -17,19 +19,16 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
   val TestPropertyId2 = "2"
 
   addServlet(classOf[Digiroad2Api], "/*")
+  addServlet(classOf[SessionApi], "/auth/*")
 
-  test("require basic authentication") {
-    val basicCredentials = Base64.encodeBase64("test:test".getBytes)
-    val authHeader = Map("Authorization" -> ("Basic " + new String(basicCredentials)))
-    val invalidCredentials = Base64.encodeBase64("test:INVALID".getBytes)
-    val invalidAuthHeader = Map("Authorization" -> ("Basic " + new String(invalidCredentials)))
+  test("require authentication") {
     get("/assets?assetTypeId=10&municipalityNumber=235") {
       status should equal(401)
     }
-    get("/assets?assetTypeId=10&municipalityNumber=235", headers = authHeader) {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test", password = "test") {
       status should equal(200)
     }
-    get("/assets?assetTypeId=10&municipalityNumber=235", headers = invalidAuthHeader) {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test", password = "invalid") {
       status should equal(401)
     }
   }
@@ -134,20 +133,27 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
     }
   }
 
-  private[this] def getWithUserAuth[A](uri: String, user: String = "test")(f: => A): A = {
-    get(uri, headers = basicAuthHeader(user))(f)
+  private[this] def getWithUserAuth[A](uri: String, username: String = "test", password: String = "test")(f: => A): A = {
+    val authHeader = authenticateAndGetHeader(username, password, uri)
+    get(uri, headers = authHeader)(f)
   }
 
-  private[this] def putWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), user: String = "test")(f: => A): A = {
-    put(uri, body, headers = headers ++ basicAuthHeader(user))(f)
+  private[this] def putWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), username: String = "test", password: String = "test")(f: => A): A = {
+    put(uri, body, headers = headers ++ authenticateAndGetHeader(username, password, uri))(f)
   }
 
-  private[this] def deleteWithUserAuth[A](uri: String, user: String = "test")(f: => A): A = {
-    delete(uri, headers = basicAuthHeader(user))(f)
+  private[this] def deleteWithUserAuth[A](uri: String, username: String = "test", password: String = "test")(f: => A): A = {
+    delete(uri, headers = authenticateAndGetHeader(username, password, uri))(f)
   }
 
-  private[this] def basicAuthHeader(user: String): Map[String, String] = {
-    val basicCredentials = Base64.encodeBase64((user + ":" + user).getBytes)
-    Map("Authorization" -> ("Basic " + new String(basicCredentials)))
+  private[this] def authenticateAndGetHeader(username: String, password: String, uri: String): Map[String, String] = {
+    post("/auth/session", Map("login" -> username, "password" -> password)) {
+      val cookieHeader = response.getHeader("Set-Cookie")
+      if (cookieHeader != null) {
+        Map("Cookie" -> cookieHeader.split(";")(0))
+      } else {
+        Map()
+      }
+    }
   }
 }
