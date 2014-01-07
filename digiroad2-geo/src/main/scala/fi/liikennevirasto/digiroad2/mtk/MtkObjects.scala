@@ -8,7 +8,7 @@ case class MtkRoadLink(id: Long, startDate: DateTime, endDate: Option[DateTime],
 case class Point(x: Double, y: Double, z: Double)
 
 object MtkRoadLinkUtils {
-  private def pointToStoringItem(point: Point) :String = {
+  private def pointToStoringItem(point: Point): String = {
     val formatter = new DecimalFormat("#.000")
     s"${formatter.format(point.x)}, ${formatter.format(point.y)}, ${formatter.format(point.z)}, null"
   }
