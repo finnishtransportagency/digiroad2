@@ -380,7 +380,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (!layer.isLayerOfType(this._layerType)) {
                 return;
             }
-
             var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
                 strategies: [new OpenLayers.Strategy.Fixed()],
                 protocol: new OpenLayers.Protocol.HTTP({
@@ -389,8 +388,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }),
                 styleMap: me._roadStyles
             });
-
-
             this._selectControl = new OpenLayers.Control.SelectFeature(busStopsRoads, {
                 hover: true,
                 highlightOnly: true,
@@ -400,18 +397,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             });
 
-
             this._map.addControl(this._selectControl);
             this._selectControl.activate();
-
-
             var directionLayer = new OpenLayers.Layer.Vector("busStopsDirection_" + layer.getId());
             this._map.addLayer(busStopsRoads);
             var busStops = new OpenLayers.Layer.Markers("busStops_" + layer.getId() );
             me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
             me._map.addLayer(directionLayer);
             me._map.addLayer(busStops);
-
             layers.push(busStopsRoads);
             layers.push(directionLayer);
             layers.push(busStops);
@@ -590,31 +583,23 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _moveSelectedBusStop: function(evt) {
             if (this._selectedBusStop && this._selectedBusStop.actionMouseDown) {
                 var me = this;
-
                 var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(evt.getLon(), evt.getLat()));
-
                 pxPosition.y = pxPosition.y + 34/2; // FIXME: read actual size from current asset
-
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = this._map.getLonLatFromPixel(busStopCenter);
-
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._selectedBusStop.layerId][0].features, lonlat.lon, lonlat.lat);
                 var nearestFeature = _.find(this._layer[this._selectedBusStop.layerId][0].features, function(feature) {
                    return feature.id == nearestLine.id;
                 });
-
                 this._selectControl.unselectAll();
                 this._selectControl.select(nearestFeature);
-
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-
                 this._selectedBusStop.roadDirection = angle;
                 this._selectedBusStop.directionArrow.style.rotation = angle+ (90 * this._selectedBusStop.effectDirection);
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
                     { x: lonlat.lon, y: lonlat.lat});
-
                 var radius =(13-this._map.getZoom())*3.8;
 
                 if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
