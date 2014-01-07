@@ -2,11 +2,12 @@ package fi.liikennevirasto.digiroad2.user;
 
 class DummyUserProvider extends UserProvider {
   def createUser(username: String, password: String, config: Map[String, String]) = {
-    User(0, username, password, config)
+    User(0, username, config)
   }
   def getUser(username: String): Option[User] = {
-    Some(User(0, username, "", Map("zoom" -> "8", "east" -> "373560", "north"-> "6677676", "municipalityNumber" -> "235")))
+    Some(User(0, username, Map("zoom" -> "8", "east" -> "373560", "north"-> "6677676", "municipalityNumber" -> "235")))
   }
+  def getAuthenticatedUser(username: String, password: String): Option[User] = getUser(username)
 
   def getUserConfiguration(): Map[String, String] = {
     getThreadLocalUser() match {
