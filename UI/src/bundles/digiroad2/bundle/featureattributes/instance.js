@@ -87,20 +87,50 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 interpolate: /\{\{(.+?)\}\}/g
             };
 
-            me._featureDataTemplate = _.template('<li>{{propertyName}}{{propertyValue}}</li>');
-            me._featureDataTemplateText = _.template('<li>{{propertyName}}<input class="featureattributeText" type="text"' +
-                ' data-propertyId="{{propertyId}}" name="{{propertyName}}" value="{{propertyDisplayValue}}"></li>');
+            me._featureDataWrapper = _.template('<div class="featureAttributesHeader">{{header}}</div>' +
+                                                '<div class="featureAttributesWrapper">' +
+                                                    '<div class="streetView">{{streetView}}</div>' +
+                                                    '<div class="formContent">{{attributes}}</div>' +
+                                                '</div>');
+
+            me._streetViewTemplate  = _.template(
+                '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
+                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=360x180&location={{wgs84Y}}' +
+                    ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
+                '</a>');
+
+            me._featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
+                                                    '<div class="formLabels">{{propertyName}}</div>' +
+                                                    '<div class="formAttributeContent">{{propertyValue}}</div>' +
+                                                 '</div>');
+            me._featureDataTemplateText = _.template('<div class="formAttributeContentRow">' +
+                                                        '<div class="formLabels">{{propertyName}}</div>' +
+                                                         '<div class="formAttributeContent">' +
+                                                            '<input class="featureAttributeText" type="text"' +
+                                                            ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
+                                                            ' value="{{propertyDisplayValue}}">' +
+                                                         '</div>' +
+                                                     '</div>');
+
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
             me._getPropertyValues();
 
             return null;
         },
-        showAttributes : function(id, content) {
+        showAttributes : function(id, point) {
             var me = this;
             me._featureDataAssetId = id;
             $.get("/api/assets/" + id, function(data) {
-                jQuery("#featureAttributes").html('<h2>' +id+ '</h2>'+ me._makeContent(data.propertyData));
-                jQuery(".featureattributeText").on("blur", function() {
+
+                var featureData = me._makeContent(data.propertyData);
+                var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
+                console.log("steetView", streetView);
+                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });
+
+                jQuery("#featureAttributes").html(featureAttributes);
+
+
+                jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
 
                     var propertyValue = [];
@@ -116,12 +146,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var data = jQuery(this);
                     var propertyValue = [];
                     var values = data.val();
+                    var name = data.attr('name');
 
                     _.forEach(values,
                         function(value) {
                             propertyValue.push({
                                 "propertyValue" : Number(value),
-                                "propertyDisplayValue" : ""
+                                "propertyDisplayValue" : name
                             });
                         }
                     );
@@ -235,9 +266,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @static
          */
         eventHandlers : {
+            'infobox.InfoBoxClosedEvent': function (event) {
+                this._closeFeatures(event);
+            }
 
         },
-
+        _closeFeatures: function (event) {
+            jQuery("#featureAttributes").html('');
+        },
         /**
          * @method stop
          * implements BundleInstance protocol stop method
