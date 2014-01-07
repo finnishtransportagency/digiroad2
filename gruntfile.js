@@ -118,7 +118,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['configureProxies:server', 'connect', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'connect', 'mocha']);
+  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
-  grunt.registerTask('default', ['jshint', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
 };
