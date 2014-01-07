@@ -121,24 +121,18 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             me._featureDataAssetId = id;
             $.get("/api/assets/" + id, function(data) {
-
                 var featureData = me._makeContent(data.propertyData);
                 var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
-                console.log("steetView", streetView);
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });
 
                 jQuery("#featureAttributes").html(featureAttributes);
-
-
                 jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
-
                     var propertyValue = [];
                     propertyValue.push({
                         "propertyValue" : 0,
                         "propertyDisplayValue" : data.val()
                     });
-
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
 
