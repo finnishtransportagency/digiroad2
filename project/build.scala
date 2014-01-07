@@ -45,6 +45,8 @@ object Digiroad2Build extends Build {
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
+        "org.apache.commons" % "commons-lang3" % "3.2",
+        "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
         "com.typesafe.slick" %% "slick" % "1.0.1",
