@@ -21,7 +21,7 @@ trait AuthenticationSupport extends ScalatraBase with ScentrySupport[User] {
   }
 
   protected def toSession = {
-    case user: User => write(user.copy(password = ""))
+    case user: User => write(user)
   }
 
   protected val scentryConfig = (new ScentryConfig { }).asInstanceOf[ScentryConfiguration]
