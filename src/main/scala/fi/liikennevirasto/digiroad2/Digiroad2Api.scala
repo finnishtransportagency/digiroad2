@@ -4,34 +4,29 @@ import org.scalatra._
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
-import org.json4s.JsonAST.JString
-import org.json4s.JsonAST.JInt
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.authentication.AuthenticationSupport
+import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
-
   before() {
     contentType = formats("json")
-    basicAuth
+    userOption match {
+      case Some(user) => Digiroad2Context.userProvider.setThreadLocalUser(user)
+      case None => throw new UnauthenticatedException()
+    }
   }
 
   get("/config") {
     // todo read user specific properties from db
-    val config = readJsonFromStream(getClass.getResourceAsStream("/map_base_config.json"))
-    val userConfig = userProvider.getUserConfiguration()
-    config.replace("mapfull" :: "state" :: Nil, (config \ "mapfull" \ "state").transformField {
-      case ("zoom", JInt(x)) => ("zoom", JInt(BigInt(userConfig.get("zoom").getOrElse(x.toString))))
-      case ("east", JString(x)) => ("east", JString(userConfig.get("east").getOrElse(x)))
-      case ("north", JString(x)) => ("north", JString(userConfig.get("north").getOrElse(x)))
-    })
+    userProvider.getThreadLocalUser() match {
+      case Some(user) => readJsonFromBody(MapConfigJson.mapConfig(user.configuration))
+      case _ => throw new UnauthenticatedException()
+    }
   }
 
   get("/assetTypes") {
@@ -96,6 +91,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   error {
     // TODO: error logging / handling
+    case ue: UnauthenticatedException => Unauthorized("Not authenticated")
     case e => e.printStackTrace()
   }
 }
