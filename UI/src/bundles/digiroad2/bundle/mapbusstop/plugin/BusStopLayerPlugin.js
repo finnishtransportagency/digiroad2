@@ -283,7 +283,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var directionArrow = this._selectedBusStop.directionArrow;
             var directionLayer = this._layer[this._selectedBusStop.layerId][1];
             var validityDirection = this._selectedBusStop.effectDirection;
-            var effectDirection = this._selectedBusStop.effectDirection
+            var effectDirection = this._selectedBusStop.effectDirection;
             var roadDirection = this._selectedBusStop.roadDirection;
 
             var layer = _.find(this._selectedBusStopLayer.markers, function(marker) {
