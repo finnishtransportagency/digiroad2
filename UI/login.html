@@ -12,5 +12,18 @@
     <br/>
     <input type="submit" value="Kirjaudu">
 </form>
+<hr/>
+<h3>Luo uusi käyttäjä</h3>
+<form method="post" action="/api/auth/user">
+    Käyttäjätunnus: <input type="text" name="username"/>
+    <br/>
+    Sähköposti: <input type="text" name="email"/>
+    <br/>
+    Salasana: <input type="password" name="password"/>
+    <br/>
+    Salasana uudestaan: <input type="password" name="passwordConfirm"/>
+    <br/>
+    <input type="submit" value="Luo käyttäjä">
+</form>
 </body>
 </html>

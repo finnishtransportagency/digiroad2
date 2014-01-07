@@ -12,7 +12,7 @@ import org.apache.commons.codec.binary.Base64
 import org.scalatra.auth.Scentry
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 
-class Digiroad2ApiSpec extends FunSuite with ScalatraSuite  {
+class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestAssetId = 100
   val TestPropertyId = "1"
