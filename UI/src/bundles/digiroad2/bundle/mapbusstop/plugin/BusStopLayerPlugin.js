@@ -546,20 +546,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                 point.heading = busStop.roadDirection+ (90  * busStop.effectDirection);
                 me._sendShowAttributesRequest(busStop.id, point);
-
                 var contentItem = me._makeContent(imageIds);
                 me._sendPopupRequest("busStop", busStop.id, contentItem, busStop.lonlat);
-
-                /*
-                var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-                var request = requestBuilder(busStop.id, point);
-                me._sandbox.request(me.getName(), request);
-*/
 
                 jQuery(".popupInfoChangeDirection").on("click", function() {
                     me._directionChange(busStop.id, point);
                 });
-
                 OpenLayers.Event.stop(evt);
             };
         },
