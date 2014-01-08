@@ -111,6 +111,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                             ' value="{{propertyDisplayValue}}">' +
                                                          '</div>' +
                                                      '</div>');
+            me._featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
+                                                    '<div class="formLabels">{{propertyName}}</div>' +
+                                                    '<div class="featureAttributeNA">{{propertyValue}}</div>' +
+                                                 '</div>');
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
             me._getPropertyValues();
@@ -204,8 +208,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, 'multiple');
                         html += me._featureDataTemplate(feature);
                     }  else {
-                        feature.propertyValue ="N/A";
-                        html += me._featureDataTemplate(feature);
+                        feature.propertyValue ='Ei toteutettu';
+                        html += me._featureDataTemplateNA(feature);
                     }
                 }
             );
@@ -230,7 +234,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var selectedValue ='';
 
                     if (_.contains(valuesNro, optionValue.propertyValue)) {
-                        selectedValue = 'selected="true"';
+                        selectedValue = 'selected="true" ';
                     }
 
                     optionValue.selectedValue = selectedValue;

@@ -96,11 +96,7 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
             var me = this;
 
             // templates
-            //this._contentWrapper('<div class="popuContentWrapper"></div>');
-            this._arrow = jQuery('<div class="popupHeaderArrow"></div>');
-            this._header = jQuery('<div></div>');
-            this._headerWrapper = jQuery('<div class="popupHeader"></div>');
-            this._headerCloseButton = jQuery('<div class="olPopupCloseBox icon-close-white" style="position: absolute; top: 12px;"></div>');
+            this._headerCloseButton = jQuery('<div class="olPopupCloseBox icon-close-white" style="position: absolute; top: 10px; right: 10px; opacity: 0.4;"></div>');
             this._contentDiv = jQuery('<div class="arrow_box"></div>');
             this._contentWrapper = jQuery('<div class="contentWrapper"></div>');
             this._actionLink = jQuery('<span class="infoboxActionLinks"><a href="#"></a></span>');
@@ -194,7 +190,7 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
             popup.moveTo = function (px) {
                 if ((px !== null && px !== undefined) && (this.div !== null && this.div !== undefined)) {
                     this.div.style.left = (px.x - 99) + "px";
-                    var topy = px.y - 136;
+                    var topy = px.y - 122;
                     this.div.style.top = topy + "px";
                 }
             };
@@ -329,60 +325,6 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
             if (panx !== 0 || pany !== 0) {
                 this.getMapModule().panMapByPixels(-panx, -pany);
             }
-        },
-        /**
-         * Changes the colour scheme of the plugin
-         *
-         * @method changeColourScheme
-         * @param {Object} colourScheme object containing the colour settings for the plugin
-         *      {
-         *          bgColour: <the background color of the gfi header>,
-         *          titleColour: <the colour of the gfi title>,
-         *          headerColour: <the colour of the feature name>,
-         *          iconCls: <the icon class of the gfi close icon>
-         *      }
-         * @param {jQuery} div
-         */
-        _changeColourScheme: function (colourScheme, div) {
-            div = div || jQuery('div#getinforesult');
-
-            if (!colourScheme || !div) return;
-
-            var gfiHeaderArrow = div.find('div.popupHeaderArrow'),
-                gfiHeader = div.find('div.popupHeader'),
-                gfiTitle = div.find('div.popupTitle'),
-                layerHeader = div.find('div.getinforesult_header'),
-                featureHeader = div.find('h3.myplaces_header'),
-                closeButton = div.find('div.olPopupCloseBox');
-
-            gfiHeaderArrow.css({
-                'border-right-color': colourScheme.bgColour
-            });
-
-            gfiHeader.css({
-                'background-color': colourScheme.bgColour,
-                'color': colourScheme.titleColour
-            });
-
-            gfiTitle.css({
-                'color': colourScheme.titleColour
-            });
-
-            layerHeader.css({
-                'background-color': colourScheme.bgColour
-            });
-
-            layerHeader.find('div.getinforesult_header_title').css({
-                'color': colourScheme.titleColour
-            });
-
-            featureHeader.css({
-                'color': colourScheme.headerColour
-            });
-
-            closeButton.removeClass('icon-close-white');
-            closeButton.removeClass('icon-close');
-            closeButton.addClass(colourScheme.iconCls);
         },
         /**
          * @method close
