@@ -113,7 +113,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _initRoadsStyles: function() {
             this._roadStyles = new OpenLayers.StyleMap({
-                "temporary": new OpenLayers.Style(null, {
+                "select": new OpenLayers.Style(null, {
                     rules: [
                         new OpenLayers.Rule({
                             symbolizer: {
@@ -388,14 +388,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }),
                 styleMap: me._roadStyles
             });
-            this._selectControl = new OpenLayers.Control.SelectFeature(busStopsRoads, {
-                hover: true,
-                highlightOnly: true,
-                renderIntent: "temporary",
-                eventListeners: {
-
-                }
-            });
+            this._selectControl = new OpenLayers.Control.SelectFeature(busStopsRoads);
 
             this._map.addControl(this._selectControl);
             this._selectControl.activate();
