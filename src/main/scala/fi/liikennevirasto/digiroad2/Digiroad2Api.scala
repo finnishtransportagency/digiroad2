@@ -8,8 +8,10 @@ import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
+import org.slf4j.LoggerFactory
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
+  val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
 
@@ -55,7 +57,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
     val asset = Asset(params("id").toLong, assetTypeId = assetTypeId.get, lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, propertyData = List(), bearing = bearing)
     val updated = featureProvider.updateAssetLocation(asset)
-    println("UPDATED: " + updated)
+    logger.debug("Asset updated: " + updated)
     updated
   }
 
@@ -90,8 +92,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   error {
-    // TODO: error logging / handling
     case ue: UnauthenticatedException => Unauthorized("Not authenticated")
-    case e => e.printStackTrace()
+    case e: Exception => logger.error("API Error", e)
   }
 }
