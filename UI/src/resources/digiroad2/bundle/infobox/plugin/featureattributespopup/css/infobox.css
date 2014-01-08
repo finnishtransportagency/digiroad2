@@ -1,100 +1,26 @@
-div.popupHeader {
-    background-color: #424343;
-    color: #FFFFFF;
-    position: relative;
-    left: 0px;
-    padding: 0px;
-    margin: 0px;
-    border-radius: 6px 6px 0px 0px;
-    display: inline-block;
-    width: 390px;
-    float: left;
-    height: 40px; }
-
-div.popupHeader div {
-    vertical-align: top;
-    margin-left: 20px;
-    margin-right: 20px;
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 0;
-    position: absolute;
-    top: 12px; }
-
-div.popupHeaderArrow {
-    width: 0;
-    height: 0;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-right: 10px solid #424343;
-    display: inline-block;
-    float: left;
-    margin-top: 10px; }
-
-
-
-/*Pop-up width reduced for places search */
-div#searchResultPopup_contentDiv div.popupContent {
-    height: 150px; }
-
-div.olPopup {
-    margin: 0;
-    padding: 0;
-    background-color: #ffffff;
-    overflow: auto;
-    /*\0/ !important*/
-    height: 400px;
-    /*\0/ !important*/
-    z-index: 16000; }
-
 div.olPopupContent {
     overflow: visible;
     padding: 0px;
     margin: 0px;
     left: 0px;
-    top: 0px; }
-
-div.popupContent hr.infoboxLine {
-    border: 1px solid;
-    width: 90%;
-    margin-top: 10px; }
-
-div.popupContent span.infoboxActionLinks {
-    padding-right: 15px;
-    padding-left: 15px; }
-
+    top: 0px;
+}
 .olPopupCloseBox {
     cursor: pointer;
-    background-attachment: scroll;
-    background-color: transparent;
     background-origin: padding-box;
-    background-repeat: no-repeat;
+    background: transparent no-repeat scroll;
     background-size: auto auto;
     right: 0px;
     position: absolute;
-    top: 14px; }
-
-div.popupContent {
-    clear: both;
-    margin-left: 10px;
-    background-color: #FFFFFF;
-    position: relative;
-    left: 0px;
-    top: 0px;
-    height: 250px;
-    border-radius: 0px 0px 6px 6px;
-    border: 1px solid;
-    border-color: #424343;
-    overflow: auto;
-    padding: 20px 20px 20px 25px; }
-
-.arrow_box {
+    top: 14px;
+}
+div.arrow_box {
     position: relative;
     background-color: #444444;
     border: 1px solid #000000;
     border-radius: 3px;
 }
-.arrow_box:after, .arrow_box:before {
+div.arrow_box:after, .arrow_box:before {
     top: 100%;
     left: 50%;
     border: solid transparent;
@@ -104,36 +30,30 @@ div.popupContent {
     position: absolute;
     pointer-events: none;
 }
-
-.arrow_box:after {
-    border-color: rgba(105, 105, 105, 0);
+div.arrow_box:after {
+    border: 20px rgba(105, 105, 105, 0);
     border-top-color: #444444;
-    border-width: 20px;
     margin-left: -20px;
 }
-.arrow_box:before {
-    border-color: rgba(0, 0, 0, 0);
+div.arrow_box:before {
+    border: 21px rgba(0, 0, 0, 0);
     border-top-color: #000000;
-    border-width: 21px;
     margin-left: -21px;
 }
-
-.popupInfoTitle {
+div.popupInfoTitle {
     font-size: 14px;
     font-family: "Arial";
     color: rgb( 255, 255, 255 );
     line-height: 1.286;
-    padding-top: 15px;
-    padding-bottom: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     padding-left: 10px;
 }
-
-.popupInfoBusStopsIcons {
+div.popupInfoBusStopsIcons {
     padding-left: 10;
     padding-bottom: 10px;
 }
-
-.popupInfoChangeDirection {
+div.popupInfoChangeDirection {
     margin-left: 10px;
     margin-right: 10px;
     border: 1px solid #000000;
@@ -147,30 +67,6 @@ div.popupContent {
     margin-bottom: 10px;
     background-color: #666666;
 }
-
-.changeDirectionButton {
+div.changeDirectionButton {
     padding: 5px;
-    border-top-color: #777777;
-    border-left-color:#777777;
-    border:solid;
-    border-radius: 3px;
-    border-left-width: 1px;
-    border-bottom-width: 0px;
-    border-right-width: 0px;
-    border-top-width: 1px;
-
-}
-
-.changeDirectionButton:active {
-    padding: 5px;
-    border-top-color: #000;
-    border-left-color:#000;
-    border-bottom-color: #999;
-    border-right-color:#999;
-    border-radius: 3px;
-    border-left-width: 0px;
-    border-bottom-width: 1px;
-    border-right-width: 1px;
-    border-top-width: 0px;
-
 }
