@@ -8,8 +8,10 @@ import java.io.File
 import scala.concurrent.ExecutionContext
 import akka.actor.Cancellable
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
+import org.slf4j.LoggerFactory
 
 object MtkFileSlurper  {
+  val logger = LoggerFactory.getLogger(getClass)
   var oracleAssetProvider: AssetProvider = null
 
   def startWatching() {
@@ -24,8 +26,7 @@ object MtkFileSlurper  {
     oracleAssetProvider = featureProvider
     val pollingInterval = getProperty("digiroad2.mtkPollingInterval").toLong
     val pollingFolder = FileUtils.getFile(getProperty("digiroad2.mtkPollingFolder"))
-    // TODO: replace with proper logger implementation
-    println(s"Mtk message parser is watching directory $pollingFolder using $pollingInterval ms polling interval")
+    logger.info(s"Mtk message parser is watching directory $pollingFolder using $pollingInterval ms polling interval")
     import scala.concurrent.duration._
     import scala.language.postfixOps
     import ExecutionContext.Implicits.global
@@ -50,8 +51,7 @@ object MtkFileSlurper  {
     val (directory, processingQueue) = params
     def addItemToQueue(file: File) {
       if(processingQueue.find(x => x.getAbsolutePath == file.getAbsolutePath).isEmpty) {
-        // TODO:proper logger implementation
-        println(s"Adding $file to processing queue")
+        logger.info(s"Adding $file to processing queue")
         processingQueue.enqueue(file)
       }
     }
@@ -62,8 +62,7 @@ object MtkFileSlurper  {
 
   def moveFileToProcessed(fileOption: Option[File]) {
     fileOption.foreach(file => {
-      // TODO:proper logger implementation
-      println(s"Moving $file to processed")
+      logger.info(s"Moving $file to processed")
       val processedFolder = FilenameUtils.getFullPath(file.getPath) + "processed" + File.separator
       FileUtils.moveFileToDirectory(file, new File(processedFolder), true)
     })
@@ -72,8 +71,7 @@ object MtkFileSlurper  {
   def storeMtkData(dataOption: Option[(File, Seq[MtkRoadLink])]) = {
     dataOption.foreach(x =>
       {
-        // TODO:proper logger implementation
-        println(s"Storing roadlinks to Oracle (amount ${x._2.size})")
+        logger.info(s"Storing roadlinks to Oracle (amount ${x._2.size})")
         oracleAssetProvider.updateRoadLinks(x._2)
       })
     dataOption.map(_._1)
@@ -81,8 +79,7 @@ object MtkFileSlurper  {
 
   def parseMtkMessage(fileOption: Option[File]) = {
     fileOption.map(file =>  {
-      // TODO:proper logger implementation
-      println(s"Parsing file $file")
+      logger.info(s"Parsing file $file")
       (file, MtkMessageParser.parseMtkMessage(Source.fromFile(file)))
     })
   }
