@@ -88,11 +88,14 @@ class MtkFileSlurperSpec extends FlatSpec with MustMatchers with BeforeAndAfter 
     FileUtils.forceMkdir(new File(dirPath))
     val file = new File(dirPath + File.separator + "file.xml")
     file.createNewFile()
-    val target = new File(dirPath + File.separator + "processed" + File.separator + "file.xml")
-    target.exists() must equal(false)
+    val targetDir = new File(dirPath + File.separator + "processed" + File.separator)
+    targetDir.exists() must equal(false)
     MtkFileSlurper.moveFileToProcessed(Some(file))
     file.exists() must equal(false)
-    target.exists() must equal(true)
+    import scala.collection.JavaConversions._
+    val target = FileUtils.listFiles(targetDir, Array("xml"), false).toList
+    target.size must equal(1)
+    target.head.getName.startsWith("file") must equal(true)
   }
 
   it must "do e2e scenario when new data is available" in {
@@ -106,6 +109,8 @@ class MtkFileSlurperSpec extends FlatSpec with MustMatchers with BeforeAndAfter 
     val point2 = Point(375290.952,6678385.118, 35.027)
     verify(mockedProvider).updateRoadLinks(List(MtkRoadLink(1457964389L, new DateTime(2010,12,30,0,0,0,0), None, 49, List(point1, point2))))
     new File(dirPath + "initial.xml").exists() must equal(false)
-    new File(dirPath + "processed" + File.separator + "initial.xml").exists() must equal(true)
+    import scala.collection.JavaConversions._
+    val files = FileUtils.listFiles(new File(dirPath + "processed" + File.separator), Array("xml"), false).toList
+    files.size must equal(1)
   }
 }
