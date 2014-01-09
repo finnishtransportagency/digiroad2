@@ -3,8 +3,10 @@ package fi.liikennevirasto.digiroad2.authentication
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.apache.commons.validator.routines.EmailValidator
+import org.slf4j.LoggerFactory
 
 class SessionApi extends ScalatraServlet with AuthenticationSupport {
+  val logger = LoggerFactory.getLogger(getClass)
   def defaultConfig(municipalityNumber: String): Map[String, String] = municipalityNumber match {
     case "235" => Map("zoom" -> "8", "east" -> "373560", "north"-> "6677676", "municipalityNumber" -> "235")
     case "837" => Map("zoom" -> "7", "east" -> "328308", "north"-> "6822545", "municipalityNumber" -> "837")
@@ -33,7 +35,10 @@ class SessionApi extends ScalatraServlet with AuthenticationSupport {
         BadRequest("Must provide a valid email address")
     } else {
       userProvider.getUser(username) match {
-        case Some(u) => BadRequest("User exists")
+        case Some(u) => {
+          logger.info("User exists: " + username + "(" + u + ")")
+          BadRequest("User exists")
+        }
         case _ => {
           userProvider.createUser(username, password, email, configMap)
           Ok("User created")
