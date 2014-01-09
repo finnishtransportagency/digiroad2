@@ -24,7 +24,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/config") {
-    // todo read user specific properties from db
     userProvider.getThreadLocalUser() match {
       case Some(user) => readJsonFromBody(MapConfigJson.mapConfig(user.configuration))
       case _ => throw new UnauthenticatedException()
