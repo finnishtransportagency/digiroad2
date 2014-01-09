@@ -1,0 +1,364 @@
+{
+    "layers": [
+    {
+        "styles": {
+
+        },
+        "type": "base",
+        "orgName": "Taustakartat",
+        "baseLayerId": 2,
+        "formats": {
+
+        },
+        "isQueryable": false,
+        "id": "base_2",
+        "minScale": 1.5E7,
+        "admin": {
+
+        },
+        "names": {
+            "fi": "Maastokartta",
+            "sv": "Terrängkarta",
+            "en": "Topographic map"
+        },
+        "name": "Maastokartta",
+        "permissions": {
+            "publish": "no_publication_permission"
+        },
+        "subLayer": [
+            {
+                "dataUrl_uuid": "c6e94f34-4925-4fa6-bac9-6b25f4e7cebf",
+                "wmsName": "peruskartta",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 75,
+                "minScale": 25000,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=c6e94f34-4925-4fa6-bac9-6b25f4e7cebf",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/peruskarttarasteri/service/wms,http://b.karttatiili.fi/dataset/peruskarttarasteri/service/wms,http://c.karttatiili.fi/dataset/peruskarttarasteri/service/wms,http://d.karttatiili.fi/dataset/peruskarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:30:57 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Peruskartta 1:20k",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 1
+            },
+            {
+                "dataUrl_uuid": "274dc94e-8dd7-4ab5-959d-70278b23c12d",
+                "wmsName": "maastokartta_500k",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 76,
+                "minScale": 550000,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=274dc94e-8dd7-4ab5-959d-70278b23c12d",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://b.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://c.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://d.karttatiili.fi/dataset/maastokarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:38:49 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Maastokartta 1:250k",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 280000
+            },
+            {
+                "dataUrl_uuid": "5c671d8d-be58-4f5d-8242-a150ecc82f95",
+                "wmsName": "maastokartta_100k",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 2,
+                "minScale": 130000,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=5c671d8d-be58-4f5d-8242-a150ecc82f95",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://b.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://c.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://d.karttatiili.fi/dataset/maastokarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:37:39 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Maastokartta 1:100k",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 55000
+            },
+            {
+                "dataUrl_uuid": "bb491154-4f95-4b47-b0a3-cf9e1a0a78cc",
+                "wmsName": "yleiskartta_4m",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 6,
+                "minScale": 2834657,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=bb491154-4f95-4b47-b0a3-cf9e1a0a78cc",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://b.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://c.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://d.karttatiili.fi/dataset/yleiskarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:31:31 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Yleiskartta 1:4milj",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 1417333
+            },
+            {
+                "dataUrl_uuid": "b726f2c9-992f-41af-8bb5-c669405be724",
+                "wmsName": "yleiskartta_2m",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 5,
+                "minScale": 1417333,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=b726f2c9-992f-41af-8bb5-c669405be724",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://b.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://c.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://d.karttatiili.fi/dataset/yleiskarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:39:04 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Yleiskartta 1:2milj",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 566939
+            },
+            {
+                "dataUrl_uuid": "72f22116-b877-4c02-8833-366134f96e06",
+                "wmsName": "yleiskartta_8m",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 7,
+                "minScale": 1.5E7,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=72f22116-b877-4c02-8833-366134f96e06",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://b.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://c.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://d.karttatiili.fi/dataset/yleiskarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:35:40 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Yleiskartta 1:8milj",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 2834657
+            },
+            {
+                "dataUrl_uuid": "980fa404-75d3-4afd-b97e-bf1a9e392cd9",
+                "wmsName": "yleiskartta_1m",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 4,
+                "minScale": 566939,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=980fa404-75d3-4afd-b97e-bf1a9e392cd9",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://b.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://c.karttatiili.fi/dataset/yleiskarttarasteri/service/wms,http://d.karttatiili.fi/dataset/yleiskarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:31:15 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Yleiskartta 1:1milj",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 283474
+            },
+            {
+                "dataUrl_uuid": "d47ac165-6abd-4357-a4f9-a6f17e2b0c58",
+                "wmsName": "maastokartta_50k",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 1,
+                "minScale": 54000,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=d47ac165-6abd-4357-a4f9-a6f17e2b0c58",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://b.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://c.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://d.karttatiili.fi/dataset/maastokarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:31:54 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Maastokartta 1:50k",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 26000
+            },
+            {
+                "dataUrl_uuid": "924a68ba-665f-4ea0-a830-26e80112b5dc",
+                "wmsName": "maastokartta_250k",
+                "styles": {
+
+                },
+                "baseLayerId": 2,
+                "orgName": "Maastokartta",
+                "type": "wmslayer",
+                "legendImage": "http://xml.nls.fi/Rasteriaineistot/Merkkienselitykset/2010/01/peruskartta_mk25000.png",
+                "formats": {
+
+                },
+                "isQueryable": false,
+                "id": 3,
+                "minScale": 245000,
+                "dataUrl": "/catalogue/ui/metadata.html?uuid=924a68ba-665f-4ea0-a830-26e80112b5dc",
+                "style": "",
+                "wmsUrl": "http://a.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://b.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://c.karttatiili.fi/dataset/maastokarttarasteri/service/wms,http://d.karttatiili.fi/dataset/maastokarttarasteri/service/wms",
+                "updated": "Mon Dec 09 09:32:11 EET 2013",
+                "admin": {
+
+                },
+                "orderNumber": 1,
+                "name": "Maastokartta 1:250k",
+                "permissions": {
+                    "publish": "no_publication_permission"
+                },
+                "opacity": 100,
+                "subtitle": "",
+                "inspire": "Maastokartat",
+                "maxScale": 135000
+            }
+        ],
+        "inspire": "Taustakartat",
+        "maxScale": 1
+    },
+    {
+        "dataUrl_uuid": "b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
+        "wmsName": "ortokuva",
+        "styles": {
+
+        },
+        "descriptionLink": "http://www.paikkatietoikkuna.fi/web/guest/ortokuvat",
+        "baseLayerId": 15,
+        "orgName": "Maanmittauslaitos",
+        "type": "wmslayer",
+        "legendImage": "",
+        "formats": {
+
+        },
+        "isQueryable": false,
+        "id": 24,
+        "minScale": 50000,
+        "dataUrl": "/catalogue/ui/metadata.html?uuid=b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
+        "style": "",
+        "wmsUrl": "http://a.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://b.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://c.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://d.karttatiili.fi/dataset/ortoilmakuva/service/wms",
+        "updated": "Fri Aug 24 11:53:00 EEST 2012",
+        "admin": {
+
+        },
+        "orderNumber": 8,
+        "name": "Ortoilmakuva",
+        "permissions": {
+            "publish": "no_publication_permission"
+        },
+        "opacity": 100,
+        "subtitle": "",
+        "inspire": "Ortoilmakuvat",
+        "maxScale": 1
+    }]
+}
