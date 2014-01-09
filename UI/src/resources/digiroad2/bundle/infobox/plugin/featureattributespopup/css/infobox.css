@@ -150,11 +150,4 @@ div.popupContent {
 
 .changeDirectionButton {
     padding: 5px;
-    border:solid;
-    border-radius: 3px;
-    border-left-width: 1px;
-    border-bottom-width: 0px;
-    border-right-width: 0px;
-    border-top-width: 1px;
-
 }
