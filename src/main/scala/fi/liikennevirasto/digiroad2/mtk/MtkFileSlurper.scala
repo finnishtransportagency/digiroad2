@@ -9,6 +9,8 @@ import scala.concurrent.ExecutionContext
 import akka.actor.Cancellable
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import org.slf4j.LoggerFactory
+import org.joda.time.format.{DateTimeFormat}
+import org.joda.time.DateTime
 
 object MtkFileSlurper  {
   val logger = LoggerFactory.getLogger(getClass)
@@ -33,7 +35,11 @@ object MtkFileSlurper  {
     val system = akka.actor.ActorSystem("system")
     val processingQueue = new mutable.SynchronizedQueue[File]()
     system.scheduler.schedule(0 milliseconds, pollingInterval milliseconds) {
-      handleSchedulerTick((pollingFolder, processingQueue))
+      try {
+        handleSchedulerTick((pollingFolder, processingQueue))
+      } catch {
+        case e: Exception => logger.error("Mtk file processign caused exception", e)
+      }
     }
   }
 
@@ -64,7 +70,10 @@ object MtkFileSlurper  {
     fileOption.foreach(file => {
       logger.info(s"Moving $file to processed")
       val processedFolder = FilenameUtils.getFullPath(file.getPath) + "processed" + File.separator
-      FileUtils.moveFileToDirectory(file, new File(processedFolder), true)
+      val fmt = DateTimeFormat.forPattern("yyyy_MM_dd_mm_ss")
+      val newFile =new File(file.getName.stripSuffix(".xml") + "_" + fmt.print(new DateTime()) + ".xml")
+      FileUtils.copyFile(file, new File(processedFolder + newFile.getName))
+      FileUtils.forceDelete(file)
     })
   }
 
