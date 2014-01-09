@@ -198,7 +198,9 @@ body {
   width: 20px !important;
   margin: 1px;
   margin-top: 6px;
-  padding: 1px; }
+  padding: 1px;
+  position: relative;
+  right: 10;}
 
 .oskari-tile-close {
   display: none; }
