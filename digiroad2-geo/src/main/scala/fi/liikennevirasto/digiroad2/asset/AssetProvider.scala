@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 
 trait AssetProvider {
   def getAssetTypes: Seq[AssetType]
-  def getAssets(assetTypeId: Long, municipalityNumber: Option[Long] = None, assetId: Option[Long] = None): Seq[Asset]
+  def getAssetById(assetId: Long): Option[Asset]
+  def getAssets(assetTypeId: Long, municipalityNumber: Option[Long] = None): Seq[Asset]
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue])
   def deleteAssetProperty(assetId: Long, propertyId: String)
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]

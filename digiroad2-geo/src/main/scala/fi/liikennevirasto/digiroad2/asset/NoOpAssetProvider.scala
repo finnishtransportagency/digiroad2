@@ -6,7 +6,8 @@ class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
   def getRoadLinks(municipalityNumber: Option[Int]): Seq[RoadLink] = List()
-  def getAssets(assetTypeId: Long, municipalityNumber: Option[Long], assetId: Option[Long]): Seq[Asset] = List()
+  def getAssetById(assetId: Long): Option[Asset] = None
+  def getAssets(assetTypeId: Long, municipalityNumber: Option[Long]): Seq[Asset] = List()
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = List()
   def updateAssetLocation(asset: Asset): Asset = asset
