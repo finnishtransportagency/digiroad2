@@ -305,7 +305,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return marker.id == me._selectedBusStop.id;
             });
 
-            this._layer[this._selectedBusStop.layerId][2].removeMarker(layer);
+            this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][2].removeMarker(layer);
             me._addBusStop(id, this._selectedBusStopLayer, lonlat, featureData, bearing,
                 this._selectedBusStop.layerId, directionArrow, directionLayer, imageIds, 10, validityDirection);
 
@@ -376,12 +376,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          */
         _addMapLayerToMap: function (layer) {
             var me = this;
-            var layers = [];
             if (!layer.isLayerOfType(this._layerType)) {
                 return;
             }
+            var layers = [];
             var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
-                strategies: [new OpenLayers.Strategy.Fixed()],
+                strategies: [new OpenLayers.Strategy.BBOX()],
                 protocol: new OpenLayers.Protocol.HTTP({
                     url: layer.getRoadLinesUrl(),
                     format: new OpenLayers.Format.GeoJSON()
@@ -389,21 +389,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 styleMap: me._roadStyles
             });
             this._selectControl = new OpenLayers.Control.SelectFeature(busStopsRoads);
-
-            this._map.addControl(this._selectControl);
-            this._selectControl.activate();
             var directionLayer = new OpenLayers.Layer.Vector("busStopsDirection_" + layer.getId());
-            this._map.addLayer(busStopsRoads);
             var busStops = new OpenLayers.Layer.Markers("busStops_" + layer.getId() );
-            me._map.addControl(new OpenLayers.Control.DragFeature(busStops));
+
+            me._map.addLayer(busStopsRoads);
             me._map.addLayer(directionLayer);
             me._map.addLayer(busStops);
             layers.push(busStopsRoads);
             layers.push(directionLayer);
             layers.push(busStops);
-            me._layer[layer.getId()] = layers;
+            me._layer[this._layerType +"_"+ layer.getId()] = layers;
 
-            jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
+             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
 
                     var validityDirectionProperty = _.find(eachData.propertyData, function(property) {
@@ -436,9 +433,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 .fail(function() {
                     console.log( "error" );
                 });
-
             me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
-
         },
         _addBusStop: function(id, busStops, ll, data, bearing, layerId, directionArrow, directionLayer, imageIds, typeId,
                               validityDirection ) {
@@ -446,7 +441,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             // new bus stop marker
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-
             var icon = new OpenLayers.Icon("", size, offset);
             icon.imageDiv.className = "callout-wrapper";
             icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
@@ -460,7 +454,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             icon.imageDiv.appendChild(callout);
             _.each(imageIds, function (imageId) {
                 var img = document.createElement("img");
-                img.setAttribute("src", "/api/images/" + imageId);
+                img.setAttribute("src", "/api/images/" + imageId + ".png");
                 callout.appendChild(img);
             });
             arrowContainer.appendChild(arrow);
@@ -469,17 +463,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var busStop = new OpenLayers.Marker(ll, icon);
             busStop.id = id;
             busStop.featureContent = data;
-            var popupId = "busStop";
-
             busStop.blinking = false;
             busStop.blinkInterVal = null;
             busStop.directionArrow = directionArrow;
             busStop.roadDirection = bearing;
             busStop.effectDirection = validityDirection; // 1 or -1
 
-            var busStopClick = me._mouseClick(busStop, imageIds, popupId);
+            var busStopClick = me._mouseClick(busStop, imageIds);
             var mouseUp = me._mouseUp(busStop, busStops,busStopClick, id, typeId);
-            var mouseDown = me._mouseDown(busStop, busStops, mouseUp, directionLayer);
+            var mouseDown = me._mouseDown(busStop, busStops, mouseUp);
             busStop.events.register("mousedown", busStops, mouseDown);
             busStop.layerId = layerId;
             busStops.addMarker(busStop);
@@ -495,14 +487,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 if (me._selectedBusStop) {
                     bearing = me._selectedBusStop.roadDirection;
                 }
-
                 // Opacity back
                 busStop.setOpacity(1);
                 busStop.actionMouseDown = false;
-
                 // Not need listeners anymore
                 busStop.events.unregister("mouseup", busStops, this);
-
                 // Not moved only click
                 if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {
                     var point = new OpenLayers.Geometry.Point(busStop.lonlat.lon, busStop.lonlat.lat);
@@ -512,9 +501,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
-
             };
-
         },
         _sendData: function(data, id) {
             jQuery.ajax({
@@ -539,26 +526,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseDown: function(busStop, busStops, mouseUp) {
             var me = this;
             return function (evt) {
-
                 me._selectedBusStop = busStop;
                 me._selectedBusStopLayer = busStops;
                 // push marker up
                 busStops.removeMarker(busStop);
                 busStops.addMarker(busStop);
-
                 // Opacity because we want know what is moving
                 busStop.setOpacity(0.6);
-
                 // Mouse need to be down until can be moved
                 busStop.actionMouseDown = true;
-
                 //Save orginal position
                 busStop.actionDownX = evt.clientX;
                 busStop.actionDownY = evt.clientY;
-
                 //register move and up
                 busStop.events.register("mouseup", busStops, mouseUp);
-
                 OpenLayers.Event.stop(evt);
             };
         },
@@ -580,8 +561,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 pxPosition.y = pxPosition.y + 34/2; // FIXME: read actual size from current asset
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = this._map.getLonLatFromPixel(busStopCenter);
-                var nearestLine = geometrycalculator.findNearestLine(this._layer[this._selectedBusStop.layerId][0].features, lonlat.lon, lonlat.lat);
-                var nearestFeature = _.find(this._layer[this._selectedBusStop.layerId][0].features, function(feature) {
+                var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][0].features, lonlat.lon, lonlat.lat);
+                var nearestFeature = _.find(this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][0].features, function(feature) {
                    return feature.id == nearestLine.id;
                 });
                 this._selectControl.unselectAll();
@@ -598,15 +579,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
                     lonlat.lon = position.x;
                     lonlat.lat = position.y;
-
                     this._selectedBusStop.roadLinkId = nearestLine.roadLinkId;
-
                     if (this._selectedBusStop.blinking) {
                         clearInterval(this._selectedBusStop.blinkInterVal);
                         this._selectedBusStop.setOpacity(0.6);
                         this._selectedBusStop.blinking = false;
                     }
-
                 } else if(!this._selectedBusStop.blinking) {
                     //blink
                     this._selectedBusStop.blinking = true;
@@ -663,12 +641,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          */
         _afterMapLayerRemoveEvent: function (event) {
             var layer = event.getMapLayer();
-
             if (!layer.isLayerOfType(this._layerType)) {
                 return;
             }
             this._removeMapLayerFromMap(layer);
-
         },
 
         /**
@@ -678,9 +654,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @param {Oskari.digiroad2.domain.BusStopLayer} layer
          */
         _removeMapLayerFromMap: function (layer) {
-            this._selectControl.deactivate();
+            //this._selectControl.deactivate();
             /* This should free all memory */
-            _.each(this._layer[layer.getId()], function (tmpLayer) {
+            _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
                 tmpLayer.destroy();
             });
         },
@@ -691,12 +667,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @return {OpenLayers.Layer[]}
          */
         getOLMapLayers: function (layer) {
-
             if (!layer.isLayerOfType(this._layerType)) {
                 return null;
             }
-
-            return [this._layer[layer.getId()][2]];
+            return this._layer[this._layerType +"_"+ layer.getId()];
         },
 
         /**
@@ -708,11 +682,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          */
         _afterChangeMapLayerOpacityEvent: function (event) {
             var layer = event.getMapLayer();
-
             if (!layer.isLayerOfType(this._layerType))
                 return;
 
-            _.each(this._layer[layer.getId()], function (tmpLayer) {
+            _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
                 tmpLayer.setOpacity(layer.getOpacity() / 100);
             });
         }
