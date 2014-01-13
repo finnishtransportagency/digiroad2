@@ -39,8 +39,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets/:assetId") {
-    // TODO: refactor to make assetTypeId optional
-    featureProvider.getAssets(0, None, Some(params("assetId").toLong)).headOption match {
+    featureProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => a
       case None => NotFound("Asset " + params("assetId") + " not found")
     }
