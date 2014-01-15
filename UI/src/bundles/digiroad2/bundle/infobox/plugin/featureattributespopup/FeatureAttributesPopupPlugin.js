@@ -190,7 +190,7 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
             popup.moveTo = function (px) {
                 if ((px !== null && px !== undefined) && (this.div !== null && this.div !== undefined)) {
                     this.div.style.left = (px.x - 99) + "px";
-                    var topy = px.y - 122;
+                    var topy = px.y - 132;
                     this.div.style.top = topy + "px";
                 }
             };
