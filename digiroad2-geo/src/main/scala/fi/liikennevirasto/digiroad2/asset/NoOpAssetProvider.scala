@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import org.joda.time.LocalDate
+import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 
 class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
-  def getRoadLinks(municipalityNumber: Option[Int]): Seq[RoadLink] = List()
+  def getRoadLinks(municipalityNumber: Option[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
   def getAssetById(assetId: Long): Option[Asset] = None
   def getAssets(assetTypeId: Long, municipalityNumber: Option[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = List()
   def getAssetTypes = List()

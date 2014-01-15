@@ -34,9 +34,9 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235") {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235&lon=6677569&lat=374794&r=20") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(3)
+      parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
@@ -75,10 +75,10 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("get road links", Tag("db")) {
-    getWithUserAuth("/roadlinks?municipalityNumber=235") {
+    getWithUserAuth("/roadlinks?municipalityNumber=235&lon=6677569&lat=374794&r=20") {
       status should equal(200)
       val roadLinksJson = parse(body)
-      (roadLinksJson \ "features" \ "geometry").children.size should (be > 20)
+      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (12)
     }
   }
 
