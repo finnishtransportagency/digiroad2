@@ -689,7 +689,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @param {Oskari.digiroad2.domain.BusStopLayer} layer
          */
         _removeMapLayerFromMap: function (layer) {
-            //this._selectControl.deactivate();
             /* This should free all memory */
             _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
                 tmpLayer.destroy();
