@@ -5,7 +5,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.asset.{Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
 import org.slf4j.LoggerFactory
@@ -35,7 +35,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
-    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).flatMap(x => Some(x.toLong)))
+    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams)
   }
 
   get("/assets/:assetId") {
@@ -61,7 +61,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = featureProvider.getRoadLinks(params.get(MunicipalityNumber).flatMap(x => Some(x.toInt)))
+    val rls = featureProvider.getRoadLinks(params.get(MunicipalityNumber).map(_.toInt), boundsFromParams)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
@@ -92,5 +92,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   error {
     case ue: UnauthenticatedException => Unauthorized("Not authenticated")
     case e: Exception => logger.error("API Error", e)
+  }
+
+  private[this] def boundsFromParams: Option[BoundingCircle] = {
+    val (lat, lon, r) = (params.get("lat").map(_.toLong), params.get("lon").map(_.toLong), params.get("r").map(_.toLong))
+    (lat, lon, r) match {
+      case (Some(la), Some(lo), Some(ra)) => Some(BoundingCircle(la, lo, ra))
+      case _ => None
+    }
   }
 }
