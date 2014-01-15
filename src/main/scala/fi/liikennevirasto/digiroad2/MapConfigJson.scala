@@ -66,7 +66,7 @@ object MapConfigJson {
 			"width": "100%",
 			"height": "100%"
 		 },
-         "globalMapAjaxUrl":"http://www.paikkatietoikkuna.fi/web/fi/kartta?p_p_id=Portti2Map_WAR_portti2mapportlet&p_p_lifecycle=1&p_p_state=exclusive&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_Portti2Map_WAR_portti2mapportlet_fi.mml.baseportlet.CMD=ajax.jsp&",
+         "globalMapAjaxUrl":"/data/map/layers.json?",
          "plugins":[
             {
                "id":"Oskari.mapframework.bundle.mapmodule.plugin.LayersPlugin"
@@ -100,6 +100,17 @@ object MapConfigJson {
             },
             {
                "id":"Oskari.mapframework.bundle.mapmodule.plugin.PanButtons"
+            },
+            {
+              "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
+              "config": {
+                "baseLayers": [
+                  "base_2",
+                  "24",
+                  "base_35"
+                ],
+                "showAsDropdown": false
+              }
             }
          ],
          "layers":[
@@ -107,7 +118,7 @@ object MapConfigJson {
                  "wmsName":"bussit",
                  "type":"busstoplayer",
                  "id":235,
-                 "minScale":5000000,
+                 "minScale":5000,
                  "wmsUrl":"/data/dummy/busstops.json",
                  "url":"/api/assets?assetTypeId=10&municipalityNumber=${municipalityNumber}",
                  "roadLinesUrl" :"/api/roadlinks?municipalityNumber=${municipalityNumber}",
