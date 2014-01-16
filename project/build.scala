@@ -52,7 +52,8 @@ object Digiroad2Build extends Build {
         "com.typesafe.slick" %% "slick" % "1.0.1",
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.joda" % "joda-convert" % "1.2",
-        "joda-time" % "joda-time" % "2.2"
+        "joda-time" % "joda-time" % "2.2",
+        "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0"
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
     )
   ) dependsOn(geoJar)
