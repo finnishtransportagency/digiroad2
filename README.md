@@ -49,18 +49,24 @@ grunt test
 
 Kehitysserverin pystytys:
 ```
-grunt connect watch
+grunt server
 ```
 Kehitysserveri ajaa automaattisesti testit, kääntää lessit ja toimii watch -tilassa.
 
+Kehityspalvelin ohjaa API-kutsut API-palvelimelle. Jotta järjestelmä toimii tulee myös API-palvelimen olla käynnissä.
 
-Palvelin-build
-==============
+API-palvelin
+============
 
 API-palvelimen buildia käsitellään sbt:llä, käyttäen projektin juuressa olevaa launcher-skriptiä sbt. Esim.
 
 ```
 ./sbt test
+```
+
+API-palvelimen saa käyntiin kehitysmoodiin seuraavalla sbt komennolla:
+```
+./sbt '~;container:start; container:reload /'
 ```
 
 Esim CI-ympäristössä Oracle-tietokanta ei ole käytettävissä, jolloin buildille pitää välittää system property "digiroad2.nodatabase" arvolla "true".
