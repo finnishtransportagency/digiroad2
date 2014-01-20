@@ -6,7 +6,7 @@ import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
-import org.joda.time.DateTime
+import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
 import org.slf4j.LoggerFactory
 
@@ -35,7 +35,17 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
-    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams)
+    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse(_))) match {
+      case (Some(period), _) => period match {
+        case "past" => (None, Some(LocalDate.now))
+        case "future" => (Some(LocalDate.now), None)
+      }
+      case (_, Some(day)) => {
+        (Some(day), Some(day))
+      }
+      case _ => (None, None)
+    }
+    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams, validFrom = startDate, validTo = endDate)
   }
 
   get("/assets/:assetId") {
