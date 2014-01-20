@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.mtk
 
-import org.joda.time.DateTime
+import org.joda.time.{LocalDate, DateTime}
 import scala.xml.parsing.ConstructingParser
 import scala.io.Source
 import org.joda.time.format.DateTimeFormat
@@ -20,7 +20,7 @@ object MtkMessageParser {
     val endDate = (node \\ "loppupvm").text
     val municipalityCode = (node \\ "kuntatunnus").text
     val points = toPoint((node \\ "posList").text)
-    MtkRoadLink(id.toLong, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(DateTime.parse(endDate, fmt)), municipalityCode.toInt, points)
+    MtkRoadLink(id.toLong, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(LocalDate.parse(endDate, fmt)), municipalityCode.toInt, points)
   }
 
   def parseMtkMessage(source: Source) = {
