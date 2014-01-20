@@ -111,6 +111,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                             ' value="{{propertyDisplayValue}}">' +
                                                          '</div>' +
                                                      '</div>');
+            me._featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
+                                                        '<div class="formLabels">{{propertyName}}</div>' +
+                                                        '<div class="formAttributeContent">' +
+                                                            '<input class="featureAttributeDate" type="text"' +
+                                                                ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
+                                                                ' value="{{propertyDisplayValue}}"/> <span class="attributeFormat">pp.kk.vvvv</span>' +
+                                                        '</div>' +
+                                                     '</div>');
             me._featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
                                                     '<div class="formLabels">{{propertyName}}</div>' +
                                                     '<div class="featureAttributeNA">{{propertyValue}}</div>' +
@@ -139,7 +147,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
-
+                jQuery(".featureAttributeDate").on("blur", function() {
+                    var data = jQuery(this);
+                    var propertyValue = [];
+                    propertyValue.push({
+                        "propertyValue" : 0,
+                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
+                    });
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
                     var propertyValue = [];
@@ -207,6 +223,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     } else if (feature.propertyType == "multiple_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, 'multiple');
                         html += me._featureDataTemplate(feature);
+                    } else if (feature.propertyType == "date") {
+                        feature.propertyValue = "";
+                        feature.propertyDisplayValue = "";
+                        if (feature.values[0]) {
+                            feature.propertyValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
+                            feature.propertyDisplayValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
+                        }
+                        html += me._featureDataTemplateDate(feature);
                     }  else {
                         feature.propertyValue ='Ei toteutettu';
                         html += me._featureDataTemplateNA(feature);
