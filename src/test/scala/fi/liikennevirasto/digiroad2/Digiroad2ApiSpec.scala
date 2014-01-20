@@ -119,6 +119,27 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("get past assets", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(1)
+    }
+  }
+
+  test("get future assets", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=future") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(1)
+    }
+  }
+
+  test("get assets for date", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&validityDate=2012-06-30") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(1)
+    }
+  }
+
   test("load image by id", Tag("db")) {
     getWithUserAuth("/images/2") {
       status should equal(200)
