@@ -116,7 +116,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                         '<div class="formAttributeContent">' +
                                                             '<input class="featureAttributeDate" type="text"' +
                                                                 ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                                ' value="{{propertyDisplayValue}}">' +
+                                                                ' value="{{propertyDisplayValue}}"/> <span class="attributeFormat">pp.kk.vvvv</span>' +
                                                         '</div>' +
                                                      '</div>');
             me._featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
@@ -147,7 +147,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
-
+                jQuery(".featureAttributeDate").on("blur", function() {
+                    var data = jQuery(this);
+                    var propertyValue = [];
+                    propertyValue.push({
+                        "propertyValue" : 0,
+                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
+                    });
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
                     var propertyValue = [];
@@ -219,10 +227,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
-                            feature.propertyValue = feature.values[0].propertyValue;
-                            feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
+                            feature.propertyValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
+                            feature.propertyDisplayValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
                         }
-                        html += me._featureDataTemplateText(feature);
+                        html += me._featureDataTemplateDate(feature);
                     }  else {
                         feature.propertyValue ='Ei toteutettu';
                         html += me._featureDataTemplateNA(feature);

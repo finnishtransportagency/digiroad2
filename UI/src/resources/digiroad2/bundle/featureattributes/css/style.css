@@ -39,6 +39,22 @@
     width: 210px;
     height: 21px;
 }
+/* TODO copy paste from above!!! */
+.featureAttributeDate {
+    border: 1px solid rgb(75, 75, 75);
+    border-radius: 2px;
+    background-color: rgb( 51, 51, 51 );
+    color: rgb( 230, 230, 230 );
+    width: 70px;
+    height: 21px;
+}
+
+.attributeFormat {
+    font-style: italic;
+    color: #8F8F8F;
+    display: inline;
+    height: 21px;
+}
 
 .featureattributeChoice {
     border: 1px solid rgb(75, 75, 75);
