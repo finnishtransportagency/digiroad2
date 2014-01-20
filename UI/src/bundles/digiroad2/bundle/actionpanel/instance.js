@@ -83,12 +83,34 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                                    '<div class="panelControlLine"></div>' +
                                    '<div class="panelControlLine"></div>' +
                                '</div>'+
-                               '<div class="actionPanel"><div class="layerGroup"><img src="/api/images/3">Joukkoliikenteen pysäkit</div></div>';
+                               '<div class="actionPanel">' +
+                                    '<div class="layerGroup">' +
+                                        '<div class="layerGroupImg">' +
+                                            '<img src="/src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
+                                        '</div>' +
+                                        '<div class="layerGroupLabel">Joukkoliikenteen pysäkit</div>' +
+                                    '</div>' +
+                                    '<div class="layerGroupLayers">' +
+                                    '</div>' +
+                               '</div>';
 
             me._mapBusStopLayer = _.template('<div class="busStopLayer">' +
                                                 '<div class="busStopLayerCheckbox"><input class="layerSelector" type="checkbox" {{selected}} value="{{id}}"/></div>' +
                                                 '<div class="busStopLayerName">{{name}}</div>' +
                                              '</div>');
+            me._actionButtons =
+                '<div class="actionButtons">' +
+                    '<div data-action="Select" class="actionButton actionButtonActive actionPanelButtonSelect">' +
+                        '<div class="actionPanelButtonSelectImage actionPanelButtonSelectActiveImage"></div>' +
+                    '</div>' +
+                    '<div data-action="Add" class="actionButton actionPanelButtonAdd">' +
+                        '<div class="actionPanelButtonAddImage"></div>' +
+                    '</div>' +
+                    '<div data-action="Remove" class="actionButton actionPanelButtonRemove">' +
+                        '<div class="actionPanelButtonRemoveImage"></div>' +
+                    '</div>' +
+                '</div>';
+
             return null;
         },
         _showPanel : function() {
@@ -109,9 +131,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                         if (_.contains(selectedLayers, layer)) {
                             selected = ' checked ';
                         }
-                        jQuery(".actionPanel").append(me._mapBusStopLayer({ selected: selected, id:layer.getId(), name: layer.getName()}));
+                        jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: selected, id:layer.getId(), name: layer.getName()}));
                     }
-                })
+                });
                 jQuery(".layerSelector").on("change", function() {
                     var data = jQuery(this);
                     if (data.is(':checked')) {
@@ -120,10 +142,24 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                         me.getSandbox().postRequestByName('RemoveMapLayerRequest', [data.val()]);
                     }
                 });
+                jQuery(".actionPanel").append(me._actionButtons);
+
+                jQuery(".actionButton").on("click", function() {
+                    var data = jQuery(this);
+                    var action = data.attr('data-action');
+                    jQuery(".actionButtonActive").removeClass("actionButtonActive");
+                    jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
+                    jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
+                    jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
+                    jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
+                    jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
+
+                });
+
             };
             var error = function() {
                 alert('Can\'t fetch map layers from server');
-            }
+            };
             mapLayerService.loadAllLayersAjax(addLayers, error);
         },
         /**
