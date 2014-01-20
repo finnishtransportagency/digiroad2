@@ -154,6 +154,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                     jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
                     jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
 
+                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ActionPanelToolSelectionChangedEvent');
+                    var event = eventBuilder(action);
+                    me.getSandbox().notifyAll(event);
+
                 });
 
             };
