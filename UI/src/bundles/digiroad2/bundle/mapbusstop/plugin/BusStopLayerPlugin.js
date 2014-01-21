@@ -483,7 +483,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             // new bus stop marker
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
-            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+            var offset = new OpenLayers.Pixel(-(size.w/2+1), -size.h-5);
             var icon = new OpenLayers.Icon("", size, offset);
             icon.imageDiv.className = "callout-wrapper";
             icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
