@@ -562,7 +562,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
-                url: "/api/assets/"+busStop.id+"/properties/validityTo/values",
+                url: "/api/assets/"+busStop.id+"/properties/validTo/values",
                 data: JSON.stringify(propertyValues),
                 dataType:"json",
                 success: function() {
