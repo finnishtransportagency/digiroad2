@@ -10,11 +10,11 @@
     };
 
     dateutil.iso8601toFinnish = function(iso8601DateString) {
-        return moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT)
+        return moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT);
     };
 
     dateutil.finnishToIso8601 = function(finnishDateString) {
-        return moment(finnishDateString, FINNISH_DATE_FORMAT).format(ISO_8601_DATE_FORMAT)
+        return moment(finnishDateString, FINNISH_DATE_FORMAT).format(ISO_8601_DATE_FORMAT);
     };
 
     dateutil.addFinnishDatePicker = function(element) {
