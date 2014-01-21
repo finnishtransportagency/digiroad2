@@ -13,7 +13,8 @@
     "lodash": "~2.3.0",
     "jquery": "1.10.2",
     "jquery-migrate": "~1.2.1",
-    "moment.js": "~2.5.0",
+    "momentjs": "~2.5.0",
+    "pikaday": "#master",
     "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.16"
   },
   "devDependencies": {

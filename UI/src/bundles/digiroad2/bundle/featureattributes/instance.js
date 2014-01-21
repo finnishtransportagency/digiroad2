@@ -147,15 +147,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
-                jQuery(".featureAttributeDate").on("blur", function() {
-                    var data = jQuery(this);
-                    var propertyValue = [];
-                    propertyValue.push({
-                        "propertyValue" : 0,
-                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
-                    });
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
-                });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
                     var propertyValue = [];
@@ -172,6 +163,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     );
 
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
+                var dateAttribute = jQuery(".featureAttributeDate");
+                dateAttribute.on("blur", function() {
+                    var data = jQuery(this);
+                    var propertyValue = [];
+                    propertyValue.push({
+                        "propertyValue" : 0,
+                        "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
+                    });
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
+                dateAttribute.each(function(i, element) {
+                    dateutil.addFinnishDatePicker(element);
                 });
             });
         },
@@ -227,8 +231,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
-                            feature.propertyValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
-                            feature.propertyDisplayValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
+                            feature.propertyValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
+                            feature.propertyDisplayValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                         }
                         html += me._featureDataTemplateDate(feature);
                     }  else {
@@ -237,7 +241,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     }
                 }
             );
-
             return html;
         },
         _getSelect: function(name, values, propertyId, multiple) {
