@@ -30,6 +30,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/layers") {
+    userProvider.getThreadLocalUser() match {
+      case Some(user) => readJsonFromBody(LayersJson.layers(user.configuration))
+      case _ => throw new UnauthenticatedException()
+    }
+  }
+
   get("/assetTypes") {
     featureProvider.getAssetTypes
   }
