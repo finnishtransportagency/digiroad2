@@ -22,6 +22,7 @@
             field: element,
             format: FINNISH_DATE_FORMAT,
             firstDay: 1,
+            yearRange: [1950, 2050],
             i18n: FINNISH_PIKADAY_I18N
         });
     };
