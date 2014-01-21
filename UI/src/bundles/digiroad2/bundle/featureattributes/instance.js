@@ -170,24 +170,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var propertyValue = [];
                     propertyValue.push({
                         "propertyValue" : 0,
-                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
+                        "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
                     });
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
                 dateAttribute.each(function(i, element) {
-                    console.log('adding pikaday to : ' + element);
-                    new Pikaday({
-                        field: element,
-                        format: 'D.M.YYYY',
-                        firstDay: 1,
-                        i18n: {
-                            previousMonth : 'edellinen kuukausi',
-                            nextMonth     : 'seuraava kuukausi',
-                            months: ['tammikuu','helmikuu','maaliskuu','huhtikuu','toukokuu','kesäkuu','heinäkuu','elokuu','syyskuu','lokakuu','marraskuu','joulukuu'],
-                            weekdays: ['sunnuntai','maanantai','tiistai','keskiviikko','torstai','perjantai','lauantai'],
-                            weekdaysShort : ['su','ma','ti','ke','to','pe','la']
-                        }
-                    });
+                    dateutil.addFinnishDatePicker(element);
                 });
             });
         },
@@ -243,8 +231,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
-                            feature.propertyValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
-                            feature.propertyDisplayValue = moment(feature.values[0].propertyDisplayValue, 'YYYY-MM-DD').format('D.M.YYYY');
+                            feature.propertyValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
+                            feature.propertyDisplayValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                         }
                         html += me._featureDataTemplateDate(feature);
                     }  else {
