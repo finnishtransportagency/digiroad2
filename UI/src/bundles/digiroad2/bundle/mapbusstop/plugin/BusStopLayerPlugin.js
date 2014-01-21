@@ -594,7 +594,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseDown: function(busStop, busStops, mouseUp) {
             var me = this;
             return function (evt) {
-                if (me._map.getZoom() < 10) {
+                if (me._map.getZoom() < 8) {
                     return;
                 }
                 if (me._selectedBusStop) {
@@ -637,6 +637,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
         },
         _moveSelectedBusStop: function(evt) {
+            if (this._map.getZoom() < 10) {
+                return;
+            }
             if (!this._selectedBusStop) {
                 return null;
             }
