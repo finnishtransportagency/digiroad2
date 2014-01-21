@@ -427,12 +427,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 busStopsRoads.setVisibility(false);
             }
 
+            busStopsRoads.opacity = layer.getOpacity() / 100;
+            directionLayer.opacity = layer.getOpacity() / 100;
+            busStops.opacity = layer.getOpacity() / 100;
+
             me._map.addLayer(busStopsRoads);
             me._map.addLayer(directionLayer);
             me._map.addLayer(busStops);
             layers.push(busStopsRoads);
             layers.push(directionLayer);
             layers.push(busStops);
+
+
+
             me._layer[this._layerType +"_"+ layer.getId()] = layers;
 
              jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
@@ -449,7 +456,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
                         null,
                         {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
-                            graphicHeight: 22, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-12, rotation: angle }
+                            graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
                     );
                     directionLayer.addFeatures(directionArrow);
 

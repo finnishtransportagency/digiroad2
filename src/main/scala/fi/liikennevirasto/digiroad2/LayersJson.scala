@@ -17,7 +17,8 @@ object LayersJson {
             "maxScale":1 ,
             "orgName":"LiVi",
             "inspire":"Ominaisuustiedot",
-            "name" : "Tulevat"
+            "name" : "Tulevat",
+            "opacity" : 30
         },{
             "wmsName":"bussit",
             "type":"busstoplayer",
@@ -29,7 +30,8 @@ object LayersJson {
             "maxScale":1 ,
             "orgName":"LiVi",
             "inspire":"Ominaisuustiedot",
-            "name" : "Käytöstä poistuneet"
+            "name" : "Käytöstä poistuneet",
+            "opacity" : 30
         }
 
     ]
