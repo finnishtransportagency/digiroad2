@@ -42,7 +42,7 @@ object MapConfigJson {
 			"width": "100%",
 			"height": "100%"
 		 },
-         "globalMapAjaxUrl":"/data/map/layers.json?",
+         "globalMapAjaxUrl":"/api/layers?",
          "plugins":[
             {
                "id":"Oskari.mapframework.bundle.mapmodule.plugin.LayersPlugin"
