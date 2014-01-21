@@ -558,7 +558,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _remove: function(busStop) {
             var date = new Date();
-            var propertyValues = [{propertyValue : this._formatDate(date), propertyDisplayValue: this._formatDate(date)}];
+            var propertyValues = [{propertyValue : 0, propertyDisplayValue: this._formatDate(date)}];
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
