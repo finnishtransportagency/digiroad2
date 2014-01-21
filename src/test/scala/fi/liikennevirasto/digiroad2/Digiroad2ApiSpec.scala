@@ -78,6 +78,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     getWithUserAuth("/layers") {
       status should equal(200)
       val responseJson = parse(body)
+      (responseJson \ "layers" \ "url").children should have length 2
       (responseJson \ "layers" \ "url").children.head.values should equal("/api/assets?assetTypeId=10&municipalityNumber=235&validityPeriod=future")
     }
   }
