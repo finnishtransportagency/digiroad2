@@ -1,7 +1,11 @@
-#maptools {
-  @left-navigation-bg-color: #333438;
-  @left-navigation-width: 153px;
+body {
+  margin : 0px;
+}
 
+@left-navigation-bg-color: #383836;
+@left-navigation-width: 40px;
+
+#maptools {
   background-color: @left-navigation-bg-color;
   height: 100%;
   position: absolute;
@@ -19,6 +23,10 @@
 #featureData {
   position: relative;
   left: 10px;
+}
+
+#contentMap {
+  margin-left: @left-navigation-width;
 }
 
 .callout-wrapper {

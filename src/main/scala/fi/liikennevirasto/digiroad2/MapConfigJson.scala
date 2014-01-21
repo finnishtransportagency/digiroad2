@@ -24,30 +24,6 @@ object MapConfigJson {
 
       }
    },
-   "userguide":{
-      "state":{
-
-      },
-      "conf":{
-
-      }
-   },
-   "layerselector2":{
-      "state":{
-
-      },
-      "conf":{
-
-      }
-   },
-   "metadataflyout":{
-      "state":{
-
-      },
-      "conf":{
-
-      }
-   },
    "mapfull":{
       "state":{
          "selectedLayers":[
@@ -223,7 +199,34 @@ object MapConfigJson {
                ],
                "orgName":"Taustakartta",
                "inspire":"Taustakartta"
-             }
+             },{
+               "dataUrl_uuid": "b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
+               "wmsName": "ortokuva",
+               "styles": {},
+               "descriptionLink": "http://www.paikkatietoikkuna.fi/web/guest/ortokuvat",
+               "baseLayerId": 15,
+               "orgName": "Maanmittauslaitos",
+               "type": "wmslayer",
+               "legendImage": "",
+               "formats": {},
+               "isQueryable": false,
+               "id": 24,
+               "minScale": 50000,
+               "dataUrl": "/catalogue/ui/metadata.html?uuid=b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
+               "style": "",
+               "wmsUrl": "http://a.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://b.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://c.karttatiili.fi/dataset/ortoilmakuva/service/wms,http://d.karttatiili.fi/dataset/ortoilmakuva/service/wms",
+               "updated": "Fri Aug 24 11:53:00 EEST 2012",
+               "admin": {},
+               "orderNumber": 8,
+               "name": "Ortoilmakuva",
+               "permissions": {
+                  "publish": "no_publication_permission"
+               },
+               "opacity": 100,
+               "subtitle": "",
+               "inspire": "Ortoilmakuvat",
+               "maxScale": 1
+            }
          ],
          "imageLocation":"/oskari.org/resources",
          "user":{
@@ -288,15 +291,6 @@ object MapConfigJson {
       },
       "conf":{
 
-      }
-   },
-   "myplaces2":{
-      "state":{
-
-      },
-      "conf":{
-         "queryUrl":"/web/fi/kartta?p_p_id=Portti2Map_WAR_portti2mapportlet&p_p_lifecycle=1&p_p_state=exclusive&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_Portti2Map_WAR_portti2mapportlet_fi.mml.baseportlet.CMD=ajax.jsp&myplaces=WFS",
-         "wmsUrl":"/karttatiili/myplaces?myCat="
       }
    },
    "infobox":{

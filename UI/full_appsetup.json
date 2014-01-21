@@ -1,8 +1,6 @@
 {
    "startupSequence": [{
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "title": "OpenLayers",
       "bundleinstancename": "openlayers-default-theme",
       "fi": "OpenLayers",
@@ -21,14 +19,10 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "title": "Map",
       "bundleinstancename": "mapfull",
       "fi": "Map",
@@ -95,14 +89,10 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "title": "Oskari DIV Manazer",
       "bundleinstancename": "divmanazer",
       "fi": "Oskari DIV Manazer",
@@ -115,34 +105,10 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-      "instanceProps": {
-
-      },
-      "title": "Toolbar",
-      "bundleinstancename": "toolbar",
-      "fi": "toolbar",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "toolbar",
-      "metadata": {
-         "Import-Bundle": {
-            "toolbar": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "title": "StateHandler",
       "bundleinstancename": "statehandler",
       "fi": "jquery",
@@ -155,14 +121,10 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "title": "Info Box",
       "bundleinstancename": "infobox",
       "fi": "infobox",
@@ -175,74 +137,10 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-      "instanceProps": {
-
-      },
-      "title": "Haku",
-      "bundleinstancename": "search",
-      "fi": "search",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "search",
-      "metadata": {
-         "Import-Bundle": {
-            "search": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Karttatasot",
-      "bundleinstancename": "layerselector2",
-      "fi": "layerselector",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "layerselector2",
-      "metadata": {
-         "Import-Bundle": {
-            "layerselector2": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
-      "title": "Valitut karttatasot",
-      "bundleinstancename": "layerselection2",
-      "fi": "layerselection",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "layerselection2",
-      "metadata": {
-         "Import-Bundle": {
-            "layerselection2": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": [
-
-         ]
-      }
-   }, {
-      "instanceProps": {
-
-      },
+      "instanceProps": {},
       "bundleinstancename": "coordinatedisplay",
       "fi": "coordinatedisplay",
       "sv": "?",
@@ -254,14 +152,25 @@
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             }
          },
-         "Require-Bundle-Instance": [
-
-         ]
+         "Require-Bundle-Instance": []
       }
    }, {
-       "instanceProps": {
-
-       },
+       "instanceProps": {},
+       "bundleinstancename": "actionpanel",
+       "fi": "actionpanel",
+       "sv": "?",
+       "en": "?",
+       "bundlename": "actionpanel",
+       "metadata": {
+           "Import-Bundle": {
+               "actionpanel": {
+                   "bundlePath": "src/packages/digiroad2/bundle/"
+               }
+           },
+           "Require-Bundle-Instance": []
+       }
+   }, {
+       "instanceProps": {},
        "bundleinstancename": "featureattributes",
        "fi": "featureattributes",
        "sv": "?",
@@ -273,9 +182,7 @@
                    "bundlePath": "src/packages/digiroad2/bundle/"
                }
            },
-           "Require-Bundle-Instance": [
-
-           ]
+           "Require-Bundle-Instance": []
        }
    } ]
 }
