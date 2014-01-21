@@ -147,15 +147,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
-                jQuery(".featureAttributeDate").on("blur", function() {
-                    var data = jQuery(this);
-                    var propertyValue = [];
-                    propertyValue.push({
-                        "propertyValue" : 0,
-                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
-                    });
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
-                });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
                     var propertyValue = [];
@@ -172,6 +163,31 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     );
 
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
+                var dateAttribute = jQuery(".featureAttributeDate");
+                dateAttribute.on("blur", function() {
+                    var data = jQuery(this);
+                    var propertyValue = [];
+                    propertyValue.push({
+                        "propertyValue" : 0,
+                        "propertyDisplayValue" : moment(data.val(), 'D.M.YYYY').format('YYYY-MM-DD')
+                    });
+                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                });
+                dateAttribute.each(function(i, element) {
+                    console.log('adding pikaday to : ' + element);
+                    new Pikaday({
+                        field: element,
+                        format: 'D.M.YYYY',
+                        firstDay: 1,
+                        i18n: {
+                            previousMonth : 'edellinen kuukausi',
+                            nextMonth     : 'seuraava kuukausi',
+                            months: ['tammikuu','helmikuu','maaliskuu','huhtikuu','toukokuu','kesäkuu','heinäkuu','elokuu','syyskuu','lokakuu','marraskuu','joulukuu'],
+                            weekdays: ['sunnuntai','maanantai','tiistai','keskiviikko','torstai','perjantai','lauantai'],
+                            weekdaysShort : ['su','ma','ti','ke','to','pe','la']
+                        }
+                    });
                 });
             });
         },
@@ -237,7 +253,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     }
                 }
             );
-
             return html;
         },
         _getSelect: function(name, values, propertyId, multiple) {
