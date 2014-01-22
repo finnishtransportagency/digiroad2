@@ -1,13 +1,14 @@
 package fi.liikennevirasto.digiroad2.mtk
 
-import org.joda.time.DateTime
+import org.joda.time.{LocalDate, DateTime}
 import scala.xml.parsing.ConstructingParser
 import scala.io.Source
 import org.joda.time.format.DateTimeFormat
+import fi.liikennevirasto.digiroad2.mtk.MtkFormats.DateFormat
 
 object MtkMessageParser {
   import scala.xml._
-  val fmt = DateTimeFormat.forPattern("yyyy-MM-dd")
+  val fmt = DateTimeFormat.forPattern(DateFormat)
 
   def toPoint(gmlList: String) = {
     val gmlToPoint = (x :List[Double]) => Point(x(0), x(1), x(2))
@@ -20,7 +21,7 @@ object MtkMessageParser {
     val endDate = (node \\ "loppupvm").text
     val municipalityCode = (node \\ "kuntatunnus").text
     val points = toPoint((node \\ "posList").text)
-    MtkRoadLink(id.toLong, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(DateTime.parse(endDate, fmt)), municipalityCode.toInt, points)
+    MtkRoadLink(id.toLong, DateTime.parse(startDate, fmt), if(endDate == "") None else Some(LocalDate.parse(endDate, fmt)), municipalityCode.toInt, points)
   }
 
   def parseMtkMessage(source: Source) = {
