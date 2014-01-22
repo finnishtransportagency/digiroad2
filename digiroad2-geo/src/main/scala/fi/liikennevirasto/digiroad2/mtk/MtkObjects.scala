@@ -17,3 +17,7 @@ object MtkRoadLinkUtils {
     roadlink.points.map(pointToStoringItem).reduceLeft(_+ ", " +_)
   }
 }
+
+object MtkFormats {
+  val dateFormat = "yyyy-MM-dd"
+}
