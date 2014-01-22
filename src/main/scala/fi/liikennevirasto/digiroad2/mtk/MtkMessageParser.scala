@@ -4,11 +4,11 @@ import org.joda.time.{LocalDate, DateTime}
 import scala.xml.parsing.ConstructingParser
 import scala.io.Source
 import org.joda.time.format.DateTimeFormat
-import fi.liikennevirasto.digiroad2.mtk.MtkFormats.dateFormat
+import fi.liikennevirasto.digiroad2.mtk.MtkFormats.DateFormat
 
 object MtkMessageParser {
   import scala.xml._
-  val fmt = DateTimeFormat.forPattern(dateFormat)
+  val fmt = DateTimeFormat.forPattern(DateFormat)
 
   def toPoint(gmlList: String) = {
     val gmlToPoint = (x :List[Double]) => Point(x(0), x(1), x(2))

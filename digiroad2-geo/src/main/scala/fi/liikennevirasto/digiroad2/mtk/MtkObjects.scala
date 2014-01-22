@@ -19,5 +19,5 @@ object MtkRoadLinkUtils {
 }
 
 object MtkFormats {
-  val dateFormat = "yyyy-MM-dd"
+  val DateFormat = "yyyy-MM-dd"
 }
