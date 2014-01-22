@@ -218,9 +218,38 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             },
             'actionpanel.ActionPanelToolSelectionChangedEvent': function (event) {
                 this._toolSelectionChange(event);
+            },'MapClickedEvent': function (event) {
+                this._addBusStopEvent(event);
             }
         },
+        _addBusStopEvent: function(event){
+            if (this._selectedControl == 'Add') {
+                var imageIds = ["1_.png","2_.png"];
+                var contentItem;
+                var me = this;
 
+                contentItem = this._makeContent(imageIds);
+                this._sendPopupRequest("busStop", me._selectedBusStop.id, contentItem, me._selectedBusStop.lonlat);
+
+                var lonlat = event.getLonLat();
+                var id = 99;
+                var featureData = this._selectedBusStop.featureContent;
+                var bearing =  this._selectedBusStop.roadDirection;
+                var directionArrow = this._selectedBusStop.directionArrow;
+                var directionLayer = this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][1];
+                var validityDirection = this._selectedBusStop.effectDirection;
+                var effectDirection = this._selectedBusStop.effectDirection;
+                var roadDirection = this._selectedBusStop.roadDirection;
+
+                me._addBusStop(id, this._selectedBusStopLayer, lonlat, featureData, bearing,
+                    this._selectedBusStop.layerId, directionArrow, directionLayer, imageIds, 10, validityDirection);
+
+                var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+                var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+                wgs84.heading = roadDirection + (90  * effectDirection);
+                me._sendShowAttributesRequest(id, wgs84);
+            }
+        },
         /**
          * @method onEvent
          * Event is handled forwarded to correct #eventHandlers if found or discarded
