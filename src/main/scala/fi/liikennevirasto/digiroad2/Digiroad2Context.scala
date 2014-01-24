@@ -11,7 +11,7 @@ object Digiroad2Context {
     props
   }
 
-  lazy val featureProvider: AssetProvider = {
+  lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider")).newInstance().asInstanceOf[AssetProvider]
   }
 
