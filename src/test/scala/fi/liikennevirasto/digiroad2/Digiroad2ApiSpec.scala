@@ -4,12 +4,9 @@ import org.scalatra.test.scalatest._
 import org.scalatest.{FunSuite, Tag}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
 import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
-import org.json4s.JsonDSL._
-import org.apache.commons.codec.binary.Base64
-import org.scalatra.auth.Scentry
+import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
@@ -146,6 +143,15 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     getWithUserAuth("/assets?assetTypeId=10&validityDate=2012-06-30") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
+    }
+  }
+
+  test("mark asset on expired link as floating", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=49&validityDate=2014-06-01") {
+      status should equal(200)
+      val assets = parse(body).extract[List[Asset]]
+      assets should have length(1)
+      assets.head.status should be(Some(Floating))
     }
   }
 
