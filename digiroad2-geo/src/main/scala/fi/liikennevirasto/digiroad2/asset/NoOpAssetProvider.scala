@@ -9,6 +9,7 @@ class NoOpAssetProvider extends AssetProvider {
   def getRoadLinks(municipalityNumber: Option[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
   def getAssetById(assetId: Long): Option[Asset] = None
   def getAssets(assetTypeId: Long, municipalityNumber: Option[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = List()
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, creator: String) = null
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = List()
   def updateAssetLocation(asset: Asset): Asset = asset

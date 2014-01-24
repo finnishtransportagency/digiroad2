@@ -38,7 +38,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assetTypes") {
-    featureProvider.getAssetTypes
+    assetProvider.getAssetTypes
   }
 
   get("/assets") {
@@ -52,18 +52,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       }
       case _ => (None, None)
     }
-    featureProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams, validFrom = startDate, validTo = endDate)
+    assetProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams, validFrom = startDate, validTo = endDate)
   }
 
   get("/assets/:assetId") {
-    featureProvider.getAssetById(params("assetId").toLong) match {
+    assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => a
       case None => NotFound("Asset " + params("assetId") + " not found")
     }
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
-    featureProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
+    assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
   // TODO: handle missing roadLinkId
@@ -71,14 +71,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
     val asset = Asset(params("id").toLong, assetTypeId = assetTypeId.get, lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, propertyData = List(), bearing = bearing)
-    val updated = featureProvider.updateAssetLocation(asset)
+    val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
     updated
   }
 
+  put("/asset") {
+    val user = userProvider.getThreadLocalUser().get
+    assetProvider.createAsset((parsedBody \ "assetTypeId").extract[Long], (parsedBody \ "lon").extract[Double], (parsedBody \ "lat").extract[Double], (parsedBody \ "roadLinkId").extract[Long], user.username)
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = featureProvider.getRoadLinks(params.get(MunicipalityNumber).map(_.toInt), boundsFromParams)
+    val rls = assetProvider.getRoadLinks(params.get(MunicipalityNumber).map(_.toInt), boundsFromParams)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
@@ -91,16 +96,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/assets/:assetId/properties/:propertyId/values") {
     val propertyValues = parsedBody.extract[List[PropertyValue]]
-    featureProvider.updateAssetProperty(params("assetId").toLong, params("propertyId"), propertyValues)
+    assetProvider.updateAssetProperty(params("assetId").toLong, params("propertyId"), propertyValues)
   }
 
   delete("/assets/:assetId/properties/:propertyId/values") {
-    featureProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
+    assetProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
   }
 
   get("/images/:imageId") {
     val id = params("imageId").split("_").head // last modified date is appended with an underscore to image id in order to cache image when it has not been altered
-    val bytes = featureProvider.getImage(id.toLong)
+    val bytes = assetProvider.getImage(id.toLong)
     response.setHeader("Expires", Never)
     response.setContentType("application/octet-stream")
     bytes
