@@ -228,7 +228,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (this._selectedControl == 'Add') {
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
                 var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-                var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon + 0.0, "lat" : event.getLonLat().lat + 0.0, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
+                var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon, "lat" : event.getLonLat().lat, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
 
                 jQuery.ajax({
                     contentType: "application/json",
@@ -237,7 +237,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     data: JSON.stringify(data),
                     dataType:"json",
                     success: function(asset) {
-                        asset.bearing = bearing;
                         me._addNewAsset(asset);
                     },
                     error: function() {
