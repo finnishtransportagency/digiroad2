@@ -237,13 +237,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     data: JSON.stringify(data),
                     dataType:"json",
                     success: function(asset) {
-
-                       /* asset = {
-                            lon : event.getLonLat().lon,
-                            lat : event.getLonLat().lat
-                        };
-
-*/
                         asset.bearing = bearing;
                         me._addNewAsset(asset);
                     },
@@ -257,20 +250,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var imageIds = ["99"];
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(imageIds);
-
             var angle = this._getAngleFromBearing(asset.bearing, 1);
             var directionArrow = this._getDirectionArrow(angle, asset.lon, asset.lat);
-
             this._layer[this._layerType + "_" + this._selectedLayerId][1].addFeatures(directionArrow);
-
             this._selectedBusStop = this._addBusStop(asset.id, this._layer[this._layerType + "_" +this._selectedLayerId][2], lonLat, asset.featureData, asset.bearing,
                 this._selectedLayerId,directionArrow, this._layer[this._layerType + "_" +this._selectedLayerId][1], imageIds, asset.assetTypeId, 1);
             this._selectedBusStopLayer = this._layer[this._layerType + "_" +this._selectedLayerId][2];
-
             this._sendPopupRequest("busStop", asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
-
-
             var point = new OpenLayers.Geometry.Point(asset.lon, asset.lat);
             var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
             wgs84.heading = asset.bearing + 90;
@@ -314,7 +301,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
             );
         },
-
         /**
          * Handle _afterMapMoveEvent
          * @private
@@ -380,11 +366,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var validityDirection = this._selectedBusStop.effectDirection;
             var effectDirection = this._selectedBusStop.effectDirection;
             var roadDirection = this._selectedBusStop.roadDirection;
-
             var layer = _.find(this._selectedBusStopLayer.markers, function(marker) {
                 return marker.id == me._selectedBusStop.id;
             });
-
             this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][2].removeMarker(layer);
             me._addBusStop(id, this._selectedBusStopLayer, lonlat, featureData, bearing,
                 this._selectedBusStop.layerId, directionArrow, directionLayer, imageIds, 10, validityDirection);
