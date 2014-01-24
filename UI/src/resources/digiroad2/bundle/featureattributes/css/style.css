@@ -1,10 +1,9 @@
 #featureAttributes {
-    float: left;
+    float: right;
     background-color: rgb( 45, 45, 45 );
     box-shadow: 0px 0px 3px 0px rgb( 0, 0, 0 );
-    width : 25%;
+    width : 400px;
     height: 100%;
-
 }
 
 .featureAttributesHeader {

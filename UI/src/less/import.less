@@ -12,12 +12,11 @@ body {
   top: 0;
   width: @left-navigation-width;
   z-index: 2;
+  float: left;
 }
-
 
 #mapdiv {
   float:left;
-  width: 75% !important;
 }
 
 #featureData {
@@ -26,6 +25,8 @@ body {
 }
 
 #contentMap {
+  float: left;
+  width: ~"calc(100% - 440px)";
   margin-left: @left-navigation-width;
 }
 
