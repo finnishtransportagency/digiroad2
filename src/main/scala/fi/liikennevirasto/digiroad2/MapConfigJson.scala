@@ -101,7 +101,7 @@ object MapConfigJson {
                  "maxScale":1 ,
                  "orgName":"LiVi",
                  "inspire":"Ominaisuustiedot",
-                 "name" : "Pysäkit"
+                 "name" : "Voimassaolevat"
              },
             {
                "type":"base",

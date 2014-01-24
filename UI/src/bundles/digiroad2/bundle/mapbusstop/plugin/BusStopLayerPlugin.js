@@ -21,6 +21,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedBusStopLayer = null;
         this._roadStyles = null;
         this._selectedControl = 'Select';
+        this._selectedLayerId = "235";
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -218,9 +219,50 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             },
             'actionpanel.ActionPanelToolSelectionChangedEvent': function (event) {
                 this._toolSelectionChange(event);
+            },'MapClickedEvent': function (event) {
+                this._addBusStopEvent(event);
             }
         },
+        _addBusStopEvent: function(event){
+            var me = this;
+            if (this._selectedControl == 'Add') {
+                var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
+                var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+                var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon + 0.0, "lat" : event.getLonLat().lat + 0.0, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
 
+                jQuery.ajax({
+                    contentType: "application/json",
+                    type: "PUT",
+                    url: "/api/asset",
+                    data: JSON.stringify(data),
+                    dataType:"json",
+                    success: function(asset) {
+                        asset.bearing = bearing;
+                        me._addNewAsset(asset);
+                    },
+                    error: function() {
+                        console.log("error");
+                    }
+                });
+            }
+        },
+        _addNewAsset: function(asset) {
+            var imageIds = ["99"];
+            var lonLat = { lon : asset.lon, lat : asset.lat};
+            var contentItem = this._makeContent(imageIds);
+            var angle = this._getAngleFromBearing(asset.bearing, 1);
+            var directionArrow = this._getDirectionArrow(angle, asset.lon, asset.lat);
+            this._layer[this._layerType + "_" + this._selectedLayerId][1].addFeatures(directionArrow);
+            this._selectedBusStop = this._addBusStop(asset.id, this._layer[this._layerType + "_" +this._selectedLayerId][2], lonLat, asset.featureData, asset.bearing,
+                this._selectedLayerId,directionArrow, this._layer[this._layerType + "_" +this._selectedLayerId][1], imageIds, asset.assetTypeId, 1);
+            this._selectedBusStopLayer = this._layer[this._layerType + "_" +this._selectedLayerId][2];
+            this._sendPopupRequest("busStop", asset.id, contentItem, lonLat);
+            this._selectedBusStop.display(false);
+            var point = new OpenLayers.Geometry.Point(asset.lon, asset.lat);
+            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+            wgs84.heading = asset.bearing + 90;
+            this._sendShowAttributesRequest(asset.id, wgs84);
+        },
         /**
          * @method onEvent
          * Event is handled forwarded to correct #eventHandlers if found or discarded
@@ -248,7 +290,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._addMapLayerToMap(layer);
             }
         },
-
+        _getAngleFromBearing: function(bearing, validityDirection) {
+            return (bearing) ? bearing + (90 * validityDirection): 90;
+        },
+        _getDirectionArrow: function(angle, lon, lat) {
+            return new OpenLayers.Feature.Vector(
+                new OpenLayers.Geometry.Point(lon, lat),
+                null,
+                {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
+                    graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
+            );
+        },
         /**
          * Handle _afterMapMoveEvent
          * @private
@@ -288,7 +340,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
         },
         _infoBoxClosed: function(event) {
-            this._selectedBusStop.display(true);
+            if (this._selectedBusStop) {
+                this._selectedBusStop.display(true);
+            }
         },
         _toolSelectionChange: function(event) {
             this._selectedControl = event.getAction();
@@ -312,11 +366,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var validityDirection = this._selectedBusStop.effectDirection;
             var effectDirection = this._selectedBusStop.effectDirection;
             var roadDirection = this._selectedBusStop.roadDirection;
-
             var layer = _.find(this._selectedBusStopLayer.markers, function(marker) {
                 return marker.id == me._selectedBusStop.id;
             });
-
             this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][2].removeMarker(layer);
             me._addBusStop(id, this._selectedBusStopLayer, lonlat, featureData, bearing,
                 this._selectedBusStop.layerId, directionArrow, directionLayer, imageIds, 10, validityDirection);
@@ -339,7 +391,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _sendPopupRequest:function(id, busStopId, content, lonlat) {
             var me = this;
             var requestBuilder = this._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-            var request = requestBuilder("busStop", this._selectedBusStop.id, [content], this._selectedBusStop.lonlat, true);
+            var request = requestBuilder("busStop", busStopId, [content], lonlat, true);
             this._sandbox.request(this.getName(), request);
 
             var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
@@ -438,8 +490,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             layers.push(directionLayer);
             layers.push(busStops);
 
-
-
             me._layer[this._layerType +"_"+ layer.getId()] = layers;
 
              jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
@@ -451,13 +501,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                     var validityDirection = (validityDirectionProperty.values[0].propertyValue == 2) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
-                    var angle = (eachData.bearing) ? eachData.bearing + (90 * validityDirection): 90;
-                    var directionArrow = new OpenLayers.Feature.Vector(
-                        new OpenLayers.Geometry.Point(eachData.lon, eachData.lat),
-                        null,
-                        {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
-                            graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
-                    );
+                    var angle = me._getAngleFromBearing(eachData.bearing, validityDirection);
+                    var directionArrow = me._getDirectionArrow(angle, eachData.lon, eachData.lat);
                     directionLayer.addFeatures(directionArrow);
 
                     var imageIds = _.chain(eachData.propertyData)
@@ -518,6 +563,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.events.register("mousedown", busStops, mouseDown);
             busStop.layerId = layerId;
             busStops.addMarker(busStop);
+            return busStop;
         },
         _mouseUp: function (busStop, busStops, busStopClick, id, typeId) {
             var me = this;
