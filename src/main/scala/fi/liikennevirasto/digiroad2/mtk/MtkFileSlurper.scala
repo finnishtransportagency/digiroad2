@@ -25,7 +25,7 @@ object MtkFileSlurper  {
   }
 
   private lazy val schedule: Cancellable = {
-    oracleAssetProvider = featureProvider
+    oracleAssetProvider = assetProvider
     val pollingInterval = getProperty("digiroad2.mtkPollingInterval").toLong
     val pollingFolder = FileUtils.getFile(getProperty("digiroad2.mtkPollingFolder"))
     logger.info(s"Mtk message parser is watching directory $pollingFolder using $pollingInterval ms polling interval")
