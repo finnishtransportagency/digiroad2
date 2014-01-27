@@ -1,15 +1,16 @@
 // TODO: Rename constants semantically
 @left-navigation-bg-color: #383836;
 @left-navigation-width: 40px;
+@feature-attribute-panel-width: 400px;
 
 body {
   margin : 0px;
-  min-width: 800px;
+  min-width: (@feature-attribute-panel-width * 2);
 }
 
 .container {
   padding-left: @left-navigation-width;
-  padding-right: 400px;
+  padding-right: @feature-attribute-panel-width;
   height: 100%;
 }
 

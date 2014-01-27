@@ -1,3 +1,4 @@
+/* TODO: Move feature attributes definition to less in order to reuse constants */
 #featureAttributes {
     float: left;
     position: relative;
