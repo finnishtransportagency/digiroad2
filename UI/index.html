@@ -14,12 +14,13 @@
 </head>
 <body>
 <div class="container">
-    <nav id="maptools">
-    </nav>
-    <div id="contentMap">
+    <div id="contentMap" class="column">
         <div id="mapdiv"></div>
     </div>
-    <div id="featureAttributes"></div>
+    <!-- TODO: Use camel-case naming -->
+    <nav id="maptools" class="column">
+    </nav>
+    <div id="featureAttributes" class="column"></div>
 </div>
 <script type="text/javascript" src="bower_components/oskari.org/bundles/bundle.js"></script>
 <script type="text/javascript" src="bower_components/oskari.org/packages/openlayers/startup.js"></script>
