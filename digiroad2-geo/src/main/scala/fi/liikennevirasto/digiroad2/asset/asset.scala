@@ -7,7 +7,7 @@ case class Asset(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLink
 case class Property(propertyId: String, propertyName: String, propertyType: String, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: Long, propertyDisplayValue: String, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: String, propertyName: String, propertyType: String, values: Seq[PropertyValue])
-case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], enDate: Option[LocalDate] = None)
+case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None)
 
 object PropertyTypes {
   val SingleChoice = "single_choice"
