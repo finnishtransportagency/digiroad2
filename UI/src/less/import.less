@@ -1,18 +1,29 @@
+@map-tools-panel-width: 40px;
+@feature-attribute-panel-width: 400px;
+
 body {
   margin : 0px;
+  min-width: (@feature-attribute-panel-width * 2);
 }
 
-@left-navigation-bg-color: #383836;
-@left-navigation-width: 40px;
+.container {
+  padding-left: @map-tools-panel-width;
+  padding-right: @feature-attribute-panel-width;
+  height: 100%;
+}
+
+.container .column {
+  float: left;
+  position: relative;
+  height: 100%;
+}
 
 #maptools {
-  background-color: @left-navigation-bg-color;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  width: @left-navigation-width;
+  width: @map-tools-panel-width;
+  margin-left: -100%;
+  right: @map-tools-panel-width;
+  background-color: #383836;
   z-index: 2;
-  float: left;
 }
 
 #mapdiv {
@@ -25,9 +36,14 @@ body {
 }
 
 #contentMap {
-  float: left;
-  width: ~"calc(100% - 440px)";
-  margin-left: @left-navigation-width;
+  width: 100%;
+}
+
+#featureAttributes {
+  width: @feature-attribute-panel-width;
+  margin-right: (@feature-attribute-panel-width * -1);
+  background-color: rgb( 45, 45, 45 );
+  box-shadow: 0 0 3px 0 rgb( 0, 0, 0 );
 }
 
 .callout-wrapper {
