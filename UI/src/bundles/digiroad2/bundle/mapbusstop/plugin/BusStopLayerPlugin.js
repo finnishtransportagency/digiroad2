@@ -404,7 +404,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _directionChange:function(id, point) {
             this._changeDirection();
             var me = this;
-            var value = (this._selectedBusStop.effectDirection == 1) ? 2:3;
+            var value = (this._selectedBusStop.effectDirection == 1) ? 3:2;
             var propertyValues = [{propertyValue : value, propertyDisplayValue: "Vaikutussuunta"}];
 
             jQuery.ajax({
@@ -460,7 +460,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                             var nearestLine = geometrycalculator.findNearestLine(me._layer[me._layerType +"_"+ layer.getId()][0].features, busStop.lonlat.lon, busStop.lonlat.lat);
                             var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
                             busStop.roadDirection = bearing;
-                            busStop.directionArrow.style.rotation = bearing+ (90 * busStop.effectDirection);
+                            busStop.directionArrow.style.rotation = bearing + (90 * busStop.effectDirection);
                             /*
                             var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
                             me._sendData(data, busStop.id);
@@ -499,7 +499,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         return property.propertyId == "validityDirection";
                     });
 
-                    var validityDirection = (validityDirectionProperty.values[0].propertyValue == 2) ? 1 : -1;
+                    var validityDirection = (validityDirectionProperty.values[0].propertyValue == 3) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
                     var angle = me._getAngleFromBearing(eachData.bearing, validityDirection);
                     var directionArrow = me._getDirectionArrow(angle, eachData.lon, eachData.lat);
@@ -706,7 +706,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._selectControl.select(nearestFeature);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
                 this._selectedBusStop.roadDirection = angle;
-                this._selectedBusStop.directionArrow.style.rotation = angle+ (90 * this._selectedBusStop.effectDirection);
+                this._selectedBusStop.directionArrow.style.rotation = angle + (90 * this._selectedBusStop.effectDirection);
 
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
