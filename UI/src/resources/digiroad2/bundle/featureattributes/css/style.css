@@ -5,16 +5,24 @@
     line-height: 1.286;
     padding-top: 15px;
     padding-bottom: 15px;
+    height: 18px;
     border: 0px solid #000000;
     border-bottom-width: 1px;
     padding-left: 10px;
     background-image: -moz-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
     background-image: -webkit-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
     background-image: -ms-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
 }
 
 .featureAttributesWrapper {
+    position: absolute;
     padding: 10px;
+    top: 49px;
+    bottom: 0;
 }
 
 .streetView {
