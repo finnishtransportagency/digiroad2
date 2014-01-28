@@ -10,7 +10,7 @@
     };
 
     dateutil.iso8601toFinnish = function(iso8601DateString) {
-        return moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT);
+        return _.isString(iso8601DateString) ? moment(iso8601DateString, ISO_8601_DATE_FORMAT).format(FINNISH_DATE_FORMAT) : "";
     };
 
     dateutil.finnishToIso8601 = function(finnishDateString) {

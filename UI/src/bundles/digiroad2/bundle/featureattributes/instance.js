@@ -116,7 +116,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                         '<div class="formAttributeContent">' +
                                                             '<input class="featureAttributeDate" type="text"' +
                                                                 ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                                ' value="{{propertyDisplayValue}}"/> <span class="attributeFormat">pp.kk.vvvv</span>' +
+                                                                ' value="{{propertyDisplayValue}}"/><span class="attributeFormat">pp.kk.vvvv</span>' +
                                                         '</div>' +
                                                      '</div>');
             me._featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
