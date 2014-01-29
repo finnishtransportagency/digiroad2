@@ -77,7 +77,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @method init
          * implements Module protocol init method - initializes request handlers
          */
-        init : function() {
+        init : function(options) {
             var me = this;
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this)
@@ -126,6 +126,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
             me._getPropertyValues();
+
+            me._backend = options.backend || window.Backend;
 
             return null;
         },
@@ -191,22 +193,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
         _saveTextData: function(propertyValue, propertyId) {
             var me = this;
-            jQuery.ajax({
-                contentType: "application/json",
-                type: "PUT",
-                url: "/api/assets/"+this._featureDataAssetId+"/properties/"+propertyId+"/values",
-                data: JSON.stringify(propertyValue),
-                dataType:"json",
-                success: function() {
-                    var eventBuilder = me.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
-                    var event = eventBuilder(propertyValue);
-                    me.getSandbox().notifyAll(event);
-                    console.log("done");
-                },
-                error: function() {
-                    console.log("error");
-                }
-            });
+            me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
+            function successFunction() {
+                var eventBuilder = me.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
+                var event = eventBuilder(propertyValue);
+                me.getSandbox().notifyAll(event);
+                console.log("done");
+            }
         },
         _makeContent: function(contents) {
             var me = this;

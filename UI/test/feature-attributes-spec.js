@@ -3,7 +3,7 @@ describe('FeatureAttributes', function() {
 
     describe('when backend returns undefined date', function() {
         var featureAttributes = Object.create(featureAttributesInstance._class.prototype);
-        featureAttributes.init();
+        featureAttributes.init({});
 
         it('should construct date attribute with empty content', function() {
             var actualHtml = featureAttributes._makeContent([{
@@ -20,6 +20,26 @@ describe('FeatureAttributes', function() {
                         '<span class="attributeFormat">pp.kk.vvvv</span>' +
                     '</div>' +
                 '</div>');
+        });
+    });
+
+    describe('when user leaves date undefined', function() {
+        var featureAttributes = null;
+        var calls = [];
+
+        before(function() {
+            featureAttributes = Object.create(featureAttributesInstance._class.prototype);
+            featureAttributes.init({
+                backend: _.extend({}, window.Backend, {
+                    putAssetPropertyValue: function(assetId, propertyId, data, success) { calls.push(data); }
+                })
+            });
+        });
+
+        it('should send null date to backend', function() {
+            featureAttributes._saveTextData({propertyValue:0, propertyDisplayValue:'Invalid date'}, 'validFrom');
+            assert.equal(1, calls.length);
+            assert.deepEqual(calls[0], { propertyValue:0, propertyDisplayValue:'Invalid date' });
         });
     });
 });
