@@ -3,6 +3,10 @@
         putAssetPropertyValue(assetId, propertyId, data, success);
     };
 
+    backend.getAsset = function (assetId, success) {
+        $.get('/api/assets/' + assetId, success);
+    };
+
     function putAssetPropertyValue(assetId, propertyId, data, success) {
         jQuery.ajax({
             contentType: "application/json",

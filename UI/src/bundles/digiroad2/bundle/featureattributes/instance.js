@@ -134,7 +134,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         showAttributes : function(id, point) {
             var me = this;
             me._featureDataAssetId = id;
-            $.get("/api/assets/" + id, function(data) {
+            me._backend.getAsset(id, function(data) {
                 var featureData = me._makeContent(data.propertyData);
                 var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });

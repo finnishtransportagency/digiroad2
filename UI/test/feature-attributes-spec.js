@@ -31,7 +31,21 @@ describe('FeatureAttributes', function() {
             featureAttributes = Object.create(featureAttributesInstance._class.prototype);
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
-                    putAssetPropertyValue: function(assetId, propertyId, data, success) { calls.push(data); }
+                    putAssetPropertyValue: function(assetId, propertyId, data, success) { calls.push(data); },
+                    getAsset: function(id, success) {
+                        success({
+                            propertyData: [{
+                                propertyId: 'propertyId',
+                                propertyName: 'propertyName',
+                                propertyType: 'date',
+                                values: [{
+                                    imageId: null,
+                                    propertyDisplayValue: null,
+                                    propertyValue: 0
+                                }]
+                            }]
+                        });
+                    }
                 })
             });
         });
