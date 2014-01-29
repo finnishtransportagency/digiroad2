@@ -453,24 +453,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 styleMap: me._roadStyles
             });
 
-            busStopsRoads.events.register("loadend",busStopsRoads, function(e) { //TODO: remove this when roadDirection came from the backend
-                if (me._layer[me._layerType +"_"+ layer.getId()][2]) {
-                    _.forEach(me._layer[me._layerType +"_"+ layer.getId()][2].markers, function(busStop) {
-                        if (!busStop.roadDirection || busStop.roadDirection === undefined) {
-                            var nearestLine = geometrycalculator.findNearestLine(me._layer[me._layerType +"_"+ layer.getId()][0].features, busStop.lonlat.lon, busStop.lonlat.lat);
-                            var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-                            busStop.roadDirection = bearing;
-                            busStop.directionArrow.style.rotation = bearing + (90 * busStop.effectDirection);
-                            /*
-                            var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
-                            me._sendData(data, busStop.id);
-                            */
-                        }
-                    });
-                    me._layer[me._layerType +"_"+ layer.getId()][1].redraw();
-                }
-            });
-
             this._selectControl = new OpenLayers.Control.SelectFeature(busStopsRoads);
             var directionLayer = new OpenLayers.Layer.Vector("busStopsDirection_" + layer.getId());
             var busStops = new OpenLayers.Layer.Markers("busStops_" + layer.getId());
