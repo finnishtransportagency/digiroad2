@@ -125,7 +125,7 @@
       }
    }, {
       "instanceProps": {},
-      "title": "Info Box",
+      "title": "Asset Info Box",
       "bundleinstancename": "infobox",
       "fi": "infobox",
       "sv": "?",
@@ -134,7 +134,7 @@
       "metadata": {
          "Import-Bundle": {
             "infobox": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
+               "bundlePath": "src/packages/digiroad2/bundle/"
             }
          },
          "Require-Bundle-Instance": []
