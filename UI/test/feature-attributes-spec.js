@@ -31,7 +31,7 @@ describe('FeatureAttributes', function() {
             featureAttributes = Object.create(featureAttributesInstance._class.prototype);
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
-                    putAssetPropertyValue: function(assetId, propertyId, data) { calls = calls.concat(data); },
+                    putAssetPropertyValue: function(assetId, propertyId, data) { calls.push(data); },
                     getAsset: function(id, success) {
                         success({
                             propertyData: [createNullDateProperty('propertyId', 'propertyName')]
@@ -47,7 +47,7 @@ describe('FeatureAttributes', function() {
             var dateInput = $('input[data-propertyid="propertyId"]');
             dateInput.blur();
             assert.equal(1, calls.length);
-            assert.deepEqual(calls[0], { propertyValue:0, propertyDisplayValue:'Invalid date' });
+            assert.deepEqual(calls[0], []);
         });
 
         function createNullDateProperty(propertyId, propertyName) {

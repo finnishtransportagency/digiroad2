@@ -170,10 +170,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 dateAttribute.on("blur", function() {
                     var data = jQuery(this);
                     var propertyValue = [];
-                    propertyValue.push({
-                        "propertyValue" : 0,
-                        "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
-                    });
+                    if(!_.isEmpty(data.val())) {
+                        propertyValue.push({
+                            "propertyValue" : 0,
+                            "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
+                        });
+                    }
                     me._saveTextData(propertyValue, data.attr('data-propertyId'));
                 });
                 dateAttribute.each(function(i, element) {
