@@ -34,16 +34,7 @@ describe('FeatureAttributes', function() {
                     putAssetPropertyValue: function(assetId, propertyId, data) { calls = calls.concat(data); },
                     getAsset: function(id, success) {
                         success({
-                            propertyData: [{
-                                propertyId: 'propertyId',
-                                propertyName: 'propertyName',
-                                propertyType: 'date',
-                                values: [{
-                                    imageId: null,
-                                    propertyDisplayValue: null,
-                                    propertyValue: 0
-                                }]
-                            }]
+                            propertyData: [createNullDateProperty('propertyId', 'propertyName')]
                         });
                     }
                 })
@@ -51,12 +42,24 @@ describe('FeatureAttributes', function() {
         });
 
         it('should send null date to backend', function() {
+            calls = [];
             featureAttributes.showAttributes(130, { x: 24, y: 60, heading: 140 });
             var dateInput = $('input[data-propertyid="propertyId"]');
             dateInput.blur();
-            // TODO: uncomment call count assert when blur occurs only one on phantom js
-//            assert.equal(1, calls.length);
+            assert.equal(1, calls.length);
             assert.deepEqual(calls[0], { propertyValue:0, propertyDisplayValue:'Invalid date' });
         });
+
+        function createNullDateProperty(propertyId, propertyName) {
+            return {
+                propertyId: propertyId,
+                propertyName: propertyName,
+                propertyType: 'date',
+                values: [{
+                imageId: null,
+                propertyDisplayValue: null,
+                propertyValue: 0
+            }]};
+        }
     });
 });
