@@ -12,6 +12,9 @@ class NoOpAssetProvider extends AssetProvider {
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = None
   def getAssetById(assetId: Long): Option[Asset] = {
     Some(Asset(0, 10, 0, 0, 0, List(
+      Property("4", "Pysäkin saavutettavuus", "text", values = Seq(PropertyValue(0, "", null))),
+      Property("5", "Esteettömyystiedot", "text", values = Seq(PropertyValue(0, "", null))),
+      Property("6", "Ylläpitäjän tunnus", "text", values = Seq(PropertyValue(0, "", null))),
       Property("validityDirection", "Vaikutussuunta", SingleChoice, values = Seq(
         PropertyValue(1, "Molempiin suuntiin"),
         PropertyValue(2, "Digitointisuuntaan"),
