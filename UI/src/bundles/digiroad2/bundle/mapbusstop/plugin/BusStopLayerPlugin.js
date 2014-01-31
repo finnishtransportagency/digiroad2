@@ -229,7 +229,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
                 var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
                 var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon, "lat" : event.getLonLat().lat, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
-
                 jQuery.ajax({
                     contentType: "application/json",
                     type: "PUT",
@@ -252,8 +251,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var angle = this._getAngleFromBearing(asset.bearing, 1);
             var directionArrow = this._getDirectionArrow(angle, asset.lon, asset.lat);
             this._layer[this._layerType + "_" + this._selectedLayerId][1].addFeatures(directionArrow);
-            this._selectedBusStop = this._addBusStop(asset.id, this._layer[this._layerType + "_" +this._selectedLayerId][2], lonLat, asset.featureData, asset.bearing,
-                this._selectedLayerId,directionArrow, this._layer[this._layerType + "_" +this._selectedLayerId][1], imageIds, asset.assetTypeId, 1);
+            this._selectedBusStop = this._addBusStop(asset.id, this._layer[this._layerType + "_" +this._selectedLayerId][2],
+                new OpenLayers.LonLat(lonLat.lon, lonLat.lat), asset.featureData, asset.bearing, this._selectedLayerId,
+                directionArrow, this._layer[this._layerType + "_" +this._selectedLayerId][1], imageIds, asset.assetTypeId, 1);
             this._selectedBusStopLayer = this._layer[this._layerType + "_" +this._selectedLayerId][2];
             this._sendPopupRequest("busStop", asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
