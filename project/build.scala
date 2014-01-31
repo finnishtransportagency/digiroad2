@@ -49,11 +49,11 @@ object Digiroad2Build extends Build {
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
-        "com.typesafe.slick" %% "slick" % "1.0.1",
+        "com.typesafe.slick" %% "slick" % "2.0.0",
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
-        "com.github.tototoshi" %% "slick-joda-mapper" % "0.4.0",
+        "com.github.tototoshi" %% "slick-joda-mapper" % "1.0.0",
         "org.mockito" % "mockito-core" % "1.9.5" % "test"
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
     )
