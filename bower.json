@@ -10,15 +10,15 @@
     "tests"
   ],
   "dependencies": {
-    "lodash": "~2.3.0",
-    "jquery": "1.10.2",
-    "jquery-migrate": "~1.2.1",
-    "momentjs": "~2.5.0",
+    "lodash": "2.3.0",
+    "jquery": "1.11.0",
+    "jquery-migrate": "1.2.1",
+    "momentjs": "2.5.0",
     "pikaday": "#master",
-    "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.16"
+    "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.17"
   },
   "devDependencies": {
-    "mocha": "~1.13.0",
-    "chai": "~1.8.1"
+    "mocha": "1.13.0",
+    "chai": "1.8.1"
   }
 }
