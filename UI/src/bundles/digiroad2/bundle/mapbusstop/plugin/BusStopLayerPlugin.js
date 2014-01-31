@@ -112,6 +112,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                                                     '<div class="changeDirectionButton">{{changeDirectionButton}}</div>' +
                                                '</div>');
             me._busStopsPopupIcons = _.template('<img src="/api/images/{{imageId}}">');
+            me._removeAssetTemplate = _.template('<div class="">Poistetaan käytöstä alken: <input id="removeAssetDateInput" class="" type="text" />&nbsp;<span class="attributeFormat">pp.kk.vvvv</span></div>');
         },
         _initRoadsStyles: function() {
             this._roadStyles = new OpenLayers.StyleMap({
@@ -581,9 +582,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             day = (day.length == 1) ? "0" + day : day;
             return d.getFullYear() + '-' + month + '-' + day;
         },
-        _remove: function(busStop) {
-            var date = new Date();
-            var propertyValues = [{propertyValue : 0, propertyDisplayValue: this._formatDate(date)}];
+        _remove: function(busStop, removalDate) {
+            var propertyValues = [{propertyValue : 0, propertyDisplayValue: removalDate}];
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
@@ -648,11 +648,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseClick: function(busStop, imageIds) {
             var me = this;
             return function (evt, point) {
-                if (me._selectedControl == 'Remove') {
-                    var remove=confirm("Oletko varma?");
-                    if (remove) {
+                if (me._selectedControl === 'Remove') {
+                    var confirm = Oskari.clazz.create('Oskari.userinterface.component.Popup');
+                    var okBtn = confirm.createCloseButton("Poista");
+                    okBtn.addClass('primary');
+                    okBtn.setHandler(function() {
                         me._remove(me._selectedBusStop);
-                    }
+                        confirm.close();
+                    });
+                    var cancelBtn = confirm.createCloseButton("Peru");
+                    confirm.makeModal();
+                    confirm.show("Poisto", me._removeAssetTemplate, [cancelBtn, okBtn]);
+
+                    dateutil.addFinnishDatePicker(jQuery('#removeAssetDateInput').get(0));
+
                     return;
                 }
                 point.heading = busStop.roadDirection+ (90  * -busStop.effectDirection);
