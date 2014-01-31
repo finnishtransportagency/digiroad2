@@ -227,8 +227,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             if (this._selectedControl == 'Add') {
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
-                var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-                var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon, "lat" : event.getLonLat().lat, "roadLinkId": nearestLine.roadLinkId, "bearing" : bearing };
+                // TODO: Support bus stops that don't map to any road link and thus have no road link reference nor bearing
+                var bearing = _.isEmpty(nearestLine) ? 180 : geometrycalculator.getLineDirectionDegAngle(nearestLine);
+                var roadLinkId = nearestLine.roadLinkId || 0;
+                var data = { "assetTypeId" : 10, "lon" : event.getLonLat().lon, "lat" : event.getLonLat().lat, "roadLinkId": roadLinkId, "bearing" : bearing };
                 jQuery.ajax({
                     contentType: "application/json",
                     type: "PUT",
