@@ -72,6 +72,7 @@ describe('FeatureAttributes', function () {
     describe('when feature attribute collection is requested', function () {
         var featureAttributes = null;
         var requestedAssetTypes = [];
+        var collectedAttributes = {};
 
         before(function () {
             requestedAssetTypes = [];
@@ -97,7 +98,7 @@ describe('FeatureAttributes', function () {
                     }
                 })
             });
-            featureAttributes.collectAttributes(function() {});
+            featureAttributes.collectAttributes(function(attributeCollection) { collectedAttributes = attributeCollection; });
         });
 
         it('should call backend for bus stop properties', function () {
@@ -110,6 +111,15 @@ describe('FeatureAttributes', function () {
             assert.equal(1, textProperty.length);
             assert.equal(true, textProperty.hasClass('featureAttributeText'));
             assert.equal('Esteettömyystiedot', textProperty.attr('name'));
+        });
+
+        it('should call callback with attribute collection when save is clicked', function() {
+            var saveButton = $('button.save');
+            var textProperty = $('input[data-propertyid="5"]');
+            textProperty.val('textValue');
+            saveButton.click();
+            assert.equal(1, collectedAttributes.length);
+            assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
         });
     });
 });

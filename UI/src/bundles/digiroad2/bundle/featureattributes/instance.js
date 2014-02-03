@@ -188,10 +188,29 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
+                var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var featureAttributes = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData });
-                jQuery("#featureAttributes").html(featureAttributes);
-                successCallback({});
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData });
+                featureAttributesMarkup += '<button class="save">Tallenna</button>';
+                featureAttributesElement.html(featureAttributesMarkup);
+                featureAttributesElement.find('button.save').on('click', function() {
+                    var inputElements = featureAttributesElement.find('input');
+                    var attributeCollection = _.map(inputElements, function(inputElement) {
+                        var jqElement = jQuery(inputElement);
+                        return {
+                          propertyId: jqElement.attr('data-propertyId'),
+                          propertyValues: propertyValuesOfTextElement(jqElement)
+                        };
+                    });
+                    successCallback(attributeCollection);
+                });
+            }
+
+            function propertyValuesOfTextElement(element) {
+                return [{
+                    "propertyValue" : 0,
+                    "propertyDisplayValue" : element.val()
+                }];
             }
         },
         _getPropertyValues: function() {
