@@ -1,8 +1,6 @@
 describe('FeatureAttributes', function () {
-    var featureAttributesInstance = Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
-
     describe('when backend returns undefined date', function () {
-        var featureAttributes = Object.create(featureAttributesInstance._class.prototype);
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
         featureAttributes.init({});
 
         it('should construct date attribute with empty content', function () {
@@ -32,7 +30,7 @@ describe('FeatureAttributes', function () {
         var calls = [];
 
         before(function () {
-            featureAttributes = Object.create(featureAttributesInstance._class.prototype);
+            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
                     putAssetPropertyValue: function (assetId, propertyId, data) {
@@ -77,7 +75,7 @@ describe('FeatureAttributes', function () {
 
         before(function () {
             requestedAssetTypes = [];
-            featureAttributes = Object.create(featureAttributesInstance._class.prototype);
+            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
                     getAssetTypeProperties: function (assetType, success) {
