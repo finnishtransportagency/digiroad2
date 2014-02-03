@@ -36,6 +36,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 "src" : "../../../../bundles/digiroad2/bundle/featureattributes/request/ShowFeatureAttributesRequestHandler.js"
             },{
                 "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/featureattributes/request/CollectFeatureAttributesRequest.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/featureattributes/request/CollectFeatureAttributesRequestHandler.js"
+            },{
+                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/featureattributes/event/FeatureAttributeChangedEvent.js"
             },{
                 "type" : "text/css",
