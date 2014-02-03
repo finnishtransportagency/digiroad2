@@ -1,38 +1,44 @@
-describe('FeatureAttributes', function() {
+describe('FeatureAttributes', function () {
     var featureAttributesInstance = Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
 
-    describe('when backend returns undefined date', function() {
+    describe('when backend returns undefined date', function () {
         var featureAttributes = Object.create(featureAttributesInstance._class.prototype);
         featureAttributes.init({});
 
-        it('should construct date attribute with empty content', function() {
-            var actualHtml = featureAttributes._makeContent([{
-                propertyId: 'propertyId',
-                propertyName: 'propertyName',
-                propertyType: 'date',
-                values: [{imageId: null, propertyDisplayValue: null, propertyValue: 0}]
-            }]);
+        it('should construct date attribute with empty content', function () {
+            var actualHtml = featureAttributes._makeContent([
+                {
+                    propertyId: 'propertyId',
+                    propertyName: 'propertyName',
+                    propertyType: 'date',
+                    values: [
+                        {imageId: null, propertyDisplayValue: null, propertyValue: 0}
+                    ]
+                }
+            ]);
             assert.equal(actualHtml,
                 '<div class="formAttributeContentRow">' +
                     '<div class="formLabels">propertyName</div>' +
                     '<div class="formAttributeContent">' +
-                        '<input class="featureAttributeDate" type="text" data-propertyId="propertyId" name="propertyName" value=""/>' +
-                        '<span class="attributeFormat">pp.kk.vvvv</span>' +
+                    '<input class="featureAttributeDate" type="text" data-propertyId="propertyId" name="propertyName" value=""/>' +
+                    '<span class="attributeFormat">pp.kk.vvvv</span>' +
                     '</div>' +
-                '</div>');
+                    '</div>');
         });
     });
 
-    describe('when user leaves date undefined', function() {
+    describe('when user leaves date undefined', function () {
         var featureAttributes = null;
         var calls = [];
 
-        before(function() {
+        before(function () {
             featureAttributes = Object.create(featureAttributesInstance._class.prototype);
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
-                    putAssetPropertyValue: function(assetId, propertyId, data) { calls.push(data); },
-                    getAsset: function(id, success) {
+                    putAssetPropertyValue: function (assetId, propertyId, data) {
+                        calls.push(data);
+                    },
+                    getAsset: function (id, success) {
                         success({
                             propertyData: [createNullDateProperty('propertyId', 'propertyName')]
                         });
@@ -41,7 +47,7 @@ describe('FeatureAttributes', function() {
             });
         });
 
-        it('should send null date to backend', function() {
+        it('should send null date to backend', function () {
             calls = [];
             featureAttributes.showAttributes(130, { x: 24, y: 60, heading: 140 });
             var dateInput = $('input[data-propertyid="propertyId"]');
@@ -55,11 +61,36 @@ describe('FeatureAttributes', function() {
                 propertyId: propertyId,
                 propertyName: propertyName,
                 propertyType: 'date',
-                values: [{
-                imageId: null,
-                propertyDisplayValue: null,
-                propertyValue: 0
-            }]};
+                values: [
+                    {
+                        imageId: null,
+                        propertyDisplayValue: null,
+                        propertyValue: 0
+                    }
+                ]};
         }
+    });
+
+    describe('when feature attribute collection is requested', function () {
+        var featureAttributes = null;
+        var requestedAssetTypes = [];
+
+        before(function () {
+            featureAttributes = Object.create(featureAttributesInstance._class.prototype);
+            featureAttributes.init({
+                backend: _.extend({}, window.Backend, {
+                    getAssetTypeProperties: function (assetType) {
+                        requestedAssetTypes.push(assetType);
+                    }
+                })
+            });
+        });
+
+        it('should call backend for bus stop properties', function () {
+            requestedAssetTypes = [];
+            featureAttributes.collectAttributes(function() {});
+            assert.equal(1, requestedAssetTypes.length);
+            assert.equal(10, requestedAssetTypes[0]);
+        });
     });
 });
