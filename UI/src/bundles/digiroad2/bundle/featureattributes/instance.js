@@ -185,7 +185,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             });
         },
         collectAttributes: function(successCallback) {
-          successCallback({});
+            var me = this;
+            me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
+            function assetTypePropertiesCallback() {
+                successCallback({});
+            }
         },
         _getPropertyValues: function() {
             var me = this;
