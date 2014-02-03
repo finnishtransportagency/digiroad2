@@ -81,7 +81,8 @@ describe('FeatureAttributes', function () {
                     getAssetTypeProperties: function (assetType, success) {
                         requestedAssetTypes.push(assetType);
                         var properties = [
-                                { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
+                                { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] }
+/*
                                 { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
                                 { propertyId: '6', propertyName: 'Ylläpitäjän tunnus', propertyType: 'text', required: false, values: [] },
                                 { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
@@ -90,6 +91,7 @@ describe('FeatureAttributes', function () {
                                 { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] },
                                 { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
                                 { propertyId: 'validTo', propertyName: 'Käytössä päättyen', propertyType: 'date', required: false, values: [] }
+*/
                         ];
                         success(properties);
                     }
@@ -101,6 +103,13 @@ describe('FeatureAttributes', function () {
         it('should call backend for bus stop properties', function () {
             assert.equal(1, requestedAssetTypes.length);
             assert.equal(10, requestedAssetTypes[0]);
+        });
+
+        it('should create text field for property "Esteettömyystiedot"', function() {
+            var textProperty = $('input[data-propertyid="5"]');
+            assert.equal(1, textProperty.length);
+            assert.equal(true, textProperty.hasClass('featureAttributeText'));
+            assert.equal('Esteettömyystiedot', textProperty.attr('name'));
         });
     });
 });
