@@ -187,7 +187,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         collectAttributes: function(successCallback) {
             var me = this;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
-            function assetTypePropertiesCallback() {
+            function assetTypePropertiesCallback(properties) {
+                var featureData = me._makeContent(properties);
+                var featureAttributes = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData });
+                jQuery("#featureAttributes").html(featureAttributes);
                 successCallback({});
             }
         },
