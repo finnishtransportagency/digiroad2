@@ -79,8 +79,20 @@ describe('FeatureAttributes', function () {
             featureAttributes = Object.create(featureAttributesInstance._class.prototype);
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
-                    getAssetTypeProperties: function (assetType) {
+                    getAssetTypeProperties: function (assetType, success) {
                         requestedAssetTypes.push(assetType);
+                        var properties = [
+                                { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
+                                { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
+                                { propertyId: '6', propertyName: 'Ylläpitäjän tunnus', propertyType: 'text', required: false, values: [] },
+                                { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
+                                { propertyId: '3', propertyName: 'Ylläpitäjä', propertyType: 'single_choice', required: true, values: [] },
+                                { propertyId: '4', propertyName: 'Pysäkin saavutettavuus', propertyType: 'text', required: false, values: [] },
+                                { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] },
+                                { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
+                                { propertyId: 'validTo', propertyName: 'Käytössä päättyen', propertyType: 'date', required: false, values: [] }
+                        ];
+                        success(properties);
                     }
                 })
             });
