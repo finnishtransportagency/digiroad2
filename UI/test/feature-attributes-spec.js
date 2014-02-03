@@ -76,6 +76,7 @@ describe('FeatureAttributes', function () {
         var requestedAssetTypes = [];
 
         before(function () {
+            requestedAssetTypes = [];
             featureAttributes = Object.create(featureAttributesInstance._class.prototype);
             featureAttributes.init({
                 backend: _.extend({}, window.Backend, {
@@ -96,11 +97,10 @@ describe('FeatureAttributes', function () {
                     }
                 })
             });
+            featureAttributes.collectAttributes(function() {});
         });
 
         it('should call backend for bus stop properties', function () {
-            requestedAssetTypes = [];
-            featureAttributes.collectAttributes(function() {});
             assert.equal(1, requestedAssetTypes.length);
             assert.equal(10, requestedAssetTypes[0]);
         });
