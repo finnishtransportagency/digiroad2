@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.mtk
 
-import scala.io.Source
+import scala.io.{Codec, Source}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.apache.commons.io._
 import scala.collection.mutable
@@ -89,7 +89,7 @@ object MtkFileSlurper  {
   def parseMtkMessage(fileOption: Option[File]) = {
     fileOption.map(file =>  {
       logger.info(s"Parsing file $file")
-      (file, MtkMessageParser.parseMtkMessage(Source.fromFile(file)))
+      (file, MtkMessageParser.parseMtkMessage(Source.fromFile(file)(Codec.UTF8)))
     })
   }
 
