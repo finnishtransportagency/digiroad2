@@ -122,16 +122,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   private[this] def boundsFromParams: Option[BoundingCircle] = {
-    params.get("bbox") match{
-      case Some(b) => {
-        val BBOXList = b.split(",").map(_.toDouble);
-        val (left, bottom, right, top) = (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
-        val r =  math.hypot(bottom - top, left - right)/2
-        val lon = (bottom + top)/2
-        val lat = (left + right)/2
-        Some(BoundingCircle(lat, lon, r))
-      }
-      case None => None
+    params.get("bbox").map { b =>
+      val BBOXList = b.split(",").map(_.toDouble);
+      val (left, bottom, right, top) = (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
+      val r =  math.hypot(bottom - top, left - right)/2
+      val lon = (bottom + top)/2
+      val lat = (left + right)/2
+      BoundingCircle(lat, lon, r)
     }
   }
 }
