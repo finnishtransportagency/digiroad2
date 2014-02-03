@@ -33,4 +33,39 @@ describe('BusStopLayerPlugin', function(){
             assert.equal(testEmptyBusStopTypeHtml, pluginInstance._makePopupContent(dataEmptyBusStopType));
         });
     });
+
+    describe('when adding a new bus stop', function() {
+        var pluginInstance = null;
+        var request = null;
+        var requestCallback = null;
+        var attributeCollectionRequest = {};
+        var attributeCollectionRequestBuilder = function(callback) {
+            requestCallback = callback;
+            return attributeCollectionRequest;
+        };
+
+        before(function() {
+            pluginInstance = Object.create(busStopPlugin._class.prototype);
+            pluginInstance.setMapModule({
+                getName: function() { return 'MapModule'; },
+                getMap: function() { return {}; }
+            });
+            pluginInstance.startPlugin({
+                register: function() {},
+                registerForEventByName: function() {},
+                getRequestBuilder: function(request) {
+                    return request === 'FeatureAttributes.CollectFeatureAttributesRequest' ? attributeCollectionRequestBuilder : null;
+                },
+                request: function(name, r) { request = r; }
+            });
+            pluginInstance._toolSelectionChange({
+                getAction: function() { return 'AddWithCollection'; }
+            });
+            pluginInstance._addBusStopEvent({});
+        });
+
+        it('should request collection of feature attributes', function() {
+            assert.equal(request, attributeCollectionRequest);
+        });
+    });
 });
