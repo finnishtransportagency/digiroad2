@@ -4,31 +4,33 @@ var assert = chai.assert;
 describe('BusStopLayerPlugin', function(){
     var busStopPlugin = Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
 
-    var dataOneBusStopType = ["2"];
-    var testOneBusStopTypeHtml =  '<img src="/api/images/2">';
+    describe('#makePopupContent()', function() {
+        var pluginInstance = null;
 
-    var dataTwoBusStopType = ["2","3"];
-    var testTwoBusStopTypeHtml =  '<img src="/api/images/2"><img src="/api/images/3">';
+        var dataOneBusStopType = ["2"];
+        var testOneBusStopTypeHtml =  '<img src="/api/images/2">';
 
-    var dataEmptyBusStopType = [];
-    var testEmptyBusStopTypeHtml =  '';
+        var dataTwoBusStopType = ["2","3"];
+        var testTwoBusStopTypeHtml =  '<img src="/api/images/2"><img src="/api/images/3">';
 
-    before(function(){
-        busStopPlugin._class.prototype._initTemplates();
-    });
+        var dataEmptyBusStopType = [];
+        var testEmptyBusStopTypeHtml =  '';
 
-    describe('#makePopupContent()', function(){
-        it('should return one bus stop html by image tag', function(){
-            assert.equal(testOneBusStopTypeHtml,busStopPlugin._class.prototype._makePopupContent(dataOneBusStopType));
+        before(function(){
+            pluginInstance = Object.create(busStopPlugin._class.prototype);
+            pluginInstance._initTemplates();
         });
 
-        it('should return two various bus stop html by image tags', function(){
-            assert.equal(testTwoBusStopTypeHtml,busStopPlugin._class.prototype._makePopupContent(dataTwoBusStopType));
+        it('should return one bus stop html by image tag', function () {
+            assert.equal(testOneBusStopTypeHtml, pluginInstance._makePopupContent(dataOneBusStopType));
         });
 
-        it('should return empty html', function(){
-            assert.equal(testEmptyBusStopTypeHtml,busStopPlugin._class.prototype._makePopupContent(dataEmptyBusStopType));
+        it('should return two various bus stop html by image tags', function () {
+            assert.equal(testTwoBusStopTypeHtml, pluginInstance._makePopupContent(dataTwoBusStopType));
         });
 
+        it('should return empty html', function () {
+            assert.equal(testEmptyBusStopTypeHtml, pluginInstance._makePopupContent(dataEmptyBusStopType));
+        });
     });
 });
