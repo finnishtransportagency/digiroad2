@@ -143,12 +143,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 jQuery("#featureAttributes").html(featureAttributes);
                 jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    propertyValue.push({
-                        "propertyValue" : 0,
-                        "propertyDisplayValue" : data.val()
-                    });
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
                 });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
@@ -199,19 +194,18 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         var jqElement = jQuery(inputElement);
                         return {
                           propertyId: jqElement.attr('data-propertyId'),
-                          propertyValues: propertyValuesOfTextElement(jqElement)
+                          propertyValues: me._propertyValuesOfTextElement(jqElement)
                         };
                     });
                     successCallback(attributeCollection);
                 });
             }
-
-            function propertyValuesOfTextElement(element) {
-                return [{
-                    "propertyValue" : 0,
-                    "propertyDisplayValue" : element.val()
-                }];
-            }
+        },
+        _propertyValuesOfTextElement: function(element) {
+            return [{
+                "propertyValue" : 0,
+                "propertyDisplayValue" : element.val()
+            }];
         },
         _getPropertyValues: function() {
             var me = this;
