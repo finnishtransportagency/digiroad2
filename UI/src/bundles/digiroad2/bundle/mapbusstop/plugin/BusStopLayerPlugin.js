@@ -444,7 +444,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
             var layers = [];
             var busStopsRoads = new OpenLayers.Layer.Vector("busStopsRoads_"+ layer.getId(), {
-                strategies: [new OpenLayers.Strategy.BBOX()],
+                strategies: [new OpenLayers.Strategy.BBOX(), new OpenLayers.Strategy.Refresh()],
                 protocol: new OpenLayers.Protocol.HTTP({
                     url: layer.getRoadLinesUrl(),
                     format: new OpenLayers.Format.GeoJSON()
