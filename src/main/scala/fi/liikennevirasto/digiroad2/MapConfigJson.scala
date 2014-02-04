@@ -1,11 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.user.Configuration
+
 object MapConfigJson {
-  def mapConfig(userConfig: Map[String, String]): String = {
-    val zoom = BigInt(userConfig.get("zoom").getOrElse("2"))
-    val east = userConfig.get("east").getOrElse("390000")
-    val north = userConfig.get("north").getOrElse("6900000")
-    val municipalityNumber = userConfig.get("municipalityNumber").getOrElse("235")
+  def mapConfig(userConfig: Configuration): String = {
+    val zoom = userConfig.zoom.getOrElse(2)
+    val east = userConfig.east.getOrElse(390000)
+    val north = userConfig.north.getOrElse(6900000)
+    val municipalityNumber = userConfig.municipalityNumber.getOrElse(235)
 
     s"""{
    "toolbar":{

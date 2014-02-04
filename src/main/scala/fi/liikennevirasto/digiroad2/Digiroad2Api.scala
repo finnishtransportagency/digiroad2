@@ -42,7 +42,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
-    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse(_))) match {
+    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
       case (Some(period), _) => period match {
         case "past" => (None, Some(LocalDate.now))
         case "future" => (Some(LocalDate.now), None)
@@ -52,12 +52,25 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       }
       case _ => (None, None)
     }
-    assetProvider.getAssets(params("assetTypeId").toLong, params.get(MunicipalityNumber).map(_.toLong), boundsFromParams, validFrom = startDate, validTo = endDate)
+    val user = userProvider.getThreadLocalUser().get
+    val authorizedMunicipalities = user.configuration.authorizedMunicipalities
+    assetProvider.getAssets(
+        params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
+        boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
+      asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+    }
+  }
+
+  private def isReadOnly( authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
+    !authorizedMunicipalities.contains(municipalityNumber)
   }
 
   get("/assets/:assetId") {
     assetProvider.getAssetById(params("assetId").toLong) match {
-      case Some(a) => a
+      case Some(a) => {
+        val authorizedMunicipalities = userProvider.getThreadLocalUser().get.configuration.authorizedMunicipalities.toSet
+        a.copy(readOnly = a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+      }
       case None => NotFound("Asset " + params("assetId") + " not found")
     }
   }
@@ -70,15 +83,24 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/assets/:id") {
     val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val asset = Asset(params("id").toLong, assetTypeId = assetTypeId.get, lon = lon.get, lat = lat.get, roadLinkId = roadLinkId.get, propertyData = List(), bearing = bearing)
+    val asset = Asset(
+        id = params("id").toLong,
+        assetTypeId = assetTypeId.get,
+        lon = lon.get,
+        lat = lat.get,
+        roadLinkId = roadLinkId.get,
+        propertyData = List(),
+        bearing = bearing)
     val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
     updated
   }
 
+  // TODO: PUT -> POST
   put("/asset") {
     val user = userProvider.getThreadLocalUser().get
-    assetProvider.createAsset((parsedBody \ "assetTypeId").extract[Long],
+    assetProvider.createAsset(
+      (parsedBody \ "assetTypeId").extract[Long],
       (parsedBody \ "lon").extract[Int].toDouble,
       (parsedBody \ "lat").extract[Int].toDouble,
       (parsedBody \ "roadLinkId").extract[Long],

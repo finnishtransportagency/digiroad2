@@ -1,8 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.user.Configuration
+
 object LayersJson {
-  def layers(userConfig: Map[String, String]): String = {
-   val municipalityNumber = userConfig.get("municipalityNumber").getOrElse("235")
+  def layers(userConfig: Configuration): String = {
+   val municipalityNumber = userConfig.municipalityNumber.getOrElse(235)
 
     s"""{
     "layers": [

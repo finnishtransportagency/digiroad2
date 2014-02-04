@@ -14,8 +14,8 @@ trait UserProvider {
     }
   }
 
-  def createUser(username: String, password: String, email: String, config: Map[String, String] = Map())
+  def createUser(username: String, password: String, email: String, config: Configuration)
   def getUser(username: String): Option[User]
   def getAuthenticatedUser(username: String, password: String): Option[User]
-  def getUserConfiguration(): Map[String, String]
+  def getUserConfiguration(): Configuration
 }

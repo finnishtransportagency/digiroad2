@@ -1,3 +1,10 @@
 package fi.liikennevirasto.digiroad2.user
 
-case class User(id: Long, username: String, email: String, configuration: Map[String, String] = Map())
+case class Configuration(
+    zoom: Option[Long] = None,
+    east: Option[Long] = None,
+    north: Option[Long] = None,
+    municipalityNumber: Option[Long]  = None,
+    authorizedMunicipalities: Set[Long] = Set()
+)
+case class User(id: Long, username: String, email: String, configuration: Configuration)

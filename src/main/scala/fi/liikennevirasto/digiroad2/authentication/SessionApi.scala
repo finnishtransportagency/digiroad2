@@ -4,13 +4,14 @@ import org.scalatra._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.apache.commons.validator.routines.EmailValidator
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.user.Configuration
 
 class SessionApi extends ScalatraServlet with AuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
-  def defaultConfig(municipalityNumber: String): Map[String, String] = municipalityNumber match {
-    case "235" => Map("zoom" -> "8", "east" -> "373560", "north"-> "6677676", "municipalityNumber" -> "235")
-    case "837" => Map("zoom" -> "7", "east" -> "328308", "north"-> "6822545", "municipalityNumber" -> "837")
-    case _ => Map()
+  def defaultConfig(municipalityNumber: String): Configuration = municipalityNumber match {
+    case "235" => Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235))
+    case "837" => Configuration(zoom = Some(7), east = Some(328308), north = Some(6822545), municipalityNumber = Some(837))
+    case _ => Configuration()
   }
 
   post("/session") {

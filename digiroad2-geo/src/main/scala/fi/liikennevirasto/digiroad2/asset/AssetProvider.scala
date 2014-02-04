@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 trait AssetProvider {
   def getAssetTypes: Seq[AssetType]
   def getAssetById(assetId: Long): Option[Asset]
-  def getAssets(assetTypeId: Long, municipalityNumber: Option[Long] = None, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
+  def getAssets(assetTypeId: Long, municipalityNumber: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): Asset
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue])
   def deleteAssetProperty(assetId: Long, propertyId: String)
