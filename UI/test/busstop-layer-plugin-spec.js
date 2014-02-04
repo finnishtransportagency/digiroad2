@@ -102,7 +102,8 @@ describe('BusStopLayerPlugin', function(){
                 assetCreationData = [];
                 assetPropertyInsertions = [];
                 requestCallback([
-                    { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }
+                    { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
+                    { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'' } ] }
                 ]);
             });
 
@@ -112,8 +113,9 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should add asset properties to back end', function() {
-                assert.equal(1, assetPropertyInsertions.length);
+                assert.equal(2, assetPropertyInsertions.length);
                 assert.deepEqual({ assetId: 123, propertyId: '5', data: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }, assetPropertyInsertions[0]);
+                assert.deepEqual({ assetId: 123, propertyId: '1', data: [ { propertyValue:2, propertyDisplayValue:'' } ] }, assetPropertyInsertions[1]);
             });
         });
     });
