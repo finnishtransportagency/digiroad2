@@ -236,9 +236,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 sendCollectAttributesRequest(function (param) {
                     var layerName = me._layerType + "_" + me._selectedLayerId;
                     var features = me._layer[layerName] ? me._layer[layerName][0].features : null;
-                    var nearestLine = me._geometryCalculations.findNearestLine(features, event.getLonLat().lon, event.getLonLat().lat);
                     // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
-                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: nearestLine.roadLinkId, bearing: 0 });
+                    var nearestLine = me._geometryCalculations.findNearestLine(features, event.getLonLat().lon, event.getLonLat().lat);
+                    var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
+                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: nearestLine.roadLinkId, bearing: bearing });
                 });
             }
             else if (this._selectedControl == 'Add') {
