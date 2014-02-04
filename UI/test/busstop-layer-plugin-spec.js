@@ -2,16 +2,14 @@
 var assert = chai.assert;
 
 describe('BusStopLayerPlugin', function(){
+    var dataOneBusStopType = ["2"];
+    var dataTwoBusStopType = ["2","3"];
+    var dataEmptyBusStopType = [];
+    
     describe('#makePopupContent()', function() {
         var pluginInstance = null;
-
-        var dataOneBusStopType = ["2"];
         var testOneBusStopTypeHtml =  '<img src="/api/images/2">';
-
-        var dataTwoBusStopType = ["2","3"];
         var testTwoBusStopTypeHtml =  '<img src="/api/images/2"><img src="/api/images/3">';
-
-        var dataEmptyBusStopType = [];
         var testEmptyBusStopTypeHtml =  '';
 
         before(function(){
@@ -32,6 +30,49 @@ describe('BusStopLayerPlugin', function(){
         });
     });
 
+    describe('#getIconImages()', function(){
+        var pluginInstance = null;
+        var oneIconImageHtml =
+            '<div class="callout">' +
+                '<img src="/api/images/2.png">' +
+                '<div class="arrow-container">' +
+                '<div class="arrow"></div>' +
+                '</div>' +
+                '<div class="dropHandle">' +
+                '</div></div>';
+        var twoIconImageHtml =
+            '<div class="callout">' +
+                '<img src="/api/images/2.png">' +
+                '<img src="/api/images/3.png">' +
+                '<div class="arrow-container">' +
+                '<div class="arrow"></div>' +
+                '</div>' +
+                '<div class="dropHandle">' +
+                '</div></div>';
+        var noIconImageHtml =
+            '<div class="callout">' +
+                '<div class="arrow-container">' +
+                '<div class="arrow"></div>' +
+                '</div>' +
+                '<div class="dropHandle">' +
+                '</div></div>';        
+        
+        before(function(){
+            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
+            pluginInstance._initTemplates();
+        });        
+        
+        it('should return one bus stop html by image tag', function(){
+            assert.equal(oneIconImageHtml,pluginInstance._getIconImages(dataOneBusStopType).outerHTML);
+        });
+        it('should return two bus stop html by images tag', function(){
+            assert.equal(twoIconImageHtml,pluginInstance._getIconImages(dataTwoBusStopType).outerHTML);
+        });
+        it('should return html without images', function(){
+            assert.equal(noIconImageHtml,pluginInstance._getIconImages(dataEmptyBusStopType).outerHTML);
+        });
+    });    
+    
     describe('when adding a new bus stop', function() {
         var pluginInstance = null;
         var requests = [];

@@ -505,13 +505,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             icon.imageDiv.className = "callout-wrapper";
             icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
             icon.imageDiv.setAttribute("style", "");
+
+            icon.imageDiv.appendChild(this._getIconImages(imageIds));
+
+            return icon;
+        },
+        _getIconImages: function(imageIds) {
             var callout = document.createElement("div");
             callout.className = "callout";
             var arrowContainer = document.createElement("div");
             arrowContainer.className = "arrow-container";
             var arrow = document.createElement("div");
             arrow.className = "arrow";
-            icon.imageDiv.appendChild(callout);
+
             _.each(imageIds, function (imageId) {
                 var img = document.createElement("img");
                 img.setAttribute("src", "/api/images/" + imageId + ".png");
@@ -522,8 +528,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var dropHandle = document.createElement("div");
             dropHandle.className="dropHandle";
             callout.appendChild(dropHandle);
-
-            return icon;
+            return callout;
         },
         _addBusStop: function(assetData, busStops, layerId, directionArrow, directionLayer, validityDirection, imageIds) {
             var icon = this._getIcon(imageIds);
