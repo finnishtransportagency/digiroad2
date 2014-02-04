@@ -22,6 +22,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._roadStyles = null;
         this._selectedControl = 'Select';
         this._selectedLayerId = "235";
+        var backend = _.isObject(config) ? config.backend : null;
+        this._backend = backend || window.Backend;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
