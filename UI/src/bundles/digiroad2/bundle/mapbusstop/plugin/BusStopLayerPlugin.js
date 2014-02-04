@@ -658,7 +658,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (this._selectedBusStop && this._selectedBusStop.actionMouseDown) {
                 var me = this;
                 var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(evt.getLon(), evt.getLat()));
-                pxPosition.y = pxPosition.y + 34/2; // FIXME: read actual size from current asset
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
                 var lonlat = this._map.getLonLatFromPixel(busStopCenter);
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType +"_"+ this._selectedBusStop.layerId][0].features, lonlat.lon, lonlat.lat);
