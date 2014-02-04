@@ -49,7 +49,12 @@ describe('BusStopLayerPlugin', function(){
                     putAsset: function(data) {
                         assetCreationData.push(data);
                     }
-                })
+                }),
+                geometryCalculations: {
+                    findNearestLine: function() {
+                        return { roadLinkId: 5 };
+                    }
+                }
             });
             pluginInstance.setMapModule({
                 getName: function() { return 'MapModule'; },
@@ -88,7 +93,7 @@ describe('BusStopLayerPlugin', function(){
 
             it('should create asset in back end', function () {
                 assert.equal(1, assetCreationData.length);
-                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 0, bearing: 0 }, assetCreationData[0]);
+                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 0 }, assetCreationData[0]);
             });
         });
     });

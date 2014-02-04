@@ -24,6 +24,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedLayerId = "235";
         var backend = _.isObject(config) ? config.backend : null;
         this._backend = backend || window.Backend;
+        var geometryCalculations = _.isObject(config) ? config.geometryCalculations : null;
+        this._geometryCalculations = geometryCalculations || window.geometrycalculator;
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
@@ -229,7 +231,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             if (this._selectedControl === 'AddWithCollection') {
                 sendCollectAttributesRequest(function (param) {
-                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: 0, bearing: 0 });
+                    var layerName = me._layerType + "_" + me._selectedLayerId;
+                    var features = me._layer[layerName] ? me._layer[layerName][0].features : null;
+                    var nearestLine = me._geometryCalculations.findNearestLine(features, event.getLonLat().lon, event.getLonLat().lat);
+                    // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
+                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: nearestLine.roadLinkId, bearing: 0 });
                 });
             }
             else if (this._selectedControl == 'Add') {
