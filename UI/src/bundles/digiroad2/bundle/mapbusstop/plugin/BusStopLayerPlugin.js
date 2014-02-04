@@ -229,7 +229,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             if (this._selectedControl === 'AddWithCollection') {
                 sendCollectAttributesRequest(function (param) {
-                    console.log('callback called with ', param);
+                    me._backend.putAsset({ assetTypeId: 10, lon: 0, lat: 0, roadLinkId: 0, bearing: 0 });
                 });
             }
             else if (this._selectedControl == 'Add') {
