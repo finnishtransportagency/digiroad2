@@ -490,9 +490,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             icon.imageDiv.className = "callout-wrapper";
             icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
             icon.imageDiv.setAttribute("style", "");
-
             icon.imageDiv.appendChild(this._getIconImages(imageIds));
-
             return icon;
         },
         _getIconImages: function(imageIds) {
@@ -502,7 +500,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             arrowContainer.className = "arrow-container";
             var arrow = document.createElement("div");
             arrow.className = "arrow";
-
             _.each(imageIds, function (imageId) {
                 var img = document.createElement("img");
                 img.setAttribute("src", "/api/images/" + imageId + ".png");
