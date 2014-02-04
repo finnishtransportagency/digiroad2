@@ -36,7 +36,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
             "locales" : [{
                 "lang" : "fi",
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle//mapbusstop/locale/fi.js"
+                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/locale/fi.js"
             }]
         },
         "bundle" : {
