@@ -11,6 +11,20 @@
         $.get('/api/assetTypeProperties/' + assetTypeId, success);
     };
 
+    backend.putAsset = function (data) {
+        jQuery.ajax({
+            contentType: "application/json",
+            type: "PUT",
+            url: "/api/asset",
+            data: JSON.stringify(data),
+            dataType: "json",
+            success: function () {},
+            error: function () {
+                console.log("error");
+            }
+        });
+    };
+
     function putAssetPropertyValue(assetId, propertyId, data, success) {
         jQuery.ajax({
             contentType: "application/json",
