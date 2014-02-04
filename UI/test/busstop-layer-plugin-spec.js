@@ -37,6 +37,7 @@ describe('BusStopLayerPlugin', function(){
         var request = null;
         var requestCallback = null;
         var assetCreationData = [];
+        var assetPropertyInsertions = [];
         var attributeCollectionRequest = {};
         var attributeCollectionRequestBuilder = function(callback) {
             requestCallback = callback;
@@ -46,8 +47,16 @@ describe('BusStopLayerPlugin', function(){
         before(function() {
             pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin', {
                 backend: _.extend({}, window.Backend, {
-                    putAsset: function(data) {
+                    putAsset: function(data, success) {
                         assetCreationData.push(data);
+                        success({ id: 123 });
+                    },
+                    putAssetPropertyValue: function(assetId, propertyId, data) {
+                        assetPropertyInsertions.push({
+                            assetId: assetId,
+                            propertyId: propertyId,
+                            data: data
+                        });
                     }
                 }),
                 geometryCalculations: {
@@ -91,12 +100,20 @@ describe('BusStopLayerPlugin', function(){
         describe('and when feature attributes have been collected', function () {
             before(function() {
                 assetCreationData = [];
-                requestCallback();
+                assetPropertyInsertions = [];
+                requestCallback([
+                    { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }
+                ]);
             });
 
             it('should create asset in back end', function () {
                 assert.equal(1, assetCreationData.length);
                 assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95 }, assetCreationData[0]);
+            });
+
+            it('should add asset properties to back end', function() {
+                assert.equal(1, assetPropertyInsertions.length);
+                assert.deepEqual({ assetId: 123, propertyId: '5', data: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }, assetPropertyInsertions[0]);
             });
         });
     });
