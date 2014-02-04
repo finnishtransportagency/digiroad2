@@ -9,7 +9,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
      * @static
      */
 
-        function (config) {
+    function (config) {
         this.mapModule = null;
         this.pluginName = null;
         this._sandbox = null;
@@ -22,10 +22,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._roadStyles = null;
         this._selectedControl = 'Select';
         this._selectedLayerId = "235";
-        var backend = _.isObject(config) ? config.backend : null;
-        this._backend = backend || window.Backend;
-        var geometryCalculations = _.isObject(config) ? config.geometryCalculations : null;
-        this._geometryCalculations = geometryCalculations || window.geometrycalculator;
+        this._backend = defineDependency('backend', window.Backend);
+        this._geometryCalculations = defineDependency('geometryCalculations', window.geometrycalculator);
+
+        function defineDependency(dependencyName, defaultImplementation) {
+            var dependency = _.isObject(config) ? config[dependencyName] : null;
+            return dependency || defaultImplementation;
+        }
     }, {
         /** @static @property __name plugin name */
         __name: 'BusStopLayerPlugin',
