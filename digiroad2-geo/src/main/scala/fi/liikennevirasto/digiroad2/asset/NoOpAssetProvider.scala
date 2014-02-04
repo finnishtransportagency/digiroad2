@@ -37,4 +37,5 @@ class NoOpAssetProvider extends AssetProvider {
   def updateAssetLocation(asset: Asset): Asset = asset
   def getImage(imageId: Long): Array[Byte] = new Array[Byte](0)
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]) { }
+  def availableProperties(assetTypeId: Long): Seq[Property] = Seq()
 }

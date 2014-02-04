@@ -5,9 +5,14 @@ import org.scalatest.{FunSuite, Tag}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, AssetType, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
+import fi.liikennevirasto.digiroad2.asset.EnumeratedPropertyValue
+import fi.liikennevirasto.digiroad2.asset.Asset
+import scala.Some
+import fi.liikennevirasto.digiroad2.asset.AssetType
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -166,6 +171,18 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     getWithUserAuth("/images/1_123456789") {
       status should equal(200)
       body.length should(be > 0)
+    }
+  }
+
+  test("get available properties for asset type", Tag("db")) {
+    getWithUserAuth("/assetTypeProperties/10") {
+      status should equal(200)
+      val ps = parse(body).extract[List[Property]]
+      ps.size should equal(6)
+      val p1 = ps.find(_.propertyId == "1").get
+      p1.propertyName should be ("Pysäkin katos")
+      p1.propertyType should be ("single_choice")
+      p1.required should be (true)
     }
   }
 
