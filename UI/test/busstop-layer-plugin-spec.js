@@ -2,8 +2,6 @@
 var assert = chai.assert;
 
 describe('BusStopLayerPlugin', function(){
-    var busStopPlugin = Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
-
     describe('#makePopupContent()', function() {
         var pluginInstance = null;
 
@@ -17,7 +15,7 @@ describe('BusStopLayerPlugin', function(){
         var testEmptyBusStopTypeHtml =  '';
 
         before(function(){
-            pluginInstance = Object.create(busStopPlugin._class.prototype);
+            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
             pluginInstance._initTemplates();
         });
 
@@ -45,7 +43,7 @@ describe('BusStopLayerPlugin', function(){
         };
 
         before(function() {
-            pluginInstance = Object.create(busStopPlugin._class.prototype);
+            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
             pluginInstance.setMapModule({
                 getName: function() { return 'MapModule'; },
                 getMap: function() { return {}; }
