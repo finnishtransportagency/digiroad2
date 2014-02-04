@@ -1,7 +1,6 @@
 digi-road-2
 ===========
 
-
 [![Build Status] (https://travis-ci.org/finnishtransportagency/digiroad2.png)]
 (https://travis-ci.org/finnishtransportagency/digiroad2)
 
