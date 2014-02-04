@@ -507,7 +507,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return icon;
         },
         _addBusStop: function(assetData, busStops, layerId, directionArrow, directionLayer, validityDirection, imageIds) {
-
             var icon = this._getIcon(imageIds);
             // new bus stop marker
             var busStop = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
@@ -543,14 +542,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 // Not need listeners anymore
                 busStop.events.unregister("mouseup", busStops, me._mouseUpFunction);
                 // Not moved only click
-                if (busStop.actionDownX == evt.clientX && busStop.actionDownY == evt.clientY ) {
-                    var point = new OpenLayers.Geometry.Point(busStop.lonlat.lon, busStop.lonlat.lat);
-                    var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
-                    busStopClick(evt, wgs84);
-                } else {
+                if (busStop.actionDownX != evt.clientX ||  busStop.actionDownY != evt.clientY ) {
                     var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
+                var point = new OpenLayers.Geometry.Point(busStop.lonlat.lon, busStop.lonlat.lat);
+                var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+                busStopClick(evt, wgs84);
             };
         },
         _formatDate: function(d) {
