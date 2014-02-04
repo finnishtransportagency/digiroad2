@@ -233,13 +233,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _addBusStopEvent: function(event){
             var me = this;
             if (this._selectedControl === 'AddWithCollection') {
-                sendCollectAttributesRequest(function (param) {
+                sendCollectAttributesRequest(function (attributeCollection) {
                     var layerName = me._layerType + "_" + me._selectedLayerId;
                     var features = me._layer[layerName] ? me._layer[layerName][0].features : null;
                     // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
                     var nearestLine = me._geometryCalculations.findNearestLine(features, event.getLonLat().lon, event.getLonLat().lat);
                     var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: nearestLine.roadLinkId, bearing: bearing });
+                    me._backend.putAsset({ assetTypeId: 10, lon: event.getLonLat().lon, lat: event.getLonLat().lat, roadLinkId: nearestLine.roadLinkId, bearing: bearing }, function (asset) {
+                        _.each(attributeCollection, function(attribute) {
+                            me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
+                        });
+                    });
                 });
             }
             else if (this._selectedControl == 'Add') {
