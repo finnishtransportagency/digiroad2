@@ -66,7 +66,14 @@ describe('BusStopLayerPlugin', function(){
             pluginInstance._toolSelectionChange({
                 getAction: function() { return 'AddWithCollection'; }
             });
-            pluginInstance._addBusStopEvent({});
+            pluginInstance._addBusStopEvent({
+                getLonLat: function () {
+                    return {
+                        lon: 30.5,
+                        lat: 41.2
+                    };
+                }
+            });
         });
 
         it('should request collection of feature attributes', function() {
@@ -81,7 +88,7 @@ describe('BusStopLayerPlugin', function(){
 
             it('should create asset in back end', function () {
                 assert.equal(1, assetCreationData.length);
-                assert.deepEqual({ assetTypeId: 10, lon: 0, lat: 0, roadLinkId: 0, bearing: 0 }, assetCreationData[0]);
+                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 0, bearing: 0 }, assetCreationData[0]);
             });
         });
     });
