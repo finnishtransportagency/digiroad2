@@ -519,6 +519,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             });
             arrowContainer.appendChild(arrow);
             callout.appendChild(arrowContainer);
+            var dropHandle = document.createElement("div");
+            dropHandle.className="dropHandle";
+            callout.appendChild(dropHandle);
+
             return icon;
         },
         _addBusStop: function(assetData, busStops, layerId, directionArrow, directionLayer, validityDirection, imageIds) {
