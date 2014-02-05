@@ -1,10 +1,8 @@
 digi-road-2
 ===========
 
-
 [![Build Status] (https://travis-ci.org/finnishtransportagency/digiroad2.png)]
 (https://travis-ci.org/finnishtransportagency/digiroad2)
-
 
 Ympäristön pystytys
 ===================
@@ -77,3 +75,8 @@ Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "d
 ```
 
 "digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
+
+Windowsissa toimii komento:
+```
+run fi.liikennevirasto.digiroad2.DigiroadServer
+```
