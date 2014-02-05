@@ -98,6 +98,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                 '<div class="featureAttributesWrapper">' +
                                                     '<div class="streetView">{{streetView}}</div>' +
                                                     '<div class="formContent">{{attributes}}</div>' +
+                                                    '<div class="formControls">{{controls}}</div>' +
                                                 '</div>');
 
             me._streetViewTemplate  = _.template(
@@ -132,6 +133,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                  '</div>');
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
+
+            me._featureDataControls = _.template('<button class="save">Luo</button>');
+
             me._getPropertyValues();
 
             return null;
@@ -142,7 +146,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me._backend.getAsset(id, function(data) {
                 var featureData = me._makeContent(data.propertyData);
                 var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
-                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });
+                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
 
                 jQuery("#featureAttributes").html(featureAttributes);
                 jQuery(".featureAttributeText").on("blur", function() {
@@ -170,8 +174,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData });
-                featureAttributesMarkup += '<button class="save">Tallenna</button>';
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 featureAttributesElement.find('button.save').on('click', function() {
                     var textElements = featureAttributesElement.find('.featureAttributeText');
