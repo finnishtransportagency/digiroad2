@@ -8,12 +8,18 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
      * @method create called automatically on construction
      * @static
      */
-        function() {
+    function(config) {
         this.sandbox = null;
         this.started = false;
         this.mediator = null;
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
+        this._backend = defineDependency('backend', window.Backend);
+
+        function defineDependency(dependencyName, defaultImplementation) {
+            var dependency = _.isObject(config) ? config[dependencyName] : null;
+            return dependency || defaultImplementation;
+        }
     }, {
         /**
          * @static
@@ -128,8 +134,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
             me._getPropertyValues();
 
-            me._backend = options.backend || window.Backend;
-
             return null;
         },
         showAttributes : function(id, point) {
@@ -209,13 +213,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
         _getPropertyValues: function() {
             var me = this;
-            jQuery.getJSON("/api/enumeratedPropertyValues/10", function(data) {
-                 me._enumeratedPropertyValues = data;
-                 return data;
-                })
-                .fail(function() {
-                    console.log( "error" );
-                });
+            me._backend.getEnumeratedPropertyValues(10, function(data) {
+                me._enumeratedPropertyValues = data;
+                return data;
+            });
         },
         _saveTextData: function(propertyValue, propertyId) {
             var me = this;

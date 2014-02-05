@@ -1,4 +1,9 @@
 (function(backend) {
+    backend.getEnumeratedPropertyValues = function (assetTypeId, success) {
+        jQuery.getJSON('/api/enumeratedPropertyValues/' + assetTypeId, success)
+            .fail(function() { console.log( "error" ); });
+    };
+
     backend.putAssetPropertyValue = function (assetId, propertyId, data, success) {
         putAssetPropertyValue(assetId, propertyId, data, success);
     };
