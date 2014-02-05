@@ -194,7 +194,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesElement.html(featureAttributesMarkup);
                 featureAttributesElement.find('button.save').on('click', function() {
                     var inputElements = featureAttributesElement.find('input');
-                    var attributeCollection = _.map(inputElements, function(inputElement) {
+                    var inputElementAttributes = _.map(inputElements, function(inputElement) {
                         var jqElement = jQuery(inputElement);
                         return {
                             propertyId: jqElement.attr('data-propertyId'),
@@ -210,7 +210,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfSingleChoice(jqElement)
                         };
                     });
-                    successCallback(attributeCollection.concat(selectionElementAttributes));
+                    successCallback(inputElementAttributes.concat(selectionElementAttributes));
                 });
             }
         },
