@@ -34,7 +34,7 @@ describe('BusStopLayerPlugin', function(){
 
     describe('when adding a new bus stop', function() {
         var pluginInstance = null;
-        var request = null;
+        var requests = [];
         var requestCallback = null;
         var assetCreationData = [];
         var assetPropertyInsertions = [];
@@ -68,6 +68,7 @@ describe('BusStopLayerPlugin', function(){
                     }
                 }
             });
+            pluginInstance._initTemplates();
             pluginInstance.setMapModule({
                 getName: function() { return 'MapModule'; },
                 getMap: function() { return {}; }
@@ -76,9 +77,14 @@ describe('BusStopLayerPlugin', function(){
                 register: function() {},
                 registerForEventByName: function() {},
                 getRequestBuilder: function(request) {
-                    return request === 'FeatureAttributes.CollectFeatureAttributesRequest' ? attributeCollectionRequestBuilder : null;
+                    if (request === 'FeatureAttributes.CollectFeatureAttributesRequest') {
+                        return attributeCollectionRequestBuilder;
+                    } else if (request === 'InfoBox.ShowInfoBoxRequest') {
+                        return function() {};
+                    }
+                    return null;
                 },
-                request: function(name, r) { request = r; }
+                request: function(name, r) { requests.push(r); }
             });
             pluginInstance._toolSelectionChange({
                 getAction: function() { return 'AddWithCollection'; }
@@ -94,7 +100,7 @@ describe('BusStopLayerPlugin', function(){
         });
 
         it('should request collection of feature attributes', function() {
-            assert.equal(request, attributeCollectionRequest);
+            assert.equal(attributeCollectionRequest, requests[0]);
         });
 
         describe('and when feature attributes have been collected', function () {
