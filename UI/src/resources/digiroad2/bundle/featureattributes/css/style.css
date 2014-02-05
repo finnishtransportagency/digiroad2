@@ -139,3 +139,7 @@ select option.selected {
 .formInputStyleError {
     border-color: rgb( 115, 52, 52 ); background-color: rgb( 184, 133, 133 );
 }
+
+div.pika-single {
+    z-index: 10001; /* default is 9999 and is not visible over oskari.org popups that have z-index of 10000 */
+}

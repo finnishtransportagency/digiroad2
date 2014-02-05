@@ -574,14 +574,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             };
         },
-        _formatDate: function(d) {
-            var month = d.getMonth();
-            var day = d.getDate() + "";
-            month = (month + 1) + "";
-            month = (month.length == 1) ? "0" +month : month;
-            day = (day.length == 1) ? "0" + day : day;
-            return d.getFullYear() + '-' + month + '-' + day;
-        },
         _remove: function(busStop, removalDate) {
             var propertyValues = [{propertyValue : 0, propertyDisplayValue: removalDate}];
             jQuery.ajax({
@@ -653,14 +645,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var okBtn = confirm.createCloseButton("Poista");
                     okBtn.addClass('primary');
                     okBtn.setHandler(function() {
-                        me._remove(me._selectedBusStop);
+                        me._remove(me._selectedBusStop, dateutil.finnishToIso8601(jQuery('#removeAssetDateInput').val()));
                         confirm.close();
+                        me._selectedBusStopLayer.redraw();
                     });
                     var cancelBtn = confirm.createCloseButton("Peru");
                     confirm.makeModal();
                     confirm.show("Poisto", me._removeAssetTemplate, [cancelBtn, okBtn]);
 
-                    dateutil.addFinnishDatePicker(jQuery('#removeAssetDateInput').get(0));
+                    var removeDateInput = jQuery('#removeAssetDateInput');
+                    removeDateInput.val(dateutil.todayInFinnishFormat());
+                    dateutil.addFinnishDatePicker(removeDateInput.get(0), { position: 'top left' });
 
                     return;
                 }

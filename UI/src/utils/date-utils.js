@@ -17,14 +17,17 @@
         return moment(finnishDateString, FINNISH_DATE_FORMAT).format(ISO_8601_DATE_FORMAT);
     };
 
-    dateutil.addFinnishDatePicker = function(element, selectedDate) {
-        return new Pikaday({
+    dateutil.todayInFinnishFormat = function() {
+        return moment().format(FINNISH_DATE_FORMAT);
+    }
+
+    dateutil.addFinnishDatePicker = function(element, config) {
+        return new Pikaday(jQuery.extend({}, {
             field: element,
             format: FINNISH_DATE_FORMAT,
             firstDay: 1,
             yearRange: [1950, 2050],
-            i18n: FINNISH_PIKADAY_I18N,
-            defaultDate: selectedDate
-        });
+            i18n: FINNISH_PIKADAY_I18N
+        }, config));
     };
 }(window.dateutil = window.dateutil || {}));
