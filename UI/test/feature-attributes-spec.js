@@ -144,19 +144,26 @@ describe('FeatureAttributes', function () {
 
         it('should call callback with attribute collection when save is clicked', function() {
             var saveButton = $('button.save');
-            var textProperty = $('input[data-propertyid="5"]');
-            textProperty.val('textValue');
-            var singleChoiceSelection = $('select[data-propertyid="1"] option[value="2"]');
-            singleChoiceSelection.prop('selected', true);
-            var multipleChoiceSelection1 = $('select[data-propertyid="2"] option[value="2"]');
-            var multipleChoiceSelection2 = $('select[data-propertyid="2"] option[value="4"]');
-            multipleChoiceSelection1.prop('selected', true);
-            multipleChoiceSelection2.prop('selected', true);
+            setTextProperty(5, 'textValue');
+            selectOptions(1, [2]);
+            selectOptions(2, [2, 4]);
             saveButton.click();
             assert.equal(3, collectedAttributes.length);
             assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
             assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
             assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
         });
+
+        function setTextProperty(propertyId, value) {
+            var textProperty = $('input[data-propertyid="' + propertyId + '"]');
+            textProperty.val(value);
+        }
+
+        function selectOptions(propertyId, values) {
+            _.each(values, function(value) {
+                var option = $('select[data-propertyid="' + propertyId + '"] option[value="' + value + '"]');
+                option.prop('selected', true);
+            });
+        }
     });
 });
