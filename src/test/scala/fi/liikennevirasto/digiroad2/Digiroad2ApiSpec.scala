@@ -178,11 +178,12 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(6)
+      ps.size should equal(9)
       val p1 = ps.find(_.propertyId == "1").get
       p1.propertyName should be ("Pysäkin katos")
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
+      ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
     }
   }
 
