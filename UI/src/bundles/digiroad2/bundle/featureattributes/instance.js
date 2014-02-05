@@ -193,7 +193,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesMarkup += '<button class="save">Tallenna</button>';
                 featureAttributesElement.html(featureAttributesMarkup);
                 featureAttributesElement.find('button.save').on('click', function() {
-                    var inputElements = featureAttributesElement.find('input');
+                    var inputElements = featureAttributesElement.find('.featureAttributeText');
                     var inputElementAttributes = _.map(inputElements, function(inputElement) {
                         var jqElement = jQuery(inputElement);
                         return {
@@ -210,7 +210,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfSelectionElement(jqElement)
                         };
                     });
-                    successCallback(inputElementAttributes.concat(selectionElementAttributes));
+
+                    var dateElements = featureAttributesElement.find('.featureAttributeDate');
+                    var dateElementAttributes = _.map(dateElements, function(dateElement) {
+                        var jqElement = jQuery(dateElement);
+                        return {
+                            propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfDateElement(jqElement)
+                        };
+                    });
+                    successCallback(inputElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
                 });
             }
         },
@@ -227,6 +236,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     "propertyDisplayValue" : element.attr('name')
                 };
             });
+        },
+        _propertyValuesOfDateElement: function(element) {
+            return [{
+                "propertyValue" : 0,
+                "propertyDisplayValue" : dateutil.finnishToIso8601(element.val())
+            }];
         },
         _getPropertyValues: function() {
             var me = this;

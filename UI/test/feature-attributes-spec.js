@@ -83,14 +83,8 @@ describe('FeatureAttributes', function () {
                         var properties = [
                             { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
                             { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
-                            { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] }
-                             /*
-                             { propertyId: '3', propertyName: 'Ylläpitäjä', propertyType: 'single_choice', required: true, values: [] },
-                             { propertyId: '4', propertyName: 'Pysäkin saavutettavuus', propertyType: 'text', required: false, values: [] },
-                             { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] },
-                             { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
-                             { propertyId: 'validTo', propertyName: 'Käytössä päättyen', propertyType: 'date', required: false, values: [] }
-                             */
+                            { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
+                            { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] }
                         ];
                         success(properties);
                     },
@@ -142,16 +136,25 @@ describe('FeatureAttributes', function () {
             assert.equal('multiple', multipleChoiceElement.attr('multiple'));
         });
 
+        it('should create date field for property "Käytössä alkaen"', function() {
+            var dateProperty = $('input[data-propertyid="validFrom"]');
+            assert.equal(1, dateProperty.length);
+            assert.equal(true, dateProperty.hasClass('featureAttributeDate'));
+            assert.equal('Käytössä alkaen', dateProperty.attr('name'));
+        });
+
         it('should call callback with attribute collection when save is clicked', function() {
             var saveButton = $('button.save');
             setTextProperty(5, 'textValue');
             selectOptions(1, [2]);
             selectOptions(2, [2, 4]);
+            setTextProperty('validFrom', '10.6.2014');
             saveButton.click();
-            assert.equal(3, collectedAttributes.length);
+            assert.equal(4, collectedAttributes.length);
             assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
             assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
             assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+            assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
         });
 
         function setTextProperty(propertyId, value) {
