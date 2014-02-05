@@ -4,9 +4,9 @@
     var FINNISH_PIKADAY_I18N = {
             previousMonth : 'edellinen kuukausi',
             nextMonth     : 'seuraava kuukausi',
-            months: ['tammikuu','helmikuu','maaliskuu','huhtikuu','toukokuu','kesäkuu','heinäkuu','elokuu','syyskuu','lokakuu','marraskuu','joulukuu'],
+            months: ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'],
             weekdays: ['sunnuntai','maanantai','tiistai','keskiviikko','torstai','perjantai','lauantai'],
-            weekdaysShort : ['su','ma','ti','ke','to','pe','la']
+            weekdaysShort : ['Su','Ma','Ti','Ke','To','Pe','La']
     };
 
     dateutil.iso8601toFinnish = function(iso8601DateString) {
