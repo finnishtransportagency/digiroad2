@@ -82,10 +82,9 @@ describe('FeatureAttributes', function () {
                         requestedAssetTypes.push(assetType);
                         var properties = [
                             { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
-                            { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] }
-                            /*
-                             { propertyId: '6', propertyName: 'Ylläpitäjän tunnus', propertyType: 'text', required: false, values: [] },
-                             { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
+                            { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
+                            { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] }
+                             /*
                              { propertyId: '3', propertyName: 'Ylläpitäjä', propertyType: 'single_choice', required: true, values: [] },
                              { propertyId: '4', propertyName: 'Pysäkin saavutettavuus', propertyType: 'text', required: false, values: [] },
                              { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] },
@@ -97,15 +96,13 @@ describe('FeatureAttributes', function () {
                     },
                     getEnumeratedPropertyValues: function(assetTypeId, success) {
                         success([
-                            /*
-                             {"propertyId": "2", "propertyName": "Pysäkin tyyppi", "propertyType": "multiple_choice", "required": true, "values": [
-                             {"propertyValue": 1, "propertyDisplayValue": "Raitiovaunu", "imageId": null},
-                             {"propertyValue": 2, "propertyDisplayValue": "Linja-autojen paikallisliikenne", "imageId": null},
-                             {"propertyValue": 3, "propertyDisplayValue": "Linja-autojen kaukoliikenne", "imageId": null},
-                             {"propertyValue": 4, "propertyDisplayValue": "Linja-autojen pikavuoro", "imageId": null},
-                             {"propertyValue": 99, "propertyDisplayValue": "Ei tietoa", "imageId": null}
-                             ]},
-                             */
+                            {propertyId: "2", propertyName: "Pysäkin tyyppi", propertyType: "multiple_choice", required: true, values: [
+                                {propertyValue: 1, propertyDisplayValue: "Raitiovaunu", imageId: null},
+                                {propertyValue: 2, propertyDisplayValue: "Linja-autojen paikallisliikenne", imageId: null},
+                                {propertyValue: 3, propertyDisplayValue: "Linja-autojen kaukoliikenne", imageId: null},
+                                {propertyValue: 4, propertyDisplayValue: "Linja-autojen pikavuoro", imageId: null},
+                                {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
+                            ]},
                             {propertyId: "1", propertyName: "Pysäkin katos", propertyType: "single_choice", required: true, values: [
                                 {propertyValue: 1, propertyDisplayValue: "Ei", imageId: null},
                                 {propertyValue: 2, propertyDisplayValue: "Kyllä", imageId: null},
@@ -138,16 +135,28 @@ describe('FeatureAttributes', function () {
             assert.isUndefined(singleChoiceElement.attr('multiple'));
         });
 
+        it('should create multiple choice field for property "Pysäkin tyyppi"', function() {
+            var multipleChoiceElement = $('select[data-propertyid="2"]');
+            assert.equal(1, multipleChoiceElement.length);
+            assert.equal(true, multipleChoiceElement.hasClass('featureattributeChoice'));
+            assert.equal('multiple', multipleChoiceElement.attr('multiple'));
+        });
+
         it('should call callback with attribute collection when save is clicked', function() {
             var saveButton = $('button.save');
             var textProperty = $('input[data-propertyid="5"]');
             textProperty.val('textValue');
             var singleChoiceSelection = $('select[data-propertyid="1"] option[value="2"]');
             singleChoiceSelection.prop('selected', true);
+            var multipleChoiceSelection1 = $('select[data-propertyid="2"] option[value="2"]');
+            var multipleChoiceSelection2 = $('select[data-propertyid="2"] option[value="4"]');
+            multipleChoiceSelection1.prop('selected', true);
+            multipleChoiceSelection2.prop('selected', true);
             saveButton.click();
-            assert.equal(2, collectedAttributes.length);
+            assert.equal(3, collectedAttributes.length);
             assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
             assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
+            assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
         });
     });
 });

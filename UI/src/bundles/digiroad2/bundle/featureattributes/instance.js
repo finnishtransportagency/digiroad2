@@ -207,7 +207,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                        var jqElement = jQuery(selectionElement);
                         return {
                             propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfSingleChoice(jqElement)
+                            propertyValues: me._propertyValuesOfSelectionElement(jqElement)
                         };
                     });
                     successCallback(inputElementAttributes.concat(selectionElementAttributes));
@@ -220,11 +220,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 "propertyDisplayValue" : element.val()
             }];
         },
-        _propertyValuesOfSingleChoice: function(element) {
-            return [{
-                "propertyValue" : Number(element.val()),
-                "propertyDisplayValue" : element.attr('name')
-            }];
+        _propertyValuesOfSelectionElement: function(element) {
+            return _.map(element.val(), function(value) {
+                return {
+                    "propertyValue" : Number(value),
+                    "propertyDisplayValue" : element.attr('name')
+                };
+            });
         },
         _getPropertyValues: function() {
             var me = this;
