@@ -313,11 +313,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         eventHandlers : {
             'infobox.InfoBoxClosedEvent': function (event) {
                 this._closeFeatures(event);
+            },
+            'mapbusstop.AssetDirectionChangeEvent' : function (event) {
+                this._directionChange(event);
             }
 
         },
         _closeFeatures: function (event) {
             jQuery("#featureAttributes").html('');
+        },
+        _directionChange: function (event) {
+            console.log('directionChange');
         },
         /**
          * @method stop

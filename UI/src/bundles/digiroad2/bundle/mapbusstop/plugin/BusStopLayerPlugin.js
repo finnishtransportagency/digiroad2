@@ -36,6 +36,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         /** @static @property _layerType type of layers this plugin handles */
         _layerType: 'busstoplayer',
 
+        _unknownAssetType: '99',
+
         /**
          * @method getName
          * @return {String} plugin name
@@ -245,6 +247,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         });
                     });
                 });
+                var contentItem = this._makeContent([this._unknownAssetType]);
+                this._sendPopupRequest("busStop", -1, contentItem, event.getLonLat());
             }
             else if (this._selectedControl == 'Add') {
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
@@ -273,7 +277,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
         },
         _addNewAsset: function(asset) {
-            var imageIds = ["99"];
+            var imageIds = [this._unknownAssetType];
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(imageIds);
             var angle = this._getAngleFromBearing(asset.bearing, 1);
@@ -428,34 +432,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._directionChange(busStopId, wgs84);
             });
         },
-        _directionChange:function(id, point) {
-            this._changeDirection();
-            var me = this;
-            var value = (this._selectedBusStop.effectDirection == 1) ? 3:2;
-            var propertyValues = [{propertyValue : value, propertyDisplayValue: "Vaikutussuunta"}];
-
-            jQuery.ajax({
-                contentType: "application/json",
-                type: "PUT",
-                url: "/api/assets/"+id+"/properties/validityDirection/values",
-                data: JSON.stringify(propertyValues),
-                dataType:"json",
-                success: function() {
-                    point.heading = me._selectedBusStop.roadDirection+ (90  * -me._selectedBusStop.effectDirection);
-                    var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-                    var request = requestBuilder(id, point);
-                    me._sandbox.request(me.getName(), request);
-                    console.log("done");
-                },
-                error: function() {
-                    console.log("error");
-                }
-            });
+        _directionChange:function(assetId, point) {
+            var eventBuilder = this._sandbox.getEventBuilder('mapbusstop.AssetDirectionChangeEvent');
+            var event = eventBuilder({});
+            this._sandbox.notifyAll(event);
         },
         _changeDirection: function() {
-            this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection == 1 ? -1 : 1;
-            this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
-            this._selectedBusStop.directionArrow.move(this._selectedBusStop.lonlat); // need because redraw();
+            if (this._moveSelectedBusStop) {
+                this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection == 1 ? -1 : 1;
+                this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
+                this._selectedBusStop.directionArrow.move(this._selectedBusStop.lonlat); // need because redraw();
+            }
         },
         /**
          * @method _addMapLayerToMap
