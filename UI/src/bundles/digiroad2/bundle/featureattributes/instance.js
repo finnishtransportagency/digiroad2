@@ -225,22 +225,22 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
         _propertyValuesOfTextElement: function(element) {
             return [{
-                "propertyValue" : 0,
-                "propertyDisplayValue" : element.val()
+                propertyValue : 0,
+                propertyDisplayValue : element.val()
             }];
         },
         _propertyValuesOfSelectionElement: function(element) {
             return _.map(element.val(), function(value) {
                 return {
-                    "propertyValue" : Number(value),
-                    "propertyDisplayValue" : element.attr('name')
+                    propertyValue : Number(value),
+                    propertyDisplayValue : element.attr('name')
                 };
             });
         },
         _propertyValuesOfDateElement: function(element) {
             return [{
-                "propertyValue" : 0,
-                "propertyDisplayValue" : dateutil.finnishToIso8601(element.val())
+                propertyValue : 0,
+                propertyDisplayValue : dateutil.finnishToIso8601(element.val())
             }];
         },
         _getPropertyValues: function() {
