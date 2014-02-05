@@ -75,3 +75,8 @@ Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "d
 ```
 
 "digiroad2.env":n arvo määrittää sen, minkä ympäristön konfiguraatiotiedostot otetaan käyttöön (hakemistosta conf/(env)/)
+
+Windowsissa toimii komento:
+```
+run fi.liikennevirasto.digiroad2.DigiroadServer
+```
