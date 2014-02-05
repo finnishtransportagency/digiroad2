@@ -235,11 +235,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
             function successFunction() {
-                var eventBuilder = me.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
-                var event = eventBuilder(propertyValue);
-                me.getSandbox().notifyAll(event);
+                me._sendFeatureChangedEvent(propertyValue);
                 console.log("done");
             }
+        },
+        _sendFeatureChangedEvent: function(propertyValue) {
+            var eventBuilder = this.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
+            var event = eventBuilder(propertyValue);
+            this.getSandbox().notifyAll(event);
         },
         _makeContent: function(contents) {
             var me = this;
@@ -292,11 +295,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
-
                     if (_.contains(valuesNro, optionValue.propertyValue)) {
                         selectedValue = 'selected="true" ';
                     }
-
                     optionValue.selectedValue = selectedValue;
                     options +=  me._featureDataTemplateChoice(optionValue);
                 }
@@ -336,7 +337,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             jQuery("#featureAttributes").html('');
         },
         _directionChange: function (event) {
-            console.log('directionChange');
+            var validityDirection = jQuery("[data-propertyid='validityDirection']");
+            var selection = validityDirection.val() == 2 ? 3 : 2;
+            validityDirection.val(selection);
+            var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: 2}];
+            this._sendFeatureChangedEvent(propertyValues);
         },
         /**
          * @method stop
