@@ -151,32 +151,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    var values = data.val();
                     var name = data.attr('name');
-
-                    _.forEach(values,
-                        function(value) {
-                            propertyValue.push({
-                                "propertyValue" : Number(value),
-                                "propertyDisplayValue" : name
-                            });
-                        }
-                    );
-
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
                 });
                 var dateAttribute = jQuery(".featureAttributeDate");
                 dateAttribute.on("blur", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    if(!_.isEmpty(data.val())) {
-                        propertyValue.push({
-                            "propertyValue" : 0,
-                            "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
-                        });
-                    }
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
                 dateAttribute.each(function(i, element) {
                     dateutil.addFinnishDatePicker(element);
@@ -238,7 +219,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             });
         },
         _propertyValuesOfDateElement: function(element) {
-            return [{
+            return _.isEmpty(element.val()) ? [] : [{
                 propertyValue : 0,
                 propertyDisplayValue : dateutil.finnishToIso8601(element.val())
             }];
