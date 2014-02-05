@@ -197,8 +197,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var attributeCollection = _.map(inputElements, function(inputElement) {
                         var jqElement = jQuery(inputElement);
                         return {
-                          propertyId: jqElement.attr('data-propertyId'),
-                          propertyValues: me._propertyValuesOfTextElement(jqElement)
+                            propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfTextElement(jqElement)
                         };
                     });
 
@@ -206,7 +206,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
                        var jqElement = jQuery(selectionElement);
                         return {
-                          propertyId: jqElement.attr('data-propertyId'),
+                            propertyId: jqElement.attr('data-propertyId'),
                             propertyValues: me._propertyValuesOfSingleChoice(jqElement)
                         };
                     });
