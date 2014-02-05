@@ -145,7 +145,6 @@ select option.selected {
     border-bottom: 1px solid #646461;
 }
 
-
 .pika-prev,
 .is-rtl .pika-next {
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADaxo44AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAytpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RjAzMkExN0U4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RjAzMkExN0Q4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChNYWNpbnRvc2gpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5kaWQ6NzYzNTc3MjUtNGQ2Zi00MzlhLWE3NzItMjAyNzRkMmIyYTg2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjc2MzU3NzI1LTRkNmYtNDM5YS1hNzcyLTIwMjc0ZDJiMmE4NiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgeE9ZsAAABISURBVHjaYlyyZBEDGhAD4sksaIKhQDwFJMmCpGoKVAIMmKCcy8iCMAlGKGZAl1gFxDpAvAZdAgReQY0KB+LXyBIwANcNEGAAkqYLqTLaB2sAAAAASUVORK5CYII=);
@@ -213,13 +212,14 @@ table.pika-table th {
 /* oskari.org popup styling */
 div.divmanazerpopup h3.popupHeader {
     color: #fff;
-    background-color: #444444;
+    background-color: #333333;
     border-radius: 5px 5px 0 0;
     color: #fff;
     font-family: "Arial";
     font-size: 12px;
     line-height: 1.286;
     padding: 5px 10px;
+    font-weight: normal;
 }
 
 div.divmanazerpopup {
@@ -229,13 +229,23 @@ div.divmanazerpopup {
     line-height: 1.286;
     text-align: center;
     background-clip: content-box;
-    background-color: #454545;
-    border: 5px solid rgba(0, 0, 0, 0.2);
+    background-color: #333333;
+    border-radius: 3px;
+    min-width: 175px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+div.divmanazerpopup div.content {
+    margin: 10px 4px;
+}
+
+div.divmanazerpopup div.actions {
+    margin: 10px 4px;
 }
 
 div.divmanazerpopup .actions input {
-    background-color: #666666;
-    border: 1px solid #000;
+    background-color: #333333;
+    border: 1px solid #666666;
     padding: 5px;
     color: #fff;
     font-family: "Arial";
@@ -245,4 +255,8 @@ div.divmanazerpopup .actions input {
     margin-left: 10px;
     margin-right: 10px;
     text-align: center;
+}
+
+div.divmanazerpopup .actions input:hover {
+    background-color: #3F3F3F;
 }

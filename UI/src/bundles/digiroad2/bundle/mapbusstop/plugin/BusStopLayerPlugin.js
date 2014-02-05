@@ -112,7 +112,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                                                     '<div class="changeDirectionButton">{{changeDirectionButton}}</div>' +
                                                '</div>');
             me._busStopsPopupIcons = _.template('<img src="/api/images/{{imageId}}">');
-            me._removeAssetTemplate = _.template('<div>Aseta poistopäivämäärä:</div><div><input id="removeAssetDateInput" class="featureAttributeDate" type="text" />&nbsp;<span class="attributeFormat">pp.kk.vvvv</span></div>');
+            me._removeAssetTemplate = _.template('<p>Aseta poistopäivämäärä:</p><p><input id="removeAssetDateInput" class="featureAttributeDate" type="text" />&nbsp;<span class="attributeFormat">pp.kk.vvvv</span></p>');
         },
         _initRoadsStyles: function() {
             this._roadStyles = new OpenLayers.StyleMap({
