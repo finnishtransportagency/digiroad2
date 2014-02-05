@@ -93,7 +93,7 @@ describe('BusStopLayerPlugin', function(){
                 request: function(name, r) { requests.push(r); }
             });
             pluginInstance._toolSelectionChange({
-                getAction: function() { return 'AddWithCollection'; }
+                getAction: function() { return 'Add'; }
             });
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {

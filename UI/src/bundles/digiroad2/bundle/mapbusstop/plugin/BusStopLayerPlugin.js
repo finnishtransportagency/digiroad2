@@ -234,7 +234,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _addBusStopEvent: function(event){
             var me = this;
-            if (this._selectedControl === 'AddWithCollection') {
+            if (this._selectedControl === 'Add') {
                 sendCollectAttributesRequest(function (attributeCollection) {
                     var layerName = me._layerType + "_" + me._selectedLayerId;
                     var features = me._layer[layerName] ? me._layer[layerName][0].features : null;
@@ -250,7 +250,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var contentItem = this._makeContent([this._unknownAssetType]);
                 this._sendPopupRequest("busStop", -1, contentItem, event.getLonLat());
             }
-            else if (this._selectedControl == 'Add') {
+            else if (this._selectedControl == 'OldAdd') {
                 var nearestLine = geometrycalculator.findNearestLine(this._layer[this._layerType + "_" + this._selectedLayerId][0].features, event.getLonLat().lon, event.getLonLat().lat);
                 // TODO: Support bus stops that don't map to any road link and thus have no road link reference nor bearing
                 var bearing = _.isEmpty(nearestLine) ? 180 : geometrycalculator.getLineDirectionDegAngle(nearestLine);
