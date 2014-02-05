@@ -142,9 +142,12 @@ describe('FeatureAttributes', function () {
             var saveButton = $('button.save');
             var textProperty = $('input[data-propertyid="5"]');
             textProperty.val('textValue');
+            var singleChoiceSelection = $('select[data-propertyid="1"] option[value="2"]');
+            singleChoiceSelection.prop('selected', true);
             saveButton.click();
-            assert.equal(1, collectedAttributes.length);
+            assert.equal(2, collectedAttributes.length);
             assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
+            assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
         });
     });
 });

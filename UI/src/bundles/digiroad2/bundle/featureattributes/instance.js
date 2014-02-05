@@ -201,7 +201,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                           propertyValues: me._propertyValuesOfTextElement(jqElement)
                         };
                     });
-                    successCallback(attributeCollection);
+
+                    var selectionElements = featureAttributesElement.find('.featureattributeChoice');
+                    var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
+                       var jqElement = jQuery(selectionElement);
+                        return {
+                          propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfSingleChoice(jqElement)
+                        };
+                    });
+                    successCallback(attributeCollection.concat(selectionElementAttributes));
                 });
             }
         },
@@ -209,6 +218,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return [{
                 "propertyValue" : 0,
                 "propertyDisplayValue" : element.val()
+            }];
+        },
+        _propertyValuesOfSingleChoice: function(element) {
+            return [{
+                "propertyValue" : Number(element.val()),
+                "propertyDisplayValue" : element.attr('name')
             }];
         },
         _getPropertyValues: function() {
