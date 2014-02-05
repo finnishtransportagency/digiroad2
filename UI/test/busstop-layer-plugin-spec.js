@@ -39,9 +39,15 @@ describe('BusStopLayerPlugin', function(){
         var assetCreationData = [];
         var assetPropertyInsertions = [];
         var attributeCollectionRequest = {};
+        var showInfoBoxRequest = {};
+        var requestedInfoBoxType = '';
         var attributeCollectionRequestBuilder = function(callback) {
             requestCallback = callback;
             return attributeCollectionRequest;
+        };
+        var showInfoBoxRequestBuilder = function(infoBoxType) {
+            requestedInfoBoxType = infoBoxType;
+            return showInfoBoxRequest;
         };
 
         before(function() {
@@ -80,7 +86,7 @@ describe('BusStopLayerPlugin', function(){
                     if (request === 'FeatureAttributes.CollectFeatureAttributesRequest') {
                         return attributeCollectionRequestBuilder;
                     } else if (request === 'InfoBox.ShowInfoBoxRequest') {
-                        return function() {};
+                        return showInfoBoxRequestBuilder;
                     }
                     return null;
                 },
@@ -101,6 +107,11 @@ describe('BusStopLayerPlugin', function(){
 
         it('should request collection of feature attributes', function() {
             assert.equal(attributeCollectionRequest, requests[0]);
+        });
+
+        it('should request bus stop infobox', function() {
+            assert.equal(showInfoBoxRequest, requests[1]);
+            assert.equal('busStop', requestedInfoBoxType);
         });
 
         describe('and when feature attributes have been collected', function () {
