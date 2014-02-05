@@ -174,9 +174,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesMarkup += '<button class="save">Tallenna</button>';
                 featureAttributesElement.html(featureAttributesMarkup);
                 featureAttributesElement.find('button.save').on('click', function() {
-                    var inputElements = featureAttributesElement.find('.featureAttributeText');
-                    var inputElementAttributes = _.map(inputElements, function(inputElement) {
-                        var jqElement = jQuery(inputElement);
+                    var textElements = featureAttributesElement.find('.featureAttributeText');
+                    var textElementAttributes = _.map(textElements, function(textElement) {
+                        var jqElement = jQuery(textElement);
                         return {
                             propertyId: jqElement.attr('data-propertyId'),
                             propertyValues: me._propertyValuesOfTextElement(jqElement)
@@ -200,7 +200,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfDateElement(jqElement)
                         };
                     });
-                    successCallback(inputElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
+                    successCallback(textElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
                 });
             }
         },
