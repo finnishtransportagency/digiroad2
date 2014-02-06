@@ -14,7 +14,7 @@
     "jquery": "1.11.0",
     "jquery-migrate": "1.2.1",
     "momentjs": "2.5.0",
-    "pikaday": "#master",
+    "pikaday": "1.2.0",
     "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.17"
   },
   "devDependencies": {
