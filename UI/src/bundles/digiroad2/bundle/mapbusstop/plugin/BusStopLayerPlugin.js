@@ -392,7 +392,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._sendPopupRequest("busStop", this._selectedBusStop.id, this._selectedBusStop.id, contentItem, this._selectedBusStop.lonlat);
             this._selectedBusStop.display(false);
 
-            var wgs84 = OpenLayers.Projection.transform(this._selectedBusStop.lonlat, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+            var wgs84 = OpenLayers.Projection.transform(new OpenLayers.Geometry.Point(this._selectedBusStop.lonlat.lon, this._selectedBusStop.lonlat.lat),
+                new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
             wgs84.heading = this._selectedBusStop.roadDirection + (90  * this._selectedBusStop.effectDirection);
             this._sendShowAttributesRequest(this._selectedBusStop.id, wgs84);
         },
