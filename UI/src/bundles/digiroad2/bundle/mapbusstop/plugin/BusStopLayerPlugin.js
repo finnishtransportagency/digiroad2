@@ -701,7 +701,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     this._selectedBusStop.blinking = true;
                     this._selectedBusStop.blinkInterVal = setInterval(function(){me._busStopBlink(me._selectedBusStop);}, 600);
                 }
-                this._selectedBusStop.lonlat.lon = lonlat;
+                this._selectedBusStop.lonlat = lonlat;
                 this._selectedBusStop.directionArrow.move(lonlat);
                 this._selectedBusStopLayer.redraw();
             }
