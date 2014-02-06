@@ -251,6 +251,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                             me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
                         });
                     });
+                    me._layer[layerName][1].destroyFeatures(directionArrow);
                 });
                 var contentItem = this._makeContent([this._unknownAssetType]);
                 this._sendPopupRequest("busStop", -1, contentItem, event.getLonLat());

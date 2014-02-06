@@ -85,6 +85,7 @@ describe('BusStopLayerPlugin', function(){
         var showInfoBoxRequest = {};
         var requestedInfoBoxType = '';
         var addedFeature = {};
+        var destroyedFeature = {};
         var attributeCollectionRequestBuilder = function(callback) {
             requestCallback = callback;
             return attributeCollectionRequest;
@@ -119,7 +120,8 @@ describe('BusStopLayerPlugin', function(){
                 },
                 layers: {
                     busstoplayer_235: [{}, {
-                        addFeatures: function(feature) { addedFeature = feature; }
+                        addFeatures: function(feature) { addedFeature = feature; },
+                        destroyFeatures: function(feature) { destroyedFeature = feature; }
                     }]
                 }
             });
@@ -186,6 +188,10 @@ describe('BusStopLayerPlugin', function(){
                 assert.equal(2, assetPropertyInsertions.length);
                 assert.deepEqual({ assetId: 123, propertyId: '5', data: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }, assetPropertyInsertions[0]);
                 assert.deepEqual({ assetId: 123, propertyId: '1', data: [ { propertyValue:2, propertyDisplayValue:'' } ] }, assetPropertyInsertions[1]);
+            });
+
+            it('should remove direction arrow feature from direction arrow layer', function() {
+                assert.equal(destroyedFeature.style.externalGraphic, '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
             });
         });
     });
