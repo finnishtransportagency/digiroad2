@@ -19,7 +19,7 @@
 
     dateutil.todayInFinnishFormat = function() {
         return moment().format(FINNISH_DATE_FORMAT);
-    }
+    };
 
     dateutil.addFinnishDatePicker = function(element, config) {
         return new Pikaday(jQuery.extend({}, {
