@@ -65,9 +65,11 @@ describe('BusStopLayerPlugin', function(){
         it('should return one bus stop html by image tag', function(){
             assert.equal(oneIconImageHtml,pluginInstance._getIconImages(dataOneBusStopType).outerHTML);
         });
+
         it('should return two bus stop html by images tag', function(){
             assert.equal(twoIconImageHtml,pluginInstance._getIconImages(dataTwoBusStopType).outerHTML);
         });
+
         it('should return html without images', function(){
             assert.equal(noIconImageHtml,pluginInstance._getIconImages(dataEmptyBusStopType).outerHTML);
         });
