@@ -84,6 +84,7 @@ describe('BusStopLayerPlugin', function(){
         var attributeCollectionRequest = {};
         var showInfoBoxRequest = {};
         var requestedInfoBoxType = '';
+        var addedFeature = {};
         var attributeCollectionRequestBuilder = function(callback) {
             requestCallback = callback;
             return attributeCollectionRequest;
@@ -115,6 +116,11 @@ describe('BusStopLayerPlugin', function(){
                     getLineDirectionDegAngle: function() {
                         return 95;
                     }
+                },
+                layers: {
+                    busstoplayer_235: [{}, {
+                        addFeatures: function(feature) { addedFeature = feature; }
+                    }]
                 }
             });
             pluginInstance._initTemplates();
@@ -155,6 +161,10 @@ describe('BusStopLayerPlugin', function(){
         it('should request bus stop infobox', function() {
             assert.equal(showInfoBoxRequest, requests[1]);
             assert.equal('busStop', requestedInfoBoxType);
+        });
+
+        it('should add direction arrow feature to direction arrow layer', function() {
+            assert.equal(addedFeature.style.externalGraphic, '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
         });
 
         describe('and when feature attributes have been collected', function () {
