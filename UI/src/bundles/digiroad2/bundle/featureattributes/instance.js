@@ -147,8 +147,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureData = me._makeContent(data.propertyData);
                 var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
-
                 jQuery("#featureAttributes").html(featureAttributes);
+                me._addDatePickers();
                 jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
                     me._saveTextData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
@@ -163,9 +163,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var data = jQuery(this);
                     me._saveTextData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
-                dateAttribute.each(function(i, element) {
-                    dateutil.addFinnishDatePicker(element);
-                });
             });
         },
         collectAttributes: function(successCallback) {
@@ -174,8 +171,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
+                me._addDatePickers();
                 featureAttributesElement.find('button.save').on('click', function() {
                     var textElements = featureAttributesElement.find('.featureAttributeText');
                     var textElementAttributes = _.map(textElements, function(textElement) {
@@ -206,6 +204,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     successCallback(textElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
                 });
             }
+        },
+        _addDatePickers: function () {
+            var dateAttribute = jQuery('.featureAttributeDate');
+            dateAttribute.each(function (i, element) {
+                dateutil.addFinnishDatePicker(element);
+            });
         },
         _propertyValuesOfTextElement: function(element) {
             return [{
