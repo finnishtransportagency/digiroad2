@@ -8,6 +8,8 @@ object MapConfigJson {
     val east = userConfig.east.getOrElse(390000)
     val north = userConfig.north.getOrElse(6900000)
     val municipalityNumber = userConfig.municipalityNumber.getOrElse(235)
+    val municipalitiesOfUserParams =
+      userConfig.authorizedMunicipalities.map(id => "municipalityNumber=" + id).mkString("&")
 
     s"""{
    "toolbar":{
@@ -98,7 +100,7 @@ object MapConfigJson {
                  "id":235,
                  "minScale":5000,
                  "wmsUrl":"/data/dummy/busstops.json",
-                 "url":"/api/assets?assetTypeId=10&municipalityNumber=${municipalityNumber}",
+                 "url":"/api/assets?assetTypeId=10&${municipalitiesOfUserParams}",
                  "roadLinesUrl" :"/api/roadlinks?municipalityNumber=${municipalityNumber}",
                  "maxScale":1 ,
                  "orgName":"LiVi",
