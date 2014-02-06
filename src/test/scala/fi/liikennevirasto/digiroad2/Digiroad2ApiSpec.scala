@@ -37,6 +37,20 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("get assets without bounding box", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(3)
+    }
+  }
+
+  test("get assets without bounding box for multiple municipalities", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235&municipalityNumber=49") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(4)
+    }
+  }
+
   test("get asset by id", Tag("db")) {
     getWithUserAuth("/assets/" + TestAssetId) {
       status should equal(200)
