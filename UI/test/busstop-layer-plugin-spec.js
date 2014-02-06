@@ -82,10 +82,12 @@ describe('BusStopLayerPlugin', function(){
         var assetCreationData = [];
         var assetPropertyInsertions = [];
         var attributeCollectionRequest = {};
+        var attributeShowRequest = {};
         var showInfoBoxRequest = {};
         var requestedInfoBoxType = '';
         var addedFeature = {};
         var destroyedFeature = {};
+        var addedMarker = {};
         var attributeCollectionRequestBuilder = function(callback) {
             requestCallback = callback;
             return attributeCollectionRequest;
@@ -93,6 +95,9 @@ describe('BusStopLayerPlugin', function(){
         var showInfoBoxRequestBuilder = function(infoBoxType) {
             requestedInfoBoxType = infoBoxType;
             return showInfoBoxRequest;
+        };
+        var attributeShowRequestBuilder = function() {
+            return attributeShowRequest;
         };
 
         before(function() {
@@ -122,6 +127,8 @@ describe('BusStopLayerPlugin', function(){
                     busstoplayer_235: [{}, {
                         addFeatures: function(feature) { addedFeature = feature; },
                         destroyFeatures: function(feature) { destroyedFeature = feature; }
+                    }, {
+                        addMarker: function(marker) { addedMarker = marker; }
                     }]
                 }
             });
@@ -138,6 +145,8 @@ describe('BusStopLayerPlugin', function(){
                         return attributeCollectionRequestBuilder;
                     } else if (request === 'InfoBox.ShowInfoBoxRequest') {
                         return showInfoBoxRequestBuilder;
+                    } else if (request === 'FeatureAttributes.ShowFeatureAttributesRequest') {
+                        return attributeShowRequestBuilder;
                     }
                     return null;
                 },
@@ -173,6 +182,7 @@ describe('BusStopLayerPlugin', function(){
             before(function() {
                 assetCreationData = [];
                 assetPropertyInsertions = [];
+                requests = [];
                 requestCallback([
                     { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
                     { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'' } ] }
@@ -192,6 +202,19 @@ describe('BusStopLayerPlugin', function(){
 
             it('should remove direction arrow feature from direction arrow layer', function() {
                 assert.equal(destroyedFeature.style.externalGraphic, '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            });
+
+            it('should show bus stop marker on marker layer', function() {
+                assert.equal(addedMarker.id, 123);
+            });
+
+            it('should request bus stop infobox', function() {
+                assert.equal(showInfoBoxRequest, requests[0]);
+                assert.equal('busStop', requestedInfoBoxType);
+            });
+
+            it('should request show of feature attributes', function() {
+                assert.equal(attributeShowRequest, requests[1]);
             });
         });
     });
