@@ -5,7 +5,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{Property, BoundingCircle, Asset, PropertyValue}
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
 import org.slf4j.LoggerFactory
@@ -114,6 +114,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     response.setHeader("Expires", Never)
     response.setContentType("application/octet-stream")
     bytes
+  }
+
+  get("/assetTypeProperties/:assetTypeId") {
+    try {
+      val assetTypeId = params("assetTypeId").toLong
+      assetProvider.availableProperties(assetTypeId)
+    } catch {
+      case e: Exception => BadRequest("Invalid asset type id: " + params("assetTypeId"))
+    }
   }
 
   error {

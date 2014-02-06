@@ -8,12 +8,18 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
      * @method create called automatically on construction
      * @static
      */
-        function() {
+    function(config) {
         this.sandbox = null;
         this.started = false;
         this.mediator = null;
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
+        this._backend = defineDependency('backend', window.Backend);
+
+        function defineDependency(dependencyName, defaultImplementation) {
+            var dependency = _.isObject(config) ? config[dependencyName] : null;
+            return dependency || defaultImplementation;
+        }
     }, {
         /**
          * @static
@@ -71,7 +77,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }
 
             sandbox.addRequestHandler('FeatureAttributes.ShowFeatureAttributesRequest', this.requestHandlers.showFeatureAttributesHandler);
-
+            sandbox.addRequestHandler('FeatureAttributes.CollectFeatureAttributesRequest', this.requestHandlers.collectFeatureAttributesHandler);
         },
         /**
          * @method init
@@ -80,7 +86,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         init : function(options) {
             var me = this;
             this.requestHandlers = {
-                showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this)
+                showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
+                collectFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.CollectFeatureAttributesRequestHandler', this)
             };
 
             _.templateSettings = {
@@ -91,6 +98,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                 '<div class="featureAttributesWrapper">' +
                                                     '<div class="streetView">{{streetView}}</div>' +
                                                     '<div class="formContent">{{attributes}}</div>' +
+                                                    '<div class="formControls">{{controls}}</div>' +
                                                 '</div>');
 
             me._streetViewTemplate  = _.template(
@@ -125,9 +133,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                  '</div>');
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
-            me._getPropertyValues();
 
-            me._backend = options.backend || window.Backend;
+            me._featureDataControls = _.template('<button class="save">Luo</button>');
+
+            me._getPropertyValues();
 
             return null;
         },
@@ -137,71 +146,106 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me._backend.getAsset(id, function(data) {
                 var featureData = me._makeContent(data.propertyData);
                 var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
-                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData });
+                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
 
                 jQuery("#featureAttributes").html(featureAttributes);
                 jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    propertyValue.push({
-                        "propertyValue" : 0,
-                        "propertyDisplayValue" : data.val()
-                    });
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
                 });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    var values = data.val();
                     var name = data.attr('name');
-
-                    _.forEach(values,
-                        function(value) {
-                            propertyValue.push({
-                                "propertyValue" : Number(value),
-                                "propertyDisplayValue" : name
-                            });
-                        }
-                    );
-
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
                 });
                 var dateAttribute = jQuery(".featureAttributeDate");
                 dateAttribute.on("blur", function() {
                     var data = jQuery(this);
-                    var propertyValue = [];
-                    if(!_.isEmpty(data.val())) {
-                        propertyValue.push({
-                            "propertyValue" : 0,
-                            "propertyDisplayValue" : dateutil.finnishToIso8601(data.val())
-                        });
-                    }
-                    me._saveTextData(propertyValue, data.attr('data-propertyId'));
+                    me._saveTextData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
                 dateAttribute.each(function(i, element) {
                     dateutil.addFinnishDatePicker(element);
                 });
             });
         },
+        collectAttributes: function(successCallback) {
+            var me = this;
+            me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
+            function assetTypePropertiesCallback(properties) {
+                var featureAttributesElement = jQuery('#featureAttributes');
+                var featureData = me._makeContent(properties);
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
+                featureAttributesElement.html(featureAttributesMarkup);
+                featureAttributesElement.find('button.save').on('click', function() {
+                    var textElements = featureAttributesElement.find('.featureAttributeText');
+                    var textElementAttributes = _.map(textElements, function(textElement) {
+                        var jqElement = jQuery(textElement);
+                        return {
+                            propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfTextElement(jqElement)
+                        };
+                    });
+
+                    var selectionElements = featureAttributesElement.find('.featureattributeChoice');
+                    var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
+                       var jqElement = jQuery(selectionElement);
+                        return {
+                            propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfSelectionElement(jqElement)
+                        };
+                    });
+
+                    var dateElements = featureAttributesElement.find('.featureAttributeDate');
+                    var dateElementAttributes = _.map(dateElements, function(dateElement) {
+                        var jqElement = jQuery(dateElement);
+                        return {
+                            propertyId: jqElement.attr('data-propertyId'),
+                            propertyValues: me._propertyValuesOfDateElement(jqElement)
+                        };
+                    });
+                    successCallback(textElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
+                });
+            }
+        },
+        _propertyValuesOfTextElement: function(element) {
+            return [{
+                propertyValue : 0,
+                propertyDisplayValue : element.val()
+            }];
+        },
+        _propertyValuesOfSelectionElement: function(element) {
+            return _.map(element.val(), function(value) {
+                return {
+                    propertyValue : Number(value),
+                    propertyDisplayValue : element.attr('name')
+                };
+            });
+        },
+        _propertyValuesOfDateElement: function(element) {
+            return _.isEmpty(element.val()) ? [] : [{
+                propertyValue : 0,
+                propertyDisplayValue : dateutil.finnishToIso8601(element.val())
+            }];
+        },
         _getPropertyValues: function() {
             var me = this;
-            jQuery.getJSON("/api/enumeratedPropertyValues/10", function(data) {
-                 me._enumeratedPropertyValues = data;
-                 return data;
-                })
-                .fail(function() {
-                    console.log( "error" );
-                });
+            me._backend.getEnumeratedPropertyValues(10, function(data) {
+                me._enumeratedPropertyValues = data;
+                return data;
+            });
         },
         _saveTextData: function(propertyValue, propertyId) {
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
             function successFunction() {
-                var eventBuilder = me.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
-                var event = eventBuilder(propertyValue);
-                me.getSandbox().notifyAll(event);
+                me._sendFeatureChangedEvent(propertyValue);
                 console.log("done");
             }
+        },
+        _sendFeatureChangedEvent: function(propertyValue) {
+            var eventBuilder = this.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
+            var event = eventBuilder(propertyValue);
+            this.getSandbox().notifyAll(event);
         },
         _makeContent: function(contents) {
             var me = this;
@@ -254,11 +298,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
-
                     if (_.contains(valuesNro, optionValue.propertyValue)) {
                         selectedValue = 'selected="true" ';
                     }
-
                     optionValue.selectedValue = selectedValue;
                     options +=  me._featureDataTemplateChoice(optionValue);
                 }
@@ -288,11 +330,21 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         eventHandlers : {
             'infobox.InfoBoxClosedEvent': function (event) {
                 this._closeFeatures(event);
+            },
+            'mapbusstop.AssetDirectionChangeEvent' : function (event) {
+                this._directionChange(event);
             }
 
         },
         _closeFeatures: function (event) {
             jQuery("#featureAttributes").html('');
+        },
+        _directionChange: function (event) {
+            var validityDirection = jQuery("[data-propertyid='validityDirection']");
+            var selection = validityDirection.val() == 2 ? 3 : 2;
+            validityDirection.val(selection);
+            var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: 2}];
+            this._sendFeatureChangedEvent(propertyValues);
         },
         /**
          * @method stop

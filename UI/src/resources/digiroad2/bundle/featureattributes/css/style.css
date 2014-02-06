@@ -34,7 +34,7 @@
 }
 
 .featureAttributeText {
-    border: 1px solid rgb(75, 75, 75);
+    border: 1px solid #646461;
     border-radius: 2px;
     background-color: rgb( 51, 51, 51 );
     color: rgb( 230, 230, 230 );
@@ -43,7 +43,7 @@
 }
 /* TODO copy paste from above!!! */
 .featureAttributeDate {
-    border: 1px solid rgb(75, 75, 75);
+    border: 1px solid #646461;
     border-radius: 2px;
     background-color: rgb( 51, 51, 51 );
     color: rgb( 230, 230, 230 );
@@ -59,7 +59,7 @@
 }
 
 .featureattributeChoice {
-    border: 1px solid rgb(75, 75, 75);
+    border: 1px solid #646461;
     border-radius: 2px;
     background-color: rgb( 51, 51, 51 );
     color: rgb( 230, 230, 230 );
@@ -104,8 +104,33 @@
    margin-top: 5px;
 }
 
+.formAttributeContentRow:last-child .formAttributeContent{
+    margin-bottom: 24px;
+}
+
 .formAttributeContentRow {
     clear:both;
+}
+
+.formControls {
+    clear:both;
+    border-top: 1px solid #646461;
+    padding-top: 10px;
+}
+
+.formControls .save {
+    float: right;
+    background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
+    background-image: -moz-linear-gradient(#7f7f7c,#5a5a57);
+    background-image: -o-linear-gradient(#7f7f7c,#5a5a57);
+    background-image: linear-gradient(#7f7f7c,#5a5a57);
+    background-color: #7f7f7c;
+    border: 0;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 11px;
+    padding: 10px 15px;
+    font-weight: bold;
 }
 
 .formDescriptor {
