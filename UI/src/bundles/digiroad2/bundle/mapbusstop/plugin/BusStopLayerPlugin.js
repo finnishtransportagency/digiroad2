@@ -255,7 +255,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     me._layer[layerName][1].destroyFeatures(directionArrow);
                 });
                 var contentItem = this._makeContent([this._unknownAssetType]);
-                this._sendPopupRequest("busStop", -1, contentItem, event.getLonLat());
+                this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat());
             }
             function sendCollectAttributesRequest(callback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
@@ -273,7 +273,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._selectedBusStop = this._addBusStop(asset, this._layer[this._layerType + "_" +this._selectedLayerId][2],
                 this._selectedLayerId, directionArrow, this._layer[this._layerType + "_" +this._selectedLayerId][1], 1, imageIds);
             this._selectedBusStopLayer = this._layer[this._layerType + "_" +this._selectedLayerId][2];
-            this._sendPopupRequest("busStop", asset.id, contentItem, lonLat);
+            this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
             var point = new OpenLayers.Geometry.Point(asset.lon, asset.lat);
             var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
@@ -375,7 +375,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._selectedBusStopLayer.removeMarker(this._selectedBusStop);
             this._selectedBusStopLayer.addMarker(this._selectedBusStop);
 
-            this._sendPopupRequest("busStop", this._selectedBusStop.id, contentItem, this._selectedBusStop.lonlat);
+            this._sendPopupRequest("busStop", this._selectedBusStop.id, this._selectedBusStop.id, contentItem, this._selectedBusStop.lonlat);
             this._selectedBusStop.display(false);
 
             var wgs84 = OpenLayers.Projection.transform(this._selectedBusStop.lonlat, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
@@ -392,10 +392,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
             return contentItem;
         },
-        _sendPopupRequest:function(id, busStopId, content, lonlat) {
+        _sendPopupRequest:function(id, title, busStopId, content, lonlat) {
             var me = this;
             var requestBuilder = this._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-            var request = requestBuilder("busStop", busStopId, [content], lonlat, true);
+            var request = requestBuilder("busStop", title, [content], lonlat, true);
             this._sandbox.request(this.getName(), request);
 
             var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
@@ -647,7 +647,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 point.heading = busStop.roadDirection+ (90  * -busStop.effectDirection);
                 me._sendShowAttributesRequest(busStop.id, point);
                 var contentItem = me._makeContent(imageIds);
-                me._sendPopupRequest("busStop", busStop.id, contentItem, busStop.lonlat);
+                me._sendPopupRequest("busStop", busStop.id, busStop.id, contentItem, busStop.lonlat);
                 me._selectedBusStop.display(false);
                 OpenLayers.Event.stop(evt);
             };

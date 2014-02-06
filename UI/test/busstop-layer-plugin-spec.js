@@ -85,6 +85,7 @@ describe('BusStopLayerPlugin', function(){
         var attributeShowRequest = {};
         var showInfoBoxRequest = {};
         var requestedInfoBoxType = '';
+        var requestedInfoBoxTitle = '';
         var addedFeature = {};
         var destroyedFeature = {};
         var addedMarker = {};
@@ -92,8 +93,9 @@ describe('BusStopLayerPlugin', function(){
             requestCallback = callback;
             return attributeCollectionRequest;
         };
-        var showInfoBoxRequestBuilder = function(infoBoxType) {
+        var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
             requestedInfoBoxType = infoBoxType;
+            requestedInfoBoxTitle = infoBoxTitle;
             return showInfoBoxRequest;
         };
         var attributeShowRequestBuilder = function() {
@@ -172,6 +174,7 @@ describe('BusStopLayerPlugin', function(){
         it('should request bus stop infobox', function() {
             assert.equal(showInfoBoxRequest, requests[1]);
             assert.equal('busStop', requestedInfoBoxType);
+            assert.equal('Uusi Pysäkki', requestedInfoBoxTitle);
         });
 
         it('should add direction arrow feature to direction arrow layer', function() {

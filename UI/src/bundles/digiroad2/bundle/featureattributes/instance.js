@@ -171,7 +171,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var featureAttributesMarkup = me._featureDataWrapper({ header : 0, streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
                 featureAttributesElement.find('button.save').on('click', function() {
