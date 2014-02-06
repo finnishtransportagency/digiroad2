@@ -352,6 +352,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         this._handleBusStopTypes(parameters);
                     } else if (displayValue == "Vaikutussuunta") {
                         this._changeDirection();
+                        var wgs84 = OpenLayers.Projection.transform(
+                            new OpenLayers.Geometry.Point(this._selectedBusStop.lonlat.lon, this._selectedBusStop.lonlat.lat),
+                            new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+                        wgs84.heading = this._selectedBusStop.roadDirection + (90  * this._selectedBusStop.effectDirection);
+                        this._sendShowAttributesRequest(this._selectedBusStop.id, wgs84);
                     }
                 }
             }
@@ -411,7 +416,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._sandbox.notifyAll(event);
         },
         _changeDirection: function() {
-            if (this._moveSelectedBusStop) {
+            if (this._selectedBusStop) {
                 this._selectedBusStop.effectDirection = this._selectedBusStop.effectDirection == 1 ? -1 : 1;
                 this._selectedBusStop.directionArrow.style.rotation =  this._selectedBusStop.roadDirection+ (90  * this._selectedBusStop.effectDirection);
                 this._selectedBusStop.directionArrow.move(this._selectedBusStop.lonlat); // need because redraw();
@@ -696,7 +701,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     this._selectedBusStop.blinking = true;
                     this._selectedBusStop.blinkInterVal = setInterval(function(){me._busStopBlink(me._selectedBusStop);}, 600);
                 }
-                this._selectedBusStop.lonlat = lonlat;
+                this._selectedBusStop.lonlat.lon = lonlat;
                 this._selectedBusStop.directionArrow.move(lonlat);
                 this._selectedBusStopLayer.redraw();
             }
