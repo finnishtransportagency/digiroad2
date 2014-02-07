@@ -16,5 +16,6 @@ trait AssetProvider {
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
+  def availableProperties(assetTypeId: Long): Seq[Property]
 }
 case class BoundingCircle(centreLat: Double, centreLon: Double, radiusM: Double)
