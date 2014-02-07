@@ -13,16 +13,15 @@ Oskari.clazz
      *
      * @param {String} title
      *        title
-     * @param {Object[]} contentData
-     *        JSON presentation for the data
+     * @param {Object} streetViewCoordinates
+     *        Coordinate and heading information for Google street view integration
      *
      */
 
-        function (title, content) {
+    function (title, streetViewCoordinates) {
         this._creator = null;
-        this._content = content;
+        this._streetViewCoordinates = streetViewCoordinates;
         this._title = title;
-
     }, {
         /** @static @property __name request name */
         __name: "FeatureAttributes.ShowFeatureAttributesRequest",
@@ -35,16 +34,16 @@ Oskari.clazz
         },
 
         /**
-         * @method getContent
-         * @return {Object[]} content
+         * @method getStreetViewCoordinates
+         * @return {Object} street view coordinates
          */
-        getContent: function () {
-            return this._content;
+        getStreetViewCoordinates: function () {
+            return this._streetViewCoordinates;
         },
 
         /**
          * @method getTitle
-         * @return {String} content
+         * @return {String} title
          */
         getTitle: function () {
             return this._title;
