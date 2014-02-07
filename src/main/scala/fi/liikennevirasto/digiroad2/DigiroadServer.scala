@@ -9,7 +9,7 @@ object DigiroadServer extends App {
   val context = new WebAppContext()
   context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
   context.setResourceBase("src/main/webapp")
-  context.setContextPath("/")
+  context.setContextPath("/digiroad")
   context.setParentLoaderPriority(true)
   context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
   server.setHandler(context)

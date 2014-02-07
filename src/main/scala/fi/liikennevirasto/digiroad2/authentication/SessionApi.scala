@@ -17,9 +17,9 @@ class SessionApi extends ScalatraServlet with AuthenticationSupport {
   post("/session") {
     scentry.authenticate()
     if (isAuthenticated) {
-      redirect("/index.html")
+      redirect(url("index.html"))
     } else {
-      redirect("/login.html")
+      redirect(url("login.html"))
     }
   }
 

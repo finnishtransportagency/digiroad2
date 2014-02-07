@@ -122,7 +122,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                                                '<div class="popupInfoChangeDirection">' +
                                                     '<div class="changeDirectionButton">{{changeDirectionButton}}</div>' +
                                                '</div>');
-            me._busStopsPopupIcons = _.template('<img src="/api/images/{{imageId}}">');
+            me._busStopsPopupIcons = _.template('<img src="api/images/{{imageId}}">');
             me._removeAssetTemplate = _.template('<p>Aseta poistopäivämäärä:</p><p><input id="removeAssetDateInput" class="featureAttributeDate" type="text" /></p>');
         },
         _initRoadsStyles: function() {
@@ -326,7 +326,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return new OpenLayers.Feature.Vector(
                 new OpenLayers.Geometry.Point(lon, lat),
                 null,
-                {externalGraphic: '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
+                {externalGraphic: 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
                     graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
             );
         },
@@ -518,7 +518,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             arrow.className = "arrow";
             _.each(imageIds, function (imageId) {
                 var img = document.createElement("img");
-                img.setAttribute("src", "/api/images/" + imageId + ".png");
+                img.setAttribute("src", "api/images/" + imageId + ".png");
                 callout.appendChild(img);
             });
             arrowContainer.appendChild(arrow);
@@ -579,7 +579,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
-                url: "/api/assets/"+busStop.id+"/properties/validTo/values",
+                url: "api/assets/"+busStop.id+"/properties/validTo/values",
                 data: JSON.stringify(propertyValues),
                 dataType:"json",
                 success: function() {
@@ -594,7 +594,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             jQuery.ajax({
                 contentType: "application/json",
                 type: "PUT",
-                url: "/api/assets/" + id,
+                url: "api/assets/" + id,
                 data: JSON.stringify(data),
                 dataType:"json",
                 success: function() {

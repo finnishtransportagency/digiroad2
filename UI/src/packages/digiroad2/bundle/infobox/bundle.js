@@ -27,7 +27,7 @@ Oskari.clazz.define("Oskari.mapframework.bundle.infobox.InfoBoxBundle",
 
             "scripts": [{
                 "type": "text/javascript",
-                "src": "../../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/instance.js"
+                "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/instance.js"
             }, {
                 "type": "text/javascript",
                 "src": "../../../../bundles/digiroad2/bundle/infobox/plugin/infobox/FeatureAttributesPopupPlugin.js"
@@ -36,16 +36,16 @@ Oskari.clazz.define("Oskari.mapframework.bundle.infobox.InfoBoxBundle",
                 "src": "../../../../bundles/digiroad2/bundle/infobox/event/InfoBoxClosedEvent.js"
             }, {
                 "type": "text/javascript",
-                "src": "../../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/ShowInfoBoxRequest.js"
+                "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/ShowInfoBoxRequest.js"
             }, {
                 "type": "text/javascript",
-                "src": "../../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/ShowInfoBoxRequestHandler.js"
+                "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/ShowInfoBoxRequestHandler.js"
             }, {
                 "type": "text/javascript",
-                "src": "../../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/HideInfoBoxRequest.js"
+                "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/HideInfoBoxRequest.js"
             }, {
                 "type": "text/javascript",
-                "src": "../../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/HideInfoBoxRequestHandler.js"
+                "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/HideInfoBoxRequestHandler.js"
             }, {
                 "type": "text/css",
                 "src": "../../../../resources/digiroad2/bundle/infobox/plugin/infobox/css/infobox.css"
