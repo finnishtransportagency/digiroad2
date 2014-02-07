@@ -1,6 +1,7 @@
 (function(dateutil, undefined) {
     var FINNISH_DATE_FORMAT = 'D.M.YYYY';
     var ISO_8601_DATE_FORMAT = 'YYYY-MM-DD';
+    var FINNISH_HINT_TEXT = 'pp.kk.vvvv';
     var FINNISH_PIKADAY_I18N = {
             previousMonth : 'edellinen kuukausi',
             nextMonth     : 'seuraava kuukausi',
@@ -21,13 +22,20 @@
         return moment().format(FINNISH_DATE_FORMAT);
     };
 
-    dateutil.addFinnishDatePicker = function(element, config) {
-        return new Pikaday(jQuery.extend({}, {
+    dateutil.addFinnishDatePicker = function(element) {
+        element.setAttribute('placeholder', FINNISH_HINT_TEXT);
+        var picker = new Pikaday({
             field: element,
             format: FINNISH_DATE_FORMAT,
             firstDay: 1,
             yearRange: [1950, 2050],
             i18n: FINNISH_PIKADAY_I18N
-        }, config));
+        });
+        jQuery(element).keypress(function(e){
+            if (e.which === 13){
+                picker.hide();
+            }
+        });
+        return picker;
     };
 }(window.dateutil = window.dateutil || {}));
