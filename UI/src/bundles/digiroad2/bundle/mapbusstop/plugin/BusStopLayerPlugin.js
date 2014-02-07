@@ -613,6 +613,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             return function (evt) {
                 if (me._map.getZoom() < 8) {
+                    var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
+                    dialog.show('Zoomaa lähemmäksi, jos haluat muokata pysäkkejä');
+                    dialog.fadeout(3000);
                     return;
                 }
                 if (me._selectedBusStop) {
