@@ -19,7 +19,6 @@ describe('FeatureAttributes', function () {
                     '<div class="formLabels">propertyName</div>' +
                     '<div class="formAttributeContent">' +
                     '<input class="featureAttributeDate" type="text" data-propertyId="propertyId" name="propertyName" value=""/>' +
-                    '<span class="attributeFormat">pp.kk.vvvv</span>' +
                     '</div>' +
                     '</div>');
         });
