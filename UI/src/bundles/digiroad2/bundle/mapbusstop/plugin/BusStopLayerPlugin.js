@@ -267,12 +267,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _addNewAsset: function(asset) {
             var layerName = this._layerType + "_" + this._selectedLayerId;
-            var imageIds = _.chain(asset.propertyData)
-                .pluck("values")
-                .flatten()
-                .reject(function(propertyValue) { return propertyValue.imageId === null || propertyValue.imageId === undefined; })
-                .map(function(propertyValue) { return propertyValue.imageId; })
-                .value();
+            var imageIds = this._getImageIds(asset.propertyData);
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(imageIds);
             var angle = this._getAngleFromBearing(asset.bearing, 1);
@@ -287,6 +282,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
             wgs84.heading = asset.bearing + 90;
             this._sendShowAttributesRequest(asset.id, wgs84);
+        },
+        _getImageIds: function(assetPropertyData) {
+            return _.chain(assetPropertyData)
+                .pluck("values")
+                .flatten()
+                .reject(function(propertyValue) { return propertyValue.imageId === null || propertyValue.imageId === undefined; })
+                .map(function(propertyValue) { return propertyValue.imageId; })
+                .value();
         },
         /**
          * @method onEvent
@@ -524,12 +527,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return callout;
         },
         _addBusStop: function(assetData, busStops, layerId, directionArrow, directionLayer, validityDirection) {
-            var imageIds = _.chain(assetData.propertyData)
-                .pluck("values")
-                .flatten()
-                .reject(function(propertyValue) { return propertyValue.imageId === null || propertyValue.imageId === undefined; })
-                .map(function(propertyValue) { return propertyValue.imageId; })
-                .value();
+            var imageIds = this._getImageIds(assetData.propertyData);
 
             var icon = this._getIcon(imageIds);
             // new bus stop marker
