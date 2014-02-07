@@ -140,12 +140,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             return null;
         },
-        showAttributes : function(id, point) {
+        showAttributes : function(id, streetViewCoordinates) {
             var me = this;
             me._featureDataAssetId = id;
             me._backend.getAsset(id, function(data) {
                 var featureData = me._makeContent(data.propertyData);
-                var streetView =  me._streetViewTemplate({ "wgs84X":point.x, "wgs84Y":point.y, "heading" : point.heading});
+                var wgs84 = OpenLayers.Projection.transform(
+                    new OpenLayers.Geometry.Point(streetViewCoordinates.lonLat.lon, streetViewCoordinates.lonLat.lat),
+                    new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
+                var streetView =  me._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: streetViewCoordinates.heading });
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
                 jQuery("#featureAttributes").html(featureAttributes);
                 me._addDatePickers();
