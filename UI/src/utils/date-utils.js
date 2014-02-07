@@ -18,24 +18,41 @@
         return moment(finnishDateString, FINNISH_DATE_FORMAT).format(ISO_8601_DATE_FORMAT);
     };
 
-    dateutil.todayInFinnishFormat = function() {
-        return moment().format(FINNISH_DATE_FORMAT);
+    dateutil.addFinnishDatePicker = function(element) {
+        return addPicker(jQuery(element));
     };
 
-    dateutil.addFinnishDatePicker = function(element) {
-        element.setAttribute('placeholder', FINNISH_HINT_TEXT);
-        var picker = new Pikaday({
-            field: element,
-            format: FINNISH_DATE_FORMAT,
-            firstDay: 1,
-            yearRange: [1950, 2050],
-            i18n: FINNISH_PIKADAY_I18N
+    dateutil.addNullableFinnishDatePicker = function(element) {
+        var elem = jQuery(element)
+        var resetButton = jQuery("<div class='pikaday-footer'><div class='deselect-button'>Ei tietoa</div></div>");
+        var picker = addPicker(elem, function() {
+            jQuery('.pika-single').append(resetButton);
+            picker.adjustPosition();
         });
-        jQuery(element).keypress(function(e){
-            if (e.which === 13){
-                picker.hide();
-            }
+        resetButton.on('click', function () {
+            elem.val(null);
+            picker.hide();
+            elem.blur();
         });
         return picker;
     };
+
+    function addPicker(jqueryElement, onDraw) {
+        var picker = new Pikaday({
+            field: jqueryElement.get(0),
+            format: FINNISH_DATE_FORMAT,
+            firstDay: 1,
+            yearRange: [1950, 2050],
+            onDraw: onDraw,
+            i18n: FINNISH_PIKADAY_I18N
+        });
+        jqueryElement.keypress(function(e){
+            if (e.which === 13) { // hide on enter key press
+                picker.hide();
+                jqueryElement.blur();
+            }
+        });
+        jqueryElement.attr('placeholder', FINNISH_HINT_TEXT);
+        return picker;
+    }
 }(window.dateutil = window.dateutil || {}));
