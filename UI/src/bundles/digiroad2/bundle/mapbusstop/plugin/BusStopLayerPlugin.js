@@ -358,7 +358,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _featureAttributeChangedEvent: function(event){
             if (this._selectedBusStop) {
                 var parameters = event.getParameter();
-                if (parameters) {
+                if (parameters && parameters.length > 0) {
                     var displayValue = parameters[0].propertyDisplayValue;
                     if(displayValue == "Pysäkin tyyppi") {
                         this._handleBusStopTypes(parameters);
