@@ -1,7 +1,7 @@
 (function(session, undefined){
     var sessionId = null;
     session.redirectToLogin = function() {
-        window.location = "/login.html";
+        window.location = "login.html";
     };
 
 }(window.session = window.session || {}));

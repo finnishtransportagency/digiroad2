@@ -46,7 +46,7 @@ object MapConfigJson {
 			"width": "100%",
 			"height": "100%"
 		 },
-         "globalMapAjaxUrl":"/api/layers?",
+         "globalMapAjaxUrl":"api/layers?",
          "plugins":[
             {
                "id":"Oskari.mapframework.bundle.mapmodule.plugin.LayersPlugin"
@@ -100,8 +100,8 @@ object MapConfigJson {
                  "id":235,
                  "minScale":5000,
                  "wmsUrl":"/data/dummy/busstops.json",
-                 "url":"/api/assets?assetTypeId=10&${municipalitiesOfUserParams}",
-                 "roadLinesUrl" :"/api/roadlinks?municipalityNumber=${municipalityNumber}",
+                 "url":"api/assets?assetTypeId=10&${municipalitiesOfUserParams}",
+                 "roadLinesUrl" :"api/roadlinks?municipalityNumber=${municipalityNumber}",
                  "maxScale":1 ,
                  "orgName":"LiVi",
                  "inspire":"Ominaisuustiedot",

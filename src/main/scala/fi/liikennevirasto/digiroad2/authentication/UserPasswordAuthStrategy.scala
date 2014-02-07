@@ -27,6 +27,6 @@ class UserPasswordAuthStrategy(protected override val app: ScalatraBase)(implici
   }
 
   override def unauthenticated()(implicit request: HttpServletRequest, response: HttpServletResponse) {
-    app.redirect("/login.html")
+    app.redirect("login.html")
   }
 }
