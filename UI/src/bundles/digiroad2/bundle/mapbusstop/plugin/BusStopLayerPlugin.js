@@ -288,7 +288,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 .pluck("values")
                 .flatten()
                 .reject(function(propertyValue) { return propertyValue.imageId === null || propertyValue.imageId === undefined; })
-                .map(function(propertyValue) { return propertyValue.imageId; })
+                .pluck("imageId")
                 .value();
         },
         /**
