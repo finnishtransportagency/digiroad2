@@ -208,7 +208,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         _addDatePickers: function () {
             var dateAttribute = jQuery('.featureAttributeDate');
             dateAttribute.each(function (i, element) {
-                dateutil.addFinnishDatePicker(element);
+                dateutil.addNullableFinnishDatePicker(element);
             });
         },
         _propertyValuesOfTextElement: function(element) {
