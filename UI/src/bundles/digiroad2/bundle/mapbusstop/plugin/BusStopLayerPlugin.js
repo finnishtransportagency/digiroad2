@@ -481,10 +481,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
              jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
                 _.each(data, function (eachData) {
-                    var validityDirectionProperty = _.find(eachData.propertyData, function(property) {
-                        return property.propertyId == "validityDirection";
-                    });
-                    var validityDirection = (validityDirectionProperty.values[0].propertyValue == 3) ? 1 : -1;
+                    var validityDirection = (eachData.validityDirection === 3) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
                     var angle = me._getAngleFromBearing(eachData.bearing, validityDirection);
                     var directionArrow = me._getDirectionArrow(angle, eachData.lon, eachData.lat);
@@ -527,7 +524,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return callout;
         },
         _addBusStop: function(assetData, busStops, layerId, directionArrow, directionLayer, validityDirection) {
-            var imageIds = this._getImageIds(assetData.propertyData);
+            var imageIds = assetData.imageIds;
 
             var icon = this._getIcon(imageIds);
             // new bus stop marker

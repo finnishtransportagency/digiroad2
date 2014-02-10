@@ -83,13 +83,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/assets/:id") {
     val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val asset = Asset(
+    val asset = ListedAsset(
         id = params("id").toLong,
         assetTypeId = assetTypeId.get,
         lon = lon.get,
         lat = lat.get,
         roadLinkId = roadLinkId.get,
-        propertyData = List(),
+        imageIds = List(),
         bearing = bearing)
     val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
