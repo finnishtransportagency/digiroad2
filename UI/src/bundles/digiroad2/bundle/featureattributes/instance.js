@@ -103,7 +103,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._streetViewTemplate  = _.template(
                 '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
-                    '<img src="http://maps.googleapis.com/maps/api/streetview?size=360x180&location={{wgs84Y}}' +
+                    '<img alt="Google StreetView-näkymä" src="http://maps.googleapis.com/maps/api/streetview?size=360x180&location={{wgs84Y}}' +
                     ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
 

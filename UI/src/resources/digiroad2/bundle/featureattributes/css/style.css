@@ -33,6 +33,15 @@
     padding-bottom: 4px;
 }
 
+.streetView img {
+    width: 360px;
+    height: 180px;
+    color: #ffffff;
+    font-family: arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+}
+
 .featureAttributeText {
     border: 1px solid #646461;
     border-radius: 2px;
@@ -127,7 +136,7 @@
     background-color: #7f7f7c;
     border: 0;
     color: #ffffff;
-    font-family: Arial;
+    font-family: arial, sans-serif;
     font-size: 11px;
     padding: 10px 15px;
     font-weight: bold;
