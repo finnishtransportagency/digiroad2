@@ -1,0 +1,35 @@
+1.
+
+Tiedoston lisääminen:
+ssh-add -L (tai cat .ssh/id_*.pub)
+
+Logataksesi web käyttäjänä kopioi ssh-add -L antama avain web-käyttäjän:  ~/.ssh/authorized_keys
+(echo "ssh-rsa AAAAB...GLUpnJkew== /Users/ramik/.ssh/id_rsa" >> .ssh/authorized_keys)
+
+2.
+
+Pannujen valmistelu:
+- kopioi jenkinsin (livi ci:ltä) id_rsa (web-käyttäjä:  ~/.ssh/)
+-
+- mikäli portti 22 on suljettu: aseta github .ssh/configissa näin:
+
+Host github.com
+  Hostname ssh.github.com
+  Port 443
+
+- asenna java
+- asenna git
+- asenna node (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
+- asenna bower (npm install -g bower)
+- asenna grunt (npm install -g grunt-cli)
+
+
+(bower "fix": git config --global url."https://".insteadOf git://)
+
+update git (http://www.halyph.com/2013/08/how-to-install-git-1834-on-centos-64.html)
+
+Oracle libit pitää olla kopioituna web-käyttäjän ~/digiroad2/oracle/ alle
+
+New Relic pitää olla kopioituna: ~/digiroad/newrelic hakemistoon
+
+bonecp properties pitää olla ~/digiroad/ hakemistossa
