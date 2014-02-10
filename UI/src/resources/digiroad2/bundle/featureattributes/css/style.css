@@ -232,6 +232,26 @@ table.pika-table th {
     color: #fff !important;
     background: #5a5a57 !important;
 }
+
+.pikaday-footer {
+    border-top: 1px solid #646461;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.deselect-button {
+    background: none repeat scroll 0 0 #444444;
+    border: 1px solid #646461;
+    border-radius: 2px;
+    font-family: arial,sans-serif;
+    font-size: 12px;
+    margin: 11px auto 5px;
+    padding: 5px;
+    text-align: center;
+    width: 80px;
+    cursor: default;
+}
+
 /* Pikaday styling end */
 
 /* oskari.org popup styling */
