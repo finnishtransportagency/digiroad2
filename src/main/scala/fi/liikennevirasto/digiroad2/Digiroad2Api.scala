@@ -18,21 +18,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   before() {
     contentType = formats("json")
-    authenticateForApi(request)(userProvider)
+    try {
+      authenticateForApi(request)(userProvider)
+    } catch {
+      case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
+    }
   }
 
   get("/config") {
-    userProvider.getThreadLocalUser() match {
-      case Some(user) => readJsonFromBody(MapConfigJson.mapConfig(user.configuration))
-      case _ => throw new UnauthenticatedException()
-    }
+    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration))
   }
 
   get("/layers") {
-    userProvider.getThreadLocalUser() match {
-      case Some(user) => readJsonFromBody(LayersJson.layers(user.configuration))
-      case _ => throw new UnauthenticatedException()
-    }
+    readJsonFromBody(LayersJson.layers(userProvider.getCurrentUser.configuration))
   }
 
   get("/assetTypes") {
@@ -40,37 +38,33 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
-    userProvider.getThreadLocalUser() match {
-      case Some(user) => {
-        val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
-          case (Some(period), _) => period match {
-            case "past" => (None, Some(LocalDate.now))
-            case "future" => (Some(LocalDate.now), None)
-          }
-          case (_, Some(day)) => {
-            (Some(day), Some(day))
-          }
-          case _ => (None, None)
-        }
-        val authorizedMunicipalities = user.configuration.authorizedMunicipalities
-        assetProvider.getAssets(
-            params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
-            boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
-          asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
-        }
+    val user = userProvider.getCurrentUser
+    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
+      case (Some(period), _) => period match {
+        case "past" => (None, Some(LocalDate.now))
+        case "future" => (Some(LocalDate.now), None)
       }
-      case _ => throw new UnauthenticatedException()
+      case (_, Some(day)) => {
+        (Some(day), Some(day))
+      }
+      case _ => (None, None)
+    }
+    val authorizedMunicipalities = user.configuration.authorizedMunicipalities
+    assetProvider.getAssets(
+        params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
+        boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
+      asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
     }
   }
 
-  private def isReadOnly( authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
+  private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
     !authorizedMunicipalities.contains(municipalityNumber)
   }
 
   get("/assets/:assetId") {
     assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => {
-        val authorizedMunicipalities = userProvider.getThreadLocalUser().get.configuration.authorizedMunicipalities.toSet
+        val authorizedMunicipalities = userProvider.getCurrentUser.configuration.authorizedMunicipalities.toSet
         a.copy(readOnly = a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
@@ -100,7 +94,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: PUT -> POST
   put("/asset") {
-    val user = userProvider.getThreadLocalUser().get
+    val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
       (parsedBody \ "assetTypeId").extract[Long],
       (parsedBody \ "lon").extract[Int].toDouble,
@@ -150,6 +144,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   error {
+    case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case e: Exception => logger.error("API Error", e)
   }

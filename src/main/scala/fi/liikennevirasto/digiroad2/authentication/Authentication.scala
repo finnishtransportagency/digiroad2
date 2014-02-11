@@ -10,18 +10,19 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context
 trait Authentication extends TestUserSupport {
   // NOTE: maybe cache user data if required for performance reasons
   def authenticateForApi(request: HttpServletRequest)(implicit userProvider: UserProvider) = {
-    userProvider.clearThreadLocalUser()
-    authenticate(request)(userProvider) match {
-      case Some(user) => userProvider.setThreadLocalUser(user)
-      case None => {
+    userProvider.clearCurrentUser()
+    try {
+      userProvider.setCurrentUser(authenticate(request)(userProvider))
+    } catch {
+      case ise: IllegalStateException => {
         if (authenticationTestModeEnabled) {
-          userProvider.setThreadLocalUser(getTestUser(request)(userProvider).getOrElse(null))
+          userProvider.setCurrentUser(getTestUser(request)(userProvider).getOrElse(throw ise))
         } else {
-          throw new UnauthenticatedException()
+          throw ise
         }
       }
     }
   }
 
-  def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): Option[User]
+  def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): User
 }

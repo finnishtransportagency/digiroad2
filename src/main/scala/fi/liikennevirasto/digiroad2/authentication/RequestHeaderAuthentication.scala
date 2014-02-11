@@ -6,12 +6,8 @@ import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 trait RequestHeaderAuthentication extends Authentication {
   val OamRemoteUserHeader = "OAM_REMOTE_USER"
 
-  def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): Option[User] = {
+  def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): User = {
     val remoteUser = request.getHeader(OamRemoteUserHeader)
-    if (remoteUser != null) {
-      userProvider.getUser(remoteUser)
-    } else {
-      None
-    }
+    userProvider.getUser(remoteUser).getOrElse(throw new IllegalStateException("Could not authenticate: " + remoteUser))
   }
 }

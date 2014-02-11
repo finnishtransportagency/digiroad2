@@ -3,18 +3,18 @@ package fi.liikennevirasto.digiroad2.user
 trait UserProvider {
   val threadLocalUser: ThreadLocal[User] = new ThreadLocal[User]
 
-  def clearThreadLocalUser() {
+  def clearCurrentUser() {
     threadLocalUser.remove()
   }
 
-  def setThreadLocalUser(user: User) {
+  def setCurrentUser(user: User) {
     threadLocalUser.set(user)
   }
 
-  def getThreadLocalUser(): Option[User] = {
+  def getCurrentUser(): User = {
     threadLocalUser.get() match {
-      case u: User => Some(u)
-      case _ => None
+      case u: User => u
+      case _ => throw new IllegalStateException("Current user not available")
     }
   }
 
