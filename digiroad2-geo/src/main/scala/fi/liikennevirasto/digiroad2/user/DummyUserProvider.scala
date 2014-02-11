@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.user;
 
 class DummyUserProvider extends UserProvider {
-  def createUser(username: String, password: String, email: String, config: Configuration) = {
-    User(0, username, email, Configuration())
+  def createUser(username: String, config: Configuration) = {
+    User(0, username, Configuration())
   }
   def getUser(username: String): Option[User] = {
-    Some(User(0, username, "test@example.com", Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235))))
+    Some(User(0, username, Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235))))
   }
   def getAuthenticatedUser(username: String, password: String): Option[User] = getUser(username)
 

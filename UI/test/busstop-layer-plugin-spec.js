@@ -8,8 +8,8 @@ describe('BusStopLayerPlugin', function(){
     
     describe('#makePopupContent()', function() {
         var pluginInstance = null;
-        var testOneBusStopTypeHtml =  '<img src="/api/images/2">';
-        var testTwoBusStopTypeHtml =  '<img src="/api/images/2"><img src="/api/images/3">';
+        var testOneBusStopTypeHtml =  '<img src="api/images/2">';
+        var testTwoBusStopTypeHtml =  '<img src="api/images/2"><img src="api/images/3">';
         var testEmptyBusStopTypeHtml =  '';
 
         before(function(){
@@ -34,7 +34,7 @@ describe('BusStopLayerPlugin', function(){
         var pluginInstance = null;
         var oneIconImageHtml =
             '<div class="callout">' +
-                '<img src="/api/images/2.png">' +
+                '<img src="api/images/2.png">' +
                 '<div class="arrow-container">' +
                 '<div class="arrow"></div>' +
                 '</div>' +
@@ -42,8 +42,8 @@ describe('BusStopLayerPlugin', function(){
                 '</div></div>';
         var twoIconImageHtml =
             '<div class="callout">' +
-                '<img src="/api/images/2.png">' +
-                '<img src="/api/images/3.png">' +
+                '<img src="api/images/2.png">' +
+                '<img src="api/images/3.png">' +
                 '<div class="arrow-container">' +
                 '<div class="arrow"></div>' +
                 '</div>' +
@@ -178,7 +178,7 @@ describe('BusStopLayerPlugin', function(){
         });
 
         it('should add direction arrow feature to direction arrow layer', function() {
-            assert.equal(addedFeature.style.externalGraphic, '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
         });
 
         describe('and when feature attributes have been collected', function () {
@@ -204,7 +204,7 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {
-                assert.equal(destroyedFeature.style.externalGraphic, '/src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
             });
 
             it('should show bus stop marker on marker layer', function() {

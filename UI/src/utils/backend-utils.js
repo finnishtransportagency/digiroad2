@@ -1,6 +1,6 @@
 (function(backend) {
     backend.getEnumeratedPropertyValues = function (assetTypeId, success) {
-        jQuery.getJSON('/api/enumeratedPropertyValues/' + assetTypeId, success)
+        jQuery.getJSON('api/enumeratedPropertyValues/' + assetTypeId, success)
             .fail(function() { console.log( "error" ); });
     };
 
@@ -9,18 +9,18 @@
     };
 
     backend.getAsset = function (assetId, success) {
-        $.get('/api/assets/' + assetId, success);
+        $.get('api/assets/' + assetId, success);
     };
 
     backend.getAssetTypeProperties = function (assetTypeId, success) {
-        $.get('/api/assetTypeProperties/' + assetTypeId, success);
+        $.get('api/assetTypeProperties/' + assetTypeId, success);
     };
 
     backend.putAsset = function (data, success) {
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
-            url: "/api/asset",
+            url: "api/asset",
             data: JSON.stringify(data),
             dataType: "json",
             success: success,
@@ -34,7 +34,7 @@
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
-            url: "/api/assets/" + assetId + "/properties/" + propertyId + "/values",
+            url: "api/assets/" + assetId + "/properties/" + propertyId + "/values",
             data: JSON.stringify(data),
             dataType:"json",
             success: success,

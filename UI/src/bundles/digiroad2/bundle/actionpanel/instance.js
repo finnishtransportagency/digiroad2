@@ -86,7 +86,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                                '<div class="actionPanel">' +
                                     '<div class="layerGroup">' +
                                         '<div class="layerGroupImg">' +
-                                            '<img src="/src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
+                                            '<img src="src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
                                         '</div>' +
                                         '<div class="layerGroupLabel">Joukkoliikenteen pysäkit</div>' +
                                     '</div>' +

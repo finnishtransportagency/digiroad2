@@ -76,7 +76,6 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
