@@ -7,4 +7,4 @@ case class Configuration(
     municipalityNumber: Option[Long]  = None,
     authorizedMunicipalities: Set[Long] = Set()
 )
-case class User(id: Long, username: String, email: String, configuration: Configuration)
+case class User(id: Long, username: String, configuration: Configuration)

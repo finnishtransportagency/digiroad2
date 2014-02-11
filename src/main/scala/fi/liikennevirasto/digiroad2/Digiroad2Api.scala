@@ -1,23 +1,27 @@
 package fi.liikennevirasto.digiroad2
 
 import org.scalatra._
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s._
+import org.json4s.jackson.Serialization.{read, write}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset.{Property, BoundingCircle, Asset, PropertyValue}
 import org.joda.time.{LocalDate, DateTime}
-import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
+import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport {
+class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
+  protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
     contentType = formats("json")
-    userOption match {
+    // NOTE: maybe cache user data if required for performance reasons
+    userProvider.clearThreadLocalUser()
+    authenticate(request)(userProvider) match {
       case Some(user) => Digiroad2Context.userProvider.setThreadLocalUser(user)
       case None => throw new UnauthenticatedException()
     }
@@ -148,7 +152,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   error {
-    case ue: UnauthenticatedException => Unauthorized("Not authenticated")
+    case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case e: Exception => logger.error("API Error", e)
   }
 
