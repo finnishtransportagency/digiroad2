@@ -62,16 +62,12 @@
 </head>
 <body id="main">
 <div id="loginForm">
-    <div class="formHeader">Digiroad 2 kirjautuminen</div>
+    <div class="formHeader">Digiroad 2 kirjautuminen (testi)</div>
 
     <form method="post" action="api/auth/session">
         <div class="formAttributeContentRow">
             <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
-            <input type="text" name="login"/></div>
-
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Salasana:</div>
-            <input type="password" name="password"/></div>
+            <input type="text" name="username"/></div>
         <input type="submit" value="Kirjaudu">
     </form>
 </div>
@@ -82,18 +78,6 @@
         <div class="formAttributeContentRow">
             <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
             <input type="text" name="username"/></div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">S&auml;hk&ouml;posti:</div>
-            <input type="text" name="email"/></div>
-
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Salasana:</div>
-            <input type="password" name="password"/></div>
-
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Salasana uudestaan:</div>
-            <input type="password" name="passwordConfirm"/></div>
-
         <div class="formAttributeContentRow">
             <div class="formLabels">Kunnan nimi:</div>
             <select name="municipalityNumber">
