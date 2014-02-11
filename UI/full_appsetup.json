@@ -34,9 +34,6 @@
             "mapwmts": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
-            "mapwfs": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            },
              "mapbusstop": {
                  "bundlePath": "src/packages/digiroad2/bundle/"
             },
