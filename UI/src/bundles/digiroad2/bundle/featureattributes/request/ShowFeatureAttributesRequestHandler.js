@@ -22,10 +22,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatu
          *      request to handle
          */
         handleRequest: function (core, request) {
-
            this.featureAttributes.showAttributes(
                 request.getTitle(),
-                request.getContent()
+                request.getStreetViewCoordinates()
             );
         }
     }, {
