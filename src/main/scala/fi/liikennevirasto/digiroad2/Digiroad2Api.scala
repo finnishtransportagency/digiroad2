@@ -2,11 +2,10 @@ package fi.liikennevirasto.digiroad2
 
 import org.scalatra._
 import org.json4s._
-import org.json4s.jackson.Serialization.{read, write}
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.asset.{Property, BoundingCircle, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
@@ -19,12 +18,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   before() {
     contentType = formats("json")
-    // NOTE: maybe cache user data if required for performance reasons
-    userProvider.clearThreadLocalUser()
-    authenticate(request)(userProvider) match {
-      case Some(user) => Digiroad2Context.userProvider.setThreadLocalUser(user)
-      case None => throw new UnauthenticatedException()
-    }
+    authenticateForApi(request)(userProvider)
   }
 
   get("/config") {
@@ -46,22 +40,26 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
-    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
-      case (Some(period), _) => period match {
-        case "past" => (None, Some(LocalDate.now))
-        case "future" => (Some(LocalDate.now), None)
+    userProvider.getThreadLocalUser() match {
+      case Some(user) => {
+        val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
+          case (Some(period), _) => period match {
+            case "past" => (None, Some(LocalDate.now))
+            case "future" => (Some(LocalDate.now), None)
+          }
+          case (_, Some(day)) => {
+            (Some(day), Some(day))
+          }
+          case _ => (None, None)
+        }
+        val authorizedMunicipalities = user.configuration.authorizedMunicipalities
+        assetProvider.getAssets(
+            params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
+            boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
+          asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+        }
       }
-      case (_, Some(day)) => {
-        (Some(day), Some(day))
-      }
-      case _ => (None, None)
-    }
-    val user = userProvider.getThreadLocalUser().get
-    val authorizedMunicipalities = user.configuration.authorizedMunicipalities
-    assetProvider.getAssets(
-        params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
-        boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
-      asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+      case _ => throw new UnauthenticatedException()
     }
   }
 

@@ -13,6 +13,19 @@ class SessionApi extends ScalatraServlet {
     case _ => Configuration()
   }
 
+  post("/session") {
+    val username = request.getParameter("username")
+    userProvider.getUser(username) match {
+      case Some(u) => {
+        cookies.set("testusername", username)
+        redirect(url("index.html"))
+      }
+      case _ => {
+        BadRequest("No such user: " + username)
+      }
+    }
+  }
+
   post("/user") {
     val (username, municipalityNumber) = (request.getParameter("username"), request.getParameter("municipalityNumber"))
     val configMap = defaultConfig(municipalityNumber)

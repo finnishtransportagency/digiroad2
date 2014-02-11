@@ -11,6 +11,10 @@ object Digiroad2Context {
     props
   }
 
+  lazy val authenticationTestModeEnabled: Boolean = {
+    properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
+  }
+
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
          .getDeclaredConstructor(classOf[UserProvider])
