@@ -8,8 +8,8 @@ import fi.liikennevirasto.digiroad2.user.Configuration
 class SessionApi extends ScalatraServlet {
   val logger = LoggerFactory.getLogger(getClass)
   def defaultConfig(municipalityNumber: String): Configuration = municipalityNumber match {
-    case "235" => Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235))
-    case "837" => Configuration(zoom = Some(7), east = Some(328308), north = Some(6822545), municipalityNumber = Some(837))
+    case "235" => Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235), authorizedMunicipalities = Set(235))
+    case "837" => Configuration(zoom = Some(7), east = Some(328308), north = Some(6822545), municipalityNumber = Some(837), authorizedMunicipalities = Set(837))
     case _ => Configuration()
   }
 
