@@ -278,10 +278,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._selectedBusStopLayer = this._layer[layerName][this._assetLayer];
             this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
-            var point = new OpenLayers.Geometry.Point(asset.lon, asset.lat);
-            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
-            wgs84.heading = asset.bearing + 90;
-            this._sendShowAttributesRequest(asset.id, wgs84);
+            var streetViewCoordinates = {
+                lonLat: lonLat,
+                heading: asset.bearing + 90
+            };
+            this._sendShowAttributesRequest(asset.id, streetViewCoordinates);
         },
         _getImageIds: function(assetPropertyData) {
             return _.chain(assetPropertyData)
@@ -364,11 +365,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         this._handleBusStopTypes(parameters);
                     } else if (displayValue == "Vaikutussuunta") {
                         this._changeDirection();
-                        var wgs84 = OpenLayers.Projection.transform(
-                            new OpenLayers.Geometry.Point(this._selectedBusStop.lonlat.lon, this._selectedBusStop.lonlat.lat),
-                            new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
-                        wgs84.heading = this._selectedBusStop.roadDirection + (90  * this._selectedBusStop.effectDirection);
-                        this._sendShowAttributesRequest(this._selectedBusStop.id, wgs84);
+                        var streetViewCoordinates = {
+                            lonLat: this._selectedBusStop.lonlat,
+                            heading: this._selectedBusStop.roadDirection + (90 * this._selectedBusStop.effectDirection)
+                        };
+                        this._sendShowAttributesRequest(this._selectedBusStop.id, streetViewCoordinates);
                     }
                 }
             }
@@ -395,10 +396,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._sendPopupRequest("busStop", this._selectedBusStop.id, this._selectedBusStop.id, contentItem, this._selectedBusStop.lonlat);
             this._selectedBusStop.display(false);
 
-            var wgs84 = OpenLayers.Projection.transform(new OpenLayers.Geometry.Point(this._selectedBusStop.lonlat.lon, this._selectedBusStop.lonlat.lat),
-                new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
-            wgs84.heading = this._selectedBusStop.roadDirection + (90  * this._selectedBusStop.effectDirection);
-            this._sendShowAttributesRequest(this._selectedBusStop.id, wgs84);
+            var streetViewCoordinates = {
+                lonLat: this._selectedBusStop.lonlat,
+                heading: this._selectedBusStop.roadDirection + (90 * this._selectedBusStop.effectDirection)
+            };
+            this._sendShowAttributesRequest(this._selectedBusStop.id, streetViewCoordinates);
         },
         _makeContent: function(imageIds) {
             var contentItem;
@@ -540,7 +542,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStop.roadDirection = assetData.bearing;
             busStop.effectDirection = validityDirection; // 1 or -1
             var busStopClick = this._mouseClick(busStop, imageIds);
-            var mouseUp = this._mouseUp(busStop, busStops,busStopClick, assetData.id, assetData.assetTypeId);
+            var mouseUp = this._mouseUp(busStop, busStops, busStopClick, assetData.id, assetData.assetTypeId);
             var mouseDown = this._mouseDown(busStop, busStops, mouseUp);
             busStop.events.register("mousedown", busStops, mouseDown);
             busStop.layerId = layerId;
@@ -568,9 +570,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
                 }
-                var point = new OpenLayers.Geometry.Point(busStop.lonlat.lon, busStop.lonlat.lat);
-                var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
-                busStopClick(evt, wgs84);
+                var streetViewCoordinates = { lonLat: busStop.lonlat };
+                busStopClick(evt, streetViewCoordinates);
             };
         },
         _remove: function(busStop, removalDate) {
@@ -641,7 +642,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _mouseClick: function(busStop, imageIds) {
             var me = this;
-            return function (evt, point) {
+            return function (evt, streetViewCoordinates) {
                 if (me._selectedControl === 'Remove') {
                     var confirm = Oskari.clazz.create('Oskari.userinterface.component.Popup');
                     var okBtn = confirm.createCloseButton("Poista");
@@ -660,8 +661,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
                     return;
                 }
-                point.heading = busStop.roadDirection+ (90  * -busStop.effectDirection);
-                me._sendShowAttributesRequest(busStop.id, point);
+                streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
+                me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
                 var contentItem = me._makeContent(imageIds);
                 me._sendPopupRequest("busStop", busStop.id, busStop.id, contentItem, busStop.lonlat);
                 me._selectedBusStop.display(false);
