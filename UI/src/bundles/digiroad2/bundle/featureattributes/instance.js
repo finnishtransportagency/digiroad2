@@ -245,7 +245,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
             function successFunction(updatedAsset) {
-                me._sendFeatureChangedEvent([updatedAsset]);
+                me._sendFeatureChangedEvent(updatedAsset);
                 console.log("done");
             }
         },

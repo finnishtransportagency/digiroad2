@@ -353,7 +353,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
         },
         _featureAttributeChangedEvent: function(event){
-            var asset = event.getParameter()[0];
+            var asset = event.getParameter();
             this._getSelectedLayer(this._directionLayer).removeFeatures(this._selectedBusStop.directionArrow);
             this._getSelectedLayer(this._assetLayer).removeMarker(this._selectedBusStop);
             this._addNewAsset(asset);
