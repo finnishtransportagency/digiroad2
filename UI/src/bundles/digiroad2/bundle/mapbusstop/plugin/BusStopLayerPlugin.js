@@ -3,12 +3,10 @@
  * Provides functionality to draw bus stops on the map
  */
 Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin',
-
     /**
      * @method create called automatically on construction
      * @static
      */
-
     function (config) {
         this.mapModule = null;
         this.pluginName = null;
@@ -491,8 +489,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var busStop = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
             busStop.id = assetData.id;
             busStop.featureContent = assetData.featureData;
-            busStop.blinking = false;
-            busStop.blinkInterVal = null;
             busStop.directionArrow = directionArrow;
             busStop.roadDirection = assetData.bearing;
             busStop.effectDirection = validityDirection; // 1 or -1
@@ -507,10 +503,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseUp: function (busStop, busStops, busStopClick, id, typeId) {
             var me = this;
             return function(evt) {
-                if (me._selectedBusStop && me._selectedBusStop.blinking) {
-                    clearInterval(me._selectedBusStop.blinkInterVal);
-                    busStop.blinkInterVal = setInterval(function(){me._busStopBlink(busStop);}, 600);
-                }
                 var bearing ="0";
                 if (me._selectedBusStop) {
                     bearing = me._selectedBusStop.roadDirection;
@@ -519,8 +511,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 busStop.setOpacity(1);
                 busStop.actionMouseDown = false;
                 // Not need listeners anymore
-                busStop.events.unregister("mouseup", busStops, me._mouseUpFunction);
-                // Not moved only click
+                me._map.events.unregister("mouseup", me._map, me._mouseUpFunction);
+                // Moved update
                 if (busStop.actionDownX != evt.clientX ||  busStop.actionDownY != evt.clientY ) {
                     var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
                     me._sendData(data, id);
@@ -589,8 +581,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 //Save orginal position
                 busStop.actionDownX = evt.clientX;
                 busStop.actionDownY = evt.clientY;
-                //register move and up
-                busStop.events.register("mouseup", busStops, mouseUp);
+                //register up
+                me._map.events.register("mouseup",me._map, mouseUp, true);
                 me._mouseUpFunction = mouseUp;
                 OpenLayers.Event.stop(evt);
             };
@@ -610,10 +602,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var cancelBtn = confirm.createCloseButton("Peru");
                     confirm.makeModal();
                     confirm.show("Poistetaan käytöstä", me._removeAssetTemplate, [cancelBtn, okBtn]);
-
                     var removeDateInput = jQuery('#removeAssetDateInput');
                     dateutil.addFinnishDatePicker(removeDateInput.get(0));
-
                     return;
                 }
                 streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
@@ -635,7 +625,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 return;
             }
             if (this._selectedBusStop && this._selectedBusStop.actionMouseDown) {
-                var me = this;
                 var layerName = this._layerType +"_"+ this._selectedBusStop.layerId;
                 var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(evt.getLon(), evt.getLat()));
                 var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
@@ -649,26 +638,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
                 this._selectedBusStop.roadDirection = angle;
                 this._selectedBusStop.directionArrow.style.rotation = angle + (90 * this._selectedBusStop.effectDirection);
-
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
                     { x: lonlat.lon, y: lonlat.lat});
-                var radius =(13-this._map.getZoom())*3.8;
-
-                if (geometrycalculator.isInCircle(lonlat.lon, lonlat.lat, radius, position.x, position.y)) {
-                    lonlat.lon = position.x;
-                    lonlat.lat = position.y;
-                    this._selectedBusStop.roadLinkId = nearestLine.roadLinkId;
-                    if (this._selectedBusStop.blinking) {
-                        clearInterval(this._selectedBusStop.blinkInterVal);
-                        this._selectedBusStop.setOpacity(0.6);
-                        this._selectedBusStop.blinking = false;
-                    }
-                } else if(!this._selectedBusStop.blinking) {
-                    //blink
-                    this._selectedBusStop.blinking = true;
-                    this._selectedBusStop.blinkInterVal = setInterval(function(){me._busStopBlink(me._selectedBusStop);}, 600);
-                }
+                lonlat.lon = position.x;
+                lonlat.lat = position.y;
+                this._selectedBusStop.roadLinkId = nearestLine.roadLinkId;
                 this._selectedBusStop.lonlat = lonlat;
                 this._selectedBusStop.directionArrow.move(lonlat);
                 this._selectedBusStopLayer.redraw();
@@ -679,16 +654,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var htmlContent = _.map(tmpItems, this._busStopsPopupIcons).join('');
             return htmlContent;
         },
-        _busStopBlink: function(busStop) {
-            if (busStop.blink) {
-                busStop.setOpacity(0.3);
-                busStop.blink = false;
-            } else {
-                busStop.setOpacity(0.9);
-                busStop.blink = true;
-            }
-        },
-
         /**
          * @method getLocalization
          * Returns JSON presentation of bundles localization data for current language.
