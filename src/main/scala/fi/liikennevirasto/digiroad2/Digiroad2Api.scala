@@ -5,12 +5,15 @@ import org.json4s._
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.asset.BoundingCircle
+import scala.Some
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication {
+class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
@@ -79,13 +82,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/assets/:id") {
     val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val asset = Asset(
+    val asset = ListedAsset(
         id = params("id").toLong,
         assetTypeId = assetTypeId.get,
         lon = lon.get,
         lat = lat.get,
         roadLinkId = roadLinkId.get,
-        propertyData = List(),
+        imageIds = List(),
         bearing = bearing)
     val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
@@ -119,11 +122,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/assets/:assetId/properties/:propertyId/values") {
     val propertyValues = parsedBody.extract[List[PropertyValue]]
-    assetProvider.updateAssetProperty(params("assetId").toLong, params("propertyId"), propertyValues)
+    val assetId = params("assetId").toLong
+    assetProvider.updateAssetProperty(assetId, params("propertyId"), propertyValues)
+    assetProvider.getAssetById(assetId)
   }
 
   delete("/assets/:assetId/properties/:propertyId/values") {
-    assetProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
+    val assetId = params("assetId").toLong
+    assetProvider.deleteAssetProperty(assetId, params("propertyId"))
+    assetProvider.getAssetById(assetId)
   }
 
   get("/images/:imageId") {

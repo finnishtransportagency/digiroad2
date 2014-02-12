@@ -102,7 +102,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                 '</div>');
 
             me._streetViewTemplate  = _.template(
-                '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,20.09,,0,5&layer=c&t=m">' +
+                '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +
                     '<img alt="Google StreetView-näkymä" src="http://maps.googleapis.com/maps/api/streetview?size=360x180&location={{wgs84Y}}' +
                     ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
@@ -143,28 +143,28 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         showAttributes : function(id, streetViewCoordinates) {
             var me = this;
             me._featureDataAssetId = id;
-            me._backend.getAsset(id, function(data) {
-                var featureData = me._makeContent(data.propertyData);
+            me._backend.getAsset(id, function(asset) {
+                var featureData = me._makeContent(asset.propertyData);
                 var wgs84 = OpenLayers.Projection.transform(
                     new OpenLayers.Geometry.Point(streetViewCoordinates.lonLat.lon, streetViewCoordinates.lonLat.lat),
                     new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-                var streetView =  me._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: streetViewCoordinates.heading });
+                var streetView =  me._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
                 jQuery("#featureAttributes").html(featureAttributes);
                 me._addDatePickers();
                 jQuery(".featureAttributeText").on("blur", function() {
                     var data = jQuery(this);
-                    me._saveTextData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
+                    me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
                 });
                 jQuery(".featureattributeChoice").on("change", function() {
                     var data = jQuery(this);
                     var name = data.attr('name');
-                    me._saveTextData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
+                    me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
                 });
                 var dateAttribute = jQuery(".featureAttributeDate");
                 dateAttribute.on("blur", function() {
                     var data = jQuery(this);
-                    me._saveTextData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
+                    me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
             });
         },
@@ -241,17 +241,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 return data;
             });
         },
-        _saveTextData: function(propertyValue, propertyId) {
+        _savePropertyData: function(propertyValue, propertyId) {
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
-            function successFunction() {
-                me._sendFeatureChangedEvent(propertyValue);
+            function successFunction(updatedAsset) {
+                me._sendFeatureChangedEvent([updatedAsset]);
                 console.log("done");
             }
         },
-        _sendFeatureChangedEvent: function(propertyValue) {
+        _sendFeatureChangedEvent: function(updatedAsset) {
             var eventBuilder = this.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
-            var event = eventBuilder(propertyValue);
+            var event = eventBuilder(updatedAsset);
             this.getSandbox().notifyAll(event);
         },
         _makeContent: function(contents) {
@@ -349,9 +349,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         _directionChange: function (event) {
             var validityDirection = jQuery("[data-propertyid='validityDirection']");
             var selection = validityDirection.val() == 2 ? 3 : 2;
-            validityDirection.val(selection);
-            var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: 2}];
-            this._sendFeatureChangedEvent(propertyValues);
+            var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: selection }];
+            this._savePropertyData(propertyValues, 'validityDirection');
         },
         /**
          * @method stop
