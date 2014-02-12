@@ -19,21 +19,4 @@ class SessionApiSpec extends FunSuite with ScalatraSuite  {
       status should be (400)
     }
   }
-
-  test("validate password", Tag("db")) {
-    val username = "test" + UUID.randomUUID().toString
-    post("/auth/user", Map("username" -> username, "password" -> "testpass", "passwordConfirm" -> "otherpass", "email" -> (username + "@example.com"))) {
-      status should be (400)
-    }
-    post("/auth/user", Map("username" -> username, "password" -> "", "passwordConfirm" -> "", "email" -> (username + "@example.com"))) {
-      status should be (400)
-    }
-  }
-
-  test("validate email", Tag("db")) {
-    val username = "test" + UUID.randomUUID().toString
-    post("/auth/user", Map("username" -> username, "password" -> "testpass", "passwordConfirm" -> "testpass", "email" -> "notvalidemail")) {
-      status should be (400)
-    }
-  }
 }

@@ -8,7 +8,7 @@ jQuery(document).ready(function() {
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : '/api/config',
+      url : 'api/config',
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");

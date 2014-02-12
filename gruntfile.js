@@ -49,7 +49,16 @@ module.exports = function(grunt) {
                       https: false,
                       changeOrigin: false,
                       xforward: false
+                  },
+                  {
+                      context: '/maasto',
+                      host: 'karttamoottori.maanmittauslaitos.fi',
+                      https: false,
+                      changeOrigin: true,
+                      xforward: false,
+                      headers : {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
                   }
+
               ]
           }
       },

@@ -1,43 +1,39 @@
 package fi.liikennevirasto.digiroad2
 
 import org.scalatra._
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s._
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
-import fi.liikennevirasto.digiroad2.authentication.{UnauthenticatedException, AuthenticationSupport}
+import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingCircle
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with AuthenticationSupport with GZipSupport {
+class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
+  protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
     contentType = formats("json")
-    userOption match {
-      case Some(user) => Digiroad2Context.userProvider.setThreadLocalUser(user)
-      case None => throw new UnauthenticatedException()
+    try {
+      authenticateForApi(request)(userProvider)
+    } catch {
+      case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
   }
 
   get("/config") {
-    userProvider.getThreadLocalUser() match {
-      case Some(user) => readJsonFromBody(MapConfigJson.mapConfig(user.configuration))
-      case _ => throw new UnauthenticatedException()
-    }
+    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration))
   }
 
   get("/layers") {
-    userProvider.getThreadLocalUser() match {
-      case Some(user) => readJsonFromBody(LayersJson.layers(user.configuration))
-      case _ => throw new UnauthenticatedException()
-    }
+    readJsonFromBody(LayersJson.layers(userProvider.getCurrentUser.configuration))
   }
 
   get("/assetTypes") {
@@ -45,6 +41,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets") {
+    val user = userProvider.getCurrentUser
     val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
       case (Some(period), _) => period match {
         case "past" => (None, Some(LocalDate.now))
@@ -55,7 +52,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       }
       case _ => (None, None)
     }
-    val user = userProvider.getThreadLocalUser().get
     val authorizedMunicipalities = user.configuration.authorizedMunicipalities
     assetProvider.getAssets(
         params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
@@ -64,14 +60,14 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  private def isReadOnly( authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
+  private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
     !authorizedMunicipalities.contains(municipalityNumber)
   }
 
   get("/assets/:assetId") {
     assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => {
-        val authorizedMunicipalities = userProvider.getThreadLocalUser().get.configuration.authorizedMunicipalities.toSet
+        val authorizedMunicipalities = userProvider.getCurrentUser.configuration.authorizedMunicipalities.toSet
         a.copy(readOnly = a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
@@ -101,7 +97,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: PUT -> POST
   put("/asset") {
-    val user = userProvider.getThreadLocalUser().get
+    val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
       (parsedBody \ "assetTypeId").extract[Long],
       (parsedBody \ "lon").extract[Int].toDouble,
@@ -155,7 +151,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   error {
-    case ue: UnauthenticatedException => Unauthorized("Not authenticated")
+    case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
+    case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case e: Exception => logger.error("API Error", e)
   }
 

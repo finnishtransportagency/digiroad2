@@ -27,11 +27,11 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     get("/assets?assetTypeId=10&municipalityNumber=235") {
       status should equal(401)
     }
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test", password = "test") {
-      status should equal(200)
-    }
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test", password = "invalid") {
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "nonexistent") {
       status should equal(401)
+    }
+    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test") {
+      status should equal(200)
     }
   }
 
@@ -95,7 +95,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
       status should equal(200)
       val responseJson = parse(body)
       (responseJson \ "layers" \ "url").children should have length 2
-      (responseJson \ "layers" \ "url").children.head.values should equal("/api/assets?assetTypeId=10&municipalityNumber=235&validityPeriod=future")
+      (responseJson \ "layers" \ "url").children.head.values should equal("api/assets?assetTypeId=10&municipalityNumber=235&validityPeriod=future")
     }
   }
 
@@ -201,27 +201,20 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
-  private[this] def getWithUserAuth[A](uri: String, username: String = "test", password: String = "test")(f: => A): A = {
-    val authHeader = authenticateAndGetHeader(username, password, uri)
+  private[this] def getWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
+    val authHeader = authenticateAndGetHeader(username)
     get(uri, headers = authHeader)(f)
   }
 
-  private[this] def putWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), username: String = "test", password: String = "test")(f: => A): A = {
-    put(uri, body, headers = headers ++ authenticateAndGetHeader(username, password, uri))(f)
+  private[this] def putWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), username: String = "test")(f: => A): A = {
+    put(uri, body, headers = headers ++ authenticateAndGetHeader(username))(f)
   }
 
-  private[this] def deleteWithUserAuth[A](uri: String, username: String = "test", password: String = "test")(f: => A): A = {
-    delete(uri, headers = authenticateAndGetHeader(username, password, uri))(f)
+  private[this] def deleteWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
+    delete(uri, headers = authenticateAndGetHeader(username))(f)
   }
 
-  private[this] def authenticateAndGetHeader(username: String, password: String, uri: String): Map[String, String] = {
-    post("/auth/session", Map("login" -> username, "password" -> password)) {
-      val cookieHeader = response.getHeader("Set-Cookie")
-      if (cookieHeader != null) {
-        Map("Cookie" -> cookieHeader.split(";")(0))
-      } else {
-        Map()
-      }
-    }
+  private[this] def authenticateAndGetHeader(username: String): Map[String, String] = {
+    Map("OAM_REMOTE_USER" -> username)
   }
 }

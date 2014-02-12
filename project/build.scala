@@ -76,7 +76,6 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -84,6 +83,7 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
         "commons-io" % "commons-io" % "2.4",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.8.v20121106" % "container;compile",
+        "org.eclipse.jetty" % "jetty-servlets" % "8.1.8.v20121106" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
     )
