@@ -5,12 +5,15 @@ import org.json4s._
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
-import fi.liikennevirasto.digiroad2.asset.{BoundingCircle, Asset, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.asset.BoundingCircle
+import scala.Some
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication {
+class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
@@ -47,10 +50,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
     val authorizedMunicipalities = user.configuration.authorizedMunicipalities
     assetProvider.getAssets(
-        params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
-        boundsFromParams, validFrom = validFrom, validTo = validTo).map { asset =>
-      asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
-    }
+        params("assetTypeId").toLong, authorizedMunicipalities.toList,
+        boundsFromParams, validFrom = validFrom, validTo = validTo)
   }
 
   private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
@@ -61,7 +62,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => {
         val authorizedMunicipalities = userProvider.getCurrentUser.configuration.authorizedMunicipalities.toSet
-        a.copy(readOnly = a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+        if (a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true)) {
+          Unauthorized("Asset " + params("assetId") + " not authorized")
+        } else {
+          a
+        }
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
     }
@@ -75,13 +80,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/assets/:id") {
     val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val asset = Asset(
+    val asset = ListedAsset(
         id = params("id").toLong,
         assetTypeId = assetTypeId.get,
         lon = lon.get,
         lat = lat.get,
         roadLinkId = roadLinkId.get,
-        propertyData = List(),
+        imageIds = List(),
         bearing = bearing)
     val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
@@ -101,8 +106,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
+    // TODO: check bounds are within range to avoid oversized queries
+    val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = assetProvider.getRoadLinks(params.get(MunicipalityNumber).map(_.toInt), boundsFromParams)
+    val rls = assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
@@ -115,11 +122,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/assets/:assetId/properties/:propertyId/values") {
     val propertyValues = parsedBody.extract[List[PropertyValue]]
-    assetProvider.updateAssetProperty(params("assetId").toLong, params("propertyId"), propertyValues)
+    val assetId = params("assetId").toLong
+    assetProvider.updateAssetProperty(assetId, params("propertyId"), propertyValues)
+    assetProvider.getAssetById(assetId)
   }
 
   delete("/assets/:assetId/properties/:propertyId/values") {
-    assetProvider.deleteAssetProperty(params("assetId").toLong, params("propertyId"))
+    val assetId = params("assetId").toLong
+    assetProvider.deleteAssetProperty(assetId, params("propertyId"))
+    assetProvider.getAssetById(assetId)
   }
 
   get("/images/:imageId") {
