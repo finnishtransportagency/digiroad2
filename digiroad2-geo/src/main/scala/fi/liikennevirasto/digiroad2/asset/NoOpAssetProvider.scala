@@ -8,7 +8,7 @@ import scala.Some
 class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
-  def getRoadLinks(municipalityNumber: Option[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
+  def getRoadLinks(municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = None
   def getAssetById(assetId: Long): Option[Asset] = {
     Some(Asset(0, 10, 0, 0, 0, propertyData = List(

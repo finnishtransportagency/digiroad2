@@ -108,8 +108,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
+    val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = assetProvider.getRoadLinks(params.get(MunicipalityNumber).map(_.toInt), boundsFromParams)
+    val rls = assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
