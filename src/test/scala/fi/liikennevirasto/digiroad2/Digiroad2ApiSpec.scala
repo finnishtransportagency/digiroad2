@@ -36,21 +36,21 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235&bbox=374702,6677462,374870,6677780") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("get assets without bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235") {
+    getWithUserAuth("/assets?assetTypeId=10") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(3)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235&municipalityNumber=49") {
+    getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(4)
     }
@@ -95,12 +95,12 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
       status should equal(200)
       val responseJson = parse(body)
       (responseJson \ "layers" \ "url").children should have length 2
-      (responseJson \ "layers" \ "url").children.head.values should equal("api/assets?assetTypeId=10&municipalityNumber=235&municipalityNumber=837&validityPeriod=future")
+      (responseJson \ "layers" \ "url").children.head.values should equal("api/assets?assetTypeId=10&validityPeriod=future")
     }
   }
 
   test("get road links", Tag("db")) {
-    getWithUserAuth("/roadlinks?municipalityNumber=235&bbox=374702,6677462,374870,6677780") {
+    getWithUserAuth("/roadlinks?bbox=374702,6677462,374870,6677780") {
       status should equal(200)
       val roadLinksJson = parse(body)
       (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (6)
@@ -166,12 +166,12 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("mark asset on expired link as floating", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=49&validityDate=2014-06-01") {
+    getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01", "test49") {
       status should equal(200)
       val assets = parse(body).extract[List[Asset]]
       assets should have length(1)
       assets.head.status should be(Some(Floating))
-    }
+     }
   }
 
   test("load image by id", Tag("db")) {

@@ -23,7 +23,7 @@ class NoOpAssetProvider extends AssetProvider {
       Property("validTo", "Käytössä päättyen", Date, values = Seq(PropertyValue(0, null)))
     )))
   }
-  def getAssets(assetTypeId: Long, municipalityNumber: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[ListedAsset] = List()
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[ListedAsset] = List()
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String) = {
     Asset(0, assetTypeId, lon, lat, roadLinkId)
   }

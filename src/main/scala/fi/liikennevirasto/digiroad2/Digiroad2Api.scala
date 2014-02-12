@@ -54,10 +54,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
     val authorizedMunicipalities = user.configuration.authorizedMunicipalities
     assetProvider.getAssets(
-        params("assetTypeId").toLong, multiParams(MunicipalityNumber).map(_.toLong),
-        boundsFromParams, validFrom = startDate, validTo = endDate).map { asset =>
-      asset.copy(readOnly = asset.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
-    }
+        params("assetTypeId").toLong, authorizedMunicipalities.toList,
+        boundsFromParams, validFrom = startDate, validTo = endDate)
   }
 
   private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
@@ -68,7 +66,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => {
         val authorizedMunicipalities = userProvider.getCurrentUser.configuration.authorizedMunicipalities.toSet
-        a.copy(readOnly = a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true))
+        if (a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true)) {
+          Unauthorized("Asset " + params("assetId") + " not authorized")
+        } else {
+          a
+        }
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
     }
@@ -108,6 +110,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
+    // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*");
     val rls = assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
