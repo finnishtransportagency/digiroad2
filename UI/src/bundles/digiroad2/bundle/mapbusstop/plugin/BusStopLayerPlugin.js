@@ -269,17 +269,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
         },
         _addNewAsset: function(asset) {
-            var layerName = this._layerType + "_" + this._selectedLayerId;
-            var imageIds = asset.imageIds;
             var lonLat = { lon : asset.lon, lat : asset.lat};
-            var contentItem = this._makeContent(imageIds);
+            var contentItem = this._makeContent(asset.imageIds);
             var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
             var angle = this._getAngleFromBearing(asset.bearing, validityDirection);
             var directionArrow = this._getDirectionArrow(angle, asset.lon, asset.lat);
-            this._layer[layerName][this._directionLayer].addFeatures(directionArrow);
-            this._selectedBusStop = this._addBusStop(asset, this._layer[layerName][this._assetLayer],
-                this._selectedLayerId, directionArrow, this._layer[layerName][this._directionLayer], validityDirection);
-            this._selectedBusStopLayer = this._layer[layerName][this._assetLayer];
+            this._getSelectedLayer(this._directionLayer).addFeatures(directionArrow);
+            this._selectedBusStop = this._addBusStop(asset, this._getSelectedLayer(this._assetLayer),
+                this._selectedLayerId, directionArrow, this._getSelectedLayer(this._directionLayer), validityDirection);
+            this._selectedBusStopLayer = this._getSelectedLayer(this._assetLayer);
             this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
             var streetViewCoordinates = {
