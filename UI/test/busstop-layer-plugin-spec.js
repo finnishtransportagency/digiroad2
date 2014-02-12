@@ -115,6 +115,9 @@ describe('BusStopLayerPlugin', function(){
                             propertyId: propertyId,
                             data: data
                         });
+                    },
+                    getAsset: function(id, success) {
+                        success({ id: 123, imageIds: [] });
                     }
                 }),
                 geometryCalculations: {

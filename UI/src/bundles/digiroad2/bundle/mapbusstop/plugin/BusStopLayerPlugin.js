@@ -252,7 +252,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         _.each(attributeCollection, function(attribute) {
                             me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
                         });
-                        me._addNewAsset(asset);
+                        // TODO FIXME: the saved asset doesn't have images until the specific property is saved and it must be loaded again
+                        me._backend.getAsset(asset.id, function(asset) {
+                            me._addNewAsset(asset);
+                        });
                     });
                     me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
                 });
