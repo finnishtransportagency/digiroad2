@@ -4,6 +4,7 @@ import org.joda.time.LocalDate
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import scala.Some
+import fi.liikennevirasto.digiroad2.asset.ValidityPeriod._
 
 class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
