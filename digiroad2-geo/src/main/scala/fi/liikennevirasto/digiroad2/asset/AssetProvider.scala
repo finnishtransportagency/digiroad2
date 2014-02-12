@@ -12,7 +12,7 @@ trait AssetProvider {
   def deleteAssetProperty(assetId: Long, propertyId: String)
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def updateAssetLocation(asset: Asset): Asset
-  def getRoadLinks(municipalityNumber: Option[Int] = None, bounds: Option[BoundingCircle] = None): Seq[RoadLink]
+  def getRoadLinks(municipalityNumbers: Seq[Long] = Seq(), bounds: Option[BoundingCircle] = None): Seq[RoadLink]
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
