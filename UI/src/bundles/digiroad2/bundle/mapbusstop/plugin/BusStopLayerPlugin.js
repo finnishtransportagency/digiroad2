@@ -442,19 +442,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             me._layer[this._layerType +"_"+ layer.getId()] = layers;
 
-             jQuery.getJSON(layer.getLayerUrls()[0], function(data) {
-                _.each(data, function (eachData) {
-                    var validityDirection = (eachData.validityDirection === 3) ? 1 : -1;
+            jQuery.getJSON(layer.getLayerUrls()[0], function(assets) {
+                _.each(assets, function (asset) {
+                    var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
-                    var angle = me._getAngleFromBearing(eachData.bearing, validityDirection);
-                    var directionArrow = me._getDirectionArrow(angle, eachData.lon, eachData.lat);
+                    var angle = me._getAngleFromBearing(asset.bearing, validityDirection);
+                    var directionArrow = me._getDirectionArrow(angle, asset.lon, asset.lat);
                     directionLayer.addFeatures(directionArrow);
-                    me._addBusStop(eachData, busStops, layer.getId(), directionArrow, directionLayer, validityDirection);
+                    me._addBusStop(asset, busStops, layer.getId(), directionArrow, directionLayer, validityDirection);
                 });
             })
-                .fail(function() {
-                    console.log( "error" );
-                });
+            .fail(function() {
+                console.log( "error" );
+            });
             me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
         },
         _getIcon: function(imageIds) {
