@@ -7,32 +7,6 @@ object LayersJson {
 
     s"""{
   "layers": [{
-    "wmsName": "bussit",
-    "type": "busstoplayer",
-    "id": 236,
-    "minScale": 5000,
-    "wmsUrl": "/data/dummy/busstops.json",
-    "url": "api/assets?assetTypeId=10&validityPeriod=future",
-    "roadLinesUrl": "/api/roadlinks&validityPeriod=future",
-    "maxScale": 1,
-    "orgName": "LiVi",
-    "inspire": "Ominaisuustiedot",
-    "name": "Tulevat",
-    "opacity": 30
-  }, {
-    "wmsName": "bussit",
-    "type": "busstoplayer",
-    "id": 237,
-    "minScale": 5000,
-    "wmsUrl": "/data/dummy/busstops.json",
-    "url": "api/assets?assetTypeId=10&validityPeriod=past",
-    "roadLinesUrl": "/api/roadlinks&validityPeriod=past",
-    "maxScale": 1,
-    "orgName": "LiVi",
-    "inspire": "Ominaisuustiedot",
-    "name": "Käytöstä poistuneet",
-    "opacity": 30
-  }, {
     "dataUrl_uuid": "b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
     "wmsName": "ortokuva",
     "styles": [{

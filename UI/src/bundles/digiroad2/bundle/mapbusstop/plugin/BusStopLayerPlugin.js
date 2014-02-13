@@ -231,6 +231,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._toolSelectionChange(event);
             },'MapClickedEvent': function (event) {
                 this._addBusStopEvent(event);
+            },
+            'actionpanel.ValidityPeriodCheckedEvent': function(event) {
+                var me = this;
+                var markers = this._getSelectedLayer(this._assetLayer).markers;
+                _.each(markers, function(marker) {
+                    if (marker.validityPeriod === event.getValidityPeriod()) {
+                      marker.display(true);
+                      me._getSelectedLayer(me._directionLayer).addFeatures(marker.directionArrow);
+                    }
+                });
+            },
+            'actionpanel.ValidityPeriodUncheckedEvent': function(event) {
+                var me = this;
+                var markers = this._getSelectedLayer(this._assetLayer).markers;
+                _.each(markers, function(marker) {
+                    if (marker.validityPeriod === event.getValidityPeriod()) {
+                      marker.display(false);
+                      me._getSelectedLayer(me._directionLayer).destroyFeatures(marker.directionArrow);
+                    }
+                });
             }
         },
         _addBusStopEvent: function(event){
@@ -497,6 +517,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var mouseDown = this._mouseDown(busStop, busStops, mouseUp);
             busStop.events.register("mousedown", busStops, mouseDown);
             busStop.layerId = layerId;
+            busStop.validityPeriod = assetData.validityPeriod;
+            if (busStop.validityPeriod !== 'current') {
+              busStop.display(false);
+              this._getSelectedLayer(this._directionLayer).destroyFeatures(directionArrow);
+            }
             busStops.addMarker(busStop);
             return busStop;
         },
