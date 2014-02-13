@@ -140,9 +140,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
             };
             
             var renderAssetValidityPeriodSelector = function() {
-              var layers = [{id: "current", label: "Voimassa", selected: true},
-                            {id: "future", label: "Tulevaisuudessa"},
-                            {id: "past", label: "Menneisyydessä"}];
+              var layers = [{id: "current", label: "Voimassaolevat", selected: true},
+                            {id: "future", label: "Tulevat"},
+                            {id: "past", label: "Käytöstä poistuneet"}];
               _.forEach(layers, function (layer) {
                   jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
               });
