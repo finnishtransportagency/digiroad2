@@ -137,7 +137,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                 var event = eventBuilder(action);
                 me.getSandbox().notifyAll(event);
               });
-            }
+            };
             
             var renderAssetValidityPeriodSelector = function() {
               var layers = [{id: "current", label: "Voimassa", selected: true},
@@ -147,20 +147,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                   jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
               });
               jQuery(".layerSelector").on("change", function() {
-                  var data = jQuery(this);
-                  var validityPeriod = data.attr('data-validity-period');
-                  if (data.is(':checked')) {
-                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodCheckedEvent');
-                    var event = eventBuilder(validityPeriod);
-                    me.getSandbox().notifyAll(event);
-                  } else {
-                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodUncheckedEvent');
-                    var event = eventBuilder(validityPeriod);
-                    me.getSandbox().notifyAll(event);
-                  }
+                  var selectedValidityPeriods = $('input.layerSelector').filter(function(_, v) {
+                    return $(v).is(':checked');
+                  }).map(function(_, v) {
+                    return $(v).attr('data-validity-period');
+                  }).toArray();
+                  var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodChangedEvent');
+                  var event = eventBuilder(selectedValidityPeriods);
+                  me.getSandbox().notifyAll(event);
               });
               jQuery(".actionPanel").append(me._actionButtons);
-            }
+            };
             
             renderAssetValidityPeriodSelector();
             renderActionButtons();
