@@ -121,7 +121,7 @@ object MapConfigJson {
              "id":235,
              "minScale":5000,
              "wmsUrl":"/data/dummy/busstops.json",
-             "url":"api/assets?assetTypeId=10&",
+             "url":"api/assets?assetTypeId=10&validityPeriod=current",
              "roadLinesUrl" :"api/roadlinks",
              "maxScale":1 ,
              "orgName":"LiVi",

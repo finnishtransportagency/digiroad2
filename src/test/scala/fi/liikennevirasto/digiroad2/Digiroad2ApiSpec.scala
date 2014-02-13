@@ -36,21 +36,21 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("get assets without bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10") {
+    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(3)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10", "test2") {
+    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current", "test2") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(4)
     }
@@ -158,15 +158,8 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
-  test("get assets for date", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityDate=2012-06-30") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
-    }
-  }
-
   test("mark asset on expired link as floating", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01", "test49") {
+    getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01&validityPeriod=current", "test49") {
       status should equal(200)
       val assets = parse(body).extract[List[Asset]]
       assets should have length(1)

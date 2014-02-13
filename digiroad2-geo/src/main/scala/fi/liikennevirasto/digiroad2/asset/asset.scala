@@ -6,12 +6,14 @@ case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class ListedAsset(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  status: Option[String] = None, readOnly: Boolean = true,
-                 municipalityNumber: Option[Long] = None)
+                 municipalityNumber: Option[Long] = None, validityPeriod: Option[String] = None)
+
 case class Asset(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Long] = None,
-                 propertyData: Seq[Property] = List())
+                 propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None)
+
 case class Property(propertyId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: Long, propertyDisplayValue: String, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
@@ -26,4 +28,10 @@ object PropertyTypes {
 
 object AssetStatus {
   val Floating = "floating"
+}
+
+object ValidityPeriod {
+  val Past = "past"
+  val Current = "current"
+  val Future = "future"
 }

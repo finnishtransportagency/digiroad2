@@ -42,20 +42,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/assets") {
     val user = userProvider.getCurrentUser
-    val (startDate: Option[LocalDate], endDate: Option[LocalDate]) = (params.get("validityPeriod"), params.get("validityDate").map(LocalDate.parse)) match {
-      case (Some(period), _) => period match {
-        case "past" => (None, Some(LocalDate.now))
-        case "future" => (Some(LocalDate.now), None)
-      }
-      case (_, Some(day)) => {
-        (Some(day), Some(day))
-      }
+    val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {
+      case Some("past") => (None, Some(LocalDate.now))
+      case Some("future") => (Some(LocalDate.now), None)
+      case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
       case _ => (None, None)
     }
     val authorizedMunicipalities = user.configuration.authorizedMunicipalities
     assetProvider.getAssets(
         params("assetTypeId").toLong, authorizedMunicipalities.toList,
-        boundsFromParams, validFrom = startDate, validTo = endDate)
+        boundsFromParams, validFrom = validFrom, validTo = validTo)
   }
 
   private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
