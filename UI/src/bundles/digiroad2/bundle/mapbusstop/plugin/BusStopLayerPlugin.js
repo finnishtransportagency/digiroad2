@@ -234,17 +234,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._addBusStopEvent(event);
             },
             'actionpanel.ValidityPeriodChangedEvent': function(event) {
-                this._selectedValidityPeriods = event.getSelectedValidityPeriods();
-                var me = this;
-                var markers = this._getSelectedLayer(this._assetLayer).markers;
-                _.each(markers, function(marker) {
-                    if (_.contains(me._selectedValidityPeriods, marker.validityPeriod)) {
-                      me._showAsset(marker);
-                    } else {
-                      me._hideAsset(marker);
-                    }
-                });
+              this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
             }
+        },
+
+        _handleValidityPeriodChanged: function(selectedValidityPeriods) {
+          this._selectedValidityPeriods = selectedValidityPeriods;
+          var me = this;
+          var markers = this._getSelectedLayer(this._assetLayer).markers;
+          _.each(markers, function(marker) {
+              if (_.contains(selectedValidityPeriods, marker.validityPeriod)) {
+                me._showAsset(marker);
+              } else {
+                me._hideAsset(marker);
+              }
+          });
         },
 
         _hideAsset: function(marker) {
