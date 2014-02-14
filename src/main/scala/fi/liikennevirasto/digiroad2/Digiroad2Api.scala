@@ -32,8 +32,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration))
   }
 
-
-
   post("/layers") {
     if (params("action_route") == "GetSupportedLocales") {
       "[\"fi_FI\"]"
