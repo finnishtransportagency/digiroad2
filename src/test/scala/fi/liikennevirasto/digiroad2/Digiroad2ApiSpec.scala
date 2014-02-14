@@ -90,15 +90,6 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
-  test("get map layer", Tag("db")) {
-    getWithUserAuth("/layers") {
-      status should equal(200)
-      val responseJson = parse(body)
-      (responseJson \ "layers" \ "url").children should have length 2
-      (responseJson \ "layers" \ "url").children.head.values should equal("api/assets?assetTypeId=10&validityPeriod=future")
-    }
-  }
-
   test("get road links", Tag("db")) {
     getWithUserAuth("/roadlinks?bbox=374702,6677462,374870,6677780") {
       status should equal(200)

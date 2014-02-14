@@ -37,6 +37,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _streetLayer : 0,
         _directionLayer : 1,
         _assetLayer : 2,
+        _selectedValidityPeriods: ['current'],
 
         /**
          * @method getName
@@ -231,8 +232,35 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._toolSelectionChange(event);
             },'MapClickedEvent': function (event) {
                 this._addBusStopEvent(event);
+            },
+            'actionpanel.ValidityPeriodChangedEvent': function(event) {
+              this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
             }
         },
+
+        _handleValidityPeriodChanged: function(selectedValidityPeriods) {
+          this._selectedValidityPeriods = selectedValidityPeriods;
+          var me = this;
+          var markers = this._getSelectedLayer(this._assetLayer).markers;
+          _.each(markers, function(marker) {
+              if (_.contains(selectedValidityPeriods, marker.validityPeriod)) {
+                me._showAsset(marker);
+              } else {
+                me._hideAsset(marker);
+              }
+          });
+        },
+
+        _hideAsset: function(marker) {
+          marker.display(false);
+          this._getSelectedLayer(this._directionLayer).destroyFeatures(marker.directionArrow);
+        },
+
+        _showAsset: function(marker) {
+          marker.display(true);
+          this._getSelectedLayer(this._directionLayer).addFeatures(marker.directionArrow);
+        },
+
         _addBusStopEvent: function(event){
             var me = this;
             if (this._selectedControl === 'Add') {
@@ -497,9 +525,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var mouseDown = this._mouseDown(busStop, busStops, mouseUp);
             busStop.events.register("mousedown", busStops, mouseDown);
             busStop.layerId = layerId;
+            busStop.validityPeriod = assetData.validityPeriod;
+            if (!_.contains(this._selectedValidityPeriods, busStop.validityPeriod)) {
+              this._hideAsset(busStop);
+            }
             busStops.addMarker(busStop);
             return busStop;
         },
+
         _mouseUp: function (busStop, busStops, busStopClick, id, typeId) {
             var me = this;
             return function(evt) {
