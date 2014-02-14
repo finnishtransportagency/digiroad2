@@ -1,6 +1,7 @@
 *.class
 *.log
-conf/dev/bonecp.properties
+conf
+lib
 
 # sbt specific
 dist/*
