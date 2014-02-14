@@ -95,7 +95,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                                '</div>';
 
             me._mapBusStopLayer = _.template('<div class="busStopLayer">' +
-                                                '<div class="busStopLayerCheckbox"><input class="layerSelector" type="checkbox" {{selected}} value="{{id}}"/></div>' +
+                                                '<div class="busStopLayerCheckbox"><input class="layerSelector" type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
                                                 '<div class="busStopLayerName">{{name}}</div>' +
                                              '</div>');
             me._actionButtons =
@@ -114,57 +114,53 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
             return null;
         },
         _showPanel : function() {
-
             var me = this;
-            var mapLayerService = me.getSandbox().getService('Oskari.mapframework.service.MapLayerService');
-            var addLayers = function() {
-                var layers = mapLayerService.getAllLayers();
-                var selectedLayers = me.getSandbox().findAllSelectedMapLayers();
-                jQuery("#maptools").html(me._panelControl);
-                jQuery(".panelControl").on("click", function() {
-                    jQuery(".actionPanel").toggleClass('actionPanelClosed');
+            
+            jQuery("#maptools").html(me._panelControl);
+            jQuery(".panelControl").on("click", function() {
+                jQuery(".actionPanel").toggleClass('actionPanelClosed');
+            });
 
-                });
-                _.forEach(layers, function (layer) {
-                    if (layer.getLayerType() === 'busstoplayer') {
-                        var selected = "";
-                        if (_.contains(selectedLayers, layer)) {
-                            selected = ' checked ';
-                        }
-                        jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: selected, id:layer.getId(), name: layer.getName()}));
-                    }
-                });
-                jQuery(".layerSelector").on("change", function() {
-                    var data = jQuery(this);
-                    if (data.is(':checked')) {
-                        me.getSandbox().postRequestByName('AddMapLayerRequest', [data.val(), false, false]);
-                    } else {
-                        me.getSandbox().postRequestByName('RemoveMapLayerRequest', [data.val()]);
-                    }
-                });
-                jQuery(".actionPanel").append(me._actionButtons);
-
-                jQuery(".actionButton").on("click", function() {
-                    var data = jQuery(this);
-                    var action = data.attr('data-action');
-                    jQuery(".actionButtonActive").removeClass("actionButtonActive");
-                    jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
-                    jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
-                    jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
-                    jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
-                    jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
-
-                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ActionPanelToolSelectionChangedEvent');
-                    var event = eventBuilder(action);
-                    me.getSandbox().notifyAll(event);
-
-                });
-
+            // FIXME: Does not really render anything just binds
+            var renderActionButtons = function() {
+              jQuery(".actionButton").on("click", function() {
+                var data = jQuery(this);
+                var action = data.attr('data-action');
+                jQuery(".actionButtonActive").removeClass("actionButtonActive");
+                jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
+                jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
+                jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
+                jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
+                jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
+    
+                var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ActionPanelToolSelectionChangedEvent');
+                var event = eventBuilder(action);
+                me.getSandbox().notifyAll(event);
+              });
             };
-            var error = function() {
-                alert('Can\'t fetch map layers from server');
+            
+            var renderAssetValidityPeriodSelector = function() {
+              var layers = [{id: "current", label: "Voimassaolevat", selected: true},
+                            {id: "future", label: "Tulevat"},
+                            {id: "past", label: "Käytöstä poistuneet"}];
+              _.forEach(layers, function (layer) {
+                  jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
+              });
+              jQuery(".layerSelector").on("change", function() {
+                  var selectedValidityPeriods = $('input.layerSelector').filter(function(_, v) {
+                    return $(v).is(':checked');
+                  }).map(function(_, v) {
+                    return $(v).attr('data-validity-period');
+                  }).toArray();
+                  var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodChangedEvent');
+                  var event = eventBuilder(selectedValidityPeriods);
+                  me.getSandbox().notifyAll(event);
+              });
+              jQuery(".actionPanel").append(me._actionButtons);
             };
-            mapLayerService.loadAllLayersAjax(addLayers, error);
+            
+            renderAssetValidityPeriodSelector();
+            renderActionButtons();
         },
         /**
          * @method onEvent
