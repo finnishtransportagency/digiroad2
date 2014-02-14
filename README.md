@@ -32,6 +32,34 @@ Ympäristön pystytys
   npm install -g grunt-cli
   ```
 
+Tietolähteet käyttäjä- sekä tie- ja kohdetiedoille
+==================================================
+
+Digiroad2 käsittelee ja käyttää tie- ja kohdetietoja joihin pääsy on toteutettu `AssetProvider` - rajapinnan kautta.
+Pääsy käyttäjätietoihin toteutetaan `UserProvider` - rajapinnan kautta.
+
+Projekti tarjoaa Oraclen tietokantaan integroituvat toteutukset digiroad2-oracle moduulissa.
+
+Tuki vaihtoehtoisille käyttäjä- sekä tie- ja kohdetietokannoille on saavutettavissa toteuttamalla `AssetProvider` ja `UserProvider` - rajapinnat.
+
+digiroad2-oracle
+----------------
+
+digiroad2-oracle moduuli toteuttaa oracle-spesifisen tuen digiroad2:n `AssetProvider` ja `UserProvider` - rajapinnoista.
+Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen polkuun.
+
+Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
+
+Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
+
+```
+bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
+bonecp.username=<käyttäjätunnus>
+bonecp.password=<salasana>
+```
+
+Tietokanta ja skeema voidaan alustaa käyttäen `fixture-reset.sh` skriptiä.
+
 Ajaminen
 ========
 
