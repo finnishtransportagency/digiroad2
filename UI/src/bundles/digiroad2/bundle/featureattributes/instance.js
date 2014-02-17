@@ -134,7 +134,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
 
-            me._featureDataControls = _.template('<button class="save">Luo</button><button class="cancel">Peruuta</button>');
+            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
 
             me._getPropertyValues();
 
