@@ -48,7 +48,6 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     params.get("username").flatMap {
       userProvider.getUser(_)
     }.map { u =>
-      val currentMunicipalities = u.configuration.authorizedMunicipalities
       val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalities))
       userProvider.saveUser(updatedUser)
       updatedUser
@@ -67,7 +66,6 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
         val (username, municipalityNumbers) = (elements.head, elements.tail.map { m => m.trim.toLong }.toSet)
         userProvider.getUser(username) match {
           case Some(u) => {
-            val currentMunicipalities = u.configuration.authorizedMunicipalities
             val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers))
             userProvider.saveUser(updatedUser)
           }
