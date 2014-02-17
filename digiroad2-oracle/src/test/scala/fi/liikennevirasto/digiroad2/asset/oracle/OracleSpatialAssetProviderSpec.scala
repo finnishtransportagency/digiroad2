@@ -15,6 +15,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import org.joda.time.DateTime
 import java.sql.Timestamp
+import java.sql.SQLIntegrityConstraintViolationException
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -139,6 +140,19 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val updatedAsset = provider.getAssetById(TestAssetId).get
     updatedAsset.propertyData.find(_.propertyId == "validityDirection").get.values.head.propertyValue should be (3)
     provider.updateAssetProperty(TestAssetId, "validityDirection", List(PropertyValue(2, "")))
+  }
+
+  test("update validity date throws exception if validFrom after validTo", Tag("db")) {
+    val asset = provider.getAssetById(TestAssetId).get
+    provider.updateAssetProperty(asset.id, "validTo", List(PropertyValue(0, "2045-12-10")))
+    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, "validFrom", List(PropertyValue(0, "2065-12-15")))
+  }
+
+
+  test("update validity date throws exception if validTo before validFrom", Tag("db")) {
+    val asset = provider.getAssetById(TestAssetId).get
+    provider.updateAssetProperty(asset.id, "validFrom", List(PropertyValue(0, "2010-12-15")))
+    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, "validTo", List(PropertyValue(0, "2009-12-10")))
   }
 
   test("update a common asset without write access fails", Tag("db")) {
