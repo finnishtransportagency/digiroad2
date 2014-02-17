@@ -395,7 +395,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _toolSelectionChange: function(event) {
             this._selectedControl = event.getAction();
-            this._selectControl.unselectAll();
+            if(_.isObject(this._selectControl)) {
+                this._selectControl.unselectAll();
+            }
         },
         _makeContent: function(imageIds) {
             var contentItem;
