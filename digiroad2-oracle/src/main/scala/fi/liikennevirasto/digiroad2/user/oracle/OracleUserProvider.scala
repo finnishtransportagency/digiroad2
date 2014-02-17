@@ -34,4 +34,11 @@ class OracleUserProvider extends UserProvider {
       sql"""select id, username, configuration from service_user where username = $username""".as[User].firstOption
     }
   }
+
+  def saveUser(user: User): User = {
+    Database.forDataSource(ds).withDynSession {
+      sqlu"""update service_user set configuration = ${write(user.configuration)} where username = ${user.username}""".execute()
+      user
+    }
+  }
 }

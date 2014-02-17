@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import org.scalatra.test.scalatest._
-import org.scalatest.{FunSuite, Tag}
+import org.scalatest.Tag
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
@@ -14,9 +13,9 @@ import scala.Some
 import fi.liikennevirasto.digiroad2.asset.AssetType
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
-class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
+class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  val TestAssetId = 100
+  val TestAssetId = 104
   val TestPropertyId = "1"
   val TestPropertyId2 = "2"
 
@@ -101,14 +100,14 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   test("update asset property", Tag("db")) {
     val body1 = write(List(PropertyValue(3, "Linja-autojen kaukoliikenne")))
     val body2 = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
-    putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes, Map("Content-type" -> "application/json")) {
+    putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
       status should equal(200)
       getWithUserAuth("/assets/" + TestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         val prop = asset.propertyData.find(_.propertyId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
-        putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes, Map("Content-type" -> "application/json")) {
+        putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + TestAssetId) {
             parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId2).get.values.head.propertyValue should be (2)
@@ -125,7 +124,7 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
       getWithUserAuth("/assets/" + TestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         asset.propertyData.find(_.propertyId == TestPropertyId).get.values.size should be (0)
-        putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
+        putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + TestAssetId) {
             parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
@@ -183,22 +182,5 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
       p1.required should be (true)
       ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
     }
-  }
-
-  private[this] def getWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
-    val authHeader = authenticateAndGetHeader(username)
-    get(uri, headers = authHeader)(f)
-  }
-
-  private[this] def putWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), username: String = "test")(f: => A): A = {
-    put(uri, body, headers = headers ++ authenticateAndGetHeader(username))(f)
-  }
-
-  private[this] def deleteWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
-    delete(uri, headers = authenticateAndGetHeader(username))(f)
-  }
-
-  private[this] def authenticateAndGetHeader(username: String): Map[String, String] = {
-    Map("OAM_REMOTE_USER" -> username)
   }
 }
