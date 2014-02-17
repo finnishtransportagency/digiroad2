@@ -272,7 +272,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
             var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
             me._layer[layerName][this._directionLayer].addFeatures(directionArrow);
-            sendCollectAttributesRequest(function (attributeCollection) {
+            sendCollectAttributesRequest(attributesCollected, collectionCancelled);
+            var contentItem = this._makeContent([this._unknownAssetType]);
+            this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
+                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+            });
+
+            function attributesCollected(attributeCollection) {
                 // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
                 me._backend.putAsset({ assetTypeId: 10, lon: selectedLon, lat: selectedLat, roadLinkId: nearestLine.roadLinkId, bearing: bearing }, function (asset) {
                     _.each(attributeCollection, function (attribute) {
@@ -284,11 +290,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     });
                 });
                 me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
-            }, collectionCancelled);
-            var contentItem = this._makeContent([this._unknownAssetType]);
-            this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
-                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
-            });
+            }
 
             function collectionCancelled() {
                 me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
