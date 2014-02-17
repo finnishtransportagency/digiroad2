@@ -100,7 +100,8 @@ create table asset (
 	bearing number,
 	validity_direction number default 2,
 	valid_from timestamp,
-	valid_to timestamp
+	valid_to timestamp,
+	constraint check_dates check (valid_from <= valid_to)
 );
 
 create table property (
