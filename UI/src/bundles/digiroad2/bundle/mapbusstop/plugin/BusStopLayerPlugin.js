@@ -286,7 +286,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
                 });
                 var contentItem = this._makeContent([this._unknownAssetType]);
-                this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat());
+                this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function() {
+                    me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                });
             }
             function sendCollectAttributesRequest(callback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
@@ -405,18 +407,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
             return contentItem;
         },
-        _sendPopupRequest:function(id, title, busStopId, content, lonlat) {
+        _sendPopupRequest:function(id, title, busStopId, content, lonlat, popupClosedCallback) {
             var me = this;
             var requestBuilder = this._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-            var request = requestBuilder("busStop", title, [content], lonlat, true);
+            var request = requestBuilder('busStop', title, [content], lonlat, true);
             this._sandbox.request(this.getName(), request);
 
             var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
 
-            jQuery(".popupInfoChangeDirection").on("click", function() {
+            jQuery('.popupInfoChangeDirection').on('click', function() {
                 me._directionChange(busStopId, wgs84);
             });
+
+            if (_.isFunction(popupClosedCallback)) {
+                jQuery('.olPopupCloseBox').on('click', popupClosedCallback);
+            }
         },
         _directionChange:function(assetId, point) {
             var eventBuilder = this._sandbox.getEventBuilder('mapbusstop.AssetDirectionChangeEvent');
