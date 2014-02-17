@@ -107,7 +107,7 @@ describe('BusStopLayerPlugin', function(){
                 backend: _.extend({}, window.Backend, {
                     putAsset: function(data, success) {
                         assetCreationData.push(data);
-                        success({ id: 123 });
+                        success( data );
                     },
                     putAssetPropertyValue: function(assetId, propertyId, data) {
                         assetPropertyInsertions.push({
@@ -117,7 +117,7 @@ describe('BusStopLayerPlugin', function(){
                         });
                     },
                     getAsset: function(id, success) {
-                        success({ id: 123, imageIds: [] });
+                        success( assetCreationData.pop() );
                     }
                 }),
                 geometryCalculations: {
