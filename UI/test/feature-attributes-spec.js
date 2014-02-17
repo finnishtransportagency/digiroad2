@@ -72,6 +72,7 @@ describe('FeatureAttributes', function () {
         var featureAttributes = null;
         var requestedAssetTypes = [];
         var collectedAttributes = {};
+        var collectionCancelled = 0;
 
         before(function () {
             requestedAssetTypes = [];
@@ -106,7 +107,9 @@ describe('FeatureAttributes', function () {
                 })
             });
             featureAttributes.init();
-            featureAttributes.collectAttributes(function(attributeCollection) { collectedAttributes = attributeCollection; });
+            featureAttributes.collectAttributes(
+                function(attributeCollection) { collectedAttributes = attributeCollection; },
+                function() { collectionCancelled++; });
         });
 
         it('should call backend for bus stop properties', function () {
@@ -171,6 +174,18 @@ describe('FeatureAttributes', function () {
                     option.prop('selected', true);
                 });
             }
+        });
+
+        describe('and when cancel button is clicked', function() {
+            before(function() {
+                collectionCancelled = 0;
+                var cancelButton = $('button.cancel');
+                cancelButton.click();
+            });
+
+            it('should call cancellation callback', function() {
+                assert.equal(collectionCancelled, 1);
+            });
         });
     });
 });
