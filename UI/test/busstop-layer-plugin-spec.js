@@ -78,7 +78,8 @@ describe('BusStopLayerPlugin', function(){
     describe('when adding a new bus stop', function() {
         var pluginInstance = null;
         var requests = [];
-        var requestCallback = null;
+        var attributesCollectedCallback = null;
+        var collectionCancelledCallback = null;
         var assetCreationData = [];
         var assetPropertyInsertions = [];
         var attributeCollectionRequest = {};
@@ -89,8 +90,9 @@ describe('BusStopLayerPlugin', function(){
         var addedFeature = {};
         var destroyedFeature = {};
         var addedMarker = {};
-        var attributeCollectionRequestBuilder = function(callback) {
-            requestCallback = callback;
+        var attributeCollectionRequestBuilder = function(collectedCallback, cancellationCallback) {
+            attributesCollectedCallback = collectedCallback;
+            collectionCancelledCallback = cancellationCallback;
             return attributeCollectionRequest;
         };
         var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
@@ -189,7 +191,7 @@ describe('BusStopLayerPlugin', function(){
                 assetCreationData = [];
                 assetPropertyInsertions = [];
                 requests = [];
-                requestCallback([
+                attributesCollectedCallback([
                     { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
                     { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'' } ] }
                 ]);
@@ -221,6 +223,17 @@ describe('BusStopLayerPlugin', function(){
 
             it('should request show of feature attributes', function() {
                 assert.equal(attributeShowRequest, requests[1]);
+            });
+        });
+
+        describe('and when feature attribute collection has been cancelled', function() {
+            before(function() {
+                destroyedFeature = {};
+                collectionCancelledCallback();
+            });
+
+            it('should remove direction arrow feature from direction arrow layer', function() {
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
             });
         });
     });

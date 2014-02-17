@@ -284,15 +284,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         });
                     });
                     me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
-                });
+                }, collectionCancelled);
                 var contentItem = this._makeContent([this._unknownAssetType]);
                 this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function() {
                     me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
                 });
             }
-            function sendCollectAttributesRequest(callback) {
+
+            function collectionCancelled() {
+                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+            }
+
+            function sendCollectAttributesRequest(callback, cancellationCallback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
-                var request = requestBuilder(callback);
+                var request = requestBuilder(callback, cancellationCallback);
                 me._sandbox.request(me.getName(), request);
             }
         },
