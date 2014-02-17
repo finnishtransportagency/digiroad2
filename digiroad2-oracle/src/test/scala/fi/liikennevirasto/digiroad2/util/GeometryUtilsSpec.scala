@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{Asset, RoadLink}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink}
 import GeometryUtils._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("calculate bearing at asset position") {
-    val asset = Asset(0, 0, 10.0, 10.0, 0)
+    val asset = AssetWithProperties(0, 0, 10.0, 10.0, 0)
     val rlDegenerate = RoadLink(id = 0, lonLat = Seq(), municipalityNumber = 235)
     val rlQuadrant1 = RoadLink(id = 0, lonLat = Seq((1,1), (2, 2)), municipalityNumber = 235)
     val rlQuadrant2 = RoadLink(id = 0, lonLat = Seq((-1,1), (-2, 2)), municipalityNumber = 235)

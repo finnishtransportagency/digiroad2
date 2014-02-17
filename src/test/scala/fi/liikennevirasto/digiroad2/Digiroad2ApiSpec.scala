@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.asset.EnumeratedPropertyValue
-import fi.liikennevirasto.digiroad2.asset.Asset
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.AssetType
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
@@ -38,28 +38,28 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   test("get assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
+      parse(body).extract[List[AssetWithProperties]].size should be(1)
     }
   }
 
   test("get assets without bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(3)
+      parse(body).extract[List[AssetWithProperties]].size should be(3)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current", "test2") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(4)
+      parse(body).extract[List[AssetWithProperties]].size should be(4)
     }
   }
 
   test("get asset by id", Tag("db")) {
     getWithUserAuth("/assets/" + TestAssetId) {
       status should equal(200)
-      parse(body).extract[Asset].id should be (TestAssetId)
+      parse(body).extract[AssetWithProperties].id should be (TestAssetId)
     }
     getWithUserAuth("/assets/9999999999999999") {
       status should equal(404)
@@ -104,14 +104,14 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes, Map("Content-type" -> "application/json")) {
       status should equal(200)
       getWithUserAuth("/assets/" + TestAssetId) {
-        val asset = parse(body).extract[Asset]
+        val asset = parse(body).extract[AssetWithProperties]
         val prop = asset.propertyData.find(_.propertyId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
         putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes, Map("Content-type" -> "application/json")) {
           status should equal(200)
           getWithUserAuth("/assets/" + TestAssetId) {
-            parse(body).extract[Asset].propertyData.find(_.propertyId == TestPropertyId2).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId2).get.values.head.propertyValue should be (2)
           }
         }
       }
@@ -123,12 +123,12 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
     deleteWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values") {
       status should equal(200)
       getWithUserAuth("/assets/" + TestAssetId) {
-        val asset = parse(body).extract[Asset]
+        val asset = parse(body).extract[AssetWithProperties]
         asset.propertyData.find(_.propertyId == TestPropertyId).get.values.size should be (0)
         putWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes, Map("Content-type" -> "application/json")) {
           status should equal(200)
           getWithUserAuth("/assets/" + TestAssetId) {
-            parse(body).extract[Asset].propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
           }
         }
       }
@@ -138,21 +138,21 @@ class Digiroad2ApiSpec extends FunSuite with ScalatraSuite {
   test("get past assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
+      parse(body).extract[List[AssetWithProperties]].size should be(1)
     }
   }
 
   test("get future assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=future") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
+      parse(body).extract[List[AssetWithProperties]].size should be(1)
     }
   }
 
   test("mark asset on expired link as floating", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01&validityPeriod=current", "test49") {
       status should equal(200)
-      val assets = parse(body).extract[List[Asset]]
+      val assets = parse(body).extract[List[AssetWithProperties]]
       assets should have length(1)
       assets.head.status should be(Some(Floating))
      }

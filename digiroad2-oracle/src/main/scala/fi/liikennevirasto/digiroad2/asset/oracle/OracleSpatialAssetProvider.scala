@@ -69,11 +69,11 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }.toSeq
   }
 
-  def getAssetById(assetId: Long): Option[Asset] = {
+  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Database.forDataSource(ds).withDynSession {
       Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
         val row = v(0)
-        Asset(id = row.id, assetTypeId = row.assetTypeId,
+        AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
               lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
               propertyData = assetRowToProperty(v) ++ AssetPropertyConfiguration.assetRowToCommonProperties(row),
               bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
@@ -84,7 +84,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[ListedAsset] = {
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) {
         None
@@ -114,7 +114,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
       val q = QueryCollector(assetsByTypeWithPosition, IndexedSeq(assetTypeId.toString)).add(andMunicipality).add(andWithinDistance).add(andValidityInRange)
       collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
         val row = v(0)
-        ListedAsset(id = row.id, assetTypeId = row.assetTypeId, lon = row.lon,
+        Asset(id = row.id, assetTypeId = row.assetTypeId, lon = row.lon,
               lat = row.lat, roadLinkId = row.roadLinkId,
               imageIds = v.map(row => getImageId(row.imageId, row.imageLastModified)).toSeq,
               bearing = row.bearing,
@@ -142,7 +142,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): Asset = {
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): AssetWithProperties = {
     Database.forDataSource(ds).withDynSession {
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
@@ -166,7 +166,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def updateAssetLocation(asset: ListedAsset): Asset = {
+  def updateAssetLocation(asset: Asset): AssetWithProperties = {
     Database.forDataSource(ds).withDynSession {
       if (!userCanModifyAsset(asset.id)) {
         throw new IllegalArgumentException("User does not have write access to municipality")

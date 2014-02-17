@@ -30,7 +30,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val unauthorizedUser =
     user.copy(configuration = Configuration(authorizedMunicipalities = Set(666999l)))
 
-  implicit def Asset2ListedAsset(asset: Asset) = new ListedAsset(asset.id, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
+  implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
     asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.status, asset.readOnly, asset.municipalityNumber)
 
   before {

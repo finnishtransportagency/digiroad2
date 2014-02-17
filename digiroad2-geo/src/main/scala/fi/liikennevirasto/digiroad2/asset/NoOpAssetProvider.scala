@@ -11,8 +11,8 @@ class NoOpAssetProvider extends AssetProvider {
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
   def getRoadLinks(municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = None
-  def getAssetById(assetId: Long): Option[Asset] = {
-    Some(Asset(0, 10, 0, 0, 0, propertyData = List(
+  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
+    Some(AssetWithProperties(0, 10, 0, 0, 0, propertyData = List(
       Property("4", "Pysäkin saavutettavuus", "text", values = Seq(PropertyValue(0, "", null))),
       Property("5", "Esteettömyystiedot", "text", values = Seq(PropertyValue(0, "", null))),
       Property("6", "Ylläpitäjän tunnus", "text", values = Seq(PropertyValue(0, "", null))),
@@ -24,9 +24,9 @@ class NoOpAssetProvider extends AssetProvider {
       Property("validTo", "Käytössä päättyen", Date, values = Seq(PropertyValue(0, null)))
     )))
   }
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[ListedAsset] = List()
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset] = List()
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String) = {
-    Asset(0, assetTypeId, lon, lat, roadLinkId)
+    AssetWithProperties(0, assetTypeId, lon, lat, roadLinkId)
   }
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
@@ -35,7 +35,7 @@ class NoOpAssetProvider extends AssetProvider {
       PropertyValue(2, "Digitointisuuntaan"),
       PropertyValue(3, "Digitointisuuntaa vastaan"))))
   }
-  def updateAssetLocation(asset: ListedAsset): Asset = getAssetById(asset.id).get
+  def updateAssetLocation(asset: Asset): AssetWithProperties = getAssetById(asset.id).get
   def getImage(imageId: Long): Array[Byte] = new Array[Byte](0)
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]) { }
   def availableProperties(assetTypeId: Long): Seq[Property] = Seq()

@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{RoadLink, Asset}
+import fi.liikennevirasto.digiroad2.asset.{RoadLink, AssetWithProperties}
 
 object GeometryUtils {
   /**
    * Calculates compass bearing of roadlink (in digitation direction) at asset position
    */
-  def calculateBearing(asset: Asset, roadLink: RoadLink): Int = {
+  def calculateBearing(asset: AssetWithProperties, roadLink: RoadLink): Int = {
     if (roadLink.lonLat.size < 2) return 0
     def direction(p1: (Double, Double), p2: (Double, Double)): Double = {
       val dLon = p2._1 - p1._1

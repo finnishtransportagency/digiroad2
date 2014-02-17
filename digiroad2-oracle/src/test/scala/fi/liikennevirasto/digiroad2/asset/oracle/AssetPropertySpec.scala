@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, Asset}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
 import java.sql.SQLException
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.User
@@ -97,5 +97,5 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
     restoredAsset.propertyData.find(_.propertyId == property.propertyId).get.values should not be empty
   }
 
-  private def getTestAsset: Asset = provider.getAssetById(TestAssetId).get
+  private def getTestAsset: AssetWithProperties = provider.getAssetById(TestAssetId).get
 }
