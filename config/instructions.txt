@@ -1,3 +1,28 @@
+Testiin / tuotantoonsiirto omalta koneelta:
+
+Ssh avain pitää olla koneen web käyttäjän authorized keys listalla, jotta pystyt loggaamaan sisään ilman salasalaa.
+Ssh konfit omalla koneella:
+
+Host gateway
+	ProxyCommand ssh reaktor nc -q0 80.248.164.107 22
+
+Host production1
+    User ktunnus
+    ProxyCommand ssh gateway nc 10.129.64.203 22
+
+Host production2
+    User ktunnus
+    ProxyCommand ssh gateway nc 10.129.64.204 22
+
+
+- Asenna ruby
+- Asenna bundler (apt-get install, yum install, brew install... )
+- Asenna capistrano: gem install capistrano
+- Releasen julkaisu, digiroad2 juuressa:
+* bundle exec cap staging deploy
+* bundle exec cap production deploy
+
+
 1.
 
 Tiedoston lisääminen:
