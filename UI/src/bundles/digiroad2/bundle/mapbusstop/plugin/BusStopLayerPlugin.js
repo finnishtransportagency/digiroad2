@@ -294,11 +294,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             function collectionCancelled() {
                 me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                sendHideInfoboxRequest('busStop');
             }
 
             function sendCollectAttributesRequest(callback, cancellationCallback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
                 var request = requestBuilder(callback, cancellationCallback);
+                me._sandbox.request(me.getName(), request);
+            }
+
+            function sendHideInfoboxRequest(infoBoxId) {
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
+                var request = requestBuilder(infoBoxId);
                 me._sandbox.request(me.getName(), request);
             }
         },

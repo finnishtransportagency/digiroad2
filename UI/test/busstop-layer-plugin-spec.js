@@ -85,8 +85,10 @@ describe('BusStopLayerPlugin', function(){
         var attributeCollectionRequest = {};
         var attributeShowRequest = {};
         var showInfoBoxRequest = {};
+        var hideInfoBoxRequest = {};
         var requestedInfoBoxType = '';
         var requestedInfoBoxTitle = '';
+        var hiddenInfoBoxId = '';
         var addedFeature = {};
         var destroyedFeature = {};
         var addedMarker = {};
@@ -99,6 +101,10 @@ describe('BusStopLayerPlugin', function(){
             requestedInfoBoxType = infoBoxType;
             requestedInfoBoxTitle = infoBoxTitle;
             return showInfoBoxRequest;
+        };
+        var hideInfoBoxRequestBuilder = function (infoBoxId) {
+            hiddenInfoBoxId = infoBoxId;
+            return hideInfoBoxRequest;
         };
         var attributeShowRequestBuilder = function() {
             return attributeShowRequest;
@@ -152,6 +158,8 @@ describe('BusStopLayerPlugin', function(){
                         return attributeCollectionRequestBuilder;
                     } else if (request === 'InfoBox.ShowInfoBoxRequest') {
                         return showInfoBoxRequestBuilder;
+                    } else if (request === 'InfoBox.HideInfoBoxRequest') {
+                        return hideInfoBoxRequestBuilder;
                     } else if (request === 'FeatureAttributes.ShowFeatureAttributesRequest') {
                         return attributeShowRequestBuilder;
                     }
@@ -225,12 +233,18 @@ describe('BusStopLayerPlugin', function(){
 
         describe('and when feature attribute collection has been cancelled', function() {
             before(function() {
+                requests = [];
                 destroyedFeature = {};
                 collectionCancelledCallback();
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {
                 assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            });
+
+            it('should remove bus stop infobox', function() {
+                assert.equal(hideInfoBoxRequest, requests[0]);
+                assert.equal(hiddenInfoBoxId, 'busStop');
             });
         });
     });
