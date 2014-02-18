@@ -282,7 +282,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
             var directionArrow = this._addDirectionArrow(bearing, 1, selectedLon, selectedLat);
-            sendCollectAttributesRequest(attributesCollected, collectionCancelled);
+            var assetPosition = {lonLat : event.getLonLat(), bearing : bearing, validityDirection :2};
+            sendCollectAttributesRequest(assetPosition, attributesCollected, collectionCancelled);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
                 me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
@@ -307,9 +308,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 sendHideInfoboxRequest('busStop');
             }
 
-            function sendCollectAttributesRequest(callback, cancellationCallback) {
+            function sendCollectAttributesRequest(assetPosition, callback, cancellationCallback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
-                var request = requestBuilder(callback, cancellationCallback);
+                var request = requestBuilder(assetPosition, callback, cancellationCallback);
                 me._sandbox.request(me.getName(), request);
             }
 

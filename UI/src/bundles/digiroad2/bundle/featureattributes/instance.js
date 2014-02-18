@@ -211,7 +211,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }
         },
         _getStreetView: function(assetPosition) {
-            console.log(assetPosition);
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
