@@ -32,6 +32,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   }
 
   post("/user") {
+    // TODO: create user atomically in provider
     val user = parsedBody.extract[User]
     userProvider.getUser(user.username) match {
       case Some(user) => Conflict("User already exists: " + user)

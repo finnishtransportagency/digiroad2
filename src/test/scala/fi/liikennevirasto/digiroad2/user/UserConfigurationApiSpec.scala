@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.AuthenticatedApiSpec
 class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  val TestUsername = "test" + UUID.randomUUID().toString
+  val TestUsername = "Test" + UUID.randomUUID().toString
   addServlet(classOf[UserConfigurationApi], "/userconfig/*")
 
   test("create user record", Tag("db")) {
@@ -19,7 +19,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       status should be (200)
       val u = parse(body).extract[User]
       u.id should not be (0)
-      u.username should be (TestUsername)
+      u.username should be (TestUsername.toLowerCase)
       u.configuration.authorizedMunicipalities should contain only (1, 2, 3)
     }
     postJsonWithUserAuth("/userconfig/user", write(user)) {
