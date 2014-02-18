@@ -42,16 +42,16 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get assets without bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current") {
+    getWithUserAuth("/assets?assetTypeId=10") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].size should be(3)
+      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 100).size should be(4)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=current", "test2") {
+    getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].size should be(4)
+      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 100).size should be(5)
     }
   }
 
