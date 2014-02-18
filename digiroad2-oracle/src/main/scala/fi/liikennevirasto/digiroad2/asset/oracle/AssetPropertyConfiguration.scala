@@ -3,8 +3,9 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue, EnumeratedPropertyValue}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.AssetRow
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
+import org.joda.time.format.{DateTimeFormat}
 import org.joda.time.DateTime
+import scala.collection.immutable.ListMap
 
 object AssetPropertyConfiguration {
   val ValidityDirectionId = "validityDirection"
@@ -30,12 +31,12 @@ object AssetPropertyConfiguration {
     ModifiedId -> ReadOnlyText
   )
 
-  val commonAssetPropertyDescriptors: Map[String, Property] = Map(
+  val commonAssetPropertyDescriptors: Map[String, Property] = ListMap(
+    CreatedId -> Property(ValidToId, "Lisätty järjestelmään", ReadOnlyText, values = Seq()),
+    ModifiedId -> Property(ValidToId, "Viimeksi muokannut", ReadOnlyText, values = Seq()),
     ValidityDirectionId -> Property(ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = Seq()),
     ValidFromId -> Property(ValidFromId, "Käytössä alkaen", Date, values = Seq()),
-    ValidToId -> Property(ValidToId, "Käytössä päättyen", Date, values = Seq()),
-    CreatedId -> Property(ValidToId, "Lisätty järjestelmään", ReadOnlyText, values = Seq()),
-    ModifiedId -> Property(ValidToId, "Viimeksi muokannut", ReadOnlyText, values = Seq())
+    ValidToId -> Property(ValidToId, "Käytössä päättyen", Date, values = Seq())
   )
 
   val ValidityDirectionSame = 2

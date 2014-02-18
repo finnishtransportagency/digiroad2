@@ -75,7 +75,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         val row = v(0)
         AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
               lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-              propertyData = assetRowToProperty(v) ++ AssetPropertyConfiguration.assetRowToCommonProperties(row),
+              propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v),
               bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
               validityPeriod = validityPeriod(row.validFrom, row.validTo),
               imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
@@ -330,11 +330,11 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         Property(r.nextString(), r.nextString, r.nextString, r.nextBoolean(), Seq())
       }
     }
-    Database.forDataSource(ds).withDynSession {
+    AssetPropertyConfiguration.commonAssetPropertyDescriptors.values.toSeq ++ Database.forDataSource(ds).withDynSession {
       sql"""
         select id, name_fi, property_type, required from property where asset_type_id = $assetTypeId
-      """.as[Property].list
-    } ++ AssetPropertyConfiguration.commonAssetPropertyDescriptors.values
+      """.as[Property].list.sortBy(_.propertyId)
+    }
   }
 
 }
