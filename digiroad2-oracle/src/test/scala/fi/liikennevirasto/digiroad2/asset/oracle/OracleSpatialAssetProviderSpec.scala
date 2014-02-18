@@ -66,11 +66,97 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val AssetCreator = "integration_test_add_asset"
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
-      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator)
+      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    }
+  }
+
+  test("add asset with properties to database", Tag("db")) {
+    val AssetCreator = "integration_test_add_asset"
+    val existingAsset = provider.getAssetById(TestAssetId).get
+    try {
+      val newAsset = provider.createAsset(
+          TestAssetTypeId,
+          existingAsset.lon,
+          existingAsset.lat,
+          existingAsset.roadLinkId,
+          180,
+          AssetCreator,
+          List(SimpleProperty("validTo", List(PropertyValue(0, "2045-12-10")))))
+      newAsset.id should (be > 100L)
+      Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
+      Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
+      newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+      newAsset.propertyData should contain (Property("validTo", "Käytössä päättyen", "date", false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    }
+  }
+
+  test("add asset is transactional", Tag("db")) {
+    import scala.slick.driver.JdbcDriver.backend.Database
+    import scala.slick.jdbc.{GetResult, StaticQuery => Q}
+    import Database.dynamicSession
+    import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+    val AssetCreator = "integration_test_add_asset"
+    val existingAsset = provider.getAssetById(TestAssetId).get
+    val oldCount = Database.forDataSource(ds).withDynSession {
+      Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head
+    }
+    try {
+      val newAsset = provider.createAsset(
+          TestAssetTypeId,
+          existingAsset.lon,
+          existingAsset.lat,
+          existingAsset.roadLinkId,
+          180,
+          AssetCreator,
+          List(SimpleProperty("validFrom", List(PropertyValue(0, "2001-12-10"))),
+               SimpleProperty("validTo", List(PropertyValue(0, "1995-12-10")))))
+      fail("Should have thrown an exception")
+    } catch {
+      case e: SQLIntegrityConstraintViolationException => {
+        Database.forDataSource(ds).withDynSession {
+          oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
+        }
+      }
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    }
+  }
+
+  test("add asset is transactional (POC)", Tag("db")) {
+    import scala.slick.driver.JdbcDriver.backend.Database
+    import scala.slick.jdbc.{GetResult, StaticQuery => Q}
+    import Database.dynamicSession
+    import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+    val AssetCreator = "integration_test_add_asset"
+    val existingAsset = provider.getAssetById(TestAssetId).get
+    val oldCount = Database.forDataSource(ds).withDynSession {
+      Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head
+    }
+    try {
+      val newAsset = provider.createAssetTransactionally(
+          TestAssetTypeId,
+          existingAsset.lon,
+          existingAsset.lat,
+          existingAsset.roadLinkId,
+          180,
+          AssetCreator,
+          List(SimpleProperty("validFrom", List(PropertyValue(0, "2001-12-10"))),
+               SimpleProperty("validTo", List(PropertyValue(0, "1995-12-10")))))
+      fail("Should have thrown an exception")
+    } catch {
+      case e: SQLIntegrityConstraintViolationException => {
+        Database.forDataSource(ds).withDynSession {
+          oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
+        }
+      }
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }
@@ -82,7 +168,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
       intercept[IllegalArgumentException] {
-        provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator)
+        provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       }
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");

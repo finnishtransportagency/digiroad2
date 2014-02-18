@@ -14,6 +14,7 @@ case class AssetWithProperties(id: Long, assetTypeId: Long, lon: Double, lat: Do
                  municipalityNumber: Option[Long] = None,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None)
 
+case class SimpleProperty(id: String, values: Seq[PropertyValue])
 case class Property(propertyId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: Long, propertyDisplayValue: String, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])

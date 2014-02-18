@@ -7,7 +7,7 @@ trait AssetProvider {
   def getAssetTypes: Seq[AssetType]
   def getAssetById(assetId: Long): Option[AssetWithProperties]
   def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): AssetWithProperties
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue])
   def deleteAssetProperty(assetId: Long, propertyId: String)
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]

@@ -40,8 +40,17 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   private def userCanModifyAsset(assetId: Long): Boolean =
     getAssetById(assetId).flatMap(a => a.municipalityNumber.map(userCanModifyMunicipality)).getOrElse(false)
 
+  private def userCanModifyMunicipalityTx(municipalityNumber: Long): Boolean =
+    userProvider.getCurrentUser.configuration.authorizedMunicipalities.contains(municipalityNumber)
+
+  private def userCanModifyAssetTx(assetId: Long): Boolean =
+    getAssetByIdTx(assetId).flatMap(a => a.municipalityNumber.map(userCanModifyMunicipality)).getOrElse(false)
+
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
     getRoadLinkById(roadLinkId).map(rl => userCanModifyMunicipality(rl.municipalityNumber)).getOrElse(false)
+
+  private def userCanModifyRoadLinkTx(roadLinkId: Long): Boolean =
+    getRoadLinkByIdTx(roadLinkId).map(rl => userCanModifyMunicipalityTx(rl.municipalityNumber)).getOrElse(false)
 
   def getAssetTypes: Seq[AssetType] = {
     Database.forDataSource(ds).withDynSession {
@@ -53,6 +62,10 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Database.forDataSource(ds).withDynSession {
       nextPrimaryKeyId.as[Long].first
     }
+  }
+
+  private[this] def nextPrimaryKeySeqValueTx = {
+    nextPrimaryKeyId.as[Long].first
   }
 
   private[oracle] def getImageId(imageId: Option[Long], imageLastModified: Option[Timestamp]) = {
@@ -82,6 +95,19 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
               validityDirection = Some(row.validityDirection))
       }.headOption
     }
+  }
+
+  def getAssetByIdTx(assetId: Long): Option[AssetWithProperties] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
+      val row = v(0)
+      AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
+            lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
+            propertyData = assetRowToProperty(v) ++ AssetPropertyConfiguration.assetRowToCommonProperties(row),
+            bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
+            validityPeriod = validityPeriod(row.validFrom, row.validTo),
+            imageIds = v.map(row => getImageId(row.imageId, row.imageLastModified)).toSeq.filter(_ != null),
+            validityDirection = Some(row.validityDirection))
+    }.headOption
   }
 
   def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
@@ -142,7 +168,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): AssetWithProperties = {
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     Database.forDataSource(ds).withDynSession {
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
@@ -153,7 +179,32 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
       val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
       insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
       insertAsset(assetId, assetTypeId, lrmPositionId, bearing, creator).execute
+      properties.foreach { property =>
+        if (!property.values.isEmpty) {
+          updateAssetProperty(assetId, property.id, property.values)
+        }
+      }
       getAssetById(assetId).get
+    }
+  }
+
+  def createAssetTransactionally(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    Database.forDataSource(ds).withDynTransaction {
+      if (!userCanModifyRoadLinkTx(roadLinkId)) {
+        throw new IllegalArgumentException("User does not have write access to municipality")
+      }
+      val assetId = nextPrimaryKeySeqValueTx
+      val lrmPositionId = nextPrimaryKeySeqValueTx
+      val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
+      val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
+      insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
+      insertAsset(assetId, assetTypeId, lrmPositionId, bearing, creator).execute
+      properties.foreach { property =>
+        if (!property.values.isEmpty) {
+          updateAssetPropertyTx(assetId, property.id, property.values)
+        }
+      }
+      getAssetByIdTx(assetId).get
     }
   }
 
@@ -207,6 +258,10 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Database.forDataSource(ds).withDynSession {
       Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
     }
+  }
+
+  def getRoadLinkByIdTx(roadLinkId: Long): Option[RoadLink] = {
+    Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
 
 
@@ -271,6 +326,72 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
           case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
         }
       }
+    }
+
+    if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(propertyId)) {
+      updateCommonAssetProperty(assetId, propertyId, propertyValues)
+    } else {
+      updateAssetSpecificProperty(assetId, propertyId.toLong, propertyValues)
+    }
+  }
+
+  def updateAssetPropertyTx(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {
+    def updateAssetSpecificProperty(assetId: Long, propertyId: Long, propertyValues: Seq[PropertyValue]) {
+      val asset = getAssetByIdTx(assetId)
+      if (!userCanModifyAssetTx(assetId)) {
+        throw new IllegalArgumentException("User does not have write access to municipality")
+      }
+      if (asset.isEmpty) throw new IllegalArgumentException("Asset " + assetId + " not found")
+      val createNew = (asset.head.propertyData.exists(_.propertyId == propertyId.toString) && asset.head.propertyData.find(_.propertyId == propertyId.toString).get.values.isEmpty)
+        Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
+          case Text => {
+            if (propertyValues.size != 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+            if (createNew) {
+              insertTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
+            } else {
+              updateTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
+            }
+          }
+          case SingleChoice => {
+            if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value")
+            if (createNew) {
+              insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+            } else {
+              updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+            }
+          }
+          case MultipleChoice => {
+            createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+          }
+          case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+        }
+    }
+
+    def updateCommonAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {
+      val column = AssetPropertyConfiguration.commonAssetPropertyColumns(propertyId)
+        if (!userCanModifyAssetTx(assetId)) {
+          throw new IllegalArgumentException("User does not have write access to municipality")
+        }
+        AssetPropertyConfiguration.commonAssetPropertyTypes(propertyId) match {
+          case SingleChoice => {
+            val newVal = propertyValues.head.propertyValue.toString
+            AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
+              (p.propertyId == propertyId) && (p.values.map(_.propertyValue.toString).contains(newVal))
+            } match {
+              case Some(propValues) => {
+                updateCommonProperty(assetId, column, newVal).execute()
+              }
+              case None => throw new IllegalArgumentException("Invalid property/value: " + propertyId + "/" + newVal)
+            }
+          }
+          case Text => updateCommonProperty(assetId, column, propertyValues.head.propertyDisplayValue).execute()
+          case Date => {
+            val formatter = ISODateTimeFormat.dateOptionalTimeParser()
+            val optionalDateTime = propertyValues.headOption.map(_.propertyDisplayValue).map(formatter.parseDateTime)
+            updateCommonDateProperty(assetId, column, optionalDateTime).execute()
+          }
+          case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+        }
     }
 
     if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(propertyId)) {

@@ -104,7 +104,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "lat").extract[Int].toDouble,
       (parsedBody \ "roadLinkId").extract[Long],
       (parsedBody \ "bearing").extract[Int],
-      user.username)
+      user.username,
+      (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
   get("/roadlinks") {
