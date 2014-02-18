@@ -127,6 +127,12 @@
     padding-top: 10px;
 }
 
+.readOnlyRow {
+    color: #8A8A8A;
+    float: right;
+    font-size: 10px;
+}
+
 .formControls .save {
     float: right;
     background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
