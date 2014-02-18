@@ -20,7 +20,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.CollectFe
          *      request to handle
          */
         handleRequest: function (core, request) {
-            this.featureAttributes.collectAttributes(request.getSuccessCallback());
+            this.featureAttributes.collectAttributes(request.getSuccessCallback(), request.getCancellationCallback());
         }
     }, {
         /**

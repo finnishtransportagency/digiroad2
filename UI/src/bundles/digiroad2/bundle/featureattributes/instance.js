@@ -135,7 +135,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
 
-            me._featureDataControls = _.template('<button class="save">Luo</button>');
+            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
 
             me._getPropertyValues();
 
@@ -169,7 +169,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 });
             });
         },
-        collectAttributes: function(successCallback) {
+        collectAttributes: function(successCallback, cancellationCallback) {
             var me = this;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
@@ -178,6 +178,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
+                featureAttributesElement.find('button.cancel').on('click', cancellationCallback);
                 featureAttributesElement.find('button.save').on('click', function() {
                     var textElements = featureAttributesElement.find('.featureAttributeText');
                     var textElementAttributes = _.map(textElements, function(textElement) {

@@ -9,11 +9,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.CollectFe
      * @param {Function} successCallback
      *        Function that will be called after user has entered bus stop feature attributes from end user.
      *        Function will received collected attribute data as function parameter
+     * @param {Function} cancellationCallback
+     *        Function that will be called when user has cancelled feature attribute collection.
      */
 
-        function (successCallback) {
+        function (successCallback, cancellationCallback) {
         this._creator = null;
         this._successCallback = successCallback;
+        this._cancellationCallback = cancellationCallback;
 
     }, {
         /** @static @property __name request name */
@@ -31,6 +34,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.CollectFe
          */
         getSuccessCallback: function () {
             return this._successCallback;
+        },
+        /**
+         * @method getCancellationCallback
+         * @return {Function} cancellationCallback
+         */
+        getCancellationCallback: function () {
+            return this._cancellationCallback;
         }
 
     }, {
