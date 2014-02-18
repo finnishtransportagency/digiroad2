@@ -273,16 +273,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             var selectedLon = event.getLonLat().lon;
             var selectedLat = event.getLonLat().lat;
-            var layerName = me._layerType + "_" + me._selectedLayerId;
-            var features = me._layer[layerName] ? me._layer[layerName][me._streetLayer].features : null;
+            var features = me._getSelectedLayer(me._streetLayer).features;
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
             var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
-            me._layer[layerName][this._directionLayer].addFeatures(directionArrow);
+            me._getSelectedLayer(me._directionLayer).addFeatures(directionArrow);
             sendCollectAttributesRequest(attributesCollected, collectionCancelled);
-            var contentItem = this._makeContent([this._unknownAssetType]);
-            this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
-                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+            var contentItem = me._makeContent([me._unknownAssetType]);
+            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
+                me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
             });
 
             function attributesCollected(attributeCollection) {
@@ -296,11 +295,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         me._addNewAsset(asset);
                     });
                 });
-                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
             }
 
             function collectionCancelled() {
-                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
                 sendHideInfoboxRequest('busStop');
             }
 
