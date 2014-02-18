@@ -47,7 +47,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Update a single-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyType == "single_choice").get
+    val property = asset.propertyData.find(_.propertyName == "Pysäkin katos").get
     val modifiedProperty = property.copy(values = List(PropertyValue(2, "Kyllä")))
     provider.updateAssetProperty(asset.id, modifiedProperty.propertyId, modifiedProperty.values)
     val updatedProperty = getTestAsset.propertyData.find(_.propertyId == modifiedProperty.propertyId).get
