@@ -142,8 +142,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): AssetWithProperties = {
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int): AssetWithProperties = {
     Database.forDataSource(ds).withDynSession {
+      val creator = userProvider.getCurrentUser.username
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }

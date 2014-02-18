@@ -25,7 +25,7 @@ class NoOpAssetProvider extends AssetProvider {
     )))
   }
   def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset] = List()
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String) = {
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int) = {
     AssetWithProperties(0, assetTypeId, lon, lat, roadLinkId)
   }
   def getAssetTypes = List()
