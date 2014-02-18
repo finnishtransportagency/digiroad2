@@ -15,4 +15,5 @@ class DummyUserProvider extends UserProvider {
       case _ => Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235))
     }
   }
+  def saveUser(user: User): User = user
 }
