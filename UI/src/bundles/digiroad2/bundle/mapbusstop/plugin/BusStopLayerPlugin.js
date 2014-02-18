@@ -255,8 +255,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
 
         _hideAsset: function(marker) {
-          marker.display(false);
-          this._getSelectedLayer(this._directionLayer).destroyFeatures(marker.directionArrow);
+            //TODO: InfoBox is a direct child component of BusStopLayer, so make it so!
+            // (get rid of useless request-abstraction)
+            if (this._selectedBusStop &&  this._selectedBusStop.id == marker.id) {
+                var request = this._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest')('busStop');
+                this._sandbox.request(this, request);
+            }
+            this._getSelectedLayer(this._directionLayer).destroyFeatures(marker.directionArrow);
+            marker.display(false);
         },
 
         _showAsset: function(marker) {
