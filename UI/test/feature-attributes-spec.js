@@ -72,6 +72,7 @@ describe('FeatureAttributes', function () {
         var featureAttributes = null;
         var requestedAssetTypes = [];
         var collectedAttributes = {};
+        var collectionCancelled = 0;
 
         before(function () {
             requestedAssetTypes = [];
@@ -106,7 +107,9 @@ describe('FeatureAttributes', function () {
                 })
             });
             featureAttributes.init();
-            featureAttributes.collectAttributes(function(attributeCollection) { collectedAttributes = attributeCollection; });
+            featureAttributes.collectAttributes(
+                function(attributeCollection) { collectedAttributes = attributeCollection; },
+                function() { collectionCancelled++; });
         });
 
         it('should call backend for bus stop properties', function () {
@@ -142,30 +145,47 @@ describe('FeatureAttributes', function () {
             assert.equal('Käytössä alkaen', dateProperty.attr('name'));
         });
 
-        it('should call callback with attribute collection when save is clicked', function() {
-            var saveButton = $('button.save');
-            setTextProperty(5, 'textValue');
-            selectOptions(1, [2]);
-            selectOptions(2, [2, 4]);
-            setTextProperty('validFrom', '10.6.2014');
-            saveButton.click();
-            assert.equal(4, collectedAttributes.length);
-            assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
-            assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
-            assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
-            assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
+        describe('and save button is clicked', function() {
+            before(function() {
+                var saveButton = $('button.save');
+                setTextProperty(5, 'textValue');
+                selectOptions(1, [2]);
+                selectOptions(2, [2, 4]);
+                setTextProperty('validFrom', '10.6.2014');
+                saveButton.click();
+            });
+
+            it('should call callback with attribute collection when save is clicked', function() {
+                assert.equal(4, collectedAttributes.length);
+                assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
+                assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
+                assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+                assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
+            });
+
+            function setTextProperty(propertyId, value) {
+                var textProperty = $('input[data-propertyid="' + propertyId + '"]');
+                textProperty.val(value);
+            }
+
+            function selectOptions(propertyId, values) {
+                _.each(values, function(value) {
+                    var option = $('select[data-propertyid="' + propertyId + '"] option[value="' + value + '"]');
+                    option.prop('selected', true);
+                });
+            }
         });
 
-        function setTextProperty(propertyId, value) {
-            var textProperty = $('input[data-propertyid="' + propertyId + '"]');
-            textProperty.val(value);
-        }
-
-        function selectOptions(propertyId, values) {
-            _.each(values, function(value) {
-                var option = $('select[data-propertyid="' + propertyId + '"] option[value="' + value + '"]');
-                option.prop('selected', true);
+        describe('and when cancel button is clicked', function() {
+            before(function() {
+                collectionCancelled = 0;
+                var cancelButton = $('button.cancel');
+                cancelButton.click();
             });
-        }
+
+            it('should call cancellation callback', function() {
+                assert.equal(collectionCancelled, 1);
+            });
+        });
     });
 });

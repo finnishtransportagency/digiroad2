@@ -78,25 +78,33 @@ describe('BusStopLayerPlugin', function(){
     describe('when adding a new bus stop', function() {
         var pluginInstance = null;
         var requests = [];
-        var requestCallback = null;
+        var attributesCollectedCallback = null;
+        var collectionCancelledCallback = null;
         var assetCreationData = [];
         var assetPropertyInsertions = [];
         var attributeCollectionRequest = {};
         var attributeShowRequest = {};
         var showInfoBoxRequest = {};
+        var hideInfoBoxRequest = {};
         var requestedInfoBoxType = '';
         var requestedInfoBoxTitle = '';
+        var hiddenInfoBoxId = '';
         var addedFeature = {};
         var destroyedFeature = {};
         var addedMarker = {};
-        var attributeCollectionRequestBuilder = function(callback) {
-            requestCallback = callback;
+        var attributeCollectionRequestBuilder = function(collectedCallback, cancellationCallback) {
+            attributesCollectedCallback = collectedCallback;
+            collectionCancelledCallback = cancellationCallback;
             return attributeCollectionRequest;
         };
         var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
             requestedInfoBoxType = infoBoxType;
             requestedInfoBoxTitle = infoBoxTitle;
             return showInfoBoxRequest;
+        };
+        var hideInfoBoxRequestBuilder = function (infoBoxId) {
+            hiddenInfoBoxId = infoBoxId;
+            return hideInfoBoxRequest;
         };
         var attributeShowRequestBuilder = function() {
             return attributeShowRequest;
@@ -106,8 +114,8 @@ describe('BusStopLayerPlugin', function(){
             pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin', {
                 backend: _.extend({}, window.Backend, {
                     putAsset: function(data, success) {
-                        assetCreationData.push(data);
-                        success( data );
+                        assetCreationData.push(_.extend({}, data, { imageIds: [] }));
+                        success( _.extend({}, data, { id: 123 }) );
                     },
                     putAssetPropertyValue: function(assetId, propertyId, data) {
                         assetPropertyInsertions.push({
@@ -117,7 +125,7 @@ describe('BusStopLayerPlugin', function(){
                         });
                     },
                     getAsset: function(id, success) {
-                        success( assetCreationData.pop() );
+                        success( assetCreationData[0] );
                     }
                 }),
                 geometryCalculations: {
@@ -150,15 +158,14 @@ describe('BusStopLayerPlugin', function(){
                         return attributeCollectionRequestBuilder;
                     } else if (request === 'InfoBox.ShowInfoBoxRequest') {
                         return showInfoBoxRequestBuilder;
+                    } else if (request === 'InfoBox.HideInfoBoxRequest') {
+                        return hideInfoBoxRequestBuilder;
                     } else if (request === 'FeatureAttributes.ShowFeatureAttributesRequest') {
                         return attributeShowRequestBuilder;
                     }
                     return null;
                 },
                 request: function(name, r) { requests.push(r); }
-            });
-            pluginInstance._toolSelectionChange({
-                getAction: function() { return 'Add'; }
             });
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {
@@ -189,7 +196,7 @@ describe('BusStopLayerPlugin', function(){
                 assetCreationData = [];
                 assetPropertyInsertions = [];
                 requests = [];
-                requestCallback([
+                attributesCollectedCallback([
                     { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
                     { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'' } ] }
                 ]);
@@ -197,7 +204,7 @@ describe('BusStopLayerPlugin', function(){
 
             it('should create asset in back end', function () {
                 assert.equal(1, assetCreationData.length);
-                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95 }, assetCreationData[0]);
+                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95, imageIds: [] }, assetCreationData[0]);
             });
 
             it('should add asset properties to back end', function() {
@@ -210,7 +217,7 @@ describe('BusStopLayerPlugin', function(){
                 assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
             });
 
-            it('should show bus stop marker on marker layer', function() {
+            xit('should show bus stop marker on marker layer', function() {
                 assert.equal(addedMarker.id, 123);
             });
 
@@ -221,6 +228,23 @@ describe('BusStopLayerPlugin', function(){
 
             it('should request show of feature attributes', function() {
                 assert.equal(attributeShowRequest, requests[1]);
+            });
+        });
+
+        describe('and when feature attribute collection has been cancelled', function() {
+            before(function() {
+                requests = [];
+                destroyedFeature = {};
+                collectionCancelledCallback();
+            });
+
+            it('should remove direction arrow feature from direction arrow layer', function() {
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            });
+
+            it('should remove bus stop infobox', function() {
+                assert.equal(hideInfoBoxRequest, requests[0]);
+                assert.equal(hiddenInfoBoxId, 'busStop');
             });
         });
     });

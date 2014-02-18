@@ -231,7 +231,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'actionpanel.ActionPanelToolSelectionChangedEvent': function (event) {
                 this._toolSelectionChange(event);
             },'MapClickedEvent': function (event) {
-                this._addBusStopEvent(event);
+                if (this._selectedControl === 'Add') {
+                    this._addBusStopEvent(event);
+                }
             },
             'actionpanel.ValidityPeriodChangedEvent': function(event) {
               this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
@@ -260,37 +262,50 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
           marker.display(true);
           this._getSelectedLayer(this._directionLayer).addFeatures(marker.directionArrow);
         },
-
         _addBusStopEvent: function(event){
             var me = this;
-            if (this._selectedControl === 'Add') {
-                var selectedLon = event.getLonLat().lon;
-                var selectedLat = event.getLonLat().lat;
-                var layerName = me._layerType + "_" + me._selectedLayerId;
-                var features = me._layer[layerName] ? me._layer[layerName][me._streetLayer].features : null;
-                var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
-                var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-                var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
-                me._layer[layerName][this._directionLayer].addFeatures(directionArrow);
-                sendCollectAttributesRequest(function (attributeCollection) {
-                    // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
-                    me._backend.putAsset({ assetTypeId: 10, lon: selectedLon, lat: selectedLat, roadLinkId: nearestLine.roadLinkId, bearing: bearing }, function (asset) {
-                        _.each(attributeCollection, function(attribute) {
-                            me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
-                        });
-                        // TODO FIXME: the saved asset doesn't have images until the specific property is saved and it must be loaded again
-                        me._backend.getAsset(asset.id, function(asset) {
-                            me._addNewAsset(asset);
-                        });
+            var selectedLon = event.getLonLat().lon;
+            var selectedLat = event.getLonLat().lat;
+            var layerName = me._layerType + "_" + me._selectedLayerId;
+            var features = me._layer[layerName] ? me._layer[layerName][me._streetLayer].features : null;
+            var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
+            var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
+            var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
+            me._layer[layerName][this._directionLayer].addFeatures(directionArrow);
+            sendCollectAttributesRequest(attributesCollected, collectionCancelled);
+            var contentItem = this._makeContent([this._unknownAssetType]);
+            this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
+                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+            });
+
+            function attributesCollected(attributeCollection) {
+                // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
+                me._backend.putAsset({ assetTypeId: 10, lon: selectedLon, lat: selectedLat, roadLinkId: nearestLine.roadLinkId, bearing: bearing }, function (asset) {
+                    _.each(attributeCollection, function (attribute) {
+                        me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
                     });
-                    me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                    // TODO FIXME: the saved asset doesn't have images until the specific property is saved and it must be loaded again
+                    me._backend.getAsset(asset.id, function (asset) {
+                        me._addNewAsset(asset);
+                    });
                 });
-                var contentItem = this._makeContent([this._unknownAssetType]);
-                this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat());
+                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
             }
-            function sendCollectAttributesRequest(callback) {
+
+            function collectionCancelled() {
+                me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
+                sendHideInfoboxRequest('busStop');
+            }
+
+            function sendCollectAttributesRequest(callback, cancellationCallback) {
                 var requestBuilder = me._sandbox.getRequestBuilder('FeatureAttributes.CollectFeatureAttributesRequest');
-                var request = requestBuilder(callback);
+                var request = requestBuilder(callback, cancellationCallback);
+                me._sandbox.request(me.getName(), request);
+            }
+
+            function sendHideInfoboxRequest(infoBoxId) {
+                var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
+                var request = requestBuilder(infoBoxId);
                 me._sandbox.request(me.getName(), request);
             }
         },
@@ -405,18 +420,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
             return contentItem;
         },
-        _sendPopupRequest:function(id, title, busStopId, content, lonlat) {
+        _sendPopupRequest:function(id, title, busStopId, content, lonlat, popupClosedCallback) {
             var me = this;
             var requestBuilder = this._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
-            var request = requestBuilder("busStop", title, [content], lonlat, true);
+            var request = requestBuilder('busStop', title, [content], lonlat, true);
             this._sandbox.request(this.getName(), request);
 
             var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection("EPSG:3067"), new OpenLayers.Projection("EPSG:4326"));
+            var wgs84 = OpenLayers.Projection.transform(point, new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
 
-            jQuery(".popupInfoChangeDirection").on("click", function() {
+            jQuery('.popupInfoChangeDirection').on('click', function() {
                 me._directionChange(busStopId, wgs84);
             });
+
+            if (_.isFunction(popupClosedCallback)) {
+                jQuery('.olPopupCloseBox').on('click', popupClosedCallback);
+            }
         },
         _directionChange:function(assetId, point) {
             var eventBuilder = this._sandbox.getEventBuilder('mapbusstop.AssetDirectionChangeEvent');
