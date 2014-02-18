@@ -82,10 +82,10 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetCreationData = [];
         var assetPropertyInsertions = [];
-        var attributeCollectionRequest = {};
-        var attributeShowRequest = {};
-        var showInfoBoxRequest = {};
-        var hideInfoBoxRequest = {};
+        var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
+        var attributeShowRequest = { name: 'attributeShowRequest' };
+        var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
+        var hideInfoBoxRequest = { name: 'hideInfoBoxRequest' };
         var requestedInfoBoxType = '';
         var requestedInfoBoxTitle = '';
         var hiddenInfoBoxId = '';
@@ -95,19 +95,19 @@ describe('BusStopLayerPlugin', function(){
         var attributeCollectionRequestBuilder = function(collectedCallback, cancellationCallback) {
             attributesCollectedCallback = collectedCallback;
             collectionCancelledCallback = cancellationCallback;
-            return attributeCollectionRequest;
+            return _.clone(attributeCollectionRequest);
         };
         var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
             requestedInfoBoxType = infoBoxType;
             requestedInfoBoxTitle = infoBoxTitle;
-            return showInfoBoxRequest;
+            return _.clone(showInfoBoxRequest);
         };
         var hideInfoBoxRequestBuilder = function (infoBoxId) {
             hiddenInfoBoxId = infoBoxId;
-            return hideInfoBoxRequest;
+            return _.clone(hideInfoBoxRequest);
         };
         var attributeShowRequestBuilder = function() {
-            return attributeShowRequest;
+            return _.clone(attributeShowRequest);
         };
 
         before(function() {
@@ -125,7 +125,7 @@ describe('BusStopLayerPlugin', function(){
                         });
                     },
                     getAsset: function(id, success) {
-                        success( assetCreationData[0] );
+                        success(_.extend({}, assetCreationData[0], { validityPeriod: 'current' }) );
                     }
                 }),
                 geometryCalculations: {
@@ -178,11 +178,11 @@ describe('BusStopLayerPlugin', function(){
         });
 
         it('should request collection of feature attributes', function() {
-            assert.equal(attributeCollectionRequest, requests[0]);
+            assert.deepEqual(attributeCollectionRequest, requests[0]);
         });
 
         it('should request bus stop infobox', function() {
-            assert.equal(showInfoBoxRequest, requests[1]);
+            assert.deepEqual(showInfoBoxRequest, requests[1]);
             assert.equal('busStop', requestedInfoBoxType);
             assert.equal('Uusi Pysäkki', requestedInfoBoxTitle);
         });
@@ -222,12 +222,13 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should request bus stop infobox', function() {
-                assert.equal(showInfoBoxRequest, requests[0]);
+                assert.equal(requests.length, 2);
+                assert.deepEqual(showInfoBoxRequest, requests[0]);
                 assert.equal('busStop', requestedInfoBoxType);
             });
 
             it('should request show of feature attributes', function() {
-                assert.equal(attributeShowRequest, requests[1]);
+                assert.deepEqual(attributeShowRequest, requests[1]);
             });
         });
 
@@ -243,7 +244,7 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove bus stop infobox', function() {
-                assert.equal(hideInfoBoxRequest, requests[0]);
+                assert.deepEqual(hideInfoBoxRequest, requests[0]);
                 assert.equal(hiddenInfoBoxId, 'busStop');
             });
         });
