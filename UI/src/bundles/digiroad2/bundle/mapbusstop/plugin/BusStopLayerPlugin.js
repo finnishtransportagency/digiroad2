@@ -276,7 +276,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var features = me._getSelectedLayer(me._streetLayer).features;
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-            var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
+            var directionArrow = me._getDirectionArrow(bearing, 1, selectedLon, selectedLat);
             me._getSelectedLayer(me._directionLayer).addFeatures(directionArrow);
             sendCollectAttributesRequest(attributesCollected, collectionCancelled);
             var contentItem = me._makeContent([me._unknownAssetType]);
@@ -319,8 +319,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(asset.imageIds);
             var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
-            var angle = this._getAngleFromBearing(asset.bearing, validityDirection);
-            var directionArrow = this._getDirectionArrow(angle, asset.lon, asset.lat);
+            var directionArrow = this._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
             this._getSelectedLayer(this._directionLayer).addFeatures(directionArrow);
             this._selectedBusStop = this._addBusStop(asset, this._getSelectedLayer(this._assetLayer),
                 this._selectedLayerId, directionArrow, this._getSelectedLayer(this._directionLayer), validityDirection);
@@ -363,7 +362,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _getAngleFromBearing: function(bearing, validityDirection) {
             return (bearing) ? bearing + (90 * validityDirection): 90;
         },
-        _getDirectionArrow: function(angle, lon, lat) {
+        _getDirectionArrow: function(bearing, validityDirection, lon, lat) {
+            var angle = this._getAngleFromBearing(bearing, validityDirection);
             return new OpenLayers.Feature.Vector(
                 new OpenLayers.Geometry.Point(lon, lat),
                 null,
@@ -489,8 +489,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 _.each(assets, function (asset) {
                     var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
-                    var angle = me._getAngleFromBearing(asset.bearing, validityDirection);
-                    var directionArrow = me._getDirectionArrow(angle, asset.lon, asset.lat);
+                    var directionArrow = me._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
                     directionLayer.addFeatures(directionArrow);
                     me._addBusStop(asset, busStops, layer.getId(), directionArrow, directionLayer, validityDirection);
                 });
