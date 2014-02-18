@@ -278,10 +278,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
             var directionArrow = me._getDirectionArrow(me._getAngleFromBearing(bearing, 1), selectedLon, selectedLat);
-            me._layer[layerName][this._directionLayer].addFeatures(directionArrow);
+            me._layer[layerName][me._directionLayer].addFeatures(directionArrow);
             sendCollectAttributesRequest(attributesCollected, collectionCancelled);
-            var contentItem = this._makeContent([this._unknownAssetType]);
-            this._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
+            var contentItem = me._makeContent([me._unknownAssetType]);
+            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
                 me._layer[layerName][me._directionLayer].destroyFeatures(directionArrow);
             });
 
