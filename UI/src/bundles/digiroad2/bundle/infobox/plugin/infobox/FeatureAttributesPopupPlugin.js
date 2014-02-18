@@ -354,15 +354,6 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
             }
             // else notify popup not found?
         },
-        onEvent: function (event) {
-            return this.eventHandlers[event.getName()].apply(this, [event]);
-        },
-        eventHandlers: {
-            'mapbusstop.AssetHiddenEvent': function (event) {
-                this.close(event.getId());
-            }
-        },
-
         /**
          * @method getPopups
          * Returns references to popups that are currently open
@@ -392,11 +383,8 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
          */
         startPlugin: function (sandbox) {
             this._sandbox = sandbox;
-            this._map = this.getMapModule().getMap();
             sandbox.register(this);
-            for (var p in this.eventHandlers) {
-                sandbox.registerForEventByName(this, p);
-            }
+
         },
         /**
          * @method stopPlugin
@@ -405,10 +393,9 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
          * Unregisters self from sandbox
          */
         stopPlugin: function (sandbox) {
-            for (var p in this.eventHandlers) {
-                sandbox.unregisterFromEventByName(this, p);
-            }
+
             sandbox.unregister(this);
+
             this._map = null;
             this._sandbox = null;
         },

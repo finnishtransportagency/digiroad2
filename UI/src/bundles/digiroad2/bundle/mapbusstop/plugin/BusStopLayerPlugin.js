@@ -255,9 +255,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
 
         _hideAsset: function(marker) {
-            var eventBuilder = this._sandbox.getEventBuilder('mapbusstop.AssetHiddenEvent');
-            var event = eventBuilder(marker.id.toString());
-            this._sandbox.notifyAll(event);
+            //TODO: send assetHiddenEvent and set the infobox and featureattributes bundles listening the event.
+            if (this._selectedBusStop &&  this._selectedBusStop.id == marker.id) {
+                var request = this._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest')("busStop");
+                this._sandbox.request(this, request);
+            }
             this._getSelectedLayer(this._directionLayer).destroyFeatures(marker.directionArrow);
             marker.display(false);
         },
@@ -323,7 +325,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._selectedBusStop = this._addBusStop(asset, this._getSelectedLayer(this._assetLayer),
                 this._selectedLayerId, directionArrow, this._getSelectedLayer(this._directionLayer), validityDirection);
             this._selectedBusStopLayer = this._getSelectedLayer(this._assetLayer);
-            this._sendPopupRequest(asset.id, asset.id, contentItem, lonLat);
+            this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
             var streetViewCoordinates = {
                 lonLat: lonLat,
@@ -659,7 +661,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
                 me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
                 var contentItem = me._makeContent(imageIds);
-                me._sendPopupRequest(busStop.id, busStop.id, contentItem, busStop.lonlat);
+                me._sendPopupRequest("busStop", busStop.id, busStop.id, contentItem, busStop.lonlat);
                 me._selectedBusStop.display(false);
                 OpenLayers.Event.stop(evt);
             };
