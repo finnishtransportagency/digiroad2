@@ -55,17 +55,17 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  private[oracle] def getImageId(imageId: Option[Long], imageLastModified: Option[Timestamp]) = {
-    imageId match {
+  private[oracle] def getImageId(image: Image) = {
+    image.imageId match {
       case None => null
-      case _ => imageId.get + "_" + imageLastModified.get.getTime
+      case _ => image.imageId.get + "_" + image.lastModified.get.getMillis
     }
   }
 
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
     assetRows.groupBy(_.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
-      Property(row.propertyId.toString, row.propertyName, row.propertyType, row.propertyRequired, v.map(r => PropertyValue(r.propertyValue, r.propertyDisplayValue, getImageId(r.imageId, r.imageLastModified))).filter(_.propertyDisplayValue != null).toSeq)
+      Property(row.propertyId.toString, row.propertyName, row.propertyType, row.propertyRequired, v.map(r => PropertyValue(r.propertyValue, r.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
     }.toSeq
   }
 
@@ -75,10 +75,10 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         val row = v(0)
         AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
               lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-              propertyData = assetRowToProperty(v) ++ AssetPropertyConfiguration.assetRowToCommonProperties(row),
+              propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v),
               bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
               validityPeriod = validityPeriod(row.validFrom, row.validTo),
-              imageIds = v.map(row => getImageId(row.imageId, row.imageLastModified)).toSeq.filter(_ != null),
+              imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
               validityDirection = Some(row.validityDirection))
       }.headOption
     }
@@ -116,7 +116,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         val row = v(0)
         Asset(id = row.id, assetTypeId = row.assetTypeId, lon = row.lon,
               lat = row.lat, roadLinkId = row.roadLinkId,
-              imageIds = v.map(row => getImageId(row.imageId, row.imageLastModified)).toSeq,
+              imageIds = v.map(row => getImageId(row.image)).toSeq,
               bearing = row.bearing,
               validityDirection = Some(row.validityDirection),
               status = assetStatus(validFrom, validTo, row.roadLinkEndDate),
@@ -142,8 +142,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Some(status)
   }
 
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String): AssetWithProperties = {
+  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int): AssetWithProperties = {
     Database.forDataSource(ds).withDynSession {
+      val creator = userProvider.getCurrentUser.username
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
@@ -330,11 +331,11 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         Property(r.nextString(), r.nextString, r.nextString, r.nextBoolean(), Seq())
       }
     }
-    Database.forDataSource(ds).withDynSession {
+    AssetPropertyConfiguration.commonAssetPropertyDescriptors.values.toSeq ++ Database.forDataSource(ds).withDynSession {
       sql"""
         select id, name_fi, property_type, required from property where asset_type_id = $assetTypeId
-      """.as[Property].list
-    } ++ AssetPropertyConfiguration.commonAssetPropertyDescriptors.values
+      """.as[Property].list.sortBy(_.propertyId)
+    }
   }
 
 }

@@ -22,6 +22,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val MunicipalityEspoo = 49
   val TestAssetId = 100
   val TestAssetTypeId = 10
+  val AssetCreator = "integration_test_add_asset"
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
   val user = User(
@@ -30,6 +31,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val unauthorizedUser =
     user.copy(configuration = Configuration(authorizedMunicipalities = Set(666999l)))
+  val creatingUser = user.copy(username = AssetCreator)
 
   implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
     asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.status, asset.readOnly, asset.municipalityNumber)
@@ -63,10 +65,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("add asset to database", Tag("db")) {
-    val AssetCreator = "integration_test_add_asset"
+    userProvider.setCurrentUser(creatingUser)
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
-      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator)
+      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180)
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
@@ -78,14 +80,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("add asset to database without write access fails", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
-    val AssetCreator = "integration_test_add_asset"
     val existingAsset = provider.getAssetById(TestAssetId).get
-    try {
-      intercept[IllegalArgumentException] {
-        provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator)
-      }
-    } finally {
-      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    intercept[IllegalArgumentException] {
+      provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180)
     }
   }
 

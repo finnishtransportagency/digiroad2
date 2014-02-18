@@ -127,6 +127,12 @@
     padding-top: 10px;
 }
 
+.readOnlyRow {
+    color: #8A8A8A;
+    float: left;
+    font-size: 11px;
+}
+
 .formControls button {
     float: right;
     border: 0;

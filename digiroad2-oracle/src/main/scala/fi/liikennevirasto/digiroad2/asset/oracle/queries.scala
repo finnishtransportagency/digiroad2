@@ -25,27 +25,32 @@ object Queries {
     }
   }
 
+  case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
+  case class Image(imageId: Option[Long], lastModified: Option[DateTime])
+
   case class AssetRow(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], propertyId: Long,
                       propertyName: String, propertyType: String, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String,
-                      imageId: Option[Long], imageLastModified: Option[Timestamp], roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Long)
+                      image: Image, roadLinkEndDate: Option[LocalDate],
+                      municipalityNumber: Long, created: Modification, modified: Modification)
 
   case class ListedAssetRow(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp],
-                      imageId: Option[Long], imageLastModified: Option[Timestamp], roadLinkEndDate: Option[LocalDate],
+                      image: Image, roadLinkEndDate: Option[LocalDate],
                       municipalityNumber: Long)
 
   implicit val getAssetWithPosition = new GetResult[(AssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
       val (id, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, propertyId, propertyName, propertyType, propertyRequired, propertyValue,
-      propertyDisplayValue, lrmId, startMeasure, endMeasure, roadLinkId, imageId, imageLastModified, roadLinkEndDate, municipalityNumber) =
+        propertyDisplayValue, lrmId, startMeasure, endMeasure, roadLinkId, image: Image, roadLinkEndDate, municipalityNumber,
+        created: Modification, modified: Modification) =
         (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString,
-        r.nextLong, r.nextInt, r.nextInt, r.nextLong, r.nextLongOption, r.nextTimestampOption, r.nextDateOption().map(new LocalDate(_)), r.nextLong())
+          r.nextLong, r.nextInt, r.nextInt, r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextLong,
+          new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption), new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption))
       val posGeom = JGeometry.load(pos)
       (AssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, propertyId, propertyName, propertyType, propertyRequired, propertyValue, propertyDisplayValue, imageId,
-        imageLastModified, roadLinkEndDate, municipalityNumber),
+        validFrom, validTo, propertyId, propertyName, propertyType, propertyRequired, propertyValue, propertyDisplayValue, image,
+        roadLinkEndDate, municipalityNumber, created, modified),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
     }
   }
@@ -53,12 +58,12 @@ object Queries {
   implicit val getListedAssetWithPosition = new GetResult[(ListedAssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
       val (id, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
-      roadLinkId, imageId, imageLastModified, roadLinkEndDate, municipalityNumber) =
+      roadLinkId, image, roadLinkEndDate, municipalityNumber) =
         (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextInt, r.nextInt,
-          r.nextLong, r.nextLongOption, r.nextTimestampOption, r.nextDateOption().map(new LocalDate(_)), r.nextLong())
+          r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption().map(new LocalDate(_)), r.nextLong())
       val posGeom = JGeometry.load(pos)
       (ListedAssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, imageId, imageLastModified, roadLinkEndDate, municipalityNumber),
+        validFrom, validTo, image, roadLinkEndDate, municipalityNumber),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
     }
   }
@@ -114,7 +119,7 @@ object Queries {
       else null
     end as display_value,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
-    rl.end_date, rl.municipality_number
+    rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by
     from asset_type t
       join asset a on a.asset_type_id = t.id
         join lrm_position lrm on a.lrm_position_id = lrm.id

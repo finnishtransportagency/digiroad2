@@ -119,6 +119,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                             ' value="{{propertyDisplayValue}}">' +
                                                          '</div>' +
                                                      '</div>');
+            me._featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{propertyName}}: {{propertyDisplayValue}}</div>');
             me._featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
                                                         '<div class="formLabels">{{propertyName}}</div>' +
                                                         '<div class="formAttributeContent">' +
@@ -268,6 +269,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
                         }
                         html += me._featureDataTemplateText(feature);
+                    } else if (feature.propertyType == "read_only_text") {
+                        feature.propertyValue = "";
+                        feature.propertyDisplayValue = "";
+                        if (feature.values[0]) {
+                            feature.propertyValue = feature.values[0].propertyValue;
+                            feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
+                        }
+                        html += me._featureDataTemplateReadOnlyText(feature);
                     } else if (feature.propertyType == "single_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
                         html += me._featureDataTemplate(feature);
