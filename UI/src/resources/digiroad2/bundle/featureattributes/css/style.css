@@ -129,8 +129,8 @@
 
 .readOnlyRow {
     color: #8A8A8A;
-    float: right;
-    font-size: 10px;
+    float: left;
+    font-size: 11px;
 }
 
 .formControls button {
