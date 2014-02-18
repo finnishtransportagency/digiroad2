@@ -80,6 +80,7 @@ describe('BusStopLayerPlugin', function(){
         var requests = [];
         var attributesCollectedCallback = null;
         var collectionCancelledCallback = null;
+        var assetPosition = null;
         var assetCreationData = [];
         var assetPropertyInsertions = [];
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
@@ -92,7 +93,8 @@ describe('BusStopLayerPlugin', function(){
         var addedFeature = {};
         var destroyedFeature = {};
         var addedMarker = {};
-        var attributeCollectionRequestBuilder = function(collectedCallback, cancellationCallback) {
+        var attributeCollectionRequestBuilder = function(position, collectedCallback, cancellationCallback) {
+            assetPosition = position;
             attributesCollectedCallback = collectedCallback;
             collectionCancelledCallback = cancellationCallback;
             return _.clone(attributeCollectionRequest);

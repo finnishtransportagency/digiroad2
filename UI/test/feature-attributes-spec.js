@@ -71,6 +71,7 @@ describe('FeatureAttributes', function () {
     describe('when feature attribute collection is requested', function () {
         var featureAttributes = null;
         var requestedAssetTypes = [];
+        var assetPosition = { lonLat : new OpenLayers.LonLat(374793,6677589), bearing : 90, validityDirection : 2 };
         var collectedAttributes = {};
         var collectionCancelled = 0;
 
@@ -107,7 +108,7 @@ describe('FeatureAttributes', function () {
                 })
             });
             featureAttributes.init();
-            featureAttributes.collectAttributes(
+            featureAttributes.collectAttributes(assetPosition,
                 function(attributeCollection) { collectedAttributes = attributeCollection; },
                 function() { collectionCancelled++; });
         });
