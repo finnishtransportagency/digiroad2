@@ -269,6 +269,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
           marker.display(true);
           this._getSelectedLayer(this._directionLayer).addFeatures(marker.directionArrow);
         },
+        _addDirectionArrow: function (bearing, validityDirection, lon, lat) {
+            var directionArrow = this._getDirectionArrow(bearing, validityDirection, lon, lat);
+            this._getSelectedLayer(this._directionLayer).addFeatures(directionArrow);
+            return directionArrow;
+        },
         _addBusStopEvent: function(event){
             var me = this;
             var selectedLon = event.getLonLat().lon;
@@ -276,8 +281,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var features = me._getSelectedLayer(me._streetLayer).features;
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-            var directionArrow = me._getDirectionArrow(bearing, 1, selectedLon, selectedLat);
-            me._getSelectedLayer(me._directionLayer).addFeatures(directionArrow);
+            var directionArrow = this._addDirectionArrow(bearing, 1, selectedLon, selectedLat);
             sendCollectAttributesRequest(attributesCollected, collectionCancelled);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
@@ -319,8 +323,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(asset.imageIds);
             var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
-            var directionArrow = this._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
-            this._getSelectedLayer(this._directionLayer).addFeatures(directionArrow);
+            var directionArrow = this._addDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
             this._selectedBusStop = this._addBusStop(asset, this._getSelectedLayer(this._assetLayer),
                 this._selectedLayerId, directionArrow, this._getSelectedLayer(this._directionLayer), validityDirection);
             this._selectedBusStopLayer = this._getSelectedLayer(this._assetLayer);
