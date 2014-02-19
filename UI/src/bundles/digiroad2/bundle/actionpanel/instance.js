@@ -12,7 +12,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
         this.sandbox = null;
         this.started = false;
         this.mediator = null;
-       }, {
+        this._cursor = {};
+    }, {
         /**
          * @static
          * @property __name
@@ -67,7 +68,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                 }
             }
             this._showPanel();
-
         },
         /**
          * @method init
@@ -75,92 +75,56 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
          */
         init : function() {
             var me = this;
-            _.templateSettings = {
-                interpolate: /\{\{(.+?)\}\}/g
-            };
-            me._panelControl = '<div class="panelControl">' +
-                                   '<div class="panelControlLine"></div>' +
-                                   '<div class="panelControlLine"></div>' +
-                                   '<div class="panelControlLine"></div>' +
-                               '</div>'+
-                               '<div class="actionPanel">' +
-                                    '<div class="layerGroup">' +
-                                        '<div class="layerGroupImg">' +
-                                            '<img src="src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
-                                        '</div>' +
-                                        '<div class="layerGroupLabel">Joukkoliikenteen pysäkit</div>' +
-                                    '</div>' +
-                                    '<div class="layerGroupLayers">' +
-                                    '</div>' +
-                               '</div>';
-
-            me._mapBusStopLayer = _.template('<div class="busStopLayer">' +
-                                                '<div class="busStopLayerCheckbox"><input class="layerSelector" type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
-                                                '<div class="busStopLayerName">{{name}}</div>' +
-                                             '</div>');
-            me._actionButtons =
-                '<div class="actionButtons">' +
-                    '<div data-action="Select" class="actionButton actionButtonActive actionPanelButtonSelect">' +
-                        '<div class="actionPanelButtonSelectImage actionPanelButtonSelectActiveImage"></div>' +
-                    '</div>' +
-                    '<div data-action="Add" class="actionButton actionPanelButtonAdd">' +
-                        '<div class="actionPanelButtonAddImage"></div>' +
-                    '</div>' +
-                    '<div data-action="Remove" class="actionButton actionPanelButtonRemove">' +
-                        '<div class="actionPanelButtonRemoveImage"></div>' +
-                    '</div>' +
-                '</div>';
-
+            me._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.actionpanel.template.Templates');
+            me._cursor = {'Select' : 'pointer', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
             return null;
         },
         _showPanel : function() {
             var me = this;
-            
-            jQuery("#maptools").html(me._panelControl);
+            jQuery("#maptools").html(me._templates.panelControl);
             jQuery(".panelControl").on("click", function() {
                 jQuery(".actionPanel").toggleClass('actionPanelClosed');
             });
 
-            // FIXME: Does not really render anything just binds
-            var renderActionButtons = function() {
-              jQuery(".actionButton").on("click", function() {
-                var data = jQuery(this);
-                var action = data.attr('data-action');
-                jQuery(".actionButtonActive").removeClass("actionButtonActive");
-                jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
-                jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
-                jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
-                jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
-                jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
-    
-                var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ActionPanelToolSelectionChangedEvent');
-                var event = eventBuilder(action);
-                me.getSandbox().notifyAll(event);
-              });
+            var bindActionButtons = function() {
+                jQuery(".actionButton").on("click", function() {
+                    var data = jQuery(this);
+                    var action = data.attr('data-action');
+                    jQuery(".actionButtonActive").removeClass("actionButtonActive");
+                    jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
+                    jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
+                    jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
+                    jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
+                    jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
+                    jQuery(".olMap").css('cursor', me._cursor[action]);
+                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ActionPanelToolSelectionChangedEvent');
+                    var event = eventBuilder(action);
+                    me.getSandbox().notifyAll(event);
+                });
             };
-            
+
             var renderAssetValidityPeriodSelector = function() {
-              var layers = [{id: "current", label: "Voimassaolevat", selected: true},
-                            {id: "future", label: "Tulevat"},
-                            {id: "past", label: "Käytöstä poistuneet"}];
-              _.forEach(layers, function (layer) {
-                  jQuery(".layerGroupLayers").append(me._mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
-              });
-              jQuery(".layerSelector").on("change", function() {
-                  var selectedValidityPeriods = $('input.layerSelector').filter(function(_, v) {
-                    return $(v).is(':checked');
-                  }).map(function(_, v) {
-                    return $(v).attr('data-validity-period');
-                  }).toArray();
-                  var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodChangedEvent');
-                  var event = eventBuilder(selectedValidityPeriods);
-                  me.getSandbox().notifyAll(event);
-              });
-              jQuery(".actionPanel").append(me._actionButtons);
+                var layers = [{id: "current", label: "Voimassaolevat", selected: true},
+                    {id: "future", label: "Tulevat"},
+                    {id: "past", label: "Käytöstä poistuneet"}];
+                _.forEach(layers, function (layer) {
+                    jQuery(".layerGroupLayers").append(me._templates.mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
+                });
+                jQuery(".layerSelector").on("change", function() {
+                    var selectedValidityPeriods = $('input.layerSelector').filter(function(_, v) {
+                        return $(v).is(':checked');
+                    }).map(function(_, v) {
+                            return $(v).attr('data-validity-period');
+                        }).toArray();
+                    var eventBuilder = me.getSandbox().getEventBuilder('actionpanel.ValidityPeriodChangedEvent');
+                    var event = eventBuilder(selectedValidityPeriods);
+                    me.getSandbox().notifyAll(event);
+                });
+                jQuery(".actionPanel").append(me._templates.actionButtons);
             };
-            
+
             renderAssetValidityPeriodSelector();
-            renderActionButtons();
+            bindActionButtons();
         },
         /**
          * @method onEvent
