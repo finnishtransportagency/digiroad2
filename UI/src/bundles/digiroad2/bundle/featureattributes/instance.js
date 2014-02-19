@@ -178,6 +178,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
+                featureAttributesElement.find('.featureattributeChoice').on('change', function() {
+                    var jqElement = jQuery(this);
+                    me._sendFeatureChangedEvent({
+                        propertyData: [{
+                            propertyId: jqElement.attr('data-propertyId'),
+                            values: me._propertyValuesOfSelectionElement(jqElement)
+                        }]
+                    });
+                });
                 featureAttributesElement.find('button.cancel').on('click', cancellationCallback);
                 featureAttributesElement.find('button.save').on('click', function() {
                     var textElements = featureAttributesElement.find('.featureAttributeText');
