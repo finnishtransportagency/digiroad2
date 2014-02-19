@@ -141,15 +141,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             return null;
         },
-        showAttributes : function(id, streetViewCoordinates) {
+        showAttributes : function(id, assetPosition) {
             var me = this;
             me._featureDataAssetId = id;
             me._backend.getAsset(id, function(asset) {
                 var featureData = me._makeContent(asset.propertyData);
-                var wgs84 = OpenLayers.Projection.transform(
-                    new OpenLayers.Geometry.Point(streetViewCoordinates.lonLat.lon, streetViewCoordinates.lonLat.lat),
-                    new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-                var streetView =  me._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
+                assetPosition.validityDirection = asset.validityDirection;
+                assetPosition.bearing = asset.bearing;
+                var streetView = me._getStreetView(assetPosition);
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
                 jQuery("#featureAttributes").html(featureAttributes);
                 me._addDatePickers();
@@ -169,13 +168,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 });
             });
         },
-        collectAttributes: function(successCallback, cancellationCallback) {
+        collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
             var me = this;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : null, attributes : featureData, controls: me._featureDataControls({}) });
+                var streetView = me._getStreetView(assetPosition);
+                var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
                 featureAttributesElement.find('button.cancel').on('click', cancellationCallback);
@@ -209,6 +209,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     successCallback(textElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
                 });
             }
+        },
+        _getStreetView: function(assetPosition) {
+            var wgs84 = OpenLayers.Projection.transform(
+                new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
+                new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
+            var streetView = this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
+            return streetView;
         },
         _addDatePickers: function () {
             var dateAttribute = jQuery('.featureAttributeDate');

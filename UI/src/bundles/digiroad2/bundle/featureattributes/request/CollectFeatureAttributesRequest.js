@@ -13,10 +13,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.CollectFe
      *        Function that will be called when user has cancelled feature attribute collection.
      */
 
-        function (successCallback, cancellationCallback) {
+        function (assetPosition, successCallback, cancellationCallback) {
         this._creator = null;
         this._successCallback = successCallback;
         this._cancellationCallback = cancellationCallback;
+        this._assetPosition = assetPosition;
 
     }, {
         /** @static @property __name request name */
@@ -41,8 +42,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.CollectFe
          */
         getCancellationCallback: function () {
             return this._cancellationCallback;
+        },
+        /**
+         * @method getAssetPosition
+         * @return {Object} assetPosition
+         */
+        getAssetPosition: function () {
+            return this._assetPosition;
         }
-
     }, {
         /**
          * @property {String[]} protocol array of superclasses as {String}
