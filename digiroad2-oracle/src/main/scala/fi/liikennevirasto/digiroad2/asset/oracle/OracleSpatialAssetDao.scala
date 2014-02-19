@@ -70,19 +70,6 @@ object OracleSpatialAssetDao {
     }.headOption
   }
 
-  def getAssetByIdTx(assetId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
-      val row = v(0)
-      AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
-            lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-            propertyData = assetRowToProperty(v) ++ AssetPropertyConfiguration.assetRowToCommonProperties(row),
-            bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
-            validityPeriod = validityPeriod(row.validFrom, row.validTo),
-            imageIds = v.map(row => getImageId(row.imageId, row.imageLastModified)).toSeq.filter(_ != null),
-            validityDirection = Some(row.validityDirection))
-    }.headOption
-  }
-
   def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) {
@@ -191,11 +178,6 @@ object OracleSpatialAssetDao {
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
-
-  def getRoadLinkByIdTx(roadLinkId: Long): Option[RoadLink] = {
-    Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
-  }
-
 
   def updateAssetSpecificProperty(assetId: Long, propertyId: Long, propertyValues: Seq[PropertyValue]) {
     val asset = getAssetById(assetId)
