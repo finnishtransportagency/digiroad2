@@ -60,6 +60,17 @@ values (4, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
 values (5, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Esteettömyystiedot', ' ', 'text');
 
+
 -- Ylläpitäjän tunnus
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
 values (6, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän tunnus', ' ', 'text');
+
+
+-- Ylläpitäjän sähköposti
+insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
+values (7, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän sähköposti', ' ', 'text');
+
+
+-- Kommentit
+insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
+values (10, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Kommentit', ' ', 'text');
