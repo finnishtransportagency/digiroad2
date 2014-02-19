@@ -74,6 +74,20 @@ describe('FeatureAttributes', function () {
         var assetPosition = { lonLat : new OpenLayers.LonLat(24.742746,60.208588), bearing : 90, validityDirection : 2 };
         var collectedAttributes = {};
         var collectionCancelled = 0;
+        var mockSandbox = {
+            sentEvent: null,
+            notifyAll: function(event) {
+                this.sentEvent = event;
+            },
+            getEventBuilder: function(event) {
+                return function(parameter) {
+                    return {
+                        name: event,
+                        parameter: parameter
+                    };
+                };
+            }
+        };
 
         before(function () {
             requestedAssetTypes = [];
@@ -107,6 +121,7 @@ describe('FeatureAttributes', function () {
                     }
                 })
             });
+            featureAttributes.setSandbox(mockSandbox);
             featureAttributes.init();
             featureAttributes.collectAttributes(assetPosition,
                 function(attributeCollection) { collectedAttributes = attributeCollection; },
@@ -146,6 +161,23 @@ describe('FeatureAttributes', function () {
             assert.equal('Käytössä alkaen', dateProperty.attr('name'));
         });
 
+        describe('and single choice field "Pysäkin katos" is changed', function() {
+            before(function() { selectOptions(1, [2]); });
+
+            it('should send feature changed event', function() {
+                assert.equal(mockSandbox.sentEvent.name, 'featureattributes.FeatureAttributeChangedEvent');
+                assert.deepEqual(mockSandbox.sentEvent.parameter, {
+                    propertyData: [{
+                        propertyId: '1',
+                        values: [{
+                            propertyValue: 2,
+                            propertyDisplayValue: 'Pysäkin katos'
+                        }]
+                    }]
+                });
+            });
+        });
+
         describe('and save button is clicked', function() {
             before(function() {
                 var saveButton = $('button.save');
@@ -168,13 +200,6 @@ describe('FeatureAttributes', function () {
                 var textProperty = $('input[data-propertyid="' + propertyId + '"]');
                 textProperty.val(value);
             }
-
-            function selectOptions(propertyId, values) {
-                _.each(values, function(value) {
-                    var option = $('select[data-propertyid="' + propertyId + '"] option[value="' + value + '"]');
-                    option.prop('selected', true);
-                });
-            }
         });
 
         describe('and when cancel button is clicked', function() {
@@ -188,5 +213,14 @@ describe('FeatureAttributes', function () {
                 assert.equal(collectionCancelled, 1);
             });
         });
+
+        function selectOptions(propertyId, values) {
+            var selectionElement = $('select[data-propertyid="' + propertyId + '"]');
+            _.each(values, function(value) {
+                var option = selectionElement.find('option[value="' + value + '"]');
+                option.prop('selected', true);
+            });
+            selectionElement.change();
+        }
     });
 });
