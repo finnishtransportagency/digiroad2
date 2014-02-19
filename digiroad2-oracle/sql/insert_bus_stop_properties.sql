@@ -51,26 +51,26 @@ insert into enumerated_value (id, value, name_fi, name_sv, created_by, property_
 values (12, 4, 'Liikennevirasto', ' ', 'automatic_import', (select id from property where name_fi = 'Ylläpitäjä'));
 
 
--- Pysäkin saavutettavuus
-insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (4, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Pysäkin saavutettavuus', ' ', 'text');
-
-
--- Esteettömyystiedot
-insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (5, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Esteettömyystiedot', ' ', 'text');
-
-
 -- Ylläpitäjän tunnus
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (6, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän tunnus', ' ', 'text');
+values (4, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän tunnus', ' ', 'text');
 
 
 -- Ylläpitäjän sähköposti
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (7, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän sähköposti', ' ', 'text');
+values (5, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Ylläpitäjän sähköposti', ' ', 'text');
+
+
+-- Pysäkin saavutettavuus
+insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
+values (6, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Pysäkin saavutettavuus', ' ', 'text');
+
+
+-- Esteettömyystiedot
+insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
+values (7, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Esteettömyystiedot', ' ', 'text');
 
 
 -- Kommentit
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (10, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Kommentit', ' ', 'text');
+values (8, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Kommentit', ' ', 'text');
