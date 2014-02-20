@@ -98,6 +98,7 @@ describe('FeatureAttributes', function () {
                         var properties = [
                             { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
                             { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
+                            { propertyId: '8', propertyName: 'Kommentit', propertyType: 'long_text', required: true, values: [] },
                             { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
                             { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] }
                         ];
@@ -160,6 +161,13 @@ describe('FeatureAttributes', function () {
             assert.equal('Käytössä alkaen', dateProperty.attr('name'));
         });
 
+        it('should create textarea field for property "Kommentit"', function() {
+            var longTextProperty = $('textarea[data-propertyid="8"]');
+            assert.equal(1, longTextProperty.length);
+            assert.equal(true, longTextProperty.hasClass('featureAttributeLongText'));
+            assert.equal('Kommentit', longTextProperty.attr('name'));
+        });
+
         describe('and asset direction is changed', function() {
             var validityDirectionBeforeChange = null;
 
@@ -214,11 +222,12 @@ describe('FeatureAttributes', function () {
             });
 
             it('should call callback with attribute collection when save is clicked', function() {
-                assert.equal(4, collectedAttributes.length);
+                assert.equal(5, collectedAttributes.length);
                 assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
-                assert.deepEqual(collectedAttributes[1], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
-                assert.deepEqual(collectedAttributes[2], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
-                assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
+                assert.deepEqual(collectedAttributes[1], { propertyId: '8', propertyValues: [ { propertyValue:0, propertyDisplayValue:'' } ] });
+                assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+                assert.deepEqual(collectedAttributes[3], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
+                assert.deepEqual(collectedAttributes[4], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
             });
 
             function setTextProperty(propertyId, value) {
