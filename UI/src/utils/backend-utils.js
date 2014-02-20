@@ -16,10 +16,10 @@
         $.get('api/assetTypeProperties/' + assetTypeId, success);
     };
 
-    backend.putAsset = function (data, success) {
+    backend.createAsset = function(data, success) {
         jQuery.ajax({
             contentType: "application/json",
-            type: "PUT",
+            type: "POST",
             url: "api/asset",
             data: JSON.stringify(data),
             dataType: "json",
