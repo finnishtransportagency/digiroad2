@@ -105,12 +105,12 @@ describe('FeatureAttributes', function () {
                     },
                     getEnumeratedPropertyValues: function(assetTypeId, success) {
                         success([
-                            {propertyId: "2", propertyName: "Pysäkin tyyppi", propertyType: "multiple_choice", required: true, values: [
-                                {propertyValue: 1, propertyDisplayValue: "Raitiovaunu", imageId: null},
-                                {propertyValue: 2, propertyDisplayValue: "Linja-autojen paikallisliikenne", imageId: null},
-                                {propertyValue: 3, propertyDisplayValue: "Linja-autojen kaukoliikenne", imageId: null},
-                                {propertyValue: 4, propertyDisplayValue: "Linja-autojen pikavuoro", imageId: null},
-                                {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
+                            {propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [
+                                {propertyValue: 1, propertyDisplayValue: 'Raitiovaunu', imageId: null},
+                                {propertyValue: 2, propertyDisplayValue: 'Linja-autojen paikallisliikenne', imageId: null},
+                                {propertyValue: 3, propertyDisplayValue: 'Linja-autojen kaukoliikenne', imageId: null},
+                                {propertyValue: 4, propertyDisplayValue: 'Linja-autojen pikavuoro', imageId: null},
+                                {propertyValue: 99, propertyDisplayValue: 'Ei tietoa', imageId: null}
                             ]},
                             {propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [
                                 {propertyValue: 2, propertyDisplayValue: 'Digitointisuuntaan', imageId: null},
