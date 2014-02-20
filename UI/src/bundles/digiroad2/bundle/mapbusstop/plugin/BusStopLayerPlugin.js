@@ -17,6 +17,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedBusStop = null;
         this._selectedBusStopLayer = null;
         this._roadStyles = null;
+        this._state = undefined;
         this._selectedControl = 'Select';
         this._selectedLayerId = "235";
         this._backend = defineDependency('backend', window.Backend);
@@ -223,7 +224,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._moveSelectedBusStop(event);
             },
             'featureattributes.FeatureAttributeChangedEvent': function (event) {
-                this._featureAttributeChangedEvent(event);
+                if(_.isObject(this._state) && _.isFunction(this._state.featureAttributeChangedHandler)) {
+                    this._state.featureAttributeChangedHandler(event);
+                } else {
+                    this._featureAttributeChangedEvent(event);
+                }
             },
             'infobox.InfoBoxClosedEvent': function (event) {
                 this._infoBoxClosed(event);
@@ -281,13 +286,32 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var features = me._getSelectedLayer(me._streetLayer).features;
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-            var directionArrow = this._addDirectionArrow(bearing, 1, selectedLon, selectedLat);
-            var assetPosition = {lonLat : event.getLonLat(), bearing : bearing, validityDirection :2};
+            var directionArrow = me._addDirectionArrow(bearing, -1, selectedLon, selectedLat);
+            var assetPosition = { lonLat: event.getLonLat(), bearing: bearing, validityDirection: 2 };
+
+            setPluginState({
+                featureAttributeChangedHandler: function(event) {
+                    var asset = event.getParameter();
+                    if(_.isArray(asset.propertyData)) {
+                        var validityDirectionProperty = _.find(asset.propertyData, function(property) { return property.propertyId === 'validityDirection'; });
+                        if(_.isObject(validityDirectionProperty) &&
+                            _.isArray(validityDirectionProperty.values) &&
+                            _.isObject(validityDirectionProperty.values[0])) {
+                            var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
+                            me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
+                            directionArrow = me._addDirectionArrow(bearing, validityDirection, selectedLon, selectedLat);
+                        }
+                    }
+                }
+            });
+            
             sendCollectAttributesRequest(assetPosition, attributesCollected, collectionCancelled);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
                 me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
             });
+
+            function setPluginState(state) { me._state = state; }
 
             function attributesCollected(attributeCollection) {
                 // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
@@ -301,11 +325,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     });
                 });
                 me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
+                setPluginState(null);
             }
 
             function collectionCancelled() {
                 me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
                 sendHideInfoboxRequest('busStop');
+                setPluginState(null);
             }
 
             function sendCollectAttributesRequest(assetPosition, callback, cancellationCallback) {

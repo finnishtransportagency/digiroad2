@@ -74,6 +74,20 @@ describe('FeatureAttributes', function () {
         var assetPosition = { lonLat : new OpenLayers.LonLat(24.742746,60.208588), bearing : 90, validityDirection : 2 };
         var collectedAttributes = {};
         var collectionCancelled = 0;
+        var mockSandbox = {
+            sentEvent: null,
+            notifyAll: function(event) {
+                this.sentEvent = event;
+            },
+            getEventBuilder: function(event) {
+                return function(parameter) {
+                    return {
+                        name: event,
+                        parameter: parameter
+                    };
+                };
+            }
+        };
 
         before(function () {
             requestedAssetTypes = [];
@@ -83,30 +97,30 @@ describe('FeatureAttributes', function () {
                         requestedAssetTypes.push(assetType);
                         var properties = [
                             { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
-                            { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
                             { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
-                            { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] }
+                            { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
+                            { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] }
                         ];
                         success(properties);
                     },
                     getEnumeratedPropertyValues: function(assetTypeId, success) {
                         success([
-                            {propertyId: "2", propertyName: "Pysäkin tyyppi", propertyType: "multiple_choice", required: true, values: [
-                                {propertyValue: 1, propertyDisplayValue: "Raitiovaunu", imageId: null},
-                                {propertyValue: 2, propertyDisplayValue: "Linja-autojen paikallisliikenne", imageId: null},
-                                {propertyValue: 3, propertyDisplayValue: "Linja-autojen kaukoliikenne", imageId: null},
-                                {propertyValue: 4, propertyDisplayValue: "Linja-autojen pikavuoro", imageId: null},
-                                {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
+                            {propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [
+                                {propertyValue: 1, propertyDisplayValue: 'Raitiovaunu', imageId: null},
+                                {propertyValue: 2, propertyDisplayValue: 'Linja-autojen paikallisliikenne', imageId: null},
+                                {propertyValue: 3, propertyDisplayValue: 'Linja-autojen kaukoliikenne', imageId: null},
+                                {propertyValue: 4, propertyDisplayValue: 'Linja-autojen pikavuoro', imageId: null},
+                                {propertyValue: 99, propertyDisplayValue: 'Ei tietoa', imageId: null}
                             ]},
-                            {propertyId: "1", propertyName: "Pysäkin katos", propertyType: "single_choice", required: true, values: [
-                                {propertyValue: 1, propertyDisplayValue: "Ei", imageId: null},
-                                {propertyValue: 2, propertyDisplayValue: "Kyllä", imageId: null},
-                                {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
+                            {propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [
+                                {propertyValue: 2, propertyDisplayValue: 'Digitointisuuntaan', imageId: null},
+                                {propertyValue: 3, propertyDisplayValue: 'Digitointisuuntaa vastaan', imageId: null}
                             ]}
                         ]);
                     }
                 })
             });
+            featureAttributes.setSandbox(mockSandbox);
             featureAttributes.init();
             featureAttributes.collectAttributes(assetPosition,
                 function(attributeCollection) { collectedAttributes = attributeCollection; },
@@ -125,8 +139,8 @@ describe('FeatureAttributes', function () {
             assert.equal('Esteettömyystiedot', textProperty.attr('name'));
         });
 
-        it('should create single choice field for property "Pysäkin katos"', function() {
-            var singleChoiceElement = $('select[data-propertyid="1"]');
+        it('should create single choice field for property "Vaikutussuunta"', function() {
+            var singleChoiceElement = $('select[data-propertyid="validityDirection"]');
             assert.equal(1, singleChoiceElement.length);
             assert.equal(true, singleChoiceElement.hasClass('featureattributeChoice'));
             assert.isUndefined(singleChoiceElement.attr('multiple'));
@@ -146,34 +160,70 @@ describe('FeatureAttributes', function () {
             assert.equal('Käytössä alkaen', dateProperty.attr('name'));
         });
 
+        describe('and asset direction is changed', function() {
+            var validityDirectionBeforeChange = null;
+
+            before(function() {
+                validityDirectionBeforeChange = validityDirectionElement().val();
+                featureAttributes.onEvent({
+                    getName: function() { return 'mapbusstop.AssetDirectionChangeEvent'; },
+                    getParameter: function() {}
+                });
+            });
+
+            it('should update validity direction element', function() {
+                var expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
+                assert.equal(validityDirectionElement().val(), expectedValidityDirection);
+            });
+        });
+
+        describe('and single choice field "Vaikutussuunta" is changed', function() {
+            var expectedValidityDirection = null;
+
+            before(function() {
+                var validityDirectionBeforeChange = validityDirectionElement().val();
+                expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
+                selectOptions('validityDirection', [expectedValidityDirection]);
+            });
+
+            it('should send feature changed event', function() {
+                assert.equal(mockSandbox.sentEvent.name, 'featureattributes.FeatureAttributeChangedEvent');
+                assert.deepEqual(mockSandbox.sentEvent.parameter, {
+                    propertyData: [{
+                        propertyId: 'validityDirection',
+                        values: [{
+                            propertyValue: expectedValidityDirection,
+                            propertyDisplayValue: 'Vaikutussuunta'
+                        }]
+                    }]
+                });
+            });
+        });
+
         describe('and save button is clicked', function() {
+            var validityDirectionValue = null;
+
             before(function() {
                 var saveButton = $('button.save');
                 setTextProperty(5, 'textValue');
                 selectOptions(1, [2]);
                 selectOptions(2, [2, 4]);
                 setTextProperty('validFrom', '10.6.2014');
+                validityDirectionValue = validityDirectionElement().val();
                 saveButton.click();
             });
 
             it('should call callback with attribute collection when save is clicked', function() {
                 assert.equal(4, collectedAttributes.length);
                 assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
-                assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
-                assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+                assert.deepEqual(collectedAttributes[1], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+                assert.deepEqual(collectedAttributes[2], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
                 assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
             });
 
             function setTextProperty(propertyId, value) {
                 var textProperty = $('input[data-propertyid="' + propertyId + '"]');
                 textProperty.val(value);
-            }
-
-            function selectOptions(propertyId, values) {
-                _.each(values, function(value) {
-                    var option = $('select[data-propertyid="' + propertyId + '"] option[value="' + value + '"]');
-                    option.prop('selected', true);
-                });
             }
         });
 
@@ -188,5 +238,16 @@ describe('FeatureAttributes', function () {
                 assert.equal(collectionCancelled, 1);
             });
         });
+
+        function selectOptions(propertyId, values) {
+            var selectionElement = $('select[data-propertyid="' + propertyId + '"]');
+            _.each(values, function(value) {
+                var option = selectionElement.find('option[value="' + value + '"]');
+                option.prop('selected', true);
+            });
+            selectionElement.change();
+        }
+
+        function validityDirectionElement() { return $('select[data-propertyid="validityDirection"]'); }
     });
 });
