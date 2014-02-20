@@ -185,8 +185,10 @@ object OracleSpatialAssetDao {
     val createNew = (asset.head.propertyData.exists(_.propertyId == propertyId.toString) && asset.head.propertyData.find(_.propertyId == propertyId.toString).get.values.isEmpty)
       Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
         case Text => {
-          if (propertyValues.size != 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-          if (createNew) {
+          if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+          if (propertyValues.size == 0) {
+            deleteTextProperty(assetId, propertyId).execute()
+          } else if (createNew) {
             insertTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
           } else {
             updateTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()

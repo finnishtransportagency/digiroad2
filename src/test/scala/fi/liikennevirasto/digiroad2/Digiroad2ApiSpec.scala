@@ -175,7 +175,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(11)
+      ps.size should equal(13)
       val p1 = ps.find(_.propertyId == "1").get
       p1.propertyName should be ("Pysäkin katos")
       p1.propertyType should be ("single_choice")
