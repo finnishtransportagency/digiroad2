@@ -32,6 +32,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle", fun
                 "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/actionpanel/event/ValidityPeriodChangedEvent.js"
             },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/actionpanel/template/Templates.js"
+            },{
                 "type" : "text/css",
                 "src" : "../../../../resources/digiroad2/bundle/actionpanel/css/style.css"
             }],
