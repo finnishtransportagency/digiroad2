@@ -82,7 +82,6 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetPosition = null;
         var assetCreationData = [];
-        var assetPropertyInsertions = [];
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
         var attributeShowRequest = { name: 'attributeShowRequest' };
         var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
@@ -189,7 +188,6 @@ describe('BusStopLayerPlugin', function(){
         describe('and when feature attributes have been collected', function () {
             before(function() {
                 assetCreationData = [];
-                assetPropertyInsertions = [];
                 requests = [];
                 attributesCollectedCallback([
                     { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
