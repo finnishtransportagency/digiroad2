@@ -120,9 +120,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
-    Database.forDataSource(ds).withDynTransaction {
+    AssetPropertyConfiguration.commonAssetPropertyDescriptors.values.toSeq ++ Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.availableProperties(assetTypeId)
-    } ++ AssetPropertyConfiguration.commonAssetPropertyDescriptors.values
+    }.sortBy(_.propertyId)
   }
 
 }
