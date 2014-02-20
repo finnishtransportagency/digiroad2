@@ -97,7 +97,6 @@ describe('FeatureAttributes', function () {
                         requestedAssetTypes.push(assetType);
                         var properties = [
                             { propertyId: '5', propertyName: 'Esteettömyystiedot', propertyType: 'text', required: false, values: [] },
-                            { propertyId: '1', propertyName: 'Pysäkin katos', propertyType: 'single_choice', required: true, values: [] },
                             { propertyId: '2', propertyName: 'Pysäkin tyyppi', propertyType: 'multiple_choice', required: true, values: [] },
                             { propertyId: 'validFrom', propertyName: 'Käytössä alkaen', propertyType: 'date', required: false, values: [] },
                             { propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [] }
@@ -111,11 +110,6 @@ describe('FeatureAttributes', function () {
                                 {propertyValue: 2, propertyDisplayValue: "Linja-autojen paikallisliikenne", imageId: null},
                                 {propertyValue: 3, propertyDisplayValue: "Linja-autojen kaukoliikenne", imageId: null},
                                 {propertyValue: 4, propertyDisplayValue: "Linja-autojen pikavuoro", imageId: null},
-                                {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
-                            ]},
-                            {propertyId: "1", propertyName: "Pysäkin katos", propertyType: "single_choice", required: true, values: [
-                                {propertyValue: 1, propertyDisplayValue: "Ei", imageId: null},
-                                {propertyValue: 2, propertyDisplayValue: "Kyllä", imageId: null},
                                 {propertyValue: 99, propertyDisplayValue: "Ei tietoa", imageId: null}
                             ]},
                             {propertyId: 'validityDirection', propertyName: 'Vaikutussuunta', propertyType: 'single_choice', required: false, values: [
@@ -145,8 +139,8 @@ describe('FeatureAttributes', function () {
             assert.equal('Esteettömyystiedot', textProperty.attr('name'));
         });
 
-        it('should create single choice field for property "Pysäkin katos"', function() {
-            var singleChoiceElement = $('select[data-propertyid="1"]');
+        it('should create single choice field for property "Vaikutussuunta"', function() {
+            var singleChoiceElement = $('select[data-propertyid="validityDirection"]');
             assert.equal(1, singleChoiceElement.length);
             assert.equal(true, singleChoiceElement.hasClass('featureattributeChoice'));
             assert.isUndefined(singleChoiceElement.attr('multiple'));
@@ -183,17 +177,23 @@ describe('FeatureAttributes', function () {
             });
         });
 
-        describe('and single choice field "Pysäkin katos" is changed', function() {
-            before(function() { selectOptions(1, [2]); });
+        describe('and single choice field "Vaikutussuunta" is changed', function() {
+            var expectedValidityDirection = null;
+
+            before(function() {
+                var validityDirectionBeforeChange = validityDirectionElement().val();
+                expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
+                selectOptions('validityDirection', [expectedValidityDirection]);
+            });
 
             it('should send feature changed event', function() {
                 assert.equal(mockSandbox.sentEvent.name, 'featureattributes.FeatureAttributeChangedEvent');
                 assert.deepEqual(mockSandbox.sentEvent.parameter, {
                     propertyData: [{
-                        propertyId: '1',
+                        propertyId: 'validityDirection',
                         values: [{
-                            propertyValue: 2,
-                            propertyDisplayValue: 'Pysäkin katos'
+                            propertyValue: expectedValidityDirection,
+                            propertyDisplayValue: 'Vaikutussuunta'
                         }]
                     }]
                 });
@@ -214,12 +214,11 @@ describe('FeatureAttributes', function () {
             });
 
             it('should call callback with attribute collection when save is clicked', function() {
-                assert.equal(5, collectedAttributes.length);
+                assert.equal(4, collectedAttributes.length);
                 assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
-                assert.deepEqual(collectedAttributes[1], { propertyId: '1', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin katos' } ] });
-                assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
-                assert.deepEqual(collectedAttributes[3], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
-                assert.deepEqual(collectedAttributes[4], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
+                assert.deepEqual(collectedAttributes[1], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
+                assert.deepEqual(collectedAttributes[2], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
+                assert.deepEqual(collectedAttributes[3], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
             });
 
             function setTextProperty(propertyId, value) {
