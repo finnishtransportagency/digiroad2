@@ -314,16 +314,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             function setPluginState(state) { me._state = state; }
 
             function attributesCollected(attributeCollection) {
-                // TODO: Support assets that don't map to any road link and thus have no road link reference nor bearing
-                me._backend.putAsset({ assetTypeId: 10, lon: selectedLon, lat: selectedLat, roadLinkId: nearestLine.roadLinkId, bearing: bearing }, function (asset) {
-                    _.each(attributeCollection, function (attribute) {
-                        me._backend.putAssetPropertyValue(asset.id, attribute.propertyId, attribute.propertyValues);
-                    });
-                    // TODO FIXME: the saved asset doesn't have images until the specific property is saved and it must be loaded again
-                    me._backend.getAsset(asset.id, function (asset) {
-                        me._addNewAsset(asset);
-                    });
+                var properties = _.map(attributeCollection, function(attr) {
+                  return {id: attr.propertyId,
+                          values: attr.propertyValues};
                 });
+                me._backend.createAsset(
+                    {assetTypeId: 10,
+                     lon: selectedLon,
+                     lat: selectedLat,
+                     roadLinkId: nearestLine.roadLinkId,
+                     bearing: bearing,
+                     properties: properties}, function(asset) {
+                       me._addNewAsset(asset);
+                     });
                 me._getSelectedLayer(me._directionLayer).destroyFeatures(directionArrow);
                 setPluginState(null);
             }

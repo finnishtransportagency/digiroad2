@@ -82,7 +82,6 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetPosition = null;
         var assetCreationData = [];
-        var assetPropertyInsertions = [];
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
         var attributeShowRequest = { name: 'attributeShowRequest' };
         var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
@@ -115,16 +114,9 @@ describe('BusStopLayerPlugin', function(){
         before(function() {
             pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin', {
                 backend: _.extend({}, window.Backend, {
-                    putAsset: function(data, success) {
+                    createAsset: function(data, success) {
                         assetCreationData.push(_.extend({}, data, { imageIds: [] }));
-                        success( _.extend({}, data, { id: 123 }) );
-                    },
-                    putAssetPropertyValue: function(assetId, propertyId, data) {
-                        assetPropertyInsertions.push({
-                            assetId: assetId,
-                            propertyId: propertyId,
-                            data: data
-                        });
+                        success( _.extend({}, assetCreationData[0], { id: 123, validityPeriod: 'current'}));
                     },
                     getAsset: function(id, success) {
                         success(_.extend({}, assetCreationData[0], { validityPeriod: 'current' }) );
@@ -221,7 +213,6 @@ describe('BusStopLayerPlugin', function(){
         describe('and when feature attributes have been collected', function () {
             before(function() {
                 assetCreationData = [];
-                assetPropertyInsertions = [];
                 requests = [];
                 attributesCollectedCallback([
                     { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] },
@@ -231,13 +222,13 @@ describe('BusStopLayerPlugin', function(){
 
             it('should create asset in back end', function () {
                 assert.equal(1, assetCreationData.length);
-                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95, imageIds: [] }, assetCreationData[0]);
-            });
-
-            it('should add asset properties to back end', function() {
-                assert.equal(2, assetPropertyInsertions.length);
-                assert.deepEqual({ assetId: 123, propertyId: '5', data: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] }, assetPropertyInsertions[0]);
-                assert.deepEqual({ assetId: 123, propertyId: '1', data: [ { propertyValue:2, propertyDisplayValue:'' } ] }, assetPropertyInsertions[1]);
+                var expectedProperties = [{id: "5",
+                                           values: [{propertyValue: 0,
+                                                     propertyDisplayValue: "textValue"}]},
+                                          {id: "1",
+                                           values: [{propertyValue: 2,
+                                                     propertyDisplayValue: ""}]}];
+                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95, imageIds: [], properties: expectedProperties}, assetCreationData[0]);
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {

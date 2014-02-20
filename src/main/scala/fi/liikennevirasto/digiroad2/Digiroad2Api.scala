@@ -95,19 +95,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     updated
   }
 
-  // TODO: Remove once frontend uses: `post("/asset") { ... }`
-  put("/asset") {
-    val user = userProvider.getCurrentUser()
-    assetProvider.createAsset(
-      (parsedBody \ "assetTypeId").extract[Long],
-      (parsedBody \ "lon").extract[Int].toDouble,
-      (parsedBody \ "lat").extract[Int].toDouble,
-      (parsedBody \ "roadLinkId").extract[Long],
-      (parsedBody \ "bearing").extract[Int],
-      user.username,
-      Nil)
-  }
-
   post("/asset") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
