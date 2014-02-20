@@ -15,9 +15,9 @@ import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  val TestAssetId = 104
   val TestPropertyId = "1"
   val TestPropertyId2 = "2"
+  val CreatedTestAssetId = 300004
 
   addServlet(classOf[Digiroad2Api], "/*")
   addServlet(classOf[SessionApi], "/auth/*")
@@ -44,21 +44,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("get assets without bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 100).size should be(4)
+      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 300000).size should be(4)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 100).size should be(5)
+      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 300000).size should be(5)
     }
   }
 
   test("get asset by id", Tag("db")) {
-    getWithUserAuth("/assets/" + TestAssetId) {
+    getWithUserAuth("/assets/" + CreatedTestAssetId) {
       status should equal(200)
-      parse(body).extract[AssetWithProperties].id should be (TestAssetId)
+      parse(body).extract[AssetWithProperties].id should be (CreatedTestAssetId)
     }
     getWithUserAuth("/assets/9999999999999999") {
       status should equal(404)
@@ -100,16 +100,16 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("update asset property", Tag("db")) {
     val body1 = write(List(PropertyValue(3, "Linja-autojen kaukoliikenne")))
     val body2 = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
-    putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
+    putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
       status should equal(200)
-      getWithUserAuth("/assets/" + TestAssetId) {
+      getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         val prop = asset.propertyData.find(_.propertyId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
-        putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
+        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
           status should equal(200)
-          getWithUserAuth("/assets/" + TestAssetId) {
+          getWithUserAuth("/assets/" + CreatedTestAssetId) {
             parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId2).get.values.head.propertyValue should be (2)
           }
         }
@@ -119,14 +119,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
 
   test("delete and create asset property", Tag("db")) {
     val propBody = write(List(PropertyValue(2, "")))
-    deleteWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values") {
+    deleteWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values") {
       status should equal(200)
-      getWithUserAuth("/assets/" + TestAssetId) {
+      getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         asset.propertyData.find(_.propertyId == TestPropertyId).get.values.size should be (0)
-        putJsonWithUserAuth("/assets/" + TestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
+        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
           status should equal(200)
-          getWithUserAuth("/assets/" + TestAssetId) {
+          getWithUserAuth("/assets/" + CreatedTestAssetId) {
             parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
           }
         }

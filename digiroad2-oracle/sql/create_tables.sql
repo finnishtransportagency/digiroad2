@@ -170,7 +170,7 @@ create table service_user (
 create sequence primary_key_seq
   minvalue 1
   maxvalue 999999999999999999999999999
-  start with 100
+  start with 300000
   increment by 1
   cache 100
   cycle;

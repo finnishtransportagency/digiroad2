@@ -13,15 +13,11 @@ import scala.language.implicitConversions
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import org.joda.time.DateTime
-import java.sql.Timestamp
+import fi.liikennevirasto.digiroad2.util.DataFixture.{TestAssetId, TestAssetTypeId, MunicipalityEspoo, MunicipalityKauniainen}
 import java.sql.SQLIntegrityConstraintViolationException
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val MunicipalityKauniainen = 235
-  val MunicipalityEspoo = 49
-  val TestAssetId = 100
-  val TestAssetTypeId = 10
+
   val AssetCreator = "integration_test_add_asset"
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
@@ -69,7 +65,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
       val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
-      newAsset.id should (be > 100L)
+      newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)

@@ -6,9 +6,9 @@ import java.sql.SQLException
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.user.Configuration
+import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 
 class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
-  val TestAssetId = 100
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
   val user = User(

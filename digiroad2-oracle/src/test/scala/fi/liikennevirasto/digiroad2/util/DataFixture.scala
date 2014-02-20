@@ -4,6 +4,11 @@ import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
 
 object DataFixture {
+  val TestAssetId = 300000
+  val TestAssetTypeId = 10
+  val MunicipalityKauniainen = 235
+  val MunicipalityEspoo = 49
+
   def tearDown() {
     SqlScriptRunner.runScript("drop_tables.sql")
   }
