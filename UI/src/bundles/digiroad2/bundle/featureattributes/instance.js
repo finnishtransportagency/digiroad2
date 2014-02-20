@@ -14,6 +14,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         this.mediator = null;
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
+        this._state = undefined;
         this._backend = defineDependency('backend', window.Backend);
 
         function defineDependency(dependencyName, defaultImplementation) {
@@ -178,7 +179,34 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
-                featureAttributesElement.find('button.cancel').on('click', cancellationCallback);
+
+                setPluginState({
+                    assetDirectionChangedHandler: function() {
+                        var validityDirection = featureAttributesElement.find('.featureattributeChoice[data-propertyid="validityDirection"]');
+                        if (validityDirection.length === 1) {
+                            var value = validityDirection.val() == 2 ? 3 : 2;
+                            var option = validityDirection.find('option[value="' + value + '"]');
+                            option.prop('selected', true);
+                            validityDirection.change();
+                        }
+                    }
+                });
+
+                featureAttributesElement.find('.featureattributeChoice').on('change', function() {
+                    var jqElement = jQuery(this);
+                    me._sendFeatureChangedEvent({
+                        propertyData: [{
+                            propertyId: jqElement.attr('data-propertyId'),
+                            values: me._propertyValuesOfSelectionElement(jqElement)
+                        }]
+                    });
+                });
+
+                featureAttributesElement.find('button.cancel').on('click', function() {
+                    setPluginState(null);
+                    cancellationCallback();
+                });
+
                 featureAttributesElement.find('button.save').on('click', function() {
                     var textElements = featureAttributesElement.find('.featureAttributeText');
                     var textElementAttributes = _.map(textElements, function(textElement) {
@@ -206,8 +234,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfDateElement(jqElement)
                         };
                     });
+                    setPluginState(null);
                     successCallback(textElementAttributes.concat(selectionElementAttributes).concat(dateElementAttributes));
                 });
+
+                function setPluginState(state) { me._state = state; }
             }
         },
         _getStreetView: function(assetPosition) {
@@ -355,10 +386,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             'infobox.InfoBoxClosedEvent': function (event) {
                 this._closeFeatures(event);
             },
-            'mapbusstop.AssetDirectionChangeEvent' : function (event) {
-                this._directionChange(event);
+            'mapbusstop.AssetDirectionChangeEvent': function (event) {
+                if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
+                    this._state.assetDirectionChangedHandler(event);
+                } else {
+                    this._directionChange(event);
+                }
             }
-
         },
         _closeFeatures: function (event) {
             jQuery("#featureAttributes").html('');

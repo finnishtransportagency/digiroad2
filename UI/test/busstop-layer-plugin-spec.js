@@ -193,6 +193,31 @@ describe('BusStopLayerPlugin', function(){
             assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
         });
 
+        describe('and when validity direction is changed', function() {
+            before(function() {
+                addedFeature = {};
+                destroyedFeature = {};
+                pluginInstance.onEvent({
+                    getName: function() { return 'featureattributes.FeatureAttributeChangedEvent'; },
+                    getParameter: function() {
+                        return {
+                            propertyData: [{
+                                propertyId: 'validityDirection',
+                                values: [{
+                                    propertyValue: 3
+                                }]
+                            }]
+                        };
+                    }
+                });
+            });
+
+            it('should recreate direction arrow', function() {
+                assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            });
+        });
+
         describe('and when feature attributes have been collected', function () {
             before(function() {
                 assetCreationData = [];
