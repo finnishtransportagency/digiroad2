@@ -68,7 +68,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
-      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180)
+      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
@@ -78,11 +78,69 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     }
   }
 
+  test("add asset with properties to database", Tag("db")) {
+    val AssetCreator = "integration_test_add_asset"
+    val existingAsset = provider.getAssetById(TestAssetId).get
+    try {
+      val newAsset = provider.createAsset(
+          TestAssetTypeId,
+          existingAsset.lon,
+          existingAsset.lat,
+          existingAsset.roadLinkId,
+          180,
+          AssetCreator,
+          List(SimpleProperty("validTo", List(PropertyValue(0, "2045-12-10")))))
+      newAsset.id should (be > 100L)
+      Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
+      Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
+      newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+      newAsset.propertyData should contain (Property("validTo", "Käytössä päättyen", "date", false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    }
+  }
+
+  test("add asset is transactional", Tag("db")) {
+    import scala.slick.driver.JdbcDriver.backend.Database
+    import scala.slick.jdbc.{GetResult, StaticQuery => Q}
+    import Database.dynamicSession
+    import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+    val AssetCreator = "integration_test_add_asset"
+    val existingAsset = provider.getAssetById(TestAssetId).get
+    val oldCount = Database.forDataSource(ds).withDynSession {
+      Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head
+    }
+    try {
+      val newAsset = provider.createAsset(
+          TestAssetTypeId,
+          existingAsset.lon,
+          existingAsset.lat,
+          existingAsset.roadLinkId,
+          180,
+          AssetCreator,
+          List(SimpleProperty("validFrom", List(PropertyValue(0, "2001-12-10"))),
+               SimpleProperty("validTo", List(PropertyValue(0, "1995-12-10")))))
+      fail("Should have thrown an exception")
+    } catch {
+      case e: SQLIntegrityConstraintViolationException => {
+        Database.forDataSource(ds).withDynSession {
+          oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
+        }
+      }
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    }
+  }
+
   test("add asset to database without write access fails", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
     val existingAsset = provider.getAssetById(TestAssetId).get
-    intercept[IllegalArgumentException] {
-      provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180)
+    try {
+      intercept[IllegalArgumentException] {
+        provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+      }
+    } finally {
+      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }
   }
 
@@ -200,17 +258,17 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("provide road link geometry by municipality", Tag("db")) {
-      provider.getRoadLinks(Seq(0)).size should be (0)
-      val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingCircle(374794, 6677569, 4000)))
-      rls.size should be (23)
-      rls.foreach { rl =>
-        rl.id should (be > 1l)
-        rl.lonLat.foreach { pt =>
-          pt._1 should (be > 60000.0 and be < 734000.0)
-          pt._2 should (be > 6600000.0 and be < 77800000.0)
-        }
+    provider.getRoadLinks(Seq(0)).size should be (0)
+    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingCircle(374794, 6677569, 4000)))
+    rls.size should be (23)
+    rls.foreach { rl =>
+      rl.id should (be > 1l)
+      rl.lonLat.foreach { pt =>
+        pt._1 should (be > 60000.0 and be < 734000.0)
+        pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
-      provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingCircle(374794, 6677569, 2000))).size should be (24)
+    }
+    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingCircle(374794, 6677569, 2000))).size should be (24)
   }
 
   test("Load image by id", Tag("db")) {
@@ -219,27 +277,4 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     image.size should (be > 1)
   }
 
-  test("validity period is 'past'") {
-    val now = DateTime.now
-    val from = Some(new Timestamp(now.minusDays(5).getMillis()))
-    val to = Some(new Timestamp(now.minusDays(2).getMillis()))
-    val validityPeriod = provider.validityPeriod(from, to)
-    validityPeriod should be (Some("past"))
-  }
-
-  test("validity period is 'current'") {
-    val now = DateTime.now
-    val from = Some(new Timestamp(now.minusDays(5).getMillis()))
-    val to = Some(new Timestamp(now.plusDays(5).getMillis()))
-    val validityPeriod = provider.validityPeriod(from, to)
-    validityPeriod should be (Some("current"))
-  }
-
-  test("validity period is 'future'") {
-    val now = DateTime.now
-    val from = Some(new Timestamp(now.plusDays(2).getMillis()))
-    val to = Some(new Timestamp(now.plusDays(5).getMillis()))
-    val validityPeriod = provider.validityPeriod(from, to)
-    validityPeriod should be (Some("future"))
-  }
 }
