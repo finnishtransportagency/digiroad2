@@ -120,6 +120,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                             ' value="{{propertyDisplayValue}}">' +
                                                          '</div>' +
                                                      '</div>');
+            me._featureDataTemplateLongText = _.template('<div class="formAttributeContentRow">' +
+                                                        '<div class="formLabels">{{propertyName}}</div>' +
+                                                            '<div class="formAttributeContent">' +
+                                                                '<textarea class="featureAttributeLongText"' +
+                                                                ' data-propertyId="{{propertyId}}" name="{{propertyName}}">' +
+                                                                '{{propertyDisplayValue}}</textarea>' +
+                                                            '</div>' +
+                                                        '</div>');
             me._featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{propertyName}}: {{propertyDisplayValue}}</div>');
             me._featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
                                                         '<div class="formLabels">{{propertyName}}</div>' +
@@ -153,7 +161,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
                 jQuery("#featureAttributes").html(featureAttributes);
                 me._addDatePickers();
-                jQuery(".featureAttributeText").on("blur", function() {
+                jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function() {
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
                 });
@@ -208,7 +216,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 });
 
                 featureAttributesElement.find('button.save').on('click', function() {
-                    var textElements = featureAttributesElement.find('.featureAttributeText');
+                    var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
                     var textElementAttributes = _.map(textElements, function(textElement) {
                         var jqElement = jQuery(textElement);
                         return {
@@ -299,15 +307,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var html = "";
             _.forEach(contents,
                 function (feature) {
-                    if (feature.propertyType == "text") {
+                    var propertyType = feature.propertyType;
+                    if (propertyType === "text" || propertyType === "long_text") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
                             feature.propertyValue = feature.values[0].propertyValue;
                             feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
                         }
-                        html += me._featureDataTemplateText(feature);
-                    } else if (feature.propertyType == "read_only_text") {
+                        html += me._getTextTemplate(propertyType, feature);
+                    } else if (propertyType === "read_only_text") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
@@ -315,13 +324,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
                         }
                         html += me._featureDataTemplateReadOnlyText(feature);
-                    } else if (feature.propertyType == "single_choice") {
+                    } else if (propertyType === "single_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
                         html += me._featureDataTemplate(feature);
-                    } else if (feature.propertyType == "multiple_choice") {
+                    } else if (feature.propertyType === "multiple_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, 'multiple');
                         html += me._featureDataTemplate(feature);
-                    } else if (feature.propertyType == "date") {
+                    } else if (propertyType === "date") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
                         if (feature.values[0]) {
@@ -336,6 +345,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             );
             return html;
+        },
+        _getTextTemplate: function(propertyType, feature) {
+            return propertyType === "long_text" ? this._featureDataTemplateLongText(feature) : this._featureDataTemplateText(feature);
         },
         _getSelect: function(name, values, propertyId, multiple) {
             var me = this;

@@ -51,6 +51,16 @@
     height: 21px;
 }
 /* TODO copy paste from above!!! */
+.featureAttributeLongText {
+    border: 1px solid #646461;
+    border-radius: 2px;
+    background-color: rgb( 51, 51, 51 );
+    color: rgb( 230, 230, 230 );
+    font-size: 12px;
+    font-family: "Arial";
+    width: 210px;
+    height: 63px;
+}
 .featureAttributeDate {
     border: 1px solid #646461;
     border-radius: 2px;
