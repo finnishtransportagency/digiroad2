@@ -24,6 +24,7 @@ object PropertyTypes {
   val SingleChoice = "single_choice"
   val MultipleChoice = "multiple_choice"
   val Text = "text"
+  val LongText = "long_text"
   val ReadOnlyText = "read_only_text"
   val Date = "date"
 }

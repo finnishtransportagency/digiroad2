@@ -73,4 +73,4 @@ values (7, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_
 
 -- Kommentit
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type)
-values (8, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Kommentit', ' ', 'text');
+values (8, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Kommentit', ' ', 'long_text');

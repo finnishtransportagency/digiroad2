@@ -184,7 +184,7 @@ object OracleSpatialAssetDao {
     if (asset.isEmpty) throw new IllegalArgumentException("Asset " + assetId + " not found")
     val createNew = (asset.head.propertyData.exists(_.propertyId == propertyId.toString) && asset.head.propertyData.find(_.propertyId == propertyId.toString).get.values.isEmpty)
       Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
-        case Text => {
+        case Text | LongText => {
           if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
           if (propertyValues.size == 0) {
             deleteTextProperty(assetId, propertyId).execute()
@@ -223,7 +223,7 @@ object OracleSpatialAssetDao {
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyId + "/" + newVal)
         }
       }
-      case Text => updateCommonProperty(assetId, column, propertyValues.head.propertyDisplayValue).execute()
+      case Text | LongText => updateCommonProperty(assetId, column, propertyValues.head.propertyDisplayValue).execute()
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
         val optionalDateTime = propertyValues.headOption.map(_.propertyDisplayValue).map(formatter.parseDateTime)
@@ -236,7 +236,7 @@ object OracleSpatialAssetDao {
   def deleteAssetProperty(assetId: Long, propertyId: String) {
     val longPropertyId: Long = propertyId.toLong
     Q.query[Long, String](propertyTypeByPropertyId).first(longPropertyId) match {
-      case Text => deleteTextProperty(assetId, longPropertyId).execute()
+      case Text | LongText => deleteTextProperty(assetId, longPropertyId).execute()
       case SingleChoice => deleteSingleChoiceProperty(assetId, longPropertyId).execute()
       case MultipleChoice => deleteMultipleChoiceProperty(assetId, longPropertyId).execute()
       case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
