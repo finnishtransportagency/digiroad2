@@ -37,6 +37,10 @@
         return picker;
     };
 
+    dateutil.removeDatePickersFromDom = function() {
+        jQuery('.pika-single.is-bound.is-hidden').remove();
+    };
+
     function addPicker(jqueryElement, onDraw) {
         var picker = new Pikaday({
             field: jqueryElement.get(0),

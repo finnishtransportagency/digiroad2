@@ -408,6 +408,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
         _closeFeatures: function (event) {
             jQuery("#featureAttributes").html('');
+            dateutil.removeDatePickersFromDom();
         },
         _directionChange: function (event) {
             var validityDirection = jQuery("[data-propertyid='validityDirection']");
