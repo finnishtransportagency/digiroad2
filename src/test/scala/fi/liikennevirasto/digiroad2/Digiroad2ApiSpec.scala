@@ -15,8 +15,8 @@ import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  val TestPropertyId = "1"
-  val TestPropertyId2 = "2"
+  val TestPropertyId = "100"
+  val TestPropertyId2 = "200"
   val CreatedTestAssetId = 300004
 
   addServlet(classOf[Digiroad2Api], "/*")
@@ -175,8 +175,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(13)
-      val p1 = ps.find(_.propertyId == "1").get
+      ps.size should equal(16)
+      val p1 = ps.find(_.propertyId == TestPropertyId).get
       p1.propertyName should be ("Pysäkin katos")
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
