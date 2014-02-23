@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 
 object Digiroad2Context {
+  val DigiroadResponseHeader = "X-Digiroad-Response"
   lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))

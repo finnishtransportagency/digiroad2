@@ -13,6 +13,10 @@ class SessionApi extends ScalatraServlet {
     case _ => Configuration()
   }
 
+  before() {
+    response.setHeader(DigiroadResponseHeader, "true")
+  }
+
   post("/session") {
     val username = request.getParameter("username")
     userProvider.getUser(username) match {
