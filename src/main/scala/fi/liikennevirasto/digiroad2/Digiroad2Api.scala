@@ -26,7 +26,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     } catch {
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
-    response.setHeader(DigiroadResponseHeader, "true")
+    response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
   get("/config") {

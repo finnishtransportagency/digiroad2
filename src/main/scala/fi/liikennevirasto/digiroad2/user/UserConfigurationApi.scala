@@ -20,7 +20,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     } catch {
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
-    response.setHeader(DigiroadResponseHeader, "true")
+    response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
   get("/user/:username") {

@@ -12,7 +12,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 });
 
 $(document).ajaxComplete(function(event, jqXHR, ajaxSettings) {
-    var digiroadResponse = jqXHR.getResponseHeader("X-Digiroad-Response");
+    var digiroadResponse = jqXHR.getResponseHeader("Digiroad2-Server-Originated-Response");
     if (!digiroadResponse) {
         session.redirectToLogin();
     }

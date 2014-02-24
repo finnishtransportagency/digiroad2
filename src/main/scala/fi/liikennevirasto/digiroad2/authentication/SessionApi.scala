@@ -14,7 +14,7 @@ class SessionApi extends ScalatraServlet {
   }
 
   before() {
-    response.setHeader(DigiroadResponseHeader, "true")
+    response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
   post("/session") {
