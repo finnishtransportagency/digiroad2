@@ -161,7 +161,19 @@ describe('BusStopLayerPlugin', function(){
                     }
                     return null;
                 },
-                request: function(name, r) { requests.push(r); }
+                request: function(name, r) { requests.push(r); },
+                sentEvent: null,
+                notifyAll: function(event) {
+                    this.sentEvent = event;
+                },
+                getEventBuilder: function(event) {
+                    return function(parameter) {
+                        return {
+                            name: event,
+                            parameter: parameter
+                        };
+                    };
+                }
             });
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {

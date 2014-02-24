@@ -253,7 +253,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
           });
         },
 
-
         _hideAsset: function(marker) {
             //TODO: InfoBox is a direct child component of BusStopLayer, so make it so!
             // (get rid of useless request-abstraction)
@@ -358,7 +357,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 heading: asset.bearing + 90
             };
             this._sendShowAttributesRequest(asset.id, streetViewCoordinates);
+            this._triggerEvent('mapbusstop.AssetModifiedEvent', asset);
         },
+
+        _triggerEvent: function(key, value) {
+            var eventBuilder = this._sandbox.getEventBuilder(key);
+            var event = eventBuilder(value);
+            this._sandbox.notifyAll(event);
+        },
+
         /**
          * @method onEvent
          * Event is handled forwarded to correct #eventHandlers if found or discarded
