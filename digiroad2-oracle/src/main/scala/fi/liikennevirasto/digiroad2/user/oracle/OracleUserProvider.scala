@@ -42,4 +42,10 @@ class OracleUserProvider extends UserProvider {
       user
     }
   }
+
+  def deleteUser(username: String) = {
+    Database.forDataSource(ds).withDynSession {
+      sqlu"""delete from service_user where username = ${username.toLowerCase}""".execute()
+    }
+  }
 }

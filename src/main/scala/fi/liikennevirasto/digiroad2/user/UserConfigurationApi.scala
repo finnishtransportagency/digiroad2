@@ -70,7 +70,9 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
             val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers))
             userProvider.saveUser(updatedUser)
           }
-          case None => logger.warn("User not found: " + username)
+          case None => {
+            userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers))
+          }
         }
       }
     }
