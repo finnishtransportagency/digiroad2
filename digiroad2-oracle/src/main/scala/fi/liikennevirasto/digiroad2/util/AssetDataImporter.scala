@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
 
+
 object AssetDataImporter {
   case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
   case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Int, endMeasure: Int)
@@ -58,13 +59,13 @@ class AssetDataImporter {
   lazy val ds: DataSource = initDataSource
   lazy val assetProvider = new OracleSpatialAssetProvider(new OracleUserProvider)
 
-  val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99)
+  val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
   val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
   val Modifier = "automatic_import"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
-    val bs = SimpleBusStop(shelterTypes(r.<<), busStopTypes(r.<<), r.<<)
+      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), busStopTypes(r.<<), r.<<)
     val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
     (bs, lrm)
   }
@@ -82,22 +83,32 @@ class AssetDataImporter {
     }
   }
 
-  def importRoadlinks(dataSet: ImportDataSet) = insertRoadLinks(roadLinksToImport(dataSet))
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    println("time: "+(System.nanoTime-s)/1e6+"ms")
+    ret
+  }
+
+  def importRoadlinks(dataSet: ImportDataSet) = roadLinksToImport(dataSet)
 
   private def roadLinksToImport(dataSet: ImportDataSet) = {
     val table = dataSet.roadLinkTable
+    var i = 0
     dataSet.database().withDynSession {
       sql"""
-        select tunnus, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
+        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
         viim_talo_o, viim_talo_v, kunta_nro, shape from #$table
-      """.as[SimpleRoadLink].list
-    }
+      """.as[SimpleRoadLink].foreach(rl => {
+          i = i + 1
+          insertRoadLink(rl, i)
+        })
+      }
   }
 
-  def insertRoadLinks(roadLinks: Seq[SimpleRoadLink]) {
+  def insertRoadLink(rl: SimpleRoadLink, idx: Int) {
     Database.forDataSource(ds).withDynTransaction {
-      roadLinks.foreach { rl =>
-        println("ROADLINK: " + rl)
+        if(idx % 1000 == 0) println(s"""$idx item in progress""")
         try {
           sqlu"""
             insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn,
@@ -111,11 +122,12 @@ class AssetDataImporter {
           case e: Exception => logger.error("Can't import roadlink", e)
         }
       }
-    }
   }
 
   def importBusStops(dataSet: ImportDataSet) = {
+    println("select")
     val busStopsAndPositions = busStopsToImport(dataSet)
+    println("/select")
     insertLrmPositions(busStopsAndPositions.map(_._2).toList)
     insertBusStops(busStopsAndPositions.map(_._1).toList)
   }
