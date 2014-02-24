@@ -16,7 +16,7 @@ class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
-     User(r.nextLong, r.nextString(), read[Configuration](r.nextString()))
+     User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
     }
   }
 
@@ -40,6 +40,12 @@ class OracleUserProvider extends UserProvider {
     Database.forDataSource(ds).withDynSession {
       sqlu"""update service_user set configuration = ${write(user.configuration)} where username = ${user.username.toLowerCase}""".execute()
       user
+    }
+  }
+
+  def deleteUser(username: String) = {
+    Database.forDataSource(ds).withDynSession {
+      sqlu"""delete from service_user where username = ${username.toLowerCase}""".execute()
     }
   }
 }

@@ -90,7 +90,7 @@ object Digiroad2Build extends Build {
   ) dependsOn(geoJar, oracleJar) aggregate(oracleJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
-    mainClass in assembly := Some("fi.liikennevirasto.digiroad2.DigiroadServer"),
+    mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
     test in assembly := {},
     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     {

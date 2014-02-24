@@ -25,7 +25,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   get("/user/:username") {
     params.get("username").flatMap {
-      userProvider.getUser(_)
+      userProvider.getUser
     } match {
       case Some(u) => u
       case None => NotFound("User not found: " + params.get("username").getOrElse(""))
@@ -36,11 +36,10 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     // TODO: create user atomically in provider
     val user = parsedBody.extract[User]
     userProvider.getUser(user.username) match {
-      case Some(user) => Conflict("User already exists: " + user)
-      case None => {
+      case Some(name) => Conflict("User already exists: " + name)
+      case None =>
         userProvider.createUser(user.username, user.configuration)
         userProvider.getUser(user.username)
-      }
     }
   }
 
@@ -48,7 +47,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     // TODO: when implementing UI, use municipalities of client to determine authorization, only modify (add/remove) authorized municipalities
     val municipalities = parsedBody.extract[List[Long]].toSet
     params.get("username").flatMap {
-      userProvider.getUser(_)
+      userProvider.getUser
     }.map { u =>
       val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalities))
       userProvider.saveUser(updatedUser)
@@ -67,20 +66,19 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
       } else {
         val (username, municipalityNumbers) = (elements.head, elements.tail.map { m => m.trim.toLong }.toSet)
         userProvider.getUser(username) match {
-          case Some(u) => {
+          case Some(u) =>
             val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers))
             userProvider.saveUser(updatedUser)
-          }
-          case None => logger.warn("User not found: " + username)
+          case None =>
+            userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers))
         }
       }
     }
   }
 
   error {
-    case e: Exception => {
+    case e: Exception =>
       logger.error("API Error", e)
       InternalServerError("Internal Error")
-    }
   }
 }
