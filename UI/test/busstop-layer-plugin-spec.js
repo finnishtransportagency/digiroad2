@@ -131,12 +131,14 @@ describe('BusStopLayerPlugin', function(){
                     }
                 },
                 layers: {
-                    busstoplayer_235: [{}, {
+                    road: {features: null},
+                    asset: {
+                      addMarker: function(marker) { addedMarker = marker; }
+                    },
+                    assetDirection: {
                         addFeatures: function(feature) { addedFeature = feature; },
                         destroyFeatures: function(feature) { destroyedFeature = feature; }
-                    }, {
-                        addMarker: function(marker) { addedMarker = marker; }
-                    }]
+                    }
                 }
             });
             pluginInstance._initTemplates();
