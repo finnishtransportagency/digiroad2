@@ -16,7 +16,7 @@ class OracleUserProvider extends UserProvider {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit val getUser = new GetResult[User] {
     def apply(r: PositionedResult) = {
-     User(r.nextLong, r.nextString(), read[Configuration](r.nextString()))
+     User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()))
     }
   }
 

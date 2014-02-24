@@ -19,7 +19,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
     postJsonWithUserAuth("/userconfig/user", write(user)) {
       status should be (200)
       val u = parse(body).extract[User]
-      u.id should not be (0)
+      u.id should not be 0
       u.username should be (TestUsername.toLowerCase)
       u.configuration.authorizedMunicipalities should contain only (1, 2, 3)
     }
@@ -33,7 +33,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       status should be (200)
       val u = parse(body).extract[User]
       u.username should be ("test49")
-      u.configuration.authorizedMunicipalities should contain only (49)
+      u.configuration.authorizedMunicipalities should contain only 49
     }
     getWithUserAuth("/userconfig/user/nonexistent") {
       status should be (404)
@@ -52,7 +52,7 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(49))) {
         status should be (200)
         getWithUserAuth("/userconfig/user/test49") {
-          parse(body).extract[User].configuration.authorizedMunicipalities should contain only (49)
+          parse(body).extract[User].configuration.authorizedMunicipalities should contain only 49
         }
       }
     }
