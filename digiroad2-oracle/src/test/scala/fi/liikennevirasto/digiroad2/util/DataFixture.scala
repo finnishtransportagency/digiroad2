@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
+import org.joda.time.DateTime
 
 object DataFixture {
   val TestAssetId = 300000
@@ -38,8 +39,14 @@ object DataFixture {
       case Some("conversion") => {
         tearDown()
         setUpFull()
+        println("<roadlinks>")
+        println(DateTime.now())
         dataImporter.importRoadlinks(Conversion)
-        dataImporter.importBusStops(Conversion)
+        println("</roadlinks>")
+        println(DateTime.now())
+        println("<importBusStops>")
+       // dataImporter.importBusStops(Conversion)
+        println("</importBusStops>")
       }
       case _ => println("Usage: DataFixture test | full | conversion")
     }
