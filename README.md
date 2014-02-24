@@ -108,3 +108,20 @@ Windowsissa toimii komento:
 ```
 run fi.liikennevirasto.digiroad2.ProductionServer
 ```
+
+Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
+======================================================
+
+Palvelun käyttäjien tietoja voi päivittää ja uusia käyttäjiä voi lisätä CSV - tiedostosta, jossa on määritelty uusien ja päivitettävien käyttäjien käyttäjänimet sekä kuntatunnukset joihin näillä käyttäjillä tulisi olla oikeudet.
+
+Alla esimerkki CSV-tiedostosta:
+```
+uusitunnus, 105, 258, 248, 245
+olemassaolevatunnus, 410, 411, 412, 413
+```
+
+Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` skriptiä:
+```
+./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
+```
+
