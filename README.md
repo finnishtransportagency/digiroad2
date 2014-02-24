@@ -106,5 +106,5 @@ Vastaavasti buildille voi välittää kohteena oleva ympäristö propertyllä "d
 
 Windowsissa toimii komento:
 ```
-run fi.liikennevirasto.digiroad2.DigiroadServer
+run fi.liikennevirasto.digiroad2.ProductionServer
 ```
