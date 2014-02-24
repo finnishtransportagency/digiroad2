@@ -34,6 +34,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("provide header to indicate session still active", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
+      status should equal(200)
+      response.getHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader) should be ("true")
+    }
+  }
+
   test("get assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
       status should equal(200)
