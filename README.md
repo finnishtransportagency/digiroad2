@@ -58,6 +58,14 @@ bonecp.username=<käyttäjätunnus>
 bonecp.password=<salasana>
 ```
 
+Tietokantayhteyden voi määrittää myös ulkoisessa properties tiedostossa joka noudattaa yllä olevaa muotoa.
+
+Tällöin digiroad2/digiroad2-oracle/conf/dev/bonecp.properties tiedosto viittaa ulkoiseen tiedostoon:
+
+```
+digiroad2-oracle.externalBoneCPPropertiesFile=/etc/digiroad2/bonecp.properties
+```
+
 Tietokanta ja skeema voidaan alustaa käyttäen `fixture-reset.sh` skriptiä.
 
 Ajaminen

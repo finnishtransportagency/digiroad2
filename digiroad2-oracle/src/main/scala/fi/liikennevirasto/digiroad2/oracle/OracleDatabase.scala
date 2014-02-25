@@ -5,12 +5,19 @@ import java.util.Properties
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import org.joda.time.LocalDate
 import java.sql.Date
+import java.io.FileInputStream
 
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
 
   lazy val localProperties: Properties = {
-    loadProperties("/bonecp.properties")
+    val properties = loadProperties("/bonecp.properties")
+    if (properties.containsKey("digiroad2-oracle.externalBoneCPPropertiesFile")) {
+      val externalPropertiesFile = new FileInputStream(properties.getProperty("digiroad2-oracle.externalBoneCPPropertiesFile"))
+      val externalProperties = new Properties()
+      externalProperties.load(externalPropertiesFile)
+      externalProperties
+    } else properties
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {
