@@ -143,12 +143,12 @@ class AssetDataImporter {
      WHERE r__ >= #$start""".as[SimpleRoadLink].list
   }
 
-  private def insertRoadLink(rl: List[SimpleRoadLink]) {
+  private def insertRoadLink(roadlinks: List[SimpleRoadLink]) {
     Database.forDataSource(ds).withSession {
       s =>
         val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ResultSetType.Auto, ResultSetConcurrency.ReadOnly, ResultSetHoldability.Default)
 
-        def batch(rl : SimpleRoadLink) {
+        def batch(rl: SimpleRoadLink) {
           ps.setLong(1, rl.id)
           ps.setInt(2, rl.roadType)
           ps.setInt(3, rl.roadNumber)
@@ -163,7 +163,7 @@ class AssetDataImporter {
           ps.addBatch
         }
 
-        rl foreach batch
+        roadlinks foreach batch
         ps.executeBatch
     }
   }
