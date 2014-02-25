@@ -87,41 +87,87 @@ class AssetDataImporter {
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
-    println("time: "+(System.nanoTime-s)/1e6+"ms")
+    println("time for insert "+(System.nanoTime-s)/1e6+"ms")
+    ret
+  }
+
+  def time2[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    println("timer for fetch "+(System.nanoTime-s)/1e6+"ms")
     ret
   }
 
   def importRoadlinks(dataSet: ImportDataSet) = roadLinksToImport(dataSet)
 
-  private def roadLinksToImport(dataSet: ImportDataSet) = {
+
+
+  private def getRoadlinkCount(dataSet: ImportDataSet) = {
     val table = dataSet.roadLinkTable
-    var i = 0
     dataSet.database().withDynSession {
-      sql"""
-        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
-        viim_talo_o, viim_talo_v, kunta_nro, shape from #$table
-      """.as[SimpleRoadLink].foreach(rl => {
-          i = i + 1
-          insertRoadLink(rl, i)
-        })
-      }
+      sql"""select count(*) from #$table""".as[Int].first
+    }
   }
 
-  def insertRoadLink(rl: SimpleRoadLink, idx: Int) {
+  private def getBatchDrivers(size: Int) = {
+
+    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    x :+ (x.last._2 + 1, size)
+  }
+
+  private def roadLinksToImport(dataSet: ImportDataSet) = {
+
+    val count = getRoadlinkCount(dataSet)
+    time {
+      getBatchDrivers(count).par.foreach(x => doConversion(dataSet, x))
+    }
+  }
+
+  private def doConversion(dataSet: ImportDataSet, driver: (Int, Int)) = {
+    val table = dataSet.roadLinkTable
+    println(driver)
+    dataSet.database().withDynSession {
+      getOldRoadlink(table, driver).foreach(rl => {
+        insertRoadLink(rl)
+      })
+    }
+  }
+
+  def getOldRoadlink(table: String, driver: (Int, Int)) = {
+     val start = driver._1
+     val end = driver._2
+     sql"""
+        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
+               viim_talo_o, viim_talo_v, kunta_nro, shape from
+        (
+        SELECT a.*, rownum r__
+        FROM
+        (
+         SELECT * FROM tielinkki
+        ) a
+        WHERE rownum < #$end)
+     WHERE r__ >= #$start""".as[SimpleRoadLink]
+  }
+
+
+
+  def insertRoadLink(rl: SimpleRoadLink) {
     Database.forDataSource(ds).withDynTransaction {
-        if(idx % 1000 == 0) println(s"""$idx item in progress""")
-        try {
-          sqlu"""
-            insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn,
-              l_start_hn, r_end_hn, l_end_hn, municipality_number, geom)
-            values (${rl.id}, ${rl.roadType}, ${rl.roadNumber}, ${rl.roadPartNumber}, ${rl.functionalClass}, ${rl.rStartHn},
-              ${rl.lStartHn}, ${rl.rEndHn}, ${rl.lEndHn}, ${rl.municipalityNumber}, ${rl.geom})
-          """.execute
-        } catch {
-          // TODO: current import data does not contain validity dates to resolve duplicate IDs (tunnus) so just disregard individual errors (duplicates) for now
-          // TODO: should tunnus be mapped to unique road_link.id as it is now (ie could there be several road links with same tunnus)?
-          case e: Exception => logger.error("Can't import roadlink", e)
-        }
+        //time {
+          // if(idx % 1000 == 0) println(s"""$idx item in progress""")
+          try {
+            sqlu"""
+              insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn,
+                l_start_hn, r_end_hn, l_end_hn, municipality_number, geom)
+              values (${rl.id}, ${rl.roadType}, ${rl.roadNumber}, ${rl.roadPartNumber}, ${rl.functionalClass}, ${rl.rStartHn},
+                ${rl.lStartHn}, ${rl.rEndHn}, ${rl.lEndHn}, ${rl.municipalityNumber}, ${rl.geom})
+            """.execute
+          } catch {
+            // TODO: current import data does not contain validity dates to resolve duplicate IDs (tunnus) so just disregard individual errors (duplicates) for now
+            // TODO: should tunnus be mapped to unique road_link.id as it is now (ie could there be several road links with same tunnus)?
+            case e: Exception => logger.error("Can't import roadlink", e)
+          }
+      //  }
       }
   }
 
