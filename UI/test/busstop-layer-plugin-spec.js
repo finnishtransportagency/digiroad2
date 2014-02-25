@@ -131,12 +131,14 @@ describe('BusStopLayerPlugin', function(){
                     }
                 },
                 layers: {
-                    busstoplayer_235: [{}, {
+                    road: {features: null},
+                    asset: {
+                      addMarker: function(marker) { addedMarker = marker; }
+                    },
+                    assetDirection: {
                         addFeatures: function(feature) { addedFeature = feature; },
                         destroyFeatures: function(feature) { destroyedFeature = feature; }
-                    }, {
-                        addMarker: function(marker) { addedMarker = marker; }
-                    }]
+                    }
                 }
             });
             pluginInstance._initTemplates();
@@ -159,7 +161,19 @@ describe('BusStopLayerPlugin', function(){
                     }
                     return null;
                 },
-                request: function(name, r) { requests.push(r); }
+                request: function(name, r) { requests.push(r); },
+                sentEvent: null,
+                notifyAll: function(event) {
+                    this.sentEvent = event;
+                },
+                getEventBuilder: function(event) {
+                    return function(parameter) {
+                        return {
+                            name: event,
+                            parameter: parameter
+                        };
+                    };
+                }
             });
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {

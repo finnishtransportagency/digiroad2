@@ -85,6 +85,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
             return null;
         },
 
+        eventHandlers: {
+          'mapbusstop.AssetModifiedEvent': function(event) {
+            this._handleAssetModified(event.getAsset());
+          }
+        },
+
+        _handleAssetModified: function(asset) {
+          var $el = jQuery('input.layerSelector[data-validity-period=' + asset.validityPeriod + ']');
+          if (!$el.is(':checked')) {
+            $el.click();
+          }
+        },
+
         _render: function() {
           this._renderView();
           this._bindEvents();
