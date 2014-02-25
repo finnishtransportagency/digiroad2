@@ -4,7 +4,7 @@ import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.Properties
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
-import scala.slick.jdbc.{StaticQuery => Q, GetResult, PositionedParameters, SetParameter}
+import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
 import Q.interpolation
 import java.io.{ByteArrayOutputStream, BufferedInputStream}
@@ -20,6 +20,10 @@ import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
 import scala.io.Source
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
+import scala.Some
+import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
+import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleRoadLink
+import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleLRMPosition
 
 
 object AssetDataImporter {
@@ -111,21 +115,20 @@ class AssetDataImporter {
   private def roadLinksToImport(dataSet: ImportDataSet) = {
     val count = getRoadlinkCount(dataSet)
     time {
-      val parallerSeq = getBatchDrivers(count).par
-      parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(20))
-      parallerSeq.foreach(x => doConversion(dataSet, x))
+      dataSet.database().withDynSession {
+        val parallerSeq = getBatchDrivers(count).par
+        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
+        parallerSeq.par.foreach(doConversion)
+      }
     }
   }
 
-  private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
-    val table = dataSet.roadLinkTable
+  private def doConversion(page: (Int, Int)) = {
     println(page)
-    dataSet.database().withDynSession {
-      getOldRoadlinksByPage(table, page).foreach(insertRoadLink)
-    }
+    insertRoadLink(getOldRoadlinksByPage(page))
   }
 
-  private def getOldRoadlinksByPage(table: String, page: (Int, Int)) = {
+  private def getOldRoadlinksByPage(page: (Int, Int)) = {
      val start = page._1
      val end = page._2
      sql"""
@@ -138,23 +141,31 @@ class AssetDataImporter {
          SELECT * FROM tielinkki ORDER BY objectid asc
         ) a
         WHERE rownum <= #$end)
-     WHERE r__ >= #$start""".as[SimpleRoadLink]
+     WHERE r__ >= #$start""".as[SimpleRoadLink].list
   }
 
-  private def insertRoadLink(rl: SimpleRoadLink) {
-    Database.forDataSource(ds).withDynTransaction {
-      try {
-        sqlu"""
-              insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn,
-                l_start_hn, r_end_hn, l_end_hn, municipality_number, geom)
-              values (${rl.id}, ${rl.roadType}, ${rl.roadNumber}, ${rl.roadPartNumber}, ${rl.functionalClass}, ${rl.rStartHn},
-                ${rl.lStartHn}, ${rl.rEndHn}, ${rl.lEndHn}, ${rl.municipalityNumber}, ${rl.geom})
-            """.execute
-      } catch {
-        // TODO: current import data does not contain validity dates to resolve duplicate IDs (tunnus) so just disregard individual errors (duplicates) for now
-        // TODO: should tunnus be mapped to unique road_link.id as it is now (ie could there be several road links with same tunnus)?
-        case e: Exception => logger.error("Can't import roadlink", e)
-      }
+  private def insertRoadLink(rl: List[SimpleRoadLink]) {
+    Database.forDataSource(ds).withSession {
+      s =>
+        val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ResultSetType.Auto, ResultSetConcurrency.ReadOnly, ResultSetHoldability.Default)
+
+        def batch(rl : SimpleRoadLink) {
+          ps.setLong(1, rl.id)
+          ps.setInt(2, rl.roadType)
+          ps.setInt(3, rl.roadNumber)
+          ps.setInt(4, rl.roadPartNumber)
+          ps.setInt(5, rl.functionalClass)
+          ps.setInt(6, rl.rStartHn)
+          ps.setInt(7, rl.lStartHn)
+          ps.setInt(8, rl.rEndHn)
+          ps.setInt(9, rl.lEndHn)
+          ps.setInt(10, rl.municipalityNumber)
+          ps.setObject(11, rl.geom)
+          ps.addBatch
+        }
+
+        rl foreach batch
+        ps.executeBatch
     }
   }
 
