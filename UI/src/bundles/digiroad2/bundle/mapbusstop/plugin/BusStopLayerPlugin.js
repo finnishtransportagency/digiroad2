@@ -411,6 +411,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (this._layers.assetDirection) {
                 this._layers.assetDirection.setVisibility(event._zoom >= 8);
             }
+            if (_.isObject(this._layers.asset)) {
+                this._renderAssets();
+            }
         },
 
         /**
@@ -504,20 +507,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._layers = {road: roadLayer,
                             assetDirection: assetDirectionLayer,
                             asset: assetLayer};
-
-            jQuery.getJSON('api/assets?assetTypeId=10', function(assets) {
+            this._renderAssets();
+            me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
+        },
+        _renderAssets: function() {
+            var self = this;
+            self._backend.getAssets(10, this._map.getExtent(), function(assets) {
                 _.each(assets, function (asset) {
                     var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
                     //Make the feature a plain OpenLayers marker
-                    var directionArrow = me._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
-                    assetDirectionLayer.addFeatures(directionArrow);
-                    me._addBusStop(asset, assetLayer, directionArrow, assetDirectionLayer, validityDirection);
+                    var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
+                    self._layers.assetDirection.addFeatures(directionArrow);
+                    self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
                 });
-            })
-            .fail(function() {
-                console.log( "error" );
             });
-            me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
         },
         _getIcon: function(imageIds) {
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
@@ -549,6 +552,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return callout;
         },
         _addBusStop: function(assetData, busStops, directionArrow, directionLayer, validityDirection) {
+            if (_.contains(_.pluck(busStops.markers, "id"), assetData.id)) return;
             var imageIds = assetData.imageIds;
             var icon = this._getIcon(imageIds);
             // new bus stop marker
@@ -569,7 +573,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             busStops.addMarker(busStop);
             return busStop;
         },
-
         _mouseUp: function (busStop, busStops, busStopClick, id, typeId) {
             var me = this;
             return function(evt) {

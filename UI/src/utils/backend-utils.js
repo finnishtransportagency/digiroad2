@@ -8,6 +8,13 @@
         putAssetPropertyValue(assetId, propertyId, data, success);
     };
 
+    backend.getAssets = function (assetTypeId, boundingBox, success) {
+        jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, success)
+            .fail(function () {
+                console.log("error");
+            });
+    };
+
     backend.getAsset = function (assetId, success) {
         $.get('api/assets/' + assetId, success);
     };
