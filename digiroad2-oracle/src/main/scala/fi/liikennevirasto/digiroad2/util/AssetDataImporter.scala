@@ -107,40 +107,40 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
   private def roadLinksToImport(dataSet: ImportDataSet) = {
     val count = getRoadlinkCount(dataSet)
     time {
-      dataSet.database().withDynSession {
         val parallerSeq = getBatchDrivers(count).par
         parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
-        parallerSeq.par.foreach(doConversion)
-      }
+        parallerSeq.par.foreach(x => doConversion(dataSet, x))
     }
   }
 
-  private def doConversion(page: (Int, Int)) = {
+  private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
     println(page)
-    insertRoadLink(getOldRoadlinksByPage(page))
+    insertRoadLink(getOldRoadlinksByPage(dataSet, page))
   }
 
-  private def getOldRoadlinksByPage(page: (Int, Int)) = {
+  private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
      val start = page._1
      val end = page._2
-     sql"""
-        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
-               viim_talo_o, viim_talo_v, kunta_nro, shape from
-        (
-        SELECT a.*, rownum r__
-        FROM
-        (
-         SELECT * FROM tielinkki ORDER BY objectid asc
-        ) a
-        WHERE rownum <= #$end)
-     WHERE r__ >= #$start""".as[SimpleRoadLink].list
+     dataSet.database().withDynSession {
+      sql"""
+          select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
+                 viim_talo_o, viim_talo_v, kunta_nro, shape from
+          (
+          SELECT a.*, rownum r__
+          FROM
+          (
+           SELECT * FROM tielinkki ORDER BY objectid asc
+          ) a
+          WHERE rownum <= #$end)
+       WHERE r__ >= #$start""".as[SimpleRoadLink].list
+    }
   }
 
   private def insertRoadLink(roadlinks: List[SimpleRoadLink]) {
