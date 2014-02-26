@@ -9,7 +9,7 @@ import Database.dynamicSession
 import Q.interpolation
 import java.io.{ByteArrayOutputStream, BufferedInputStream}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import oracle.sql.STRUCT
 import org.slf4j.LoggerFactory
@@ -24,6 +24,7 @@ import scala.Some
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleRoadLink
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleLRMPosition
+import org.joda.time.format.PeriodFormatterBuilder
 
 
 object AssetDataImporter {
@@ -114,16 +115,49 @@ class AssetDataImporter {
 
   private def roadLinksToImport(dataSet: ImportDataSet) = {
     val count = getRoadlinkCount(dataSet)
+    totalItems = count
+    startTime = DateTime.now()
+    lastCheckpoint = DateTime.now()
     time {
         val parallerSeq = getBatchDrivers(count).par
         parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
         parallerSeq.par.foreach(x => doConversion(dataSet, x))
     }
   }
+  var totalItems = 0
+  var processedItems = 0
+  var counterForProcessed = 0
+  var startTime: DateTime = null
+  var lastCheckpoint: DateTime = null
+
+  private def updateStatus(processedPage: (Int, Int)) = {
+    this.synchronized {
+      processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
+      if(counterForProcessed % 10 == 0) {
+        val percentage = (processedItems / (totalItems * 1.0)) * 100
+        val currentTime = DateTime.now()
+        val formatter = new PeriodFormatterBuilder()
+          .appendHours()
+          .appendSuffix(" h ")
+          .appendMinutes()
+          .appendSuffix(" m ")
+          .appendSeconds()
+          .appendSuffix(" s ")
+          .appendMillis()
+          .appendSuffix(" ms ")
+          .toFormatter()
+        val lastBatchExecTime = formatter.print(new Interval(lastCheckpoint, currentTime).toDuration.toPeriod)
+        val totalExecTime = formatter.print(new Interval(startTime, currentTime).toDuration.toPeriod)
+        println(f"""$processedItems / $totalItems  items ($percentage%1.2f %%) processed. Last batch took $lastBatchExecTime. Total execution time $totalExecTime""")
+        lastCheckpoint = currentTime
+      }
+      counterForProcessed = counterForProcessed + 1
+    }
+  }
 
   private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
-    println(page)
     insertRoadLink(getOldRoadlinksByPage(dataSet, page))
+    updateStatus(page)
   }
 
   private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
