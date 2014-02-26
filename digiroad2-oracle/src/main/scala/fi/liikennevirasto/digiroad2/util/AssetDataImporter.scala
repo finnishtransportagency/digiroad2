@@ -109,7 +109,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 50).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -196,11 +196,11 @@ class AssetDataImporter {
           ps.setInt(9, rl.lEndHn)
           ps.setInt(10, rl.municipalityNumber)
           ps.setObject(11, rl.geom)
-          ps.execute
+          ps.addBatch
         }
 
         roadlinks foreach batch
-       // ps.executeBatch
+        ps.executeBatch
     }
   }
 
