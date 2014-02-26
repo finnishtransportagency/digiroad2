@@ -109,7 +109,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 10).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -117,7 +117,7 @@ class AssetDataImporter {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(4))
+    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(5))
     totalItems = count
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
@@ -133,7 +133,7 @@ class AssetDataImporter {
   private def updateStatus(processedPage: (Int, Int)) = {
     this.synchronized {
       processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
-      if(counterForProcessed % 50 == 0) {
+      if(counterForProcessed % 200 == 0) {
         val percentage = (processedItems / (totalItems * 1.0)) * 100
         val currentTime = DateTime.now()
         val formatter = new PeriodFormatterBuilder()
@@ -157,6 +157,7 @@ class AssetDataImporter {
 
   private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
     insertRoadLink(getOldRoadlinksByPage(dataSet, page))
+    // println(page)
     updateStatus(page)
   }
 
@@ -181,7 +182,7 @@ class AssetDataImporter {
   private def insertRoadLink(roadlinks: List[SimpleRoadLink]) {
     Database.forDataSource(ds).withSession {
       s =>
-        val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ResultSetType.Auto, ResultSetConcurrency.ReadOnly, ResultSetHoldability.Default)
+        val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
         def batch(rl: SimpleRoadLink) {
           ps.setLong(1, rl.id)
@@ -200,7 +201,6 @@ class AssetDataImporter {
 
         roadlinks foreach batch
         ps.executeBatch
-        ps.close
     }
   }
 
