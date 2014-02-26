@@ -85,6 +85,14 @@
     width: 210px;
 }
 
+.featureattributeChoice label {
+    vertical-align: middle;
+}
+
+.featureAttributeChoice input[type='checkbox'] {
+    vertical-align: middle;
+}
+
 .formContent {
     font-size: 12px;
     font-family: "Arial";

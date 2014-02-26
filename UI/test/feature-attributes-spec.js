@@ -148,10 +148,9 @@ describe('FeatureAttributes', function () {
         });
 
         it('should create multiple choice field for property "Pysäkin tyyppi"', function() {
-            var multipleChoiceElement = $('select[data-propertyid="2"]');
+            var multipleChoiceElement = $('div[data-propertyid="2"]');
             assert.equal(1, multipleChoiceElement.length);
             assert.equal(true, multipleChoiceElement.hasClass('featureattributeChoice'));
-            assert.equal('multiple', multipleChoiceElement.attr('multiple'));
         });
 
         it('should create date field for property "Käytössä alkaen"', function() {
@@ -215,7 +214,7 @@ describe('FeatureAttributes', function () {
                 var saveButton = $('button.save');
                 setTextProperty(5, 'textValue');
                 selectOptions(1, [2]);
-                selectOptions(2, [2, 4]);
+                checkMultiCheckboxes(2, [2, 4]);
                 setTextProperty('validFrom', '10.6.2014');
                 validityDirectionValue = validityDirectionElement().val();
                 saveButton.click();
@@ -225,8 +224,8 @@ describe('FeatureAttributes', function () {
                 assert.equal(5, collectedAttributes.length);
                 assert.deepEqual(collectedAttributes[0], { propertyId: '5', propertyValues: [ { propertyValue:0, propertyDisplayValue:'textValue' } ] });
                 assert.deepEqual(collectedAttributes[1], { propertyId: '8', propertyValues: [ { propertyValue:0, propertyDisplayValue:'' } ] });
-                assert.deepEqual(collectedAttributes[2], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
-                assert.deepEqual(collectedAttributes[3], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
+                assert.deepEqual(collectedAttributes[2], { propertyId: 'validityDirection', propertyValues: [ { propertyValue:Number(validityDirectionValue), propertyDisplayValue:'Vaikutussuunta' } ] });
+                assert.deepEqual(collectedAttributes[3], { propertyId: '2', propertyValues: [ { propertyValue:2, propertyDisplayValue:'Pysäkin tyyppi' }, { propertyValue:4, propertyDisplayValue:'Pysäkin tyyppi' } ] });
                 assert.deepEqual(collectedAttributes[4], { propertyId: 'validFrom', propertyValues: [ { propertyValue:0, propertyDisplayValue:'2014-06-10' } ] });
             });
 
@@ -256,6 +255,16 @@ describe('FeatureAttributes', function () {
             });
             selectionElement.change();
         }
+
+        function checkMultiCheckboxes(propertyId, values) {
+            var multiCheckboxElement = $('div[data-propertyid="' + propertyId + '"]');
+            _.each(values, function(value) {
+                var option = multiCheckboxElement.find('input[value="' + value + '"]');
+                option.prop('checked', 'checked');
+            });
+            multiCheckboxElement.change();
+       }
+
 
         function validityDirectionElement() { return $('select[data-propertyid="validityDirection"]'); }
     });
