@@ -109,7 +109,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -120,7 +120,7 @@ class AssetDataImporter {
     lastCheckpoint = DateTime.now()
     time {
         val parallerSeq = getBatchDrivers(count).par
-        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(5))
+        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
         parallerSeq.par.foreach(x => doConversion(dataSet, x))
     }
   }
