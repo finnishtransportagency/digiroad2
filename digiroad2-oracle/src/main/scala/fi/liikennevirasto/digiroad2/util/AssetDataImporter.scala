@@ -109,20 +109,20 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
   private def roadLinksToImport(dataSet: ImportDataSet) = {
     val count = getRoadlinkCount(dataSet)
+    val parallerSeq = getBatchDrivers(count).par
+    println(s"""batching done.""")
+    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(4))
     totalItems = count
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
-    time {
-        val parallerSeq = getBatchDrivers(count).par
-        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
-        parallerSeq.par.foreach(x => doConversion(dataSet, x))
-    }
+    parallerSeq.foreach(x => doConversion(dataSet, x))
+
   }
   var totalItems = 0
   var processedItems = 0
@@ -133,7 +133,7 @@ class AssetDataImporter {
   private def updateStatus(processedPage: (Int, Int)) = {
     this.synchronized {
       processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
-      if(counterForProcessed % 100 == 0) {
+      if(counterForProcessed % 50 == 0) {
         val percentage = (processedItems / (totalItems * 1.0)) * 100
         val currentTime = DateTime.now()
         val formatter = new PeriodFormatterBuilder()
