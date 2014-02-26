@@ -11,19 +11,6 @@ trait DigiroadServer {
   val contextPath : String
   def commenceMtkFileImport()
 
-  class NLSProxyServlet extends ProxyServlet {
-    override protected def proxyHttpURI(req: HttpServletRequest, uri: String): HttpURI = {
-      new HttpURI("http://karttamoottori.maanmittauslaitos.fi"
-        + uri.replaceFirst("/digiroad", ""))
-    }
-
-    override def customizeExchange(exchange: HttpExchange, req: HttpServletRequest): Unit = {
-      exchange.setRequestHeader("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
-      exchange.setRequestHeader("Host", null)
-      super.customizeExchange(exchange, req)
-    }
-  }
-
   def startServer() {
     val server = new Server(8080)
     val context = new WebAppContext()
@@ -38,5 +25,18 @@ trait DigiroadServer {
     commenceMtkFileImport()
     server.start()
     server.join()
+  }
+}
+
+class NLSProxyServlet extends ProxyServlet {
+  override protected def proxyHttpURI(req: HttpServletRequest, uri: String): HttpURI = {
+    new HttpURI("http://karttamoottori.maanmittauslaitos.fi"
+      + uri.replaceFirst("/digiroad", ""))
+  }
+
+  override def customizeExchange(exchange: HttpExchange, req: HttpServletRequest): Unit = {
+    exchange.setRequestHeader("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
+    exchange.setRequestHeader("Host", null)
+    super.customizeExchange(exchange, req)
   }
 }
