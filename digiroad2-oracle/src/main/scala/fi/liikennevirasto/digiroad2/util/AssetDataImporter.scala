@@ -108,7 +108,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 100).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -119,31 +119,31 @@ class AssetDataImporter {
     lastCheckpoint = DateTime.now()
     time {
         val parallerSeq = getBatchDrivers(count).par
-        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
+        parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(5))
         parallerSeq.par.foreach(x => doConversion(dataSet, x))
     }
   }
   var totalItems = 0
   var processedItems = 0
-  var counterForProcessed = 0
+  var counterForProcessed = 1
   var startTime: DateTime = null
   var lastCheckpoint: DateTime = null
 
   private def updateStatus(processedPage: (Int, Int)) = {
     this.synchronized {
       processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
-      if(counterForProcessed % 10 == 0) {
+      if(counterForProcessed % 100 == 0) {
         val percentage = (processedItems / (totalItems * 1.0)) * 100
         val currentTime = DateTime.now()
         val formatter = new PeriodFormatterBuilder()
           .appendHours()
-          .appendSuffix(" h ")
+          .appendSuffix("h ")
           .appendMinutes()
-          .appendSuffix(" m ")
+          .appendSuffix("m ")
           .appendSeconds()
-          .appendSuffix(" s ")
+          .appendSuffix("s ")
           .appendMillis()
-          .appendSuffix(" ms ")
+          .appendSuffix("ms ")
           .toFormatter()
         val lastBatchExecTime = formatter.print(new Interval(lastCheckpoint, currentTime).toDuration.toPeriod)
         val totalExecTime = formatter.print(new Interval(startTime, currentTime).toDuration.toPeriod)
@@ -199,6 +199,7 @@ class AssetDataImporter {
 
         roadlinks foreach batch
         ps.executeBatch
+        ps.close
     }
   }
 
