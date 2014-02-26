@@ -109,7 +109,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 10).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 50).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -117,7 +117,7 @@ class AssetDataImporter {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(5))
+    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
     totalItems = count
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
@@ -133,7 +133,7 @@ class AssetDataImporter {
   private def updateStatus(processedPage: (Int, Int)) = {
     this.synchronized {
       processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
-      if(counterForProcessed % 200 == 0) {
+      if(counterForProcessed % 40 == 0) {
         val percentage = (processedItems / (totalItems * 1.0)) * 100
         val currentTime = DateTime.now()
         val formatter = new PeriodFormatterBuilder()
@@ -196,11 +196,11 @@ class AssetDataImporter {
           ps.setInt(9, rl.lEndHn)
           ps.setInt(10, rl.municipalityNumber)
           ps.setObject(11, rl.geom)
-          ps.addBatch
+          ps.execute
         }
 
         roadlinks foreach batch
-        ps.executeBatch
+       // ps.executeBatch
     }
   }
 
