@@ -28,6 +28,9 @@
         var picker = addPicker(elem, function() {
             jQuery('.pika-single').append(resetButton);
             picker.adjustPosition();
+            // FIXME: Dirty hack to prevent odd behavior when clicking year and month selector.
+            // Remove once we have a sane feature attribute saving method.
+            jQuery('.pika-select').remove();
         });
         resetButton.on('click', function () {
             elem.val(null);
@@ -48,7 +51,7 @@
             firstDay: 1,
             yearRange: [1950, 2050],
             onDraw: onDraw,
-            i18n: FINNISH_PIKADAY_I18N
+            i18n: FINNISH_PIKADAY_I18N,
         });
         jqueryElement.keypress(function(e){
             if (e.which === 13) { // hide on enter key press
