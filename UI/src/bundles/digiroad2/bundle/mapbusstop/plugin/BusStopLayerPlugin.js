@@ -514,11 +514,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var self = this;
             self._backend.getAssets(10, this._map.getExtent(), function(assets) {
                 _.each(assets, function (asset) {
-                    var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
-                    //Make the feature a plain OpenLayers marker
-                    var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
-                    self._layers.assetDirection.addFeatures(directionArrow);
-                    self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                    if (!_.contains(_.pluck(self._layers.asset.markers, "id"), asset.id)) {
+                        var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
+                        //Make the feature a plain OpenLayers marker
+                        var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
+                        self._layers.assetDirection.addFeatures(directionArrow);
+                        self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                    }
                 });
             });
         },
@@ -552,7 +554,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return callout;
         },
         _addBusStop: function(assetData, busStops, directionArrow, directionLayer, validityDirection) {
-            if (_.contains(_.pluck(busStops.markers, "id"), assetData.id)) return;
             var imageIds = assetData.imageIds;
             var icon = this._getIcon(imageIds);
             // new bus stop marker
