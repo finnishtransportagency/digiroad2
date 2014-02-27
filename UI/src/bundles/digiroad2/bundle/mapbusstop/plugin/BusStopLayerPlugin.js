@@ -305,6 +305,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._layers.assetDirection.destroyFeatures(directionArrow);
             });
             var overlay = applyBlockingOverlay();
+            movePopupAboveOverlay();
 
             function setPluginState(state) { me._state = state; }
 
@@ -351,6 +352,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 overlay.overlay('#contentMap');
                 overlay.followResizing(true);
                 return overlay;
+            }
+
+            function movePopupAboveOverlay() {
+                var popupElement = jQuery('.olPopup');
+                var contentMapElement = jQuery('#contentMap');
+                var popupBoundingRectangle = popupElement[0].getBoundingClientRect();
+                var contentMapBoundingRectangle = contentMapElement[0].getBoundingClientRect();
+                var popupLeftRelativeToContentMap = popupBoundingRectangle.left - contentMapBoundingRectangle.left;
+                var popupTopRelativeToContentMap = popupBoundingRectangle.top - contentMapBoundingRectangle.top;
+                var detachedPopup = popupElement.detach();
+                detachedPopup.css('left', popupLeftRelativeToContentMap + 'px');
+                detachedPopup.css('top', popupTopRelativeToContentMap + 'px');
+                contentMapElement.append(detachedPopup);
             }
         },
         _addNewAsset: function(asset) {
