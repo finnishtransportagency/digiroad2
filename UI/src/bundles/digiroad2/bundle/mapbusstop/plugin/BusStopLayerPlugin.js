@@ -679,6 +679,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     dateutil.addFinnishDatePicker(removeDateInput.get(0));
                     return;
                 }
+                me._state = null;
                 streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
                 me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
                 var contentItem = me._makeContent(imageIds);

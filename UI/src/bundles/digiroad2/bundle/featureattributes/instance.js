@@ -154,6 +154,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
         showAttributes : function(id, assetPosition) {
             var me = this;
+            this._state = null;
             me._featureDataAssetId = id;
             me._backend.getAsset(id, function(asset) {
                 var featureData = me._makeContent(asset.propertyData);
