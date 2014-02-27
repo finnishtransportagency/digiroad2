@@ -127,8 +127,8 @@ class AssetDataImporter {
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
     parallerSeq.foreach(x => doConversion(dataSet, x))
-
   }
+
   var totalItems = 0
   var processedItems = 0
   var counterForProcessed = 1
@@ -212,7 +212,6 @@ class AssetDataImporter {
   def importBusStops(dataSet: ImportDataSet) = {
     val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
     lrmPositions.grouped(250).toList.par.foreach(insertLrmPositions)
-    // insertBusStops(busStops)
     insertImages()
     val typeProps = getTypeProperties
     busStops.toList.par.foreach(x => insertBusStops(x, typeProps))
@@ -314,25 +313,25 @@ class AssetDataImporter {
 
   def insertImages() {
     Database.forDataSource(ds).withDynSession {
-    val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
+      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
 
-    imagesForBusStopTypes.foreach { keyVal =>
-      val s = getClass.getResourceAsStream(keyVal._2)
-      val bis = new BufferedInputStream(s)
-      val fos = new ByteArrayOutputStream(65535)
-      val buf = new Array[Byte](1024)
-      Stream.continually(bis.read(buf)).takeWhile(_ != -1).foreach(fos.write(buf, 0, _))
-      val byteArray = fos.toByteArray
+      imagesForBusStopTypes.foreach { keyVal =>
+        val s = getClass.getResourceAsStream(keyVal._2)
+        val bis = new BufferedInputStream(s)
+        val fos = new ByteArrayOutputStream(65535)
+        val buf = new Array[Byte](1024)
+        Stream.continually(bis.read(buf)).takeWhile(_ != -1).foreach(fos.write(buf, 0, _))
+        val byteArray = fos.toByteArray
 
-      sqlu"""
-        insert into image (id, created_by, modified_date, file_name, image_data)
-        values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
-      """.execute
+        sqlu"""
+          insert into image (id, created_by, modified_date, file_name, image_data)
+          values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
+        """.execute
 
-      sqlu"""
-        update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
-      """.execute
-    }
+        sqlu"""
+          update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
+        """.execute
+      }
     }
   }
 
