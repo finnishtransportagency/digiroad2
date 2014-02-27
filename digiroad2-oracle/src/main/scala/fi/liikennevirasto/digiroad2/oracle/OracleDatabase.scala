@@ -11,13 +11,7 @@ object OracleDatabase {
   lazy val ds: DataSource = initDataSource
 
   lazy val localProperties: Properties = {
-    val properties = loadProperties("/bonecp.properties")
-    if (properties.containsKey("digiroad2-oracle.externalBoneCPPropertiesFile")) {
-      val externalPropertiesFile = new FileInputStream(properties.getProperty("digiroad2-oracle.externalBoneCPPropertiesFile"))
-      val externalProperties = new Properties()
-      externalProperties.load(externalPropertiesFile)
-      externalProperties
-    } else properties
+    loadProperties("/bonecp.properties")
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {

@@ -9,5 +9,6 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new Digiroad2Api, "/api/*")
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
+    context.mount(new PingApi, "/api/ping/*")
   }
 }
