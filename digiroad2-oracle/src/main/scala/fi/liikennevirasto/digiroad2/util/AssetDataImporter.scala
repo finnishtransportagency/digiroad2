@@ -34,6 +34,10 @@ object AssetDataImporter {
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
+  case class PropertyWrapper(shelterTypePropertyId: Long, reachabilityPropertyId: Long,
+                             accessibilityPropertyId: Long, administratorPropertyId: Long,
+                             busStopAssetTypeId: Long, busStopTypePropertyId: Long)
+
   sealed trait ImportDataSet {
     def database(): DatabaseDef
     val roadLinkTable: String
@@ -207,11 +211,11 @@ class AssetDataImporter {
 
   def importBusStops(dataSet: ImportDataSet) = {
     val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
-    time {
-      // insertLrmPositions(lrmPositions)
-        lrmPositions.grouped(250).toList.par.foreach(insertLrmPositions)
-    }
-   // insertBusStops(busStops)
+    lrmPositions.grouped(250).toList.par.foreach(insertLrmPositions)
+    // insertBusStops(busStops)
+    insertImages()
+    val typeProps = getTypeProperties
+    busStops.toList.par.foreach(x => insertBusStops(x, typeProps))
   }
 
   private def busStopsToImport(dataSet: ImportDataSet) = {
@@ -238,67 +242,51 @@ class AssetDataImporter {
         }
 
         lrmPositions foreach batch
-        try {
-          ps.executeBatch
-        } catch {
-          case e: Exception => {
-            println("error")
-            println(lrmPositions)
-          }
-        }
+        ps.executeBatch
         ps.close
         session.close
     }
   }
 
-  def insertBusStops(busStops: Seq[SimpleBusStop]) {
+  def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
-      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
       val shelterTypePropertyId = sql"select id from property where name_fi = 'Pysäkin katos'".as[Long].first
       val reachabilityPropertyId = sql"select id from property where name_fi = 'Pysäkin saavutettavuus'".as[Long].first
       val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyystiedot'".as[Long].first
       val administratorPropertyId = sql"select id from property where name_fi = 'Ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
+      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
+      PropertyWrapper(shelterTypePropertyId, reachabilityPropertyId, accessibilityPropertyId, administratorPropertyId,
+                      busStopAssetTypeId, busStopTypePropertyId)
+    }
+  }
 
-      importMunicipalityCodes
+  def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
+    Database.forDataSource(ds).withDynSession {
+      val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
 
-      insertImages(busStopTypePropertyId)
+      sqlu"""
+        insert into asset(id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
+        values($assetId, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+      """.execute
 
-      busStops.foreach { busStop =>
-        try {
-          println("BUS STOP: " + busStop)
-          val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
-
-          sqlu"""
-            insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
-            values($assetId, ${busStop.externalId}, $busStopAssetTypeId, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
-          """.execute
-
-          val bearing = assetProvider.getAssetById(assetId) match {
-            case Some(a) => {
-              assetProvider.getRoadLinkById(a.roadLinkId) match {
-                case Some(rl) => GeometryUtils.calculateBearing(a, rl)
-                case None => 0.0 // TODO log/throw error?
-              }
-            }
+      val bearing = assetProvider.getAssetById(assetId) match {
+        case Some(a) => {
+          assetProvider.getRoadLinkById(a.roadLinkId) match {
+            case Some(rl) => GeometryUtils.calculateBearing(a, rl)
             case None => 0.0 // TODO log/throw error?
           }
-          sqlu"update asset set bearing = $bearing where id = $assetId".execute
-          busStop.busStopType.foreach { busStopType =>
-            insertMultipleChoiceValue(busStopTypePropertyId, assetId, busStopType)
-          }
-
-          insertTextPropertyData(reachabilityPropertyId, assetId, "Ei tiedossa")
-
-          insertTextPropertyData(accessibilityPropertyId, assetId, "Ei tiedossa")
-
-          insertSingleChoiceValue(administratorPropertyId, assetId, 4)
-
-          insertSingleChoiceValue(shelterTypePropertyId, assetId, busStop.shelterType)
-        } catch {
-          case e: Exception => logger.error("Cannot insert " + busStop, e)
         }
+        case None => 0.0 // TODO log/throw error?
       }
+      sqlu"update asset set bearing = $bearing where id = $assetId".execute
+      busStop.busStopType.foreach { busStopType =>
+        insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
+      }
+      insertTextPropertyData(typeProps.reachabilityPropertyId, assetId, "Ei tiedossa")
+      insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
+      insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 4)
+      insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
     }
   }
 
@@ -324,7 +312,10 @@ class AssetDataImporter {
     """.execute
   }
 
-  def insertImages(busStopTypePropertyId: Long) {
+  def insertImages() {
+    Database.forDataSource(ds).withDynSession {
+    val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
+
     imagesForBusStopTypes.foreach { keyVal =>
       val s = getClass.getResourceAsStream(keyVal._2)
       val bis = new BufferedInputStream(s)
@@ -341,6 +332,7 @@ class AssetDataImporter {
       sqlu"""
         update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
       """.execute
+    }
     }
   }
 

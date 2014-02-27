@@ -28,7 +28,8 @@ object DataFixture {
       case Some("test") => {
         tearDown()
         setUpTest()
-        dataImporter.insertBusStops(BusStopTestData.generateTestData)
+        val typeProps = dataImporter.getTypeProperties
+        BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
       }
       case Some("full") => {
         tearDown()
@@ -41,7 +42,7 @@ object DataFixture {
         setUpFull()
         println("<roadlinks>")
         println(DateTime.now())
-        dataImporter.importRoadlinks(Conversion)
+        // dataImporter.importRoadlinks(Conversion)
         println("</roadlinks>")
         println(DateTime.now())
         println("<importBusStops>")
