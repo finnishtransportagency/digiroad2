@@ -206,35 +206,48 @@ class AssetDataImporter {
   }
 
   def importBusStops(dataSet: ImportDataSet) = {
-    println("select")
-    val busStopsAndPositions = busStopsToImport(dataSet)
-    println("/select")
-    insertLrmPositions(busStopsAndPositions.map(_._2).toList)
-    insertBusStops(busStopsAndPositions.map(_._1).toList)
+    val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
+    time {
+      // insertLrmPositions(lrmPositions)
+        lrmPositions.grouped(250).toList.par.foreach(insertLrmPositions)
+    }
+   // insertBusStops(busStops)
   }
 
   private def busStopsToImport(dataSet: ImportDataSet) = {
     val table = dataSet.busStopTable
     dataSet.database().withDynSession {
       sql"""
-        select katos, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table
+        select katos, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table where tielinkkitunnus is not null
       """.as[(SimpleBusStop, SimpleLRMPosition)].list
     }
   }
 
   def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition]) {
-    Database.forDataSource(ds).withDynTransaction {
-      lrmPositions.foreach { lrm =>
-        println("LRM POSITION: " + lrm)
-        try {
-          sqlu"""
-          insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure)
-          values (${lrm.id}, ${lrm.roadLinkId}, 1, ${lrm.laneCode}, ${lrm.sideCode}, ${lrm.startMeasure}, ${lrm.endMeasure})
-        """.execute
-        } catch {
-          case e: Exception => logger.error("Can't insert lrm position", e)
+    Database.forDataSource(ds).withSession {
+      session =>
+        val ps = session.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
+        def batch(lrm: SimpleLRMPosition) {
+          ps.setLong(1, lrm.id)
+          ps.setLong(2, lrm.roadLinkId)
+          ps.setInt(3, lrm.laneCode)
+          ps.setInt(4, lrm.sideCode)
+          ps.setInt(5, lrm.startMeasure)
+          ps.setInt(6, lrm.endMeasure)
+          ps.addBatch
         }
-      }
+
+        lrmPositions foreach batch
+        try {
+          ps.executeBatch
+        } catch {
+          case e: Exception => {
+            println("error")
+            println(lrmPositions)
+          }
+        }
+        ps.close
+        session.close
     }
   }
 
