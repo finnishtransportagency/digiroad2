@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleRoadLink
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
+import scala.slick.driver.JdbcDriver
 
 
 object AssetDataImporter {
@@ -102,13 +103,13 @@ class AssetDataImporter {
   private def getRoadlinkCount(dataSet: ImportDataSet) = {
     val table = dataSet.roadLinkTable
     dataSet.database().withDynSession {
-      sql"""select count(*) from #$table""".as[Int].first
+      sql"""select max(objectid) from #$table""".as[Int].first
     }
   }
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 2000).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -116,7 +117,7 @@ class AssetDataImporter {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(10))
+    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(8))
     totalItems = count
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
@@ -129,22 +130,13 @@ class AssetDataImporter {
   var startTime: DateTime = null
   var lastCheckpoint: DateTime = null
 
-  private def updateStatus(processedPage: (Int, Int)) = {
+  private def updateStatus(size: Int) = {
     this.synchronized {
-      processedItems = processedItems + (1 + processedPage._2 - processedPage._1)
-      if(counterForProcessed % 40 == 0) {
+      processedItems = processedItems + size
+      if(counterForProcessed % 20 == 0) {
         val percentage = (processedItems / (totalItems * 1.0)) * 100
         val currentTime = DateTime.now()
-        val formatter = new PeriodFormatterBuilder()
-          .appendHours()
-          .appendSuffix("h ")
-          .appendMinutes()
-          .appendSuffix("m ")
-          .appendSeconds()
-          .appendSuffix("s ")
-          .appendMillis()
-          .appendSuffix("ms ")
-          .toFormatter()
+        val formatter = getPeriodFormatter
         val lastBatchExecTime = formatter.print(new Interval(lastCheckpoint, currentTime).toDuration.toPeriod)
         val totalExecTime = formatter.print(new Interval(startTime, currentTime).toDuration.toPeriod)
         println(f"""$processedItems / $totalItems  items ($percentage%1.2f %%) processed. Last batch took $lastBatchExecTime. Total execution time $totalExecTime""")
@@ -154,53 +146,62 @@ class AssetDataImporter {
     }
   }
 
+  private def getPeriodFormatter = {
+    new PeriodFormatterBuilder()
+      .appendHours()
+      .appendSuffix("h ")
+      .appendMinutes()
+      .appendSuffix("m ")
+      .appendSeconds()
+      .appendSuffix("s ")
+      .appendMillis()
+      .appendSuffix("ms ")
+      .toFormatter()
+  }
+
   private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
-    insertRoadLink(getOldRoadlinksByPage(dataSet, page))
-    // println(page)
-    updateStatus(page)
+    val links = getOldRoadlinksByPage(dataSet, page)
+    insertRoadLink(links)
+    updateStatus(links.size)
   }
 
   private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
      val start = page._1
      val end = page._2
-     dataSet.database().withDynSession {
-      sql"""
-          select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
-                 viim_talo_o, viim_talo_v, kunta_nro, shape from
-          (
-          SELECT a.*, rownum r__
-          FROM
-          (
-           SELECT * FROM tielinkki ORDER BY objectid asc
-          ) a
-          WHERE rownum <= #$end)
-       WHERE r__ >= #$start""".as[SimpleRoadLink].list
-    }
+     val s = dataSet.database().createSession()
+
+      val query = Q.query[(Int, Int), SimpleRoadLink]("""
+        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
+               viim_talo_o, viim_talo_v, kunta_nro, shape from tielinkki where objectid between ? and ?""")
+      val result = query.list(start, end)(s)
+      s.close()
+      result
   }
 
   private def insertRoadLink(roadlinks: List[SimpleRoadLink]) {
-    Database.forDataSource(ds).withSession {
-      s =>
-        val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    val s = Database.forDataSource(ds).createSession()
 
-        def batch(rl: SimpleRoadLink) {
-          ps.setLong(1, rl.id)
-          ps.setInt(2, rl.roadType)
-          ps.setInt(3, rl.roadNumber)
-          ps.setInt(4, rl.roadPartNumber)
-          ps.setInt(5, rl.functionalClass)
-          ps.setInt(6, rl.rStartHn)
-          ps.setInt(7, rl.lStartHn)
-          ps.setInt(8, rl.rEndHn)
-          ps.setInt(9, rl.lEndHn)
-          ps.setInt(10, rl.municipalityNumber)
-          ps.setObject(11, rl.geom)
-          ps.addBatch
-        }
+    val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
-        roadlinks foreach batch
-        ps.executeBatch
+    def batch(rl: SimpleRoadLink) {
+      ps.setLong(1, rl.id)
+      ps.setInt(2, rl.roadType)
+      ps.setInt(3, rl.roadNumber)
+      ps.setInt(4, rl.roadPartNumber)
+      ps.setInt(5, rl.functionalClass)
+      ps.setInt(6, rl.rStartHn)
+      ps.setInt(7, rl.lStartHn)
+      ps.setInt(8, rl.rEndHn)
+      ps.setInt(9, rl.lEndHn)
+      ps.setInt(10, rl.municipalityNumber)
+      ps.setObject(11, rl.geom)
+      ps.addBatch
     }
+
+    roadlinks foreach batch
+    ps.executeBatch
+    ps.close()
+    s.close()
   }
 
   def importBusStops(dataSet: ImportDataSet) = {
