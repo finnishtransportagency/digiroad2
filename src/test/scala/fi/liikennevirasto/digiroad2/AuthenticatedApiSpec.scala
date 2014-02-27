@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import org.scalatest.FunSuite
 import org.scalatra.test.scalatest.ScalatraSuite
 
-trait AuthenticatedApiSpec extends FunSuite with ScalatraSuite{
+trait AuthenticatedApiSpec extends FunSuite with ScalatraSuite {
   def getWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
     val authHeader = authenticateAndGetHeader(username)
     get(uri, headers = authHeader)(f)
