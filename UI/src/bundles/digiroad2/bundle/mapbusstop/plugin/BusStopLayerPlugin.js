@@ -304,6 +304,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
                 me._layers.assetDirection.destroyFeatures(directionArrow);
             });
+            var overlay = applyBlockingOverlay();
 
             function setPluginState(state) { me._state = state; }
 
@@ -323,12 +324,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                      });
                 me._layers.assetDirection.destroyFeatures(directionArrow);
                 setPluginState(null);
+                overlay.close();
             }
 
             function collectionCancelled() {
                 me._layers.assetDirection.destroyFeatures(directionArrow);
                 sendHideInfoboxRequest('busStop');
                 setPluginState(null);
+                overlay.close();
             }
 
             function sendCollectAttributesRequest(assetPosition, callback, cancellationCallback) {
@@ -341,6 +344,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(infoBoxId);
                 me._sandbox.request(me.getName(), request);
+            }
+
+            function applyBlockingOverlay() {
+                var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                overlay.overlay('#contentMap');
+                overlay.followResizing(true);
+                return overlay;
             }
         },
         _addNewAsset: function(asset) {
