@@ -45,7 +45,7 @@ object DataFixture {
         println("</roadlinks>")
         println(DateTime.now())
         println("<importBusStops>")
-       // dataImporter.importBusStops(Conversion)
+        dataImporter.importBusStops(Conversion)
         println("</importBusStops>")
       }
       case _ => println("Usage: DataFixture test | full | conversion")
