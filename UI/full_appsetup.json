@@ -34,9 +34,6 @@
             "mapwmts": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
-             "mapbusstop": {
-                 "bundlePath": "src/packages/digiroad2/bundle/"
-            },
             "service-base": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
@@ -84,6 +81,9 @@
             },
             "event-map": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
+            },
+            "mapbusstop": {
+                 "bundlePath": "src/packages/digiroad2/bundle/"
             }
          },
          "Require-Bundle-Instance": []

@@ -237,7 +237,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             },
             'actionpanel.ValidityPeriodChangedEvent': function(event) {
               this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
+            },
+            'mapbusstop.ApplicationInitializedEvent': function(event) {
+                this._zoomNotInMessage = this._getNotInZoomRange();
+                this._zoomNotInMessage();
             }
+        },
+        _getNotInZoomRange: function() {
+            var self = this;
+            return function() {
+                if (self._oldZoomLevel != self._map.getZoom()) {
+                    var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
+                    dialog.show('Zoomaa lähemmäksi, jos haluat muokata pysäkkejä');
+                    dialog.fadeout(2000);
+                }
+            };
         },
 
         _handleValidityPeriodChanged: function(selectedValidityPeriods) {
@@ -525,8 +539,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     }
                 });
             } else {
+                if(this._zoomNotInMessage) {
+                    this._zoomNotInMessage();
+                }
                 self._removeAssetsFromLayer();
-                self._noticeZoomLevel();
             }
             self._oldZoomLevel = self._map.getZoom();
         },
@@ -536,13 +552,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _removeAssetsFromLayer: function() {
             this._layers.assetDirection.removeAllFeatures();
             this._layers.asset.clearMarkers();
-        },
-        _noticeZoomLevel: function() {
-            if (this._oldZoomLevel != this._map.getZoom()) {
-                var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                dialog.show('Zoomaa lähemmäksi, jos haluat muokata pysäkkejä');
-                dialog.fadeout(2000);
-            }
         },
         _getIcon: function(imageIds) {
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
