@@ -300,11 +300,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             });
             
-            sendCollectAttributesRequest(assetPosition, attributesCollected, collectionCancelled);
+            sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
-            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-            });
+            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), quitAddition);
             var overlay = applyBlockingOverlay();
             movePopupAboveOverlay();
 
@@ -324,16 +322,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                      properties: properties}, function(asset) {
                        me._addNewAsset(asset);
                      });
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-                setPluginState(null);
-                overlay.close();
-            }
-
-            function collectionCancelled() {
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-                sendHideInfoboxRequest('busStop');
-                setPluginState(null);
-                overlay.close();
+                quitAddition();
             }
 
             function sendCollectAttributesRequest(assetPosition, callback, cancellationCallback) {
@@ -369,6 +358,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 detachedPopup.css('top', popupTopRelativeToContentMap + 'px');
                 detachedPopup.css('z-index', popupZIndex);
                 contentMapElement.append(detachedPopup);
+            }
+
+            function quitAddition() {
+                me._layers.assetDirection.destroyFeatures(directionArrow);
+                sendHideInfoboxRequest('busStop');
+                setPluginState(null);
+                overlay.close();
             }
         },
         _addNewAsset: function(asset) {

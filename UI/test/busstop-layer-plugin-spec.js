@@ -266,7 +266,7 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should request bus stop infobox', function() {
-                assert.equal(requests.length, 2);
+                assert.equal(requests.length, 3);
                 assert.deepEqual(showInfoBoxRequest, requests[0]);
                 assert.equal('busStop', requestedInfoBoxType);
             });
