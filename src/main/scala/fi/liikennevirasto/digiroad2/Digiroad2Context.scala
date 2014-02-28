@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
@@ -25,6 +26,10 @@ object Digiroad2Context {
 
   lazy val userProvider: UserProvider = {
     Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
+
+  lazy val municipalityProvider: MunicipalityProvider = {
+    Class.forName(properties.getProperty("digiroad2.municipalityProvider")).newInstance().asInstanceOf[MunicipalityProvider]
   }
 
   val env = System.getProperty("env")
