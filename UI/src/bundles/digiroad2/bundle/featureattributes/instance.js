@@ -174,12 +174,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
                 });
                 jQuery("div.featureattributeChoice").on("change", function() {
-                  var data = jQuery(this);
-                  var name = data.attr('name');
-                  me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
-              });
-                var dateAttribute = jQuery(".featureAttributeDate");
-                dateAttribute.on("blur", function() {
+                    var data = jQuery(this);
+                    var name = data.attr('name');
+                    me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
+                });
+                var dateAttribute = jQuery(".featureAttributeDate").on("blur", function() {
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
@@ -284,10 +283,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return streetView;
         },
         _addDatePickers: function () {
-            var dateAttribute = jQuery('.featureAttributeDate');
-            dateAttribute.each(function (i, element) {
-                dateutil.addNullableFinnishDatePicker(element);
-            });
+            var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
+            var $validTo = jQuery('.featureAttributeDate[data-propertyId=validTo]');
+            if ($validFrom.length > 0 && $validFrom.length > 0) {
+                dateutil.addDependentDatePickers($validFrom, $validTo);
+            }
         },
         _propertyValuesOfTextElement: function(element) {
             return [{
@@ -509,3 +509,4 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          */
         protocol : ['Oskari.bundle.BundleInstance', 'Oskari.mapframework.module.Module']
     });
+
