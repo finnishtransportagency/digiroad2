@@ -82,7 +82,7 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetPosition = null;
         var assetCreationData = [];
-        var overlays = [];
+        var overlays = {};
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
         var attributeShowRequest = { name: 'attributeShowRequest' };
         var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
@@ -144,14 +144,17 @@ describe('BusStopLayerPlugin', function(){
                 },
                 oskari: {
                     clazz: {
-                        create: function(className) {
-                            var overlay = {
-                                overlay: function(selector) { this.selector = selector; },
+                        create: function() {
+                            return {
+                                overlay: function(selector) {
+                                    overlays[selector] = this;
+                                    this.open = true;
+                                },
                                 followResizing: function() {},
-                                close: function() { this.closed = true; }
+                                close: function() {
+                                    this.open = false;
+                                }
                             };
-                            overlays.push(overlay);
-                            return overlay;
                         }
                     }
                 }
@@ -190,7 +193,7 @@ describe('BusStopLayerPlugin', function(){
                     };
                 }
             });
-            overlays = [];
+            overlays = {};
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {
                     return {
@@ -216,9 +219,8 @@ describe('BusStopLayerPlugin', function(){
         });
 
         it('should block map and tools components', function() {
-            assert.equal(overlays.length, 2);
-            assert.equal(overlays[0].selector, '#contentMap');
-            assert.equal(overlays[1].selector, '#maptools');
+            assert.equal(overlays['#contentMap'].open, true);
+            assert.equal(overlays['#maptools'].open, true);
         });
 
         describe('and when validity direction is changed', function() {
@@ -286,10 +288,8 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove overlays', function() {
-                var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
-                assert.equal(mapOverlay.closed, true);
-                var toolsOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#maptools'; });
-                assert.equal(toolsOverlay.closed, true);
+                assert.equal(overlays['#contentMap'].open, false);
+                assert.equal(overlays['#maptools'].open, false);
             });
         });
 
@@ -310,10 +310,8 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove overlays', function() {
-                var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
-                assert.equal(mapOverlay.closed, true);
-                var toolsOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#maptools'; });
-                assert.equal(toolsOverlay.closed, true);
+                assert.equal(overlays['#contentMap'].open, false);
+                assert.equal(overlays['#maptools'].open, false);
             });
         });
     });

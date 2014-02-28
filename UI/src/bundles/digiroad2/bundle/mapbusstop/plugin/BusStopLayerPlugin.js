@@ -344,11 +344,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 mapOverlay.overlay('#contentMap');
                 mapOverlay.followResizing(true);
 
-                var mapTools = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
-                mapTools.overlay('#maptools');
-                mapTools.followResizing(true);
+                var toolsOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                toolsOverlay.overlay('#maptools');
+                toolsOverlay.followResizing(true);
 
-                return [mapOverlay, mapTools];
+                return {
+                    mapOverlay: mapOverlay,
+                    toolsOverlay: toolsOverlay
+                };
             }
 
             function movePopupAboveOverlay() {
@@ -372,7 +375,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._layers.assetDirection.destroyFeatures(directionArrow);
                 removeInfoBox('busStop');
                 setPluginState(null);
-                _.each(overlays, function(overlay) { overlay.close(); });
+                _.forEach(overlays, function(overlay) { overlay.close(); });
             }
         },
         _addNewAsset: function(asset) {
