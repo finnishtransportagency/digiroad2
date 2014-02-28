@@ -82,6 +82,7 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetPosition = null;
         var assetCreationData = [];
+        var overlays = {};
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
         var attributeShowRequest = { name: 'attributeShowRequest' };
         var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
@@ -101,6 +102,7 @@ describe('BusStopLayerPlugin', function(){
         var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
             requestedInfoBoxType = infoBoxType;
             requestedInfoBoxTitle = infoBoxTitle;
+            jQuery('#contentMap').append('<div class="olPopup"></div>');
             return _.clone(showInfoBoxRequest);
         };
         var hideInfoBoxRequestBuilder = function (infoBoxId) {
@@ -139,6 +141,22 @@ describe('BusStopLayerPlugin', function(){
                         addFeatures: function(feature) { addedFeature = feature; },
                         destroyFeatures: function(feature) { destroyedFeature = feature; }
                     }
+                },
+                oskari: {
+                    clazz: {
+                        create: function() {
+                            return {
+                                overlay: function(selector) {
+                                    overlays[selector] = this;
+                                    this.open = true;
+                                },
+                                followResizing: function() {},
+                                close: function() {
+                                    this.open = false;
+                                }
+                            };
+                        }
+                    }
                 }
             });
             pluginInstance._initTemplates();
@@ -175,6 +193,7 @@ describe('BusStopLayerPlugin', function(){
                     };
                 }
             });
+            overlays = {};
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {
                     return {
@@ -197,6 +216,11 @@ describe('BusStopLayerPlugin', function(){
 
         it('should add direction arrow feature to direction arrow layer', function() {
             assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+        });
+
+        it('should block map and tools components', function() {
+            assert.equal(overlays['#contentMap'].open, true);
+            assert.equal(overlays['#maptools'].open, true);
         });
 
         describe('and when validity direction is changed', function() {
@@ -254,13 +278,18 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should request bus stop infobox', function() {
-                assert.equal(requests.length, 2);
+                assert.equal(requests.length, 3);
                 assert.deepEqual(showInfoBoxRequest, requests[0]);
                 assert.equal('busStop', requestedInfoBoxType);
             });
 
             it('should request show of feature attributes', function() {
                 assert.deepEqual(attributeShowRequest, requests[1]);
+            });
+
+            it('should remove overlays', function() {
+                assert.equal(overlays['#contentMap'].open, false);
+                assert.equal(overlays['#maptools'].open, false);
             });
         });
 
@@ -278,6 +307,11 @@ describe('BusStopLayerPlugin', function(){
             it('should remove bus stop infobox', function() {
                 assert.deepEqual(hideInfoBoxRequest, requests[0]);
                 assert.equal(hiddenInfoBoxId, 'busStop');
+            });
+
+            it('should remove overlays', function() {
+                assert.equal(overlays['#contentMap'].open, false);
+                assert.equal(overlays['#maptools'].open, false);
             });
         });
     });
