@@ -512,7 +512,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (self._isInZoomLevel()) {
                 self._layers.asset.setVisibility(true);
                 self._backend.getAssets(10, this._map.getExtent(), function(assets) {
-                    if (self._isInZoomLevel()) { //if still in zoom level
+                    if (self._isInZoomLevel()) {
                         _.each(assets, function (asset) {
                             if (!_.contains(_.pluck(self._layers.asset.markers, "id"), asset.id)) {
                                 var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
