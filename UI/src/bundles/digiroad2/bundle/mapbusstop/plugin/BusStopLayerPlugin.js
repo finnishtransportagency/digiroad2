@@ -408,9 +408,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent} event
          */
         _afterMapMoveEvent: function(event) {
-            if (this._layers.assetDirection) {
-                this._layers.assetDirection.setVisibility(event._zoom >= 8);
-            }
             if (_.isObject(this._layers.asset)) {
                 this._renderAssets();
             }
@@ -493,7 +490,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var assetDirectionLayer = new OpenLayers.Layer.Vector("assetDirection_" + layer.getId());
             var assetLayer = new OpenLayers.Layer.Markers("asset_" + layer.getId());
 
-            if (this._map.getZoom() > 5) {
+            if (this._map.getZoom() > 8) {
                 roadLayer.setVisibility(false);
             }
 
@@ -512,17 +509,40 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _renderAssets: function() {
             var self = this;
-            self._backend.getAssets(10, this._map.getExtent(), function(assets) {
-                _.each(assets, function (asset) {
-                    if (!_.contains(_.pluck(self._layers.asset.markers, "id"), asset.id)) {
-                        var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
-                        //Make the feature a plain OpenLayers marker
-                        var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
-                        self._layers.assetDirection.addFeatures(directionArrow);
-                        self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+            if (self._isInZoomLevel()) {
+                self._layers.asset.setVisibility(true);
+                self._backend.getAssets(10, this._map.getExtent(), function(assets) {
+                    if (self._isInZoomLevel()) { //if still in zoom level
+                        _.each(assets, function (asset) {
+                            if (!_.contains(_.pluck(self._layers.asset.markers, "id"), asset.id)) {
+                                var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
+                                //Make the feature a plain OpenLayers marker
+                                var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
+                                self._layers.assetDirection.addFeatures(directionArrow);
+                                self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                            }
+                        });
                     }
                 });
-            });
+            } else {
+                self._removeAssetsFromLayer();
+                self._noticeZoomLevel();
+            }
+            self._oldZoomLevel = self._map.getZoom();
+        },
+        _isInZoomLevel: function() {
+            return this._map.getZoom() > 8;
+        },
+        _removeAssetsFromLayer: function() {
+            this._layers.assetDirection.removeAllFeatures();
+            this._layers.asset.clearMarkers();
+        },
+        _noticeZoomLevel: function() {
+            if (this._oldZoomLevel != this._map.getZoom()) {
+                var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
+                dialog.show('Zoomaa lähemmäksi, jos haluat muokata pysäkkejä');
+                dialog.fadeout(2000);
+            }
         },
         _getIcon: function(imageIds) {
             var size = new OpenLayers.Size(28, 16 * imageIds.length);
