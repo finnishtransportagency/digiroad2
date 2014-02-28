@@ -42,7 +42,7 @@ object DataFixture {
         setUpFull()
         println("<roadlinks>")
         println(DateTime.now())
-        // dataImporter.importRoadlinks(Conversion)
+        dataImporter.importRoadlinks(Conversion)
         println("</roadlinks>")
         println(DateTime.now())
         println("<importBusStops>")
