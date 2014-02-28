@@ -331,10 +331,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._sandbox.request(me.getName(), request);
             }
 
-            function sendHideInfoboxRequest(infoBoxId) {
+            function removeInfoBox(infoBoxId) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(infoBoxId);
                 me._sandbox.request(me.getName(), request);
+                jQuery('.olPopup').remove();
             }
 
             function applyBlockingOverlay() {
@@ -362,7 +363,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             function quitAddition() {
                 me._layers.assetDirection.destroyFeatures(directionArrow);
-                sendHideInfoboxRequest('busStop');
+                removeInfoBox('busStop');
                 setPluginState(null);
                 overlay.close();
             }
