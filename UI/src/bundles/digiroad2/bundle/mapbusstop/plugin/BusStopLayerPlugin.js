@@ -358,13 +358,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             function movePopupAboveOverlay() {
                 var popupElement = jQuery('.olPopup');
                 var contentMapElement = jQuery('#contentMap');
+                var overlayElement = contentMapElement.find('.oskarioverlay');
                 var popupBoundingRectangle = popupElement[0].getBoundingClientRect();
                 var contentMapBoundingRectangle = contentMapElement[0].getBoundingClientRect();
                 var popupLeftRelativeToContentMap = popupBoundingRectangle.left - contentMapBoundingRectangle.left;
                 var popupTopRelativeToContentMap = popupBoundingRectangle.top - contentMapBoundingRectangle.top;
+                var popupZIndex = Number(overlayElement.css('z-index')) + 1;
                 var detachedPopup = popupElement.detach();
                 detachedPopup.css('left', popupLeftRelativeToContentMap + 'px');
                 detachedPopup.css('top', popupTopRelativeToContentMap + 'px');
+                detachedPopup.css('z-index', popupZIndex);
                 contentMapElement.append(detachedPopup);
             }
         },
