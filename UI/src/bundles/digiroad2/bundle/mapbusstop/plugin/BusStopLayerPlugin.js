@@ -21,6 +21,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedControl = 'Select';
         this._backend = defineDependency('backend', window.Backend);
         this._geometryCalculations = defineDependency('geometryCalculations', window.geometrycalculator);
+        this._oskari = defineDependency('oskari', window.Oskari);
 
         function defineDependency(dependencyName, defaultImplementation) {
             var dependency = _.isObject(config) ? config[dependencyName] : null;
@@ -313,11 +314,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             });
             
-            sendCollectAttributesRequest(assetPosition, attributesCollected, collectionCancelled);
+            sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
-            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), function () {
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-            });
+            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), quitAddition);
+            var overlays = applyBlockingOverlays();
+            movePopupAboveOverlay();
 
             function setPluginState(state) { me._state = state; }
 
@@ -335,14 +336,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                      properties: properties}, function(asset) {
                        me._addNewAsset(asset);
                      });
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-                setPluginState(null);
-            }
-
-            function collectionCancelled() {
-                me._layers.assetDirection.destroyFeatures(directionArrow);
-                sendHideInfoboxRequest('busStop');
-                setPluginState(null);
+                quitAddition();
             }
 
             function sendCollectAttributesRequest(assetPosition, callback, cancellationCallback) {
@@ -351,10 +345,51 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._sandbox.request(me.getName(), request);
             }
 
-            function sendHideInfoboxRequest(infoBoxId) {
+            function removeInfoBox(infoBoxId) {
                 var requestBuilder = me._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest');
                 var request = requestBuilder(infoBoxId);
                 me._sandbox.request(me.getName(), request);
+                jQuery('.olPopup').remove();
+            }
+
+            function applyBlockingOverlays() {
+                // TODO: Replace two overlays with one with selector '#contentMap,#maptools' when oskari overlay supports this.
+                var mapOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                mapOverlay.overlay('#contentMap');
+                mapOverlay.followResizing(true);
+
+                var toolsOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                toolsOverlay.overlay('#maptools');
+                toolsOverlay.followResizing(true);
+
+                return {
+                    mapOverlay: mapOverlay,
+                    toolsOverlay: toolsOverlay
+                };
+            }
+
+            function movePopupAboveOverlay() {
+                var popupElement = jQuery('.olPopup');
+                var contentMapElement = jQuery('#contentMap');
+                var overlayElement = contentMapElement.find('.oskarioverlay');
+                var popupBoundingRectangle = popupElement[0].getBoundingClientRect();
+                var contentMapBoundingRectangle = contentMapElement[0].getBoundingClientRect();
+                var popupLeftRelativeToContentMap = popupBoundingRectangle.left - contentMapBoundingRectangle.left;
+                var popupTopRelativeToContentMap = popupBoundingRectangle.top - contentMapBoundingRectangle.top;
+                var popupZIndex = Number(overlayElement.css('z-index')) + 1;
+                var detachedPopup = popupElement.detach();
+                detachedPopup.css('left', popupLeftRelativeToContentMap + 'px');
+                detachedPopup.css('top', popupTopRelativeToContentMap + 'px');
+                detachedPopup.css('z-index', popupZIndex);
+                detachedPopup.css('cursor', 'default');
+                contentMapElement.append(detachedPopup);
+            }
+
+            function quitAddition() {
+                me._layers.assetDirection.destroyFeatures(directionArrow);
+                removeInfoBox('busStop');
+                setPluginState(null);
+                _.forEach(overlays, function(overlay) { overlay.close(); });
             }
         },
         _addNewAsset: function(asset) {
@@ -395,7 +430,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @param {Oskari.mapframework.domain.WmsLayer[]} layers
          */
         preselectLayers: function (layers) {
-            var sandbox = this._sandbox;
             for (var i = 0; i < layers.length; i++) {
                 var layer = layers[i];
                 if (!layer.isLayerOfType(this._layerType)) {
