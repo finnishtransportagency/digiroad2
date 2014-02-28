@@ -21,6 +21,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         this._selectedControl = 'Select';
         this._backend = defineDependency('backend', window.Backend);
         this._geometryCalculations = defineDependency('geometryCalculations', window.geometrycalculator);
+        this._oskari = defineDependency('oskari', window.Oskari);
 
         function defineDependency(dependencyName, defaultImplementation) {
             var dependency = _.isObject(config) ? config[dependencyName] : null;
@@ -348,7 +349,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
 
             function applyBlockingOverlay() {
-                var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                var overlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
                 overlay.overlay('#contentMap');
                 overlay.followResizing(true);
                 return overlay;

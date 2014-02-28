@@ -101,6 +101,7 @@ describe('BusStopLayerPlugin', function(){
         var showInfoBoxRequestBuilder = function(infoBoxType, infoBoxTitle) {
             requestedInfoBoxType = infoBoxType;
             requestedInfoBoxTitle = infoBoxTitle;
+            jQuery('#contentMap').append('<div class="olPopup"></div>');
             return _.clone(showInfoBoxRequest);
         };
         var hideInfoBoxRequestBuilder = function (infoBoxId) {
@@ -138,6 +139,17 @@ describe('BusStopLayerPlugin', function(){
                     assetDirection: {
                         addFeatures: function(feature) { addedFeature = feature; },
                         destroyFeatures: function(feature) { destroyedFeature = feature; }
+                    }
+                },
+                oskari: {
+                    clazz: {
+                        create: function(className) {
+                            return {
+                                overlay: function() {},
+                                followResizing: function() {},
+                                close: function() {}
+                            };
+                        }
                     }
                 }
             });
