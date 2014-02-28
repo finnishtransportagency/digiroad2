@@ -82,6 +82,7 @@ describe('BusStopLayerPlugin', function(){
         var collectionCancelledCallback = null;
         var assetPosition = null;
         var assetCreationData = [];
+        var overlays = [];
         var attributeCollectionRequest = { name: 'attributeCollectionRequest' };
         var attributeShowRequest = { name: 'attributeShowRequest' };
         var showInfoBoxRequest = { name: 'showInfoBoxRequest' };
@@ -144,11 +145,13 @@ describe('BusStopLayerPlugin', function(){
                 oskari: {
                     clazz: {
                         create: function(className) {
-                            return {
-                                overlay: function() {},
+                            var overlay = {
+                                overlay: function(selector) { this.selector = selector; },
                                 followResizing: function() {},
-                                close: function() {}
+                                close: function() { this.closed = true; }
                             };
+                            overlays.push(overlay);
+                            return overlay;
                         }
                     }
                 }
@@ -187,6 +190,7 @@ describe('BusStopLayerPlugin', function(){
                     };
                 }
             });
+            overlays = [];
             pluginInstance._addBusStopEvent({
                 getLonLat: function () {
                     return {
@@ -209,6 +213,11 @@ describe('BusStopLayerPlugin', function(){
 
         it('should add direction arrow feature to direction arrow layer', function() {
             assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+        });
+
+        it('should block map component', function() {
+            assert.equal(overlays.length, 1);
+            assert.equal(overlays[0].selector, '#contentMap');
         });
 
         describe('and when validity direction is changed', function() {
@@ -274,6 +283,11 @@ describe('BusStopLayerPlugin', function(){
             it('should request show of feature attributes', function() {
                 assert.deepEqual(attributeShowRequest, requests[1]);
             });
+
+            it('should remove overlay', function() {
+                var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
+                assert.equal(mapOverlay.closed, true);
+            });
         });
 
         describe('and when feature attribute collection has been cancelled', function() {
@@ -290,6 +304,11 @@ describe('BusStopLayerPlugin', function(){
             it('should remove bus stop infobox', function() {
                 assert.deepEqual(hideInfoBoxRequest, requests[0]);
                 assert.equal(hiddenInfoBoxId, 'busStop');
+            });
+
+            it('should remove overlay', function() {
+                var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
+                assert.equal(mapOverlay.closed, true);
             });
         });
     });
