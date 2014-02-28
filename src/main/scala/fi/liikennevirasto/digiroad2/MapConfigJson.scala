@@ -72,8 +72,6 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar"
           }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.PanButtons"
-          }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
             "config": {
               "baseLayers": [
