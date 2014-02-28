@@ -358,6 +358,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 detachedPopup.css('left', popupLeftRelativeToContentMap + 'px');
                 detachedPopup.css('top', popupTopRelativeToContentMap + 'px');
                 detachedPopup.css('z-index', popupZIndex);
+                detachedPopup.css('cursor', 'default');
                 contentMapElement.append(detachedPopup);
             }
 
