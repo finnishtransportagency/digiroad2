@@ -406,7 +406,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @param {Oskari.mapframework.domain.WmsLayer[]} layers
          */
         preselectLayers: function (layers) {
-            var sandbox = this._sandbox;
             for (var i = 0; i < layers.length; i++) {
                 var layer = layers[i];
                 if (!layer.isLayerOfType(this._layerType)) {
