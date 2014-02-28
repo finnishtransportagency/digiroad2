@@ -215,9 +215,10 @@ describe('BusStopLayerPlugin', function(){
             assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
         });
 
-        it('should block map component', function() {
-            assert.equal(overlays.length, 1);
+        it('should block map and tools components', function() {
+            assert.equal(overlays.length, 2);
             assert.equal(overlays[0].selector, '#contentMap');
+            assert.equal(overlays[1].selector, '#maptools');
         });
 
         describe('and when validity direction is changed', function() {
@@ -284,9 +285,11 @@ describe('BusStopLayerPlugin', function(){
                 assert.deepEqual(attributeShowRequest, requests[1]);
             });
 
-            it('should remove overlay', function() {
+            it('should remove overlays', function() {
                 var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
                 assert.equal(mapOverlay.closed, true);
+                var toolsOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#maptools'; });
+                assert.equal(toolsOverlay.closed, true);
             });
         });
 
@@ -306,9 +309,11 @@ describe('BusStopLayerPlugin', function(){
                 assert.equal(hiddenInfoBoxId, 'busStop');
             });
 
-            it('should remove overlay', function() {
+            it('should remove overlays', function() {
                 var mapOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#contentMap'; });
                 assert.equal(mapOverlay.closed, true);
+                var toolsOverlay = _.find(overlays, function(overlay) { return overlay.selector === '#maptools'; });
+                assert.equal(toolsOverlay.closed, true);
             });
         });
     });

@@ -303,7 +303,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), quitAddition);
-            var overlay = applyBlockingOverlay();
+            var overlays = applyBlockingOverlays();
             movePopupAboveOverlay();
 
             function setPluginState(state) { me._state = state; }
@@ -338,11 +338,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 jQuery('.olPopup').remove();
             }
 
-            function applyBlockingOverlay() {
-                var overlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
-                overlay.overlay('#contentMap');
-                overlay.followResizing(true);
-                return overlay;
+            function applyBlockingOverlays() {
+                // TODO: Replace two overlays with one with selector '#contentMap,#maptools' when oskari overlay supports this.
+                var mapOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                mapOverlay.overlay('#contentMap');
+                mapOverlay.followResizing(true);
+
+                var mapTools = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                mapTools.overlay('#maptools');
+                mapTools.followResizing(true);
+
+                return [mapOverlay, mapTools];
             }
 
             function movePopupAboveOverlay() {
@@ -366,7 +372,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 me._layers.assetDirection.destroyFeatures(directionArrow);
                 removeInfoBox('busStop');
                 setPluginState(null);
-                overlay.close();
+                _.each(overlays, function(overlay) { overlay.close(); });
             }
         },
         _addNewAsset: function(asset) {
