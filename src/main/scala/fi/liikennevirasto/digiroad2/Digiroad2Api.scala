@@ -156,7 +156,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   error {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
-    case e: Exception => logger.error("API Error", e)
+    case e: Exception => {
+      logger.error("API Error", e)
+      halt(InternalServerError("API error"))
+    }
   }
 
   private[this] def boundsFromParams: Option[BoundingCircle] = {

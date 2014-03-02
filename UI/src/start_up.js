@@ -45,7 +45,9 @@ jQuery(document).ready(function() {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
-        // all bundles have been loaded
+          var eventBuilder = Oskari.getSandbox().getEventBuilder('mapbusstop.ApplicationInitializedEvent');
+          var event = eventBuilder();
+          Oskari.getSandbox().notifyAll(event);
       });
     }
   };
