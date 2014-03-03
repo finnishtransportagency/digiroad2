@@ -70,7 +70,7 @@ object OracleSpatialAssetDao {
     }.headOption
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) {
         None
@@ -164,7 +164,7 @@ object OracleSpatialAssetDao {
     getAssetById(asset.id).get
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
+  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) None else Some(roadLinksAndMunicipality(municipalityNumbers), municipalityNumbers.toList)
     def andWithinDistance = bounds map { b =>

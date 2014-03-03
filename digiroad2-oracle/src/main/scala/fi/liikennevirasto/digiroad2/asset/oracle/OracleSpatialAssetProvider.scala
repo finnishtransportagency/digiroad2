@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def userCanModifyMunicipality(municipalityNumber: Long): Boolean =
+  private def userCanModifyMunicipality(municipalityNumber: Int): Boolean =
     userProvider.getCurrentUser.configuration.authorizedMunicipalities.contains(municipalityNumber)
 
   private def userCanModifyAsset(assetId: Long): Boolean =
@@ -36,7 +36,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssets(assetTypeId, municipalityNumbers, bounds, validFrom, validTo)
     }
@@ -74,7 +74,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     parallerSeq.foreach(RoadlinkProvider.updateRoadLink(ds, _))
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Long], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
+  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinks(municipalityNumbers, bounds)
     }

@@ -57,7 +57,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
         boundsFromParams, validFrom = validFrom, validTo = validTo)
   }
 
-  private def isReadOnly(authorizedMunicipalities: Set[Long])(municipalityNumber: Long): Boolean = {
+  private def isReadOnly(authorizedMunicipalities: Set[Int])(municipalityNumber: Int): Boolean = {
     !authorizedMunicipalities.contains(municipalityNumber)
   }
 
