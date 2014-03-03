@@ -70,7 +70,22 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
           }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar"
+            "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar",
+            "config" : {
+              "location" : {
+                "classes" : "right top"
+              },
+              "toolStyle" : {
+                "val" : "sharp-light",
+                "heightCenter" : "0",
+                "widthPlus" : "23px",
+                "heightPlus" : "18px",
+                "widthMinus" : "23px",
+                "heightMinus" : "18px",
+                "widthCursor" : "0px",
+                "heightCursor" : "0px"
+              }
+            }
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
             "config": {
@@ -86,7 +101,7 @@ object MapConfigJson {
             "wmsName": "bussit",
             "type": "busstoplayer",
             "id": 235,
-            "minScale": 5000,
+            "minScale": 6000,
             "wmsUrl": "/data/dummy/busstops.json",
             "url": "api/assets?assetTypeId=10",
             "roadLinesUrl": "api/roadlinks",
@@ -1190,7 +1205,7 @@ object MapConfigJson {
             },
             "inspire": "Maastokartat"
           }],
-          "imageLocation": "/oskari.org/resources",
+          "imageLocation": "./bower_components/oskari.org/resources",
           "user": {
             "lastName": "",
             "nickName": "",
@@ -1236,8 +1251,10 @@ object MapConfigJson {
         "state": {
 
         },
-        "conf": {
-
+        "conf" : {
+          "location" : {
+            "classes" : "left bottom"
+          }
         }
       }
     }"""

@@ -285,7 +285,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         _addDatePickers: function () {
             var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
             var $validTo = jQuery('.featureAttributeDate[data-propertyId=validTo]');
-            if ($validFrom.length > 0 && $validFrom.length > 0) {
+            if ($validFrom.length > 0 && $validTo.length > 0) {
                 dateutil.addDependentDatePickers($validFrom, $validTo);
             }
         },
