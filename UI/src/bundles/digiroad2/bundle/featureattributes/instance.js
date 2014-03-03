@@ -146,7 +146,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplateCheckbox = _.template('<input {{checkedValue}} type="checkbox" value="{{propertyValue}}"></input><label for="{{name}}">{{propertyDisplayValue}}</label><br/>');
 
-            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
+            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save" disabled="disabled">Luo</button>');
 
             me._getPropertyValues();
 
@@ -219,12 +219,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
+                    var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
+                    if(isRequired(jqElement)) {
+                        if(_.isEmpty(values)) disableSave();
+                        else enableSave();
+                    }
                     me._sendFeatureChangedEvent({
                       propertyData: [{
                           propertyId: jqElement.attr('data-propertyId'),
-                          values: me._propertyValuesOfMultiCheckboxElement(jqElement)
+                          values: values
                       }]
                     });
+
+                    function isRequired(element) { return (element.attr('data-required') === 'true'); }
                 });
 
                 featureAttributesElement.find('button.cancel').on('click', function() {
@@ -271,6 +278,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     setPluginState(null);
                     successCallback(textElementAttributes.concat(selectionElementAttributes).concat(multiCheckboxElementAttributes).concat(dateElementAttributes));
                 });
+
+                function disableSave() {
+                    featureAttributesElement.find('button.save').prop('disabled', true);
+                }
+
+                function enableSave() {
+                    featureAttributesElement.find('button.save').prop('disabled', false);
+                }
 
                 function setPluginState(state) { me._state = state; }
             }
@@ -369,7 +384,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
                         html += me._featureDataTemplate(feature);
                     } else if (feature.propertyType === "multiple_choice") {
-                        feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId);
+                        feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId, feature.required);
                         html += me._featureDataTemplate(feature);
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
@@ -418,9 +433,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return options;
         },
 
-        _getMultiCheckbox: function(name, values, propertyId) {
+        _getMultiCheckbox: function(name, values, propertyId, required) {
             var me = this;
-            var checkboxes = '<div data-propertyId="' + propertyId + '" name="' + name + '" class="featureattributeChoice">';
+            var checkboxes = '<div data-propertyId="' + propertyId +
+                '" name="' + name +
+                '" data-required="' + required +
+                '" class="featureattributeChoice">';
             var valuesNro = _.pluck(values, 'propertyValue');
 
             var propertyValues = _.find(me._enumeratedPropertyValues,

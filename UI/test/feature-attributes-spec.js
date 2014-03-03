@@ -167,6 +167,11 @@ describe('FeatureAttributes', function () {
             assert.equal('Kommentit', longTextProperty.attr('name'));
         });
 
+        it('should disable save button', function() {
+            var saveButton = $('button.save');
+            assert.isTrue(saveButton.prop('disabled'));
+        });
+
         describe('and asset direction is changed', function() {
             var validityDirectionBeforeChange = null;
 
@@ -204,6 +209,17 @@ describe('FeatureAttributes', function () {
                         }]
                     }]
                 });
+            });
+        });
+
+        describe('and multiple choice field "Pysäkin tyyppi" is changed', function() {
+            before(function() {
+                checkMultiCheckboxes(2, [2, 4]);
+            });
+
+            it('should enable save button', function() {
+                var saveButton = $('button.save');
+                assert.isFalse(saveButton.prop('disabled'));
             });
         });
 
