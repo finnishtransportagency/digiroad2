@@ -35,6 +35,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _layerType: 'busstoplayer',
         _unknownAssetType: '99',
         _selectedValidityPeriods: ['current'],
+        _visibilityZoomLevelForRoads : 10,
 
         /**
          * @method getName
@@ -464,8 +465,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             if (_.isObject(this._layers.asset)) {
                 this._renderAssets();
             }
+            this._handleRoadsVisibility();
         },
-
+        _isInRoadLinkZoomLevel: function() {
+            return this._map.getZoom() >= this._visibilityZoomLevelForRoads;
+        },
+        _handleRoadsVisibility: function() {
+            if (_.isObject(this._layers.road)) {
+                this._layers.road.setVisibility(this._isInRoadLinkZoomLevel());
+            }
+        },
         /**
          * Handle _afterMapLayerAddEvent
          * @private
@@ -538,15 +547,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }),
                 styleMap: me._roadStyles
             });
-
+            roadLayer.setVisibility(this._isInRoadLinkZoomLevel());
             this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
             var assetDirectionLayer = new OpenLayers.Layer.Vector("assetDirection_" + layer.getId());
             var assetLayer = new OpenLayers.Layer.Markers("asset_" + layer.getId());
-
-            if (this._map.getZoom() > 8) {
-                roadLayer.setVisibility(false);
-            }
-
             roadLayer.opacity = layer.getOpacity() / 100;
             assetDirectionLayer.opacity = layer.getOpacity() / 100;
             assetLayer.opacity = layer.getOpacity() / 100;

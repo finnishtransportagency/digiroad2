@@ -86,7 +86,7 @@ object MapConfigJson {
             "wmsName": "bussit",
             "type": "busstoplayer",
             "id": 235,
-            "minScale": 5000,
+            "minScale": 6000,
             "wmsUrl": "/data/dummy/busstops.json",
             "url": "api/assets?assetTypeId=10",
             "roadLinesUrl": "api/roadlinks",
