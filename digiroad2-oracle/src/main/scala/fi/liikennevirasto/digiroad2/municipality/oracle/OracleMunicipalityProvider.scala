@@ -11,7 +11,7 @@ class OracleMunicipalityProvider extends MunicipalityProvider {
 
   def getMunicipalities(elyNumber: Int): Seq[Int] = {
     Database.forDataSource(ds).withDynSession {
-      sql"""select municipality_id from ely where id = """.as[Int].list
+      sql"""select municipality_id from ely where id = ${{elyNumber}}""".as[Int].list
     }
   }
 }
