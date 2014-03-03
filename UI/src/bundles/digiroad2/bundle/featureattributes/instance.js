@@ -408,15 +408,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             var options = '<select data-propertyId="'+propertyId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
-
-            var propertyValues = _.find(me._enumeratedPropertyValues,
-                function(property) {
-                    if (property.propertyId === propertyId) {
-                        return property;
-                    }
-                }
-            );
-
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
@@ -439,15 +431,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 '" data-required="' + required +
                 '" class="featureattributeChoice">';
             var valuesNro = _.pluck(values, 'propertyValue');
-
-            var propertyValues = _.find(me._enumeratedPropertyValues,
-                function(property) {
-                    if (property.propertyId === propertyId) {
-                        return property;
-                    }
-                }
-            );
-
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
                     var checkedValue = '';
@@ -472,11 +456,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         onEvent : function(event) {
             var me = this;
             var handler = me.eventHandlers[event.getName()];
-            if(!handler) {
-                return;
+            if(handler) {
+                return handler.apply(this, [event]);
             }
-
-            return handler.apply(this, [event]);
+            return undefined;
         },
         /**
          * @property {Object} eventHandlers
