@@ -40,8 +40,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @param {Oskari.mapframework.sandbox.Sandbox} sandbox
          * Sets the sandbox reference to this component
          */
-        setSandbox : function(sbx) {
-            this.sandbox = sbx;
+        setSandbox : function(sandbox) {
+            this.sandbox = sandbox;
         },
         /**
          * @method getSandbox
@@ -72,7 +72,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me.setSandbox(sandbox);
 
             for(var p in me.eventHandlers) {
-                if(p) {
+                if(me.eventHandlers.hasOwnProperty(p)) {
                     sandbox.registerForEventByName(me, p);
                 }
             }
@@ -84,7 +84,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @method init
          * implements Module protocol init method - initializes request handlers
          */
-        init : function(options) {
+        init : function() {
             var me = this;
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
@@ -178,7 +178,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var name = data.attr('name');
                     me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
                 });
-                var dateAttribute = jQuery(".featureAttributeDate").on("blur", function() {
+                jQuery(".featureAttributeDate").on("blur", function() {
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
@@ -294,8 +294,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            var streetView = this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
-            return streetView;
+            return this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
         },
         _addDatePickers: function () {
             var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
@@ -495,11 +494,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }
         },
-        _closeFeatures: function (event) {
+        _closeFeatures: function () {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
         },
-        _directionChange: function (event) {
+        _directionChange: function () {
             var validityDirection = jQuery("[data-propertyid='validityDirection']");
             var selection = validityDirection.val() == 2 ? 3 : 2;
             var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: selection }];
@@ -513,7 +512,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             var sandbox = this.sandbox;
             for(var p in me.eventHandlers) {
-                if(p) {
+                if(me.eventHandlers.hasOwnProperty(p)) {
                     sandbox.unregisterFromEventByName(me, p);
                 }
             }
