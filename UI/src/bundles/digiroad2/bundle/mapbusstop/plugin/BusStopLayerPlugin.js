@@ -294,9 +294,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var selectedLat = event.getLonLat().lat;
             var features = this._layers.road.features;
             var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
+            var projectionOnNearestLine = me._geometryCalculations.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+            var projectionLonLat = {
+                lon: projectionOnNearestLine.x,
+                lat: projectionOnNearestLine.y
+            };
             var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-            var directionArrow = me._addDirectionArrow(bearing, -1, selectedLon, selectedLat);
-            var assetPosition = { lonLat: event.getLonLat(), bearing: bearing, validityDirection: 2 };
+            var directionArrow = me._addDirectionArrow(bearing, -1, projectionOnNearestLine.x, projectionOnNearestLine.y);
+            var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
 
             setPluginState({
                 featureAttributeChangedHandler: function(event) {
@@ -308,7 +313,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                             _.isObject(validityDirectionProperty.values[0])) {
                             var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
                             me._layers.assetDirection.destroyFeatures(directionArrow);
-                            directionArrow = me._addDirectionArrow(bearing, validityDirection, selectedLon, selectedLat);
+                            directionArrow = me._addDirectionArrow(bearing, validityDirection, projectionOnNearestLine.x, projectionOnNearestLine.y);
                         }
                     }
                 }
@@ -316,7 +321,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             
             sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
-            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, event.getLonLat(), quitAddition);
+            me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, projectionLonLat, quitAddition);
             var overlays = applyBlockingOverlays();
             movePopupAboveOverlay();
 
@@ -329,8 +334,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 });
                 me._backend.createAsset(
                     {assetTypeId: 10,
-                     lon: selectedLon,
-                     lat: selectedLat,
+                     lon: projectionOnNearestLine.x,
+                     lat: projectionOnNearestLine.y,
                      roadLinkId: nearestLine.roadLinkId,
                      bearing: bearing,
                      properties: properties}, function(asset) {

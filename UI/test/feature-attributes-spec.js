@@ -1,4 +1,4 @@
-xdescribe('FeatureAttributes', function () {
+describe('FeatureAttributes', function () {
     describe('when backend returns undefined date', function () {
         var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
         featureAttributes.init({});

@@ -130,6 +130,9 @@ describe('BusStopLayerPlugin', function(){
                     },
                     getLineDirectionDegAngle: function() {
                         return 95;
+                    },
+                    nearestPointOnLine: function() {
+                        return { x: 25.3, y: 44.8 };
                     }
                 },
                 layers: {
@@ -266,7 +269,7 @@ describe('BusStopLayerPlugin', function(){
                                           {id: "1",
                                            values: [{propertyValue: 2,
                                                      propertyDisplayValue: ""}]}];
-                assert.deepEqual({ assetTypeId: 10, lon: 30.5, lat: 41.2, roadLinkId: 5, bearing: 95, imageIds: [], properties: expectedProperties}, assetCreationData[0]);
+                assert.deepEqual({ assetTypeId: 10, lon: 25.3, lat: 44.8, roadLinkId: 5, bearing: 95, imageIds: [], properties: expectedProperties}, assetCreationData[0]);
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {
