@@ -141,10 +141,9 @@ describe('FeatureAttributes', function () {
         });
 
         it('should create single choice field for property "Vaikutussuunta"', function() {
-            var singleChoiceElement = $('select[data-propertyid="validityDirection"]');
+            var singleChoiceElement = $('div[data-propertyid="validityDirection"]');
             assert.equal(1, singleChoiceElement.length);
-            assert.equal(true, singleChoiceElement.hasClass('featureattributeChoice'));
-            assert.isUndefined(singleChoiceElement.attr('multiple'));
+            assert.equal(true, singleChoiceElement.hasClass('featureAttributeButton'));
         });
 
         it('should create multiple choice field for property "Pysäkin tyyppi"', function() {
@@ -176,7 +175,7 @@ describe('FeatureAttributes', function () {
             var validityDirectionBeforeChange = null;
 
             before(function() {
-                validityDirectionBeforeChange = validityDirectionElement().val();
+                validityDirectionBeforeChange = validityDirectionElement().attr('value');
                 featureAttributes.onEvent({
                     getName: function() { return 'mapbusstop.AssetDirectionChangeEvent'; },
                     getParameter: function() {}
@@ -185,7 +184,7 @@ describe('FeatureAttributes', function () {
 
             it('should update validity direction element', function() {
                 var expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
-                assert.equal(validityDirectionElement().val(), expectedValidityDirection);
+                assert.equal(validityDirectionElement().attr('value'), expectedValidityDirection);
             });
         });
 
@@ -193,9 +192,9 @@ describe('FeatureAttributes', function () {
             var expectedValidityDirection = null;
 
             before(function() {
-                var validityDirectionBeforeChange = validityDirectionElement().val();
+                var validityDirectionBeforeChange = validityDirectionElement().attr('value');
                 expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
-                selectOptions('validityDirection', [expectedValidityDirection]);
+                $('div.featureAttributeButton').attr('value', 3);
             });
 
             it('should send feature changed event', function() {
@@ -232,7 +231,7 @@ describe('FeatureAttributes', function () {
                 selectOptions(1, [2]);
                 checkMultiCheckboxes(2, [2, 4]);
                 setTextProperty('validFrom', '10.6.2014');
-                validityDirectionValue = validityDirectionElement().val();
+                validityDirectionValue = validityDirectionElement().attr('value');
                 saveButton.click();
             });
 
@@ -282,6 +281,6 @@ describe('FeatureAttributes', function () {
        }
 
 
-        function validityDirectionElement() { return $('select[data-propertyid="validityDirection"]'); }
+        function validityDirectionElement() { return $('div[data-propertyid="validityDirection"]'); }
     });
 });
