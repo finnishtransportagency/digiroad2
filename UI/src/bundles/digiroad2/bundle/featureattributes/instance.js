@@ -211,9 +211,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-propertyid="validityDirection"]');
                 var assetDirectionChangedHandler = function() {
                     var value = validityDirection.attr('value');
-                    validityDirection.attr('value', value == 2 ? 3 : 2);
-                    assetPosition.validityDirection = value == 2 ? 3 : 2;
-                    jQuery('.streetView').html(me._getStreetView(assetPosition));
+                    var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
+                    validityDirection.attr('value', newValidityDirection);
+                    jQuery('.streetView').html(me._getStreetView(_.merge({}, assetPosition, { validityDirection: newValidityDirection })));
                     me._sendFeatureChangedEvent({
                         propertyData: [{
                             propertyId: validityDirection.attr('data-propertyId'),
