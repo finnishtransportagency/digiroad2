@@ -126,7 +126,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                           '<div class="formAttributeContent">' +
                                                               '<button class="featureAttributeButton"' +
                                                               ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                              ' value="{{propertyValue}}">Vaihda' +
+                                                              ' value="{{propertyValue}}">Vaihda suuntaa' +
                                                               '</button>' +
                                                           '</div>' +
                                                        '</div>');
