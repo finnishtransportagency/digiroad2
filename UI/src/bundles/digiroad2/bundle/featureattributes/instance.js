@@ -126,7 +126,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                                           '<div class="formAttributeContent">' +
                                                               '<div class="featureAttributeButton"' +
                                                               ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                              ' value="{{propertyValue}}">{{propertyDisplayValue}}' +
+                                                              ' value="{{propertyValue}}">Vaihda' +
                                                               '</div>' +
                                                           '</div>' +
                                                        '</div>');
@@ -412,7 +412,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         html += me._featureDataTemplate(_.merge({}, feature, { required: false }));
                     } else if (feature.propertyId === 'validityDirection') {
                         feature.propertyValue = 2;
-                        feature.propertyDisplayValue = "Vaihda";
                         if (feature.values[0]) {
                             feature.propertyValue = feature.values[0].propertyValue === 2 ? 3 : 2;
                         }
