@@ -141,7 +141,7 @@ describe('FeatureAttributes', function () {
         });
 
         it('should create single choice field for property "Vaikutussuunta"', function() {
-            var singleChoiceElement = $('div[data-propertyid="validityDirection"]');
+            var singleChoiceElement = $('button[data-propertyid="validityDirection"]');
             assert.equal(1, singleChoiceElement.length);
             assert.equal(true, singleChoiceElement.hasClass('featureAttributeButton'));
         });
@@ -194,7 +194,7 @@ describe('FeatureAttributes', function () {
             before(function() {
                 var validityDirectionBeforeChange = validityDirectionElement().attr('value');
                 expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
-                $('div.featureAttributeButton').attr('value', 3);
+                $('button.featureAttributeButton').attr('value', 3);
             });
 
             it('should send feature changed event', function() {
@@ -281,6 +281,6 @@ describe('FeatureAttributes', function () {
        }
 
 
-        function validityDirectionElement() { return $('div[data-propertyid="validityDirection"]'); }
+        function validityDirectionElement() { return $('button[data-propertyid="validityDirection"]'); }
     });
 });

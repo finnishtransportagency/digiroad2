@@ -124,10 +124,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me._featureDataTemplateButton = _.template('<div class="formAttributeContentRow">' +
                                                           '<div class="formLabels">{{propertyName}}</div>' +
                                                           '<div class="formAttributeContent">' +
-                                                              '<div class="featureAttributeButton"' +
+                                                              '<button class="featureAttributeButton"' +
                                                               ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
                                                               ' value="{{propertyValue}}">Vaihda' +
-                                                              '</div>' +
+                                                              '</button>' +
                                                           '</div>' +
                                                        '</div>');
 
@@ -187,7 +187,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
                 });
-                jQuery("div.featureAttributeButton").on("click", function() {
+                jQuery("button.featureAttributeButton").on("click", function() {
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-propertyId'));
                 });
