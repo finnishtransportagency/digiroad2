@@ -45,7 +45,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   put("/user/:username/municipalities") {
     // TODO: when implementing UI, use municipalities of client to determine authorization, only modify (add/remove) authorized municipalities
-    val municipalities = parsedBody.extract[List[Long]].toSet
+    val municipalities = parsedBody.extract[List[Int]].toSet
     params.get("username").flatMap {
       userProvider.getUser
     }.map { u =>
@@ -60,11 +60,16 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   put("/municipalitiesbatch") {
     request.body.lines.foreach { line =>
-      val elements = line.trim.split(",").toList
+      val elements = line.trim.split(";").toIndexedSeq
       if (elements.length < 2) {
         logger.warn("Discarding line: " + line)
       } else {
-        val (username, municipalityNumbers) = (elements.head, elements.tail.map { m => m.trim.toLong }.toSet)
+        val municipalitiesOfEly = parseInputToInts(elements, 1) match {
+          case None => Set()
+          case Some(numbers) => municipalityProvider.getMunicipalities(numbers.toSet).toSet
+        }
+        val municipalities = parseInputToInts(elements, 2).getOrElse(Set()).toSet
+        val (username, municipalityNumbers) = (elements.head, municipalitiesOfEly ++ municipalities)
         userProvider.getUser(username) match {
           case Some(u) =>
             val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers))
@@ -73,6 +78,15 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
             userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers))
         }
       }
+    }
+  }
+
+  def parseInputToInts(input: Seq[String], position: Int): Option[Seq[Int]] = {
+    if (!input.isDefinedAt(position)) return None
+    val split = input(position).split(",").filterNot(_.trim.isEmpty)
+    split match {
+      case Array() => None
+      case _ => Some(split.map(_.trim.toInt).toSeq)
     }
   }
 
