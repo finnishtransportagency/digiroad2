@@ -108,7 +108,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
 
-            me._featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
+            me._featureDataTemplate = _.template('<div class="formAttributeContentRow" data-required="{{required}}">' +
                                                     '<div class="formLabels">{{propertyName}}</div>' +
                                                     '<div class="formAttributeContent">{{propertyValue}}</div>' +
                                                  '</div>');
@@ -220,7 +220,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
                     var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                    if(isRequired(jqElement)) {
+                    if(isRequired(jqElement.parents('.formAttributeContentRow'))) {
                         if(_.isEmpty(values)) disableSave();
                         else enableSave();
                     }
@@ -381,9 +381,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         html += me._featureDataTemplateReadOnlyText(feature);
                     } else if (propertyType === "single_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
-                        html += me._featureDataTemplate(feature);
+                        html += me._featureDataTemplate(_.merge({}, feature, { required: false }));
                     } else if (feature.propertyType === "multiple_choice") {
-                        feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId, feature.required);
+                        feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId);
                         html += me._featureDataTemplate(feature);
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
@@ -424,11 +424,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return options;
         },
 
-        _getMultiCheckbox: function(name, values, propertyId, required) {
+        _getMultiCheckbox: function(name, values, propertyId) {
             var me = this;
             var checkboxes = '<div data-propertyId="' + propertyId +
                 '" name="' + name +
-                '" data-required="' + required +
                 '" class="featureattributeChoice">';
             var valuesNro = _.pluck(values, 'propertyValue');
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });

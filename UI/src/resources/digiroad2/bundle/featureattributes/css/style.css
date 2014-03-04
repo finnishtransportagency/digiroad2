@@ -115,6 +115,14 @@
 
 }
 
+.formAttributeContentRow[data-required="true"] .formLabels {
+    color: #e6d7b1;
+}
+
+.formAttributeContentRow[data-required="true"] .formLabels:before {
+    content: "*";
+}
+
 .featureAttributeNA {
     font-size: 12px;
     font-family: "Arial";
