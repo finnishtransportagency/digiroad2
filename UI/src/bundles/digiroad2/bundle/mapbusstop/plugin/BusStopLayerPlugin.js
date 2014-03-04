@@ -242,6 +242,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             },
             'mapbusstop.ApplicationInitializedEvent': function(event) {
                 this._zoomNotInMessage = this._getNotInZoomRange();
+                this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
             }
         },
