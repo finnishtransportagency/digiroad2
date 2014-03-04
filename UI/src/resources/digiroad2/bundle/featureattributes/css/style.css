@@ -159,9 +159,6 @@
     font-size: 11px;
     padding: 10px 15px;
     font-weight: bold;
-}
-
-.formControls .save {
     background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
     background-image: -moz-linear-gradient(#7f7f7c,#5a5a57);
     background-image: -o-linear-gradient(#7f7f7c,#5a5a57);
@@ -176,10 +173,6 @@
     background-image: linear-gradient(#646461,#5a5a57);
     background-color: #646461;
     color: #a4a4a2;
-}
-
-.formControls .cancel {
-    background-color: #2d2d2d;
 }
 
 .formDescriptor {
