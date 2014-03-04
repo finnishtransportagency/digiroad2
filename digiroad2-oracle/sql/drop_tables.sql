@@ -7,10 +7,11 @@ drop table property;
 drop table asset_type;
 drop table image;
 drop table service_user;
-drop table ev_bus_stop;
 drop table road_node;
 drop table lrm_position;
 drop table road_link;
+drop table ely;
+drop table municipality;
 drop sequence primary_key_seq;
 drop sequence road_node_seq;
 

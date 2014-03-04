@@ -32,12 +32,12 @@ object Queries {
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], propertyId: Long,
                       propertyName: String, propertyType: String, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String,
                       image: Image, roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Long, created: Modification, modified: Modification)
+                      municipalityNumber: Int, created: Modification, modified: Modification)
 
   case class ListedAssetRow(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp],
                       image: Image, roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Long)
+                      municipalityNumber: Int)
 
   implicit val getAssetWithPosition = new GetResult[(AssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
@@ -45,7 +45,7 @@ object Queries {
         propertyDisplayValue, lrmId, startMeasure, endMeasure, roadLinkId, image: Image, roadLinkEndDate, municipalityNumber,
         created: Modification, modified: Modification) =
         (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString,
-          r.nextLong, r.nextInt, r.nextInt, r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextLong,
+          r.nextLong, r.nextInt, r.nextInt, r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextInt,
           new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption), new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption))
       val posGeom = JGeometry.load(pos)
       (AssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
@@ -60,7 +60,7 @@ object Queries {
       val (id, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
       roadLinkId, image, roadLinkEndDate, municipalityNumber) =
         (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextInt, r.nextInt,
-          r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption().map(new LocalDate(_)), r.nextLong())
+          r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption().map(new LocalDate(_)), r.nextInt)
       val posGeom = JGeometry.load(pos)
       (ListedAssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
         validFrom, validTo, image, roadLinkEndDate, municipalityNumber),
@@ -70,7 +70,7 @@ object Queries {
 
   implicit val getRoadLink = new GetResult[RoadLink] {
     def apply(r: PositionedResult) = {
-      val (id, geomBytes, endDate, municipalityNumber) = (r.nextLong(), r.nextBytes(), r.nextDateOption(), r.nextLong())
+      val (id, geomBytes, endDate, municipalityNumber) = (r.nextLong, r.nextBytes, r.nextDateOption, r.nextInt)
       val geom = JGeometry.load(geomBytes)
       val decimalPattern = "#.###"
       val newFormat = NumberFormat.getNumberInstance(Locale.US).asInstanceOf[DecimalFormat]
@@ -230,7 +230,7 @@ object Queries {
 
   def roadLinks = "SELECT id, geom, end_date, municipality_number FROM road_link WHERE functional_class IN (1, 2, 3, 4, 5, 6)"
 
-  def roadLinksAndMunicipality(municipalityNumbers: Seq[Long]) =
+  def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
     if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
 
   def roadLinksAndWithinDistance = "AND SDO_WITHIN_DISTANCE(geom, ?, ?) = 'TRUE'"

@@ -166,6 +166,18 @@ create table service_user (
 	configuration varchar2(4000)
 );
 
+create table municipality (
+  id number primary key,
+  name_fi varchar2(128),
+  name_sv varchar2(128)
+);
+
+create table ely (
+  id number,
+  name_fi varchar2(128),
+  municipality_id references municipality,
+  constraint ely_pk primary key (id, municipality_id)
+);
 
 create sequence primary_key_seq
   minvalue 1

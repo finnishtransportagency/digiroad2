@@ -61,9 +61,10 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   test("batch load users with municipalities") {
     val batchString =
       s"""
-        test2, 4, 5, 6, 49, 235
-        test49, 1, 2, 3, 49
-        newuser, 2, 3, 6
+        test2; ; 4, 5, 6, 49, 235
+        test49; ; 1, 2, 3, 49
+        newuser; ; 2, 3, 6
+        testEly; 0;
       """
     try {
       putJsonWithUserAuth("/userconfig/municipalitiesbatch", batchString, Map("Content-type" -> "text/plain")) {
@@ -76,12 +77,23 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
         getWithUserAuth("/userconfig/user/newuser") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (2, 3, 6)
         }
+        getWithUserAuth("/userconfig/user/testEly") {
+          parse(body).extract[User].configuration.authorizedMunicipalities should contain only (35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+        }
       }
     } finally {
       val provider = new OracleUserProvider
       provider.deleteUser("newuser")
+      provider.deleteUser("testEly")
       putJsonWithUserAuth("/userconfig/user/test2/municipalities", write(List(235, 49)), Map("Content-type" -> "application/json")) {}
       putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(49)), Map("Content-type" -> "application/json")) {}
     }
+  }
+
+  test("parse command line parameters") {
+    val userConfiguration = new UserConfigurationApi()
+    userConfiguration.parseInputToInts(Seq(" "), 0) shouldBe empty
+    userConfiguration.parseInputToInts(Seq("1, 2,3,"), 0).get should contain only (1, 2, 3)
+    userConfiguration.parseInputToInts(Seq("1, 2,3,"), 1) mustEqual None
   }
 }

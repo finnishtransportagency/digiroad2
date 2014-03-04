@@ -17,6 +17,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
+import scala.io.Source
 
 object AssetDataImporter {
   case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
@@ -154,6 +155,8 @@ class AssetDataImporter {
       val administratorPropertyId = sql"select id from property where name_fi = 'Ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
 
+      importMunicipalityCodes
+
       insertImages(busStopTypePropertyId)
 
       busStops.foreach { b =>
@@ -236,12 +239,17 @@ class AssetDataImporter {
     }
   }
 
-  def parseBusStopType(value: Int): Seq[Int] = {
-    busStopTypes.getOrElse(value, Seq(99))
-  }
-
-  def parseShelterType(value: Int): Int = {
-    shelterTypes.getOrElse(value, 99)
+  def importMunicipalityCodes() = {
+    val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
+    src.getLines().toList.drop(1).map(row => {
+      var elems = row.replace("\"", "").split(";");
+      sqlu"""
+        insert into municipality(id, name_fi, name_sv) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)} )
+      """.execute
+      sqlu"""
+        insert into ely(id, name_fi, municipality_id) values( ${elems(3).toInt}, ${elems(4)}, ${elems(0).toInt} )
+      """.execute
+    })
   }
 
   private[this] def initDataSource: DataSource = {
