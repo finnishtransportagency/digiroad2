@@ -40,8 +40,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @param {Oskari.mapframework.sandbox.Sandbox} sandbox
          * Sets the sandbox reference to this component
          */
-        setSandbox : function(sbx) {
-            this.sandbox = sbx;
+        setSandbox : function(sandbox) {
+            this.sandbox = sandbox;
         },
         /**
          * @method getSandbox
@@ -72,7 +72,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me.setSandbox(sandbox);
 
             for(var p in me.eventHandlers) {
-                if(p) {
+                if(me.eventHandlers.hasOwnProperty(p)) {
                     sandbox.registerForEventByName(me, p);
                 }
             }
@@ -84,7 +84,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @method init
          * implements Module protocol init method - initializes request handlers
          */
-        init : function(options) {
+        init : function() {
             var me = this;
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
@@ -108,7 +108,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
 
-            me._featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
+            me._featureDataTemplate = _.template('<div class="formAttributeContentRow" data-required="{{required}}">' +
                                                     '<div class="formLabels">{{propertyName}}</div>' +
                                                     '<div class="formAttributeContent">{{propertyValue}}</div>' +
                                                  '</div>');
@@ -146,7 +146,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             me._featureDataTemplateCheckbox = _.template('<input {{checkedValue}} type="checkbox" value="{{propertyValue}}"></input><label for="{{name}}">{{propertyDisplayValue}}</label><br/>');
 
-            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
+            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save" disabled="disabled">Luo</button>');
 
             me._getPropertyValues();
 
@@ -178,7 +178,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     var name = data.attr('name');
                     me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
                 });
-                var dateAttribute = jQuery(".featureAttributeDate").on("blur", function() {
+                jQuery(".featureAttributeDate").on("blur", function() {
                     var data = jQuery(this);
                     me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
@@ -219,12 +219,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
+                    var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
+                    if(isRequired(jqElement.parents('.formAttributeContentRow'))) {
+                        if(_.isEmpty(values)) disableSave();
+                        else enableSave();
+                    }
                     me._sendFeatureChangedEvent({
                       propertyData: [{
                           propertyId: jqElement.attr('data-propertyId'),
-                          values: me._propertyValuesOfMultiCheckboxElement(jqElement)
+                          values: values
                       }]
                     });
+
+                    function isRequired(element) { return (element.attr('data-required') === 'true'); }
                 });
 
                 featureAttributesElement.find('button.cancel').on('click', function() {
@@ -272,6 +279,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     successCallback(textElementAttributes.concat(selectionElementAttributes).concat(multiCheckboxElementAttributes).concat(dateElementAttributes));
                 });
 
+                function disableSave() {
+                    featureAttributesElement.find('button.save').prop('disabled', true);
+                }
+
+                function enableSave() {
+                    featureAttributesElement.find('button.save').prop('disabled', false);
+                }
+
                 function setPluginState(state) { me._state = state; }
             }
         },
@@ -279,8 +294,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            var streetView = this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
-            return streetView;
+            return this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
         },
         _addDatePickers: function () {
             var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
@@ -367,7 +381,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         html += me._featureDataTemplateReadOnlyText(feature);
                     } else if (propertyType === "single_choice") {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
-                        html += me._featureDataTemplate(feature);
+                        html += me._featureDataTemplate(_.merge({}, feature, { required: false }));
                     } else if (feature.propertyType === "multiple_choice") {
                         feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId);
                         html += me._featureDataTemplate(feature);
@@ -394,15 +408,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             var options = '<select data-propertyId="'+propertyId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
-
-            var propertyValues = _.find(me._enumeratedPropertyValues,
-                function(property) {
-                    if (property.propertyId === propertyId) {
-                        return property;
-                    }
-                }
-            );
-
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
@@ -420,17 +426,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
         _getMultiCheckbox: function(name, values, propertyId) {
             var me = this;
-            var checkboxes = '<div data-propertyId="' + propertyId + '" name="' + name + '" class="featureattributeChoice">';
+            var checkboxes = '<div data-propertyId="' + propertyId +
+                '" name="' + name +
+                '" class="featureattributeChoice">';
             var valuesNro = _.pluck(values, 'propertyValue');
-
-            var propertyValues = _.find(me._enumeratedPropertyValues,
-                function(property) {
-                    if (property.propertyId === propertyId) {
-                        return property;
-                    }
-                }
-            );
-
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
                     var checkedValue = '';
@@ -455,11 +455,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         onEvent : function(event) {
             var me = this;
             var handler = me.eventHandlers[event.getName()];
-            if(!handler) {
-                return;
+            if(handler) {
+                return handler.apply(this, [event]);
             }
-
-            return handler.apply(this, [event]);
+            return undefined;
         },
         /**
          * @property {Object} eventHandlers
@@ -477,11 +476,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }
         },
-        _closeFeatures: function (event) {
+        _closeFeatures: function () {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
         },
-        _directionChange: function (event) {
+        _directionChange: function () {
             var validityDirection = jQuery("[data-propertyid='validityDirection']");
             var selection = validityDirection.val() == 2 ? 3 : 2;
             var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: selection }];
@@ -495,7 +494,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var me = this;
             var sandbox = this.sandbox;
             for(var p in me.eventHandlers) {
-                if(p) {
+                if(me.eventHandlers.hasOwnProperty(p)) {
                     sandbox.unregisterFromEventByName(me, p);
                 }
             }
