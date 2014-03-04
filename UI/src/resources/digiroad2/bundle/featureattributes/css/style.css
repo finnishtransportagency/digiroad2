@@ -6,7 +6,7 @@
     padding-top: 15px;
     padding-bottom: 15px;
     height: 18px;
-    border: 0px solid #000000;
+    border: 0 solid #000000;
     border-bottom-width: 1px;
     padding-left: 10px;
     background-image: -moz-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
@@ -115,6 +115,14 @@
 
 }
 
+.formAttributeContentRow[data-required="true"] .formLabels {
+    color: #e6d7b1;
+}
+
+.formAttributeContentRow[data-required="true"] .formLabels:before {
+    content: "*";
+}
+
 .featureAttributeNA {
     font-size: 12px;
     font-family: "Arial";
@@ -159,9 +167,6 @@
     font-size: 11px;
     padding: 10px 15px;
     font-weight: bold;
-}
-
-.formControls .save {
     background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
     background-image: -moz-linear-gradient(#7f7f7c,#5a5a57);
     background-image: -o-linear-gradient(#7f7f7c,#5a5a57);
@@ -169,8 +174,13 @@
     background-color: #7f7f7c;
 }
 
-.formControls .cancel {
-    background-color: #2d2d2d;
+.formControls .save:disabled {
+    background-image: -webkit-linear-gradient(#646461,#5a5a57);
+    background-image: -moz-linear-gradient(#646461,#5a5a57);
+    background-image: -o-linear-gradient(#646461,#5a5a57);
+    background-image: linear-gradient(#646461,#5a5a57);
+    background-color: #646461;
+    color: #a4a4a2;
 }
 
 .formDescriptor {
@@ -181,7 +191,7 @@
 
 .sidebarContainer {
     background-color: rgb( 45, 45, 45 );
-    box-shadow: 0px 0px 3px 0px rgb( 0, 0, 0 );
+    box-shadow: 0 0 3px 0 rgb( 0, 0, 0 );
 }
 
 select option.selected {
@@ -226,7 +236,6 @@ div.pika-single {
     color: #fff;
     background: #444444;
     border: 1px solid #555;
-    border-bottom-color: #555;
     width: 225px;
     z-index: 10001; /* default is 9999 and is not visible over oskari.org popups that have z-index of 10000 */
 }
@@ -255,7 +264,7 @@ table.pika-table th {
     margin: 3px 0 0;
     padding: 0 8px 0 0;
     background: #444444;
-    border: 0px #444444;
+    border: 0 #444444;
 }
 
 .is-today .pika-button {
@@ -299,7 +308,6 @@ div.divmanazerpopup h3.popupHeader {
     color: #fff;
     background-color: #333333;
     border-radius: 5px 5px 0 0;
-    color: #fff;
     font-family: "Arial";
     font-size: 12px;
     line-height: 1.286;
