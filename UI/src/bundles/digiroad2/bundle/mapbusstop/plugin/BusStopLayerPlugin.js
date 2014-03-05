@@ -240,7 +240,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'actionpanel.ValidityPeriodChangedEvent': function(event) {
               this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
             },
-            'mapbusstop.ApplicationInitializedEvent': function(event) {
+            'mapbusstop.ApplicationInitializedEvent': function() {
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
@@ -462,7 +462,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          * @private
          * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent} event
          */
-        _afterMapMoveEvent: function(event) {
+        _afterMapMoveEvent: function() {
             if (_.isObject(this._layers.asset)) {
                 this._renderAssets();
             }
