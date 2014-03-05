@@ -320,9 +320,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         var assetType = _.find(asset.propertyData, function(property) {
                             return property.propertyId === '200';
                         });
-                        var values = _.pluck(assetType.values, 'propertyValue');
-                        var content = me._makePopupContent(values);
-                        jQuery('.popupInfoBusStopsIcons').html(content);
+                        if (assetType && assetType.values) {
+                            var values = _.pluck(assetType.values, 'propertyValue');
+                            var content = me._makePopupContent(values);
+                            jQuery('.popupInfoBusStopsIcons').html(content);
+                        }
                     }
                 }
             });
