@@ -80,6 +80,13 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
+  def getRoadLinks(municipalityNumbers: Seq[Int], left: Double, bottom: Double, right: Double, top: Double): Seq[RoadLink] = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.getRoadLinks(municipalityNumbers, left, bottom, right, top)
+    }
+  }
+
+
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinkById(roadLinkId)

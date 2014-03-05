@@ -235,6 +235,8 @@ object Queries {
 
   def roadLinksAndWithinDistance = "AND SDO_WITHIN_DISTANCE(geom, ?, ?) = 'TRUE'"
 
+  def roadLinksAndWithinBoundingBox = "AND SDO_FILTER(geom, ?) = 'TRUE'"
+
   def enumeratedPropertyValues = """
     select p.id, p.property_type, p.name_fi as property_name, p.required, e.value, e.name_fi from asset_type a
     join property p on p.asset_type_id = a.id

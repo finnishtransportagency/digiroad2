@@ -109,10 +109,21 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
+    val bboxOption = params.get("bbox").map { b =>
+      val BBOXList = b.split(",").map(_.toDouble);
+      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
+    }
+
     // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*");
-    val rls = assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
+
+    val rls = if (bboxOption.isDefined) {
+      val bb = bboxOption.get
+      assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, bb._1, bb._2, bb._3, bb._4)
+    } else {
+      assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
+    }
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->

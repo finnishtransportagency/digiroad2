@@ -13,6 +13,7 @@ trait AssetProvider {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def updateAssetLocation(asset: Asset): AssetWithProperties
   def getRoadLinks(municipalityNumbers: Seq[Int] = Seq(), bounds: Option[BoundingCircle] = None): Seq[RoadLink]
+  def getRoadLinks(municipalityNumbers: Seq[Int], left: Double, bottom: Double, right: Double, top: Double): Seq[RoadLink]
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
