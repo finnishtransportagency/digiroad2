@@ -460,7 +460,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         /**
          * Handle _afterMapMoveEvent
          * @private
-         * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent} event
          */
         _afterMapMoveEvent: function() {
             if (_.isObject(this._layers.asset)) {
@@ -699,9 +698,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             });
         },
-        _sendShowAttributesRequest: function(id, point) {
+        _sendShowAttributesRequest: function(assetAttributes, point) {
             var requestBuilder = this._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-            var request = requestBuilder(id, point);
+            var request = requestBuilder(assetAttributes, point);
             this._sandbox.request(this.getName(), request);
         },
         _mouseDown: function(busStop, busStops, mouseUp) {
@@ -737,11 +736,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             return function (evt, streetViewCoordinates) {
                 me._state = null;
-                streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
-                me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
-                var contentItem = me._makeContent(imageIds);
-                me._sendPopupRequest("busStop", busStop.id, busStop.id, contentItem, busStop.lonlat);
-                me._selectedBusStop.display(false);
+                me._backend.getAsset(busStop.id, function(assetData) {
+                    var assetAttributes = _.merge({}, assetData, { id: busStop.id });
+                    streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
+                    var contentItem = me._makeContent(imageIds);
+                    me._sendPopupRequest('busStop', popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
+                    me._sendShowAttributesRequest(assetAttributes, streetViewCoordinates);
+                    me._selectedBusStop.display(false);
+
+
+                    function popupTitle(asset) {
+                        if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
+                        else return 'Ei ID:tä';
+                    }
+                });
                 OpenLayers.Event.stop(evt);
             };
         },

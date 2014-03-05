@@ -51,11 +51,6 @@ describe('FeatureAttributes', function () {
                 backend: _.extend({}, window.Backend, {
                     putAssetPropertyValue: function (assetId, propertyId, data) {
                         calls.push(data);
-                    },
-                    getAsset: function (id, success) {
-                        success({
-                            propertyData: [createNullDateProperty('propertyId', 'propertyName')]
-                        });
                     }
                 })
             });
@@ -64,7 +59,9 @@ describe('FeatureAttributes', function () {
 
         it('should send null date to backend', function () {
             calls = [];
-            featureAttributes.showAttributes(130, { lonLat: { lon: 24, lat: 60 }, heading: 140 });
+            featureAttributes.showAttributes(
+                { id: 130, propertyData: [createNullDateProperty('propertyId', 'propertyName')] },
+                { lonLat: { lon: 24, lat: 60 }, heading: 140 });
             var dateInput = $('input[data-propertyid="propertyId"]');
             dateInput.blur();
             assert.equal(1, calls.length);
@@ -303,16 +300,11 @@ describe('FeatureAttributes', function () {
     });
 
     function showFeatureAttributes(externalId) {
-        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance', {
-            backend: _.extend({}, window.Backend, {
-                getAsset: function (id, success) {
-                    var returnValue = { propertyData: [] };
-                    if(_.isNumber(externalId)) returnValue.externalId = externalId;
-                    success(returnValue);
-                }
-            })
-        });
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
+        var assetData = { id: 130, propertyData: [] };
+        var assetPosition = { lonLat: { lon: 24, lat: 60 }, heading: 140 };
+        if(_.isNumber(externalId)) assetData.externalId = externalId;
         featureAttributes.init();
-        featureAttributes.showAttributes(130, { lonLat: { lon: 24, lat: 60 }, heading: 140 });
+        featureAttributes.showAttributes(assetData, assetPosition);
     }
 });

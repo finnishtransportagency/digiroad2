@@ -7,7 +7,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatu
     /**
      * @method create called automatically on construction
      * @static
-     * @param {Oskari.digiroad2.bundle.featureattributes.FeatureAttributes}
+     * @param featureAttributes
      */
 
         function (featureAttributes) {
@@ -23,7 +23,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatu
          */
         handleRequest: function (core, request) {
            this.featureAttributes.showAttributes(
-                request.getTitle(),
+                request.getAssetAttributes(),
                 request.getStreetViewCoordinates()
             );
         }

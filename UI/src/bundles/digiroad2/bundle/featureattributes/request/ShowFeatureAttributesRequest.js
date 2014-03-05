@@ -11,17 +11,17 @@ Oskari.clazz
      * @method create called automatically on construction
      * @static
      *
-     * @param {String} title
-     *        title
+     * @param {Object} assetAttributes
+     *        Attributes of the asset to be shown
      * @param {Object} streetViewCoordinates
      *        Coordinate and heading information for Google street view integration
      *
      */
 
-    function (title, streetViewCoordinates) {
+    function (assetAttributes, streetViewCoordinates) {
         this._creator = null;
         this._streetViewCoordinates = streetViewCoordinates;
-        this._title = title;
+        this._assetAttributes = assetAttributes;
     }, {
         /** @static @property __name request name */
         __name: "FeatureAttributes.ShowFeatureAttributesRequest",
@@ -42,11 +42,11 @@ Oskari.clazz
         },
 
         /**
-         * @method getTitle
-         * @return {String} title
+         * @method getAssetAttributes
+         * @return {Object} assetAttributes
          */
-        getTitle: function () {
-            return this._title;
+        getAssetAttributes: function () {
+            return this._assetAttributes;
         }
 
     }, {
