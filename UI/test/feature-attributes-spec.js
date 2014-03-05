@@ -194,7 +194,7 @@ describe('FeatureAttributes', function () {
             before(function() {
                 var validityDirectionBeforeChange = validityDirectionElement().attr('value');
                 expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
-                $('button.featureAttributeButton').attr('value', 3);
+                $('button.featureAttributeButton').click();
             });
 
             it('should send feature changed event', function() {
