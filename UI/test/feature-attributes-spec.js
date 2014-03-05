@@ -24,6 +24,24 @@ describe('FeatureAttributes', function () {
         });
     });
 
+    describe('attributes on bus stop with national bus stop id', function() {
+        before(function() { showFeatureAttributes(85755); });
+
+        it('should show national bus stop id', function () {
+            var featureAttributesHeader = $('.featureAttributesHeader');
+            assert.equal(featureAttributesHeader.text(), 'Valtakunnallinen ID: 85755');
+        });
+    });
+
+    describe('attributes on bus stop without national bus stop id', function() {
+        before(function() { showFeatureAttributes(); });
+
+        it('should indicate missing national bus stop id', function () {
+            var featureAttributesHeader = $('.featureAttributesHeader');
+            assert.equal(featureAttributesHeader.text(), 'Ei valtakunnalista ID:tä');
+        });
+    });
+
     describe('when user leaves date undefined', function () {
         var featureAttributes = null;
         var calls = [];
@@ -283,4 +301,18 @@ describe('FeatureAttributes', function () {
 
         function validityDirectionElement() { return $('button[data-propertyid="validityDirection"]'); }
     });
+
+    function showFeatureAttributes(externalId) {
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance', {
+            backend: _.extend({}, window.Backend, {
+                getAsset: function (id, success) {
+                    var returnValue = { propertyData: [] };
+                    if(_.isNumber(externalId)) returnValue.externalId = externalId;
+                    success(returnValue);
+                }
+            })
+        });
+        featureAttributes.init();
+        featureAttributes.showAttributes(130, { lonLat: { lon: 24, lat: 60 }, heading: 140 });
+    }
 });

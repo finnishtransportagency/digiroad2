@@ -172,7 +172,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 assetPosition.validityDirection = asset.validityDirection;
                 assetPosition.bearing = asset.bearing;
                 var streetView = me._getStreetView(assetPosition);
-                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
+                var featureAttributes = me._featureDataWrapper({ header: busStopHeader(asset), streetView : streetView, attributes : featureData, controls: null });
                 jQuery("#featureAttributes").html(featureAttributes);
                 me._addDatePickers();
                 jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function() {
@@ -196,6 +196,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
                 });
             });
+
+            function busStopHeader(asset) {
+                if(_.isNumber(asset.externalId)) { return 'Valtakunnallinen ID: ' + asset.externalId; }
+                else return 'Ei valtakunnalista ID:tä';
+            }
         },
         collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
             var me = this;
