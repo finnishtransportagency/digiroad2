@@ -736,22 +736,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseClick: function(busStop, imageIds) {
             var me = this;
             return function (evt, streetViewCoordinates) {
-                if (me._selectedControl === 'Remove') {
-                    var confirm = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                    var okBtn = confirm.createCloseButton("Poista");
-                    okBtn.addClass('primary');
-                    okBtn.setHandler(function() {
-                        me._remove(me._selectedBusStop, dateutil.finnishToIso8601(jQuery('#removeAssetDateInput').val()));
-                        confirm.close();
-                        me._layers.asset.redraw();
-                    });
-                    var cancelBtn = confirm.createCloseButton("Peru");
-                    confirm.makeModal();
-                    confirm.show("Poistetaan käytöstä", me._removeAssetTemplate, [cancelBtn, okBtn]);
-                    var removeDateInput = jQuery('#removeAssetDateInput');
-                    dateutil.addFinnishDatePicker(removeDateInput.get(0));
-                    return;
-                }
                 me._state = null;
                 streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
                 me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
