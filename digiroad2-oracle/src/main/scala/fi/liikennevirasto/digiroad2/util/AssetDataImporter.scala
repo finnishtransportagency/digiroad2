@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
 import scala.io.Source
 
 object AssetDataImporter {
-  case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
+  case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None, externalId: Option[Long] = None)
   case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Int, endMeasure: Int)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
@@ -159,14 +159,14 @@ class AssetDataImporter {
 
       insertImages(busStopTypePropertyId)
 
-      busStops.foreach { b =>
+      busStops.foreach { busStop =>
         try {
-          println("BUS STOP: " + b)
+          println("BUS STOP: " + busStop)
           val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
 
           sqlu"""
-            insert into asset(id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
-            values($assetId, $busStopAssetTypeId, ${b.lrmPositionId}, $Modifier, ${b.validFrom}, ${b.validTo.getOrElse(null)})
+            insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
+            values($assetId, ${busStop.externalId}, $busStopAssetTypeId, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
           """.execute
 
           val bearing = assetProvider.getAssetById(assetId) match {
@@ -179,7 +179,7 @@ class AssetDataImporter {
             case None => 0.0 // TODO log/throw error?
           }
           sqlu"update asset set bearing = $bearing where id = $assetId".execute
-          b.busStopType.foreach { busStopType =>
+          busStop.busStopType.foreach { busStopType =>
             insertMultipleChoiceValue(busStopTypePropertyId, assetId, busStopType)
           }
 
@@ -189,9 +189,9 @@ class AssetDataImporter {
 
           insertSingleChoiceValue(administratorPropertyId, assetId, 4)
 
-          insertSingleChoiceValue(shelterTypePropertyId, assetId, b.shelterType)
+          insertSingleChoiceValue(shelterTypePropertyId, assetId, busStop.shelterType)
         } catch {
-          case e: Exception => logger.error("Cannot insert " + b, e)
+          case e: Exception => logger.error("Cannot insert " + busStop, e)
         }
       }
     }

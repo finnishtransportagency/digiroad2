@@ -60,7 +60,7 @@ object OracleSpatialAssetDao {
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
-      AssetWithProperties(id = row.id, assetTypeId = row.assetTypeId,
+      AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
         propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.propertyId.toLong),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),

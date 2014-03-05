@@ -6,7 +6,7 @@ import GeometryUtils._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("calculate bearing at asset position") {
-    val asset = AssetWithProperties(0, 0, 10.0, 10.0, 0)
+    val asset = AssetWithProperties(0, None, 0, 10.0, 10.0, 0)
     val rlDegenerate = RoadLink(id = 0, lonLat = Seq(), municipalityNumber = 235)
     val rlQuadrant1 = RoadLink(id = 0, lonLat = Seq((1,1), (2, 2)), municipalityNumber = 235)
     val rlQuadrant2 = RoadLink(id = 0, lonLat = Seq((-1,1), (-2, 2)), municipalityNumber = 235)
