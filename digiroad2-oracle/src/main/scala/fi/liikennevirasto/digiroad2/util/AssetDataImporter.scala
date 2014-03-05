@@ -29,7 +29,8 @@ import scala.slick.driver.JdbcDriver
 
 
 object AssetDataImporter {
-  case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None, externalId: Option[Long] = None)
+
+  case class SimpleBusStop(shelterType: Int, busStopId: Long, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
   case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Int, endMeasure: Int)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
@@ -78,8 +79,8 @@ class AssetDataImporter {
   val Modifier = "automatic_import"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
-      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), busStopTypes(r.<<), r.<<)
-    val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
+      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), r.<<, busStopTypes(r.<<), r.<<)
+      val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
     (bs, lrm)
   }
   implicit val getSimpleRoadLink = GetResult[SimpleRoadLink](r => SimpleRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.nextObject().asInstanceOf[STRUCT]))
@@ -221,7 +222,7 @@ class AssetDataImporter {
     val table = dataSet.busStopTable
     dataSet.database().withDynSession {
       sql"""
-        select katos, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table where tielinkkitunnus is not null
+        select katos, pysakki_id, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table where tielinkkitunnus is not null
       """.as[(SimpleBusStop, SimpleLRMPosition)].list
     }
   }
@@ -265,8 +266,8 @@ class AssetDataImporter {
       val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
 
       sqlu"""
-        insert into asset(id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
-        values($assetId, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+        insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
+        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
       """.execute
 
       val bearing = assetProvider.getAssetById(assetId) match {
@@ -327,10 +328,10 @@ class AssetDataImporter {
           insert into image (id, created_by, modified_date, file_name, image_data)
           values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
         """.execute
-
         sqlu"""
           update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
         """.execute
+
       }
     }
   }

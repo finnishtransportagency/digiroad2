@@ -40,6 +40,7 @@ object DataFixture {
       case Some("conversion") => {
         tearDown()
         setUpFull()
+        SqlScriptRunner.runScript("drop_indices.sql")
         println("<roadlinks>")
         println(DateTime.now())
         dataImporter.importRoadlinks(Conversion)
@@ -48,6 +49,7 @@ object DataFixture {
         println("<importBusStops>")
         dataImporter.importBusStops(Conversion)
         println("</importBusStops>")
+        SqlScriptRunner.runScript("create_indices.sql")
       }
       case _ => println("Usage: DataFixture test | full | conversion")
     }
