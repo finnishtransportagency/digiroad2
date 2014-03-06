@@ -250,7 +250,7 @@ object Queries {
   def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
     if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
 
-  def roadLinksAndWithinDistance = "AND SDO_WITHIN_DISTANCE(geom, ?, ?) = 'TRUE'"
+  def roadLinksAndWithinBoundingBox = "AND SDO_FILTER(geom, ?) = 'TRUE'"
 
   def enumeratedPropertyValues = """
     select p.id, p.property_type, p.name_fi as property_name, p.required, e.value, e.name_fi from asset_type a

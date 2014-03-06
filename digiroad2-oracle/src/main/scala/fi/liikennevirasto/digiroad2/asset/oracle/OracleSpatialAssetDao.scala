@@ -70,16 +70,16 @@ object OracleSpatialAssetDao {
     }.headOption
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) {
         None
       } else {
         Some(("AND rl.municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")", municipalityNumbers.toList))
       }
-    def andWithinDistance = bounds map { b =>
-        val latLonGeometry = JGeometry.createPoint(Array(b.centreLat, b.centreLon), 2, 3067)
-        ("AND SDO_WITHIN_DISTANCE(rl.geom, ?, ?) = 'TRUE'", List(storeGeometry(latLonGeometry, dynamicSession.conn), "DISTANCE=" + b.radiusM + " UNIT=METER"))
+    def andWithinBoundingBox = bounds map { b =>
+      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
+      (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
     def andValidityInRange = (validFrom, validTo) match {
       case (Some(from), Some(to)) => Some(andByValidityTimeConstraint, List(jodaToSqlDate(from), jodaToSqlDate(to)))
@@ -96,7 +96,7 @@ object OracleSpatialAssetDao {
         case _ => None
       }
     }
-    val q = QueryCollector(assetsByTypeWithPosition, IndexedSeq(assetTypeId.toString)).add(andMunicipality).add(andWithinDistance).add(andValidityInRange)
+    val q = QueryCollector(assetsByTypeWithPosition, IndexedSeq(assetTypeId.toString)).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
     collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       Asset(id = row.id, assetTypeId = row.assetTypeId, lon = row.lon,
@@ -164,14 +164,14 @@ object OracleSpatialAssetDao {
     getAssetById(asset.id).get
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
+  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) None else Some(roadLinksAndMunicipality(municipalityNumbers), municipalityNumbers.toList)
-    def andWithinDistance = bounds map { b =>
-      val latLonGeometry = JGeometry.createPoint(Array(b.centreLat, b.centreLon), 2, 3067)
-      (roadLinksAndWithinDistance, List(storeGeometry(latLonGeometry, dynamicSession.conn), "DISTANCE=" + b.radiusM + " UNIT=METER"))
+    def andWithinBoundingBox = bounds map { b =>
+      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067);
+      (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
-    val q = QueryCollector(roadLinks).add(andMunicipality).add(andWithinDistance)
+    val q = QueryCollector(roadLinks).add(andMunicipality).add(andWithinBoundingBox)
     collectedQuery[RoadLink](q)
   }
 

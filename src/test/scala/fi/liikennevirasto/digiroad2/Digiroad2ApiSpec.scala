@@ -42,7 +42,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374650,6677400,374920,6677820&validityPeriod=current") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
     }
@@ -97,10 +97,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get road links", Tag("db")) {
-    getWithUserAuth("/roadlinks?bbox=374702,6677462,374870,6677780") {
+    getWithUserAuth("/roadlinks?bbox=374662,6677430,374890,6677800") {
       status should equal(200)
       val roadLinksJson = parse(body)
-      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (6)
+      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (7)
     }
   }
 
