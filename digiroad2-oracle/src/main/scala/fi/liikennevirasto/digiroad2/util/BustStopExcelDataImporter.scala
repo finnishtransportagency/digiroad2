@@ -42,39 +42,62 @@ class BustStopExcelDataImporter {
   }
 
   def insertExcelData(ed: List[ExcelBusStopData]) {
-    Database.forDataSource(excelDs).withDynTransaction {
+    Database.forDataSource(convDs).withDynTransaction {
       ed.foreach{ data =>
-        insertTextPropertyValue(data.externalId, "Pysäkin nimi", data.stopNameFi, data.stopNameSv);
+        val assetIds = sql"""
+          select id from asset where external_id = ${data.externalId}
+        """.as[Long].list
 
-        insertTextPropertyValue(data.externalId, "Pysäkin suunta", data.direction);
+        if (assetIds.size == 1) {
+          println("UPDATING ASSET: " + assetIds.mkString)
 
-        insertTextPropertyValue(data.externalId, "Pysäkin saavutettavuus", data.reachability);
+          insertTextPropertyValue(data.externalId, "Pysäkin nimi", data.stopNameFi, data.stopNameSv)
 
-        insertTextPropertyValue(data.externalId, "Esteettömyystiedot", data.accessibility);
+          insertTextPropertyValue(data.externalId, "Pysäkin suunta", data.direction)
 
-        insertTextPropertyValue(data.externalId, "Pysäkin tunnus", data.internalId);
+          insertTextPropertyValue(data.externalId, "Pysäkin saavutettavuus", data.reachability)
 
-        insertTextPropertyValue(data.externalId, "Kommentit", data.equipments);
+          insertTextPropertyValue(data.externalId, "Esteettömyystiedot", data.accessibility)
+
+          insertTextPropertyValue(data.externalId, "Pysäkin tunnus", data.internalId)
+
+          insertTextPropertyValue(data.externalId, "Kommentit", data.equipments)
+
+        } else {
+          println("NO ASSET FOUND FOR EXTERNAL ID: " + data.externalId)
+        }
       }
     }
   }
 
   def insertTextPropertyValue(externalId: Long, propertyName: String, value: String) {
-    sqlu"""
-      insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-      values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
-      (select id from asset where external_id = ${externalId}),
-      ${value}, 'samulin_ja_eskon_konversio')
-    """.execute
+    insertTextPropertyValue(externalId, propertyName, value, null)
   }
 
   def insertTextPropertyValue(externalId: Long, propertyName: String, valueFi: String, valueSv: String) {
-    sqlu"""
-      insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-      values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
-      (select id from asset where external_id = ${externalId}),
-      ${valueFi}, ${valueSv}, 'samulin_ja_eskon_konversio')
-    """.execute
+    println("  UPDATING PROPERTY: " + propertyName + " WITH VALUES: " + valueFi + " " + valueSv)
+    val propertyId = sql"""
+      select id from text_property_value
+      where property_id = (select id from property where NAME_FI = ${propertyName})
+      and asset_id = (select id from asset where external_id = ${externalId})
+    """.as[Long].firstOption
+
+    propertyId match {
+      case None => {
+        sqlu"""
+          insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
+          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
+          (select id from asset where external_id = ${externalId}),
+          ${valueFi}, ${valueSv}, 'samulin_ja_eskon_konversio')
+        """.execute
+      }
+      case _ => {
+        sqlu"""
+          update text_property_value set value_fi = ${valueFi}, value_sv = ${valueSv}, modified_by = 'samulin_ja_eskon_konversio'
+          where id = ${propertyId}
+        """.execute
+      }
+    }
   }
 }
 
