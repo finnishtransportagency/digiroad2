@@ -28,7 +28,7 @@ object Queries {
   case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
 
-  case class AssetRow(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
+  case class AssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], propertyId: Long,
                       propertyName: String, propertyType: String, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String,
                       image: Image, roadLinkEndDate: Option[LocalDate],
@@ -41,14 +41,31 @@ object Queries {
 
   implicit val getAssetWithPosition = new GetResult[(AssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
-      val (id, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, propertyId, propertyName, propertyType, propertyRequired, propertyValue,
-        propertyDisplayValue, lrmId, startMeasure, endMeasure, roadLinkId, image: Image, roadLinkEndDate, municipalityNumber,
-        created: Modification, modified: Modification) =
-        (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString,
-          r.nextLong, r.nextInt, r.nextInt, r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextInt,
-          new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption), new Modification(r.nextTimestampOption.map(new DateTime(_)), r.nextStringOption))
+      val id = r.nextLong()
+      val externalId = r.nextLongOption()
+      val assetTypeId = r.nextLong()
+      val bearing = r.nextIntOption()
+      val validityDirection = r.nextInt()
+      val validFrom = r.nextTimestampOption()
+      val validTo = r.nextTimestampOption()
+      val pos = r.nextBytes()
+      val propertyId = r.nextLong()
+      val propertyName = r.nextString()
+      val propertyType = r.nextString()
+      val propertyRequired = r.nextBoolean()
+      val propertyValue = r.nextLong()
+      val propertyDisplayValue = r.nextString()
+      val lrmId = r.nextLong()
+      val startMeasure = r.nextInt()
+      val endMeasure = r.nextInt()
+      val roadLinkId = r.nextLong()
+      val image = new Image(r.nextLongOption(), r.nextTimestampOption().map(new DateTime(_)))
+      val roadLinkEndDate = r.nextDateOption().map(new LocalDate(_))
+      val municipalityNumber = r.nextInt()
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption())
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption())
       val posGeom = JGeometry.load(pos)
-      (AssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
+      (AssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
         validFrom, validTo, propertyId, propertyName, propertyType, propertyRequired, propertyValue, propertyDisplayValue, image,
         roadLinkEndDate, municipalityNumber, created, modified),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
@@ -105,7 +122,7 @@ object Queries {
 
   def allAssets =
     """
-    select a.id as asset_id, t.id as asset_type_id, a.bearing as bearing, a.validity_direction as validity_direction,
+    select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, a.validity_direction as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
     p.id as property_id, p.name_fi as property_name, p.property_type, p.required,

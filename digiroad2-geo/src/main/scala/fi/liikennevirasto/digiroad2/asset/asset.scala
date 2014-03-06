@@ -8,7 +8,7 @@ case class Asset(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLink
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None, validityPeriod: Option[String] = None)
 
-case class AssetWithProperties(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
+case class AssetWithProperties(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None,

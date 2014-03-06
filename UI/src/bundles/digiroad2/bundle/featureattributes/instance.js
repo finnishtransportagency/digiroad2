@@ -163,39 +163,45 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
             return null;
         },
-        showAttributes : function(id, assetPosition) {
+        showAttributes : function(assetAttributes, assetPosition) {
             var me = this;
             this._state = null;
-            me._featureDataAssetId = id;
-            me._backend.getAsset(id, function(asset) {
-                var featureData = me._makeContent(asset.propertyData);
-                assetPosition.validityDirection = asset.validityDirection;
-                assetPosition.bearing = asset.bearing;
-                var streetView = me._getStreetView(assetPosition);
-                var featureAttributes = me._featureDataWrapper({ header : id, streetView : streetView, attributes : featureData, controls: null });
-                jQuery("#featureAttributes").html(featureAttributes);
-                me._addDatePickers();
-                jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function() {
-                    var data = jQuery(this);
-                    me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
-                });
-                jQuery("select.featureattributeChoice").on("change", function() {
-                    var data = jQuery(this);
-                    me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
-                });
-                jQuery("div.featureattributeChoice").on("change", function() {
-                    var data = jQuery(this);
-                    me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
-                });
-                jQuery("button.featureAttributeButton").on("click", function() {
-                    var data = jQuery(this);
-                    me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-propertyId'));
-                });
-                jQuery(".featureAttributeDate").on("blur", function() {
-                    var data = jQuery(this);
-                    me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
-                });
+            me._featureDataAssetId = assetAttributes.id;
+
+            var featureData = me._makeContent(assetAttributes.propertyData);
+            assetPosition.validityDirection = assetAttributes.validityDirection;
+            assetPosition.bearing = assetAttributes.bearing;
+            var streetView = me._getStreetView(assetPosition);
+            var featureAttributes = me._featureDataWrapper({ header: busStopHeader(assetAttributes), streetView: streetView, attributes: featureData, controls: null });
+            jQuery("#featureAttributes").html(featureAttributes);
+            me._addDatePickers();
+            jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
+                var data = jQuery(this);
+                me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
             });
+            jQuery("select.featureattributeChoice").on("change", function () {
+                var data = jQuery(this);
+                me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
+            });
+            jQuery("div.featureattributeChoice").on("change", function () {
+                var data = jQuery(this);
+                me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
+            });
+            jQuery("button.featureAttributeButton").on("click", function () {
+                var data = jQuery(this);
+                me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-propertyId'));
+            });
+            jQuery(".featureAttributeDate").on("blur", function () {
+                var data = jQuery(this);
+                me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
+            });
+
+            function busStopHeader(asset) {
+                if (_.isNumber(asset.externalId)) {
+                    return 'Valtakunnallinen ID: ' + asset.externalId;
+                }
+                else return 'Ei valtakunnalista ID:tä';
+            }
         },
         collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
             var me = this;
