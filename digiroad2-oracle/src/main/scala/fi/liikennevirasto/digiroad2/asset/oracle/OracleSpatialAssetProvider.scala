@@ -80,13 +80,6 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], left: Double, bottom: Double, right: Double, top: Double): Seq[RoadLink] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getRoadLinks(municipalityNumbers, left, bottom, right, top)
-    }
-  }
-
-
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinkById(roadLinkId)
@@ -111,7 +104,6 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(propertyId)) {
       throw new IllegalArgumentException("Cannot delete common asset property value: " + propertyId)
     }
-    val longPropertyId: Long = propertyId.toLong
     Database.forDataSource(ds).withDynTransaction {
       if (!userCanModifyAsset(assetId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")

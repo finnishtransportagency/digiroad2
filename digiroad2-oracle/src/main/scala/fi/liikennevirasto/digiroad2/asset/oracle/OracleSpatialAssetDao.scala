@@ -175,17 +175,6 @@ object OracleSpatialAssetDao {
     collectedQuery[RoadLink](q)
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], left: Double, bottom: Double, right: Double, top: Double): Seq[RoadLink] = {
-    def andMunicipality =
-      if (municipalityNumbers.isEmpty) None else Some(roadLinksAndMunicipality(municipalityNumbers), municipalityNumbers.toList)
-    def andWithinBoundingBox = {
-      val boundingBox = new JGeometry(left, bottom, right, top, 3067);
-      Some(roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
-    }
-    val q = QueryCollector(roadLinks).add(andMunicipality).add(andWithinBoundingBox)
-    collectedQuery[RoadLink](q)
-  }
-
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
