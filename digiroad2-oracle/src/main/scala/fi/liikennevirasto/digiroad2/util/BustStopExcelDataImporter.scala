@@ -11,7 +11,7 @@ class BustStopExcelDataImporter {
   lazy val convDs: DataSource = initConversionDataSource
   lazy val excelDs: DataSource = initExcelDataSource
 
-  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSe: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String)
+  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String)
 
   implicit val getExcelBusStopData = GetResult[ExcelBusStopData](r => ExcelBusStopData(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
 
@@ -44,49 +44,37 @@ class BustStopExcelDataImporter {
   def insertExcelData(ed: List[ExcelBusStopData]) {
     Database.forDataSource(excelDs).withDynTransaction {
       ed.foreach{ data =>
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Pysäkin nimi'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.stopNameFi}, ${data.stopNameSe}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Pysäkin nimi", data.stopNameFi, data.stopNameSv);
 
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Pysäkin suunta'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.direction}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Pysäkin suunta", data.direction);
 
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Pysäkin saavutettavuus'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.reachability}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Pysäkin saavutettavuus", data.reachability);
 
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Esteettömyystiedot'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.accessibility}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Esteettömyystiedot", data.accessibility);
 
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Pysäkin tunnus'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.internalId}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Pysäkin tunnus", data.internalId);
 
-        sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = 'Kommentit'),
-          (select id from asset where external_id = ${data.externalId}),
-          ${data.equipments}, 'samulin_ja_eskon_konversio')
-        """.execute
+        insertTextPropertyValue(data.externalId, "Kommentit", data.equipments);
       }
     }
+  }
+
+  def insertTextPropertyValue(externalId: Long, propertyName: String, value: String) {
+    sqlu"""
+      insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
+      values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
+      (select id from asset where external_id = ${externalId}),
+      ${value}, 'samulin_ja_eskon_konversio')
+    """.execute
+  }
+
+  def insertTextPropertyValue(externalId: Long, propertyName: String, valueFi: String, valueSv: String) {
+    sqlu"""
+      insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
+      values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
+      (select id from asset where external_id = ${externalId}),
+      ${valueFi}, ${valueSv}, 'samulin_ja_eskon_konversio')
+    """.execute
   }
 }
 
