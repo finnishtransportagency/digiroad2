@@ -18,4 +18,5 @@ trait AssetProvider {
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
   def availableProperties(assetTypeId: Long): Seq[Property]
 }
-case class BoundingRectangle(left: Double, bottom: Double, right: Double, top: Double)
+case class Point(x: Double, y: Double)
+case class BoundingRectangle(leftBottom: Point, rightTop: Point)

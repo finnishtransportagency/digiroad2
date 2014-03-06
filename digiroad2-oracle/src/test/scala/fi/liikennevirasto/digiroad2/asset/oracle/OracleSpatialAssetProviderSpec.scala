@@ -43,7 +43,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("load assets with spatial bounds", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen), Some(BoundingRectangle(374700, 6677595, 374750, 6677560)),
+    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     assets.size shouldBe(1)
   }
@@ -255,7 +255,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("provide road link geometry by municipality", Tag("db")) {
     provider.getRoadLinks(Seq(0)).size should be (0)
-    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingRectangle(372794, 6679569, 376794, 6675569)))
+    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
     rls.size should be (23)
     rls.foreach { rl =>
       rl.id should (be > 1l)
@@ -264,7 +264,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
     }
-    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingRectangle(373794, 6678569, 375794, 6676569))).size should be (24)
+    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (24)
   }
 
   test("Load image by id", Tag("db")) {

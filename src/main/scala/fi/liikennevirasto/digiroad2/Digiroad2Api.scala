@@ -171,7 +171,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   private[this] def boundsFromParams: Option[BoundingRectangle] = {
     params.get("bbox").map { b =>
       val BBOXList = b.split(",").map(_.toDouble)
-      BoundingRectangle(BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3))
+      BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
     }
   }
 }

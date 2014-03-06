@@ -78,7 +78,7 @@ object OracleSpatialAssetDao {
         Some(("AND rl.municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")", municipalityNumbers.toList))
       }
     def andWithinBoundingBox = bounds map { b =>
-      val boundingBox = new JGeometry(b.left, b.bottom, b.right, b.top, 3067);
+      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
       (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
     def andValidityInRange = (validFrom, validTo) match {
@@ -168,7 +168,7 @@ object OracleSpatialAssetDao {
     def andMunicipality =
       if (municipalityNumbers.isEmpty) None else Some(roadLinksAndMunicipality(municipalityNumbers), municipalityNumbers.toList)
     def andWithinBoundingBox = bounds map { b =>
-      val boundingBox = new JGeometry(b.left, b.bottom, b.right, b.top, 3067);
+      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067);
       (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
     val q = QueryCollector(roadLinks).add(andMunicipality).add(andWithinBoundingBox)

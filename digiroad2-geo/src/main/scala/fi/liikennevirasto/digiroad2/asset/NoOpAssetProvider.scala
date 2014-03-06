@@ -10,7 +10,6 @@ class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
   def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = List()
-  def getRoadLinks(municipalityNumbers: Seq[Int], left: Double, bottom: Double, right: Double, top: Double): Seq[RoadLink] = Seq()
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = None
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Some(AssetWithProperties(0, 10, 0, 0, 0, propertyData = List(
