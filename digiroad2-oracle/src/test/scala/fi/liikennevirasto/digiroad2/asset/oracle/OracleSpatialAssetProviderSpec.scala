@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import org.joda.time.LocalDate
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.BoundingCircle
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
 import scala.language.implicitConversions
 import fi.liikennevirasto.digiroad2.user.Configuration
@@ -43,7 +43,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("load assets with spatial bounds", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen), Some(BoundingCircle(374794, 6677569, 20)),
+    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen), Some(BoundingRectangle(374700, 6677595, 374750, 6677560)),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     assets.size shouldBe(1)
   }
@@ -255,7 +255,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("provide road link geometry by municipality", Tag("db")) {
     provider.getRoadLinks(Seq(0)).size should be (0)
-    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingCircle(374794, 6677569, 4000)))
+    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingRectangle(372794, 6679569, 376794, 6675569)))
     rls.size should be (23)
     rls.foreach { rl =>
       rl.id should (be > 1l)
@@ -264,7 +264,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
     }
-    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingCircle(374794, 6677569, 2000))).size should be (24)
+    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingRectangle(373794, 6678569, 375794, 6676569))).size should be (24)
   }
 
   test("Load image by id", Tag("db")) {

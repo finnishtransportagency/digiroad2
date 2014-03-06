@@ -36,7 +36,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssets(assetTypeId, municipalityNumbers, bounds, validFrom, validTo)
     }
@@ -74,7 +74,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     parallerSeq.foreach(RoadlinkProvider.updateRoadLink(ds, _))
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = {
+  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinks(municipalityNumbers, bounds)
     }

@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.BoundingCircle
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
@@ -118,12 +118,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*");
 
-    val rls = if (bboxOption.isDefined) {
-      val bb = bboxOption.get
-      assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, bb._1, bb._2, bb._3, bb._4)
-    } else {
-      assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
-    }
+    val rls = assetProvider.getRoadLinks(user.configuration.authorizedMunicipalities.toList, boundsFromParams)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
@@ -173,14 +168,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  private[this] def boundsFromParams: Option[BoundingCircle] = {
+  private[this] def boundsFromParams: Option[BoundingRectangle] = {
     params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble);
-      val (left, bottom, right, top) = (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
-      val r =  math.hypot(bottom - top, left - right)/2
-      val lon = (bottom + top)/2
-      val lat = (left + right)/2
-      BoundingCircle(lat, lon, r)
+      val BBOXList = b.split(",").map(_.toDouble)
+      BoundingRectangle(BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3))
     }
   }
 }
