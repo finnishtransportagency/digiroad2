@@ -378,13 +378,3 @@ div.divmanazerpopup .actions input:hover {
     padding-top: 2px;
     padding-bottom: 3px;
 }
-
-li.selected {
-    font-family: Arial;
-    font-size: 11px;
-}
-
-div.content ul li {
-    font-family: Arial;
-    font-size: 11px;
-}

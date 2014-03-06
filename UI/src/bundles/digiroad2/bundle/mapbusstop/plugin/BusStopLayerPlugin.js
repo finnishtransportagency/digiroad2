@@ -113,7 +113,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 interpolate: /\{\{(.+?)\}\}/g
             };
 
-            me._popupInfoTemplate = _.template('<div class="popupInfoBusStopsIcons">{{busStopsIons}}</div>' +
+            me._popupInfoTemplate = _.template('<div class="popupInfoBusStopsIcons">{{busStopsIcons}}</div>' +
                                                '<div class="popupInfoChangeDirection">' +
                                                     '<div class="changeDirectionButton">{{changeDirectionButton}}</div>' +
                                                '</div>');
@@ -317,6 +317,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                             me._layers.assetDirection.destroyFeatures(directionArrow);
                             directionArrow = me._addDirectionArrow(bearing, validityDirection, projectionOnNearestLine.x, projectionOnNearestLine.y);
                         }
+                        var assetType = _.find(asset.propertyData, function(property) {
+                            return property.propertyId === '200';
+                        });
+                        if (assetType && assetType.values) {
+                            var values = _.pluck(assetType.values, 'propertyValue');
+                            var content = me._makePopupContent(values);
+                            jQuery('.popupInfoBusStopsIcons').html(content);
+                        }
                     }
                 }
             });
@@ -503,7 +511,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _makeContent: function(imageIds) {
             var contentItem;
             var images = this._makePopupContent(imageIds);
-            var htmlContent = this._popupInfoTemplate({busStopsIons : images, changeDirectionButton : "Vaihda suuntaa"});
+            var htmlContent = this._popupInfoTemplate({busStopsIcons : images, changeDirectionButton : "Vaihda suuntaa"});
             contentItem = {
                 html: htmlContent,
                 actions: {}
