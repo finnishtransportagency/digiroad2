@@ -8,6 +8,7 @@ import Database.dynamicSession
 import Q.interpolation
 
 class BustStopExcelDataImporter {
+  val Updater = "excel_data_migration"
   lazy val convDs: DataSource = initConversionDataSource
   lazy val excelDs: DataSource = initExcelDataSource
 
@@ -43,28 +44,34 @@ class BustStopExcelDataImporter {
 
   def insertExcelData(ed: List[ExcelBusStopData]) {
     Database.forDataSource(convDs).withDynTransaction {
-      ed.foreach{ data =>
-        val assetIds = sql"""
-          select id from asset where external_id = ${data.externalId}
-        """.as[Long].list
+      ed.foreach{ row =>
+        val assetId = sql"""
+          select id from asset where external_id = ${row.externalId}
+        """.as[Long].firstOption
 
-        if (assetIds.size == 1) {
-          println("UPDATING ASSET: " + assetIds.mkString)
+        assetId match {
+          case Some(_) => {
+            println("UPDATING ASSET: " + assetId.get + " WITH EXTERNAL ID: " + row.externalId)
 
-          insertTextPropertyValue(data.externalId, "Pysäkin nimi", data.stopNameFi, data.stopNameSv)
+            sqlu"""
+              update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId.get}
+            """.execute
 
-          insertTextPropertyValue(data.externalId, "Pysäkin suunta", data.direction)
+            insertTextPropertyValue(row.externalId, "Pysäkin nimi", row.stopNameFi, row.stopNameSv)
 
-          insertTextPropertyValue(data.externalId, "Pysäkin saavutettavuus", data.reachability)
+            insertTextPropertyValue(row.externalId, "Pysäkin suunta", row.direction)
 
-          insertTextPropertyValue(data.externalId, "Esteettömyystiedot", data.accessibility)
+            insertTextPropertyValue(row.externalId, "Pysäkin saavutettavuus", row.reachability)
 
-          insertTextPropertyValue(data.externalId, "Pysäkin tunnus", data.internalId)
+            insertTextPropertyValue(row.externalId, "Esteettömyystiedot", row.accessibility)
 
-          insertTextPropertyValue(data.externalId, "Kommentit", data.equipments)
+            insertTextPropertyValue(row.externalId, "Pysäkin tunnus", row.internalId)
 
-        } else {
-          println("NO ASSET FOUND FOR EXTERNAL ID: " + data.externalId)
+            insertTextPropertyValue(row.externalId, "Kommentit", row.equipments)
+          }
+          case None => {
+            println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
+          }
         }
       }
     }
@@ -75,7 +82,7 @@ class BustStopExcelDataImporter {
   }
 
   def insertTextPropertyValue(externalId: Long, propertyName: String, valueFi: String, valueSv: String) {
-    println("  UPDATING PROPERTY: " + propertyName + " WITH VALUES: " + valueFi + " " + valueSv)
+    println("  UPDATING PROPERTY: " + propertyName + " WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
     val propertyId = sql"""
       select id from text_property_value
       where property_id = (select id from property where NAME_FI = ${propertyName})
@@ -88,12 +95,12 @@ class BustStopExcelDataImporter {
           insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
           values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
           (select id from asset where external_id = ${externalId}),
-          ${valueFi}, ${valueSv}, 'samulin_ja_eskon_konversio')
+          ${valueFi}, ${valueSv}, ${Updater})
         """.execute
       }
       case _ => {
         sqlu"""
-          update text_property_value set value_fi = ${valueFi}, value_sv = ${valueSv}, modified_by = 'samulin_ja_eskon_konversio'
+          update text_property_value set value_fi = ${valueFi}, value_sv = ${valueSv}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
         """.execute
       }
