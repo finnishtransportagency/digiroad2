@@ -24,6 +24,24 @@ describe('FeatureAttributes', function () {
         });
     });
 
+    describe('attributes on bus stop with national bus stop id', function() {
+        before(function() { showFeatureAttributes(85755); });
+
+        it('should show national bus stop id', function () {
+            var featureAttributesHeader = $('.featureAttributesHeader');
+            assert.equal(featureAttributesHeader.text(), 'Valtakunnallinen ID: 85755');
+        });
+    });
+
+    describe('attributes on bus stop without national bus stop id', function() {
+        before(function() { showFeatureAttributes(); });
+
+        it('should indicate missing national bus stop id', function () {
+            var featureAttributesHeader = $('.featureAttributesHeader');
+            assert.equal(featureAttributesHeader.text(), 'Ei valtakunnalista ID:tä');
+        });
+    });
+
     describe('when user leaves date undefined', function () {
         var featureAttributes = null;
         var calls = [];
@@ -33,11 +51,6 @@ describe('FeatureAttributes', function () {
                 backend: _.extend({}, window.Backend, {
                     putAssetPropertyValue: function (assetId, propertyId, data) {
                         calls.push(data);
-                    },
-                    getAsset: function (id, success) {
-                        success({
-                            propertyData: [createNullDateProperty('propertyId', 'propertyName')]
-                        });
                     }
                 })
             });
@@ -46,7 +59,9 @@ describe('FeatureAttributes', function () {
 
         it('should send null date to backend', function () {
             calls = [];
-            featureAttributes.showAttributes(130, { lonLat: { lon: 24, lat: 60 }, heading: 140 });
+            featureAttributes.showAttributes(
+                { id: 130, propertyData: [createNullDateProperty('propertyId', 'propertyName')] },
+                { lonLat: { lon: 24, lat: 60 }, heading: 140 });
             var dateInput = $('input[data-propertyid="propertyId"]');
             dateInput.blur();
             assert.equal(1, calls.length);
@@ -194,7 +209,7 @@ describe('FeatureAttributes', function () {
             before(function() {
                 var validityDirectionBeforeChange = validityDirectionElement().attr('value');
                 expectedValidityDirection = (validityDirectionBeforeChange == 2 ? 3 : 2);
-                $('button.featureAttributeButton').attr('value', 3);
+                $('button.featureAttributeButton').click();
             });
 
             it('should send feature changed event', function() {
@@ -283,4 +298,13 @@ describe('FeatureAttributes', function () {
 
         function validityDirectionElement() { return $('button[data-propertyid="validityDirection"]'); }
     });
+
+    function showFeatureAttributes(externalId) {
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
+        var assetData = { id: 130, propertyData: [] };
+        var assetPosition = { lonLat: { lon: 24, lat: 60 }, heading: 140 };
+        if(_.isNumber(externalId)) assetData.externalId = externalId;
+        featureAttributes.init();
+        featureAttributes.showAttributes(assetData, assetPosition);
+    }
 });

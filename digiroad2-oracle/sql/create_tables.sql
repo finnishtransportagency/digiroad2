@@ -91,6 +91,7 @@ create table asset_type (
 
 create table asset (
 	id number primary key,
+  external_id number,
 	asset_type_id number references asset_type,
 	lrm_position_id number,
 	created_date timestamp default current_timestamp not null,

@@ -240,7 +240,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'actionpanel.ValidityPeriodChangedEvent': function(event) {
               this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
             },
-            'mapbusstop.ApplicationInitializedEvent': function(event) {
+            'mapbusstop.ApplicationInitializedEvent': function() {
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
@@ -468,9 +468,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         /**
          * Handle _afterMapMoveEvent
          * @private
-         * @param {Oskari.mapframework.event.common.AfterMapLayerAddEvent} event
          */
-        _afterMapMoveEvent: function(event) {
+        _afterMapMoveEvent: function() {
             if (_.isObject(this._layers.asset)) {
                 this._renderAssets();
             }
@@ -707,9 +706,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             });
         },
-        _sendShowAttributesRequest: function(id, point) {
+        _sendShowAttributesRequest: function(assetAttributes, point) {
             var requestBuilder = this._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
-            var request = requestBuilder(id, point);
+            var request = requestBuilder(assetAttributes, point);
             this._sandbox.request(this.getName(), request);
         },
         _mouseDown: function(busStop, busStops, mouseUp) {
@@ -744,28 +743,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseClick: function(busStop, imageIds) {
             var me = this;
             return function (evt, streetViewCoordinates) {
-                if (me._selectedControl === 'Remove') {
-                    var confirm = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                    var okBtn = confirm.createCloseButton("Poista");
-                    okBtn.addClass('primary');
-                    okBtn.setHandler(function() {
-                        me._remove(me._selectedBusStop, dateutil.finnishToIso8601(jQuery('#removeAssetDateInput').val()));
-                        confirm.close();
-                        me._layers.asset.redraw();
-                    });
-                    var cancelBtn = confirm.createCloseButton("Peru");
-                    confirm.makeModal();
-                    confirm.show("Poistetaan käytöstä", me._removeAssetTemplate, [cancelBtn, okBtn]);
-                    var removeDateInput = jQuery('#removeAssetDateInput');
-                    dateutil.addFinnishDatePicker(removeDateInput.get(0));
-                    return;
-                }
                 me._state = null;
-                streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
-                me._sendShowAttributesRequest(busStop.id, streetViewCoordinates);
-                var contentItem = me._makeContent(imageIds);
-                me._sendPopupRequest("busStop", busStop.id, busStop.id, contentItem, busStop.lonlat);
-                me._selectedBusStop.display(false);
+                me._backend.getAsset(busStop.id, function(assetData) {
+                    var assetAttributes = _.merge({}, assetData, { id: busStop.id });
+                    streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
+                    var contentItem = me._makeContent(imageIds);
+                    me._sendPopupRequest('busStop', popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
+                    me._sendShowAttributesRequest(assetAttributes, streetViewCoordinates);
+                    me._selectedBusStop.display(false);
+
+
+                    function popupTitle(asset) {
+                        if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
+                        else return 'Ei ID:tä';
+                    }
+                });
                 OpenLayers.Event.stop(evt);
             };
         },

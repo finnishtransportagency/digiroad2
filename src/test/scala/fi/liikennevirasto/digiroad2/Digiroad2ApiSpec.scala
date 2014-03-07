@@ -42,23 +42,23 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374650,6677400,374920,6677820&validityPeriod=current") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].size should be(1)
+      parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("get assets without bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 300000).size should be(4)
+      parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(4)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].filterNot(_.id == 300000).size should be(5)
+      parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(5)
     }
   }
 
@@ -97,10 +97,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get road links", Tag("db")) {
-    getWithUserAuth("/roadlinks?bbox=374702,6677462,374870,6677780") {
+    getWithUserAuth("/roadlinks?bbox=374662,6677430,374890,6677800") {
       status should equal(200)
       val roadLinksJson = parse(body)
-      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (6)
+      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (7)
     }
   }
 
@@ -144,22 +144,22 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("get past assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].size should be(1)
+      parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("get future assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=future") {
       status should equal(200)
-      parse(body).extract[List[AssetWithProperties]].size should be(1)
+      parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("mark asset on expired link as floating", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01&validityPeriod=current", "test49") {
       status should equal(200)
-      val assets = parse(body).extract[List[AssetWithProperties]]
-      assets should have length(1)
+      val assets = parse(body).extract[List[Asset]]
+      assets should have length 1
       assets.head.status should be(Some(Floating))
      }
   }
@@ -188,6 +188,17 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
       ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
+    }
+  }
+
+  test("get national bus stop id if defined", Tag("db")) {
+    getWithUserAuth("/assets/300008") {
+      val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
+      System.out.println(assetWithProperties)
+      assetWithProperties.externalId should be (Some(85755))
+    }
+    getWithUserAuth("/assets/300013") {
+      parse(body).extract[AssetWithProperties].externalId should be (None)
     }
   }
 }

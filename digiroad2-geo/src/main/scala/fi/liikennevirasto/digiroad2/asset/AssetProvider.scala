@@ -6,16 +6,17 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 trait AssetProvider {
   def getAssetTypes: Seq[AssetType]
   def getAssetById(assetId: Long): Option[AssetWithProperties]
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int] = Nil, bounds: Option[BoundingRectangle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue])
   def deleteAssetProperty(assetId: Long, propertyId: String)
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def updateAssetLocation(asset: Asset): AssetWithProperties
-  def getRoadLinks(municipalityNumbers: Seq[Int] = Seq(), bounds: Option[BoundingCircle] = None): Seq[RoadLink]
+  def getRoadLinks(municipalityNumbers: Seq[Int] = Seq(), bounds: Option[BoundingRectangle] = None): Seq[RoadLink]
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
   def availableProperties(assetTypeId: Long): Seq[Property]
 }
-case class BoundingCircle(centreLat: Double, centreLon: Double, radiusM: Double)
+case class Point(x: Double, y: Double)
+case class BoundingRectangle(leftBottom: Point, rightTop: Point)

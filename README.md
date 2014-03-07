@@ -121,8 +121,9 @@ Palvelun käyttäjien tietoja voi päivittää ja uusia käyttäjiä voi lisät�
 
 Alla esimerkki CSV-tiedostosta:
 ```
-uusitunnus, 105, 258, 248, 245
-olemassaolevatunnus, 410, 411, 412, 413
+kuntakäyttäjä; ;105, 258, 248, 245;
+olemassaolevatunnus; ;410, 411, 412, 413;
+elykäyttäjä;0,1,2,3,4,5,6,7,8,9;
 ```
 
 Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` skriptiä:

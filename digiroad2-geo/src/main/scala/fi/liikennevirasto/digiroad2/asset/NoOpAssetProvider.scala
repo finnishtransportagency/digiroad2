@@ -9,10 +9,10 @@ import fi.liikennevirasto.digiroad2.asset.ValidityPeriod._
 class NoOpAssetProvider extends AssetProvider {
   def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {}
   def deleteAssetProperty(assetId: Long, propertyId: String) {}
-  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingCircle]): Seq[RoadLink] = List()
+  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = List()
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = None
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Some(AssetWithProperties(0, 10, 0, 0, 0, propertyData = List(
+    Some(AssetWithProperties(0, None, 10, 0, 0, 0, propertyData = List(
       Property("4", "Pysäkin saavutettavuus", "text", values = Seq(PropertyValue(0, "", null))),
       Property("5", "Esteettömyystiedot", "text", values = Seq(PropertyValue(0, "", null))),
       Property("6", "Ylläpitäjän tunnus", "text", values = Seq(PropertyValue(0, "", null))),
@@ -24,9 +24,9 @@ class NoOpAssetProvider extends AssetProvider {
       Property("validTo", "Käytössä päättyen", Date, values = Seq(PropertyValue(0, null)))
     )))
   }
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int] = Nil, bounds: Option[BoundingCircle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset] = List()
+  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int] = Nil, bounds: Option[BoundingRectangle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset] = List()
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, propertyValues: Seq[SimpleProperty]) = {
-    AssetWithProperties(0, assetTypeId, lon, lat, roadLinkId)
+    AssetWithProperties(0, None, assetTypeId, lon, lat, roadLinkId)
   }
   def getAssetTypes = List()
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
