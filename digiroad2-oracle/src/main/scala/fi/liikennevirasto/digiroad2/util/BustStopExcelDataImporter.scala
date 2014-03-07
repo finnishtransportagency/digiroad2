@@ -45,60 +45,58 @@ class BustStopExcelDataImporter {
   def insertExcelData(ed: List[ExcelBusStopData]) {
     Database.forDataSource(convDs).withDynTransaction {
       ed.foreach{ row =>
-        val assetId = sql"""
+        val assetIds = sql"""
           select id from asset where external_id = ${row.externalId}
-        """.as[Long].firstOption
+        """.as[Long].list
 
-        assetId match {
-          case Some(_) => {
-            println("UPDATING ASSET: " + assetId.get + " WITH EXTERNAL ID: " + row.externalId)
+        if (assetIds.nonEmpty) {
+          assetIds.foreach { assetId =>
+            println("UPDATING ASSET: " + assetId + " WITH EXTERNAL ID: " + row.externalId)
 
             sqlu"""
-              update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId.get}
+              update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId}
             """.execute
 
-            insertTextPropertyValue(row.externalId, "Pysäkin nimi", row.stopNameFi, row.stopNameSv)
+            insertTextPropertyValue(assetId, "Pysäkin nimi", row.stopNameFi, row.stopNameSv)
 
-            insertTextPropertyValue(row.externalId, "Pysäkin suunta", row.direction)
+            insertTextPropertyValue(assetId, "Pysäkin suunta", row.direction)
 
-            insertTextPropertyValue(row.externalId, "Pysäkin saavutettavuus", row.reachability)
+            insertTextPropertyValue(assetId, "Pysäkin saavutettavuus", row.reachability)
 
-            insertTextPropertyValue(row.externalId, "Esteettömyystiedot", row.accessibility)
+            insertTextPropertyValue(assetId, "Esteettömyystiedot", row.accessibility)
 
-            insertTextPropertyValue(row.externalId, "Pysäkin tunnus", row.internalId)
+            insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
-            insertTextPropertyValue(row.externalId, "Kommentit", row.equipments)
+            insertTextPropertyValue(assetId, "Kommentit", row.equipments)
           }
-          case None => {
-            println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
-          }
+        } else {
+          println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
         }
       }
     }
   }
 
-  def insertTextPropertyValue(externalId: Long, propertyName: String, value: String) {
-    insertTextPropertyValue(externalId, propertyName, value, null)
+  def insertTextPropertyValue(assetId: Long, propertyName: String, value: String) {
+    insertTextPropertyValue(assetId, propertyName, value, null)
   }
 
-  def insertTextPropertyValue(externalId: Long, propertyName: String, valueFi: String, valueSv: String) {
-    println("  UPDATING PROPERTY: " + propertyName + " WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
+  def insertTextPropertyValue(assetId: Long, propertyName: String, valueFi: String, valueSv: String) {
     val propertyId = sql"""
       select id from text_property_value
       where property_id = (select id from property where NAME_FI = ${propertyName})
-      and asset_id = (select id from asset where external_id = ${externalId})
+      and asset_id = ${assetId}
     """.as[Long].firstOption
 
     propertyId match {
       case None => {
+        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
         sqlu"""
           insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}),
-          (select id from asset where external_id = ${externalId}),
-          ${valueFi}, ${valueSv}, ${Updater})
+          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${valueFi}, ${valueSv}, ${Updater})
         """.execute
       }
       case _ => {
+        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
         sqlu"""
           update text_property_value set value_fi = ${valueFi}, value_sv = ${valueSv}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
