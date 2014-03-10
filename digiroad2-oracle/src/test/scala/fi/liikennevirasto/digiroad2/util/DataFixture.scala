@@ -22,33 +22,40 @@ object DataFixture {
     SqlScriptRunner.runScripts(List("create_tables.sql", "insert_bus_stop_properties.sql", "insert_users.sql"))
   }
 
+  def importRoadlinksFromConversion(dataImporter: AssetDataImporter) {
+    println("<roadlinks>")
+    println(DateTime.now())
+    dataImporter.importRoadlinks(Conversion)
+    println(DateTime.now())
+    println("</roadlinks>")
+  }
+
+  def importBusStopsFromConversion(dataImporter: AssetDataImporter) {
+    println("<importBusStops>")
+    println(DateTime.now())
+    dataImporter.importBusStops(Conversion)
+    println(DateTime.now())
+    println("</importBusStops>")
+  }
+
   def main(args:Array[String]) = {
     val dataImporter = new AssetDataImporter
     args.headOption match {
-      case Some("test") => {
+      case Some("test") =>
         tearDown()
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-      }
-      case Some("full") => {
+      case Some("full") =>
         tearDown()
         setUpFull()
         dataImporter.importRoadlinks(TemporaryTables)
         dataImporter.importBusStops(TemporaryTables)
-      }
-      case Some("conversion") => {
+      case Some("conversion") =>
         tearDown()
         setUpFull()
-        println("<roadlinks>")
-        println(DateTime.now())
-        // dataImporter.importRoadlinks(Conversion)
-        println("</roadlinks>")
-        println(DateTime.now())
-        println("<importBusStops>")
-        dataImporter.importBusStops(Conversion)
-        println("</importBusStops>")
-      }
+        importRoadlinksFromConversion(dataImporter)
+        importBusStopsFromConversion(dataImporter)
       case _ => println("Usage: DataFixture test | full | conversion")
     }
   }
