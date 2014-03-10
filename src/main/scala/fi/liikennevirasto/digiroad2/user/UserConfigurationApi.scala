@@ -81,6 +81,20 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
   }
 
+  put("/user/:username/roles") {
+    val newRoles = parsedBody.extract[List[String]].toSet
+    params.get("username").flatMap {
+      userProvider.getUser
+    }.map { u =>
+      val updatedUser = u.copy(configuration = u.configuration.copy(roles = newRoles))
+      userProvider.saveUser(updatedUser)
+      updatedUser
+    } match {
+      case Some(updated) => updated
+      case None => NotFound("User not found: " + params("username"))
+    }
+  }
+
   def parseInputToInts(input: Seq[String], position: Int): Option[Seq[Int]] = {
     if (!input.isDefinedAt(position)) return None
     val split = input(position).split(",").filterNot(_.trim.isEmpty)
