@@ -43,6 +43,10 @@ object OracleSpatialAssetDao {
     nextPrimaryKeyId.as[Long].first
   }
 
+  def getNationalBusStopId = {
+    nextNationalBusStopId.as[Long].first
+  }
+
   private[oracle] def getImageId(image: Image) = {
     image.imageId match {
       case None => null
@@ -129,10 +133,11 @@ object OracleSpatialAssetDao {
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val assetId = nextPrimaryKeySeqValue
     val lrmPositionId = nextPrimaryKeySeqValue
+    val externalId = getNationalBusStopId
     val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
-    insertAsset(assetId, assetTypeId, lrmPositionId, bearing, creator).execute
+    insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
     properties.foreach { property =>
       if (!property.values.isEmpty) {
         if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(property.id)) {
