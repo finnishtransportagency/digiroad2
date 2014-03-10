@@ -38,7 +38,7 @@ describe('FeatureAttributes', function () {
 
         it('should indicate missing national bus stop id', function () {
             var featureAttributesHeader = $('.featureAttributesHeader');
-            assert.equal(featureAttributesHeader.text(), 'Ei valtakunnalista ID:tä');
+            assert.equal(featureAttributesHeader.text(), 'Ei valtakunnallista ID:tä');
         });
     });
 
