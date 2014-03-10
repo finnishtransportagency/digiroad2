@@ -2,12 +2,18 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
+import java.util.Properties
 
 object DataFixture {
   val TestAssetId = 300000
   val TestAssetTypeId = 10
   val MunicipalityKauniainen = 235
   val MunicipalityEspoo = 49
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/bonecp.properties"))
+    props
+  }
 
   def tearDown() {
     SqlScriptRunner.runScript("drop_tables.sql")
@@ -22,6 +28,22 @@ object DataFixture {
   }
 
   def main(args:Array[String]) = {
+    import scala.util.control.Breaks._
+    val username = properties.getProperty("bonecp.username")
+    if (!username.startsWith("dr2dev")) {
+      println("***********************************************************************************")
+      println("YOU ARE RUNNING FIXTURE RESET AGAINST NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("***********************************************************************************")
+      breakable {
+        while (true) {
+          val input = Console.readLine()
+          if (input.trim() == "YES") {
+            break
+          }
+        }
+      }
+    }
+
     val dataImporter = new AssetDataImporter
     args.headOption match {
       case Some("test") => {
