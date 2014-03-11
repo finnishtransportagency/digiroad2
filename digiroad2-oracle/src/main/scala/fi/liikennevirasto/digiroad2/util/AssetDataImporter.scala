@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.Properties
-import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
 import Q.interpolation
@@ -122,13 +122,25 @@ class AssetDataImporter {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
-    totalItems = count
-    startTime = DateTime.now()
-    lastCheckpoint = DateTime.now()
-    parallerSeq.foreach(x => doConversion(dataSet, x))
+    withSessionFromDataSource(ds, targetDbSession => {
+      parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
+      totalItems = count
+      startTime = DateTime.now()
+      lastCheckpoint = DateTime.now()
+      parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession))
+    })
   }
 
+  def withSessionFromDataSource(ds: DataSource, function: (Session) => Unit) = {
+    val targetDbSession = Database.forDataSource(ds).createSession()
+    try {
+      function(targetDbSession)
+    } finally {
+      targetDbSession.close()
+    }
+  }
+
+  // TODO: Move these from global scope to function parameters
   var totalItems = 0
   var processedItems = 0
   var counterForProcessed = 1
@@ -164,9 +176,9 @@ class AssetDataImporter {
       .toFormatter()
   }
 
-  private def doConversion(dataSet: ImportDataSet, page: (Int, Int)) = {
+  private def doConversion(dataSet: ImportDataSet, page: (Int, Int), targetDbSession: Session) = {
     val links = getOldRoadlinksByPage(dataSet, page)
-    insertRoadLink(links)
+    insertRoadLink(links, targetDbSession)
     updateStatus(links.size)
   }
 
@@ -183,10 +195,8 @@ class AssetDataImporter {
       result
   }
 
-  private def insertRoadLink(roadlinks: List[SimpleRoadLink]) {
-    val s = Database.forDataSource(ds).createSession()
-
-    val ps = s.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+  private def insertRoadLink(roadlinks: List[SimpleRoadLink], targetDbSession: Session) {
+    val ps = targetDbSession.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
     def batch(rl: SimpleRoadLink) {
       ps.setLong(1, rl.id)
@@ -206,7 +216,6 @@ class AssetDataImporter {
     roadlinks foreach batch
     ps.executeBatch
     ps.close()
-    s.close()
   }
 
   def importBusStops(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
