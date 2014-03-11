@@ -75,7 +75,7 @@ class AssetDataImporter {
   val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
   val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
-  val Modifier = "automatic_import"
+  val Modifier = "dr1conversion"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
       val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), r.<<, busStopTypes(r.<<), r.<<)
@@ -114,7 +114,7 @@ class AssetDataImporter {
 
   private def getBatchDrivers(size: Int) = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 2000).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
     x :+ (x.last._2 + 1, size)
   }
 
@@ -345,7 +345,7 @@ class AssetDataImporter {
   }
 
   def importMunicipalityCodes() = {
-    val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
+    val src = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
     src.getLines().toList.drop(1).map(row => {
       var elems = row.replace("\"", "").split(";");
       sqlu"""

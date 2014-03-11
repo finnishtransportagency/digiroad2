@@ -56,7 +56,7 @@ object DataFixture {
       case Some("conversion") =>
         tearDown()
         setUpFull()
-        val taskPool = new ForkJoinPool(8)
+        val taskPool = new ForkJoinPool(4)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
       case Some("busstops") =>
