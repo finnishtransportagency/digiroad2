@@ -17,7 +17,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{RoadlinkProvider, OracleSpatia
 import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.{ParSeq, ForkJoinTaskSupport}
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.Some
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
@@ -102,7 +102,7 @@ class AssetDataImporter {
     ret
   }
 
-  def importRoadlinks(dataSet: ImportDataSet) = roadLinksToImport(dataSet)
+  def importRoadlinks(dataSet: ImportDataSet, taskPool: ForkJoinPool) = roadLinksToImport(dataSet, taskPool)
 
   private def getRoadlinkCount(dataSet: ImportDataSet) = {
     val table = dataSet.roadLinkTable
@@ -117,11 +117,11 @@ class AssetDataImporter {
     x :+ (x.last._2 + 1, size)
   }
 
-  private def roadLinksToImport(dataSet: ImportDataSet) = {
+  private def roadLinksToImport(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(8))
+    parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
     totalItems = count
     startTime = DateTime.now()
     lastCheckpoint = DateTime.now()
@@ -208,12 +208,16 @@ class AssetDataImporter {
     s.close()
   }
 
-  def importBusStops(dataSet: ImportDataSet) = {
+  def importBusStops(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
     val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
-    lrmPositions.grouped(250).toList.par.foreach(insertLrmPositions)
+    val insertLrmPositionsSequence: ParSeq[List[SimpleLRMPosition]] = lrmPositions.grouped(250).toList.par
+    insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
+    insertLrmPositionsSequence.foreach(insertLrmPositions)
     insertImages()
     val typeProps = getTypeProperties
-    busStops.toList.par.foreach(x => insertBusStops(x, typeProps))
+    val insertBusStopsSequence: ParSeq[SimpleBusStop] = busStops.toList.par
+    insertBusStopsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
+    insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
   private def busStopsToImport(dataSet: ImportDataSet) = {
@@ -228,6 +232,7 @@ class AssetDataImporter {
   def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition]) {
     Database.forDataSource(ds).withSession {
       session =>
+        var elementCount = 0
         val ps = session.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
         def batch(lrm: SimpleLRMPosition) {
           ps.setLong(1, lrm.id)
@@ -237,10 +242,13 @@ class AssetDataImporter {
           ps.setInt(5, lrm.startMeasure)
           ps.setInt(6, lrm.endMeasure)
           ps.addBatch
+          elementCount = elementCount + 1
+          println("Added LRM " + lrm.id + " to batch as element " + elementCount)
         }
 
         lrmPositions foreach batch
         ps.executeBatch
+        println("Executed batch of " + lrmPositions.length + " LRM positions")
         ps.close
         session.close
     }
