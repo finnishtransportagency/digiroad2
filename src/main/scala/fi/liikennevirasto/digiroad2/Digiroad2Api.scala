@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
+import fi.liikennevirasto.digiroad2.user.{Role, User}
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -51,21 +52,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
       case _ => (None, None)
     }
-    val authorizedMunicipalities = user.configuration.authorizedMunicipalities
     assetProvider.getAssets(
         params("assetTypeId").toLong, user,
         boundsFromParams, validFrom = validFrom, validTo = validTo)
   }
 
-  private def isReadOnly(authorizedMunicipalities: Set[Int])(municipalityNumber: Int): Boolean = {
-    !authorizedMunicipalities.contains(municipalityNumber)
+  private def isReadOnly(user: User)(municipalityNumber: Int): Boolean = {
+    !(user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber))
   }
 
   get("/assets/:assetId") {
     assetProvider.getAssetById(params("assetId").toLong) match {
       case Some(a) => {
-        val authorizedMunicipalities = userProvider.getCurrentUser.configuration.authorizedMunicipalities.toSet
-        if (a.municipalityNumber.map(isReadOnly(authorizedMunicipalities)).getOrElse(true)) {
+        if (a.municipalityNumber.map(isReadOnly(userProvider.getCurrentUser())).getOrElse(true)) {
           Unauthorized("Asset " + params("assetId") + " not authorized")
         } else {
           a
