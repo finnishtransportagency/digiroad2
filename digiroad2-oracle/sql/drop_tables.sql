@@ -8,7 +8,7 @@ drop table asset_type;
 drop table image;
 drop table service_user;
 drop table road_node;
-drop table lrm_position;
+drop table lrm_position cascade constraints;
 drop table road_link;
 drop table ely;
 drop table municipality;
