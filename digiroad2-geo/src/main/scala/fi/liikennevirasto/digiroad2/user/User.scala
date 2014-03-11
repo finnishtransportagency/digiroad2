@@ -5,6 +5,11 @@ case class Configuration(
     east: Option[Long] = None,
     north: Option[Long] = None,
     municipalityNumber: Option[Int]  = None,
-    authorizedMunicipalities: Set[Int] = Set()
+    authorizedMunicipalities: Set[Int] = Set(),
+    roles: Set[String] = Set()
 )
 case class User(id: Long, username: String, configuration: Configuration)
+object Role {
+  val Operator = "operator"
+  val Administrator = "administrator"
+}

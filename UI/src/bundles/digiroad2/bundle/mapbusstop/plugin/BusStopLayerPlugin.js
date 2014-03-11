@@ -414,13 +414,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var directionArrow = this._addDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
             this._selectedBusStop = this._addBusStop(asset, this._layers.asset,
                 directionArrow, this._layers.assetDirection, validityDirection);
-            this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
+            this._sendPopupRequest("busStop", this._popupTitle(asset), asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
             var streetViewCoordinates = {
                 lonLat: lonLat,
                 heading: asset.bearing + 90
             };
-            this._sendShowAttributesRequest(asset.id, streetViewCoordinates);
+            this._sendShowAttributesRequest(asset, streetViewCoordinates);
             this._triggerEvent('mapbusstop.AssetModifiedEvent', asset);
         },
 
@@ -748,19 +748,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var assetAttributes = _.merge({}, assetData, { id: busStop.id });
                     streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
                     var contentItem = me._makeContent(imageIds);
-                    me._sendPopupRequest('busStop', popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
+                    me._sendPopupRequest('busStop', me._popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
                     me._sendShowAttributesRequest(assetAttributes, streetViewCoordinates);
                     me._selectedBusStop.display(false);
-
-
-                    function popupTitle(asset) {
-                        if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
-                        else return 'Ei ID:tä';
-                    }
                 });
                 OpenLayers.Event.stop(evt);
             };
         },
+
+        _popupTitle: function(asset) {
+            if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
+            else return 'Ei ID:tä';
+        },
+
         _moveSelectedBusStop: function(evt) {
             if (this._map.getZoom() < 10) {
                 return;

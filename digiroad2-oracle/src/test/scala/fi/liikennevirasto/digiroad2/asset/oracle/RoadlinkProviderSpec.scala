@@ -13,6 +13,14 @@ import fi.liikennevirasto.digiroad2.asset.RoadLink
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.DataFixture._
+import fi.liikennevirasto.digiroad2.mtk.Point
+import scala.Some
+import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
+import fi.liikennevirasto.digiroad2.user.Configuration
+import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.asset.RoadLink
 
 
 class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll
@@ -29,6 +37,18 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
   val roadlink4 = MtkRoadLink(669L, startDate, None, 99998,
                               List(Point(100004.001, 3000000.002, 3.003), Point(100022.0, 3000016.0, 64.0)))
 
+  val user99999 = User(
+    id = 1,
+    username = "User",
+    configuration = Configuration(authorizedMunicipalities = Set(99999)))
+  val user99998 = User(
+    id = 2,
+    username = "User",
+    configuration = Configuration(authorizedMunicipalities = Set(99998)))
+  val user99995 = User(
+    id = 3,
+    username = "User",
+    configuration = Configuration(authorizedMunicipalities = Set(99995)))
   val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
   val ds = OracleDatabase.initDataSource
   val mockedProvider = mock[NodeProvider]
@@ -51,10 +71,10 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
 
   it must "be created if nonexistent (insert)" in {
     cleanDbForMunicipalities("99999")
-    provider.getRoadLinks(Seq(99999)) must equal(List())
+    provider.getRoadLinks(user99999) must equal(List())
     provider.updateRoadLinks(List(roadlink1, roadlink2))
 
-    provider.getRoadLinks(Seq(99999)).sortBy(x => x.id) must equal(
+    provider.getRoadLinks(user99999).sortBy(x => x.id) must equal(
       List(RoadLink(id = 666L, lonLat = Vector((100001.001, 2999997.002), (100002.0, 2999998.0)), municipalityNumber = 99999),
            RoadLink(id = 667L, lonLat = Vector((100002.001, 2999998.002), (100003.0, 2999999.0)), municipalityNumber = 99999)))
     verify(mockedProvider).createRoadNode(roadlink1.points.head)
@@ -65,14 +85,14 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
 
   it must "be updated if exists" in {
     cleanDbForMunicipalities("99998")
-    provider.getRoadLinks(Seq(99998)) must equal(List())
+    provider.getRoadLinks(user99998) must equal(List())
     when(mockedProvider.createRoadNode(roadlink3.points.head)).thenReturn(1000)
     when(mockedProvider.createRoadNode(roadlink3.points.last)).thenReturn(1001)
     when(mockedProvider.createRoadNode(roadlink4.points.head)).thenReturn(1002)
     when(mockedProvider.createRoadNode(roadlink4.points.last)).thenReturn(1003)
     provider.updateRoadLinks(List(roadlink3, roadlink4))
 
-    provider.getRoadLinks(Seq(99998)).sortBy(x => x.id) must equal(
+    provider.getRoadLinks(user99998).sortBy(x => x.id) must equal(
       List(RoadLink(id = 668L,
                     lonLat = Vector((100003.001, 2999999.002), (100012.0, 3000015.0)),
                     municipalityNumber = 99998),
@@ -86,7 +106,7 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
                     endDate = Some(new LocalDate(2013, 10, 11))),
            roadlink4.copy(points = List(Point(200014.001, 4000001.002, 13.003), Point(200222.0, 4000216.0, 64.0)))))
 
-    provider.getRoadLinks(Seq(99998)).sortBy(x => x.id) must equal(
+    provider.getRoadLinks(user99998).sortBy(x => x.id) must equal(
       List(RoadLink(id = 668L,
                     lonLat = Vector((200004.001, 4000000.002), (200022.0, 4000016.0)),
                     endDate = Some(new LocalDate(2013, 10, 11)),
@@ -104,9 +124,9 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
     val roadlink = MtkRoadLink(700L, startDate, Some(new LocalDate(2013, 10, 10)), 99995,
         List(Point(100003.001, 2999999.002, 3.003), Point(100012.0, 3000015.0, 48.0)))
     cleanDbForMunicipalities("99995")
-    provider.getRoadLinks(Seq(99995)) must equal(List())
+    provider.getRoadLinks(user99995) must equal(List())
     provider.updateRoadLinks(List(roadlink))
-    provider.getRoadLinks(Seq(99995)) must equal(List())
+    provider.getRoadLinks(user99995) must equal(List())
     verify(mockedProvider, never()).updateRoadNode(anyObject(), anyObject())
     verify(mockedProvider, never()).createRoadNode(anyObject())
   }

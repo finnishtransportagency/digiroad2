@@ -10,13 +10,15 @@ import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
 
 class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def userCanModifyMunicipality(municipalityNumber: Int): Boolean =
-    userProvider.getCurrentUser.configuration.authorizedMunicipalities.contains(municipalityNumber)
+  private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
+    val user = userProvider.getCurrentUser()
+    user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber)
+  }
 
   private def userCanModifyAsset(assetId: Long): Boolean =
     getAssetById(assetId).flatMap(a => a.municipalityNumber.map(userCanModifyMunicipality)).getOrElse(false)
@@ -36,9 +38,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getAssets(assetTypeId, municipalityNumbers, bounds, validFrom, validTo)
+      OracleSpatialAssetDao.getAssets(assetTypeId, user, bounds, validFrom, validTo)
     }
   }
 
@@ -74,9 +76,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     parallerSeq.foreach(RoadlinkProvider.updateRoadLink(ds, _))
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
+  def getRoadLinks(user: User, bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getRoadLinks(municipalityNumbers, bounds)
+      OracleSpatialAssetDao.getRoadLinks(user, bounds)
     }
   }
 

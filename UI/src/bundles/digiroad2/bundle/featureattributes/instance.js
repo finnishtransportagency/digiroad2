@@ -200,7 +200,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 if (_.isNumber(asset.externalId)) {
                     return 'Valtakunnallinen ID: ' + asset.externalId;
                 }
-                else return 'Ei valtakunnalista ID:tä';
+                else return 'Ei valtakunnallista ID:tä';
             }
         },
         collectAttributes: function(assetPosition, successCallback, cancellationCallback) {

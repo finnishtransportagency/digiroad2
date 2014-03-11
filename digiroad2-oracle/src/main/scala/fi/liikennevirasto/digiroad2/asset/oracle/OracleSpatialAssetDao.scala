@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.slf4j.LoggerFactory
 import scala.Array
 import org.joda.time.LocalDate
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{Role, User, UserProvider}
 import fi.liikennevirasto.digiroad2.asset.ValidityPeriod
 import org.joda.time.Interval
 import org.joda.time.DateTime
@@ -74,12 +74,12 @@ object OracleSpatialAssetDao {
     }.headOption
   }
 
-  def getAssets(assetTypeId: Long, municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
-      if (municipalityNumbers.isEmpty) {
+      if (user.configuration.roles.contains(Role.Operator)) {
         None
       } else {
-        Some(("AND rl.municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")", municipalityNumbers.toList))
+        Some(("AND rl.municipality_number IN (" + user.configuration.authorizedMunicipalities.toList.map(_ => "?").mkString(",") + ")", user.configuration.authorizedMunicipalities.toList))
       }
     def andWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
@@ -169,9 +169,9 @@ object OracleSpatialAssetDao {
     getAssetById(asset.id).get
   }
 
-  def getRoadLinks(municipalityNumbers: Seq[Int], bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
+  def getRoadLinks(user: User, bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
     def andMunicipality =
-      if (municipalityNumbers.isEmpty) None else Some(roadLinksAndMunicipality(municipalityNumbers), municipalityNumbers.toList)
+      if (user.configuration.roles.contains(Role.Operator)) None else Some((roadLinksAndMunicipality(user.configuration.authorizedMunicipalities.toList), user.configuration.authorizedMunicipalities.toList))
     def andWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067);
       (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
