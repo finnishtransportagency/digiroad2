@@ -77,6 +77,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+      newAsset.externalId.get should (be > 300000L)
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }
