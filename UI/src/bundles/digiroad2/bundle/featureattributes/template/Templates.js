@@ -17,10 +17,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.template.Template
                 ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
                 '</a>');
 
-        this.featureDataTemplate = _.template('<div class="formAttributeContentRow" data-required="{{required}}">' +
+        this.featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
             '<div class="formLabels">{{propertyName}}</div>' +
             '<div class="formAttributeContent">{{propertyValue}}</div>' +
             '</div>');
+
         this.featureDataTemplateText = _.template('<div class="formAttributeContentRow">' +
             '<div class="formLabels">{{propertyName}}</div>' +
             '<div class="formAttributeContent">' +
@@ -66,6 +67,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.template.Template
 
         this.featureDataTemplateCheckbox = _.template('<input {{checkedValue}} type="checkbox" value="{{propertyValue}}"></input><label for="{{name}}">{{propertyDisplayValue}}</label><br/>');
 
-        this.featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save" disabled="disabled">Luo</button>');
+        this.featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
     }
 );
