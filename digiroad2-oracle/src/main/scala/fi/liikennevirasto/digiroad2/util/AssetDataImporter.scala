@@ -30,7 +30,7 @@ import scala.slick.driver.JdbcDriver
 object AssetDataImporter {
 
   case class SimpleBusStop(shelterType: Int, busStopId: Long, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
-  case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Int, endMeasure: Int)
+  case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Double, endMeasure: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -240,8 +240,8 @@ class AssetDataImporter {
           ps.setLong(2, lrm.roadLinkId)
           ps.setInt(3, lrm.laneCode)
           ps.setInt(4, lrm.sideCode)
-          ps.setInt(5, lrm.startMeasure)
-          ps.setInt(6, lrm.endMeasure)
+          ps.setDouble(5, lrm.startMeasure)
+          ps.setDouble(6, lrm.endMeasure)
           ps.addBatch
           elementCount = elementCount + 1
           println("Added LRM " + lrm.id + " to batch as element " + elementCount)
