@@ -322,13 +322,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         });
                         if (assetType && assetType.values) {
                             var values = _.pluck(assetType.values, 'propertyValue');
+                            if (_.isEmpty(values)) {
+                                values.push('99');
+                            }
                             var content = me._makePopupContent(values);
                             jQuery('.popupInfoBusStopsIcons').html(content);
                         }
                     }
                 }
             });
-            
             sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, projectionLonLat, quitAddition);
@@ -338,10 +340,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             function setPluginState(state) { me._state = state; }
 
             function attributesCollected(attributeCollection) {
-                var properties = _.map(attributeCollection, function(attr) {
-                  return {id: attr.propertyId,
-                          values: attr.propertyValues};
-                });
+                var properties = _.chain(attributeCollection)
+                    .map(function(attr) {
+                         return {id: attr.propertyId,
+                                 values: attr.propertyValues};
+                    })
+                    .map(function(p) {
+                        if (p.id == 200 && _.isEmpty(p.values)) {
+                            p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                                         propertyValue: 99}];
+                        }
+                        return p;
+                    })
+                    .value();
                 me._backend.createAsset(
                     {assetTypeId: 10,
                      lon: projectionOnNearestLine.x,
@@ -407,6 +418,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 _.forEach(overlays, function(overlay) { overlay.close(); });
             }
         },
+
         _addNewAsset: function(asset) {
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(asset.imageIds);
@@ -674,22 +686,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 var streetViewCoordinates = { lonLat: busStop.lonlat };
                 busStopClick(evt, streetViewCoordinates);
             };
-        },
-        _remove: function(busStop, removalDate) {
-            var propertyValues = [{propertyValue : 0, propertyDisplayValue: removalDate}];
-            jQuery.ajax({
-                contentType: "application/json",
-                type: "PUT",
-                url: "api/assets/"+busStop.id+"/properties/validTo/values",
-                data: JSON.stringify(propertyValues),
-                dataType:"json",
-                success: function() {
-                    console.log("done");
-                },
-                error: function() {
-                    console.log("error");
-                }
-            });
         },
         _sendData: function(data, id) {
             jQuery.ajax({
