@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{Conversion, TemporaryTables}
 import org.joda.time.DateTime
 import scala.concurrent.forkjoin.ForkJoinPool
 

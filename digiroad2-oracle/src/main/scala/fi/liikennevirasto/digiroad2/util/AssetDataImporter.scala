@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.dataimport
+package fi.liikennevirasto.digiroad2.util
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
@@ -13,18 +13,16 @@ import org.joda.time.{Interval, DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import oracle.sql.STRUCT
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.oracle.{RoadlinkProvider, OracleSpatialAssetProvider}
-import fi.liikennevirasto.digiroad2.util.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter._
 import scala.collection.parallel.{ParSeq, ForkJoinTaskSupport}
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.Some
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleRoadLink
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleLRMPosition
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
-import scala.slick.driver.JdbcDriver
 
 
 object AssetDataImporter {
@@ -122,22 +120,13 @@ class AssetDataImporter {
     val count = getRoadlinkCount(dataSet)
     val parallerSeq = getBatchDrivers(count).par
     println(s"""batching done.""")
-    withSessionFromDataSource(ds, targetDbSession => {
+    Database.forDataSource(ds).withSession(targetDbSession => {
       parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
       totalItems = count
       startTime = DateTime.now()
       lastCheckpoint = DateTime.now()
       parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession))
     })
-  }
-
-  def withSessionFromDataSource(ds: DataSource, function: (Session) => Unit) = {
-    val targetDbSession = Database.forDataSource(ds).createSession()
-    try {
-      function(targetDbSession)
-    } finally {
-      targetDbSession.close()
-    }
   }
 
   // TODO: Move these from global scope to function parameters
@@ -220,9 +209,11 @@ class AssetDataImporter {
 
   def importBusStops(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
     val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
-    val insertLrmPositionsSequence: ParSeq[List[SimpleLRMPosition]] = lrmPositions.grouped(250).toList.par
-    insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
-    insertLrmPositionsSequence.foreach(insertLrmPositions)
+    Database.forDataSource(ds).withSession(targetDbSession => {
+      val insertLrmPositionsSequence: ParSeq[List[SimpleLRMPosition]] = lrmPositions.grouped(250).toList.par
+      insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
+      insertLrmPositionsSequence.foreach(lrmPositions => insertLrmPositions(lrmPositions, targetDbSession))
+    })
     insertImages()
     val typeProps = getTypeProperties
     val insertBusStopsSequence: ParSeq[SimpleBusStop] = busStops.toList.par
@@ -239,29 +230,25 @@ class AssetDataImporter {
     }
   }
 
-  def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition]) {
-    Database.forDataSource(ds).withSession {
-      session =>
-        var elementCount = 0
-        val ps = session.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
-        def batch(lrm: SimpleLRMPosition) {
-          ps.setLong(1, lrm.id)
-          ps.setLong(2, lrm.roadLinkId)
-          ps.setInt(3, lrm.laneCode)
-          ps.setInt(4, lrm.sideCode)
-          ps.setDouble(5, lrm.startMeasure)
-          ps.setDouble(6, lrm.endMeasure)
-          ps.addBatch
-          elementCount = elementCount + 1
-          println("Added LRM " + lrm.id + " to batch as element " + elementCount)
-        }
-
-        lrmPositions foreach batch
-        ps.executeBatch
-        println("Executed batch of " + lrmPositions.length + " LRM positions")
-        ps.close
-        session.close
+  def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition], targetDbSession: Session) {
+    var elementCount = 0
+    val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
+    def batch(lrm: SimpleLRMPosition) {
+      ps.setLong(1, lrm.id)
+      ps.setLong(2, lrm.roadLinkId)
+      ps.setInt(3, lrm.laneCode)
+      ps.setInt(4, lrm.sideCode)
+      ps.setDouble(5, lrm.startMeasure)
+      ps.setDouble(6, lrm.endMeasure)
+      ps.addBatch
+      elementCount = elementCount + 1
+      println("Added LRM " + lrm.id + " to batch as element " + elementCount)
     }
+
+    lrmPositions foreach batch
+    ps.executeBatch
+    println("Executed batch of " + lrmPositions.length + " LRM positions")
+    ps.close
   }
 
   def getTypeProperties = {

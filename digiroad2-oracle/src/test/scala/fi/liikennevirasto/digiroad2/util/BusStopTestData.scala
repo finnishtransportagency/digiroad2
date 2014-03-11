@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.joda.time.LocalDate
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.SimpleBusStop
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
 
 object BusStopTestData {
   def generateTestData = {
