@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
 import org.joda.time.DateTime
+import scala.concurrent.forkjoin.ForkJoinPool
 
 object DataFixture {
   val TestAssetId = 300000
@@ -22,18 +23,18 @@ object DataFixture {
     SqlScriptRunner.runScripts(List("create_tables.sql", "insert_bus_stop_properties.sql", "insert_users.sql"))
   }
 
-  def importRoadlinksFromConversion(dataImporter: AssetDataImporter) {
+  def importRoadlinksFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
     println("<roadlinks>")
     println(DateTime.now())
-    dataImporter.importRoadlinks(Conversion)
+    dataImporter.importRoadlinks(Conversion, taskPool)
     println(DateTime.now())
     println("</roadlinks>")
   }
 
-  def importBusStopsFromConversion(dataImporter: AssetDataImporter) {
+  def importBusStopsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
     println("<importBusStops>")
     println(DateTime.now())
-    dataImporter.importBusStops(Conversion)
+    dataImporter.importBusStops(Conversion, taskPool)
     println(DateTime.now())
     println("</importBusStops>")
   }
@@ -49,13 +50,18 @@ object DataFixture {
       case Some("full") =>
         tearDown()
         setUpFull()
-        dataImporter.importRoadlinks(TemporaryTables)
-        dataImporter.importBusStops(TemporaryTables)
+        val taskPool = new ForkJoinPool(1)
+        dataImporter.importRoadlinks(TemporaryTables, taskPool)
+        dataImporter.importBusStops(TemporaryTables, taskPool)
       case Some("conversion") =>
         tearDown()
         setUpFull()
-        importRoadlinksFromConversion(dataImporter)
-        importBusStopsFromConversion(dataImporter)
+        val taskPool = new ForkJoinPool(8)
+        importRoadlinksFromConversion(dataImporter, taskPool)
+        importBusStopsFromConversion(dataImporter, taskPool)
+      case Some("busstops") =>
+        val taskPool = new ForkJoinPool(8)
+        importBusStopsFromConversion(dataImporter, taskPool)
       case _ => println("Usage: DataFixture test | full | conversion")
     }
   }
