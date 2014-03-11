@@ -286,10 +286,12 @@ class AssetDataImporter {
         }
         case None => 0.0 // TODO log/throw error?
       }
+
       sqlu"update asset set bearing = $bearing where id = $assetId".execute
       busStop.busStopType.foreach { busStopType =>
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
+
       insertTextPropertyData(typeProps.reachabilityPropertyId, assetId, "Ei tiedossa")
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 4)
@@ -338,7 +340,6 @@ class AssetDataImporter {
         sqlu"""
           update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
         """.execute
-
       }
     }
   }
