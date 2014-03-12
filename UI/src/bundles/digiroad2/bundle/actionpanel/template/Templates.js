@@ -33,9 +33,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.actionpanel.template.Templates',
                 '<div data-action="Add" class="actionButton actionPanelButtonAdd">' +
                     '<div class="actionPanelButtonAddImage"></div>' +
                 '</div>' +
-//                '<div data-action="Remove" class="actionButton actionPanelButtonRemove">' +
-//                    '<div class="actionPanelButtonRemoveImage"></div>' +
-//                '</div>' +
             '</div>';
     }
 );
