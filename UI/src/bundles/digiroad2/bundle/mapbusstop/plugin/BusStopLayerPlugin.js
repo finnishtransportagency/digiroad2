@@ -725,6 +725,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var me = this;
             return function (evt, streetViewCoordinates) {
                 me._state = null;
+                eventbus.trigger('asset:selected', busStop.id);
                 me._backend.getAsset(busStop.id, function(assetData) {
                     var assetAttributes = _.merge({}, assetData, { id: busStop.id });
                     streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
