@@ -3,13 +3,10 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{Conversion, TemporaryTables}
 import org.joda.time.DateTime
 import scala.concurrent.forkjoin.ForkJoinPool
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
 import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import scala.Some
-import com.googlecode.flyway.core.api.MigrationVersion
 
 object DataFixture {
   val TestAssetId = 300000
@@ -60,6 +57,22 @@ object DataFixture {
     println("</importBusStops>")
   }
 
+  def importMunicipalityCodes() {
+    println("<importMunicipalityCodes>")
+    println(DateTime.now())
+    new MunicipalityCodeImporter().importMunicipalityCodes()
+    println(DateTime.now())
+    println("<importMunicipalityCodes>")
+  }
+
+  def createIndices() {
+    println("<createIndices>")
+    println(DateTime.now())
+    SqlScriptRunner.runScripts(List("create_indices.sql"))
+    println(DateTime.now())
+    println("<createIndices>")
+  }
+
   def main(args:Array[String]) = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -84,18 +97,24 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
+        importMunicipalityCodes()
+        createIndices()
       case Some("full") =>
         tearDown()
         setUpFull()
         val taskPool = new ForkJoinPool(1)
         dataImporter.importRoadlinks(TemporaryTables, taskPool)
         dataImporter.importBusStops(TemporaryTables, taskPool)
+        importMunicipalityCodes()
+        createIndices()
       case Some("conversion") =>
         tearDown()
         setUpFull()
-        val taskPool = new ForkJoinPool(4)
+        val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
+        importMunicipalityCodes()
+        createIndices()
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
