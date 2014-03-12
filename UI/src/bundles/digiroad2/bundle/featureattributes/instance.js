@@ -177,6 +177,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 validityDirection.click(assetDirectionChangedHandler);
 
                 featureAttributesElement.find('button.cancel').on('click', function() {
+                    eventbus.trigger('asset:unselected');
                     setPluginState(null);
                     cancellationCallback();
                 });
