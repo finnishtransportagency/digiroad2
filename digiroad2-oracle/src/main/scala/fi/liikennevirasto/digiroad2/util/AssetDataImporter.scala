@@ -340,19 +340,6 @@ class AssetDataImporter {
     }
   }
 
-  def importMunicipalityCodes() = {
-    val src = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
-    src.getLines().toList.drop(1).map(row => {
-      var elems = row.replace("\"", "").split(";");
-      sqlu"""
-        insert into municipality(id, name_fi, name_sv) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)} )
-      """.execute
-      sqlu"""
-        insert into ely(id, name_fi, municipality_id) values( ${elems(3).toInt}, ${elems(4)}, ${elems(0).toInt} )
-      """.execute
-    })
-  }
-
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(localProperties)

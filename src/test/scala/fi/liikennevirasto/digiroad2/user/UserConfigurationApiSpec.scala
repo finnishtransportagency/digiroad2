@@ -15,13 +15,14 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   addServlet(classOf[UserConfigurationApi], "/userconfig/*")
 
   test("create user record", Tag("db")) {
-    val user = User(0, TestUsername, Configuration(authorizedMunicipalities = Set(1, 2, 3)))
+    val user = User(0, TestUsername, Configuration(authorizedMunicipalities = Set(1, 2, 3), roles = Set(Role.Operator, Role.Administrator)))
     postJsonWithUserAuth("/userconfig/user", write(user)) {
       status should be (200)
       val u = parse(body).extract[User]
       u.id should not be 0
       u.username should be (TestUsername.toLowerCase)
       u.configuration.authorizedMunicipalities should contain only (1, 2, 3)
+      u.configuration.roles should contain only (Role.Operator, Role.Administrator)
     }
     postJsonWithUserAuth("/userconfig/user", write(user)) {
       status should be (409)
@@ -54,6 +55,15 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
         getWithUserAuth("/userconfig/user/test49") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only 49
         }
+      }
+    }
+  }
+
+  test("set roles for user") {
+    putJsonWithUserAuth("/userconfig/user/" + TestUsername + "/roles", write(List(Role.Operator, Role.Administrator))) {
+      status should be(200)
+      getWithUserAuth("/userconfig/user/" + TestUsername) {
+        parse(body).extract[User].configuration.roles should contain only(Role.Operator, Role.Administrator)
       }
     }
   }

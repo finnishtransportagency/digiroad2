@@ -91,74 +91,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 collectFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.CollectFeatureAttributesRequestHandler', this)
             };
 
-            _.templateSettings = {
-                interpolate: /\{\{(.+?)\}\}/g
-            };
-
-            me._featureDataWrapper = _.template('<div class="featureAttributesHeader">{{header}}</div>' +
-                                                '<div class="featureAttributesWrapper">' +
-                                                    '<div class="streetView">{{streetView}}</div>' +
-                                                    '<div class="formContent">{{attributes}}</div>' +
-                                                    '<div class="formControls">{{controls}}</div>' +
-                                                '</div>');
-
-            me._streetViewTemplate  = _.template(
-                '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +
-                    '<img alt="Google StreetView-näkymä" src="http://maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location={{wgs84Y}}' +
-                    ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
-                '</a>');
-
-            me._featureDataTemplate = _.template('<div class="formAttributeContentRow" data-required="{{required}}">' +
-                                                    '<div class="formLabels">{{propertyName}}</div>' +
-                                                    '<div class="formAttributeContent">{{propertyValue}}</div>' +
-                                                 '</div>');
-            me._featureDataTemplateText = _.template('<div class="formAttributeContentRow">' +
-                                                        '<div class="formLabels">{{propertyName}}</div>' +
-                                                         '<div class="formAttributeContent">' +
-                                                            '<input class="featureAttributeText" type="text"' +
-                                                            ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                            ' value="{{propertyDisplayValue}}">' +
-                                                         '</div>' +
-                                                     '</div>');
-
-            me._featureDataTemplateButton = _.template('<div class="formAttributeContentRow">' +
-                                                          '<div class="formLabels">{{propertyName}}</div>' +
-                                                          '<div class="formAttributeContent">' +
-                                                              '<button class="featureAttributeButton"' +
-                                                              ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                              ' value="{{propertyValue}}">Vaihda suuntaa' +
-                                                              '</button>' +
-                                                          '</div>' +
-                                                       '</div>');
-
-            me._featureDataTemplateLongText = _.template('<div class="formAttributeContentRow">' +
-                                                        '<div class="formLabels">{{propertyName}}</div>' +
-                                                            '<div class="formAttributeContent">' +
-                                                                '<textarea class="featureAttributeLongText"' +
-                                                                ' data-propertyId="{{propertyId}}" name="{{propertyName}}">' +
-                                                                '{{propertyDisplayValue}}</textarea>' +
-                                                            '</div>' +
-                                                        '</div>');
-            me._featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{propertyName}}: {{propertyDisplayValue}}</div>');
-            me._featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
-                                                        '<div class="formLabels">{{propertyName}}</div>' +
-                                                        '<div class="formAttributeContent">' +
-                                                            '<input class="featureAttributeDate" type="text"' +
-                                                                ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
-                                                                ' value="{{propertyDisplayValue}}"/>' +
-                                                        '</div>' +
-                                                     '</div>');
-            me._featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
-                                                    '<div class="formLabels">{{propertyName}}</div>' +
-                                                    '<div class="featureAttributeNA">{{propertyValue}}</div>' +
-                                                 '</div>');
-
-            me._featureDataTemplateChoice = _.template('<option {{selectedValue}} value="{{propertyValue}}">{{propertyDisplayValue}}</option>');
-
-            me._featureDataTemplateCheckbox = _.template('<input {{checkedValue}} type="checkbox" value="{{propertyValue}}"></input><label for="{{name}}">{{propertyDisplayValue}}</label><br/>');
-
-            me._featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save" disabled="disabled">Luo</button>');
-
+            me._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
             me._getPropertyValues();
 
             return null;
@@ -172,7 +105,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             assetPosition.validityDirection = assetAttributes.validityDirection;
             assetPosition.bearing = assetAttributes.bearing;
             var streetView = me._getStreetView(assetPosition);
-            var featureAttributes = me._featureDataWrapper({ header: busStopHeader(assetAttributes), streetView: streetView, attributes: featureData, controls: null });
+            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(assetAttributes), streetView: streetView, attributes: featureData, controls: null });
             jQuery("#featureAttributes").html(featureAttributes);
             me._addDatePickers();
             jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
@@ -200,7 +133,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 if (_.isNumber(asset.externalId)) {
                     return 'Valtakunnallinen ID: ' + asset.externalId;
                 }
-                else return 'Ei valtakunnalista ID:tä';
+                else return 'Ei valtakunnallista ID:tä';
             }
         },
         collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
@@ -210,7 +143,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
                 var streetView = me._getStreetView(assetPosition);
-                var featureAttributesMarkup = me._featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._featureDataControls({}) });
+                var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
 
@@ -231,18 +164,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
                     var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                    if(isRequired(jqElement.parents('.formAttributeContentRow'))) {
-                        if(_.isEmpty(values)) disableSave();
-                        else enableSave();
-                    }
                     me._sendFeatureChangedEvent({
                       propertyData: [{
                           propertyId: jqElement.attr('data-propertyId'),
                           values: values
                       }]
                     });
-
-                    function isRequired(element) { return (element.attr('data-required') === 'true'); }
                 });
 
                 setPluginState({assetDirectionChangedHandler: assetDirectionChangedHandler});
@@ -307,14 +234,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         .concat(dateElementAttributes));
                 });
 
-                function disableSave() {
-                    featureAttributesElement.find('button.save').prop('disabled', true);
-                }
-
-                function enableSave() {
-                    featureAttributesElement.find('button.save').prop('disabled', false);
-                }
-
                 function setPluginState(state) { me._state = state; }
             }
         },
@@ -322,7 +241,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            return this._streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
+            return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
         },
         _addDatePickers: function () {
             var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
@@ -379,6 +298,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             });
         },
         _savePropertyData: function(propertyValue, propertyId) {
+
+            if (propertyId == 200 && _.isEmpty(propertyValue)) {
+                propertyValue = [{
+                    propertyDisplayValue: "Pysäkin tyyppi",
+                    propertyValue: 99
+                }];
+            }
+
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
             function successFunction(updatedAsset) {
@@ -412,19 +339,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             feature.propertyValue = feature.values[0].propertyValue;
                             feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
                         }
-                        html += me._featureDataTemplateReadOnlyText(feature);
+                        html += me._templates.featureDataTemplateReadOnlyText(feature);
                     } else if (propertyType === "single_choice" && feature.propertyId !== 'validityDirection') {
                         feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
-                        html += me._featureDataTemplate(_.merge({}, feature, { required: false }));
+                        html += me._templates.featureDataTemplate(feature);
                     } else if (feature.propertyId === 'validityDirection') {
                         feature.propertyValue = 2;
                         if (feature.values[0]) {
                             feature.propertyValue = feature.values[0].propertyValue === 2 ? 3 : 2;
                         }
-                        html += me._featureDataTemplateButton(feature);
+                        html += me._templates.featureDataTemplateButton(feature);
                     } else if (feature.propertyType === "multiple_choice") {
                         feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId);
-                        html += me._featureDataTemplate(feature);
+                        html += me._templates.featureDataTemplate(feature);
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
@@ -432,17 +359,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             feature.propertyValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                             feature.propertyDisplayValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                         }
-                        html += me._featureDataTemplateDate(feature);
+                        html += me._templates.featureDataTemplateDate(feature);
                     }  else {
                         feature.propertyValue ='Ei toteutettu';
-                        html += me._featureDataTemplateNA(feature);
+                        html += me._templates.featureDataTemplateNA(feature);
                     }
                 }
             );
             return html;
         },
         _getTextTemplate: function(propertyType, feature) {
-            return propertyType === "long_text" ? this._featureDataTemplateLongText(feature) : this._featureDataTemplateText(feature);
+            return propertyType === "long_text" ? this._templates.featureDataTemplateLongText(feature) : this._templates.featureDataTemplateText(feature);
         },
         _getSelect: function(name, values, propertyId, multiple) {
             var me = this;
@@ -456,7 +383,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                         selectedValue = 'selected="true" ';
                     }
                     optionValue.selectedValue = selectedValue;
-                    options +=  me._featureDataTemplateChoice(optionValue);
+                    options +=  me._templates.featureDataTemplateChoice(optionValue);
                 }
             );
 
@@ -465,6 +392,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         },
 
         _getMultiCheckbox: function(name, values, propertyId) {
+            var validValues = [1,2,3,4];
             var me = this;
             var checkboxes = '<div data-propertyId="' + propertyId +
                 '" name="' + name +
@@ -473,14 +401,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
-                    var checkedValue = '';
-                    if (_.contains(valuesNro, inputValue.propertyValue)) {
-                        checkedValue = 'checked ';
+                    if (_.contains(validValues, inputValue.propertyValue)) {
+                        var checkedValue = '';
+                        if (_.contains(valuesNro, inputValue.propertyValue)) {
+                            checkedValue = 'checked ';
+                        }
+                        inputValue.checkedValue = checkedValue;
+                        inputValue.propertyId = propertyId;
+                        inputValue.name = propertyId + '_' + inputValue.propertyValue;
+                        checkboxes +=  me._templates.featureDataTemplateCheckbox(inputValue);
                     }
-                    inputValue.checkedValue = checkedValue;
-                    inputValue.propertyId = propertyId;
-                    inputValue.name = propertyId + '_' + inputValue.propertyValue;
-                    checkboxes +=  me._featureDataTemplateCheckbox(inputValue);
                 }
             );
 

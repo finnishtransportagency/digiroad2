@@ -120,6 +120,8 @@ object Queries {
 
   def nextPrimaryKeyId = sql"select primary_key_seq.nextval from dual"
 
+  def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
+
   def allAssets =
     """
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, a.validity_direction as validity_direction,
@@ -186,10 +188,10 @@ object Queries {
 
   def updateAssetBearing(assetId: Long, bearing: Int) = sqlu"update asset set bearing = $bearing where id = $assetId"
 
-  def insertAsset(assetId: Long, assetTypeId: Long, roadLinkId: Long, bearing: Int, creator: String) =
+  def insertAsset(assetId: Long, externalId: Long, assetTypeId: Long, roadLinkId: Long, bearing: Int, creator: String) =
     sqlu"""
-      insert into asset(id, asset_type_id, lrm_position_id, bearing, valid_from, created_by)
-      values ($assetId, $assetTypeId, $roadLinkId, $bearing, ${new LocalDate()}, $creator)
+      insert into asset(id, external_id, asset_type_id, lrm_position_id, bearing, valid_from, created_by)
+      values ($assetId, $externalId, $assetTypeId, $roadLinkId, $bearing, ${new LocalDate()}, $creator)
     """
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"

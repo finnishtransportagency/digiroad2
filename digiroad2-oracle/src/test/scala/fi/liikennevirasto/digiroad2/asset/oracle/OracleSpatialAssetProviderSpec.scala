@@ -10,8 +10,7 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
 import scala.language.implicitConversions
-import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.user.{Role, Configuration, User}
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.util.DataFixture.{TestAssetId, TestAssetTypeId, MunicipalityEspoo, MunicipalityKauniainen}
 import java.sql.SQLIntegrityConstraintViolationException
@@ -24,10 +23,19 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val user = User(
     id = 1,
     username = "Hannu",
-    configuration = Configuration(authorizedMunicipalities = Set(235)))
+    configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen)))
+  val espooUser = User(
+    id = 2,
+    username = "Hannu",
+    configuration = Configuration(authorizedMunicipalities = Set(MunicipalityEspoo)))
+  val espooKauniainenUser = User(
+    id = 3,
+    username = "Hannu",
+    configuration = Configuration(authorizedMunicipalities = Set(MunicipalityEspoo, MunicipalityKauniainen)))
   val unauthorizedUser =
     user.copy(configuration = Configuration(authorizedMunicipalities = Set(666999)))
   val creatingUser = user.copy(username = AssetCreator)
+  val operatorUser = user.copy(configuration = user.configuration.copy(authorizedMunicipalities = Set(1), roles = Set(Role.Operator)))
 
   implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
     asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.status, asset.readOnly, asset.municipalityNumber)
@@ -37,13 +45,13 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("load assets by municipality number", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen))
+    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
     assets.foreach(asset => asset.municipalityNumber shouldBe(Some(MunicipalityKauniainen)))
   }
 
   test("load assets with spatial bounds", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
+    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     assets.size shouldBe(1)
   }
@@ -69,6 +77,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+      newAsset.externalId.get should (be > 300000L)
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }
@@ -157,7 +166,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update the position of an asset, changing road links", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen),
+    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser(),
       validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     val origAsset = assets(0)
     val refAsset = assets(1)
@@ -173,7 +182,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
-    val assets = provider.getAssets(TestAssetTypeId, List(MunicipalityKauniainen),
+    val assets = provider.getAssets(TestAssetTypeId, user,
       validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     val origAsset = assets(0)
     val refAsset = assets(1)
@@ -185,6 +194,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update a common asset property value (single choice)", Tag("db")) {
+    userProvider.setCurrentUser(operatorUser)
     val asset = provider.getAssetById(TestAssetId).get
     asset.propertyData.find(_.propertyId == "validityDirection").get.values.head.propertyValue should be (AssetPropertyConfiguration.ValidityDirectionSame)
     provider.updateAssetProperty(TestAssetId, "validityDirection", List(PropertyValue(3, "")))
@@ -237,7 +247,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("asset on non-expired link is not marked as floating", Tag("db")) {
     val assets = provider.getAssets(assetTypeId = 10,
-      municipalityNumbers = List(MunicipalityEspoo),
+      user = espooUser,
       validFrom = Some(new LocalDate(2013, 6, 1)),
       validTo = Some(new LocalDate(2013, 6, 1)))
     assets should have length(1)
@@ -246,7 +256,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("asset on expired link is marked as floating", Tag("db")) {
     val assets = provider.getAssets(assetTypeId = 10,
-      municipalityNumbers = List(MunicipalityEspoo),
+      user = espooUser,
       validFrom = Some(new LocalDate(2014, 6, 1)),
       validTo = Some(new LocalDate(2014, 6, 1)))
     assets should have length(1)
@@ -254,8 +264,8 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("provide road link geometry by municipality", Tag("db")) {
-    provider.getRoadLinks(Seq(0)).size should be (0)
-    val rls = provider.getRoadLinks(Seq(MunicipalityKauniainen), Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
+    provider.getRoadLinks(unauthorizedUser).size should be (0)
+    val rls = provider.getRoadLinks(user, Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
     rls.size should be (23)
     rls.foreach { rl =>
       rl.id should (be > 1l)
@@ -264,7 +274,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
     }
-    provider.getRoadLinks(Seq(MunicipalityKauniainen, MunicipalityEspoo), Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (24)
+    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (24)
   }
 
   test("Load image by id", Tag("db")) {

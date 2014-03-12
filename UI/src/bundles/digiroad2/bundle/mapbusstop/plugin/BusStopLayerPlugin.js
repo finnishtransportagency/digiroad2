@@ -322,13 +322,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         });
                         if (assetType && assetType.values) {
                             var values = _.pluck(assetType.values, 'propertyValue');
+                            if (_.isEmpty(values)) {
+                                values.push('99');
+                            }
                             var content = me._makePopupContent(values);
                             jQuery('.popupInfoBusStopsIcons').html(content);
                         }
                     }
                 }
             });
-            
             sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, projectionLonLat, quitAddition);
@@ -338,10 +340,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             function setPluginState(state) { me._state = state; }
 
             function attributesCollected(attributeCollection) {
-                var properties = _.map(attributeCollection, function(attr) {
-                  return {id: attr.propertyId,
-                          values: attr.propertyValues};
-                });
+                var properties = _.chain(attributeCollection)
+                    .map(function(attr) {
+                         return {id: attr.propertyId,
+                                 values: attr.propertyValues};
+                    })
+                    .map(function(p) {
+                        if (p.id == 200 && _.isEmpty(p.values)) {
+                            p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                                         propertyValue: 99}];
+                        }
+                        return p;
+                    })
+                    .value();
                 me._backend.createAsset(
                     {assetTypeId: 10,
                      lon: projectionOnNearestLine.x,
@@ -407,6 +418,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 _.forEach(overlays, function(overlay) { overlay.close(); });
             }
         },
+
         _addNewAsset: function(asset) {
             var lonLat = { lon : asset.lon, lat : asset.lat};
             var contentItem = this._makeContent(asset.imageIds);
@@ -414,13 +426,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var directionArrow = this._addDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
             this._selectedBusStop = this._addBusStop(asset, this._layers.asset,
                 directionArrow, this._layers.assetDirection, validityDirection);
-            this._sendPopupRequest("busStop", asset.id, asset.id, contentItem, lonLat);
+            this._sendPopupRequest("busStop", this._popupTitle(asset), asset.id, contentItem, lonLat);
             this._selectedBusStop.display(false);
             var streetViewCoordinates = {
                 lonLat: lonLat,
                 heading: asset.bearing + 90
             };
-            this._sendShowAttributesRequest(asset.id, streetViewCoordinates);
+            this._sendShowAttributesRequest(asset, streetViewCoordinates);
             this._triggerEvent('mapbusstop.AssetModifiedEvent', asset);
         },
 
@@ -675,22 +687,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 busStopClick(evt, streetViewCoordinates);
             };
         },
-        _remove: function(busStop, removalDate) {
-            var propertyValues = [{propertyValue : 0, propertyDisplayValue: removalDate}];
-            jQuery.ajax({
-                contentType: "application/json",
-                type: "PUT",
-                url: "api/assets/"+busStop.id+"/properties/validTo/values",
-                data: JSON.stringify(propertyValues),
-                dataType:"json",
-                success: function() {
-                    console.log("done");
-                },
-                error: function() {
-                    console.log("error");
-                }
-            });
-        },
         _sendData: function(data, id) {
             jQuery.ajax({
                 contentType: "application/json",
@@ -748,19 +744,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     var assetAttributes = _.merge({}, assetData, { id: busStop.id });
                     streetViewCoordinates.heading = busStop.roadDirection + (-90 * busStop.effectDirection);
                     var contentItem = me._makeContent(imageIds);
-                    me._sendPopupRequest('busStop', popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
+                    me._sendPopupRequest('busStop', me._popupTitle(assetData), busStop.id, contentItem, busStop.lonlat);
                     me._sendShowAttributesRequest(assetAttributes, streetViewCoordinates);
                     me._selectedBusStop.display(false);
-
-
-                    function popupTitle(asset) {
-                        if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
-                        else return 'Ei ID:tä';
-                    }
                 });
                 OpenLayers.Event.stop(evt);
             };
         },
+
+        _popupTitle: function(asset) {
+            if(_.isNumber(asset.externalId)) return 'ID: ' + asset.externalId;
+            else return 'Ei ID:tä';
+        },
+
         _moveSelectedBusStop: function(evt) {
             if (this._map.getZoom() < 10) {
                 return;
