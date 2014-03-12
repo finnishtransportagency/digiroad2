@@ -50,6 +50,23 @@
             }
         });
     };
+    
+    backend.updateAsset = function(id, data) {
+        jQuery.ajax({
+          contentType: "application/json",
+          type: "PUT",
+          url: "api/assets/" + id,
+          data: JSON.stringify(data),
+          dataType:"json",
+          success: function(asset) {
+              eventbus.trigger('asset:saved asset:fetched', asset);
+              console.log("done");
+          },
+          error: function() {
+              console.log("error");
+          }
+        });
+    };
 
     function putAssetPropertyValue(assetId, propertyId, data, success) {
         jQuery.ajax({

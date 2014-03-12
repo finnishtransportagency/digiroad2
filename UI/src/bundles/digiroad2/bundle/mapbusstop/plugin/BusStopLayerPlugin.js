@@ -681,26 +681,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 // Moved update
                 if (busStop.actionDownX != evt.clientX ||  busStop.actionDownY != evt.clientY ) {
                     var data = { "assetTypeId" : typeId, "lon" : busStop.lonlat.lon, "lat" : busStop.lonlat.lat, "roadLinkId": busStop.roadLinkId, "bearing" : bearing };
-                    me._sendData(data, id);
+                    me._backend.updateAsset(id, data);
                 }
                 var streetViewCoordinates = { lonLat: busStop.lonlat };
                 busStopClick(evt, streetViewCoordinates);
             };
-        },
-        _sendData: function(data, id) {
-            jQuery.ajax({
-                contentType: "application/json",
-                type: "PUT",
-                url: "api/assets/" + id,
-                data: JSON.stringify(data),
-                dataType:"json",
-                success: function() {
-                    console.log("done");
-                },
-                error: function() {
-                    console.log("error");
-                }
-            });
         },
         _sendShowAttributesRequest: function(assetAttributes, point) {
             var requestBuilder = this._sandbox.getRequestBuilder('FeatureAttributes.ShowFeatureAttributesRequest');
