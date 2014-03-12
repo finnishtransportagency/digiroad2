@@ -96,6 +96,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var self = this;
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
+            eventbus.on('asset:unselected', this._closeAsset, this);
           
             var me = this;
 
@@ -230,9 +231,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 } else {
                     this._featureAttributeChangedEvent(event);
                 }
-            },
-            'infobox.InfoBoxClosedEvent': function (event) {
-                this._infoBoxClosed(event);
             },
             'MapClickedEvent': function (event) {
                 if (this._selectedControl === 'Add') {
@@ -508,7 +506,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._layers.asset.removeMarker(this._selectedBusStop);
             this._addNewAsset(asset);
         },
-        _infoBoxClosed: function() {
+        _closeAsset: function() {
             if (this._selectedBusStop) {
                 this._selectedBusStop.display(true);
             }

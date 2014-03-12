@@ -33,9 +33,6 @@ Oskari.clazz.define("Oskari.mapframework.bundle.infobox.InfoBoxBundle",
                 "src": "../../../../bundles/digiroad2/bundle/infobox/plugin/infobox/FeatureAttributesPopupPlugin.js"
             }, {
                 "type": "text/javascript",
-                "src": "../../../../bundles/digiroad2/bundle/infobox/event/InfoBoxClosedEvent.js"
-            }, {
-                "type": "text/javascript",
                 "src": "../../../../../bower_components/oskari.org/bundles/framework/bundle/infobox/request/ShowInfoBoxRequest.js"
             }, {
                 "type": "text/javascript",

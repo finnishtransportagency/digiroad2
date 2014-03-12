@@ -85,6 +85,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * implements Module protocol init method - initializes request handlers
          */
         init : function() {
+            eventbus.on('asset:unselected', this._closeAsset, this);
+          
             var me = this;
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
@@ -436,9 +438,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          * @static
          */
         eventHandlers : {
-            'infobox.InfoBoxClosedEvent': function (event) {
-                this._closeFeatures(event);
-            },
             'mapbusstop.AssetDirectionChangeEvent': function (event) {
                 if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
                     this._state.assetDirectionChangedHandler(event);
@@ -447,7 +446,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }
         },
-        _closeFeatures: function () {
+        _closeAsset: function() {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
         },

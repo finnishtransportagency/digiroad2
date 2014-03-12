@@ -334,9 +334,6 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
         close: function (id) {
             // FIXME: `id` is "busStop", we want something nicer to pass as a value
             eventbus.trigger('asset:unselected');
-            var eventBuilder = this._sandbox.getEventBuilder('infobox.InfoBoxClosedEvent');
-            var event = eventBuilder({});
-            this._sandbox.notifyAll(event);
             // destroys all if id not given
             // deletes reference to the same id will work next time also
             if (!id) {
