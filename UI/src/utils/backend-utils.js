@@ -1,7 +1,10 @@
 (function(backend) {
     backend.getEnumeratedPropertyValues = function (assetTypeId, success) {
-        jQuery.getJSON('api/enumeratedPropertyValues/' + assetTypeId, success)
-            .fail(function() { console.log( "error" ); });
+        jQuery.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function(enumeratedPropertyValues) {
+            eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
+            success(enumeratedPropertyValues);
+        })
+        .fail(function() { console.log( "error" ); });
     };
 
     backend.putAssetPropertyValue = function (assetId, propertyId, data, success) {
@@ -9,21 +12,26 @@
     };
 
     backend.getAssets = function (assetTypeId, boundingBox, success) {
-        jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, success)
-            .fail(function () {
-                console.log("error");
-            });
+        jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function(assets) {
+            eventbus.trigger('assets:fetched', assets);
+            success(assets);
+        }).fail(function() {
+            console.log("error");
+        });
     };
 
     backend.getAsset = function (assetId, success) {
         $.get('api/assets/' + assetId, function(asset) {
             eventbus.trigger('asset:fetched', asset);
-            success();
+            success(asset);
         });
     };
 
     backend.getAssetTypeProperties = function (assetTypeId, success) {
-        $.get('api/assetTypeProperties/' + assetTypeId, success);
+        $.get('api/assetTypeProperties/' + assetTypeId, function(assetTypeProperties) {
+            eventbus.trigger('assetTypeProperties:fetched', assetTypeProperties);
+            success(assetTypeProperties);
+        });
     };
 
     backend.createAsset = function(data, success) {
@@ -33,7 +41,10 @@
             url: "api/asset",
             data: JSON.stringify(data),
             dataType: "json",
-            success: success,
+            success: function(asset) {
+                eventbus.trigger('asset:saved asset:fetched', asset);
+                success(asset);
+            },
             error: function () {
                 console.log("error");
             }
@@ -47,7 +58,10 @@
             url: "api/assets/" + assetId + "/properties/" + propertyId + "/values",
             data: JSON.stringify(data),
             dataType:"json",
-            success: success,
+            success: function(assetPropertyValue) {
+              eventbus.trigger('assetPropertyValue:saved assetPropertyValue:fetched', assetPropertyValue);
+              success(assetPropertyValue);
+            },
             error: function() {
                 console.log("error");
             }
