@@ -16,7 +16,10 @@
     };
 
     backend.getAsset = function (assetId, success) {
-        $.get('api/assets/' + assetId, success);
+        $.get('api/assets/' + assetId, function(asset) {
+            eventbus.trigger('asset:fetched', asset);
+            success();
+        });
     };
 
     backend.getAssetTypeProperties = function (assetTypeId, success) {

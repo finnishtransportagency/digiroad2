@@ -15,7 +15,8 @@
     "jquery-migrate": "1.2.1",
     "momentjs": "2.5.0",
     "pikaday": "1.2.0",
-    "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.17"
+    "oskari.org": "https://github.com/nls-oskari/oskari.git#REL_1.17",
+    "backbone-events" : "https://github.com/jrf0110/backbone-events.git"
   },
   "devDependencies": {
     "mocha": "1.13.0",
