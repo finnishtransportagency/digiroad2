@@ -38,6 +38,10 @@ object DataFixture {
 
   def setUpFull() {
     flyway.migrate()
+  }
+
+  def setUpFullWithUsers() {
+    setUpFull()
     SqlScriptRunner.runScripts(List("insert_users.sql"))
   }
 
@@ -101,7 +105,7 @@ object DataFixture {
         createIndices()
       case Some("full") =>
         tearDown()
-        setUpFull()
+        setUpFullWithUsers()
         val taskPool = new ForkJoinPool(1)
         dataImporter.importRoadlinks(TemporaryTables, taskPool)
         dataImporter.importBusStops(TemporaryTables, taskPool)
