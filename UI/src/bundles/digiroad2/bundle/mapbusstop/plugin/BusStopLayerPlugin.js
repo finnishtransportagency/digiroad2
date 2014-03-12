@@ -93,6 +93,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          *          reference to application sandbox
          */
         init: function (sandbox) {
+            var self = this;
+            eventbus.on('tool:changed',  this._toolSelectionChange, this);
+            eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
+          
             var me = this;
 
             // register domain builder
@@ -230,15 +234,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'infobox.InfoBoxClosedEvent': function (event) {
                 this._infoBoxClosed(event);
             },
-            'actionpanel.ActionPanelToolSelectionChangedEvent': function (event) {
-                this._toolSelectionChange(event);
-            },'MapClickedEvent': function (event) {
+            'MapClickedEvent': function (event) {
                 if (this._selectedControl === 'Add') {
                     this._addBusStopEvent(event);
                 }
-            },
-            'actionpanel.ValidityPeriodChangedEvent': function(event) {
-              this._handleValidityPeriodChanged(event.getSelectedValidityPeriods());
             },
             'mapbusstop.ApplicationInitializedEvent': function() {
                 this._zoomNotInMessage = this._getNotInZoomRange();
@@ -515,8 +514,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
         },
 
-        _toolSelectionChange: function(event) {
-            this._selectedControl = event.getAction();
+        _toolSelectionChange: function(action) {
+            this._selectedControl = action;
             this._selectControl.unselectAll();
         },
         _makeContent: function(imageIds) {

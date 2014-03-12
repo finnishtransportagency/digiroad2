@@ -73,7 +73,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
          * @method init
          * implements Module protocol init method - initializes request handlers
          */
-        init : function() {
+        init: function() {
+            eventbus.on('asset:fetched assetPropertyValue:fetched', this._handleAssetModified, this);
             var me = this;
             me._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.actionpanel.template.Templates');
             me._cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
@@ -85,13 +86,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
             return null;
         },
 
-        eventHandlers: {
-          'mapbusstop.AssetModifiedEvent': function(event) {
-            this._handleAssetModified(event.getAsset());
-          }
-        },
-
         _handleAssetModified: function(asset) {
+          console.log(asset);
           var $el = jQuery('input.layerSelector[data-validity-period=' + asset.validityPeriod + ']');
           if (!$el.is(':checked')) {
             $el.click();
@@ -122,7 +118,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                 }).map(function(_, v) {
                         return $(v).attr('data-validity-period');
                     }).toArray();
-                me._triggerEvent('actionpanel.ValidityPeriodChangedEvent', selectedValidityPeriods);
                 eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
             });
 
@@ -136,17 +131,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                 jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
                 jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
                 jQuery(".olMap").css('cursor', me._cursor[action]);
-                me._triggerEvent('actionpanel.ActionPanelToolSelectionChangedEvent', action);
                 eventbus.trigger('tool:changed', action);
             });
         },
         _togglePanel: function() {
             jQuery(".actionPanel").toggleClass('actionPanelClosed');
-        },
-        _triggerEvent: function(eventName, parameter) {
-            var eventBuilder = this.getSandbox().getEventBuilder(eventName);
-            var event = eventBuilder(parameter);
-            this.getSandbox().notifyAll(event);
         },
         /**
          * @method onEvent
