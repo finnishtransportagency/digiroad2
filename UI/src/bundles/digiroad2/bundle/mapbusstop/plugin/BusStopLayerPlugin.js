@@ -430,7 +430,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 heading: asset.bearing + 90
             };
             this._sendShowAttributesRequest(asset, streetViewCoordinates);
-            this._triggerEvent('mapbusstop.AssetModifiedEvent', asset);
         },
 
         _triggerEvent: function(key, value) {
