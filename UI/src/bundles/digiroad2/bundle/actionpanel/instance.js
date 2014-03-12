@@ -123,6 +123,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                         return $(v).attr('data-validity-period');
                     }).toArray();
                 me._triggerEvent('actionpanel.ValidityPeriodChangedEvent', selectedValidityPeriods);
+                eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
             });
 
             jQuery(".actionButton").on("click", function() {
@@ -136,6 +137,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
                 jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
                 jQuery(".olMap").css('cursor', me._cursor[action]);
                 me._triggerEvent('actionpanel.ActionPanelToolSelectionChangedEvent', action);
+                eventbus.trigger('tool:changed', action);
             });
         },
         _togglePanel: function() {
