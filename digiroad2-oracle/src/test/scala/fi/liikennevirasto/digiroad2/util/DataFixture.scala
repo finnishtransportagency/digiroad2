@@ -3,6 +3,10 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter
 import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter.{Conversion, TemporaryTables}
 import java.util.Properties
+import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import scala.Some
+import com.googlecode.flyway.core.api.MigrationVersion
 
 object DataFixture {
   val TestAssetId = 300000
@@ -15,16 +19,26 @@ object DataFixture {
     props
   }
 
+  lazy val flyway: Flyway = {
+    val flyway = new Flyway()
+    flyway.setDataSource(ds)
+    flyway.setInitOnMigrate(true)
+    flyway.setLocations("db.migration")
+    flyway
+  }
+
   def tearDown() {
-    SqlScriptRunner.runScript("drop_tables.sql")
+    flyway.clean()
   }
 
   def setUpTest() {
-    SqlScriptRunner.runScripts(List("create_tables.sql", "drop_and_insert_test_fixture.sql", "insert_bus_stop_properties.sql", "insert_users.sql"))
+    flyway.migrate()
+    SqlScriptRunner.runScripts(List("drop_and_insert_test_fixture.sql", "insert_users.sql"))
   }
 
   def setUpFull() {
-    SqlScriptRunner.runScripts(List("create_tables.sql", "insert_bus_stop_properties.sql", "insert_users.sql"))
+    flyway.migrate()
+    SqlScriptRunner.runScripts(List("insert_users.sql"))
   }
 
   def main(args:Array[String]) = {
