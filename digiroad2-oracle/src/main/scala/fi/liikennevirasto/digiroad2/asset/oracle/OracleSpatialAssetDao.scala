@@ -140,7 +140,7 @@ object OracleSpatialAssetDao {
     insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
     properties.foreach { property =>
       if (!property.values.isEmpty) {
-        if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(property.id)) {
+        if (AssetPropertyConfiguration.commonAssetProperties.get(property.id).isDefined) {
           OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.id, property.values)
         } else {
           OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.id.toLong, property.values)
@@ -215,24 +215,24 @@ object OracleSpatialAssetDao {
   }
 
   def updateCommonAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {
-    val column = AssetPropertyConfiguration.commonAssetPropertyColumns(propertyId)
-    AssetPropertyConfiguration.commonAssetPropertyTypes(propertyId) match {
+    val property = AssetPropertyConfiguration.commonAssetProperties(propertyId)
+    AssetPropertyConfiguration.commonAssetProperties(propertyId).propertyType match {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
           (p.propertyId == propertyId) && (p.values.map(_.propertyValue.toString).contains(newVal))
         } match {
           case Some(propValues) => {
-            updateCommonProperty(assetId, column, newVal).execute()
+            updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute()
           }
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyId + "/" + newVal)
         }
       }
-      case Text | LongText => updateCommonProperty(assetId, column, propertyValues.head.propertyDisplayValue).execute()
+      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyDisplayValue).execute()
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
         val optionalDateTime = propertyValues.headOption.map(_.propertyDisplayValue).map(formatter.parseDateTime)
-        updateCommonDateProperty(assetId, column, optionalDateTime).execute()
+        updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute()
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

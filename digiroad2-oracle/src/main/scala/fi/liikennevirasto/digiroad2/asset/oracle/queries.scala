@@ -124,7 +124,7 @@ object Queries {
 
   def allAssets =
     """
-    select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, a.validity_direction as validity_direction,
+    select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
     p.id as property_id, p.name_fi as property_name, p.property_type, p.required,
@@ -152,7 +152,7 @@ object Queries {
 
   def allAssetsWithoutProperties =
     """
-    select a.id as asset_id, t.id as asset_type_id, a.bearing as bearing, a.validity_direction as validity_direction,
+    select a.id as asset_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
@@ -241,11 +241,17 @@ object Queries {
   def deleteSingleChoiceProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from single_choice_value where asset_id = $assetId and property_id = $propertyId"
 
-  def updateCommonProperty(assetId: Long, propertyColumn: String, value: String) =
-    sqlu"update asset set #$propertyColumn = $value where id = $assetId"
+  def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
+    if (isLrmAssetProperty)
+      sqlu"update lrm_position set #$propertyColumn = $value where id = (select lrm_position_id from asset where id = $assetId)"
+    else
+      sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
-  def updateCommonDateProperty(assetId: Long, propertyColumn: String, value: Option[DateTime]) =
-    sqlu"update asset set #$propertyColumn = $value where id = $assetId"
+  def updateCommonDateProperty(assetId: Long, propertyColumn: String, value: Option[DateTime], isLrmAssetProperty: Boolean = false) =
+    if (isLrmAssetProperty)
+      sqlu"update lrm_position set #$propertyColumn = $value where id = (select lrm_position_id from asset where id = $assetId)"
+    else
+      sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
   def roadLinks = "SELECT id, geom, end_date, municipality_number FROM road_link WHERE functional_class IN (1, 2, 3, 4, 5, 6)"
 

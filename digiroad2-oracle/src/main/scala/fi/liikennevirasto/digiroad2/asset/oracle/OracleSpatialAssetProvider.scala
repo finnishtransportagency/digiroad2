@@ -94,7 +94,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
 
     Database.forDataSource(ds).withDynTransaction {
-      if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(propertyId)) {
+      if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyId)) {
         OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyId, propertyValues)
       } else {
         OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyId.toLong, propertyValues)
@@ -103,7 +103,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   }
 
   def deleteAssetProperty(assetId: Long, propertyId: String) {
-    if (AssetPropertyConfiguration.commonAssetPropertyColumns.keySet.contains(propertyId)) {
+    if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyId)) {
       throw new IllegalArgumentException("Cannot delete common asset property value: " + propertyId)
     }
     Database.forDataSource(ds).withDynTransaction {
@@ -121,7 +121,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
-    AssetPropertyConfiguration.commonAssetPropertyDescriptors.values.toSeq ++ Database.forDataSource(ds).withDynTransaction {
+    AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.availableProperties(assetTypeId)
     }.sortBy(_.propertyId.toLong)
   }
