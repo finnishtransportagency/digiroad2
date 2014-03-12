@@ -21,10 +21,6 @@ create table road_node
   constraint road_node_pk primary key(id)
 );
 
-create index road_node_sx
-  on road_node(geom)
-  indextype is mdsys.spatial_index;
-
 -- road_link cannot yet have foreign key reference to road_node (no data)
 
 create table road_link
@@ -50,10 +46,6 @@ create table road_link
   constraint fk_startnode foreign key (end_road_node_id) references road_node(id)
 */
 );
-
-create index road_link_sx
-  on road_link(geom)
-  indextype is mdsys.spatial_index;
 
 create table lrm_position
 (
