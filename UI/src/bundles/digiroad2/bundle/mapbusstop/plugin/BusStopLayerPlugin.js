@@ -92,20 +92,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
          *          reference to application sandbox
          */
         init: function (sandbox) {
-            var self = this;
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
           
-            var me = this;
-
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
                 mapLayerService.registerLayerModel('busstoplayer', 'Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer');
             }
-            this.templates = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.template.Templates');
+            this._initTemplates();
             var layerModelBuilder = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayerModelBuilder', sandbox);
             mapLayerService.registerLayerModelBuilder('busstoplayer', layerModelBuilder);
         },
