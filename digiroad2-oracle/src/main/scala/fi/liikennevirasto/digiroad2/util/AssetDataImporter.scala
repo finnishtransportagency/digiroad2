@@ -1,29 +1,40 @@
-package fi.liikennevirasto.digiroad2.dataimport
+package fi.liikennevirasto.digiroad2.util
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.Properties
-import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
-import scala.slick.jdbc.{StaticQuery => Q, GetResult, PositionedParameters, SetParameter}
+import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
+import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
 import Q.interpolation
 import java.io.{ByteArrayOutputStream, BufferedInputStream}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import oracle.sql.STRUCT
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
-import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.dataimport.AssetDataImporter._
-import scala.io.Source
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter._
+import scala.collection.parallel.{ParSeq, ForkJoinTaskSupport}
+import scala.concurrent.forkjoin.ForkJoinPool
+import scala.Some
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
+import org.joda.time.format.PeriodFormatterBuilder
+
 
 object AssetDataImporter {
-  case class SimpleBusStop(shelterType: Int, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None, externalId: Option[Long] = None)
-  case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Int, endMeasure: Int)
+
+  case class SimpleBusStop(shelterType: Int, busStopId: Long, busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
+  case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Double, endMeasure: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
+
+  case class PropertyWrapper(shelterTypePropertyId: Long, reachabilityPropertyId: Long,
+                             accessibilityPropertyId: Long, administratorPropertyId: Long,
+                             busStopAssetTypeId: Long, busStopTypePropertyId: Long)
 
   sealed trait ImportDataSet {
     def database(): DatabaseDef
@@ -59,14 +70,14 @@ class AssetDataImporter {
   lazy val ds: DataSource = initDataSource
   lazy val assetProvider = new OracleSpatialAssetProvider(new OracleUserProvider)
 
-  val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99)
+  val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
   val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
-  val Modifier = "automatic_import"
+  val Modifier = "dr1conversion"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
-    val bs = SimpleBusStop(shelterTypes(r.<<), busStopTypes(r.<<), r.<<)
-    val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
+      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), r.<<, busStopTypes(r.<<), r.<<)
+      val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
     (bs, lrm)
   }
   implicit val getSimpleRoadLink = GetResult[SimpleRoadLink](r => SimpleRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.nextObject().asInstanceOf[STRUCT]))
@@ -83,117 +94,203 @@ class AssetDataImporter {
     }
   }
 
-  def importRoadlinks(dataSet: ImportDataSet) = insertRoadLinks(roadLinksToImport(dataSet))
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    println("time for insert "+(System.nanoTime-s)/1e6+"ms")
+    ret
+  }
 
-  private def roadLinksToImport(dataSet: ImportDataSet) = {
+  def importRoadlinks(dataSet: ImportDataSet, taskPool: ForkJoinPool) = roadLinksToImport(dataSet, taskPool)
+
+  private def getRoadlinkCount(dataSet: ImportDataSet) = {
     val table = dataSet.roadLinkTable
     dataSet.database().withDynSession {
-      sql"""
-        select tunnus, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
-        viim_talo_o, viim_talo_v, kunta_nro, shape from #$table
-      """.as[SimpleRoadLink].list
+      sql"""select max(objectid) from #$table""".as[Int].first
     }
   }
 
-  def insertRoadLinks(roadLinks: Seq[SimpleRoadLink]) {
-    Database.forDataSource(ds).withDynTransaction {
-      roadLinks.foreach { rl =>
-        println("ROADLINK: " + rl)
-        try {
-          sqlu"""
-            insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn,
-              l_start_hn, r_end_hn, l_end_hn, municipality_number, geom)
-            values (${rl.id}, ${rl.roadType}, ${rl.roadNumber}, ${rl.roadPartNumber}, ${rl.functionalClass}, ${rl.rStartHn},
-              ${rl.lStartHn}, ${rl.rEndHn}, ${rl.lEndHn}, ${rl.municipalityNumber}, ${rl.geom})
-          """.execute
-        } catch {
-          // TODO: current import data does not contain validity dates to resolve duplicate IDs (tunnus) so just disregard individual errors (duplicates) for now
-          // TODO: should tunnus be mapped to unique road_link.id as it is now (ie could there be several road links with same tunnus)?
-          case e: Exception => logger.error("Can't import roadlink", e)
-        }
+  private def getBatchDrivers(size: Int) = {
+    println(s"""creating batching for $size items""")
+    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
+    x :+ (x.last._2 + 1, size)
+  }
+
+  private def roadLinksToImport(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
+    val count = getRoadlinkCount(dataSet)
+    val parallerSeq = getBatchDrivers(count).par
+    println(s"""batching done.""")
+    Database.forDataSource(ds).withSession(targetDbSession => {
+      parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
+      val totalItems = count
+      val startTime = DateTime.now()
+      lastCheckpoint = DateTime.now()
+      parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession, totalItems, startTime))
+    })
+  }
+
+  var processedItems = 0
+  var counterForProcessed = 1
+  var lastCheckpoint: DateTime = null
+  private def updateStatus(size: Int, totalItems: Int, startTime: DateTime) = {
+    this.synchronized {
+      processedItems = processedItems + size
+      if(counterForProcessed % 20 == 0) {
+        val percentage = (processedItems / (totalItems * 1.0)) * 100
+        val currentTime = DateTime.now()
+        val formatter = getPeriodFormatter
+        val lastBatchExecTime = formatter.print(new Interval(lastCheckpoint, currentTime).toDuration.toPeriod)
+        val totalExecTime = formatter.print(new Interval(startTime, currentTime).toDuration.toPeriod)
+        println(f"""$processedItems / $totalItems  items ($percentage%1.2f %%) processed. Last batch took $lastBatchExecTime. Total execution time $totalExecTime""")
+        lastCheckpoint = currentTime
       }
+      counterForProcessed = counterForProcessed + 1
     }
   }
 
-  def importBusStops(dataSet: ImportDataSet) = {
-    val busStopsAndPositions = busStopsToImport(dataSet)
-    insertLrmPositions(busStopsAndPositions.map(_._2).toList)
-    insertBusStops(busStopsAndPositions.map(_._1).toList)
+  private def getPeriodFormatter = {
+    new PeriodFormatterBuilder()
+      .appendHours()
+      .appendSuffix("h ")
+      .appendMinutes()
+      .appendSuffix("m ")
+      .appendSeconds()
+      .appendSuffix("s ")
+      .appendMillis()
+      .appendSuffix("ms ")
+      .toFormatter()
+  }
+
+  private def doConversion(dataSet: ImportDataSet, page: (Int, Int), targetDbSession: Session, totalItems: Int, startTime: DateTime) = {
+    val links = getOldRoadlinksByPage(dataSet, page)
+    insertRoadLink(links, targetDbSession)
+    updateStatus(links.size, totalItems, startTime)
+  }
+
+  private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
+     val start = page._1
+     val end = page._2
+     val s = dataSet.database().createSession()
+
+      val query = Q.query[(Int, Int), SimpleRoadLink]("""
+        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
+               viim_talo_o, viim_talo_v, kunta_nro, shape from tielinkki where objectid between ? and ?""")
+      val result = query.list(start, end)(s)
+      s.close()
+      result
+  }
+
+  private def insertRoadLink(roadlinks: List[SimpleRoadLink], targetDbSession: Session) {
+    val ps = targetDbSession.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+
+    def batch(rl: SimpleRoadLink) {
+      ps.setLong(1, rl.id)
+      ps.setInt(2, rl.roadType)
+      ps.setInt(3, rl.roadNumber)
+      ps.setInt(4, rl.roadPartNumber)
+      ps.setInt(5, rl.functionalClass)
+      ps.setInt(6, rl.rStartHn)
+      ps.setInt(7, rl.lStartHn)
+      ps.setInt(8, rl.rEndHn)
+      ps.setInt(9, rl.lEndHn)
+      ps.setInt(10, rl.municipalityNumber)
+      ps.setObject(11, rl.geom)
+      ps.addBatch
+    }
+
+    roadlinks foreach batch
+    ps.executeBatch
+    ps.close()
+  }
+
+  def importBusStops(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
+    val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
+    Database.forDataSource(ds).withSession(targetDbSession => {
+      val insertLrmPositionsSequence: ParSeq[List[SimpleLRMPosition]] = lrmPositions.grouped(250).toList.par
+      insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
+      insertLrmPositionsSequence.foreach(lrmPositions => insertLrmPositions(lrmPositions, targetDbSession))
+    })
+    insertImages()
+    val typeProps = getTypeProperties
+    val insertBusStopsSequence: ParSeq[SimpleBusStop] = busStops.toList.par
+    insertBusStopsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
+    insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
   private def busStopsToImport(dataSet: ImportDataSet) = {
     val table = dataSet.busStopTable
     dataSet.database().withDynSession {
       sql"""
-        select katos, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table
+        select katos, pysakki_id, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table where tielinkkitunnus is not null
       """.as[(SimpleBusStop, SimpleLRMPosition)].list
     }
   }
 
-  def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition]) {
-    Database.forDataSource(ds).withDynTransaction {
-      lrmPositions.foreach { lrm =>
-        println("LRM POSITION: " + lrm)
-        try {
-          sqlu"""
-          insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure)
-          values (${lrm.id}, ${lrm.roadLinkId}, 1, ${lrm.laneCode}, ${lrm.sideCode}, ${lrm.startMeasure}, ${lrm.endMeasure})
-        """.execute
-        } catch {
-          case e: Exception => logger.error("Can't insert lrm position", e)
-        }
-      }
+  def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition], targetDbSession: Session) {
+    var elementCount = 0
+    val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
+    def batch(lrm: SimpleLRMPosition) {
+      ps.setLong(1, lrm.id)
+      ps.setLong(2, lrm.roadLinkId)
+      ps.setInt(3, lrm.laneCode)
+      ps.setInt(4, lrm.sideCode)
+      ps.setDouble(5, lrm.startMeasure)
+      ps.setDouble(6, lrm.endMeasure)
+      ps.addBatch
+      elementCount = elementCount + 1
+      println("Added LRM " + lrm.id + " to batch as element " + elementCount)
     }
+
+    lrmPositions foreach batch
+    ps.executeBatch
+    println("Executed batch of " + lrmPositions.length + " LRM positions")
+    ps.close
   }
 
-  def insertBusStops(busStops: Seq[SimpleBusStop]) {
+  def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
-      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
       val shelterTypePropertyId = sql"select id from property where name_fi = 'Pysäkin katos'".as[Long].first
       val reachabilityPropertyId = sql"select id from property where name_fi = 'Pysäkin saavutettavuus'".as[Long].first
       val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyystiedot'".as[Long].first
       val administratorPropertyId = sql"select id from property where name_fi = 'Ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
+      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
+      PropertyWrapper(shelterTypePropertyId, reachabilityPropertyId, accessibilityPropertyId, administratorPropertyId,
+                      busStopAssetTypeId, busStopTypePropertyId)
+    }
+  }
 
-      importMunicipalityCodes
+  def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
+    Database.forDataSource(ds).withDynSession {
+      val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
 
-      insertImages(busStopTypePropertyId)
+      sqlu"""
+        insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
+        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+      """.execute
 
-      busStops.foreach { busStop =>
-        try {
-          println("BUS STOP: " + busStop)
-          val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
-
-          sqlu"""
-            insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
-            values($assetId, ${busStop.externalId}, $busStopAssetTypeId, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
-          """.execute
-
-          val bearing = assetProvider.getAssetById(assetId) match {
-            case Some(a) => {
-              assetProvider.getRoadLinkById(a.roadLinkId) match {
-                case Some(rl) => GeometryUtils.calculateBearing(a, rl)
-                case None => 0.0 // TODO log/throw error?
-              }
-            }
-            case None => 0.0 // TODO log/throw error?
+      val bearing = assetProvider.getAssetById(assetId) match {
+        case Some(a) =>
+          assetProvider.getRoadLinkById(a.roadLinkId) match {
+            case Some(rl) => GeometryUtils.calculateBearing(a, rl)
+            case None =>
+              println(s"No road link found for Asset: $assetId")
+              0.0
           }
-          sqlu"update asset set bearing = $bearing where id = $assetId".execute
-          busStop.busStopType.foreach { busStopType =>
-            insertMultipleChoiceValue(busStopTypePropertyId, assetId, busStopType)
-          }
-
-          insertTextPropertyData(reachabilityPropertyId, assetId, "Ei tiedossa")
-
-          insertTextPropertyData(accessibilityPropertyId, assetId, "Ei tiedossa")
-
-          insertSingleChoiceValue(administratorPropertyId, assetId, 4)
-
-          insertSingleChoiceValue(shelterTypePropertyId, assetId, busStop.shelterType)
-        } catch {
-          case e: Exception => logger.error("Cannot insert " + busStop, e)
-        }
+        case None =>
+          println(s"No Asset found: $assetId")
+          0.0
       }
+
+      sqlu"update asset set bearing = $bearing where id = $assetId".execute
+      busStop.busStopType.foreach { busStopType =>
+        insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
+      }
+
+      insertTextPropertyData(typeProps.reachabilityPropertyId, assetId, "Ei tiedossa")
+      insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
+      insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 4)
+      insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
     }
   }
 
@@ -219,37 +316,27 @@ class AssetDataImporter {
     """.execute
   }
 
-  def insertImages(busStopTypePropertyId: Long) {
-    imagesForBusStopTypes.foreach { keyVal =>
-      val s = getClass.getResourceAsStream(keyVal._2)
-      val bis = new BufferedInputStream(s)
-      val fos = new ByteArrayOutputStream(65535)
-      val buf = new Array[Byte](1024)
-      Stream.continually(bis.read(buf)).takeWhile(_ != -1).foreach(fos.write(buf, 0, _))
-      val byteArray = fos.toByteArray
+  def insertImages() {
+    Database.forDataSource(ds).withDynSession {
+      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
 
-      sqlu"""
-        insert into image (id, created_by, modified_date, file_name, image_data)
-        values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
-      """.execute
+      imagesForBusStopTypes.foreach { keyVal =>
+        val s = getClass.getResourceAsStream(keyVal._2)
+        val bis = new BufferedInputStream(s)
+        val fos = new ByteArrayOutputStream(65535)
+        val buf = new Array[Byte](1024)
+        Stream.continually(bis.read(buf)).takeWhile(_ != -1).foreach(fos.write(buf, 0, _))
+        val byteArray = fos.toByteArray
 
-      sqlu"""
-        update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
-      """.execute
+        sqlu"""
+          insert into image (id, created_by, modified_date, file_name, image_data)
+          values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
+        """.execute
+        sqlu"""
+          update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
+        """.execute
+      }
     }
-  }
-
-  def importMunicipalityCodes() = {
-    val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
-    src.getLines().toList.drop(1).map(row => {
-      var elems = row.replace("\"", "").split(";");
-      sqlu"""
-        insert into municipality(id, name_fi, name_sv) values( ${elems(0).toInt}, ${elems(1)}, ${elems(2)} )
-      """.execute
-      sqlu"""
-        insert into ely(id, name_fi, municipality_id) values( ${elems(3).toInt}, ${elems(4)}, ${elems(0).toInt} )
-      """.execute
-    })
   }
 
   private[this] def initDataSource: DataSource = {

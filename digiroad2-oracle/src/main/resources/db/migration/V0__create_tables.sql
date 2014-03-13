@@ -1,6 +1,6 @@
 insert into user_sdo_geom_metadata (table_name, column_name, diminfo, srid)
   values ('ROAD_NODE', 'GEOM', mdsys.sdo_dim_array(mdsys.sdo_dim_element('X',50100,762000,0.1),
-                                                   mdsys.sdo_dim_element('Y',6582000,7800000,0.1), 
+                                                   mdsys.sdo_dim_element('Y',6582000,7800000,0.1),
                                                    mdsys.sdo_dim_element('Z',0,100000,0.1)),
           3067
 );
@@ -20,7 +20,6 @@ create table road_node
   geom sdo_geometry,
   constraint road_node_pk primary key(id)
 );
-
 
 -- road_link cannot yet have foreign key reference to road_node (no data)
 
@@ -47,8 +46,6 @@ create table road_link
   constraint fk_startnode foreign key (end_road_node_id) references road_node(id)
 */
 );
-
-
 
 create table lrm_position
 (
@@ -87,7 +84,7 @@ create table asset_type (
 create table asset (
 	id number primary key,
   external_id number,
-  asset_type_id number references asset_type,
+	asset_type_id number references asset_type,
 	lrm_position_id number,
 	created_date timestamp default current_timestamp not null,
 	created_by varchar2(128),
@@ -190,11 +187,3 @@ create sequence road_node_seq
   increment by 1
   cache 100
   cycle;
-
-create sequence national_bus_stop_id_seq
-  minvalue 1
-  maxvalue 999999999999999999999999999
-  start with 300000
-  increment by 1
-  cache 100
-  nocycle;
