@@ -22,7 +22,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
 
         "protocol" : ["Oskari.bundle.Bundle", "Oskari.mapframework.bundle.extension.ExtensionBundle"],
         "source" : {
-
             "scripts" : [{
                 "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/domain/BusStopLayer.js"
@@ -34,11 +33,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
                 "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/plugin/BusStopLayerPlugin.js"
             },{
                 "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/plugin/template/Templates.js"
+            },{
+                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/event/AssetDirectionChangeEvent.js"
             },{
                 "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/common/event/ApplicationInitializedEvent.js"
-            }
             }],
             "locales" : [{
                 "lang" : "fi",
