@@ -27,10 +27,14 @@ object DataFixture {
     flyway
   }
 
-  def migrationTo(version: Option[String]) = {
+  def migrateTo(version: String) = {
     val migrator = flyway
-    if(version.isDefined) migrator.setTarget(version.get.toString)
-    migrator
+    migrator.setTarget(version.toString)
+    migrator.migrate()
+  }
+
+  def migrateAll() = {
+    flyway.migrate()
   }
 
   def tearDown() {
@@ -38,12 +42,12 @@ object DataFixture {
   }
 
   def setUpTest() {
-    migrationTo(None).migrate()
+    migrateAll()
     SqlScriptRunner.runScripts(List("drop_and_insert_test_fixture.sql", "insert_users.sql"))
   }
 
   def setUpFull() {
-    migrationTo(None).migrate()
+    migrateAll()
     SqlScriptRunner.runScripts(List("insert_users.sql"))
   }
 
@@ -108,12 +112,12 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("conversion") =>
         tearDown()
-        migrationTo(Some("0.1")).migrate()
+        migrateTo("0.1")
         val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
         importMunicipalityCodes()
-        migrationTo(None).migrate()
+        migrateAll()
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
