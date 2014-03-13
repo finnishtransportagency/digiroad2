@@ -14,7 +14,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         this.mediator = null;
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
-        this._state = undefined;
         this._backend = defineDependency('backend', window.Backend);
 
         function defineDependency(dependencyName, defaultImplementation) {
@@ -86,15 +85,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          */
         init : function() {
             eventbus.on('asset:unselected', this._closeAsset, this);
-          
-            var me = this;
+            eventbus.on('assetPropertyValue:changed', this._changeAssetDirection, this)
+
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
                 collectFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.CollectFeatureAttributesRequestHandler', this)
             };
 
-            me._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
-            me._getPropertyValues();
+            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
+            this._getPropertyValues();
 
             return null;
         },
@@ -138,8 +137,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 else return 'Ei valtakunnallista ID:tä';
             }
         },
-        collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
+        _changeAssetDirection: function(data) {
+            var newValidityDirection = data.propertyData[0].values[0].propertyValue;
+            var validityDirection = jQuery('.featureAttributeButton[data-propertyid="validityDirection"]');
+            validityDirection.attr('value', newValidityDirection);
+            jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
+        },
+        collectAttributes: function(asset, successCallback, cancellationCallback) {
             var me = this;
+            this._selectedAsset = {position: asset.data.position};
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
@@ -153,12 +159,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var assetDirectionChangedHandler = function() {
                     var value = validityDirection.attr('value');
                     var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
-                    validityDirection.attr('value', newValidityDirection);
-                    jQuery('.streetView').html(me._getStreetView(_.merge({}, assetPosition, { validityDirection: newValidityDirection })));
-                    me._sendFeatureChangedEvent({
+                    eventbus.trigger('assetPropertyValue:changed', {
                         propertyData: [{
                             propertyId: validityDirection.attr('data-propertyId'),
-                            values: me._propertyValuesOfButtonElement(validityDirection)
+                            values: [{propertyValue: newValidityDirection}]
                         }]
                     });
                 };
@@ -166,7 +170,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
                     var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                    me._sendFeatureChangedEvent({
+                    eventbus.trigger('assetPropertyValue:changed', {
                       propertyData: [{
                           propertyId: jqElement.attr('data-propertyId'),
                           values: values
@@ -174,13 +178,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                 });
 
-                setPluginState({assetDirectionChangedHandler: assetDirectionChangedHandler});
-
                 validityDirection.click(assetDirectionChangedHandler);
 
                 featureAttributesElement.find('button.cancel').on('click', function() {
                     eventbus.trigger('asset:unselected');
-                    setPluginState(null);
                     cancellationCallback();
                 });
 
@@ -229,15 +230,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfDateElement(jqElement)
                         };
                     });
-                    setPluginState(null);
                     successCallback(textElementAttributes
                         .concat(selectionElementAttributes)
                         .concat(buttonElementAttributes)
                         .concat(multiCheckboxElementAttributes)
                         .concat(dateElementAttributes));
                 });
-
-                function setPluginState(state) { me._state = state; }
             }
         },
         _getStreetView: function(assetPosition) {
@@ -439,6 +437,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          */
         eventHandlers : {
             'mapbusstop.AssetDirectionChangeEvent': function (event) {
+                // FIXME
                 if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
                     this._state.assetDirectionChangedHandler(event);
                 } else {
