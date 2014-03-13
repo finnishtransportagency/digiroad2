@@ -332,8 +332,7 @@ Oskari.clazz.define('Oskari.mapframework.bundle.infobox.plugin.mapmodule.Openlay
          *      id for popup that we want to close (optional - if not given, closes all popups)
          */
         close: function (id) {
-            // FIXME: `id` is "busStop", we want something nicer to pass as a value
-            eventbus.trigger('asset:unselected');
+            eventbus.trigger('asset:unselected', id && parseInt(id, 10));
             // destroys all if id not given
             // deletes reference to the same id will work next time also
             if (!id) {
