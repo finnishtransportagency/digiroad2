@@ -96,7 +96,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
-          
+
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
@@ -535,7 +535,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
         },
         _fetchAssets: function() {
-            var self = this;
             if (this._isInZoomLevel()) {
                 this._backend.getAssets(10, this._map.getExtent(), function (){});
             } else {
@@ -544,7 +543,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
                 this._removeAssetsFromLayer();
             }
-            this._oldZoomLevel = self._map.getZoom();
+            this._oldZoomLevel = this._map.getZoom();
         },
         _renderAssets: function(assets) {
             var self = this;
