@@ -96,6 +96,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
+            eventbus.on('assetPropertyValue:saved', this._updateAsset, this);
 
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
@@ -182,8 +183,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'featureattributes.FeatureAttributeChangedEvent': function (event) {
                 if(_.isObject(this._state) && _.isFunction(this._state.featureAttributeChangedHandler)) {
                     this._state.featureAttributeChangedHandler(event);
-                } else {
-                    this._featureAttributeChangedEvent(event);
                 }
             },
             'MapClickedEvent': function (event) {
@@ -207,7 +206,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             };
         },
-
+        _updateAsset: function(asset) {
+            this._layers.assetDirection.removeFeatures(this._selectedBusStop.directionArrow);
+            this._layers.asset.removeMarker(this._selectedBusStop);
+            this._addNewAsset(asset);
+        },
         _handleValidityPeriodChanged: function(selectedValidityPeriods) {
           this._selectedValidityPeriods = selectedValidityPeriods;
           var me = this;
@@ -536,7 +539,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _fetchAssets: function() {
             if (this._isInZoomLevel()) {
-                this._backend.getAssets(10, this._map.getExtent(), function (){});
+                this._backend.getAssets(10, this._map.getExtent());
             } else {
                 if(this._zoomNotInMessage) {
                     this._zoomNotInMessage();

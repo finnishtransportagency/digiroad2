@@ -11,10 +11,9 @@
         putAssetPropertyValue(assetId, propertyId, data, success);
     };
 
-    backend.getAssets = function (assetTypeId, boundingBox, success) {
+    backend.getAssets = function (assetTypeId, boundingBox) {
         jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function(assets) {
             eventbus.trigger('assets:fetched', assets);
-            success(assets);
         }).fail(function() {
             console.log("error");
         });
