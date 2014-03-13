@@ -270,13 +270,16 @@ class AssetDataImporter {
       """.execute
 
       val bearing = assetProvider.getAssetById(assetId) match {
-        case Some(a) => {
+        case Some(a) =>
           assetProvider.getRoadLinkById(a.roadLinkId) match {
             case Some(rl) => GeometryUtils.calculateBearing(a, rl)
-            case None => 0.0 // TODO log/throw error?
+            case None =>
+              println(s"No road link found for Asset: $assetId")
+              0.0
           }
-        }
-        case None => 0.0 // TODO log/throw error?
+        case None =>
+          println(s"No Asset found: $assetId")
+          0.0
       }
 
       sqlu"update asset set bearing = $bearing where id = $assetId".execute
