@@ -122,21 +122,17 @@ class AssetDataImporter {
     println(s"""batching done.""")
     Database.forDataSource(ds).withSession(targetDbSession => {
       parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
-      totalItems = count
-      startTime = DateTime.now()
+      val totalItems = count
+      val startTime = DateTime.now()
       lastCheckpoint = DateTime.now()
-      parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession))
+      parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession, totalItems, startTime))
     })
   }
 
-  // TODO: Move these from global scope to function parameters
-  var totalItems = 0
   var processedItems = 0
   var counterForProcessed = 1
-  var startTime: DateTime = null
   var lastCheckpoint: DateTime = null
-
-  private def updateStatus(size: Int) = {
+  private def updateStatus(size: Int, totalItems: Int, startTime: DateTime) = {
     this.synchronized {
       processedItems = processedItems + size
       if(counterForProcessed % 20 == 0) {
@@ -165,10 +161,10 @@ class AssetDataImporter {
       .toFormatter()
   }
 
-  private def doConversion(dataSet: ImportDataSet, page: (Int, Int), targetDbSession: Session) = {
+  private def doConversion(dataSet: ImportDataSet, page: (Int, Int), targetDbSession: Session, totalItems: Int, startTime: DateTime) = {
     val links = getOldRoadlinksByPage(dataSet, page)
     insertRoadLink(links, targetDbSession)
-    updateStatus(links.size)
+    updateStatus(links.size, totalItems, startTime)
   }
 
   private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
