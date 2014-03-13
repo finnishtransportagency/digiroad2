@@ -208,36 +208,36 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _updateAsset: function(asset) {
             this._layers.assetDirection.removeFeatures(this._selectedAsset.directionArrow);
-            this._layers.asset.removeMarker(this._selectedAsset);
+            this._layers.asset.removeMarker(this._selectedAsset.marker);
             this._addNewAsset(asset);
         },
         _handleValidityPeriodChanged: function(selectedValidityPeriods) {
-          this._selectedValidityPeriods = selectedValidityPeriods;
-          var me = this;
-          var markers = this._layers.asset.markers;
-          _.each(markers, function(marker) {
-              if (_.contains(selectedValidityPeriods, marker.validityPeriod)) {
-                me._showAsset(marker);
-              } else {
-                me._hideAsset(marker);
-              }
-          });
+            this._selectedValidityPeriods = selectedValidityPeriods;
+            var me = this;
+            var assets = this._assets;
+            _.each(assets, function(asset) {
+                if (_.contains(selectedValidityPeriods, asset.data.validityPeriod)) {
+                  me._showAsset(asset);
+                } else {
+                  me._hideAsset(asset);
+                }
+            });
         },
 
-        _hideAsset: function(marker) {
+        _hideAsset: function(asset) {
             //TODO: InfoBox is a direct child component of BusStopLayer, so make it so!
             // (get rid of useless request-abstraction)
-            if (this._selectedAsset && this._selectedAsset.marker.id == marker.id) {
+            if (this._selectedAsset && this._selectedAsset.data.id == asset.data.id) {
                 var request = this._sandbox.getRequestBuilder('InfoBox.HideInfoBoxRequest')('busStop');
                 this._sandbox.request(this, request);
             }
-            this._layers.assetDirection.destroyFeatures(marker.directionArrow);
-            marker.display(false);
+            this._layers.assetDirection.destroyFeatures(asset.directionArrow);
+            asset.marker.display(false);
         },
 
-        _showAsset: function(marker) {
-          marker.display(true);
-          this._layers.assetDirection.addFeatures(marker.directionArrow);
+        _showAsset: function(asset) {
+          asset.marker.display(true);
+          this._layers.assetDirection.addFeatures(asset.directionArrow);
         },
         _addDirectionArrow: function (bearing, validityDirection, lon, lat) {
             var directionArrow = this._getDirectionArrow(bearing, validityDirection, lon, lat);
@@ -247,7 +247,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _handleAssetPropertyValueChanged: function(asset) {
             var self = this;
             var turnArrow = function(asset, direction) {
-                console.log(asset);
                 self._layers.assetDirection.destroyFeatures(asset.directionArrow);
                 asset.directionArrow.style.rotation = direction;
                 self._layers.assetDirection.addFeatures(asset.directionArrow);
@@ -292,15 +291,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._selectedAsset = {directionArrow: directionArrow,
                                    data: {bearing: bearing,
                                           position: assetPosition,
-                                          validityDirection: 1}};
+                                          validityDirection: 2}};
 
-            sendCollectAttributesRequest(assetPosition, attributesCollected, quitAddition);
+            sendCollectAttributesRequest(this._selectedAsset.data, attributesCollected, quitAddition);
             var contentItem = me._makeContent([me._unknownAssetType]);
             me._sendPopupRequest('busStop', 'Uusi Pysäkki', -1, contentItem, projectionLonLat, quitAddition);
             var overlays = applyBlockingOverlays();
             movePopupAboveOverlay();
-
-            function setPluginState(state) { me._state = state; }
 
             function attributesCollected(attributeCollection) {
                 var properties = _.chain(attributeCollection)
@@ -377,7 +374,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             function quitAddition() {
                 me._layers.assetDirection.destroyFeatures(directionArrow);
                 removeInfoBox('busStop');
-                setPluginState(null);
                 _.forEach(overlays, function(overlay) { overlay.close(); });
             }
         },
@@ -391,11 +387,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 directionArrow, this._layers.assetDirection, validityDirection);
             this._sendPopupRequest("busStop", this._popupTitle(asset), asset.id, contentItem, lonLat);
             this._selectedAsset.marker.display(false);
-            var streetViewCoordinates = {
+            asset.position = {
                 lonLat: lonLat,
                 heading: asset.bearing + 90
             };
-            this._sendShowAttributesRequest(asset, streetViewCoordinates);
+            this._sendShowAttributesRequest(asset, asset.position);
         },
 
         _triggerEvent: function(key, value) {
@@ -495,11 +491,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
             var self = this;
             jQuery('.popupInfoChangeDirection').on('click', function() {
-                self._selectedAsset.data.validityDirection = self._selectedAsset.data.validityDirection == 1 ? -1 : 1;
-                var data = {propertyData: [{propertyId: "validityDirection",
-                                            values: [{propertyDisplayValue: "Vaikutussuunta",
-                                                      propertyValue: self._selectedAsset.data.validityDirection == 1 ? 2 : 3}]}]};
-                eventbus.trigger('assetPropertyValue:changed', data);
+                self._selectedAsset.data.validityDirection = self._selectedAsset.data.validityDirection == 2 ? 3 : 2;
+                var propertyId = 'validityDirection';
+                var propertyValue = self._selectedAsset.data.validityDirection;
+                var data = {propertyData: [{propertyId: propertyId,
+                                            values: [{propertyDisplayValue: 'Vaikutussuunta',
+                                                      propertyValue: propertyValue}]}]};
+                if (self._selectedAsset.data.id) {
+                    self._backend.putAssetPropertyValue(
+                        self._selectedAsset.data.id, propertyId,
+                        [{propertyValue: propertyValue, propertyDisplayValue: 'Vaikutussuunta'}]);
+                } else {
+                    eventbus.trigger('assetPropertyValue:changed', data);
+                }
             });
 
             if (_.isFunction(popupClosedCallback)) {
@@ -558,13 +562,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var self = this;
             if (self._isInZoomLevel()) {
                 self._layers.asset.setVisibility(true);
-                _.each(assets, function (asset) {
+                _.each(assets, function(asset) {
                     if (!_.contains(_.pluck(self._layers.asset.markers, "id"), asset.id)) {
                         var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
                         //Make the feature a plain OpenLayers marker
                         var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
                         self._layers.assetDirection.addFeatures(directionArrow);
-                        self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                        self._assets = self._assets || [];
+                        self._assets.push(self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection));
                     }
                 });
             }
@@ -624,7 +629,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             marker.events.register("mousedown", busStops, mouseDown);
             marker.validityPeriod = assetData.validityPeriod;
             if (!_.contains(this._selectedValidityPeriods, assetData.validityPeriod)) {
-              this._hideAsset(marker);
+              this._hideAsset(asset);
             }
             busStops.addMarker(marker);
             return asset;
@@ -695,6 +700,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     streetViewCoordinates.heading = asset.data.roadDirection + (-90 * asset.data.effectDirection);
                     var contentItem = me._makeContent(imageIds);
                     me._sendPopupRequest('busStop', me._popupTitle(assetData), asset.data.id, contentItem, asset.marker.lonlat);
+                    assetAttributes.position = streetViewCoordinates;
                     me._sendShowAttributesRequest(assetAttributes, streetViewCoordinates);
                     me._selectedAsset.marker.display(false);
                 });

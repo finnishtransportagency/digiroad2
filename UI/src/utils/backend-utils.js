@@ -76,7 +76,9 @@
             dataType:"json",
             success: function(assetPropertyValue) {
               eventbus.trigger('assetPropertyValue:saved assetPropertyValue:fetched', assetPropertyValue);
-              success(assetPropertyValue);
+              if (success) {
+                success(assetPropertyValue);
+              }
             },
             error: function() {
                 console.log("error");

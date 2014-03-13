@@ -85,7 +85,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
          */
         init : function() {
             eventbus.on('asset:unselected', this._closeAsset, this);
-            eventbus.on('assetPropertyValue:changed', this._changeAssetDirection, this)
+            eventbus.on('assetPropertyValue:changed', function(data) {
+                console.log(data);
+                if (data.propertyData[0].propertyId == 'validityDirection') {
+                    this._changeAssetDirection(data);
+                }
+            }, this);
 
             this.requestHandlers = {
                 showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
@@ -100,8 +105,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
         showAttributes : function(assetAttributes, assetPosition) {
             var me = this;
             this._state = null;
+            this._selectedAsset = assetAttributes;
             me._featureDataAssetId = assetAttributes.id;
-
             var featureData = me._makeContent(assetAttributes.propertyData);
             assetPosition.validityDirection = assetAttributes.validityDirection;
             assetPosition.bearing = assetAttributes.bearing;
@@ -137,20 +142,22 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 else return 'Ei valtakunnallista ID:tä';
             }
         },
+        
         _changeAssetDirection: function(data) {
             var newValidityDirection = data.propertyData[0].values[0].propertyValue;
             var validityDirection = jQuery('.featureAttributeButton[data-propertyid="validityDirection"]');
             validityDirection.attr('value', newValidityDirection);
             jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
         },
+        
         collectAttributes: function(asset, successCallback, cancellationCallback) {
             var me = this;
-            this._selectedAsset = {position: asset.data.position};
+            this._selectedAsset = asset;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var streetView = me._getStreetView(assetPosition);
+                var streetView = me._getStreetView(me._selectedAsset.position);
                 var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();

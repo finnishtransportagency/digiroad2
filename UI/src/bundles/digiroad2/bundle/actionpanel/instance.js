@@ -42,7 +42,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
         },
 
         _handleAssetModified: function(asset) {
-          console.log(asset);
           var $el = jQuery('input.layerSelector[data-validity-period=' + asset.validityPeriod + ']');
           if (!$el.is(':checked')) {
             $el.click();
