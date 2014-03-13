@@ -48,35 +48,30 @@ object DataFixture {
   }
 
   def importRoadlinksFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
-    println("<roadlinks>")
+    println("\nCommencing road link import from conversion at time: ")
     println(DateTime.now())
     dataImporter.importRoadlinks(Conversion, taskPool)
+    println("Road link import complete at time: ")
     println(DateTime.now())
-    println("</roadlinks>")
+    println("\n")
   }
 
   def importBusStopsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
-    println("<importBusStops>")
+    println("\nCommencing bus stop import from conversion at time: ")
     println(DateTime.now())
     dataImporter.importBusStops(Conversion, taskPool)
+    println("Bus stop import complete at time: ")
     println(DateTime.now())
-    println("</importBusStops>")
+    println("\n")
   }
 
   def importMunicipalityCodes() {
-    println("<importMunicipalityCodes>")
+    println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
     new MunicipalityCodeImporter().importMunicipalityCodes()
+    println("Municipality code import complete at time: ")
     println(DateTime.now())
-    println("<importMunicipalityCodes>")
-  }
-
-  def createIndices() {
-    println("<createIndices>")
-    println(DateTime.now())
-    SqlScriptRunner.runScripts(List("create_indices.sql"))
-    println(DateTime.now())
-    println("<createIndices>")
+    println("\n")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -104,7 +99,6 @@ object DataFixture {
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         importMunicipalityCodes()
-        createIndices()
       case Some("full") =>
         tearDown()
         setUpFull()
