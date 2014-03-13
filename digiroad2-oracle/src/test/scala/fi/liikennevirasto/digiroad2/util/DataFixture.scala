@@ -19,7 +19,7 @@ object DataFixture {
     props
   }
 
-  lazy val flyway: Flyway = {
+  def flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
     flyway.setInitOnMigrate(true)
@@ -27,21 +27,23 @@ object DataFixture {
     flyway
   }
 
+  def migrationTo(version: Option[String]) = {
+    val migrator = flyway
+    if(version.isDefined) migrator.setTarget(version.get.toString)
+    migrator
+  }
+
   def tearDown() {
     flyway.clean()
   }
 
   def setUpTest() {
-    flyway.migrate()
+    migrationTo(None).migrate()
     SqlScriptRunner.runScripts(List("drop_and_insert_test_fixture.sql", "insert_users.sql"))
   }
 
   def setUpFull() {
-    flyway.migrate()
-  }
-
-  def setUpFullWithUsers() {
-    setUpFull()
+    migrationTo(None).migrate()
     SqlScriptRunner.runScripts(List("insert_users.sql"))
   }
 
@@ -77,7 +79,7 @@ object DataFixture {
     println("<createIndices>")
   }
 
-  def main(args:Array[String]) = {
+  def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
     if (!username.startsWith("dr2dev")) {
@@ -105,20 +107,19 @@ object DataFixture {
         createIndices()
       case Some("full") =>
         tearDown()
-        setUpFullWithUsers()
+        setUpFull()
         val taskPool = new ForkJoinPool(1)
         dataImporter.importRoadlinks(TemporaryTables, taskPool)
         dataImporter.importBusStops(TemporaryTables, taskPool)
         importMunicipalityCodes()
-        createIndices()
       case Some("conversion") =>
         tearDown()
-        setUpFull()
+        migrationTo(Some("0.1")).migrate()
         val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
         importMunicipalityCodes()
-        createIndices()
+        migrationTo(None).migrate()
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
