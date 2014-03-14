@@ -31,7 +31,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
          * implements Module protocol init method - initializes request handlers
          */
         init: function() {
-            eventbus.on('asset:fetched assetPropertyValue:fetched', this._handleAssetModified, this);
+            eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._handleAssetModified, this);
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.actionpanel.template.Templates');
             this._cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
             this._layerPeriods = [

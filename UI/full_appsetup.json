@@ -122,22 +122,6 @@
       }
    }, {
       "instanceProps": {},
-      "title": "Asset Info Box",
-      "bundleinstancename": "infobox",
-      "fi": "infobox",
-      "sv": "?",
-      "en": "?",
-      "bundlename": "infobox",
-      "metadata": {
-         "Import-Bundle": {
-            "infobox": {
-               "bundlePath": "src/packages/digiroad2/bundle/"
-            }
-         },
-         "Require-Bundle-Instance": []
-      }
-   }, {
-      "instanceProps": {},
       "bundleinstancename": "coordinatedisplay",
       "fi": "coordinatedisplay",
       "sv": "?",

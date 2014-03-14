@@ -33,7 +33,7 @@
         });
     };
 
-    backend.createAsset = function(data, success) {
+    backend.createAsset = function(data) {
         jQuery.ajax({
             contentType: "application/json",
             type: "POST",
@@ -41,8 +41,7 @@
             data: JSON.stringify(data),
             dataType: "json",
             success: function(asset) {
-                eventbus.trigger('asset:saved asset:fetched', asset);
-                success(asset);
+                eventbus.trigger('asset:created', asset);
             },
             error: function () {
                 console.log("error");
