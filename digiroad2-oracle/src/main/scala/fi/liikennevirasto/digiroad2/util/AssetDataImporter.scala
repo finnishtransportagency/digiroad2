@@ -242,8 +242,8 @@ class AssetDataImporter {
     Database.forDataSource(ds).withDynSession {
       val shelterTypePropertyId = sql"select id from property where name_fi = 'Pysäkin katos'".as[Long].first
       val reachabilityPropertyId = sql"select id from property where name_fi = 'Pysäkin saavutettavuus'".as[Long].first
-      val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyystiedot'".as[Long].first
-      val administratorPropertyId = sql"select id from property where name_fi = 'Ylläpitäjä'".as[Long].first
+      val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyys liikuntarajoitteiselle'".as[Long].first
+      val administratorPropertyId = sql"select id from property where name_fi = 'Tietojen ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
       val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
       PropertyWrapper(shelterTypePropertyId, reachabilityPropertyId, accessibilityPropertyId, administratorPropertyId,
