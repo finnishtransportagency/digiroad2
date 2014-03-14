@@ -97,6 +97,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             eventbus.on('assets:fetched', this._renderAssets, this);
             eventbus.on('assetPropertyValue:saved', this._updateAsset, this);
             eventbus.on('assetPropertyValue:changed', this._handleAssetPropertyValueChanged, this);
+            eventbus.on('asset:saved', this._handleAssetSaved, this);
 
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
@@ -178,7 +179,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._afterMapMoveEvent(event);
             },
             'MouseHoverEvent': function (event) {
-                this._moveSelectedBusStop(event);
+                this._moveSelectedAsset(event);
             },
             'MapClickedEvent': function (event) {
                 if (this._selectedControl === 'Add') {
@@ -217,6 +218,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                   me._hideAsset(asset);
                 }
             });
+        },
+
+        _handleAssetSaved: function(asset) {
+            this._selectedAsset.data = asset;
+            this._assets[asset.id] = this._selectedAsset;
         },
 
         _hideAsset: function(asset) {
@@ -380,6 +386,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var directionArrow = this._addDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
             this._selectedAsset = this._addBusStop(asset, this._layers.asset,
                 directionArrow, this._layers.assetDirection, validityDirection);
+            this._assets[asset.id] = this._selectedAsset;
             this._sendPopupRequest(asset.id, this._popupTitle(asset), asset.id, contentItem, lonLat);
             this._selectedAsset.marker.display(false);
             asset.position = {
@@ -706,7 +713,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             else return 'Ei ID:tä';
         },
 
-        _moveSelectedBusStop: function(evt) {
+        _moveSelectedAsset: function(evt) {
             if (this._map.getZoom() < 10) {
                 return;
             }
@@ -745,14 +752,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             var tmpItems = _.map(imageIds, function(x) { return { imageId: x};});
             return _.map(tmpItems, this.templates.busStopsPopupIcons).join('');
         },
-        /**
-         * @method getLocalization
-         * Returns JSON presentation of bundles localization data for current language.
-         * If key-parameter is not given, returns the whole localization data.
-         *
-         * @param {String} key (optional) if given, returns the value for key
-         * @return {String/Object} returns single localization string or JSON object for complete data depending on localization structure and if parameter key is given
-         */
         getLocalization : function(key) {
             if(this._localization !== undefined) {
                 this._localization = Oskari.getLocalization(this.getName());
@@ -762,12 +761,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             }
             return this._localization;
         },
-        /**
-         * @method _afterMapLayerRemoveEvent
-         * Handle AfterMapLayerRemoveEvent
-         * @private
-         * @param {Oskari.mapframework.event.common.AfterMapLayerRemoveEvent} event
-         */
         _afterMapLayerRemoveEvent: function (event) {
             var layer = event.getMapLayer();
             if (!layer.isLayerOfType(this._layerType)) {
@@ -776,24 +769,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             this._removeMapLayerFromMap(layer);
         },
 
-        /**
-         * @method _afterMapLayerRemoveEvent
-         * Removes the layer from the map
-         * @private
-         * @param {Oskari.digiroad2.domain.BusStopLayer} layer
-         */
         _removeMapLayerFromMap: function (layer) {
             /* This should free all memory */
             _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
                 tmpLayer.destroy();
             });
         },
-        /**
-         * @method getOLMapLayers
-         * Returns references to OpenLayers layer objects for requested layer or null if layer is not added to map.
-         * @param {Oskari.digiroad2.domain.BusStopLayer} layer
-         * @return {OpenLayers.Layer[]}
-         */
+
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
                 return null;
@@ -801,12 +783,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return _.values(this._layers);
         },
 
-        /**
-         * @method _afterChangeMapLayerOpacityEvent
-         * Handle AfterChangeMapLayerOpacityEvent
-         * @private
-         * @param {Oskari.mapframework.event.common.AfterChangeMapLayerOpacityEvent} event
-         */
         _afterChangeMapLayerOpacityEvent: function (event) {
             var layer = event.getMapLayer();
             if (!layer.isLayerOfType(this._layerType))
@@ -817,9 +793,5 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             });
         }
     }, {
-        /**
-         * @property {String[]} protocol array of superclasses as {String}
-         * @static
-         */
         'protocol': ["Oskari.mapframework.module.Module", "Oskari.mapframework.ui.module.common.mapmodule.Plugin"]
     });
