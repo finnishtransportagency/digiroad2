@@ -169,7 +169,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
         _cancelCreate: function() {
             this._removeOverlay();
-            this.removeAssetFromMap(this._selectedAsset);
+            this._removeAssetFromMap(this._selectedAsset);
         },
         _getNotInZoomRange: function() {
             var self = this;
@@ -280,6 +280,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                                           lat: projectionOnNearestLine.y,
                                           roadLinkId: nearestLine.roadLinkId,
                                           bearing: bearing}};
+            this._highlightAsset(this._selectedAsset);
             var imageIds = ['99_' + (new Date().getMilliseconds())];
             var icon = this._getIcon(imageIds);
             var marker = new OpenLayers.Marker(new OpenLayers.LonLat(this._selectedAsset.data.lon, this._selectedAsset.data.lat), icon);
@@ -321,13 +322,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 lonLat: lonLat,
                 heading: asset.bearing + 90
             };
-            /*
-            var imageIds = ['99'];
-            var icon = this._getIcon(imageIds);
-            var marker = new OpenLayers.Marker(new OpenLayers.LonLat(asset.lon, asset.lat), icon);
-            this._layers.asset.addMarker(marker);
-            asset.marker = marker;
-            */
+            this._highlightAsset(this._selectedAsset);
         },
         onEvent: function (event) {
             return this.eventHandlers[event.getName()].apply(this, [event]);
@@ -350,7 +345,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 new OpenLayers.Geometry.Point(lon, lat),
                 null,
                 {externalGraphic: 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
-                    graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle }
+                 graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle}
             );
         },
         _afterMapMoveEvent: function() {
@@ -372,8 +367,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
 
         _closeAsset: function(id) {
+            this._unhighlightAsset(this._selectedAsset);
             this._selectedAsset = null;
             this._selectControl.unselectAll();
+        },
+        
+        _unhighlightAsset: function(asset) {
+            var arrow = asset.directionArrow;
+            arrow.style.backgroundGraphic = null,
+            arrow.style.backgroundHeight = null;
+            arrow.style.backgroundWidth = null;
+            this._layers.assetDirection.redraw();
         },
 
         _toolSelectionChange: function(action) {
@@ -523,7 +527,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         _mouseDown: function(asset, busStops, mouseUp) {
             var me = this;
             return function (evt) {
-                eventbus.trigger('asset:unselected', this._selectedAsset && this._selectedAsset.data.id);
+                if (me._selectedAsset) {
+                    eventbus.trigger('asset:unselected', me._selectedAsset.data.id);
+                }
                 me._selectedAsset = asset;
                 // push marker up
                 busStops.removeMarker(asset.marker);
@@ -552,11 +558,20 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     streetViewCoordinates.heading = asset.data.roadDirection + (-90 * asset.data.effectDirection);
                     assetAttributes.position = streetViewCoordinates;
                     me._selectedAsset = asset;
+                    me._highlightAsset(me._selectedAsset);
                 });
                 OpenLayers.Event.stop(evt);
             };
         },
 
+        _highlightAsset: function(asset) {
+            var arrow = asset.directionArrow;
+            arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/mapbusstop/images/hover.png',
+            arrow.style.backgroundHeight = 68;
+            arrow.style.backgroundWidth = 68;
+            this._layers.assetDirection.redraw();
+        },
+        
         _moveSelectedAsset: function(evt) {
             if (this._map.getZoom() < 10) {
                 return;

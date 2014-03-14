@@ -44,7 +44,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }
         },
         init : function() {
-            eventbus.on('asset:fetched assetPropertyValue:fetched', this._initializeEditExisting, this);
+            eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._initializeEditExisting, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('asset:placed', this._initializeCreateNew, this);
             eventbus.on('assetPropertyValue:changed', function(data) {
