@@ -11,6 +11,9 @@ trait RequestHeaderAuthentication extends Authentication {
   def authenticate(request: HttpServletRequest)(implicit userProvider: UserProvider): User = {
     val remoteUser = request.getHeader(OamRemoteUserHeader)
     raLogger.info("Authenticate request, remote user = " + remoteUser)
-    userProvider.getUser(remoteUser).getOrElse(throw new IllegalStateException("Could not authenticate: " + remoteUser))
+    if (remoteUser == null || remoteUser.isEmpty) {
+      throw new UnauthenticatedException()
+    }
+    userProvider.getUser(remoteUser).getOrElse(throw new UserNotFoundException(remoteUser))
   }
 }
