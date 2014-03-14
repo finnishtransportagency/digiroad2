@@ -22,6 +22,7 @@ object DataFixture {
   def flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
+    flyway.setInitVersion("-1")
     flyway.setInitOnMigrate(true)
     flyway.setLocations("db.migration")
     flyway
