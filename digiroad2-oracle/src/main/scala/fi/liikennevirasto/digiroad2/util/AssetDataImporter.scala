@@ -7,7 +7,6 @@ import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
 import Q.interpolation
-import java.io.{ByteArrayOutputStream, BufferedInputStream}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.{Interval, DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -72,7 +71,6 @@ class AssetDataImporter {
 
   val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
-  val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
   val Modifier = "dr1conversion"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
@@ -81,12 +79,6 @@ class AssetDataImporter {
     (bs, lrm)
   }
   implicit val getSimpleRoadLink = GetResult[SimpleRoadLink](r => SimpleRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.nextObject().asInstanceOf[STRUCT]))
-
-  implicit object SetByteArray extends SetParameter[Array[Byte]] {
-    def apply(v: Array[Byte], pp: PositionedParameters) {
-      pp.setBytes(v)
-    }
-  }
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -210,7 +202,6 @@ class AssetDataImporter {
       insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
       insertLrmPositionsSequence.foreach(lrmPositions => insertLrmPositions(lrmPositions, targetDbSession))
     })
-    insertImages()
     val typeProps = getTypeProperties
     val insertBusStopsSequence: ParSeq[SimpleBusStop] = busStops.toList.par
     insertBusStopsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
@@ -314,29 +305,6 @@ class AssetDataImporter {
       insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by)
       values ($propertyId, $assetId, (select id from enumerated_value where value = $value and property_id = $propertyId), $Modifier)
     """.execute
-  }
-
-  def insertImages() {
-    Database.forDataSource(ds).withDynSession {
-      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
-
-      imagesForBusStopTypes.foreach { keyVal =>
-        val s = getClass.getResourceAsStream(keyVal._2)
-        val bis = new BufferedInputStream(s)
-        val fos = new ByteArrayOutputStream(65535)
-        val buf = new Array[Byte](1024)
-        Stream.continually(bis.read(buf)).takeWhile(_ != -1).foreach(fos.write(buf, 0, _))
-        val byteArray = fos.toByteArray
-
-        sqlu"""
-          insert into image (id, created_by, modified_date, file_name, image_data)
-          values (${keyVal._1}, $Modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
-        """.execute
-        sqlu"""
-          update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
-        """.execute
-      }
-    }
   }
 
   private[this] def initDataSource: DataSource = {

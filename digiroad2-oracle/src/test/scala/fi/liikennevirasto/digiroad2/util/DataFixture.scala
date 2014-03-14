@@ -102,6 +102,7 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
+        BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
       case Some("full") =>
         tearDown()
@@ -109,6 +110,7 @@ object DataFixture {
         val taskPool = new ForkJoinPool(1)
         dataImporter.importRoadlinks(TemporaryTables, taskPool)
         dataImporter.importBusStops(TemporaryTables, taskPool)
+        BusStopIconImageData.insertImages("fulltestdataimport")
         importMunicipalityCodes()
       case Some("conversion") =>
         tearDown()
@@ -116,6 +118,7 @@ object DataFixture {
         val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
+        BusStopIconImageData.insertImages("dr1conversion")
         importMunicipalityCodes()
         migrateAll()
       case Some("busstops") =>
