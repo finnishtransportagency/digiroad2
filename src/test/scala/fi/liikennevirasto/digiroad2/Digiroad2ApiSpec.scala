@@ -27,7 +27,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(401)
     }
     getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "nonexistent") {
-      status should equal(401)
+      status should equal(403)
     }
     getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test") {
       status should equal(200)

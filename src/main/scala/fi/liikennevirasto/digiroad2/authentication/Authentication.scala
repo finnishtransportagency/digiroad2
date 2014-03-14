@@ -17,12 +17,12 @@ trait Authentication extends TestUserSupport {
     try {
       userProvider.setCurrentUser(authenticate(request)(userProvider))
     } catch {
-      case ise: IllegalStateException => {
+      case ua: UnauthenticatedException => {
         if (authenticationTestModeEnabled) {
           authLogger.info("Remote user not found, falling back to test mode authentication")
-          userProvider.setCurrentUser(getTestUser(request)(userProvider).getOrElse(throw ise))
+          userProvider.setCurrentUser(getTestUser(request)(userProvider).getOrElse(throw UserNotFoundException("")))
         } else {
-          throw ise
+          throw ua
         }
       }
     }

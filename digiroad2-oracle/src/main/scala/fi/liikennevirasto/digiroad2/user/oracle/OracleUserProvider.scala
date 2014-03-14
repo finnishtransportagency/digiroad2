@@ -32,20 +32,20 @@ class OracleUserProvider extends UserProvider {
   def getUser(username: String): Option[User] = {
     if (username == null) return None
     Database.forDataSource(ds).withDynSession {
-      sql"""select id, username, configuration from service_user where username = ${username.toLowerCase}""".as[User].firstOption
+      sql"""select id, username, configuration from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
     }
   }
 
   def saveUser(user: User): User = {
     Database.forDataSource(ds).withDynSession {
-      sqlu"""update service_user set configuration = ${write(user.configuration)} where username = ${user.username.toLowerCase}""".execute()
+      sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute()
       user
     }
   }
 
   def deleteUser(username: String) = {
     Database.forDataSource(ds).withDynSession {
-      sqlu"""delete from service_user where username = ${username.toLowerCase}""".execute()
+      sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute()
     }
   }
 }
