@@ -180,11 +180,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'MouseHoverEvent': function (event) {
                 this._moveSelectedBusStop(event);
             },
-            'featureattributes.FeatureAttributeChangedEvent': function (event) {
-                if(_.isObject(this._state) && _.isFunction(this._state.featureAttributeChangedHandler)) {
-                    this._state.featureAttributeChangedHandler(event);
-                }
-            },
             'MapClickedEvent': function (event) {
                 if (this._selectedControl === 'Add') {
                     this._addBusStopEvent(event);
@@ -393,13 +388,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             };
             this._sendShowAttributesRequest(asset, asset.position);
         },
-
-        _triggerEvent: function(key, value) {
-            var eventBuilder = this._sandbox.getEventBuilder(key);
-            var event = eventBuilder(value);
-            this._sandbox.notifyAll(event);
-        },
-
         /**
          * @method onEvent
          * Event is handled forwarded to correct #eventHandlers if found or discarded
@@ -463,8 +451,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         },
 
         _closeAsset: function(id) {
-            if (this._selectedAsset && this._selectedAsset.data.id === id
-                  && this._selectedAsset.marker && this._selectedAsset.marker.display) {
+            if (this._selectedAsset && this._selectedAsset.data.id === id &&
+                    this._selectedAsset.marker && this._selectedAsset.marker.display) {
                 this._selectedAsset.marker.display(true);
                 this._selectedAsset = null;
             }
@@ -485,7 +473,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return contentItem;
         },
         _sendPopupRequest:function(id, title, busStopId, content, lonlat, popupClosedCallback) {
-            id = id == undefined ? id : '' + id;
+            id = id === undefined ? id : '' + id;
             var me = this;
             var requestBuilder = this._sandbox.getRequestBuilder('InfoBox.ShowInfoBoxRequest');
             var request = requestBuilder(id, title, [content], lonlat, true);
@@ -570,8 +558,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         //Make the feature a plain OpenLayers marker
                         var directionArrow = self._getDirectionArrow(asset.bearing, validityDirection, asset.lon, asset.lat);
                         self._layers.assetDirection.addFeatures(directionArrow);
-                        self._assets = self._assets || [];
-                        self._assets.push(self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection));
+                        self._assets = self._assets || {};
+                        self._assets[asset.id] = self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
                     }
                 });
             }
@@ -641,7 +629,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return function(evt) {
                 var bearing ="0";
                 if (me._selectedAsset) {
-                    bearing = me._selectedAsset.roadDirection;
+                    bearing = me._selectedAsset.data.roadDirection;
                 }
                 // Opacity back
                 asset.marker.setOpacity(1);
@@ -739,7 +727,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._selectControl.unselectAll();
                 this._selectControl.select(nearestFeature);
                 var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-                this._selectedAsset.marker.roadDirection = angle;
+                this._selectedAsset.data.bearing = angle;
+                this._selectedAsset.data.roadDirection = angle;
                 this._selectedAsset.directionArrow.style.rotation = angle + (90 * this._selectedAsset.marker.effectDirection);
                 var position = geometrycalculator.nearestPointOnLine(
                     nearestLine,
