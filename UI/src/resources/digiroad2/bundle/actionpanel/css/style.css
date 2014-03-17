@@ -124,3 +124,20 @@ div.actionButtonActive {
     background: #cbdce5;
     border-radius: 2px;
 }
+
+button.editMode {
+    border: 1px solid #000000;
+    border-radius: 3px;
+    font-family: "Arial";
+    color: rgb( 255, 255, 255 );
+    line-height: 1.286;
+    text-align:center;
+    background-color: #666666;
+    padding: 3px;
+    cursor: pointer;
+
+    font-size: 11px;
+    width: 210px;
+    padding-top: 2px;
+    padding-bottom: 3px;
+}

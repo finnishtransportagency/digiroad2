@@ -3,6 +3,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
         this.started = false;
         this.mediator = null;
         this._cursor = {};
+        this._readOnly = true;
     }, {
         getName: function() {
             return 'ActionPanel';
@@ -51,10 +52,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
         _renderView: function() {
             var me = this;
             jQuery("#maptools").html(me._templates.panelControl);
-           _.forEach(me._layerPeriods, function (layer) {
+            _.forEach(me._layerPeriods, function (layer) {
                 jQuery(".layerGroupLayers").append(me._templates.mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
             });
-            jQuery(".actionPanel").append(me._templates.actionButtons);
+            if (!this._readOnly) {
+                jQuery(".actionPanel").append(me._templates.actionButtons);
+            } else {
+               jQuery(".actionPanel").append('<button class="editMode">Muokkaa</button>').click(function() {
+                   eventbus.trigger('asset:unselected');
+                   eventbus.trigger('application:readOnly', false);
+               });
+            }
         },
         _bindEvents: function() {
             var me = this;

@@ -7,6 +7,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
         this._backend = defineDependency('backend', window.Backend);
+        this._readOnly = true;
 
         function defineDependency(dependencyName, defaultImplementation) {
             var dependency = _.isObject(config) ? config[dependencyName] : null;
@@ -52,6 +53,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     this._changeAssetDirection(data);
                 }
             }, this);
+            eventbus.on('application:readOnly', function(readOnly) {
+                this._readOnly = readOnly;
+
+            }, this);
 
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
             this._getPropertyValues();
@@ -68,6 +73,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: null });
             jQuery("#featureAttributes").html(featureAttributes);
             me._addDatePickers();
+            if (this._readOnly) {
+              $('#featureAttributes button').prop('disabled', true);
+              $('#featureAttributes input').prop('disabled', true);
+              $('#featureAttributes select').prop('disabled', true);
+              $('#featureAttributes textarea').prop('disabled', true);
+            }
             jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
                 var data = jQuery(this);
                 me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));

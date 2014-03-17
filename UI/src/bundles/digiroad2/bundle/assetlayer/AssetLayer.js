@@ -12,6 +12,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         this._backend = defineDependency('backend', window.Backend);
         this._geometryCalculations = defineDependency('geometryCalculations', window.geometrycalculator);
         this._oskari = defineDependency('oskari', window.Oskari);
+        this._readOnly = true;
 
         function defineDependency(dependencyName, defaultImplementation) {
             var dependency = _.isObject(config) ? config[dependencyName] : null;
@@ -57,6 +58,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
+            }, this);
+            eventbus.on('application:readOnly', function(readOnly) {
+                this._readOnly = readOnly;
             }, this);
 
             // register domain builder
@@ -304,7 +308,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         },
 
         _closeAsset: function(id) {
-            this._unhighlightAsset(this._selectedAsset);
+            if (this._selectedAsset) {
+                this._unhighlightAsset(this._selectedAsset);
+            }
             this._selectedAsset = null;
             this._selectControl.unselectAll();
         },
@@ -449,22 +455,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             return asset;
         },
         _mouseUp: function(asset, busStops, busStopClick, id, typeId) {
-            var me = this;
+            var self = this;
             return function(evt) {
                 OpenLayers.Event.stop(evt);
                 var bearing ="0";
-                if (me._selectedAsset) {
-                    bearing = me._selectedAsset.data.roadDirection;
+                if (self._selectedAsset) {
+                    bearing = self._selectedAsset.data.roadDirection;
                 }
                 // Opacity back
                 asset.marker.setOpacity(1);
                 asset.marker.actionMouseDown = false;
                 // Not need listeners anymore
-                me._map.events.unregister("mouseup", me._map, me._mouseUpFunction);
+                self._map.events.unregister("mouseup", self._map, self._mouseUpFunction);
                 // Moved update
-                if (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY ) {
+                if (!self._readOnly && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
                     var data = { "assetTypeId" : typeId, "lon" : asset.marker.lonlat.lon, "lat" : asset.marker.lonlat.lat, "roadLinkId": asset.roadLinkId, "bearing" : bearing };
-                    me._backend.updateAsset(id, data);
+                    self._backend.updateAsset(id, data);
                 }
                 var streetViewCoordinates = { lonLat: asset.marker.lonlat };
                 busStopClick(evt, streetViewCoordinates);
@@ -520,6 +526,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         },
         
         _moveSelectedAsset: function(evt) {
+            if (this._readOnly) {
+                return;
+            }
+
             if (this._map.getZoom() < 10) {
                 return;
             }
