@@ -1,20 +1,11 @@
-/**
- * @class Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance
- *
- */
 Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance",
 
-    /**
-     * @method create called automatically on construction
-     * @static
-     */
     function(config) {
         this.sandbox = null;
         this.started = false;
         this.mediator = null;
         this._enumeratedPropertyValues = null;
         this._featureDataAssetId = null;
-        this._state = undefined;
         this._backend = defineDependency('backend', window.Backend);
 
         function defineDependency(dependencyName, defaultImplementation) {
@@ -22,44 +13,19 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return dependency || defaultImplementation;
         }
     }, {
-        /**
-         * @static
-         * @property __name
-         */
         __name : 'FeatureAttributes',
 
-        /**
-         * @method getName
-         * @return {String} the name for the component
-         */
         getName : function() {
             return this.__name;
         },
-        /**
-         * @method setSandbox
-         * @param {Oskari.mapframework.sandbox.Sandbox} sandbox
-         * Sets the sandbox reference to this component
-         */
         setSandbox : function(sandbox) {
             this.sandbox = sandbox;
         },
-        /**
-         * @method getSandbox
-         * @return {Oskari.mapframework.sandbox.Sandbox}
-         */
         getSandbox : function() {
             return this.sandbox;
         },
-        /**
-         * @method update
-         * implements BundleInstance protocol update method - does nothing atm
-         */
         update : function() {
         },
-        /**
-         * @method start
-         * implements BundleInstance protocol start methdod
-         */
         start : function() {
             var me = this;
             if(me.started) {
@@ -76,36 +42,30 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     sandbox.registerForEventByName(me, p);
                 }
             }
-
-            sandbox.addRequestHandler('FeatureAttributes.ShowFeatureAttributesRequest', this.requestHandlers.showFeatureAttributesHandler);
-            sandbox.addRequestHandler('FeatureAttributes.CollectFeatureAttributesRequest', this.requestHandlers.collectFeatureAttributesHandler);
         },
-        /**
-         * @method init
-         * implements Module protocol init method - initializes request handlers
-         */
         init : function() {
-            var me = this;
-            this.requestHandlers = {
-                showFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.ShowFeatureAttributesRequestHandler', this),
-                collectFeatureAttributesHandler : Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.request.CollectFeatureAttributesRequestHandler', this)
-            };
+            eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._initializeEditExisting, this);
+            eventbus.on('asset:unselected', this._closeAsset, this);
+            eventbus.on('asset:placed', this._initializeCreateNew, this);
+            eventbus.on('assetPropertyValue:changed', function(data) {
+                if (data.propertyData[0].propertyId == 'validityDirection') {
+                    this._changeAssetDirection(data);
+                }
+            }, this);
 
-            me._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
-            me._getPropertyValues();
+            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
+            this._getPropertyValues();
 
             return null;
         },
-        showAttributes : function(assetAttributes, assetPosition) {
+        _initializeEditExisting : function(asset) {
             var me = this;
-            this._state = null;
-            me._featureDataAssetId = assetAttributes.id;
-
-            var featureData = me._makeContent(assetAttributes.propertyData);
-            assetPosition.validityDirection = assetAttributes.validityDirection;
-            assetPosition.bearing = assetAttributes.bearing;
-            var streetView = me._getStreetView(assetPosition);
-            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(assetAttributes), streetView: streetView, attributes: featureData, controls: null });
+            this._selectedAsset = asset;
+            me._featureDataAssetId = asset.id;
+            var position = {bearing: asset.bearing, lonLat: {lon: asset.lon, lat: asset.lat}, validityDirection: asset.validityDirection};
+            var featureData = me._makeContent(asset.propertyData);
+            var streetView = me._getStreetView(position);
+            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: null });
             jQuery("#featureAttributes").html(featureAttributes);
             me._addDatePickers();
             jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
@@ -136,13 +96,22 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 else return 'Ei valtakunnallista ID:tä';
             }
         },
-        collectAttributes: function(assetPosition, successCallback, cancellationCallback) {
+        
+        _changeAssetDirection: function(data) {
+            var newValidityDirection = data.propertyData[0].values[0].propertyValue;
+            var validityDirection = jQuery('.featureAttributeButton[data-propertyid="validityDirection"]');
+            validityDirection.attr('value', newValidityDirection);
+            jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
+        },
+        
+        _initializeCreateNew: function(asset) {
             var me = this;
+            this._selectedAsset = asset;
             me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
             function assetTypePropertiesCallback(properties) {
                 var featureAttributesElement = jQuery('#featureAttributes');
                 var featureData = me._makeContent(properties);
-                var streetView = me._getStreetView(assetPosition);
+                var streetView = me._getStreetView(me._selectedAsset.position);
                 var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
                 featureAttributesElement.html(featureAttributesMarkup);
                 me._addDatePickers();
@@ -151,12 +120,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 var assetDirectionChangedHandler = function() {
                     var value = validityDirection.attr('value');
                     var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
-                    validityDirection.attr('value', newValidityDirection);
-                    jQuery('.streetView').html(me._getStreetView(_.merge({}, assetPosition, { validityDirection: newValidityDirection })));
-                    me._sendFeatureChangedEvent({
+                    eventbus.trigger('assetPropertyValue:changed', {
                         propertyData: [{
                             propertyId: validityDirection.attr('data-propertyId'),
-                            values: me._propertyValuesOfButtonElement(validityDirection)
+                            values: [{propertyValue: newValidityDirection}]
                         }]
                     });
                 };
@@ -164,7 +131,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                     var jqElement = jQuery(this);
                     var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                    me._sendFeatureChangedEvent({
+                    eventbus.trigger('assetPropertyValue:changed', {
                       propertyData: [{
                           propertyId: jqElement.attr('data-propertyId'),
                           values: values
@@ -172,13 +139,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                     });
                 });
 
-                setPluginState({assetDirectionChangedHandler: assetDirectionChangedHandler});
-
                 validityDirection.click(assetDirectionChangedHandler);
 
                 featureAttributesElement.find('button.cancel').on('click', function() {
-                    setPluginState(null);
-                    cancellationCallback();
+                    eventbus.trigger('asset:cancelled');
+                    eventbus.trigger('asset:unselected');
+                    me._closeAsset();
                 });
 
                 featureAttributesElement.find('button.save').on('click', function() {
@@ -226,15 +192,36 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                             propertyValues: me._propertyValuesOfDateElement(jqElement)
                         };
                     });
-                    setPluginState(null);
-                    successCallback(textElementAttributes
+
+                    var saveAsset = function(data) {
+                        var properties = _.chain(data)
+                            .map(function(attr) {
+                                return {id: attr.propertyId,
+                                    values: attr.propertyValues};
+                            })
+                            .map(function(p) {
+                                if (p.id == 200 && _.isEmpty(p.values)) {
+                                    p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                                        propertyValue: 99}];
+                                }
+                                return p;
+                            })
+                            .value();
+                        me._backend.createAsset(
+                            {assetTypeId: 10,
+                                lon: me._selectedAsset.lon,
+                                lat: me._selectedAsset.lat,
+                                roadLinkId:  me._selectedAsset.roadLinkId,
+                                bearing:  me._selectedAsset.bearing,
+                                properties: properties});
+                    };
+
+                    saveAsset(textElementAttributes
                         .concat(selectionElementAttributes)
                         .concat(buttonElementAttributes)
                         .concat(multiCheckboxElementAttributes)
                         .concat(dateElementAttributes));
                 });
-
-                function setPluginState(state) { me._state = state; }
             }
         },
         _getStreetView: function(assetPosition) {
@@ -307,17 +294,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }
 
             var me = this;
-            me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue, successFunction);
-            function successFunction(updatedAsset) {
-                me._sendFeatureChangedEvent(updatedAsset);
-                console.log("done");
-            }
+            me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue);
         },
-        _sendFeatureChangedEvent: function(updatedAsset) {
-            var eventBuilder = this.getSandbox().getEventBuilder('featureattributes.FeatureAttributeChangedEvent');
-            var event = eventBuilder(updatedAsset);
-            this.getSandbox().notifyAll(event);
-        },
+
         _makeContent: function(contents) {
             var me = this;
             var html = "";
@@ -417,11 +396,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             checkboxes +="</div>";
             return checkboxes;
         },
-        /**
-         * @method onEvent
-         * @param {Oskari.mapframework.event.Event} event a Oskari event object
-         * Event is handled forwarded to correct #eventHandlers if found or discarded if not.
-         */
         onEvent : function(event) {
             var me = this;
             var handler = me.eventHandlers[event.getName()];
@@ -430,15 +404,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }
             return undefined;
         },
-        /**
-         * @property {Object} eventHandlers
-         * @static
-         */
         eventHandlers : {
-            'infobox.InfoBoxClosedEvent': function (event) {
-                this._closeFeatures(event);
-            },
             'mapbusstop.AssetDirectionChangeEvent': function (event) {
+                // FIXME
                 if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
                     this._state.assetDirectionChangedHandler(event);
                 } else {
@@ -446,7 +414,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }
         },
-        _closeFeatures: function () {
+        _closeAsset: function() {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
         },
@@ -456,10 +424,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: selection }];
             this._savePropertyData(propertyValues, 'validityDirection');
         },
-        /**
-         * @method stop
-         * implements BundleInstance protocol stop method
-         */
         stop : function() {
             var me = this;
             var sandbox = this.sandbox;
@@ -472,10 +436,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             me.started = false;
         }
     }, {
-        /**
-         * @property {String[]} protocol
-         * @static
-         */
         protocol : ['Oskari.bundle.BundleInstance', 'Oskari.mapframework.module.Module']
     });
 
