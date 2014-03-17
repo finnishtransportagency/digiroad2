@@ -198,11 +198,15 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("get national bus stop id", Tag("db")) {
+  test("get national bus stop id if defined", Tag("db")) {
     getWithUserAuth("/assets/300008") {
       val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
       System.out.println(assetWithProperties)
       assetWithProperties.externalId should be (Some(85755))
+    }
+    getWithUserAuth("/assets/300004") {
+      val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
+      assetWithProperties.externalId should be (None)
     }
   }
 }
