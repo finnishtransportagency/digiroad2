@@ -64,7 +64,7 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
           }, {
-            "id": "Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin"
+            "id": "Oskari.digiroad2.bundle.assetlayer.AssetLayer"
           }, {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
@@ -99,7 +99,7 @@ object MapConfigJson {
           }],
           "layers": [{
             "wmsName": "bussit",
-            "type": "busstoplayer",
+            "type": "assetlayer",
             "id": 235,
             "minScale": 6000,
             "wmsUrl": "/data/dummy/busstops.json",
@@ -1232,14 +1232,6 @@ object MapConfigJson {
         }
       },
       "statehandler": {
-        "state": {
-
-        },
-        "conf": {
-
-        }
-      },
-      "infobox": {
         "state": {
 
         },

@@ -1,4 +1,4 @@
-Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance",
+Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
 
     function(config) {
         this.sandbox = null;
@@ -13,7 +13,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return dependency || defaultImplementation;
         }
     }, {
-        __name : 'FeatureAttributes',
+        __name : 'AssetForm',
 
         getName : function() {
             return this.__name;
@@ -53,7 +53,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }, this);
 
-            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
+            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
             this._getPropertyValues();
 
             return null;
@@ -403,16 +403,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 return handler.apply(this, [event]);
             }
             return undefined;
-        },
-        eventHandlers : {
-            'mapbusstop.AssetDirectionChangeEvent': function (event) {
-                // FIXME
-                if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
-                    this._state.assetDirectionChangedHandler(event);
-                } else {
-                    this._directionChange(event);
-                }
-            }
         },
         _closeAsset: function() {
             jQuery("#featureAttributes").html('');

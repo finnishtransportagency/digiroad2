@@ -1,7 +1,7 @@
 
 var assert = chai.assert;
 
-describe('BusStopLayerPlugin', function(){
+describe('AssetLayer', function(){
     var dataOneBusStopType = ["2"];
     var dataTwoBusStopType = ["2","3"];
     var dataEmptyBusStopType = [];
@@ -34,7 +34,7 @@ describe('BusStopLayerPlugin', function(){
                 '</div></div>';        
         
         before(function(){
-            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
+            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.assetlayer.AssetLayer');
             pluginInstance._initTemplates();
         });        
         
@@ -60,7 +60,7 @@ describe('BusStopLayerPlugin', function(){
         var addedMarker = {};
 
         before(function() {
-            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin', {
+            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.assetlayer.AssetLayer', {
                 backend: _.extend({}, window.Backend, {
                     createAsset: function(data, success) {
                         assetCreationData.push(_.extend({}, data, { imageIds: [] }));
@@ -130,7 +130,7 @@ describe('BusStopLayerPlugin', function(){
         });
 
         it('should add direction arrow feature to direction arrow layer', function() {
-            assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+            assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png');
         });
 
         it('should block map and tools components', function() {
@@ -145,8 +145,8 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should recreate direction arrow', function() {
-                assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
-                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+                assert.equal(addedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png');
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png');
             });
         });
 
@@ -167,7 +167,7 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {
-                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png');
             });
 
             xit('should show bus stop marker on marker layer', function() {
@@ -186,7 +186,7 @@ describe('BusStopLayerPlugin', function(){
             });
 
             it('should remove direction arrow feature from direction arrow layer', function() {
-                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png');
+                assert.equal(destroyedFeature.style.externalGraphic, 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png');
             });
 
             it('should remove overlays', function() {

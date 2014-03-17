@@ -82,7 +82,7 @@
             "event-map": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
-            "mapbusstop": {
+            "assetlayer": {
                  "bundlePath": "src/packages/digiroad2/bundle/"
             }
          },
@@ -152,14 +152,14 @@
        }
    }, {
        "instanceProps": {},
-       "bundleinstancename": "featureattributes",
-       "fi": "featureattributes",
+       "bundleinstancename": "assetform",
+       "fi": "assetform",
        "sv": "?",
        "en": "?",
-       "bundlename": "featureattributes",
+       "bundlename": "assetform",
        "metadata": {
            "Import-Bundle": {
-               "featureattributes": {
+               "assetform": {
                    "bundlePath": "src/packages/digiroad2/bundle/"
                }
            },
