@@ -92,11 +92,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             'MouseHoverEvent': function (event) {
                 this._moveSelectedAsset(event);
             },
-            'MapClickedEvent': function (event) {
+            'MapClickedEvent': function(event) {
                 if (this._selectedControl === 'Add') {
                     this._addBusStopEvent(event);
                 } else if (this._selectedAsset) {
-                    eventbus.trigger('asset:unselected', this._selectedAsset.data.id);
+                    // FIXME: Currently this breaks selection on Firefox after initial zoom
+//                    eventbus.trigger('asset:unselected', this._selectedAsset.data.id);
                 }
             }
         },
@@ -450,6 +451,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _mouseUp: function(asset, busStops, busStopClick, id, typeId) {
             var me = this;
             return function(evt) {
+                OpenLayers.Event.stop(evt);
                 var bearing ="0";
                 if (me._selectedAsset) {
                     bearing = me._selectedAsset.data.roadDirection;
@@ -471,6 +473,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _mouseDown: function(asset, busStops, mouseUp) {
             var me = this;
             return function (evt) {
+                OpenLayers.Event.stop(evt);
                 if (me._selectedAsset) {
                     eventbus.trigger('asset:unselected', me._selectedAsset.data.id);
                 }
@@ -494,6 +497,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _mouseClick: function(asset, imageIds) {
             var me = this;
             return function (evt, streetViewCoordinates) {
+                OpenLayers.Event.stop(evt);
                 me._state = null;
                 eventbus.trigger('asset:selected', asset.data.id);
                 me._backend.getAsset(asset.data.id, function(assetData) {
@@ -504,7 +508,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                     me._selectedAsset = asset;
                     me._highlightAsset(me._selectedAsset);
                 });
-                OpenLayers.Event.stop(evt);
             };
         },
 
