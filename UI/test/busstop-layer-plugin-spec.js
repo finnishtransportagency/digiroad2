@@ -5,30 +5,6 @@ describe('BusStopLayerPlugin', function(){
     var dataOneBusStopType = ["2"];
     var dataTwoBusStopType = ["2","3"];
     var dataEmptyBusStopType = [];
-    
-    describe('#makePopupContent()', function() {
-        var pluginInstance = null;
-        var testOneBusStopTypeHtml =  '<img src="api/images/2">';
-        var testTwoBusStopTypeHtml =  '<img src="api/images/2"><img src="api/images/3">';
-        var testEmptyBusStopTypeHtml =  '';
-
-        before(function(){
-            pluginInstance = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin');
-            pluginInstance._initTemplates();
-        });
-
-        it('should return one bus stop html by image tag', function () {
-            assert.equal(testOneBusStopTypeHtml, pluginInstance._makePopupContent(dataOneBusStopType));
-        });
-
-        it('should return two various bus stop html by image tags', function () {
-            assert.equal(testTwoBusStopTypeHtml, pluginInstance._makePopupContent(dataTwoBusStopType));
-        });
-
-        it('should return empty html', function () {
-            assert.equal(testEmptyBusStopTypeHtml, pluginInstance._makePopupContent(dataEmptyBusStopType));
-        });
-    });
 
     describe('#getIconImages()', function(){
         var pluginInstance = null;

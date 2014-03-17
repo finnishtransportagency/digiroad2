@@ -155,6 +155,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             'MapClickedEvent': function (event) {
                 if (this._selectedControl === 'Add') {
                     this._addBusStopEvent(event);
+                } else if (this._selectedAsset) {
+                    eventbus.trigger('asset:unselected', this._selectedAsset.data.id);
                 }
             },
             'mapbusstop.ApplicationInitializedEvent': function() {
@@ -278,8 +280,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                                           validityDirection: 2,
                                           lon: projectionOnNearestLine.x,
                                           lat: projectionOnNearestLine.y,
-                                          roadLinkId: nearestLine.roadLinkId,
-                                          bearing: bearing}};
+                                          roadLinkId: nearestLine.roadLinkId}};
             this._highlightAsset(this._selectedAsset);
             var imageIds = ['99_' + (new Date().getMilliseconds())];
             var icon = this._getIcon(imageIds);
@@ -302,7 +303,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                     mapOverlay: mapOverlay,
                     toolsOverlay: toolsOverlay
                 };
-            }
+            };
 
             this._overlays = applyBlockingOverlays();
         },
@@ -374,7 +375,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
         
         _unhighlightAsset: function(asset) {
             var arrow = asset.directionArrow;
-            arrow.style.backgroundGraphic = null,
+            arrow.style.backgroundGraphic = null;
             arrow.style.backgroundHeight = null;
             arrow.style.backgroundWidth = null;
             this._layers.assetDirection.redraw();
@@ -566,7 +567,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         _highlightAsset: function(asset) {
             var arrow = asset.directionArrow;
-            arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/mapbusstop/images/hover.png',
+            arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/mapbusstop/images/hover.png';
             arrow.style.backgroundHeight = 68;
             arrow.style.backgroundWidth = 68;
             this._layers.assetDirection.redraw();

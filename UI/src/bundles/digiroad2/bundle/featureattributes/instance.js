@@ -214,7 +214,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                                 roadLinkId:  me._selectedAsset.roadLinkId,
                                 bearing:  me._selectedAsset.bearing,
                                 properties: properties});
-                    }
+                    };
 
                     saveAsset(textElementAttributes
                         .concat(selectionElementAttributes)
