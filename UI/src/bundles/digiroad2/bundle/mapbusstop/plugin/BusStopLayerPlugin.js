@@ -446,7 +446,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                         self._assets[asset.id] = self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
                         // TODO: If we have a selected asset it probably should be updated at this point as well
                         if (self._selectedAsset && self._selectedAsset.data.id == asset.id) {
-                            self._highlightAsset(self._assets[asset.id])
+                            self._highlightAsset(self._assets[asset.id]);
                         }
                     }
                 });
