@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
-import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException}
+import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
@@ -161,6 +161,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   error {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
+    case unf: UserNotFoundException => halt(Forbidden(unf.username))
     case e: Exception => {
       logger.error("API Error", e)
       halt(InternalServerError("API error"))

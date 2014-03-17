@@ -1,13 +1,17 @@
-(function(session, undefined){
-    session.redirectToLogin = function() {
+$(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    if (jqXHR.status == 401) {
         window.location = "index.html";
-    };
+    } else if (jqXHR.status == 403) {
+        window.location = "autherror.html";
+    }
+});
 
-}(window.session = window.session || {}));
-
+// TODO: enable header check when
+/*
 $(document).ajaxComplete(function(event, jqXHR, ajaxSettings) {
     var digiroadResponse = jqXHR.getResponseHeader("Digiroad2-Server-Originated-Response");
     if (!digiroadResponse) {
-//        session.redirectToLogin();
+        window.location = "index.html";
     }
 });
+*/
