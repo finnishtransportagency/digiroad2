@@ -99,7 +99,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
-      newAsset.propertyData should contain (Property("validTo", "Käytössä päättyen", "date", false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
+      newAsset.propertyData should contain (Property("validTo", "Viimeinen voimassaolopäivä", "date", 80, false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }

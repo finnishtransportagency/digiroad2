@@ -57,17 +57,19 @@ class BustStopExcelDataImporter {
               update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId}
             """.execute
 
-            insertTextPropertyValue(assetId, "Pysäkin nimi", row.stopNameFi, row.stopNameSv)
+            insertTextPropertyValue(assetId, "Nimi suomeksi", row.stopNameFi)
 
-            insertTextPropertyValue(assetId, "Pysäkin suunta", row.direction)
+            insertTextPropertyValue(assetId, "Nimi ruotsiksi", row.stopNameSv)
 
-            insertTextPropertyValue(assetId, "Pysäkin saavutettavuus", row.reachability)
+            insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
-            insertTextPropertyValue(assetId, "Esteettömyystiedot", row.accessibility)
+            //insertTextPropertyValue(assetId, "Pysäkin saavutettavuus", row.reachability)
+
+            insertTextPropertyValue(assetId, "Esteettömyys liikuntarajoitteiselle", row.accessibility)
 
             insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Kommentit", row.equipments)
+            insertTextPropertyValue(assetId, "Lisätiedot", row.equipments)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -76,11 +78,7 @@ class BustStopExcelDataImporter {
     }
   }
 
-  def insertTextPropertyValue(assetId: Long, propertyName: String, value: String) {
-    insertTextPropertyValue(assetId, propertyName, value, null)
-  }
-
-  def insertTextPropertyValue(assetId: Long, propertyName: String, valueFi: String, valueSv: String) {
+  def insertTextPropertyValue(assetId: Long, propertyName: String, valueFi: String) {
     val propertyId = sql"""
       select id from text_property_value
       where property_id = (select id from property where NAME_FI = ${propertyName})
@@ -89,16 +87,16 @@ class BustStopExcelDataImporter {
 
     propertyId match {
       case None => {
-        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
+        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "'")
         sqlu"""
-          insert into text_property_value(id, property_id, asset_id, value_fi, value_sv, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${valueFi}, ${valueSv}, ${Updater})
+          insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
+          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${valueFi}, ${Updater})
         """.execute
       }
       case _ => {
-        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "', SE: '" + valueSv + "'")
+        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "'")
         sqlu"""
-          update text_property_value set value_fi = ${valueFi}, value_sv = ${valueSv}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          update text_property_value set value_fi = ${valueFi}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
         """.execute
       }

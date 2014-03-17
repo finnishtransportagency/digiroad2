@@ -26,13 +26,12 @@ import org.joda.time.format.PeriodFormatterBuilder
 
 object AssetDataImporter {
 
-  case class SimpleBusStop(shelterType: Int, busStopId: Option[Long], busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
+  case class SimpleBusStop(shelterType: Int, assetId: Option[Long] = None, busStopId: Option[Long], busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
   case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Double, endMeasure: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
-  case class PropertyWrapper(shelterTypePropertyId: Long, reachabilityPropertyId: Long,
-                             accessibilityPropertyId: Long, administratorPropertyId: Long,
+  case class PropertyWrapper(shelterTypePropertyId: Long, accessibilityPropertyId: Long, administratorPropertyId: Long,
                              busStopAssetTypeId: Long, busStopTypePropertyId: Long)
 
   sealed trait ImportDataSet {
@@ -74,7 +73,7 @@ class AssetDataImporter {
   val Modifier = "dr1conversion"
 
   implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
-      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), r.<<, busStopTypes(r.<<), r.<<)
+      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), None, r.<<, busStopTypes(r.<<), r.<<)
       val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
     (bs, lrm)
   }
@@ -240,20 +239,19 @@ class AssetDataImporter {
 
   def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
-      val shelterTypePropertyId = sql"select id from property where name_fi = 'Pysäkin katos'".as[Long].first
-      val reachabilityPropertyId = sql"select id from property where name_fi = 'Pysäkin saavutettavuus'".as[Long].first
+      val shelterTypePropertyId = sql"select id from property where name_fi = 'Varusteet (Katos)'".as[Long].first
       val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyys liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select id from property where name_fi = 'Tietojen ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
       val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
-      PropertyWrapper(shelterTypePropertyId, reachabilityPropertyId, accessibilityPropertyId, administratorPropertyId,
+      PropertyWrapper(shelterTypePropertyId, accessibilityPropertyId, administratorPropertyId,
                       busStopAssetTypeId, busStopTypePropertyId)
     }
   }
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
     Database.forDataSource(ds).withDynSession {
-      val assetId = sql"select primary_key_seq.nextval from dual".as[Long].first
+      val assetId = busStop.assetId.getOrElse(sql"select primary_key_seq.nextval from dual".as[Long].first)
 
       sqlu"""
         insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
@@ -278,7 +276,6 @@ class AssetDataImporter {
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
 
-      insertTextPropertyData(typeProps.reachabilityPropertyId, assetId, "Ei tiedossa")
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 4)
       insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)

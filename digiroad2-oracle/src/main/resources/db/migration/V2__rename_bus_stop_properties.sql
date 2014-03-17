@@ -12,6 +12,11 @@ update property set NAME_FI = 'Liikennöintisuunta' where NAME_FI = 'Pysäkin su
 
 update property set NAME_FI = 'Esteettömyys liikuntarajoitteiselle' where NAME_FI = 'Esteettömyystiedot';
 
+update property set NAME_FI = 'Varusteet (Katos)' where NAME_FI = 'Pysäkin katos';
+
+
+delete from property where NAME_FI = 'Pysäkin saavutettavuus';
+
 
 alter table property drop column name_sv;
 
@@ -35,94 +40,81 @@ values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussip
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Aikataulu', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Aikataulu)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Aikataulu'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Aikataulu)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Aikataulu'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Aikataulu)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Aikataulu'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Aikataulu)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Katos', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Mainoskatos)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Katos'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Mainoskatos)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Katos'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Mainoskatos)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Katos'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Mainoskatos)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Mainoskatos', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Penkki)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Mainoskatos'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Penkki)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Mainoskatos'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Penkki)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Mainoskatos'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Penkki)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Penkki', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Pyöräteline)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Penkki'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Pyöräteline)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Penkki'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Pyöräteline)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Penkki'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Pyöräteline)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Pyöräteline', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Sähköinen aikataulunäyttö)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Pyöräteline'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Sähköinen aikataulunäyttö)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Pyöräteline'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Sähköinen aikataulunäyttö)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Pyöräteline'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Sähköinen aikataulunäyttö)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Sähköinen aikataulunäyttö', 'single_choice');
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Varusteet (Valaistus)', 'single_choice');
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Sähköinen aikataulunäyttö'));
+values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Varusteet (Valaistus)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Sähköinen aikataulunäyttö'));
+values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Varusteet (Valaistus)'));
 
 insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Sähköinen aikataulunäyttö'));
-
-
-insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), '0', 'automatic_import', 'Valaistus', 'single_choice');
-
-insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 1, 'Ei', 'automatic_import', (select id from property where name_fi = 'Valaistus'));
-
-insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 2, 'Kyllä', 'automatic_import', (select id from property where name_fi = 'Valaistus'));
-
-insert into enumerated_value (id, value, name_fi, created_by, property_id)
-values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Valaistus'));
+values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id from property where name_fi = 'Varusteet (Valaistus)'));
 
 
 insert into property (id, asset_type_id, required, created_by, name_fi, property_type)
@@ -140,3 +132,6 @@ values (primary_key_seq.nextval, 99, 'Ei tietoa', 'automatic_import', (select id
 
 insert into property (id, asset_type_id, created_by, name_fi, property_type)
 values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Liityntäpysäköintipaikkojen määrä', 'text');
+
+insert into property (id, asset_type_id, created_by, name_fi, property_type)
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Pysäkin omistaja', 'text');
