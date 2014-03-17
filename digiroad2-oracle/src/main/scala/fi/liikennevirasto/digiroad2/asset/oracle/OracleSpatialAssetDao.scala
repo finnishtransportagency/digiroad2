@@ -47,6 +47,23 @@ object OracleSpatialAssetDao {
     nextNationalBusStopId.as[Long].first
   }
 
+  def getAssetsByMunicipality(municipality: Int) = {
+    def foo = {
+      Some(" WHERE rl.municipality_number = ?", List(municipality))
+    }
+    val q = QueryCollector(allAssets).add(foo)
+    collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
+      val row = v(0)
+      AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+        lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
+        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.propertyId.toLong),
+        bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
+        validityPeriod = validityPeriod(row.validFrom, row.validTo),
+        imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
+        validityDirection = Some(row.validityDirection))
+    }.toSeq
+  }
+
   private[oracle] def getImageId(image: Image) = {
     image.imageId match {
       case None => null
