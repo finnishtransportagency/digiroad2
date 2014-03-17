@@ -250,12 +250,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             }];
         },
         _propertyValuesOfSelectionElement: function(element) {
-            return _.map(element.val(), function(value) {
-                return {
-                    propertyValue : Number(value),
-                    propertyDisplayValue : element.attr('name')
-                };
-            });
+            return [{
+                propertyValue : Number(element.val()),
+                propertyDisplayValue : element.attr('name')
+            }];
         },
         _propertyValuesOfMultiCheckboxElement: function(element) {
             return _.chain(element.find('input'))
