@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.featureattributes.template.Templates',
+Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
     function () {
         _.templateSettings = {
             interpolate: /\{\{(.+?)\}\}/g

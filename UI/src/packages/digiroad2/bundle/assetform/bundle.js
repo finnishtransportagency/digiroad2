@@ -1,14 +1,13 @@
-/**
- * @class Oskari.digiroad2.bundle.busstop.BusStopBundle
- */
-Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() {
+Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm", function() {
     }, {
         /*
          * implementation for protocol 'Oskari.bundle.Bundle'
          */
         "create" : function() {
-
-            return null;
+            var me = this;
+            var inst =
+                Oskari.clazz.create("Oskari.digiroad2.bundle.assetform.AssetForm");
+            return inst;
         },
         "update" : function(manager, bundle, bi, info) {
             manager.alert("RECEIVED update notification " + info);
@@ -22,32 +21,23 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
 
         "protocol" : ["Oskari.bundle.Bundle", "Oskari.mapframework.bundle.extension.ExtensionBundle"],
         "source" : {
+
             "scripts" : [{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/domain/BusStopLayer.js"
+                "src" : "../../../../bundles/digiroad2/bundle/assetform/AssetForm.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/domain/BusStopLayerModelBuilder.js"
+                "src" : "../../../../bundles/digiroad2/bundle/assetform/template/Templates.js"
             },{
-                "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/plugin/BusStopLayerPlugin.js"
-            },{
-                "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/plugin/template/Templates.js"
-            },{
-                "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/common/event/ApplicationInitializedEvent.js"
+                "type" : "text/css",
+                "src" : "../../../../resources/digiroad2/bundle/assetform/css/style.css"
             }],
-            "locales" : [{
-                "lang" : "fi",
-                "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/mapbusstop/locale/fi.js"
-            }]
+            "locales" : []
         },
         "bundle" : {
             "manifest" : {
-                "Bundle-Identifier" : "busstop",
-                "Bundle-Name" : "busstop",
+                "Bundle-Identifier" : "assetform",
+                "Bundle-Name" : "assetform",
                 "Bundle-Tag" : {
                     "mapframework" : true
                 },
@@ -71,8 +61,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
                 }],
                 "Bundle-Name-Locale" : {
                     "fi" : {
-                        "Name" : "BusStop",
-                        "Title" : "BusStop"
+                        "Name" : "AssetForm",
+                        "Title" : "AssetForm"
                     },
                     "en" : {}
                 },
@@ -85,4 +75,4 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.busstop.BusStopBundle", function() 
 /**
  * Install this bundle
  */
-Oskari.bundle_manager.installBundleClass("mapbusstop", "Oskari.digiroad2.bundle.busstop.BusStopBundle");
+Oskari.bundle_manager.installBundleClass("assetform", "Oskari.digiroad2.bundle.assetform.AssetForm");

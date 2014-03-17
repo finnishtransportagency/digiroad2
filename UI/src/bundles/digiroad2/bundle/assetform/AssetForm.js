@@ -1,4 +1,4 @@
-Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance",
+Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
 
     function(config) {
         this.sandbox = null;
@@ -13,7 +13,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             return dependency || defaultImplementation;
         }
     }, {
-        __name : 'FeatureAttributes',
+        __name : 'AssetForm',
 
         getName : function() {
             return this.__name;
@@ -53,7 +53,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }
             }, this);
 
-            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.template.Templates');
+            this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
             this._getPropertyValues();
 
             return null;
@@ -250,12 +250,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
             }];
         },
         _propertyValuesOfSelectionElement: function(element) {
-            return _.map(element.val(), function(value) {
-                return {
-                    propertyValue : Number(value),
-                    propertyDisplayValue : element.attr('name')
-                };
-            });
+            return [{
+                propertyValue : Number(element.val()),
+                propertyDisplayValue : element.attr('name')
+            }];
         },
         _propertyValuesOfMultiCheckboxElement: function(element) {
             return _.chain(element.find('input'))
@@ -403,16 +401,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 return handler.apply(this, [event]);
             }
             return undefined;
-        },
-        eventHandlers : {
-            'mapbusstop.AssetDirectionChangeEvent': function (event) {
-                // FIXME
-                if(_.isObject(this._state) && _.isFunction(this._state.assetDirectionChangedHandler)) {
-                    this._state.assetDirectionChangedHandler(event);
-                } else {
-                    this._directionChange(event);
-                }
-            }
         },
         _closeAsset: function() {
             jQuery("#featureAttributes").html('');

@@ -1,17 +1,7 @@
-/**
- * @class Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer
- *
- * MapLayer of type Stats
- */
-Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer',
+Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.domain.BusStopLayer',
 
-    /**
-     * @method create called automatically on construction
-     * @static
-     */
         function() {
-        /* Layer Type */
-        this._layerType = "busstoplayer";
+        this._layerType = "assetlayer";
         this._roadLinesUrl = "";
         this._layerUrls = [];
 

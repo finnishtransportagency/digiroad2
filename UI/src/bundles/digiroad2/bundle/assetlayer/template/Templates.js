@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.template.Templates',
+Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.plugin.template.Templates',
     function () {
         _.templateSettings = {
             interpolate: /\{\{(.+?)\}\}/g
