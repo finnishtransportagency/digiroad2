@@ -1,7 +1,7 @@
 /**
- * @class Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle
+ * @class Oskari.digiroad2.bundle.actionpanel.ActionPanel
  */
-Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle", function() {
+Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel", function() {
     }, {
         /*
          * implementation for protocol 'Oskari.bundle.Bundle'
@@ -9,7 +9,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle", fun
         "create" : function() {
             var me = this;
             var inst =
-                Oskari.clazz.create("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstance");
+                Oskari.clazz.create("Oskari.digiroad2.bundle.actionpanel.ActionPanel");
             return inst;
         },
         "update" : function(manager, bundle, bi, info) {
@@ -24,7 +24,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle", fun
         "source" : {
             "scripts" : [{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/actionpanel/instance.js"
+                "src" : "../../../../bundles/digiroad2/bundle/actionpanel/ActionPanel.js"
             },{
                 "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/actionpanel/template/Templates.js"
@@ -74,4 +74,4 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle", fun
 /**
  * Install this bundle
  */
-Oskari.bundle_manager.installBundleClass("actionpanel", "Oskari.digiroad2.bundle.actionpanel.ActionPanelBundle");
+Oskari.bundle_manager.installBundleClass("actionpanel", "Oskari.digiroad2.bundle.actionpanel.ActionPanel");

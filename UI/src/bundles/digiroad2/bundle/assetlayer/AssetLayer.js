@@ -1,12 +1,4 @@
-/**
- * @class Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin
- * Provides functionality to draw bus stops on the map
- */
-Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugin',
-    /**
-     * @method create called automatically on construction
-     * @static
-     */
+Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
     function (config) {
         this.mapModule = null;
         this.pluginName = null;
@@ -26,70 +18,30 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return dependency || defaultImplementation;
         }
     }, {
-        /** @static @property __name plugin name */
-        __name: 'BusStopLayerPlugin',
-
-        /** @static @property _layerType type of layers this plugin handles */
-        _layerType: 'busstoplayer',
+        __name: 'AssetLayer',
+        _layerType: 'assetlayer',
         _unknownAssetType: '99',
         _selectedValidityPeriods: ['current'],
         _visibilityZoomLevelForRoads : 10,
-
-        /**
-         * @method getName
-         * @return {String} plugin name
-         */
         getName: function () {
             return this.pluginName;
         },
-        /**
-         * @method getMapModule
-         * @return {Oskari.mapframework.ui.module.common.MapModule} reference to map
-         * module
-         */
         getMapModule: function () {
             return this.mapModule;
         },
-        /**
-         * @method setMapModule
-         * @param {Oskari.mapframework.ui.module.common.MapModule} mapModule
-         * Reference to map module
-         */
         setMapModule: function (mapModule) {
             this.mapModule = mapModule;
             this.pluginName = mapModule.getName() + this.__name;
         },
-        /**
-         * @method hasUI
-         * This plugin doesn't have an UI that we would want to ever hide so always returns false
-         * @return {Boolean}
-         */
         hasUI: function () {
             return false;
         },
-        /**
-         * @method register
-         * Interface method for the plugin protocol.
-         * Registers self as a layerPlugin to mapmodule with mapmodule.setLayerPlugin()
-         */
         register: function () {
-            this.getMapModule().setLayerPlugin('busstoplayer', this);
+            this.getMapModule().setLayerPlugin('assetlayer', this);
         },
-        /**
-         * @method unregister
-         * Interface method for the plugin protocol
-         * Unregisters self from mapmodules layerPlugins
-         */
         unregister: function () {
-            this.getMapModule().setLayerPlugin('busstoplayer', null);
+            this.getMapModule().setLayerPlugin('assetlayer', null);
         },
-        /**
-         * @method init
-         * Interface method for the module protocol.
-         *
-         * @param {Oskari.mapframework.sandbox.Sandbox} sandbox
-         *          reference to application sandbox
-         */
         init: function (sandbox) {
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
@@ -101,18 +53,23 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             eventbus.on('asset:created', this._handleAssetCreated, this);
             eventbus.on('asset:created', this._removeOverlay, this);
             eventbus.on('asset:cancelled', this._cancelCreate, this);
+            eventbus.on('application:initialized', function() {
+                this._zoomNotInMessage = this._getNotInZoomRange();
+                this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
+                this._zoomNotInMessage();
+            }, this);
 
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
-                mapLayerService.registerLayerModel('busstoplayer', 'Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayer');
+                mapLayerService.registerLayerModel('assetlayer', 'Oskari.digiroad2.bundle.assetlayer.domain.BusStopLayer');
             }
             this._initTemplates();
-            var layerModelBuilder = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.domain.BusStopLayerModelBuilder', sandbox);
-            mapLayerService.registerLayerModelBuilder('busstoplayer', layerModelBuilder);
+            var layerModelBuilder = Oskari.clazz.create('Oskari.digiroad2.bundle.assetlayer.domain.BusStopLayerModelBuilder', sandbox);
+            mapLayerService.registerLayerModelBuilder('assetlayer', layerModelBuilder);
         },
         _initTemplates: function() {
-            this.templates = Oskari.clazz.create('Oskari.digiroad2.bundle.mapbusstop.plugin.template.Templates');
+            this.templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetlayer.plugin.template.Templates');
         },
         startPlugin: function (sandbox) {
             this._sandbox = sandbox;
@@ -124,27 +81,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 }
             }
         },
-        stopPlugin: function (sandbox) {
-            for (var p in this.eventHandlers) {
-                if (this.eventHandlers.hasOwnProperty(p)) {
-                    sandbox.unregisterFromEventByName(this, p);
-                }
-            }
-            sandbox.unregister(this);
-            this._map = null;
-            this._sandbox = null;
-        },
         start: function (sandbox) {},
-        stop: function (sandbox) {},
         eventHandlers: {
             'AfterMapLayerAddEvent': function (event) {
                 this._afterMapLayerAddEvent(event);
-            },
-            'AfterMapLayerRemoveEvent': function (event) {
-                this._afterMapLayerRemoveEvent(event);
-            },
-            'AfterChangeMapLayerOpacityEvent': function (event) {
-                this._afterChangeMapLayerOpacityEvent(event);
             },
             'AfterMapMoveEvent' : function (event) {
                 this._afterMapMoveEvent(event);
@@ -158,11 +98,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 } else if (this._selectedAsset) {
                     eventbus.trigger('asset:unselected', this._selectedAsset.data.id);
                 }
-            },
-            'mapbusstop.ApplicationInitializedEvent': function() {
-                this._zoomNotInMessage = this._getNotInZoomRange();
-                this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
-                this._zoomNotInMessage();
             }
         },
         _removeAssetFromMap: function(asset) {
@@ -345,7 +280,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
             return new OpenLayers.Feature.Vector(
                 new OpenLayers.Geometry.Point(lon, lat),
                 null,
-                {externalGraphic: 'src/resources/digiroad2/bundle/mapbusstop/images/suuntain.png',
+                {externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png',
                  graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle}
             );
         },
@@ -575,7 +510,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
 
         _highlightAsset: function(asset) {
             var arrow = asset.directionArrow;
-            arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/mapbusstop/images/hover.png';
+            arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/assetlayer/images/hover.png';
             arrow.style.backgroundHeight = 68;
             arrow.style.backgroundWidth = 68;
             this._layers.assetDirection.redraw();
@@ -616,45 +551,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.mapbusstop.plugin.BusStopLayerPlugi
                 this._layers.asset.redraw();
             }
         },
-        getLocalization : function(key) {
-            if(this._localization !== undefined) {
-                this._localization = Oskari.getLocalization(this.getName());
-            }
-            if(key) {
-                return this._localization[key];
-            }
-            return this._localization;
-        },
-        _afterMapLayerRemoveEvent: function (event) {
-            var layer = event.getMapLayer();
-            if (!layer.isLayerOfType(this._layerType)) {
-                return;
-            }
-            this._removeMapLayerFromMap(layer);
-        },
-
-        _removeMapLayerFromMap: function (layer) {
-            /* This should free all memory */
-            _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
-                tmpLayer.destroy();
-            });
-        },
-
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
                 return null;
             }
             return _.values(this._layers);
-        },
-
-        _afterChangeMapLayerOpacityEvent: function (event) {
-            var layer = event.getMapLayer();
-            if (!layer.isLayerOfType(this._layerType))
-                return;
-
-            _.each(this._layer[this._layerType +"_"+ layer.getId()], function (tmpLayer) {
-                tmpLayer.setOpacity(layer.getOpacity() / 100);
-            });
         }
     }, {
         'protocol': ["Oskari.mapframework.module.Module", "Oskari.mapframework.ui.module.common.mapmodule.Plugin"]

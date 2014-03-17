@@ -1,4 +1,4 @@
-Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstance",
+Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
     function() {
         this.started = false;
         this.mediator = null;
@@ -26,10 +26,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanelBundleInstan
             }
             this._render();
         },
-        /**
-         * @method init
-         * implements Module protocol init method - initializes request handlers
-         */
         init: function() {
             eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._handleAssetModified, this);
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.actionpanel.template.Templates');

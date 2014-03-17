@@ -1,16 +1,11 @@
-/**
- * @class Oskari.digiroad2.bundle.featuredata.FeatureDataBundle
- */
-Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundle", function() {
+Oskari.clazz.define("Oskari.digiroad2.bundle.assetlayer.AssetLayer", function() {
     }, {
         /*
          * implementation for protocol 'Oskari.bundle.Bundle'
          */
         "create" : function() {
-            var me = this;
-            var inst =
-                Oskari.clazz.create("Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance");
-            return inst;
+
+            return null;
         },
         "update" : function(manager, bundle, bi, info) {
             manager.alert("RECEIVED update notification " + info);
@@ -24,23 +19,24 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 
         "protocol" : ["Oskari.bundle.Bundle", "Oskari.mapframework.bundle.extension.ExtensionBundle"],
         "source" : {
-
             "scripts" : [{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/featureattributes/instance.js"
+                "src" : "../../../../bundles/digiroad2/bundle/assetlayer/domain/BusStopLayer.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/featureattributes/template/Templates.js"
+                "src" : "../../../../bundles/digiroad2/bundle/assetlayer/domain/BusStopLayerModelBuilder.js"
             },{
-                "type" : "text/css",
-                "src" : "../../../../resources/digiroad2/bundle/featureattributes/css/style.css"
-            }],
-            "locales" : []
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/assetlayer/AssetLayer.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/assetlayer/template/Templates.js"
+            }]
         },
         "bundle" : {
             "manifest" : {
-                "Bundle-Identifier" : "featureattributes",
-                "Bundle-Name" : "featureattributes",
+                "Bundle-Identifier" : "assetlayer",
+                "Bundle-Name" : "assetlayer",
                 "Bundle-Tag" : {
                     "mapframework" : true
                 },
@@ -64,8 +60,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
                 }],
                 "Bundle-Name-Locale" : {
                     "fi" : {
-                        "Name" : "FeatureAttributes",
-                        "Title" : "FeatureAttributes"
+                        "Name" : "AssetLayer",
+                        "Title" : "AssetLayer"
                     },
                     "en" : {}
                 },
@@ -78,4 +74,4 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.featureattributes.FeatureAttributes
 /**
  * Install this bundle
  */
-Oskari.bundle_manager.installBundleClass("featureattributes", "Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundle");
+Oskari.bundle_manager.installBundleClass("assetlayer", "Oskari.digiroad2.bundle.assetlayer.AssetLayer");

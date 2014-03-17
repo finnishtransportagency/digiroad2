@@ -1,6 +1,6 @@
-describe('FeatureAttributes', function () {
+describe('AssetForm', function () {
     describe('when backend returns undefined date', function () {
-        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.AssetForm');
         featureAttributes.init({});
 
         it('should construct date attribute with empty content', function () {
@@ -47,7 +47,7 @@ describe('FeatureAttributes', function () {
         var calls = [];
 
         before(function () {
-            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance', {
+            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.AssetForm', {
                 backend: _.extend({}, window.Backend, {
                     putAssetPropertyValue: function (assetId, propertyId, data) {
                         calls.push(data);
@@ -106,7 +106,7 @@ describe('FeatureAttributes', function () {
 
         before(function () {
             requestedAssetTypes = [];
-            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance', {
+            featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.AssetForm', {
                 backend: _.extend({}, window.Backend, {
                     getAssetTypeProperties: function (assetType, success) {
                         requestedAssetTypes.push(assetType);
@@ -300,7 +300,7 @@ describe('FeatureAttributes', function () {
     });
 
     function showFeatureAttributes(externalId) {
-        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.featureattributes.FeatureAttributesBundleInstance');
+        var featureAttributes = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.AssetForm');
         var assetData = { id: 130, propertyData: [] };
         var assetPosition = { lonLat: { lon: 24, lat: 60 }, heading: 140 };
         if(_.isNumber(externalId)) assetData.externalId = externalId;
