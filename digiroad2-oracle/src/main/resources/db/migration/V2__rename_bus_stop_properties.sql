@@ -19,6 +19,11 @@ delete from text_property_value where property_id = (select id from property whe
 delete from property where name_fi = 'Pysäkin saavutettavuus';
 
 
+alter table property modify (name_sv null);
+
+alter table enumerated_value modify (name_sv null);
+
+
 insert into property (id, asset_type_id, created_by, name_fi, property_type)
 values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'automatic_import', 'Nimi ruotsiksi', 'text');
 
