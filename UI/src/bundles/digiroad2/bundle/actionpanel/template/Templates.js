@@ -26,7 +26,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.actionpanel.template.Templates',
                 '<div class="busStopLayerName">{{name}}</div>' +
             '</div>');
         this.actionButtons =
-            '<div class="actionButtons">' +
+            '<div class="actionButtons readOnlyModeHidden">' +
                 '<div data-action="Select" class="actionButton actionButtonActive actionPanelButtonSelect">' +
                     '<div class="actionPanelButtonSelectImage actionPanelButtonSelectActiveImage"></div>' +
                 '</div>' +
@@ -34,5 +34,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.actionpanel.template.Templates',
                     '<div class="actionPanelButtonAddImage"></div>' +
                 '</div>' +
             '</div>';
+
+        this.editButton = '<button class="editMode actionModeButton">Muokkaa</button>';
+        this.readyButton = '<button class="readOnlyMode actionModeButton editModeHidden">Valmis</button>';
     }
 );
