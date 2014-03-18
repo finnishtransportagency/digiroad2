@@ -49,7 +49,8 @@ namespace :deploy do
     on roles(:all) do |host|
       execute "cd #{release_path} && npm install && bower install && grunt"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
-      execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/conf/#{fetch(:stage)}/."
+      execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
+      execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} assembly"
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/"

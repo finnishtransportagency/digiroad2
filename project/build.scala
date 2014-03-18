@@ -13,7 +13,6 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.10.2"
   val ScalatraVersion = "2.2.1"
   val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
-
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),

@@ -29,7 +29,7 @@ object OracleDatabase {
     try {
       props.load(getClass.getResourceAsStream(resourcePath))
     } catch {
-      case e: Exception => throw new RuntimeException("Can't load " + resourcePath + " for env: " + System.getProperty("env"), e)
+      case e: Exception => throw new RuntimeException("Can't load " + resourcePath + " for env: " + System.getProperty("digiroad2.env"), e)
     }
     props
   }
