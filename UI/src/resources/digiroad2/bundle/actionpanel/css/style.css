@@ -165,5 +165,6 @@ div.editMessage {
     top: 5px;
     left: 40%;
     font-size: 11px;
+    font-family: "Arial";
     border: 2px #00539c;
 }
