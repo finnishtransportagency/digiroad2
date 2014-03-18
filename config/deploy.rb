@@ -54,6 +54,7 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a bower_components src/main/webapp/"
+      execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end
 
