@@ -50,14 +50,15 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
           this._bindEvents();
         },
         _renderView: function() {
-            var me = this;
-            jQuery("#maptools").html(me._templates.panelControl);
-            _.forEach(me._layerPeriods, function (layer) {
-                jQuery(".layerGroupLayers").append(me._templates.mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
+            var self = this;
+            jQuery("#maptools").html(self._templates.panelControl);
+            _.forEach(self._layerPeriods, function (layer) {
+                jQuery(".layerGroupLayers").append(self._templates.mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
             });
-            jQuery(".actionPanel").append(me._templates.actionButtons);
-            jQuery(".actionPanel").append(me._templates.editButton);
-            jQuery(".actionPanel").append(me._templates.readyButton);
+            jQuery(".actionPanel").append(self._templates.actionButtons);
+            jQuery(".actionPanel").append(self._templates.editButton);
+            jQuery(".actionPanel").append(self._templates.readyButton);
+            jQuery(".container").append(self._templates.editMessage);
         },
         _bindEvents: function() {
             var me = this;
@@ -104,6 +105,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
             jQuery('.editMode').toggleClass('editModeHidden');
             jQuery('.readOnlyMode').toggleClass('editModeHidden');
             jQuery('.actionButtons').toggleClass('editModeHidden');
+            jQuery('.editMessage').toggleClass('readOnlyModeHidden');
+            jQuery('.layerGroup').toggleClass('layerGroupEditMode');
         },
         _togglePanel: function() {
             jQuery(".actionPanel").toggleClass('actionPanelClosed');

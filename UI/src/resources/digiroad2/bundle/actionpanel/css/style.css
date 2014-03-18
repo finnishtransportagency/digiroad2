@@ -27,10 +27,12 @@ div.panelControlLine {
 }
 
 div.layerGroup {
-    height: 41px;
-    background-image: -moz-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
-    background-image: -webkit-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
-    background-image: -ms-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
+     height: 41px;
+    background-color: #666666;
+ }
+
+div.layerGroupEditMode {
+    background-color: #196eb8;
 }
 
 div.layerGroup:active {
@@ -126,14 +128,15 @@ div.actionButtonActive {
 }
 
 button.readOnlyMode {
-    background-color: #005AE0;
+    background-color: #196eb8;
+    border-color: #236085;
 }
 .readOnlyModeHidden {
     display: none;
 }
 
 button.actionModeButton {
-    border: 1px solid #000000;
+    border: 1px solid;
     border-radius: 3px;
     font-family: "Arial";
     color: rgb( 255, 255, 255 );
@@ -152,4 +155,15 @@ button.editMode {
 
 button.editModeHidden {
     display: none;
+}
+
+div.editMessage {
+    color: rgb( 255, 255, 255 );
+    background-color: #196eb8;
+    padding: 10px;
+    position: absolute;
+    top: 5px;
+    left: 40%;
+    font-size: 11px;
+    border: 2px #00539c;
 }
