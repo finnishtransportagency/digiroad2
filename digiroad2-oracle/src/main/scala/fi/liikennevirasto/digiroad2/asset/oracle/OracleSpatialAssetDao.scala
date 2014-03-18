@@ -55,9 +55,9 @@ object OracleSpatialAssetDao {
   }
 
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
-    assetRows.groupBy(_.propertyId).map { case (k, v) =>
+    assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
-      Property(row.propertyId.toString, row.propertyName, row.propertyType, row.propertyRequired, v.map(r => PropertyValue(r.propertyValue, r.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
+      Property(row.property.propertyId.toString, row.property.propertyName, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
     }.toSeq
   }
 
@@ -66,7 +66,7 @@ object OracleSpatialAssetDao {
       val row = v(0)
       AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.propertyId.toLong),
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
@@ -275,11 +275,11 @@ object OracleSpatialAssetDao {
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
-        Property(r.nextString(), r.nextString, r.nextString, r.nextBoolean(), Seq())
+        Property(r.nextString(), r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
       }
     }
     sql"""
-      select id, name_fi, property_type, required from property where asset_type_id = $assetTypeId
+      select id, name_fi, property_type, ui_position_index, required from property where asset_type_id = $assetTypeId
     """.as[Property].list
   }
 }

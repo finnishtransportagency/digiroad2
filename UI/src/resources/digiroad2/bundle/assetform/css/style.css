@@ -114,10 +114,11 @@
     font-size: 12px;
     font-family: "Arial";
     color: rgb( 230, 230, 230 );
-    line-height: 2.5;
+    line-height: 1.5;
     text-align: right;
     float: left;
     width:140px;
+    padding-top: 6px;
     padding-right: 10px;
     vertical-align: middle;
 

@@ -23,11 +23,11 @@ object AssetPropertyConfiguration {
   val commonAssetPropertyEnumeratedValues: Seq[EnumeratedPropertyValue] = List(enumeratedValidityDirectionValues)
 
   val commonAssetProperties: Map[String, CommonAssetProperty] = Map(
-    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = Seq()), true),
-    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(ValidFromId, "Käytössä alkaen", Date, values = Seq())),
-    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(ValidToId, "Käytössä päättyen", Date, values = Seq())),
-    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(ValidToId, "Lisätty järjestelmään", ReadOnlyText, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(ValidToId, "Viimeksi muokannut", ReadOnlyText, values = Seq()))
+    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(ValidityDirectionId, "Vaikutussuunta", SingleChoice, 65, values = Seq()), true),
+    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(ValidFromId, "Ensimmäinen voimassaolopäivä", Date, 70, values = Seq())),
+    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(ValidToId, "Viimeinen voimassaolopäivä", Date, 80, values = Seq())),
+    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(ValidToId, "Lisätty järjestelmään", ReadOnlyText, 10, values = Seq())),
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(ValidToId, "Muokattu viimeksi", ReadOnlyText, 20, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: AssetRow): Seq[Property] = {

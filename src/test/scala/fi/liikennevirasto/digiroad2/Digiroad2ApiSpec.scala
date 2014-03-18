@@ -89,7 +89,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(4)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(11)
     }
   }
 
@@ -189,9 +189,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(16)
+      ps.size should equal(29)
       val p1 = ps.find(_.propertyId == TestPropertyId).get
-      p1.propertyName should be ("Pysäkin katos")
+      p1.propertyName should be ("Varusteet (Katos)")
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
       ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
@@ -201,12 +201,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("get national bus stop id if defined", Tag("db")) {
     getWithUserAuth("/assets/300008") {
       val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
-      System.out.println(assetWithProperties)
       assetWithProperties.externalId should be (Some(85755))
     }
     getWithUserAuth("/assets/300004") {
       val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
       assetWithProperties.externalId should be (None)
     }
+  }
+
+  test("asset properties are in same order when creating new or editing existing", Tag("db")) {
+    val propNames = getWithUserAuth("/assetTypeProperties/10") {
+      parse(body).extract[List[Property]].map(p => p.propertyName)
+    }
+    val assetPropNames = getWithUserAuth("/assets/" + CreatedTestAssetId) {
+      parse(body).extract[AssetWithProperties].propertyData.map(p => p.propertyName)
+    }
+    propNames should be(assetPropNames)
   }
 }
