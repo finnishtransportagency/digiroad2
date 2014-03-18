@@ -37,5 +37,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.actionpanel.template.Templates',
 
         this.editButton = '<button class="editMode actionModeButton">Muokkaa</button>';
         this.readyButton = '<button class="readOnlyMode actionModeButton editModeHidden">Valmis</button>';
+        this.editMessage = '<div class="editMessage readOnlyModeHidden">Muokkaustila: muutokset tallentuvat automaattisesti</div>';
     }
 );
