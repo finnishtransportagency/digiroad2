@@ -15,12 +15,8 @@ update property set NAME_FI = 'Esteettömyys liikuntarajoitteiselle' where NAME_
 update property set NAME_FI = 'Varusteet (Katos)' where NAME_FI = 'Pysäkin katos';
 
 
-delete from property where NAME_FI = 'Pysäkin saavutettavuus';
-
-
-alter table property drop column name_sv;
-
-alter table enumerated_value drop column name_sv;
+delete from text_property_value where property_id = (select id from property where name_fi = 'Pysäkin saavutettavuus');
+delete from property where name_fi = 'Pysäkin saavutettavuus';
 
 
 insert into property (id, asset_type_id, created_by, name_fi, property_type)
