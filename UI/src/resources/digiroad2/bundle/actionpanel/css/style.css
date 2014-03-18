@@ -80,8 +80,8 @@ div.actionButtons {
     height: 42px;
     border: 0px solid #cbcbc0;
     border-bottom-width: 1px;
-
 }
+
 div.actionButton {
     float:left;
     margin-top: 5px;
@@ -123,4 +123,33 @@ div.actionButtonActive {
     border: 1px solid #236085;
     background: #cbdce5;
     border-radius: 2px;
+}
+
+button.readOnlyMode {
+    background-color: #005AE0;
+}
+.readOnlyModeHidden {
+    display: none;
+}
+
+button.actionModeButton {
+    border: 1px solid #000000;
+    border-radius: 3px;
+    font-family: "Arial";
+    color: rgb( 255, 255, 255 );
+    line-height: 1.286;
+    text-align:center;
+    padding: 6px;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 11px;
+    width: 96%;
+}
+
+button.editMode {
+    background-color: #666666;
+}
+
+button.editModeHidden {
+    display: none;
 }

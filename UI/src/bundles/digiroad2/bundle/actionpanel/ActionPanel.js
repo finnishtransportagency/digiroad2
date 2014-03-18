@@ -3,6 +3,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
         this.started = false;
         this.mediator = null;
         this._cursor = {};
+        this._readOnly = true;
     }, {
         getName: function() {
             return 'ActionPanel';
@@ -51,10 +52,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
         _renderView: function() {
             var me = this;
             jQuery("#maptools").html(me._templates.panelControl);
-           _.forEach(me._layerPeriods, function (layer) {
+            _.forEach(me._layerPeriods, function (layer) {
                 jQuery(".layerGroupLayers").append(me._templates.mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
             });
             jQuery(".actionPanel").append(me._templates.actionButtons);
+            jQuery(".actionPanel").append(me._templates.editButton);
+            jQuery(".actionPanel").append(me._templates.readyButton);
         },
         _bindEvents: function() {
             var me = this;
@@ -74,19 +77,37 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
             jQuery(".actionButton").on("click", function() {
                 var data = jQuery(this);
                 var action = data.attr('data-action');
-                jQuery(".actionButtonActive").removeClass("actionButtonActive");
-                jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
-                jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
-                jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
-                jQuery(".actionPanelButtonRemoveActiveImage").removeClass("actionPanelButtonRemoveActiveImage");
-                jQuery(".actionPanelButton"+action+"Image").addClass("actionPanelButton"+action+"ActiveImage");
-                jQuery(".olMap").css('cursor', me._cursor[action]);
-                eventbus.trigger('tool:changed', action);
+                me._changeTool(action);
             });
+
+            jQuery('.editMode').on('click', function() {
+                me._toggleEditMode(false);
+            });
+
+            jQuery('.readOnlyMode').on('click', function() {
+                me._toggleEditMode(true);
+            });
+        },
+        _changeTool: function(action) {
+            jQuery(".actionButtonActive").removeClass("actionButtonActive");
+            jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
+            jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
+            jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
+            jQuery(".olMap").css('cursor', this._cursor[action]);
+            eventbus.trigger('tool:changed', action);
+        },
+        _toggleEditMode: function(readOnly) {
+            this._changeTool('Select');
+            eventbus.trigger('asset:unselected');
+            eventbus.trigger('application:readOnly', readOnly);
+            jQuery('.actionButtons').toggleClass('readOnlyModeHidden');
+            jQuery('.editMode').toggleClass('editModeHidden');
+            jQuery('.readOnlyMode').toggleClass('editModeHidden');
+            jQuery('.actionButtons').toggleClass('editModeHidden');
         },
         _togglePanel: function() {
             jQuery(".actionPanel").toggleClass('actionPanelClosed');
-        },
+        }
     }, {
         protocol : ['Oskari.bundle.BundleInstance', 'Oskari.mapframework.module.Module']
     });
