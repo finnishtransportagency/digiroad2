@@ -208,4 +208,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       assetWithProperties.externalId should be (None)
     }
   }
+
+  test("asset properties are in same order when creating new or editing existing", Tag("db")) {
+    val propNames = getWithUserAuth("/assetTypeProperties/10") {
+      parse(body).extract[List[Property]].map(p => p.propertyName)
+    }
+    val assetPropNames = getWithUserAuth("/assets/" + CreatedTestAssetId) {
+      parse(body).extract[AssetWithProperties].propertyData.map(p => p.propertyName)
+    }
+    propNames should be(assetPropNames)
+  }
 }
