@@ -55,11 +55,10 @@ object OracleSpatialAssetDao {
   }
 
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
-    val props = assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
+    assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
       Property(row.property.propertyId.toString, row.property.propertyName, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
     }.toSeq
-    props
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
