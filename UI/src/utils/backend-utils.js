@@ -11,17 +11,13 @@
         putAssetPropertyValue(assetId, propertyId, data, success);
     };
 
-    var getAssetsAjax = _.throttle(function(assetTypeId, boundingBox) {
+    backend.getAssets =  _.throttle(function(assetTypeId, boundingBox) {
         jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function(assets) {
             eventbus.trigger('assets:fetched', assets);
         }).fail(function() {
             console.log("error");
         });
     }, 1000);
-
-    backend.getAssets = function(assetTypeId, boundingBox) {
-        getAssetsAjax(assetTypeId, boundingBox);
-    };
 
     backend.getAsset = function (assetId, success) {
         $.get('api/assets/' + assetId, function(asset) {
