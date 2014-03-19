@@ -134,8 +134,7 @@ describe('AssetLayer', function(){
         });
 
         it('should block map and tools components', function() {
-            assert.equal(overlays['#contentMap'].open, true);
-            assert.equal(overlays['#maptools'].open, true);
+            assert.equal(overlays['#contentMap,#maptools'].open, true);
         });
 
         xdescribe('and when validity direction is changed', function() {

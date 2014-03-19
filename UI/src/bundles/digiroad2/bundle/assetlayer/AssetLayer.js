@@ -231,26 +231,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             eventbus.trigger('asset:placed', this._selectedAsset.data);
 
             var applyBlockingOverlays = function() {
-                // TODO: Replace two overlays with one with selector '#contentMap,#maptools' when oskari overlay supports this.
-                var mapOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
-                mapOverlay.overlay('#contentMap');
-                mapOverlay.followResizing(true);
-
-                var toolsOverlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
-                toolsOverlay.overlay('#maptools');
-                toolsOverlay.followResizing(true);
-
-                return {
-                    mapOverlay: mapOverlay,
-                    toolsOverlay: toolsOverlay
-                };
+                var overlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+                overlay.overlay('#contentMap,#maptools');
+                overlay.followResizing(true);
+                return overlay;
             };
 
-            this._overlays = applyBlockingOverlays();
+            this._overlay = applyBlockingOverlays();
         },
 
         _removeOverlay: function() {
-            _.forEach(this._overlays, function(overlay) { overlay.close(); });
+            this._overlay.close();
         },
 
         _addNewAsset: function(asset) {
