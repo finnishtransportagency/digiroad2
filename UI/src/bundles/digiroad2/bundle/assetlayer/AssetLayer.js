@@ -128,6 +128,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             this._addNewAsset(asset);
         },
         _handleValidityPeriodChanged: function(selectedValidityPeriods) {
+            this._selectControl.unselectAll();
             this._selectedValidityPeriods = selectedValidityPeriods;
             var me = this;
             var assets = this._assets;
