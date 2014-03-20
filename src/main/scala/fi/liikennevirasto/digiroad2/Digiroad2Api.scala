@@ -31,7 +31,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/config") {
-    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration))
+    val (east, north, zoom) = params.get("assetId").flatMap { assetId =>
+        assetProvider.getAssetPositionByExternalId(assetId.toLong).map { case (east, north) =>
+        (Some(east), Some(north), Some(12))
+      }
+    }.getOrElse {
+      val config = userProvider.getCurrentUser.configuration
+      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+    }
+    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration, east, north, zoom))
   }
 
   post("/layers") {
@@ -80,17 +88,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: handle missing roadLinkId
   put("/assets/:id") {
-    val (assetTypeId, lon, lat, roadLinkId, bearing) = ((parsedBody \ "assetTypeId").extractOpt[Long], (parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
+    val (lon, lat, roadLinkId, bearing) =
+      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
       (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val asset = Asset(
+    val updated =
+      assetProvider.updateAssetLocation(
         id = params("id").toLong,
-        assetTypeId = assetTypeId.get,
         lon = lon.get,
         lat = lat.get,
         roadLinkId = roadLinkId.get,
-        imageIds = List(),
         bearing = bearing)
-    val updated = assetProvider.updateAssetLocation(asset)
     logger.debug("Asset updated: " + updated)
     updated
   }

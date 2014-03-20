@@ -98,8 +98,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(200)
       val responseJson = parse(body)
       (responseJson \ "mapfull" \ "state" \ "zoom").values should equal(8)
-      (responseJson \ "mapfull" \ "state" \ "east").values should equal("373560")
-      (responseJson \ "mapfull" \ "state" \ "north").values should equal("6677676")
+      (responseJson \ "mapfull" \ "state" \ "east").values should equal("373560.0")
+      (responseJson \ "mapfull" \ "state" \ "north").values should equal("6677676.0")
     }
   }
 

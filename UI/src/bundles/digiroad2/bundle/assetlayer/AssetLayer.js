@@ -46,12 +46,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         init: function (sandbox) {
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
+            eventbus.on('asset:selected', function(_, asset) {
+                this._selectedAsset = asset;
+                this._highlightAsset(asset);
+            }, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
             eventbus.on('assetPropertyValue:saved', this._updateAsset, this);
             eventbus.on('assetPropertyValue:changed', this._handleAssetPropertyValueChanged, this);
             eventbus.on('asset:saved', this._handleAssetSaved, this);
             eventbus.on('asset:created', this._handleAssetCreated, this);
+            eventbus.on('asset:fetched', this._handleAssetFetched, this);
             eventbus.on('asset:created', this._removeOverlay, this);
             eventbus.on('asset:cancelled', this._cancelCreate, this);
             eventbus.on('application:initialized', function() {
@@ -147,6 +152,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _handleAssetSaved: function(asset) {
             this._selectedAsset.data = asset;
             this._assets[asset.id] = this._selectedAsset;
+        },
+        _handleAssetFetched: function(assetData) {
+            this._selectedAsset.data = assetData;
         },
         _hideAsset: function(asset) {
             this._layers.assetDirection.destroyFeatures(asset.directionArrow);
@@ -347,7 +355,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                             assetDirection: assetDirectionLayer,
                             asset: assetLayer};
             this._fetchAssets();
-            me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
         },
         _fetchAssets: function() {
             if (this._isInZoomLevel()) {
@@ -378,6 +385,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                             self._removeAssetFromMap(self._assets[asset.id]);
                         }
                         self._assets[asset.id] = self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                        var assetIdFromURL = function() {
+                            var matches = window.location.hash.match(/\#\/asset\/(\d+)/);
+                            if (matches) {
+                                return matches[1];
+                            }
+                        };
                         if (self._selectedAsset && self._selectedAsset.data.id == asset.id) {
                             self._selectedAsset = self._assets[asset.id];
                             self._highlightAsset(self._selectedAsset);
@@ -497,15 +510,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             return function (evt, streetViewCoordinates) {
                 OpenLayers.Event.stop(evt);
                 me._state = null;
-                eventbus.trigger('asset:selected', asset.data.id);
-                me._backend.getAsset(asset.data.id, function(assetData) {
-                    // FIXME: DEPRECATED, USE EVENTS INSTEAD OF CALLBACKS
-                    var assetAttributes = _.merge({}, assetData, { id: asset.data.id });
-                    streetViewCoordinates.heading = asset.data.roadDirection + (-90 * asset.data.effectDirection);
-                    assetAttributes.position = streetViewCoordinates;
-                    me._selectedAsset = asset;
-                    me._highlightAsset(me._selectedAsset);
-                });
+                eventbus.trigger('asset:selected', asset.data.id, asset);
+                me._backend.getAsset(asset.data.id);
             };
         },
 

@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.user.Configuration
 
 object MapConfigJson {
-  def mapConfig(userConfig: Configuration): String = {
-    val zoom = userConfig.zoom.getOrElse(2)
-    val east = userConfig.east.getOrElse(390000)
-    val north = userConfig.north.getOrElse(6900000)
+  def mapConfig(userConfig: Configuration, eastOpt: Option[Double], northOpt: Option[Double], zoomOpt: Option[Int]): String = {
+    val zoom = zoomOpt.getOrElse(2)
+    val east = eastOpt.getOrElse(390000)
+    val north = northOpt.getOrElse(6900000)
 
     s"""{
       "mapfull": {

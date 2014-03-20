@@ -47,7 +47,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         init : function() {
             eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._initializeEditExisting, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
-            eventbus.on('asset:placed', this._initializeCreateNew, this);
+            eventbus.on('asset:placed', function(asset) {
+                this._selectedAsset = asset;
+                this._backend.getAssetTypeProperties(10);
+            }, this);
+            eventbus.on('assetTypeProperties:fetched', function(properties) {
+                this._initializeCreateNew(properties);
+            }, this);
             eventbus.on('assetPropertyValue:changed', function(data) {
                 if (data.propertyData[0].propertyId == 'validityDirection') {
                     this._changeAssetDirection(data);
@@ -55,7 +61,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {
                 this._readOnly = readOnly;
-
+            }, this);
+            eventbus.on('enumeratedPropertyValues:fetched', function(values) {
+                this._enumeratedPropertyValues = values;
             }, this);
 
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
@@ -115,125 +123,121 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
         },
         
-        _initializeCreateNew: function(asset) {
+        _initializeCreateNew: function(properties) {
             var me = this;
-            this._selectedAsset = asset;
-            me._backend.getAssetTypeProperties(10, assetTypePropertiesCallback);
-            function assetTypePropertiesCallback(properties) {
-                var featureAttributesElement = jQuery('#featureAttributes');
-                var featureData = me._makeContent(properties);
-                var streetView = me._getStreetView(me._selectedAsset.position);
-                var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
-                featureAttributesElement.html(featureAttributesMarkup);
-                me._addDatePickers();
+            var featureAttributesElement = jQuery('#featureAttributes');
+            var featureData = me._makeContent(properties);
+            var streetView = me._getStreetView(me._selectedAsset.position);
+            var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
+            featureAttributesElement.html(featureAttributesMarkup);
+            me._addDatePickers();
 
-                var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-propertyid="validityDirection"]');
-                var assetDirectionChangedHandler = function() {
-                    var value = validityDirection.attr('value');
-                    var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
-                    eventbus.trigger('assetPropertyValue:changed', {
-                        propertyData: [{
-                            propertyId: validityDirection.attr('data-propertyId'),
-                            values: [{propertyValue: newValidityDirection}]
-                        }]
-                    });
+            var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-propertyid="validityDirection"]');
+            var assetDirectionChangedHandler = function() {
+                var value = validityDirection.attr('value');
+                var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
+                eventbus.trigger('assetPropertyValue:changed', {
+                    propertyData: [{
+                        propertyId: validityDirection.attr('data-propertyId'),
+                        values: [{propertyValue: newValidityDirection}]
+                    }]
+                });
+            };
+
+            featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
+                var jqElement = jQuery(this);
+                var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
+                eventbus.trigger('assetPropertyValue:changed', {
+                  propertyData: [{
+                      propertyId: jqElement.attr('data-propertyId'),
+                      values: values
+                  }]
+                });
+            });
+
+            validityDirection.click(assetDirectionChangedHandler);
+
+            featureAttributesElement.find('button.cancel').on('click', function() {
+                eventbus.trigger('asset:cancelled');
+                eventbus.trigger('asset:unselected');
+                me._closeAsset();
+            });
+
+            featureAttributesElement.find('button.save').on('click', function() {
+                var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
+                var textElementAttributes = _.map(textElements, function(textElement) {
+                    var jqElement = jQuery(textElement);
+                    return {
+                        propertyId: jqElement.attr('data-propertyId'),
+                        propertyValues: me._propertyValuesOfTextElement(jqElement)
+                    };
+                });
+
+                var buttonElements = featureAttributesElement.find('.featureAttributeButton');
+                var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
+                    var jqElement = jQuery(buttonElement);
+                    return {
+                        propertyId: jqElement.attr('data-propertyId'),
+                        propertyValues: me._propertyValuesOfButtonElement(jqElement)
+                    };
+                });
+
+                var selectionElements = featureAttributesElement.find('select.featureattributeChoice');
+                var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
+                   var jqElement = jQuery(selectionElement);
+                    return {
+                        propertyId: jqElement.attr('data-propertyId'),
+                        propertyValues: me._propertyValuesOfSelectionElement(jqElement)
+                    };
+                });
+
+                var multiCheckboxElements = featureAttributesElement.find('div.featureattributeChoice');
+                var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
+                   var jqElement = jQuery(multiCheckboxElement);
+                    return {
+                        propertyId: jqElement.attr('data-propertyId'),
+                        propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
+                    };
+                });
+
+                var dateElements = featureAttributesElement.find('.featureAttributeDate');
+                var dateElementAttributes = _.map(dateElements, function(dateElement) {
+                    var jqElement = jQuery(dateElement);
+                    return {
+                        propertyId: jqElement.attr('data-propertyId'),
+                        propertyValues: me._propertyValuesOfDateElement(jqElement)
+                    };
+                });
+
+                var saveAsset = function(data) {
+                    var properties = _.chain(data)
+                        .map(function(attr) {
+                            return {id: attr.propertyId,
+                                values: attr.propertyValues};
+                        })
+                        .map(function(p) {
+                            if (p.id == 200 && _.isEmpty(p.values)) {
+                                p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                                    propertyValue: 99}];
+                            }
+                            return p;
+                        })
+                        .value();
+                    me._backend.createAsset(
+                        {assetTypeId: 10,
+                            lon: me._selectedAsset.lon,
+                            lat: me._selectedAsset.lat,
+                            roadLinkId:  me._selectedAsset.roadLinkId,
+                            bearing:  me._selectedAsset.bearing,
+                            properties: properties});
                 };
 
-                featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
-                    var jqElement = jQuery(this);
-                    var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                    eventbus.trigger('assetPropertyValue:changed', {
-                      propertyData: [{
-                          propertyId: jqElement.attr('data-propertyId'),
-                          values: values
-                      }]
-                    });
-                });
-
-                validityDirection.click(assetDirectionChangedHandler);
-
-                featureAttributesElement.find('button.cancel').on('click', function() {
-                    eventbus.trigger('asset:cancelled');
-                    eventbus.trigger('asset:unselected');
-                    me._closeAsset();
-                });
-
-                featureAttributesElement.find('button.save').on('click', function() {
-                    var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
-                    var textElementAttributes = _.map(textElements, function(textElement) {
-                        var jqElement = jQuery(textElement);
-                        return {
-                            propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfTextElement(jqElement)
-                        };
-                    });
-
-                    var buttonElements = featureAttributesElement.find('.featureAttributeButton');
-                    var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
-                        var jqElement = jQuery(buttonElement);
-                        return {
-                            propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfButtonElement(jqElement)
-                        };
-                    });
-
-                    var selectionElements = featureAttributesElement.find('select.featureattributeChoice');
-                    var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
-                       var jqElement = jQuery(selectionElement);
-                        return {
-                            propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfSelectionElement(jqElement)
-                        };
-                    });
-
-                    var multiCheckboxElements = featureAttributesElement.find('div.featureattributeChoice');
-                    var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
-                       var jqElement = jQuery(multiCheckboxElement);
-                        return {
-                            propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
-                        };
-                    });
-
-                    var dateElements = featureAttributesElement.find('.featureAttributeDate');
-                    var dateElementAttributes = _.map(dateElements, function(dateElement) {
-                        var jqElement = jQuery(dateElement);
-                        return {
-                            propertyId: jqElement.attr('data-propertyId'),
-                            propertyValues: me._propertyValuesOfDateElement(jqElement)
-                        };
-                    });
-
-                    var saveAsset = function(data) {
-                        var properties = _.chain(data)
-                            .map(function(attr) {
-                                return {id: attr.propertyId,
-                                    values: attr.propertyValues};
-                            })
-                            .map(function(p) {
-                                if (p.id == 200 && _.isEmpty(p.values)) {
-                                    p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
-                                        propertyValue: 99}];
-                                }
-                                return p;
-                            })
-                            .value();
-                        me._backend.createAsset(
-                            {assetTypeId: 10,
-                                lon: me._selectedAsset.lon,
-                                lat: me._selectedAsset.lat,
-                                roadLinkId:  me._selectedAsset.roadLinkId,
-                                bearing:  me._selectedAsset.bearing,
-                                properties: properties});
-                    };
-
-                    saveAsset(textElementAttributes
-                        .concat(selectionElementAttributes)
-                        .concat(buttonElementAttributes)
-                        .concat(multiCheckboxElementAttributes)
-                        .concat(dateElementAttributes));
-                });
-            }
+                saveAsset(textElementAttributes
+                    .concat(selectionElementAttributes)
+                    .concat(buttonElementAttributes)
+                    .concat(multiCheckboxElementAttributes)
+                    .concat(dateElementAttributes));
+            });
         },
         _getStreetView: function(assetPosition) {
             var wgs84 = OpenLayers.Projection.transform(
@@ -288,10 +292,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         },
         _getPropertyValues: function() {
             var me = this;
-            me._backend.getEnumeratedPropertyValues(10, function(data) {
-                me._enumeratedPropertyValues = data;
-                return data;
-            });
+            me._backend.getEnumeratedPropertyValues(10);
         },
         _savePropertyData: function(propertyValue, propertyId) {
 

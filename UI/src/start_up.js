@@ -4,11 +4,19 @@ jQuery(document).ready(function() {
   var appSetup;
   var appConfig;
   
+  var assetIdFromURL = function() {
+      var matches = window.location.hash.match(/\#\/asset\/(\d+)/);
+      if (matches) {
+        return matches[1];
+      }
+  };
+  
   var downloadConfig = function(notifyCallback) {
+    var assetId = assetIdFromURL();
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : 'api/config',
+      url : 'api/config' + (assetId ? '?assetId=' + assetId : ''),
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");
@@ -37,6 +45,14 @@ jQuery(document).ready(function() {
     });
   };
   
+  eventbus.on('asset:fetched asset:created', function(asset) {
+      window.location.hash = '#/asset/' + asset.externalId;
+  });
+  
+  eventbus.on('asset:unselected', function(asset) {
+    window.location.hash = '';
+});
+  
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -51,5 +67,4 @@ jQuery(document).ready(function() {
   };
   downloadAppSetup(startApplication);
   downloadConfig(startApplication);
-  
 });

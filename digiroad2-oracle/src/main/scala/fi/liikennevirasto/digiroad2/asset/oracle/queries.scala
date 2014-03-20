@@ -34,7 +34,7 @@ object Queries {
                       image: Image, roadLinkEndDate: Option[LocalDate],
                       municipalityNumber: Int, created: Modification, modified: Modification)
 
-  case class ListedAssetRow(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
+  case class ListedAssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp],
                       image: Image, roadLinkEndDate: Option[LocalDate],
                       municipalityNumber: Int)
@@ -76,12 +76,12 @@ object Queries {
 
   implicit val getListedAssetWithPosition = new GetResult[(ListedAssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
-      val (id, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
+      val (id, externalId, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
       roadLinkId, image, roadLinkEndDate, municipalityNumber) =
-        (r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextInt, r.nextInt,
+        (r.nextLong, r.nextLongOption, r.nextLong, r.nextIntOption, r.nextInt, r.nextTimestampOption, r.nextTimestampOption, r.nextBytes, r.nextLong, r.nextInt, r.nextInt,
           r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextInt)
       val posGeom = JGeometry.load(pos)
-      (ListedAssetRow(id, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
+      (ListedAssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
         validFrom, validTo, image, roadLinkEndDate, municipalityNumber),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
     }
@@ -154,7 +154,7 @@ object Queries {
 
   def allAssetsWithoutProperties =
     """
-    select a.id as asset_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
+    select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
@@ -175,6 +175,8 @@ object Queries {
   def assetsByTypeWithPosition = allAssetsWithoutProperties + " where t.id = ?"
 
   def assetWithPositionById = allAssets + " WHERE a.id = ?"
+
+  def assetByExternalId = allAssets + " WHERE a.external_id = ?"
 
   def assetWhereId(id: Long) = sql"WHERE a.id = $id"
 

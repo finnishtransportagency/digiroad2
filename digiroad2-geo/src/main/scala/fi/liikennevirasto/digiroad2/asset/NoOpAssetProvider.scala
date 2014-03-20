@@ -25,6 +25,9 @@ class NoOpAssetProvider extends AssetProvider {
       Property("validTo", "Käytössä päättyen", Date, values = Seq(PropertyValue(0, null)))
     )))
   }
+  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
+    Some((0, 0))
+  }
   def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset] = List()
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, propertyValues: Seq[SimpleProperty]) = {
     AssetWithProperties(0, None, assetTypeId, lon, lat, roadLinkId)
@@ -36,7 +39,7 @@ class NoOpAssetProvider extends AssetProvider {
       PropertyValue(2, "Digitointisuuntaan"),
       PropertyValue(3, "Digitointisuuntaa vastaan"))))
   }
-  def updateAssetLocation(asset: Asset): AssetWithProperties = getAssetById(asset.id).get
+  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]): AssetWithProperties = getAssetById(id).get
   def getImage(imageId: Long): Array[Byte] = new Array[Byte](0)
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]) { }
   def availableProperties(assetTypeId: Long): Seq[Property] = Seq()
