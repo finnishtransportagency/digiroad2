@@ -6,6 +6,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import Database.dynamicSession
 import Q.interpolation
+import org.apache.commons.lang3.StringUtils
 
 class BustStopExcelDataImporter {
   val Updater = "excel_data_migration"
@@ -63,13 +64,18 @@ class BustStopExcelDataImporter {
 
             insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
-            //insertTextPropertyValue(assetId, "Pysäkin saavutettavuus", row.reachability)
+            val equipments = StringUtils.trimToEmpty(row.equipments)
+            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoicePropertyToYes(assetId, "Varusteet (Penkki)")
+            if (equipments.toLowerCase.contains("katos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Katos)")
+            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Mainoskatos)")
+            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoicePropertyToYes(assetId, "Varusteet (Aikataulu)")
+            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoicePropertyToYes(assetId, "Varusteet (Pyöräteline)")
 
             insertTextPropertyValue(assetId, "Esteettömyys liikuntarajoitteiselle", row.accessibility)
 
             insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Lisätiedot", row.equipments)
+            insertTextPropertyValue(assetId, "Lisätiedot", equipments + "\n" + row.reachability)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -81,7 +87,7 @@ class BustStopExcelDataImporter {
   def insertTextPropertyValue(assetId: Long, propertyName: String, valueFi: String) {
     val propertyId = sql"""
       select id from text_property_value
-      where property_id = (select id from property where NAME_FI = ${propertyName})
+      where property_id = (select id from property where name_fi = ${propertyName})
       and asset_id = ${assetId}
     """.as[Long].firstOption
 
@@ -98,6 +104,29 @@ class BustStopExcelDataImporter {
         sqlu"""
           update text_property_value set value_fi = ${valueFi}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
+        """.execute
+      }
+    }
+  }
+
+  def setSingleChoicePropertyToYes(assetId: Long, propertyName: String) {
+    val Yes = 2
+    val propertyId = sql"""
+      select id from single_choice_value
+      where property_id = (select id from property where name_fi = ${propertyName})
+      and asset_id = ${assetId}
+    """.as[Long].firstOption
+
+    propertyId match {
+      case None => {
+        sqlu"""
+          insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by)
+          values ($propertyId, $assetId, (select id from enumerated_value where value = $Yes and property_id = $propertyId), ${Updater})
+        """.execute
+      }
+      case _ => {
+        sqlu"""
+          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = $Yes), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
         """.execute
       }
     }
