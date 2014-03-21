@@ -283,4 +283,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     image.size should (be > 1)
   }
 
+  test("Loads all asset with properties in municipality find", Tag("db")) {
+    val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+    val municipalities = provider.getAssetsByMunicipality(235)
+    municipalities.size should be(5)
+  }
 }
