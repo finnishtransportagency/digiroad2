@@ -1,14 +1,13 @@
 (function(backend) {
-    backend.getEnumeratedPropertyValues = function (assetTypeId, success) {
+    backend.getEnumeratedPropertyValues = function (assetTypeId) {
         jQuery.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function(enumeratedPropertyValues) {
             eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
-            success(enumeratedPropertyValues);
         })
         .fail(function() { console.log( "error" ); });
     };
 
-    backend.putAssetPropertyValue = function (assetId, propertyId, data, success) {
-        putAssetPropertyValue(assetId, propertyId, data, success);
+    backend.putAssetPropertyValue = function (assetId, propertyId, data) {
+        putAssetPropertyValue(assetId, propertyId, data);
     };
 
     backend.getAssets =  _.throttle(function(assetTypeId, boundingBox) {
@@ -19,17 +18,22 @@
         });
     }, 1000);
 
-    backend.getAsset = function (assetId, success) {
+    backend.getAsset = function (assetId) {
         $.get('api/assets/' + assetId, function(asset) {
             eventbus.trigger('asset:fetched', asset);
-            success(asset);
+        });
+    };
+    
+    backend.getIdFromExternalId = function(externalId, keepPosition) {
+        $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
+            eventbus.trigger('asset:unselected');
+            eventbus.trigger('asset:selected', {id: asset.id, externalId: asset.externalId}, keepPosition);
         });
     };
 
-    backend.getAssetTypeProperties = function (assetTypeId, success) {
+    backend.getAssetTypeProperties = function (assetTypeId) {
         $.get('api/assetTypeProperties/' + assetTypeId, function(assetTypeProperties) {
             eventbus.trigger('assetTypeProperties:fetched', assetTypeProperties);
-            success(assetTypeProperties);
         });
     };
 
@@ -58,7 +62,6 @@
           dataType:"json",
           success: function(asset) {
               eventbus.trigger('asset:saved asset:fetched', asset);
-              console.log("done");
           },
           error: function() {
               console.log("error");
@@ -66,7 +69,7 @@
         });
     };
 
-    function putAssetPropertyValue(assetId, propertyId, data, success) {
+    function putAssetPropertyValue(assetId, propertyId, data) {
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
@@ -75,9 +78,6 @@
             dataType:"json",
             success: function(assetPropertyValue) {
               eventbus.trigger('assetPropertyValue:saved assetPropertyValue:fetched', assetPropertyValue);
-              if (success) {
-                success(assetPropertyValue);
-              }
             },
             error: function() {
                 console.log("error");

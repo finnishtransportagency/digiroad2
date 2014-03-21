@@ -37,7 +37,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val creatingUser = user.copy(username = AssetCreator)
   val operatorUser = user.copy(configuration = user.configuration.copy(authorizedMunicipalities = Set(1), roles = Set(Role.Operator)))
 
-  implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
+  implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.externalId, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
     asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.status, asset.readOnly, asset.municipalityNumber)
 
   before {
@@ -156,10 +156,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val lon2 = lon1 + 4.0
     val lat2 = lat1 + 4.0
     val b2 = Random.nextInt(360)
-    val asset2 = asset.copy(lon = lon2, lat = lat2, bearing = Some(b2))
-    provider.updateAssetLocation(asset2)
+    provider.updateAssetLocation(id = asset.id, roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))
     val updated = provider.getAssetById(asset.id).get
-    provider.updateAssetLocation(asset)
+    provider.updateAssetLocation(id = asset.id, roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)
     Math.abs(updated.lat - lat1) should (be > 0.5)
     Math.abs(updated.lon - lon1) should (be > 0.5)
     updated.bearing.get should be (b2)
@@ -172,9 +171,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val refAsset = assets(1)
     origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
     val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
-    provider.updateAssetLocation(bsMoved)
+    provider.updateAssetLocation(id = bsMoved.id, roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)
     val bsUpdated = provider.getAssetById(bsMoved.id).get
-    provider.updateAssetLocation(origAsset)
+    provider.updateAssetLocation(id = origAsset.id, roadLinkId = origAsset.roadLinkId, lon = origAsset.lon, lat = origAsset.lat, bearing = origAsset.bearing)
     Math.abs(bsUpdated.lat - refAsset.lat) should (be < 0.05)
     Math.abs(bsUpdated.lon - refAsset.lon) should (be < 0.05)
     bsUpdated.roadLinkId should be (refAsset.roadLinkId)
@@ -189,7 +188,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
     val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
     intercept[IllegalArgumentException] {
-      provider.updateAssetLocation(bsMoved)
+      provider.updateAssetLocation(id = bsMoved.id, roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)
     }
   }
 

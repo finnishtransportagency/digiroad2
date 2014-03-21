@@ -38,6 +38,18 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
+  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.getAssetByExternalId(externalId)
+    }
+  }
+
+  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.getAssetPositionByExternalId(externalId)
+    }
+  }
+
   def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssets(assetTypeId, user, bounds, validFrom, validTo)
@@ -60,12 +72,12 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
       }
   }
 
-  def updateAssetLocation(asset: Asset): AssetWithProperties = {
+  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]): AssetWithProperties = {
     Database.forDataSource(ds).withDynTransaction {
-      if (!userCanModifyAsset(asset.id)) {
+      if (!userCanModifyAsset(id)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
-      OracleSpatialAssetDao.updateAssetLocation(asset)
+      OracleSpatialAssetDao.updateAssetLocation(id = id, lon = lon, lat = lat, roadLinkId = roadLinkId, bearing = bearing)
     }
   }
 

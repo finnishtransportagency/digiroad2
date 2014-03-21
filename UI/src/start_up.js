@@ -4,11 +4,19 @@ jQuery(document).ready(function() {
   var appSetup;
   var appConfig;
   
+  var assetIdFromURL = function() {
+      var matches = window.location.hash.match(/(\d+)(.*)/);
+      if (matches) {
+        return {externalId: matches[1], keepPosition: matches[2] !== ''};
+      }
+  };
+  
   var downloadConfig = function(notifyCallback) {
+    var data = assetIdFromURL();
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : 'api/config',
+      url : 'api/config' + (data.externalId ? '?externalAssetId=' + data.externalId : ''),
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");
@@ -37,6 +45,17 @@ jQuery(document).ready(function() {
     });
   };
   
+  eventbus.on('application:readOnly', function(readOnly) {
+      window.location.hash = '';
+  });
+  
+  $(window).on('hashchange', function(evt) {
+      var data = assetIdFromURL();
+      if (data.externalId) {
+          Backend.getIdFromExternalId(data.externalId, data.keepPosition);
+      }
+  });
+  
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -46,10 +65,13 @@ jQuery(document).ready(function() {
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
           eventbus.trigger('application:initialized');
+          var data = assetIdFromURL();
+          if (data.externalId) {
+              Backend.getIdFromExternalId(data.externalId);
+          }
       });
     }
   };
   downloadAppSetup(startApplication);
   downloadConfig(startApplication);
-  
 });

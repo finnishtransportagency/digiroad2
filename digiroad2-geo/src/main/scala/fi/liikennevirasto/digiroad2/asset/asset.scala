@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.asset
 import org.joda.time.LocalDate
 
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
-case class Asset(id: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
+case class Asset(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None, validityPeriod: Option[String] = None)

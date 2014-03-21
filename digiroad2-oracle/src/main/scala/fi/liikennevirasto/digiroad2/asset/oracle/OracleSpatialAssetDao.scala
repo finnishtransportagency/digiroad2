@@ -78,16 +78,29 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
-      val row = v(0)
-      AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+  private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
+    val row = param._2(0)
+    AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v)).sortBy(_.propertyUiIndex),
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
+        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection))
+  }
+
+  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+  }
+
+  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+  }
+
+  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map { case (k, v) =>
+      val row = v(0)
+      (row.lon, row.lat)
     }.headOption
   }
 
@@ -120,7 +133,7 @@ object OracleSpatialAssetDao {
     val q = QueryCollector(assetsByTypeWithPosition, IndexedSeq(assetTypeId.toString)).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
     collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
-      Asset(id = row.id, assetTypeId = row.assetTypeId, lon = row.lon,
+      Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = row.lon,
         lat = row.lat, roadLinkId = row.roadLinkId,
         imageIds = v.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
@@ -174,16 +187,16 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def updateAssetLocation(asset: Asset): AssetWithProperties = {
-    val latLonGeometry = JGeometry.createPoint(Array(asset.lon, asset.lat), 2, 3067)
-    val lrMeasure = getPointLRMeasure(latLonGeometry, asset.roadLinkId, dynamicSession.conn)
-    val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(asset.id)
-    updateLRMeasure(lrmPositionId, asset.roadLinkId, lrMeasure, dynamicSession.conn)
-    asset.bearing match {
-      case Some(b) => updateAssetBearing(asset.id, b).execute()
+  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]): AssetWithProperties = {
+    val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
+    val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
+    val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
+    updateLRMeasure(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
+    bearing match {
+      case Some(b) => updateAssetBearing(id, b).execute()
       case None => // do nothing
     }
-    getAssetById(asset.id).get
+    getAssetById(id).get
   }
 
   def getRoadLinks(user: User, bounds: Option[BoundingRectangle]): Seq[RoadLink] = {

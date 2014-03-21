@@ -46,12 +46,28 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         init: function (sandbox) {
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
+            eventbus.on('asset:selected', function(data) {
+                this._backend.getAsset(data.id);
+            }, this);
+            eventbus.on('asset:selected', function(data, keepPosition) {
+                this._selectedAsset = this._assets[data.id];
+                this._highlightAsset(this._selectedAsset);
+                if (!keepPosition) {
+                    var sandbox = Oskari.getSandbox(),
+                        requestBuilder = sandbox.getRequestBuilder('MapMoveRequest'),
+                        request;
+                    request = requestBuilder(this._selectedAsset.data.lon, this._selectedAsset.data.lat, 12);
+                    sandbox.request(this.getName(), request);
+                }
+            }, this);
+
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
             eventbus.on('assetPropertyValue:saved', this._updateAsset, this);
             eventbus.on('assetPropertyValue:changed', this._handleAssetPropertyValueChanged, this);
             eventbus.on('asset:saved', this._handleAssetSaved, this);
             eventbus.on('asset:created', this._handleAssetCreated, this);
+            eventbus.on('asset:fetched', this._handleAssetFetched, this);
             eventbus.on('asset:created', this._removeOverlay, this);
             eventbus.on('asset:cancelled', this._cancelCreate, this);
             eventbus.on('application:initialized', function() {
@@ -147,6 +163,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _handleAssetSaved: function(asset) {
             this._selectedAsset.data = asset;
             this._assets[asset.id] = this._selectedAsset;
+        },
+        _handleAssetFetched: function(assetData) {
+            this._selectedAsset.data = assetData;
         },
         _hideAsset: function(asset) {
             this._layers.assetDirection.destroyFeatures(asset.directionArrow);
@@ -347,7 +366,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                             assetDirection: assetDirectionLayer,
                             asset: assetLayer};
             this._fetchAssets();
-            me._sandbox.printDebug("#!#! CREATED OPENLAYER.Markers.BusStop for BusStopLayer " + layer.getId());
         },
         _fetchAssets: function() {
             if (this._isInZoomLevel()) {
@@ -378,6 +396,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                             self._removeAssetFromMap(self._assets[asset.id]);
                         }
                         self._assets[asset.id] = self._addBusStop(asset, self._layers.asset, directionArrow, self._layers.assetDirection, validityDirection);
+                        var assetIdFromURL = function() {
+                            var matches = window.location.hash.match(/\#\/asset\/(\d+)/);
+                            if (matches) {
+                                return matches[1];
+                            }
+                        };
                         if (self._selectedAsset && self._selectedAsset.data.id == asset.id) {
                             self._selectedAsset = self._assets[asset.id];
                             self._highlightAsset(self._selectedAsset);
@@ -435,7 +459,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             asset.marker = marker;
             asset.data = assetData;
             asset.directionArrow = directionArrow;
-            var busStopClick = this._mouseClick(asset, imageIds);
+            var busStopClick = this._mouseClick(asset);
             var mouseUp = this._mouseUp(asset, busStops, busStopClick, assetData.id, assetData.assetTypeId);
             var mouseDown = this._mouseDown(asset, busStops, mouseUp);
             marker.events.register("mousedown", busStops, mouseDown);
@@ -492,20 +516,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                 OpenLayers.Event.stop(evt);
             };
         },
-        _mouseClick: function(asset, imageIds) {
+        _mouseClick: function(asset) {
             var me = this;
-            return function (evt, streetViewCoordinates) {
+            return function (evt) {
                 OpenLayers.Event.stop(evt);
                 me._state = null;
-                eventbus.trigger('asset:selected', asset.data.id);
-                me._backend.getAsset(asset.data.id, function(assetData) {
-                    // FIXME: DEPRECATED, USE EVENTS INSTEAD OF CALLBACKS
-                    var assetAttributes = _.merge({}, assetData, { id: asset.data.id });
-                    streetViewCoordinates.heading = asset.data.roadDirection + (-90 * asset.data.effectDirection);
-                    assetAttributes.position = streetViewCoordinates;
-                    me._selectedAsset = asset;
-                    me._highlightAsset(me._selectedAsset);
-                });
+                window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
             };
         },
 
