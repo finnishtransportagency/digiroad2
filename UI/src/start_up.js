@@ -5,18 +5,18 @@ jQuery(document).ready(function() {
   var appConfig;
   
   var assetIdFromURL = function() {
-      var matches = window.location.hash.match(/\#\/asset\/(\d+)/);
+      var matches = window.location.hash.match(/(\d+)(.*)/);
       if (matches) {
-        return matches[1];
+        return {externalId: matches[1], keepPosition: matches[2] !== ''};
       }
   };
   
   var downloadConfig = function(notifyCallback) {
-    var externalAssetId = assetIdFromURL();
+    var data = assetIdFromURL();
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : 'api/config' + (externalAssetId ? '?externalAssetId=' + externalAssetId : ''),
+      url : 'api/config' + (data.externalId ? '?externalAssetId=' + data.externalId : ''),
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");
@@ -45,18 +45,14 @@ jQuery(document).ready(function() {
     });
   };
   
-  eventbus.on('asset:fetched asset:created', function(asset) {
-      window.location.hash = '#/asset/' + asset.externalId;
-  });
-  
-  eventbus.on('asset:unselected', function(asset) {
+  eventbus.on('application:readOnly', function(readOnly) {
       window.location.hash = '';
   });
   
-  $(window).on('hashchange', function() {
-      var externalAssetId = assetIdFromURL();
-      if (externalAssetId) {
-          eventbus.trigger('asset:preselected', externalAssetId);
+  $(window).on('hashchange', function(evt) {
+      var data = assetIdFromURL();
+      if (data.externalId) {
+          Backend.getIdFromExternalId(data.externalId, data.keepPosition);
       }
   });
   
@@ -69,9 +65,9 @@ jQuery(document).ready(function() {
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
           eventbus.trigger('application:initialized');
-          var externalAssetId = assetIdFromURL();
-          if (externalAssetId) {
-              eventbus.trigger('asset:preselected', externalAssetId);
+          var data = assetIdFromURL();
+          if (data.externalId) {
+              Backend.getIdFromExternalId(data.externalId);
           }
       });
     }

@@ -46,9 +46,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         init: function (sandbox) {
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
-            eventbus.on('asset:selected', function(_, asset) {
-                this._highlightAsset(asset);
+            eventbus.on('asset:selected', function(data) {
+                this._backend.getAsset(data.id);
             }, this);
+            eventbus.on('asset:selected', function(data, keepPosition) {
+                this._selectedAsset = this._assets[data.id];
+                this._highlightAsset(this._selectedAsset);
+                if (!keepPosition) {
+                    var sandbox = Oskari.getSandbox(),
+                        requestBuilder = sandbox.getRequestBuilder('MapMoveRequest'),
+                        request;
+                    request = requestBuilder(this._selectedAsset.data.lon, this._selectedAsset.data.lat, 12);
+                    sandbox.request(this.getName(), request);
+                }
+            }, this);
+
             eventbus.on('asset:unselected', this._closeAsset, this);
             eventbus.on('assets:fetched', this._renderAssets, this);
             eventbus.on('assetPropertyValue:saved', this._updateAsset, this);
@@ -65,12 +77,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {
                 this._readOnly = readOnly;
-            }, this);
-            eventbus.on('asset:selected', function(assetId) {
-                this._selectedAsset = this._assets[assetId];
-            }, this);
-            eventbus.on('asset:preselected', function(externalId) {
-                this._backend.getAssetByExternalId(externalId);
             }, this);
 
             // register domain builder
@@ -159,19 +165,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             this._assets[asset.id] = this._selectedAsset;
         },
         _handleAssetFetched: function(assetData) {
-            if (!this._selectedAsset) {
-                this._selectedAsset = this._assets[assetData.id];
-                eventbus.trigger('asset:selected', assetData.id, this._selectedAsset);
-            }
             this._selectedAsset.data = assetData;
-//            this._map.moveTo(assetData.lon, assetData.lat, 12);
-            
-            
-            var sandbox = Oskari.getSandbox(),
-                          requestBuilder = sandbox.getRequestBuilder('MapMoveRequest'),
-                          request;
-            request = requestBuilder(assetData.lon, assetData.lat, 12);
-            sandbox.request(this.getName(), request);
         },
         _hideAsset: function(asset) {
             this._layers.assetDirection.destroyFeatures(asset.directionArrow);
@@ -465,7 +459,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             asset.marker = marker;
             asset.data = assetData;
             asset.directionArrow = directionArrow;
-            var busStopClick = this._mouseClick(asset, imageIds);
+            var busStopClick = this._mouseClick(asset);
             var mouseUp = this._mouseUp(asset, busStops, busStopClick, assetData.id, assetData.assetTypeId);
             var mouseDown = this._mouseDown(asset, busStops, mouseUp);
             marker.events.register("mousedown", busStops, mouseDown);
@@ -522,13 +516,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
                 OpenLayers.Event.stop(evt);
             };
         },
-        _mouseClick: function(asset, imageIds) {
+        _mouseClick: function(asset) {
             var me = this;
-            return function (evt, streetViewCoordinates) {
+            return function (evt) {
                 OpenLayers.Event.stop(evt);
                 me._state = null;
-                eventbus.trigger('asset:selected', asset.data.id, asset);
-                me._backend.getAsset(asset.data.id);
+                window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
             };
         },
 

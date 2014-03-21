@@ -24,9 +24,10 @@
         });
     };
     
-    backend.getAssetByExternalId = function(externalId) {
+    backend.getIdFromExternalId = function(externalId, keepPosition) {
         $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
-            eventbus.trigger('asset:fetched', asset);
+            eventbus.trigger('asset:unselected');
+            eventbus.trigger('asset:selected', {id: asset.id, externalId: asset.externalId}, keepPosition);
         });
     };
 
