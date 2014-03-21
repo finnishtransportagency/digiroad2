@@ -23,6 +23,12 @@
             eventbus.trigger('asset:fetched', asset);
         });
     };
+    
+    backend.getAssetByExternalId = function(externalId) {
+        $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
+            eventbus.trigger('asset:fetched', asset);
+        });
+    };
 
     backend.getAssetTypeProperties = function (assetTypeId) {
         $.get('api/assetTypeProperties/' + assetTypeId, function(assetTypeProperties) {

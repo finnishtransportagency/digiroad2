@@ -31,7 +31,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/config") {
-    val (east, north, zoom) = params.get("assetId").flatMap { assetId =>
+    val (east, north, zoom) = params.get("externalAssetId").flatMap { assetId =>
         assetProvider.getAssetPositionByExternalId(assetId.toLong).map { case (east, north) =>
         (Some(east), Some(north), Some(12))
       }
@@ -70,7 +70,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/assets/:assetId") {
-    assetProvider.getAssetById(params("assetId").toLong) match {
+    val getAssetById = if (params.get("externalId").isDefined) {
+      assetProvider.getAssetByExternalId _
+    } else {
+      assetProvider.getAssetById _
+    }
+    getAssetById(params("assetId").toLong) match {
       case Some(a) => {
         if (a.municipalityNumber.map(isReadOnly(userProvider.getCurrentUser())).getOrElse(true)) {
           Unauthorized("Asset " + params("assetId") + " not authorized")

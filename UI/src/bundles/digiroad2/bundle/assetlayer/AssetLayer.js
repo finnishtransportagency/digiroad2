@@ -47,7 +47,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
             eventbus.on('asset:selected', function(_, asset) {
-                this._selectedAsset = asset;
                 this._highlightAsset(asset);
             }, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
@@ -66,6 +65,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {
                 this._readOnly = readOnly;
+            }, this);
+            eventbus.on('asset:selected', function(assetId) {
+                this._selectedAsset = this._assets[assetId];
+            }, this);
+            eventbus.on('asset:preselected', function(externalId) {
+                this._backend.getAssetByExternalId(externalId);
             }, this);
 
             // register domain builder
@@ -154,7 +159,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             this._assets[asset.id] = this._selectedAsset;
         },
         _handleAssetFetched: function(assetData) {
+            if (!this._selectedAsset) {
+                this._selectedAsset = this._assets[assetData.id];
+                eventbus.trigger('asset:selected', assetData.id, this._selectedAsset);
+            }
             this._selectedAsset.data = assetData;
+//            this._map.moveTo(assetData.lon, assetData.lat, 12);
+            
+            
+            var sandbox = Oskari.getSandbox(),
+                          requestBuilder = sandbox.getRequestBuilder('MapMoveRequest'),
+                          request;
+            request = requestBuilder(assetData.lon, assetData.lat, 12);
+            sandbox.request(this.getName(), request);
         },
         _hideAsset: function(asset) {
             this._layers.assetDirection.destroyFeatures(asset.directionArrow);

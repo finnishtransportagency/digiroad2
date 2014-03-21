@@ -65,7 +65,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             eventbus.on('enumeratedPropertyValues:fetched', function(values) {
                 this._enumeratedPropertyValues = values;
             }, this);
-
+            
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
             this._getPropertyValues();
 

@@ -38,6 +38,12 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
+  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.getAssetByExternalId(externalId)
+    }
+  }
+
   def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssetPositionByExternalId(externalId)

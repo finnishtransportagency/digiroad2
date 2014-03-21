@@ -12,11 +12,11 @@ jQuery(document).ready(function() {
   };
   
   var downloadConfig = function(notifyCallback) {
-    var assetId = assetIdFromURL();
+    var externalAssetId = assetIdFromURL();
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : 'api/config' + (assetId ? '?assetId=' + assetId : ''),
+      url : 'api/config' + (externalAssetId ? '?externalAssetId=' + externalAssetId : ''),
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");
@@ -50,8 +50,15 @@ jQuery(document).ready(function() {
   });
   
   eventbus.on('asset:unselected', function(asset) {
-    window.location.hash = '';
-});
+      window.location.hash = '';
+  });
+  
+  $(window).on('hashchange', function() {
+      var externalAssetId = assetIdFromURL();
+      if (externalAssetId) {
+          eventbus.trigger('asset:preselected', externalAssetId);
+      }
+  });
   
   var startApplication = function() {
     // check that both setup and config are loaded 
@@ -62,6 +69,10 @@ jQuery(document).ready(function() {
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
           eventbus.trigger('application:initialized');
+          var externalAssetId = assetIdFromURL();
+          if (externalAssetId) {
+              eventbus.trigger('asset:preselected', externalAssetId);
+          }
       });
     }
   };

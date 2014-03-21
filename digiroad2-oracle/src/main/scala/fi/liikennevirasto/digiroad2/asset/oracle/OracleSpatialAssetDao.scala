@@ -61,17 +61,23 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map { case (k, v) =>
-      val row = v(0)
-      AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+  private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
+    val row = param._2(0)
+    AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v)).sortBy(_.propertyUiIndex),
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
+        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection))
-    }.headOption
+  }
+
+  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+  }
+
+  def getAssetById(assetId: Long): Option[AssetWithProperties] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
   }
 
   def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
