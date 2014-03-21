@@ -51,7 +51,7 @@ jQuery(document).ready(function() {
   
   $(window).on('hashchange', function(evt) {
       var data = assetIdFromURL();
-      if (data.externalId) {
+      if (data && data.externalId) {
           Backend.getIdFromExternalId(data.externalId, data.keepPosition);
       }
   });
@@ -66,7 +66,7 @@ jQuery(document).ready(function() {
       app.startApplication(function(startupInfos) {
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();
-          if (data.externalId) {
+          if (data && data.externalId) {
               Backend.getIdFromExternalId(data.externalId);
           }
       });
