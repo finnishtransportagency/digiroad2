@@ -16,7 +16,25 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   it must "return correct csv entries from test data" in {
     val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(assetsByMunicipality)
     csv.length must be (5)
-    csv.head must equal("300000;1;1;;;374635.608258218;6677267.45072414;;;80;;2;1;0;0;0;katos;Ei tiedossa;;18.03.2014 15:55:29;dr1conversion;2013-03-18 00:00:00.0;2017-03-18 00:00:00.0;;235;;;")
-    csv.drop(1).head must equal("300001;5;5;;;374792.096855508;6677566.77442972;;;210;;2;1;1;1;0;;Ei tiedossa;;18.03.2014 15:55:31;dr1conversion;2012-03-18 00:00:00.0;2013-03-18 00:00:00.0;;235;;;")
+
+    val propertyValueOfFirst = extractPropertyValue(assetsByMunicipality.head, _: String)
+    val firstCreated = parseCreated(propertyValueOfFirst("created"))
+    val firstValidFrom = propertyValueOfFirst("validFrom")
+    val firstValidTo = propertyValueOfFirst("validTo")
+    csv.head must equal("300000;1;1;;;374635.608258218;6677267.45072414;;;80;;2;1;0;0;0;katos;Ei tiedossa;;" + firstCreated + ";dr1conversion;" + firstValidFrom + ";" + firstValidTo + ";;235;;;")
+
+    val propertyValueOfSecond = extractPropertyValue(assetsByMunicipality.drop(1).head, _: String)
+    val secondCreated = parseCreated(propertyValueOfSecond("created"))
+    val secondValidFrom = propertyValueOfSecond("validFrom")
+    val secondValidTo = propertyValueOfSecond("validTo")
+    csv.drop(1).head must equal("300001;5;5;;;374792.096855508;6677566.77442972;;;210;;2;1;1;1;0;;Ei tiedossa;;" + secondCreated + ";dr1conversion;" + secondValidFrom + ";" + secondValidTo + ";;235;;;")
+  }
+
+  private def extractPropertyValue(asset: AssetWithProperties, propertyId: String): String = {
+    asset.propertyData.find(_.propertyId == propertyId).get.values.head.propertyDisplayValue
+  }
+
+  private def parseCreated(s: String): String = {
+    s.split(" ").drop(1).mkString(" ")
   }
 }
