@@ -65,11 +65,11 @@ class BustStopExcelDataImporter {
             insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
             val equipments = trimToEmpty(row.equipments)
-            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoicePropertyToYes(assetId, "Varusteet (Penkki)")
-            if (equipments.toLowerCase.contains("katos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Katos)")
-            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Mainoskatos)")
-            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoicePropertyToYes(assetId, "Varusteet (Aikataulu)")
-            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoicePropertyToYes(assetId, "Varusteet (Pyöräteline)")
+            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoicePropertyToYes(assetId, "Penkki")
+            if (equipments.toLowerCase.contains("katos")) setSingleChoicePropertyToYes(assetId, "Katos")
+            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoicePropertyToYes(assetId, "Mainoskatos")
+            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoicePropertyToYes(assetId, "Aikataulu")
+            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoicePropertyToYes(assetId, "Pyöräteline")
 
             if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoicePropertyToYes(assetId, "Saattomahdollisuus henkilöautolla")
 

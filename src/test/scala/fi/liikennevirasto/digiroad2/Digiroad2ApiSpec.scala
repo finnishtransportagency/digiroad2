@@ -191,7 +191,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       val ps = parse(body).extract[List[Property]]
       ps.size should equal(29)
       val p1 = ps.find(_.propertyId == TestPropertyId).get
-      p1.propertyName should be ("Varusteet (Katos)")
+      p1.propertyName should be ("Katos")
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
       ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
