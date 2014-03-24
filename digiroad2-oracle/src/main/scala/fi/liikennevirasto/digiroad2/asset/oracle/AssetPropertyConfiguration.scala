@@ -26,8 +26,8 @@ object AssetPropertyConfiguration {
     ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(ValidityDirectionId, "Vaikutussuunta", SingleChoice, 65, values = Seq()), true),
     ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(ValidFromId, "Ensimmäinen voimassaolopäivä", Date, 70, values = Seq())),
     ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(ValidToId, "Viimeinen voimassaolopäivä", Date, 80, values = Seq())),
-    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(ValidToId, "Lisätty järjestelmään", ReadOnlyText, 10, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(ValidToId, "Muokattu viimeksi", ReadOnlyText, 20, values = Seq()))
+    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(CreatedId, "Lisätty järjestelmään", ReadOnlyText, 10, values = Seq())),
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(ModifiedId, "Muokattu viimeksi", ReadOnlyText, 20, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: AssetRow): Seq[Property] = {
