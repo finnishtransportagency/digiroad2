@@ -304,6 +304,48 @@ class AssetDataImporter {
     """.execute
   }
 
+  def getAssetIds() = {
+    var counter = 0
+    def toUpdateSql(values: (Long, Option[String])) = {
+      counter = counter + 1
+      if(counter % 50 == 0) println(s"$counter items processed")
+      val (assetId, adminCode) = values
+      val value = adminCode.map(x => (if(x == null) null else s"'$x'")).getOrElse("'ei tiedossa'")
+      getSqlForAdminCode(assetId, value)
+    }
+
+    sql"""
+        select id, external_id from asset
+      """.as[(Long, Long)]
+         .mapResult((x: (Long, Long)) => (x._1, getAdminCodeFromDr1(Conversion, x._2)))
+         .mapResult(toUpdateSql)
+  }
+
+  def getSqlForAdminCode(assetId: Long, value: String) = {
+    s"""
+      |update text_property_value set value_fi = $value, modified_by = 'dr1conversion', modified_date = CURRENT_TIMESTAMP
+      |   where property_id = (select id from property where name_fi = 'Ylläpitäjän tunnus') and asset_id = $assetId;
+      |insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
+      |   SELECT primary_key_seq.nextval, (select id from property where NAME_FI = 'Ylläpitäjän tunnus'), $assetId, $value, 'dr1conversion' from dual
+      |   WHERE NOT EXISTS (select 1 from text_property_value
+      |                     where property_id = (select id from property where name_fi = 'Ylläpitäjän tunnus') and asset_id = $assetId);
+    """.stripMargin
+  }
+
+  def getAdminCodeFromDr1(dataSet: ImportDataSet, externalId: Long) = {
+    dataSet.database().withDynSession {
+      try {
+      sql"""
+          select segm_pysakki_yllap_tunnus from segmentti where segm_pysakki_valtak_tunnus = $externalId
+      """.as[String].firstOption
+      } catch {
+        case e: Exception =>
+          println(s"failed with id $externalId")
+          throw e
+      }
+    }
+  }
+
   private[this] def initDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val cfg = new BoneCPConfig(localProperties)

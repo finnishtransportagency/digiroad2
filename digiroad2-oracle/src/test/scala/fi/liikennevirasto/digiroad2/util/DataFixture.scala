@@ -7,6 +7,11 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import scala.Some
+import java.io.{File, PrintWriter}
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
+import scala.slick.jdbc.{StaticQuery => Q, _}
+import Database.dynamicSession
 
 object DataFixture {
   val TestAssetId = 300000
@@ -125,7 +130,13 @@ object DataFixture {
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
-      case _ => println("Usage: DataFixture test | full | conversion")
+      case Some("AdminIdUpdate") =>
+        Database.forDataSource(ds).withDynSession {
+          val writer = new PrintWriter(new File("admincode.sql"))
+          dataImporter.getAssetIds().mapResult(_.trim.stripMargin).foreach(x => writer.write(x + "\n"))
+          writer.close()
+        }
+      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate")
     }
   }
 }
