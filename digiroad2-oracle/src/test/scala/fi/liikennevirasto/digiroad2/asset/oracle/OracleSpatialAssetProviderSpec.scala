@@ -287,4 +287,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val municipalities = provider.getAssetsByMunicipality(235)
     municipalities.size should be(5)
   }
+
+  test("returns correct amount of assets from test data", Tag("db")) {
+    val assetsByMunicipality = provider.getAssetsByMunicipality(235)
+    assetsByMunicipality.size should be (5)
+    assetsByMunicipality.head.id should be (300000)
+  }
 }
