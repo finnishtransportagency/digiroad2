@@ -6,6 +6,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import Database.dynamicSession
 import Q.interpolation
+import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
 
 class BustStopExcelDataImporter {
   val Updater = "excel_data_migration"
@@ -28,9 +29,9 @@ class BustStopExcelDataImporter {
   private[this] def initConversionDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val ds = new BoneCPDataSource()
-    ds.setJdbcUrl("jdbc:oracle:thin:@livispr01n1l-vip:1521/drkeh")
-    ds.setUsername("dr2data")
-    ds.setPassword("dr2data")
+    ds.setJdbcUrl("")
+    ds.setUsername("")
+    ds.setPassword("")
     ds
   }
 
@@ -63,13 +64,22 @@ class BustStopExcelDataImporter {
 
             insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
-            //insertTextPropertyValue(assetId, "Pysäkin saavutettavuus", row.reachability)
+            val equipments = trimToEmpty(row.equipments)
+            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoicePropertyToYes(assetId, "Varusteet (Penkki)")
+            if (equipments.toLowerCase.contains("katos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Katos)")
+            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoicePropertyToYes(assetId, "Varusteet (Mainoskatos)")
+            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoicePropertyToYes(assetId, "Varusteet (Aikataulu)")
+            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoicePropertyToYes(assetId, "Varusteet (Pyöräteline)")
+
+            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoicePropertyToYes(assetId, "Saattomahdollisuus henkilöautolla")
+
+            insertTextPropertyValue(assetId, "Liityntäpysäköinnin lisätiedot", row.reachability)
 
             insertTextPropertyValue(assetId, "Esteettömyys liikuntarajoitteiselle", row.accessibility)
 
             insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Lisätiedot", row.equipments)
+            insertTextPropertyValue(assetId, "Lisätiedot", equipments)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -78,26 +88,50 @@ class BustStopExcelDataImporter {
     }
   }
 
-  def insertTextPropertyValue(assetId: Long, propertyName: String, valueFi: String) {
+  def insertTextPropertyValue(assetId: Long, propertyName: String, value: String) {
+    if (isBlank(value)) return
+
     val propertyId = sql"""
       select id from text_property_value
-      where property_id = (select id from property where NAME_FI = ${propertyName})
+      where property_id = (select id from property where name_fi = ${propertyName})
       and asset_id = ${assetId}
     """.as[Long].firstOption
 
     propertyId match {
       case None => {
-        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "'")
+        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUE: '" + value + "'")
         sqlu"""
           insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${valueFi}, ${Updater})
+          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${value}, ${Updater})
         """.execute
       }
       case _ => {
-        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUES FI: '" + valueFi + "'")
+        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUE: '" + value + "'")
         sqlu"""
-          update text_property_value set value_fi = ${valueFi}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          update text_property_value set value_fi = ${value}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
+        """.execute
+      }
+    }
+  }
+
+  def setSingleChoicePropertyToYes(assetId: Long, propertyName: String) {
+    val Yes = 2
+    val propertyId = sql"""select id from property where name_fi = ${propertyName}""".as[Long].first
+    val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
+
+    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: 'Kyllä'")
+    existingProperty match {
+      case None => {
+        sqlu"""
+          insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by, modified_date)
+          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${Yes} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
+        """.execute
+      }
+      case _ => {
+        sqlu"""
+          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${Yes} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          where property_id = $propertyId and asset_id = ${assetId}
         """.execute
       }
     }
