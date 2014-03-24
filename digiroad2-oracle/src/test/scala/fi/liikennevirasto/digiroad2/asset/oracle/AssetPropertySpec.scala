@@ -47,7 +47,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Update a single-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Varusteet (Katos)").get
+    val property = asset.propertyData.find(_.propertyName == "Katos").get
     val modifiedProperty = property.copy(values = List(PropertyValue(2, "Kyllä")))
     provider.updateAssetProperty(asset.id, modifiedProperty.propertyId, modifiedProperty.values)
     val updatedProperty = getTestAsset.propertyData.find(_.propertyId == modifiedProperty.propertyId).get
@@ -64,7 +64,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Delete and create a single-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Varusteet (Katos)").get
+    val property = asset.propertyData.find(_.propertyName == "Katos").get
     provider.deleteAssetProperty(asset.id, property.propertyId)
     val updatedAsset = getTestAsset
     updatedAsset.propertyData.find(_.propertyId == property.propertyId).get.values shouldBe empty
