@@ -16,7 +16,7 @@ jQuery(document).ready(function() {
     jQuery.ajax({
       type : 'GET',
       dataType : 'json',
-      url : 'api/config' + (data.externalId ? '?externalAssetId=' + data.externalId : ''),
+      url : 'api/config' + (data && data.externalId ? '?externalAssetId=' + data.externalId : ''),
       beforeSend: function(x) {
           if (x && x.overrideMimeType) {
               x.overrideMimeType("application/j-son;charset=UTF-8");
