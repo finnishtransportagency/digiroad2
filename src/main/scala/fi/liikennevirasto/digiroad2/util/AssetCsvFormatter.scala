@@ -167,7 +167,7 @@ object AssetCsvFormatter {
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopShelter: Seq[Long] = getItemsFromPropertyByName("Varusteet (Katos)", asset.propertyData).map(x => x.propertyValue)
+    val busstopShelter: Seq[Long] = getItemsFromPropertyByName("Katos", asset.propertyData).map(x => x.propertyValue)
     val shelter = (if(busstopShelter.contains(2)) "katos" else "")
     (asset, shelter :: result)
   }

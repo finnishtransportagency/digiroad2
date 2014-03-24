@@ -239,7 +239,7 @@ class AssetDataImporter {
 
   def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
-      val shelterTypePropertyId = sql"select id from property where name_fi = 'Varusteet (Katos)'".as[Long].first
+      val shelterTypePropertyId = sql"select id from property where name_fi = 'Katos'".as[Long].first
       val accessibilityPropertyId = sql"select id from property where name_fi = 'Esteettömyys liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select id from property where name_fi = 'Tietojen ylläpitäjä'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
