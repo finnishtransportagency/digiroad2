@@ -69,7 +69,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
                 return;
             }
 
-            var vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry");
+            var vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry", {
+                styleMap: new OpenLayers.StyleMap({
+                    "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+                        strokeColor: "#333399",
+                        strokeWidth: 8
+                    }, OpenLayers.Feature.Vector.style["default"])),
+                    "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+                        strokeColor: "#3333ff",
+                        strokeWidth: 12
+                    }, OpenLayers.Feature.Vector.style["select"]))
+                })
+            });
+            vectorLayer.setOpacity(0.5);
             // TODO: Instead of a success callback fire an event
             jQuery.get('/data/SpeedLimits.json', function(lineAssets) {
                 var features = _.map(lineAssets, function(lineAsset) {
@@ -81,7 +93,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
                 vectorLayer.addFeatures(features);
             });
             this._map.addLayer(vectorLayer);
-
+            this.selectControl = new OpenLayers.Control.SelectFeature(
+                [vectorLayer],
+                {
+                    clickout: true, toggle: false,
+                    multiple: false, hover: false,
+                    toggleKey: "ctrlKey", // ctrl key removes from selection
+                    multipleKey: "shiftKey" // shift key adds to selection
+                }
+            );
+            this._map.addControl(this.selectControl);
+            this.selectControl.activate();
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
