@@ -93,17 +93,37 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
                 vectorLayer.addFeatures(features);
             });
             this._map.addLayer(vectorLayer);
+
+            this.modifyControls = {
+                modify : new OpenLayers.Control.ModifyFeature(vectorLayer, {
+                    standalone: true
+                })
+            };
+            // this.modifyControls.activate();
+
             this.selectControl = new OpenLayers.Control.SelectFeature(
                 [vectorLayer],
                 {
-                    clickout: true, toggle: false,
-                    multiple: false, hover: false,
-                    toggleKey: "ctrlKey", // ctrl key removes from selection
-                    multipleKey: "shiftKey" // shift key adds to selection
+                    geometryTypes: this.modifyControls.modify.geometryTypes,
+                    clickout: this.modifyControls.modify.clickout,
+                    toggle: this.modifyControls.modify.toggle,
+                    onBeforeSelect: this.modifyControls.modify.beforeSelectFeature,
+                    onSelect: this.modifyControls.modify.selectFeature,
+                    onUnselect: this.modifyControls.modify.unselectFeature,
+                    scope: this.modifyControls.modify
                 }
             );
             this._map.addControl(this.selectControl);
             this.selectControl.activate();
+
+            for(var key in this.modifyControls) {
+                this._map.addControl(this.modifyControls[key]);
+            }
+            // no harm in activating straight away
+            this.modifyControls.modify.activate();
+
+
+
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
