@@ -8,7 +8,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 
 object BusStopIconImageData {
-  val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
+  val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "5" -> "/virtuaalipysakki.png", "99" -> "/pysakki_ei_tiedossa.png")
 
   implicit object SetByteArray extends SetParameter[Array[Byte]] {
     def apply(v: Array[Byte], pp: PositionedParameters) {
