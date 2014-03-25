@@ -381,7 +381,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         },
 
         _getMultiCheckbox: function(name, values, propertyId) {
-            var validValues = [1,2,3,4];
+            var invalidValues = [99];
             var me = this;
             var checkboxes = '<div data-propertyId="' + propertyId +
                 '" name="' + name +
@@ -390,7 +390,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
-                    if (_.contains(validValues, inputValue.propertyValue)) {
+                    if (!_.contains(invalidValues, inputValue.propertyValue)) {
                         var checkedValue = '';
                         if (_.contains(valuesNro, inputValue.propertyValue)) {
                             checkedValue = 'checked ';
