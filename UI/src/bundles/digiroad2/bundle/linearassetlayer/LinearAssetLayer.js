@@ -41,34 +41,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
             if (mapLayerService) {
                 mapLayerService.registerLayerModel('linearassetlayer', 'Oskari.digiroad2.bundle.linearassetlayer.domain.LineAsset');
             }
-
+            this.initializeLayer();
         },
         onEvent: function (event) {
             return this.eventHandlers[event.getName()].apply(this, [event]);
         },
         startPlugin: function (sandbox) {
-            this._sandbox = sandbox;
             this._map = this.getMapModule().getMap();
             sandbox.register(this);
-            for (var p in this.eventHandlers) {
-                if (this.eventHandlers.hasOwnProperty(p)) {
-                    sandbox.registerForEventByName(this, p);
-                }
-            }
         },
         start: function (sandbox) {},
-        eventHandlers: {
-          'AfterMapLayerAddEvent': function (event) {
-            this.addToMapLayer(event.getMapLayer());
-          }
 
-        },
-
-        addToMapLayer: function (layer) {
-            if (!layer.isLayerOfType(this.layerType)) {
-                return;
-            }
-
+        initializeLayer: function() {
             var vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry", {
                 styleMap: new OpenLayers.StyleMap({
                     "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
