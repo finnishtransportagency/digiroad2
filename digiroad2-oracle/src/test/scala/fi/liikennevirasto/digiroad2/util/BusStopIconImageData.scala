@@ -8,7 +8,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 
 object BusStopIconImageData {
-  val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "5" -> "/virtuaalipysakki.png", "99" -> "/pysakki_ei_tiedossa.png")
+  val imagesForBusStopTypes = Map[String, String] ("1" -> "/raitiovaunu.png", "2" -> "/paikallisliikenne.png", "3" -> "/kaukoliikenne.png", "4" -> "/pikavuoro.png", "99" -> "/pysakki_ei_tiedossa.png")
 
   implicit object SetByteArray extends SetParameter[Array[Byte]] {
     def apply(v: Array[Byte], pp: PositionedParameters) {
@@ -17,10 +17,14 @@ object BusStopIconImageData {
   }
 
   def insertImages(modifier: String) {
-    Database.forDataSource(ds).withDynSession {
-      val busStopTypePropertyId = sql"select id from property where name_fi = 'Pysäkin tyyppi'".as[Long].first
+   insertImages(modifier, "Pysäkin tyyppi", imagesForBusStopTypes)
+  }
 
-      imagesForBusStopTypes.foreach { keyVal =>
+  def insertImages(modifier: String, propertyName: String, vals: Map[String, String]) {
+    Database.forDataSource(ds).withDynSession {
+      val propertyId = sql"""select id from property where name_fi = ${propertyName}""".as[Long].first
+
+      vals.foreach { keyVal =>
         val s = getClass.getResourceAsStream(keyVal._2)
         val bis = new BufferedInputStream(s)
         val fos = new ByteArrayOutputStream(65535)
@@ -33,7 +37,7 @@ object BusStopIconImageData {
           values (${keyVal._1}, $modifier, current_timestamp, ${keyVal._2.tail}, $byteArray)
         """.execute
         sqlu"""
-          update enumerated_value set image_id = ${keyVal._1} where property_id = $busStopTypePropertyId and value = ${keyVal._1}
+          update enumerated_value set image_id = ${keyVal._1} where property_id = $propertyId and value = ${keyVal._1}
         """.execute
       }
     }
