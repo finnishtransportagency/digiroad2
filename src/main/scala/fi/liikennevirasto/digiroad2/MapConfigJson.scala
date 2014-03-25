@@ -17,6 +17,8 @@ object MapConfigJson {
             "opacity": 100
           }, {
             "id": "235"
+          }, {
+            "id": "236"
           }],
           "srs": "EPSG:3067",
           "zoom": ${zoom},
@@ -65,6 +67,8 @@ object MapConfigJson {
             "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
           }, {
             "id": "Oskari.digiroad2.bundle.assetlayer.AssetLayer"
+          }, {
+            "id": "Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer"
           }, {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {

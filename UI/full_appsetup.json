@@ -84,7 +84,10 @@
             },
             "assetlayer": {
                  "bundlePath": "src/packages/digiroad2/bundle/"
-            }
+            },
+            "linearassetlayer": {
+                 "bundlePath": "src/packages/digiroad2/bundle/"
+             }
          },
          "Require-Bundle-Instance": []
       }
