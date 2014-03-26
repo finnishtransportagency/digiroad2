@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
+Oskari.clazz.define('Oskari.digiroad2.bundle.map.LinearAssetLayer',
     function (config) {
         this.mapModule = null;
         this.pluginName = null;
@@ -15,7 +15,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
             return dependency || defaultImplementation;
         }
     }, {
-        __name: 'LineAssetLayer',
+        __name: 'LinearAssetLayer',
         layerType: 'linearassetlayer',
         getName: function () {
             return this.pluginName;
@@ -39,7 +39,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer',
         init: function (sandbox) {
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
-                mapLayerService.registerLayerModel('linearassetlayer', 'Oskari.digiroad2.bundle.linearassetlayer.domain.LineAsset');
+                mapLayerService.registerLayerModel('linearassetlayer', 'Oskari.digiroad2.bundle.map.domain.LineAsset');
             }
             this.initializeLayer();
         },

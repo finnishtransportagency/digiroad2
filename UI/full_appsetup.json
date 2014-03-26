@@ -82,12 +82,9 @@
             "event-map": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
-            "assetlayer": {
+            "map": {
                  "bundlePath": "src/packages/digiroad2/bundle/"
-            },
-            "linearassetlayer": {
-                 "bundlePath": "src/packages/digiroad2/bundle/"
-             }
+            }
          },
          "Require-Bundle-Instance": []
       }

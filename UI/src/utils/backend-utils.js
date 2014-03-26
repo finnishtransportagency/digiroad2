@@ -28,6 +28,7 @@
         $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
             eventbus.trigger('asset:unselected');
             eventbus.trigger('asset:selected', {id: asset.id, externalId: asset.externalId}, keepPosition);
+            // TODO: Perhaps retrieve complete asset?
         });
     };
 

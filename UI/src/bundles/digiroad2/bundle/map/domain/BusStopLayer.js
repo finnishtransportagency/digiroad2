@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.domain.BusStopLayer',
+Oskari.clazz.define('Oskari.digiroad2.bundle.map.domain.BusStopLayer',
 
         function() {
         this._layerType = "assetlayer";

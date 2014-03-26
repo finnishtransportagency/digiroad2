@@ -1,4 +1,4 @@
-Oskari.clazz.define("Oskari.digiroad2.bundle.linearassetlayer.LineAssetLayer", function() {
+Oskari.clazz.define("Oskari.digiroad2.bundle.map.Map", function() {
     }, {
         /*
          * implementation for protocol 'Oskari.bundle.Bundle'
@@ -19,18 +19,34 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.linearassetlayer.LineAssetLayer", f
 
         "protocol" : ["Oskari.bundle.Bundle", "Oskari.mapframework.bundle.extension.ExtensionBundle"],
         "source" : {
-            "scripts" : [{
+            "scripts" : [
+            {
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/linearassetlayer/domain/LinearAsset.js"
+                "src" : "../../../../bundles/digiroad2/bundle/map/domain/BusStopLayer.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/linearassetlayer/LinearAssetLayer.js"
+                "src" : "../../../../bundles/digiroad2/bundle/map/domain/BusStopLayerModelBuilder.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/map/AssetLayer.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/map/template/Templates.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/map/domain/LinearAsset.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/map/LinearAssetLayer.js"
+            },{
+                "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/map/Map.js"
             }]
         },
         "bundle" : {
             "manifest" : {
-                "Bundle-Identifier" : "linearassetlayer",
-                "Bundle-Name" : "linearassetlayer",
+                "Bundle-Identifier" : "map",
+                "Bundle-Name" : "map",
                 "Bundle-Tag" : {
                     "mapframework" : true
                 },
@@ -54,8 +70,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.linearassetlayer.LineAssetLayer", f
                 }],
                 "Bundle-Name-Locale" : {
                     "fi" : {
-                        "Name" : "LineAssetLayer",
-                        "Title" : "LineAssetLayer"
+                        "Name" : "Map",
+                        "Title" : "Map"
                     },
                     "en" : {}
                 },
@@ -68,4 +84,4 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.linearassetlayer.LineAssetLayer", f
 /**
  * Install this bundle
  */
-Oskari.bundle_manager.installBundleClass("linearassetlayer", "Oskari.digiroad2.bundle.linearassetlayer.LineAssetLayer");
+Oskari.bundle_manager.installBundleClass("map", "Oskari.digiroad2.bundle.map.Map");

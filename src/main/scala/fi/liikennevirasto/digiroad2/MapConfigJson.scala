@@ -12,13 +12,7 @@ object MapConfigJson {
       "mapfull": {
         "state": {
           "selectedLayers": [{
-            "id": "base_35",
-            "style": "default",
-            "opacity": 100
-          }, {
-            "id": "235"
-          }, {
-            "id": "236"
+            "id": "base_35"
           }],
           "srs": "EPSG:3067",
           "zoom": ${zoom},
@@ -66,9 +60,7 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
           }, {
-            "id": "Oskari.digiroad2.bundle.assetlayer.AssetLayer"
-          }, {
-            "id": "Oskari.digiroad2.bundle.linearassetlayer.LinearAssetLayer"
+            "id": "Oskari.digiroad2.bundle.map.Map"
           }, {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
@@ -103,11 +95,9 @@ object MapConfigJson {
           }],
           "layers": [{
             "wmsName": "bussit",
-            "type": "assetlayer",
+            "type": "map",
             "id": 235,
             "minScale": 6000,
-            "wmsUrl": "/data/dummy/busstops.json",
-            "url": "api/assets?assetTypeId=10",
             "roadLinesUrl": "api/roadlinks",
             "maxScale": 1,
             "orgName": "LiVi",

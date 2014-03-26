@@ -3,19 +3,6 @@ jQuery(document).ready(function() {
   Oskari.setLoaderMode('dev');
   var appSetup;
   var appConfig;
-
-  var linearAssetLayerConfig =  {
-      "wmsName": "speedlimit",
-      "type": "linearassetlayer",
-      "id": 236,
-      "minScale": 6000,
-       "wmsUrl": "/data/dummy/busstops.json",
-       "url": "api/assets?assetTypeId=10",
-       "maxScale": 1,
-       "orgName": "LiVi",
-       "inspire": "Ominaisuustiedot",
-       "name": "Voimassaolevat"
-  };
   
   var assetIdFromURL = function() {
       var matches = window.location.hash.match(/(\d+)(.*)/);
@@ -36,7 +23,6 @@ jQuery(document).ready(function() {
           }
       },
       success : function(config) {
-          config.mapfull.conf.layers.push(linearAssetLayerConfig);
           appConfig = config;
           notifyCallback();
       }

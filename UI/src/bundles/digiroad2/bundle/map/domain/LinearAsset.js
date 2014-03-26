@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.linearassetlayer.domain.LineAsset',
+Oskari.clazz.define('Oskari.digiroad2.bundle.map.domain.LinearAsset',
 
     function() {
         this._layerType = "linearassetlayer";
