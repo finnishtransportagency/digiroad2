@@ -13,6 +13,8 @@ window.AssetLayer = function(map, roadLayer) {
     map.addLayer(assetLayer);
 
     var assets = null;
+    var overlay;
+    var selectedControl;
 
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
@@ -226,11 +228,10 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var handleAssetPropertyValueChanged = function(asset) {
-        var self = this;
         var turnArrow = function(asset, direction) {
-            self._layers.assetDirection.destroyFeatures(asset.directionArrow);
+            assetDirectionLayer.destroyFeatures(asset.directionArrow);
             asset.directionArrow.style.rotation = direction;
-            self._layers.assetDirection.addFeatures(asset.directionArrow);
+            assetDirectionLayer.addFeatures(asset.directionArrow);
         };
 
         if(_.isArray(asset.propertyData)) {
@@ -239,7 +240,7 @@ window.AssetLayer = function(map, roadLayer) {
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
                 var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
-                turnArrow(this._selectedAsset, this._selectedAsset.data.bearing + (90 * validityDirection));
+                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
             }
             var assetType = _.find(asset.propertyData, function(property) {
                 return property.propertyId === '200';
@@ -252,55 +253,55 @@ window.AssetLayer = function(map, roadLayer) {
                 var imageIds = _.map(values, function(v) {
                     return v + '_' + new Date().getMilliseconds();
                 });
-                self._layers.asset.removeMarker(self._selectedAsset.marker);
-                self._selectedAsset.marker.icon = self._getIcon(imageIds);
-                self._layers.asset.addMarker(self._selectedAsset.marker);
-                self._layers.asset.redraw();
+                assetLayer.removeMarker(selectedAsset.marker);
+                selectedAsset.marker.icon = getIcon(imageIds);
+                assetLayer.addMarker(selectedAsset.marker);
+                assetLayer.redraw();
             }
 
         }
     };
 
-    var addBusStopEvent = function(event){
+    var createNewAsset = function(lonlat){
         if (selectedAsset) {
             eventbus.trigger('asset:unselected', selectedAsset.data.id);
         }
-        var selectedLon = event.getLonLat().lon;
-        var selectedLat = event.getLonLat().lat;
-        var features = this._layers.road.features;
-        var nearestLine = me._geometryCalculations.findNearestLine(features, selectedLon, selectedLat);
-        var projectionOnNearestLine = me._geometryCalculations.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
+        var selectedLon = lonlat.lon;
+        var selectedLat = lonlat.lat;
+        var features = roadLayer.features;
+        var nearestLine = geometrycalculator.findNearestLine(features, selectedLon, selectedLat);
+        var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
         var projectionLonLat = {
             lon: projectionOnNearestLine.x,
             lat: projectionOnNearestLine.y
         };
-        var bearing = me._geometryCalculations.getLineDirectionDegAngle(nearestLine);
-        var directionArrow = me._addDirectionArrow(bearing, -1, projectionOnNearestLine.x, projectionOnNearestLine.y);
+        var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        var directionArrow = addDirectionArrow(bearing, -1, projectionOnNearestLine.x, projectionOnNearestLine.y);
         var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
 
-        this._selectedAsset = {directionArrow: directionArrow,
+        selectedAsset = {directionArrow: directionArrow,
             data: {bearing: bearing,
                 position: assetPosition,
                 validityDirection: 2,
                 lon: projectionOnNearestLine.x,
                 lat: projectionOnNearestLine.y,
                 roadLinkId: nearestLine.roadLinkId}};
-        this._highlightAsset(this._selectedAsset);
+        highlightAsset(selectedAsset);
         var imageIds = ['99_' + (new Date().getMilliseconds())];
-        var icon = this._getIcon(imageIds);
-        var marker = new OpenLayers.Marker(new OpenLayers.LonLat(this._selectedAsset.data.lon, this._selectedAsset.data.lat), icon);
-        this._layers.asset.addMarker(marker);
-        this._selectedAsset.marker = marker;
-        eventbus.trigger('asset:placed', this._selectedAsset.data);
+        var icon = getIcon(imageIds);
+        var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
+        assetLayer.addMarker(marker);
+        selectedAsset.marker = marker;
+        eventbus.trigger('asset:placed', selectedAsset.data);
 
         var applyBlockingOverlays = function() {
-            var overlay = me._oskari.clazz.create('Oskari.userinterface.component.Overlay');
+            var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
             overlay.overlay('#contentMap,#maptools');
             overlay.followResizing(true);
             return overlay;
         };
 
-        this._overlay = applyBlockingOverlays();
+        overlay = applyBlockingOverlays();
     };
 
     var removeOverlay = function() {
@@ -379,6 +380,13 @@ window.AssetLayer = function(map, roadLayer) {
         }
     };
 
+    toolSelectionChange = function(action) {
+        selectedControl = action;
+        if (selectedAsset) {
+            eventbus.trigger('asset:unselected');
+        }
+    };
+
     eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
     eventbus.on('asset:selected', function(data) {
         backend.getAsset(data.id);
@@ -391,8 +399,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
     eventbus.on('asset:unselected', closeAsset, this);
-    // FIXME
-    //eventbus.on('tool:changed', toolSelectionChange, this);
+    eventbus.on('tool:changed', toolSelectionChange, this);
     eventbus.on('assetPropertyValue:saved', updateAsset, this);
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
     eventbus.on('asset:saved', handleAssetSaved, this);
@@ -413,9 +420,15 @@ window.AssetLayer = function(map, roadLayer) {
     }, this);
 
     var events = map.events;
-    events.register("mousemove",map,function(e){
+    events.register('mousemove', map, function(e) {
         var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
         moveSelectedAsset(pixel);
-        return true;
     },true);
+
+    events.register('click', map, function(e) {
+        if (selectedControl === 'Add') {
+            var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
+            createNewAsset(map.getLonLatFromPixel(pixel));
+        }
+    });
 }
