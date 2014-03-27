@@ -380,7 +380,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
     };
 
-    toolSelectionChange = function(action) {
+    var toolSelectionChange = function(action) {
         selectedControl = action;
         if (selectedAsset) {
             eventbus.trigger('asset:unselected');
