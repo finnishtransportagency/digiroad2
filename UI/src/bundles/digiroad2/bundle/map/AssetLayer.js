@@ -248,7 +248,7 @@ window.AssetLayer = function(map, roadLayer) {
             if (assetType) {
                 var values = _.pluck(assetType.values, 'propertyValue');
                 if (values.length === 0) {
-                    values.push(['99']);
+                    values.push([unknownAssetType]);
                 }
                 var imageIds = _.map(values, function(v) {
                     return v + '_' + new Date().getMilliseconds();
@@ -287,7 +287,7 @@ window.AssetLayer = function(map, roadLayer) {
                 lat: projectionOnNearestLine.y,
                 roadLinkId: nearestLine.roadLinkId}};
         highlightAsset(selectedAsset);
-        var imageIds = ['99_' + (new Date().getMilliseconds())];
+        var imageIds = [unknownAssetType+'_' + (new Date().getMilliseconds())];
         var icon = getIcon(imageIds);
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
         assetLayer.addMarker(marker);
