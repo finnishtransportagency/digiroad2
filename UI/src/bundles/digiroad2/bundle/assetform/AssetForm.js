@@ -295,7 +295,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             me._backend.getEnumeratedPropertyValues(10);
         },
         _savePropertyData: function(propertyValue, propertyId) {
-
+console.log("PROPVAL: " + JSON.stringify(propertyValue));
+console.log("PROPID: " + propertyId);
             if (propertyId == 200 && _.isEmpty(propertyValue)) {
                 propertyValue = [{
                     propertyDisplayValue: "Pysäkin tyyppi",
