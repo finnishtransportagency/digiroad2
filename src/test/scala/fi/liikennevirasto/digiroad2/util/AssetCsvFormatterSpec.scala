@@ -14,20 +14,19 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   it must "return correct csv entries from test data" in {
-    val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(assetsByMunicipality)
-    csv.length must be (5)
+    val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(assetsByMunicipality).tail
+    csv.length must be (4)
 
-    val propertyValueOfFirst = extractPropertyValue(assetsByMunicipality.head, _: String)
+    val propertyValueOfFirst = extractPropertyValue(assetsByMunicipality.drop(1).head, _: String)
     val firstCreated = parseCreated(propertyValueOfFirst("created"))
     val firstValidFrom = propertyValueOfFirst("validFrom")
     val firstValidTo = propertyValueOfFirst("validTo")
-    csv.head must equal("300000;1;1;;;374635.608258218;6677267.45072414;;;80;;2;1;0;0;0;katos;Ei tiedossa;;" + firstCreated + ";dr1conversion;" + firstValidFrom + ";" + firstValidTo + ";;235;;;")
-
-    val propertyValueOfSecond = extractPropertyValue(assetsByMunicipality.drop(1).head, _: String)
+    csv.head must equal("300001;5;5;;;374792.096855508;6677566.77442972;;;210;;2;1;1;1;0;;Ei tiedossa;;" + firstCreated + ";dr1conversion;" + firstValidFrom + ";" + firstValidTo + ";;235;;;")
+    val propertyValueOfSecond = extractPropertyValue(assetsByMunicipality.drop(2).head, _: String)
     val secondCreated = parseCreated(propertyValueOfSecond("created"))
     val secondValidFrom = propertyValueOfSecond("validFrom")
     val secondValidTo = propertyValueOfSecond("validTo")
-    csv.drop(1).head must equal("300001;5;5;;;374792.096855508;6677566.77442972;;;210;;2;1;1;1;0;;Ei tiedossa;;" + secondCreated + ";dr1conversion;" + secondValidFrom + ";" + secondValidTo + ";;235;;;")
+    csv.drop(1).head must equal("300004;2;2;;;374483.666384383;6677247.88841149;;;85;;2;1;0;0;0;katos;Ei tiedossa;;" + secondCreated + ";dr1conversion;" + secondValidFrom + ";" + secondValidTo + ";;235;;;")
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyId: String): String = {
