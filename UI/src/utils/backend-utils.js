@@ -27,7 +27,7 @@
     backend.getIdFromExternalId = function(externalId, keepPosition) {
         $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
             eventbus.trigger('asset:unselected');
-            eventbus.trigger('asset:selected', {id: asset.id, externalId: asset.externalId}, keepPosition);
+            eventbus.trigger('asset:fetched', asset, keepPosition);
         });
     };
 
@@ -61,7 +61,7 @@
           data: JSON.stringify(data),
           dataType:"json",
           success: function(asset) {
-              eventbus.trigger('asset:saved asset:fetched', asset);
+              eventbus.trigger('asset:saved asset:fetched', asset, true);
           },
           error: function() {
               console.log("error");

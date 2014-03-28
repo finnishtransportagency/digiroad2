@@ -46,12 +46,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         init: function (sandbox) {
             eventbus.on('tool:changed',  this._toolSelectionChange, this);
             eventbus.on('validityPeriod:changed', this._handleValidityPeriodChanged, this);
-            eventbus.on('asset:selected', function(data) {
-                this._backend.getAsset(data.id);
-            }, this);
-            eventbus.on('asset:selected', function(data, keepPosition) {
-                this._selectedAsset = this._assets[data.id];
-                this._highlightAsset(this._selectedAsset);
+            eventbus.on('asset:fetched', function(asset, keepPosition) {
+                if (this._assets[asset.id]) {
+                    this._assets[asset.id].data = asset;
+                    this._selectedAsset = this._assets[asset.id];
+                    this._highlightAsset(this._selectedAsset);
+                } else {
+                    this._addNewAsset(asset);
+                }
                 if (!keepPosition) {
                     var sandbox = Oskari.getSandbox(),
                         requestBuilder = sandbox.getRequestBuilder('MapMoveRequest'),
@@ -67,7 +69,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
             eventbus.on('assetPropertyValue:changed', this._handleAssetPropertyValueChanged, this);
             eventbus.on('asset:saved', this._handleAssetSaved, this);
             eventbus.on('asset:created', this._handleAssetCreated, this);
-            eventbus.on('asset:fetched', this._handleAssetFetched, this);
             eventbus.on('asset:created', this._removeOverlay, this);
             eventbus.on('asset:cancelled', this._cancelCreate, this);
             eventbus.on('application:initialized', function() {
@@ -163,9 +164,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.AssetLayer',
         _handleAssetSaved: function(asset) {
             this._selectedAsset.data = asset;
             this._assets[asset.id] = this._selectedAsset;
-        },
-        _handleAssetFetched: function(assetData) {
-            this._selectedAsset.data = assetData;
         },
         _hideAsset: function(asset) {
             this._layers.assetDirection.destroyFeatures(asset.directionArrow);
