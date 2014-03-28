@@ -40,7 +40,7 @@ class BusStopExcelDataImporter {
   def importDataFromExcel(): List[ExcelBusStopData] = {
     Database.forDataSource(excelDs).withDynTransaction {
       sql"""
-        select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE, X_ETRS_TM35FIN, Y_ETRS_TM35FIN from excel_unique where valtak_tunnus = 202370
+        select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE, X_ETRS_TM35FIN, Y_ETRS_TM35FIN from excel_unique
       """.as[ExcelBusStopData].list
     }
   }
