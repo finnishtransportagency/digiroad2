@@ -7,7 +7,7 @@ jQuery(document).ready(function() {
   var assetIdFromURL = function() {
       var matches = window.location.hash.match(/(\d+)(.*)/);
       if (matches) {
-        return {externalId: matches[1], keepPosition: matches[2] !== ''};
+        return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
       }
   };
   
