@@ -10,3 +10,5 @@ create table localized_string
 );
 alter table enumerated_value add localized_string_id number(38);
 alter table text_property_value add localized_string_id number(38);
+alter table enumerated_value add constraint fk_enumerated_value_localized foreign key (localized_string_id) references localized_string(id);
+alter table text_property_value add constraint fk_text_value_localized foreign key (localized_string_id) references localized_string(id);
