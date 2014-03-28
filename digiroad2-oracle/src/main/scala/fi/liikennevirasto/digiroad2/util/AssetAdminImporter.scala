@@ -6,23 +6,32 @@ import Q.interpolation
 
 object AssetAdminImporter {
   var counter = 0
-  def toUpdateSql(values: (Long, Option[(String, String)])) = {
+  def toAdminUpdateSql(values: (Long, Option[(String, String)])) = {
     counter = counter + 1
     if(counter % 50 == 0) println(s"$counter items processed")
     val (assetId, adminCode) = values
     val adminCodeValue = adminCode.map(x => x._1).map(x => if(x == null) null else s"'$x'").getOrElse("'ei tiedossa'")
     val adminValue = adminCode.map(x => x._2).map(x => if(x == null) 99 else x.toInt).getOrElse(99)
-    (getSqlForAdminCode(assetId, adminCodeValue), getSqlForAdministrator(assetId, adminValue))
+    (getSqlForTextProperty(assetId, adminCodeValue, "Ylläpitäjän tunnus"), getSqlForAdministrator(assetId, adminValue))
   }
 
-  private def getSqlForAdminCode(assetId: Long, value: String) = {
+  def toNameUpdateSql(values: (Long, Option[(String, String)])) = {
+    counter = counter + 1
+    if(counter % 50 == 0) println(s"$counter items processed")
+    val (assetId, names) = values
+    val (nameFi, nameSv) = names.getOrElse((null, null))
+    def getName(name: String) = if(name == null) null else s"'$name'"
+    (getSqlForTextProperty(assetId, getName(nameFi), "Nimi suomeksi"), getSqlForTextProperty(assetId, getName(nameSv), "Nimi ruotsiksi"))
+  }
+
+  private def getSqlForTextProperty(assetId: Long, value: String, propertyName: String) = {
     s"""
       |update text_property_value set value_fi = $value, modified_by = 'dr1conversion', modified_date = CURRENT_TIMESTAMP
-      |   where property_id = (select id from property where name_fi = 'Ylläpitäjän tunnus') and asset_id = $assetId;
+      |   where property_id = (select id from property where name_fi = '$propertyName') and asset_id = $assetId;
       |insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-      |   SELECT primary_key_seq.nextval, (select id from property where NAME_FI = 'Ylläpitäjän tunnus'), $assetId, $value, 'dr1conversion' from dual
+      |   SELECT primary_key_seq.nextval, (select id from property where NAME_FI = '$propertyName'), $assetId, $value, 'dr1conversion' from dual
       |   WHERE NOT EXISTS (select 1 from text_property_value
-      |                     where property_id = (select id from property where name_fi = 'Ylläpitäjän tunnus') and asset_id = $assetId);
+      |                     where property_id = (select id from property where name_fi = '$propertyName') and asset_id = $assetId);
     """.stripMargin
   }
 
@@ -36,24 +45,14 @@ object AssetAdminImporter {
       |                           where property_id = (select id from property where name_fi = 'Tietojen ylläpitäjä') and asset_id = $assetId);
     """.stripMargin
   }
-}
 
-class AssetAdminImporter extends AssetDataImporter {
-
-  def getAssetIds(toSqlFunc: ((Long, Option[(String, String)])) => (String, String)) = {
-    sql"""
-        select id, external_id from asset
-      """.as[(Long, Long)]
-      .mapResult((x: (Long, Long)) => (x._1, getAdminCodeFromDr1(AssetDataImporter.Conversion, x._2)))
-      .mapResult(toSqlFunc)
-  }
-
-  def getAdminCodeFromDr1(dataSet: AssetDataImporter.ImportDataSet, externalId: Long) = {
+  def getAdminCodesFromDr1(dataSet: AssetDataImporter.ImportDataSet, externalId: Long) = {
     dataSet.database().withDynSession {
       try {
+        val external = externalId.toString
         sql"""
-          select segm_pysakki_yllap_tunnus, segm_omistaja_tyyppi from segmentti where segm_pysakki_valtak_tunnus = $externalId
-      """.as[(String, String)].firstOption
+          select yllaptunnus, administrator_type from lineaarilokaatio where pysakki_id = $external
+        """.as[(String, String)].firstOption
       } catch {
         case e: Exception =>
           println(s"failed with id $externalId")
@@ -61,4 +60,36 @@ class AssetAdminImporter extends AssetDataImporter {
       }
     }
   }
+
+  def getNamesFromDr1(dataSet: AssetDataImporter.ImportDataSet, externalId: Long) = {
+    dataSet.database().withDynSession {
+      try {
+        val external = externalId.toString
+        sql"""
+          select nimi_fi, nimi_sv from lineaarilokaatio where pysakki_id = $external
+        """.as[(String, String)].firstOption
+      } catch {
+        case e: Exception =>
+          println(s"failed with id $externalId")
+          throw e
+      }
+    }
+  }
+}
+
+class AssetAdminImporter extends AssetDataImporter {
+
+  def getAssetIdsQuery: StaticQuery0[(Long, Long)] = {
+    sql"""
+        select id, external_id from asset
+    """.as[(Long, Long)]
+  }
+
+  def getAssetIds(toSqlFunc: ((Long, Option[(String, String)])) => (String, String),
+  dataFromDr1: (AssetDataImporter.ImportDataSet, Long) => Option[(String, String)]) = {
+    getAssetIdsQuery
+      .mapResult((x: (Long, Long)) => (x._1, dataFromDr1(AssetDataImporter.Conversion, x._2)))
+      .mapResult(toSqlFunc)
+  }
+
 }
