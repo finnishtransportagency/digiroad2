@@ -8,7 +8,7 @@ import Database.dynamicSession
 import Q.interpolation
 import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
 
-class BustStopExcelDataImporter {
+class BusStopExcelDataImporter {
   val Updater = "excel_data_migration"
   lazy val convDs: DataSource = initConversionDataSource
   lazy val excelDs: DataSource = initExcelDataSource
@@ -138,7 +138,7 @@ class BustStopExcelDataImporter {
   }
 }
 
-object BustStopExcelDataImporter extends App {
-  val importer = new BustStopExcelDataImporter()
+object BusStopExcelDataImporter extends App {
+  val importer = new BusStopExcelDataImporter()
   importer.insertExcelData(importer.importDataFromExcel())
 }
