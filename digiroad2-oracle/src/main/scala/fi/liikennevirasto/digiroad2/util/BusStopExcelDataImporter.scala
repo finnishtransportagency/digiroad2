@@ -10,12 +10,14 @@ import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
 
 class BusStopExcelDataImporter {
   val Updater = "excel_data_migration"
+  val No = 1
+  val Yes = 2
   lazy val convDs: DataSource = initConversionDataSource
   lazy val excelDs: DataSource = initExcelDataSource
 
-  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String)
+  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String, xPosition: String, yPosition: String)
 
-  implicit val getExcelBusStopData = GetResult[ExcelBusStopData](r => ExcelBusStopData(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+  implicit val getExcelBusStopData = GetResult[ExcelBusStopData](r => ExcelBusStopData(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
 
   private[this] def initExcelDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
@@ -29,16 +31,16 @@ class BusStopExcelDataImporter {
   private[this] def initConversionDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val ds = new BoneCPDataSource()
-    ds.setJdbcUrl("")
-    ds.setUsername("")
-    ds.setPassword("")
+    ds.setJdbcUrl("jdbc:oracle:thin:@livispr01n1l-vip:1521/drtest")
+    ds.setUsername("dr2testuser")
+    ds.setPassword("Epjart5OnOy")
     ds
   }
 
   def importDataFromExcel(): List[ExcelBusStopData] = {
     Database.forDataSource(excelDs).withDynTransaction {
       sql"""
-        select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE from excel_unique
+        select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE, X_ETRS_TM35FIN, Y_ETRS_TM35FIN from excel_unique where valtak_tunnus = 202370
       """.as[ExcelBusStopData].list
     }
   }
@@ -65,13 +67,14 @@ class BusStopExcelDataImporter {
             insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
             val equipments = trimToEmpty(row.equipments)
-            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoicePropertyToYes(assetId, "Penkki")
-            if (equipments.toLowerCase.contains("katos")) setSingleChoicePropertyToYes(assetId, "Katos")
-            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoicePropertyToYes(assetId, "Mainoskatos")
-            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoicePropertyToYes(assetId, "Aikataulu")
-            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoicePropertyToYes(assetId, "Pyöräteline")
+            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoiceProperty(assetId, "Penkki", Yes)
+            if (equipments.toLowerCase.contains("katos") || equipments.toLowerCase.contains("omniselter")) setSingleChoiceProperty(assetId, "Katos", Yes)
+            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoiceProperty(assetId, "Mainoskatos", Yes)
+            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", Yes)
+            if (equipments.toLowerCase.contains("ei aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", No)
+            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoiceProperty(assetId, "Pyöräteline", Yes)
 
-            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoicePropertyToYes(assetId, "Saattomahdollisuus henkilöautolla")
+            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Yes)
 
             insertTextPropertyValue(assetId, "Liityntäpysäköinnin lisätiedot", row.reachability)
 
@@ -80,6 +83,10 @@ class BusStopExcelDataImporter {
             insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
             insertTextPropertyValue(assetId, "Lisätiedot", equipments)
+
+            insertTextPropertyValue(assetId, "Maastokoordinaatti X", row.xPosition)
+
+            insertTextPropertyValue(assetId, "Maastokoordinaatti Y", row.yPosition)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -115,22 +122,22 @@ class BusStopExcelDataImporter {
     }
   }
 
-  def setSingleChoicePropertyToYes(assetId: Long, propertyName: String) {
-    val Yes = 2
+  def setSingleChoiceProperty(assetId: Long, propertyName: String, value: Int) {
+
     val propertyId = sql"""select id from property where name_fi = ${propertyName}""".as[Long].first
     val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
 
-    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: 'Kyllä'")
+    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + value)
     existingProperty match {
       case None => {
         sqlu"""
           insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by, modified_date)
-          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${Yes} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
+          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${value} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
         """.execute
       }
       case _ => {
         sqlu"""
-          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${Yes} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${value} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where property_id = $propertyId and asset_id = ${assetId}
         """.execute
       }
