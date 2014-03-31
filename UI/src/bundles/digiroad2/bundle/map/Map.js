@@ -145,9 +145,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 }),
                 styleMap: templates.roadStyles
             });
-            roadLayer.setVisibility(this._isInRoadLinkZoomLevel());
+            roadLayer.setVisibility(false);
             this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
-            roadLayer.opacity = 100 / 100;
 
             me._map.addLayer(roadLayer);
             this._layers = {road: roadLayer};
