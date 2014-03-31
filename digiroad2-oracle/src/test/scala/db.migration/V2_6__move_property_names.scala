@@ -14,10 +14,14 @@ import fi.liikennevirasto.digiroad2.asset.LocalizedString
 class V2_6__move_property_names extends JdbcMigration {
   def migrate(connection: Connection) {
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.availableProperties(10).foreach { p =>
-        val ls = LocalizationDao.insertLocalizedString(LocalizedString(Map(LocalizedString.LangFi -> p.propertyName)))
-        sqlu"""
-          update property set name_localized_string_id = ${ls.id.get} where name_fi = ${p.propertyName}
+      val originalProps = sql"""
+          select name_fi from property
+        """.as[String].list()
+      originalProps.foreach {
+        p =>
+          val ls = LocalizationDao.insertLocalizedString(LocalizedString(Map(LocalizedString.LangFi -> p)))
+          sqlu"""
+          update property set name_localized_string_id = ${ls.id.get} where name_fi = ${p}
         """.execute()
       }
       sqlu"""
@@ -29,3 +33,4 @@ class V2_6__move_property_names extends JdbcMigration {
     }
   }
 }
+
