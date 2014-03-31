@@ -7,6 +7,8 @@ import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import Database.dynamicSession
 import Q.interpolation
 import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
+import com.github.tototoshi.csv._
+import java.io.{InputStreamReader}
 
 class BusStopExcelDataImporter {
   val Updater = "excel_data_migration"
@@ -15,33 +17,46 @@ class BusStopExcelDataImporter {
   lazy val convDs: DataSource = initConversionDataSource
   lazy val excelDs: DataSource = initExcelDataSource
 
-  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String, xPosition: String, yPosition: String)
+  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String, xPosition: String, yPosition: String, passengerId: Option[String] = None)
 
   implicit val getExcelBusStopData = GetResult[ExcelBusStopData](r => ExcelBusStopData(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+
+  implicit object SemicolonSeparatedValues extends DefaultCSVFormat {
+    override val delimiter = ';'
+  }
 
   private[this] def initExcelDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val ds = new BoneCPDataSource()
-    ds.setJdbcUrl("jdbc:oracle:thin:@livispr01n1l-vip:1521/drkonv")
-    ds.setUsername("dr2sample2")
-    ds.setPassword("dr2sample2")
+    ds.setJdbcUrl("")
+    ds.setUsername("")
+    ds.setPassword("")
     ds
   }
 
   private[this] def initConversionDataSource: DataSource = {
     Class.forName("oracle.jdbc.driver.OracleDriver")
     val ds = new BoneCPDataSource()
-    ds.setJdbcUrl("jdbc:oracle:thin:@livispr01n1l-vip:1521/drtest")
-    ds.setUsername("dr2testuser")
-    ds.setPassword("Epjart5OnOy")
+    ds.setJdbcUrl("")
+    ds.setUsername("")
+    ds.setPassword("")
     ds
   }
 
-  def importDataFromExcel(): List[ExcelBusStopData] = {
+  def readExcelDataFromDb(): List[ExcelBusStopData] = {
     Database.forDataSource(excelDs).withDynTransaction {
       sql"""
         select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE, X_ETRS_TM35FIN, Y_ETRS_TM35FIN from excel_unique
       """.as[ExcelBusStopData].list
+    }
+  }
+
+  def readExcelDataFromCsvFile(): List[ExcelBusStopData] = {
+    val reader = CSVReader.open(new InputStreamReader(getClass.getResourceAsStream("/pysakkitiedot.csv")))
+    reader.allWithHeaders().map { row =>
+      new ExcelBusStopData(row("Valtakunnallinen ID").toLong, row("Pysäkin nimi"), row("Pysäkin nimi SE"), row("Suunta kansalaisen näkökulmasta"),
+        row("Pysäkin saavutettavuus"), row("Esteettömyys-tiedot"), row("Ylläpitäjän sisäinen pysäkki-ID"), row("Pysäkin varusteet"),
+        row("X_ETRS-TM35FIN"), row("Y_ETRS-TM35FIN"), row.get("Pysäkin tunnus matkustajalle"))
     }
   }
 
@@ -87,6 +102,8 @@ class BusStopExcelDataImporter {
             insertTextPropertyValue(assetId, "Maastokoordinaatti X", row.xPosition)
 
             insertTextPropertyValue(assetId, "Maastokoordinaatti Y", row.yPosition)
+
+            insertTextPropertyValue(assetId, "Matkustajatunnus", row.passengerId.getOrElse(null))
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -147,5 +164,5 @@ class BusStopExcelDataImporter {
 
 object BusStopExcelDataImporter extends App {
   val importer = new BusStopExcelDataImporter()
-  importer.insertExcelData(importer.importDataFromExcel())
+  importer.insertExcelData(importer.readExcelDataFromCsvFile())
 }
