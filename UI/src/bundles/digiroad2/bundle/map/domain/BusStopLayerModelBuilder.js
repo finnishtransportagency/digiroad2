@@ -1,4 +1,4 @@
-Oskari.clazz.define('Oskari.digiroad2.bundle.assetlayer.domain.BusStopLayerModelBuilder', function (sandbox) {
+Oskari.clazz.define('Oskari.digiroad2.bundle.map.domain.BusStopLayerModelBuilder', function (sandbox) {
     this.sandbox = sandbox;
 }, {
     parseLayerData: function (layer, mapLayerJson, maplayerService) {
