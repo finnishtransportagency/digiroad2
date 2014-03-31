@@ -10,7 +10,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.slf4j.LoggerFactory
 
-class LocalizationDao {
+object LocalizationDao {
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit val getUser = new GetResult[LocalizedString] {
@@ -23,14 +23,14 @@ class LocalizationDao {
     // TODO: insert dates
     val seqId = sql"""select primary_key_seq.nextval from dual""".as[Long].first()
     sqlu"""
-      insert into localized_string (id, value_fi, value_sv) values ($seqId, ${ls.forLanguage(LangFi).getOrElse("")}, ${ls.forLanguage(LangSv).getOrElse("")})
+      insert into localized_string (id, value_fi, value_sv, created_date) values ($seqId, ${ls.forLanguage(LangFi).getOrElse("")}, ${ls.forLanguage(LangSv).getOrElse("")}, current_timestamp)
     """.execute()
     ls.copy(id = Some(seqId))
   }
 
   def updateLocalizedString(ls: LocalizedString) {
     val updated: Int = sqlu"""
-      update localized_string set value_fi = ${ls.forLanguage(LangFi).getOrElse("")}, value_sv = ${ls.forLanguage(LangSv).getOrElse("")} where id = ${ls.id.get}
+      update localized_string set value_fi = ${ls.forLanguage(LangFi).getOrElse("")}, value_sv = ${ls.forLanguage(LangSv).getOrElse("")}, modified_date=current_timestamp where id = ${ls.id.get}
     """.first
     if (updated == 0) {
       logger.error("Couldn't update localized string: " + ls)
