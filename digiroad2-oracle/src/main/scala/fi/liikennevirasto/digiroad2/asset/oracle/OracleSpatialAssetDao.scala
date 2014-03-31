@@ -309,7 +309,7 @@ object OracleSpatialAssetDao {
       }
     }
     sql"""
-      select id, name_fi, property_type, ui_position_index, required from property where asset_type_id = $assetTypeId
+      select p.id, ls.value_fi, p.property_type, p.ui_position_index, p.required from property p, localized_string ls where ls.id = p.name_localized_string_id and p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
 }
