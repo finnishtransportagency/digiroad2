@@ -132,11 +132,26 @@ object DataFixture {
         importBusStopsFromConversion(dataImporter, taskPool)
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {
-          val writer = new PrintWriter(new File("admincode.sql"))
-          dataImporter.getAssetIds().mapResult(_.trim.stripMargin).foreach(x => writer.write(x + "\n"))
-          writer.close()
+          val adminCodeWriter = new PrintWriter(new File("admincode.sql"))
+          val adminWriter = new PrintWriter(new File("admins.sql"))
+          new AssetAdminImporter().getAssetIds(AssetAdminImporter.toAdminUpdateSql, AssetAdminImporter.getAdminCodesFromDr1).foreach(x => {
+            adminCodeWriter.write(x._1 + "\n")
+            adminWriter.write(x._2 + "\n")
+          })
+          adminWriter.close()
+          adminCodeWriter.close()
+       }
+      case Some("NameUpdate") =>
+        Database.forDataSource(ds).withDynSession {
+          val nameWriter = new PrintWriter(new File("names.sql"))
+          new AssetAdminImporter().getAssetIds(AssetAdminImporter.toNameUpdateSql, AssetAdminImporter.getNamesFromDr1)
+            .foreach(x => {
+            nameWriter.write(x._1)
+            nameWriter.write(x._2)
+          })
+          nameWriter.close()
         }
-      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate")
+      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate")
     }
   }
 }
