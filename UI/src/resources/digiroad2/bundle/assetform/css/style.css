@@ -373,9 +373,12 @@ div.divmanazerpopup .actions input:hover {
     background-color: #666666;
     padding: 3px;
     cursor: pointer;
-
     font-size: 11px;
     width: 210px;
     padding-top: 2px;
     padding-bottom: 3px;
+}
+
+.featureAttributeButton:disabled {
+    cursor: default;
 }

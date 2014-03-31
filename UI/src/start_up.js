@@ -23,8 +23,8 @@ jQuery(document).ready(function() {
           }
       },
       success : function(config) {
-         appConfig = config;
-         notifyCallback();
+          appConfig = config;
+          notifyCallback();
       }
     });
   };
