@@ -48,10 +48,10 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetsByMunicipality(municipality: Int) = {
-    def foo = {
+    def withMunicipality = {
       Some(" WHERE rl.municipality_number = ?", List(municipality))
     }
-    val q = QueryCollector(allAssets).add(foo)
+    val q = QueryCollector(allAssets).add(withMunicipality)
     collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
