@@ -154,7 +154,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             // TODO: Initialize AssetLayer and LinearAssetLayer
 
             new AssetLayer(this._map, roadLayer);
-            new LinearAssetLayer(this._map, roadLayer);
+            //new LinearAssetLayer(this._map, roadLayer);
         },
         _isInZoomLevel: function() {
             return this._map.getZoom() > 8;
