@@ -1,3 +1,4 @@
+drop table localized_string;
 drop table multiple_choice_value;
 drop table single_choice_value;
 drop table enumerated_value;

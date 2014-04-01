@@ -129,7 +129,7 @@ object Queries {
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
-    p.id as property_id, p.name_fi as property_name, p.property_type, p.ui_position_index, p.required,
+    p.id as property_id, name_ls.value_fi as property_name, p.property_type, p.ui_position_index, p.required,
     case
       when e.value is not null then e.value
       else null
@@ -150,7 +150,8 @@ object Queries {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join image i on e.image_id = i.id"""
+          left join image i on e.image_id = i.id
+        join localized_string name_ls on name_ls.id = p.name_localized_string_id"""
 
   def allAssetsWithoutProperties =
     """
@@ -265,9 +266,10 @@ object Queries {
   def roadLinksAndWithinBoundingBox = "AND SDO_FILTER(geom, ?) = 'TRUE'"
 
   def enumeratedPropertyValues = """
-    select p.id, p.property_type, p.name_fi as property_name, p.required, e.value, e.name_fi from asset_type a
+    select p.id, p.property_type, ls.value_fi as property_name, p.required, e.value, e.name_fi from asset_type a
     join property p on p.asset_type_id = a.id
     join enumerated_value e on e.property_id = p.id
+    join localized_string ls on ls.id = p.name_localized_string_id
     where p.property_type = 'single_choice' or p.property_type = 'multiple_choice' and a.id = ?"""
 
   def getPointLRMeasure(latLonGeometry: JGeometry, roadLinkId: Long, conn: Connection): BigDecimal = {
