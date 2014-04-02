@@ -271,7 +271,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
     };
 
-    var createNewAsset = function(lonlat){
+    var createNewAsset = function(lonlat) {
         if (selectedAsset) {
             eventbus.trigger('asset:unselected', selectedAsset.data.id);
         }
@@ -419,7 +419,12 @@ window.AssetLayer = function(map, roadLayer) {
     eventbus.on('application:readOnly', function(value) {
         readOnly = value;
     }, this);
-    eventbus.on('assets:fetched', renderAssets, this);
+    eventbus.on('assets:fetched', function(assets) {
+        // FIXME: We should disable this at an earlier state
+        if (assetDirectionLayer.map && assetLayer.map) {
+            renderAssets(assets);
+        }
+    }, this);
     eventbus.on('map:moved', function(state) {
         if (8 < state.zoom) {
             backend.getAssets(10, state.bbox);
@@ -440,4 +445,17 @@ window.AssetLayer = function(map, roadLayer) {
             createNewAsset(map.getLonLatFromPixel(pixel));
         }
     });
+
+    eventbus.on('layer:selected', function(layer) {
+        if (layer !== 'asset') {
+            if (assetLayer.map && assetDirectionLayer.map) {
+                map.removeLayer(assetLayer);
+                map.removeLayer(assetDirectionLayer);
+            }
+        } else {
+            map.addLayer(assetDirectionLayer);
+            map.addLayer(assetLayer);
+        }
+    }, this);
+    eventbus.on('layer:selected', closeAsset, this);
 };

@@ -47,6 +47,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         init : function() {
             eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', this._initializeEditExisting, this);
             eventbus.on('asset:unselected', this._closeAsset, this);
+            eventbus.on('layer:selected', this._closeAsset, this);
             eventbus.on('asset:placed', function(asset) {
                 this._selectedAsset = asset;
                 this._backend.getAssetTypeProperties(10);
