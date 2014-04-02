@@ -117,7 +117,7 @@ class BusStopExcelDataImporter {
 
     val propertyId = sql"""
       select id from text_property_value
-      where property_id = (select id from property where name_fi = ${propertyName})
+      where property_id = (select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName})
       and asset_id = ${assetId}
     """.as[Long].firstOption
 
@@ -126,7 +126,7 @@ class BusStopExcelDataImporter {
         println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUE: '" + value + "'")
         sqlu"""
           insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select id from property where NAME_FI = ${propertyName}), ${assetId}, ${value}, ${Updater})
+          values (primary_key_seq.nextval, (select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}), ${assetId}, ${value}, ${Updater})
         """.execute
       }
       case _ => {
@@ -141,7 +141,7 @@ class BusStopExcelDataImporter {
 
   def setSingleChoiceProperty(assetId: Long, propertyName: String, value: Int) {
 
-    val propertyId = sql"""select id from property where name_fi = ${propertyName}""".as[Long].first
+    val propertyId = sql"""select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}""".as[Long].first
     val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
 
     println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + value)
