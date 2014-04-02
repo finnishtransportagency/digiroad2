@@ -84,4 +84,10 @@
             }
         });
     }
+
+    // FIXME: Dummy implementation
+    var id = 0;
+    backend.createLinearAsset = function(startPosition, endPosition) {
+        eventbus.trigger('linearAsset:created', {id: ++id, points: [startPosition, endPosition]});
+    };
 }(window.Backend = window.Backend || {}));

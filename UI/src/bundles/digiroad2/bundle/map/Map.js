@@ -63,7 +63,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._selectControl.unselectAll();
                 this._selectControl.select(nearestFeature);
             }, this);
-            eventbus.on('asset:unselected validityPeriod:changed', function(){
+            eventbus.on('asset:unselected validityPeriod:changed layer:selected', function(){
                 this._selectControl.unselectAll();
             }, this);
 
@@ -150,10 +150,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
             me._map.addLayer(roadLayer);
             this._layers = {road: roadLayer};
-            // TODO: Initialize AssetLayer and LinearAssetLayer
-
             new AssetLayer(this._map, roadLayer);
-            //new LinearAssetLayer(this._map, roadLayer);
+            new LinearAssetLayer(this._map, roadLayer);
         },
         _isInZoomLevel: function() {
             return this._map.getZoom() > 8;
