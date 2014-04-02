@@ -27,6 +27,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel", function(
                 "src" : "../../../../bundles/digiroad2/bundle/actionpanel/ActionPanel.js"
             },{
                 "type" : "text/javascript",
+                "src" : "../../../../bundles/digiroad2/bundle/actionpanel/ActionPanelBox.js"
+            },{
+                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/actionpanel/template/Templates.js"
             },{
                 "type" : "text/css",
