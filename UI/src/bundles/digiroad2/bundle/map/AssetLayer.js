@@ -420,13 +420,10 @@ window.AssetLayer = function(map, roadLayer) {
         readOnly = value;
     }, this);
     eventbus.on('assets:fetched', function(assets) {
-        // FIXME: We should disable this at an earlier state
-        if (assetDirectionLayer.map && assetLayer.map) {
-            renderAssets(assets);
-        }
+        renderAssets(assets);
     }, this);
     eventbus.on('map:moved', function(state) {
-        if (8 < state.zoom) {
+        if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
             backend.getAssets(10, state.bbox);
         } else {
             removeAssetsFromLayer();
@@ -455,6 +452,9 @@ window.AssetLayer = function(map, roadLayer) {
         } else {
             map.addLayer(assetDirectionLayer);
             map.addLayer(assetLayer);
+            if (8 < map.getZoom()) {
+                backend.getAssets(10, map.getExtent());
+            }
         }
     }, this);
     eventbus.on('layer:selected', closeAsset, this);
