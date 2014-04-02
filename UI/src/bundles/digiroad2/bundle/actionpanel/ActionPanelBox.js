@@ -126,7 +126,7 @@ window.AssetActionPanel = function(identifier, header) {
         jQuery(".actionPanel").toggleClass('actionPanelClosed');
     };
 
-    var hideEditStuff = function() {
+    var hideEditMode = function() {
         readyButton.hide();
         actionButtons.hide();
         layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
@@ -139,12 +139,12 @@ window.AssetActionPanel = function(identifier, header) {
         if (identifier === id) {
             layerGroup.find('.layerGroupLayers').removeClass('readOnlyModeHidden');
             editButton.show();
-            hideEditStuff();
+            hideEditMode();
             layerGroup.find('.layerGroup').addClass('layerGroupEditMode');
         } else {
             layerGroup.find('.layerGroupLayers').addClass('readOnlyModeHidden');
             editButton.hide();
-            hideEditStuff();
+            hideEditMode();
         }
     };
 
