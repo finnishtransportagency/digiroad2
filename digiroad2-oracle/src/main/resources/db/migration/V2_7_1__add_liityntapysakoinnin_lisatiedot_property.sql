@@ -1,2 +1,2 @@
 insert into property (id, asset_type_id, created_by, name_fi, name_sv, property_type, ui_position_index)
-values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'db_migration_v2.4.1', 'Liityntäpysäköinnin lisätiedot', '', 'text', 135);
+values (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'db_migration_v2.7.1', 'Liityntäpysäköinnin lisätiedot', '', 'text', 135);
