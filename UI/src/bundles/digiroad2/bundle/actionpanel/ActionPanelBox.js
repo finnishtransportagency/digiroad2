@@ -1,9 +1,4 @@
-window.AssetActionPanel = function(identifier) {
-
-    var headers = {
-        asset : 'Joukkoliikenteen pysäkit',
-        linearAsset : 'Nopeusrajoitukset'
-    };
+window.AssetActionPanel = function(identifier, header) {
 
     var layerGroup =jQuery(
         '<div class="actionPanel ' + identifier + '">' +
@@ -11,7 +6,7 @@ window.AssetActionPanel = function(identifier) {
                 '<div class="layerGroupImg">' +
                     '<img src="src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
                 '</div>' +
-                '<div class="layerGroupLabel">'+headers[identifier]+'</div>' +
+                '<div class="layerGroupLabel">'+header+'</div>' +
             '</div>' +
             '<div class="layerGroupLayers"></div>' +
         '</div>');
@@ -61,7 +56,6 @@ window.AssetActionPanel = function(identifier) {
         jQuery(".panelLayerGroup").append(layerGroup);
         var $el = jQuery.find('.'+identifier);
 
-        console.log($el);
         _.forEach(layerPeriods, function (layer) {
             layerGroup.find(".layerGroupLayers").append(mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
         });
@@ -125,7 +119,7 @@ window.AssetActionPanel = function(identifier) {
             eventbus.trigger('asset:unselected');
             eventbus.trigger('application:readOnly', readOnly);
             jQuery('.editMessage').toggleClass('readOnlyModeHidden');
-            layerGroup.find('.layerGroup').toggleClass('layerGroupEditMode');
+
         };
 
     var togglePanel = function() {
@@ -137,6 +131,7 @@ window.AssetActionPanel = function(identifier) {
         actionButtons.hide();
         layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
         jQuery('.editMessage').addClass('readOnlyModeHidden');
+        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
 
     };
 
@@ -145,6 +140,7 @@ window.AssetActionPanel = function(identifier) {
             layerGroup.find('.layerGroupLayers').removeClass('readOnlyModeHidden');
             editButton.show();
             hideEditStuff();
+            layerGroup.find('.layerGroup').addClass('layerGroupEditMode');
         } else {
             layerGroup.find('.layerGroupLayers').addClass('readOnlyModeHidden');
             editButton.hide();
