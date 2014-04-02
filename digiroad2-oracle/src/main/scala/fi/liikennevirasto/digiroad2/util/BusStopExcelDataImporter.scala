@@ -82,11 +82,11 @@ class BusStopExcelDataImporter {
 
             insertTextPropertyValue(assetId, "yllapitajan_tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Lisätiedot", equipments)
+            insertTextPropertyValue(assetId, "lisatiedot", equipments)
 
-            insertTextPropertyValue(assetId, "Maastokoordinaatti X", row.xPosition)
+            insertTextPropertyValue(assetId, "maastokoordinaatti_x", row.xPosition)
 
-            insertTextPropertyValue(assetId, "Maastokoordinaatti Y", row.yPosition)
+            insertTextPropertyValue(assetId, "maastokoordinaatti_y", row.yPosition)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
