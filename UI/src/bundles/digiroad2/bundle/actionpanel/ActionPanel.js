@@ -36,8 +36,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.actionpanel.ActionPanel",
 
 
             jQuery("#maptools").append(panelControl);
-            new AssetActionPanel('asset', 'Joukkoliikenteen pysäkit');
-            new AssetActionPanel('linearAsset', 'Nopeusrajoitukset');
+            new AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', 'bus-stop.png');
+            new AssetActionPanel('linearAsset', 'Nopeusrajoitukset', 'speed-limit.png');
             eventbus.trigger('layer:selected','asset');
 
 

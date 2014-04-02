@@ -37,11 +37,18 @@ div.layerGroup {
     color: #000;
  }
 
-div.layerGroupEditMode {
+div.layerGroupSelectedMode {
     background-color: #196eb8;
     background-image: -moz-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
     background-image: -webkit-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
     background-image: -ms-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
+    color:#fff;
+}
+
+div.layerGroupEditMode {
+    background-image: -moz-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
+    background-image: -webkit-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
+    background-image: -ms-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
     color:#fff;
 }
 
@@ -57,10 +64,36 @@ div.layerGroupLayers {
 }
 
 
-.layerGroupImg {
-    padding-top: 16px;
-    padding-left: 12px;
+.layerGroupImg_asset {
+    margin-top: 15px;
+    padding-top: 12px;
+    margin-left: 2px;
+    padding-left: 18px;
     float: left;
+}
+
+.layerGroupImg_unselected_asset {
+    background: transparent url('../images/bus-stop.png') no-repeat;
+}
+
+.layerGroupImg_selected_asset {
+    background: transparent url('../images/bus-stop-selected.png') no-repeat;
+}
+
+.layerGroupImg_linearAsset {
+    padding-left: 18px;
+    margin-left: 2px;
+    padding-bottom: 16px;
+    padding-top: 15px;
+    margin-top: 11px;
+    float: left;
+}
+
+.layerGroupImg_unselected_linearAsset {
+    background: transparent url('../images/speed-limit.png') no-repeat;
+}
+.layerGroupImg_selected_linearAsset {
+    background: transparent url('../images/speed-limit-selected.png') no-repeat;
 }
 
 div.layerGroupLabel {
@@ -97,7 +130,6 @@ div.actionButton {
     float:left;
     margin-top: 5px;
     margin-left: 5px;
-    border: 1px solid #fff;
 }
 
 .actionPanelButtonSelectImage {

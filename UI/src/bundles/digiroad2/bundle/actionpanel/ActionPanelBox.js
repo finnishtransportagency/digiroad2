@@ -1,11 +1,9 @@
-window.AssetActionPanel = function(identifier, header) {
+window.AssetActionPanel = function(identifier, header, icon) {
 
     var layerGroup =jQuery(
         '<div class="actionPanel ' + identifier + '">' +
             '<div class="layerGroup">' +
-                '<div class="layerGroupImg">' +
-                    '<img src="src/resources/digiroad2/bundle/actionpanel/images/bussi_valkoinen.png">' +
-                '</div>' +
+                '<div class="layerGroupImg_'+identifier+' layerGroupImg_unselected_'+identifier+'"></div>' +
                 '<div class="layerGroupLabel">'+header+'</div>' +
             '</div>' +
             '<div class="layerGroupLayers"></div>' +
@@ -119,6 +117,8 @@ window.AssetActionPanel = function(identifier, header) {
             eventbus.trigger('asset:unselected');
             eventbus.trigger('application:readOnly', readOnly);
             jQuery('.editMessage').toggleClass('readOnlyModeHidden');
+            layerGroup.find('.layerGroup').toggleClass('layerGroupSelectedMode');
+            layerGroup.find('.layerGroup').toggleClass('layerGroupEditMode');
 
         };
 
@@ -129,20 +129,21 @@ window.AssetActionPanel = function(identifier, header) {
     var hideEditMode = function() {
         readyButton.hide();
         actionButtons.hide();
+        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
         layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
         jQuery('.editMessage').addClass('readOnlyModeHidden');
-        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-
     };
 
     var handleGroupSelect = function(id) {
         if (identifier === id) {
             layerGroup.find('.layerGroupLayers').removeClass('readOnlyModeHidden');
+            layerGroup.find('.layerGroupImg_unselected_'+id).addClass('layerGroupImg_selected_'+id);
             editButton.show();
             hideEditMode();
-            layerGroup.find('.layerGroup').addClass('layerGroupEditMode');
+            layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
         } else {
             layerGroup.find('.layerGroupLayers').addClass('readOnlyModeHidden');
+            layerGroup.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
             editButton.hide();
             hideEditMode();
         }
