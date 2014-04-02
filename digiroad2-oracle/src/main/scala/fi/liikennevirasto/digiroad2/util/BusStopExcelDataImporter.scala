@@ -88,6 +88,7 @@ class BusStopExcelDataImporter {
             if (equipments.toLowerCase.contains("aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", Yes)
             if (equipments.toLowerCase.contains("ei aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", No)
             if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoiceProperty(assetId, "Pyöräteline", Yes)
+            if (equipments.toLowerCase.contains("ei katos")) setSingleChoiceProperty(assetId, "Katos", No)
 
             if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Yes)
 
