@@ -11,7 +11,7 @@ window.AssetActionPanel = function(identifier, header, icon) {
 
     var mapBusStopLayer = _.template(
         '<div class="busStopLayer">' +
-            '<div class="busStopLayerCheckbox"><input class="layerSelector " type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
+            '<div class="busStopLayerCheckbox"><input class="layerSelector_'+identifier+'" type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
             '<div class="busStopLayerName">{{name}}</div>' +
             '</div>');
 
@@ -39,7 +39,7 @@ window.AssetActionPanel = function(identifier, header, icon) {
     ];
 
     var handleAssetModified = function(asset) {
-        var $el = jQuery('input.layerSelector[data-validity-period=' + asset.validityPeriod + ']');
+        var $el = jQuery('input.layerSelector_'+identifier+'[data-validity-period=' + asset.validityPeriod + ']');
         if (!$el.is(':checked')) {
             $el.click();
         }
@@ -69,8 +69,8 @@ window.AssetActionPanel = function(identifier, header, icon) {
             togglePanel();
         });
 
-        jQuery(".layerSelector").on("change", function() {
-            var selectedValidityPeriods = $('input.layerSelector').filter(function(_, v) {
+        jQuery(".layerSelector_"+identifier).on("change", function() {
+            var selectedValidityPeriods = $('input.layerSelector_'+identifier).filter(function(_, v) {
                 return $(v).is(':checked');
             }).map(function(_, v) {
                 return $(v).attr('data-validity-period');
