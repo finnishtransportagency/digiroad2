@@ -16,6 +16,10 @@ window.AssetLayer = function(map, roadLayer) {
     var overlay;
     var selectedControl;
 
+    var isInZoomLevel = function() {
+        return (8 < map.getZoom());
+    };
+
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
             return (bearing) ? bearing + (90 * validityDirection): 90;
@@ -441,7 +445,7 @@ window.AssetLayer = function(map, roadLayer) {
     },true);
 
     events.register('click', map, function(e) {
-        if (selectedControl === 'Add') {
+        if (selectedControl === 'Add' && isInZoomLevel()) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
         }
@@ -456,7 +460,7 @@ window.AssetLayer = function(map, roadLayer) {
         } else {
             map.addLayer(assetDirectionLayer);
             map.addLayer(assetLayer);
-            if (8 < map.getZoom()) {
+            if (isInZoomLevel()) {
                 backend.getAssets(10, map.getExtent());
             }
         }
