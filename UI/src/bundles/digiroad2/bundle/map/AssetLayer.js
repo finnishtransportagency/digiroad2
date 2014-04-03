@@ -79,6 +79,7 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseUp = function(asset, mouseClickFn) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
+            clickTimestamp = null;
             var bearing = "0";
             if (selectedAsset) {
                 bearing = selectedAsset.data.roadDirection;
@@ -89,7 +90,7 @@ window.AssetLayer = function(map, roadLayer) {
             // Not need listeners anymore
             map.events.unregister("mouseup", map, mouseUpFunction);
             // Moved update
-            if (!readOnly && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
+            if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
                 var data = {
                     assetTypeId: asset.data.assetTypeId,
                     lon: asset.marker.lonlat.lon,
@@ -99,15 +100,19 @@ window.AssetLayer = function(map, roadLayer) {
                 };
                 backend.updateAsset(asset.data.id, data);
             }
+            assetIsMoving = false;
             var streetViewCoordinates = { lonLat: asset.marker.lonlat };
             mouseClickFn(evt, streetViewCoordinates);
         };
     };
 
     var clickTimestamp;
+    var clickCoords;
+    var assetIsMoving = false;
     var mouseDown = function(asset, mouseUpFn) {
-        return function (evt) {
+        return function(evt) {
             clickTimestamp = new Date().getTime();
+            clickCoords = [evt.x, evt.y];
             OpenLayers.Event.stop(evt);
             if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
                 eventbus.trigger('asset:unselected', selectedAsset.data.id);
@@ -436,9 +441,19 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
 
+    var approximately = function(n, m) {
+      var threshold = 10;
+      return threshold >= Math.abs(n - m);
+    };
+
     var events = map.events;
     events.register('mousemove', map, function(e) {
-        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700) {
+        if (readOnly) {
+          return;
+        }
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700 &&
+            (clickCoords && approximately(clickCoords[0], e.x) && approximately(clickCoords[1], e.y)) || assetIsMoving) {
+            assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             moveSelectedAsset(pixel);
         }
