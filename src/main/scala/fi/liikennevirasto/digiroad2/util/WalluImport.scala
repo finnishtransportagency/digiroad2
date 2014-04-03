@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import java.io.{File, PrintWriter}
+import java.io._
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 
 object WalluImport {
 
@@ -11,7 +11,9 @@ object WalluImport {
   val provider = new OracleSpatialAssetProvider(userProvider)
 
   def writeCsvToFile() = {
-    val printer = new PrintWriter(new File("vallu_import.csv"))
+    val printer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("vallu_import.csv"), "UTF-8"))
+    // BOM for excel
+    printer.write("\uFEFF")
     getMunicipalities.foreach(x => {
       getAssetsForMunicipality(x)
         .map(getCsvRowsForAsset _)
