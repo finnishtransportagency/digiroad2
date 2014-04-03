@@ -42,7 +42,7 @@ object AssetCsvFormatter {
 
   private def addStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.externalId.toString :: result)
+    (asset, asset.externalId.getOrElse("").toString :: result)
   }
 
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
