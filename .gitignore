@@ -6,3 +6,5 @@ target/
 .DS_Store
 logs/
 bower_components/
+flag.txt
+ftp.conf

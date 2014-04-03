@@ -138,8 +138,14 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }).sortBy(_.propertyUiIndex)
   }
 
+  def getMunicipalities: Seq[Int] = {
+    Database.forDataSource(ds).withDynSession {
+      OracleSpatialAssetDao.getMunicipalities
+    }
+  }
+
   override def getAssetsByMunicipality(municipality: Int) = {
-    Database.forDataSource(ds).withDynTransaction {
+    Database.forDataSource(ds).withDynSession {
       OracleSpatialAssetDao.getAssetsByMunicipality(municipality)
     }
   }

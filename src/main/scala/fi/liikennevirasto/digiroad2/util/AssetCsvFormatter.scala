@@ -10,8 +10,11 @@ object AssetCsvFormatter {
                "VIRTUAL_STOP;EQUIPMENTS;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
-  def formatFromAssetWithPropertiesValluCsv(assets: Seq[AssetWithProperties]): Seq[String] = {
-    assets.map(asset => {
+  def formatAssetsWithProperties(assets: Seq[AssetWithProperties]): Seq[String] = {
+    assets.map(formatFromAssetWithPropertiesValluCsv)
+  }
+
+  def formatFromAssetWithPropertiesValluCsv(asset: AssetWithProperties): String = {
       (addStopId _)
         .andThen (addAdminStopId _)
         .andThen (addStopCode _)
@@ -35,7 +38,6 @@ object AssetCsvFormatter {
         .andThen (addComments _)
         .andThen (addContactEmail _)
         .apply(asset, List())._2.reverse.mkString(";")
-    })
   }
 
   private def addStopId(params: (AssetWithProperties, List[String])) = {

@@ -61,8 +61,8 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection))
-    }.toSeq
-  }
+    }
+    }
 
   private[oracle] def getImageId(image: Image) = {
     image.imageId match {
@@ -300,6 +300,12 @@ object OracleSpatialAssetDao {
 
   def getImage(imageId: Long): Array[Byte] = {
     Q.query[Long, Array[Byte]](imageById).first(imageId)
+  }
+
+  def getMunicipalities: Seq[Int] = {
+    sql"""
+      select id from municipality
+    """.as[Int].list
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {

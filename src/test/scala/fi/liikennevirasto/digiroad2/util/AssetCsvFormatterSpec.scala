@@ -14,7 +14,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   it must "return correct csv entries from test data" in {
-    val csvAll = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(assetsByMunicipality)
+    val csvAll = AssetCsvFormatter.formatAssetsWithProperties(assetsByMunicipality)
     csvAll.length must be > 3
     val csv = csvAll.find(_.startsWith("300003")).get
 
