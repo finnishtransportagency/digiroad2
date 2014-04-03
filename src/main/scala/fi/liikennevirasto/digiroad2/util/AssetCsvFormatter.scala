@@ -42,17 +42,19 @@ object AssetCsvFormatter {
 
   private def addStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.id.toString :: result)
+    (asset, asset.externalId.toString :: result)
   }
 
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.externalId.getOrElse("").toString :: result)
+    val id = getItemsFromPropertyByName("Ylläpitäjän tunnus", asset.propertyData)
+    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addStopCode(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.externalId.getOrElse("").toString :: result)
+    val id = getItemsFromPropertyByName("Matkustajatunnus", asset.propertyData)
+    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addContactEmail(params: (AssetWithProperties, List[String])) = {
@@ -105,8 +107,8 @@ object AssetCsvFormatter {
 
   private def addMaintainerId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByName("Ylläpitäjän tunnus", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    // maintainer not known
+    (asset, "" :: result)
   }
 
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
@@ -152,8 +154,8 @@ object AssetCsvFormatter {
 
   private def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    // bearing description not known
-    (asset, "" :: result)
+    val id = getItemsFromPropertyByName("Liikennöintisuunta", asset.propertyData)
+    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
