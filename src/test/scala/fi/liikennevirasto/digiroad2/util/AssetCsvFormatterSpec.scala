@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
-  var assetsByMunicipality: Seq[AssetWithProperties] = null
+  var assetsByMunicipality: Iterable[AssetWithProperties] = null
   before {
     assetsByMunicipality = provider.getAssetsByMunicipality(235)
   }
