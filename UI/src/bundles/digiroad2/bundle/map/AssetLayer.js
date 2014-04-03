@@ -100,8 +100,10 @@ window.AssetLayer = function(map, roadLayer) {
         };
     };
 
+    var clickTimestamp;
     var mouseDown = function(asset, mouseUpFn) {
         return function (evt) {
+            clickTimestamp = new Date().getTime();
             OpenLayers.Event.stop(evt);
             if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
                 eventbus.trigger('asset:unselected', selectedAsset.data.id);
@@ -432,8 +434,10 @@ window.AssetLayer = function(map, roadLayer) {
 
     var events = map.events;
     events.register('mousemove', map, function(e) {
-        var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
-        moveSelectedAsset(pixel);
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700) {
+            var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
+            moveSelectedAsset(pixel);
+        }
     },true);
 
     events.register('click', map, function(e) {
