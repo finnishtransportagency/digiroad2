@@ -10,7 +10,7 @@ object AssetCsvFormatter {
                "VIRTUAL_STOP;EQUIPMENTS;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
-  def formatAssetsWithProperties(assets: Seq[AssetWithProperties]): Seq[String] = {
+  def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
     assets.map(formatFromAssetWithPropertiesValluCsv)
   }
 
