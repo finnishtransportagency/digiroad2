@@ -449,7 +449,7 @@ window.AssetLayer = function(map, roadLayer) {
     var events = map.events;
     events.register('mousemove', map, function(e) {
         if (readOnly) {
-          return;
+            return;
         }
         if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700 &&
             (clickCoords && approximately(clickCoords[0], e.x) && approximately(clickCoords[1], e.y)) || assetIsMoving) {
@@ -457,7 +457,7 @@ window.AssetLayer = function(map, roadLayer) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             moveSelectedAsset(pixel);
         }
-    },true);
+    }, true);
 
     events.register('click', map, function(e) {
         if (selectedControl === 'Add' && isInZoomLevel()) {
