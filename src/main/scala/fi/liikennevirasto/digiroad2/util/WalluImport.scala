@@ -11,7 +11,7 @@ object WalluImport {
   val provider = new OracleSpatialAssetProvider(userProvider)
 
   def writeCsvToFile() = {
-    val printer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("vallu_import.csv"), "UTF-8"))
+    val printer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("digiroad_stops.csv"), "UTF-8"))
     // BOM for excel
     printer.write("\uFEFF")
     getMunicipalities.foreach(x => {
