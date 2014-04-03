@@ -1,0 +1,213 @@
+@actionpanel-image-path: "../src/resources/digiroad2/bundle/actionpanel/images";
+
+.panelControl {
+  padding: 14 12 11;
+  border: 0px solid;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+  cursor: pointer;
+}
+
+div.panelControlLine {
+  background-color: #ffffff;
+  height: 2px;
+  margin-bottom: 3px;
+}
+
+.actionPanel {
+  width: 280px;
+  position: relative;
+  left: 40px;
+  top: -41px;
+  background-color: #efefed;
+  border: 0px solid #cbcbc9;
+  border-bottom-width: 1px;
+}
+
+.actionPanelClosed {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
+
+div.layerGroup {
+  height: 41px;
+  background-image: -moz-linear-gradient( 90deg, rgb(179, 179, 175) 0%, rgb(250, 250, 250) 100%);
+  background-image: -webkit-linear-gradient( 90deg, rgb(179, 179, 175) 0%, rgb(250, 250, 250) 100%);
+  background-image: -ms-linear-gradient( 90deg, rgb(179, 179, 175) 0%, rgb(250, 250, 250) 100%);
+  padding-left: 5px;
+  color: #000;
+}
+
+div.layerGroupSelectedMode {
+  background-color: #196eb8;
+  background-image: -moz-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
+  background-image: -webkit-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
+  background-image: -ms-linear-gradient( 90deg, rgb(66,66,64) 0%, rgb(90,90,87) 100%);
+  color:#fff;
+}
+
+div.layerGroupEditMode {
+  background-image: -moz-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
+  background-image: -webkit-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
+  background-image: -ms-linear-gradient( 90deg, #2468A3 0%, #4085C0 100%);
+  color:#fff;
+}
+
+div.layerGroup:active {
+  background-color: #5a5a57;
+}
+
+div.layerGroupLayers {
+  background-color: #efefed;
+  padding-bottom: 16px;
+  border: 0px solid #cbcbc0;
+  border-bottom-width: 1px;
+}
+
+
+.layerGroupImg_asset {
+  margin-top: 15px;
+  padding-top: 12px;
+  margin-left: 2px;
+  padding-left: 18px;
+  float: left;
+}
+
+.layerGroupImg_unselected_asset {
+  background: transparent url('@{actionpanel-image-path}/bus-stop.png') no-repeat;
+}
+
+.layerGroupImg_selected_asset {
+  background: transparent url('@{actionpanel-image-path}/bus-stop-selected.png') no-repeat;
+}
+
+.layerGroupImg_linearAsset {
+  padding-left: 18px;
+  margin-left: 2px;
+  padding-bottom: 16px;
+  padding-top: 15px;
+  margin-top: 11px;
+  float: left;
+}
+
+.layerGroupImg_unselected_linearAsset {
+  background: transparent url('@{actionpanel-image-path}/speed-limit.png') no-repeat;
+}
+.layerGroupImg_selected_linearAsset {
+  background: transparent url('@{actionpanel-image-path}/speed-limit-selected.png') no-repeat;
+}
+
+div.layerGroupLabel {
+  padding-top: 12px;
+  padding-left: 6px;
+  float: left;
+  font-size: 13px;
+  font-family: arial;
+}
+
+
+div.busStopLayerCheckbox {
+  float : left;
+  margin-top: -3;
+  padding-right: 7px;
+}
+div.busStopLayer {
+  padding-left: 20px;
+  padding-top: 13px;
+  padding-bottom: 3px;
+  background-color: #efefed;
+  font-size: 12px;
+  font-family: arial;
+  color: #000000;
+}
+
+div.actionButtons {
+  height: 42px;
+  border: 0px solid #cbcbc9;
+  border-bottom-width: 1px;
+}
+
+div.actionButton {
+  float:left;
+  margin-top: 5px;
+  margin-left: 5px;
+}
+
+.actionPanelButtonSelectImage {
+  width : 29px;
+  height: 29px;
+  backGround-image:url('@{actionpanel-image-path}/valinta_passive.png');
+}
+
+.actionPanelButtonSelectActiveImage {
+  backGround-image:url('@{actionpanel-image-path}/valinta_active.png');
+}
+
+.actionPanelButtonAddImage {
+  width : 29px;
+  height: 29px;
+  backGround-image:url('@{actionpanel-image-path}/uusi_pysakki_passive.png');
+}
+
+.actionPanelButtonAddActiveImage {
+  backGround-image:url('@{actionpanel-image-path}/uusi_pysakki_active.png');
+}
+
+.actionPanelButtonRemoveImage {
+  width : 29px;
+  height: 29px;
+  backGround-image:url('@{actionpanel-image-path}/poisto_passive.png');
+}
+
+.actionPanelButtonRemoveActiveImage {
+  backGround-image:url('@{actionpanel-image-path}/poisto_active.png');
+}
+
+div.actionButtonActive {
+  border: 1px solid #236085;
+  background: #cbdce5;
+  border-radius: 2px;
+}
+
+button.readOnlyMode {
+  background-color: #196eb8;
+  border-color: #236085;
+}
+.readOnlyModeHidden {
+  display: none;
+}
+
+button.actionModeButton {
+  border: 0px solid;
+  border-radius: 3px;
+  font-family: "Arial";
+  color: rgb( 255, 255, 255 );
+  line-height: 1.286;
+  text-align:center;
+  padding: 6px;
+  cursor: pointer;
+  margin: 5px;
+  font-size: 11px;
+  width: 96%;
+}
+
+button.editMode {
+  background-color: #979793;
+}
+
+button.editModeHidden {
+  display: none;
+}
+
+div.editMessage {
+  color: rgb( 255, 255, 255 );
+  background-color: #196eb8;
+  padding: 10px;
+  position: absolute;
+  top: 5px;
+  left: 40%;
+  font-size: 11px;
+  font-family: "Arial";
+  border: 2px #00539c;
+}
