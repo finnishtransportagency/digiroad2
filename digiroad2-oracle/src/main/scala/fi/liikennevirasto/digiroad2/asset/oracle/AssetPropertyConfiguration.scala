@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.AssetRow
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import org.joda.time.format.{DateTimeFormat}
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 
 case class CommonAssetProperty(publicId: String, column: String, propertyType: String, propertyDescriptor: Property, lrmPositionProperty: Boolean = false)
 object AssetPropertyConfiguration {
@@ -14,6 +15,10 @@ object AssetPropertyConfiguration {
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
   val Format = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
+    LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi"),
+    LangSv -> Map()
+  )
 
   val ValidityDirectionSame = 2
   val ValidityDirectionOpposite = 3
