@@ -49,7 +49,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
             '{{propertyDisplayValue}}</textarea>' +
             '</div>' +
             '</div>');
-        this.featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{publicId}}: {{propertyDisplayValue}}</div>');
+        this.featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{localizedName}}: {{propertyDisplayValue}}</div>');
         this.featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
             '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">' +
