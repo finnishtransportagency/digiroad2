@@ -3,35 +3,37 @@ package fi.liikennevirasto.digiroad2.util
 import javax.sql.DataSource
 import com.jolbox.bonecp.BoneCPDataSource
 import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q, GetResult}
+import scala.slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
 import Q.interpolation
 import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
 import com.github.tototoshi.csv._
 import java.io.{InputStreamReader}
+import scala.language.implicitConversions
+
+sealed trait Status { def dbValue: Int }
 
 class BusStopExcelDataImporter {
   val Updater = "excel_data_migration"
-  val No = 1
-  val Yes = 2
   lazy val convDs: DataSource = initConversionDataSource
-  lazy val excelDs: DataSource = initExcelDataSource
+  case object Yes extends Status { val dbValue = 1 }
+  case object No extends Status { val dbValue = 2 }
+  case object Unknown extends Status { val dbValue = 99 }
 
-  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String, xPosition: String, yPosition: String, passengerId: Option[String] = None)
+  case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String, internalId: String, equipments: String, xPosition: String, yPosition: String,
+                              passengerId: String, timetable: Option[Status], shelter: Option[Status], addShelter: Option[Status], bench: Option[Status], bicyclePark: Option[Status], electricTimetable: Option[Status], lightning: Option[Status])
 
-  implicit val getExcelBusStopData = GetResult[ExcelBusStopData](r => ExcelBusStopData(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+  implicit def GetStatus(status: String) = {
+    status match {
+      case "1" => Some(No)
+      case "2" => Some(Yes)
+      case "3" => Some(Unknown)
+      case _ => None
+    }
+  }
 
   implicit object SemicolonSeparatedValues extends DefaultCSVFormat {
     override val delimiter = ';'
-  }
-
-  private[this] def initExcelDataSource: DataSource = {
-    Class.forName("oracle.jdbc.driver.OracleDriver")
-    val ds = new BoneCPDataSource()
-    ds.setJdbcUrl("")
-    ds.setUsername("")
-    ds.setPassword("")
-    ds
   }
 
   private[this] def initConversionDataSource: DataSource = {
@@ -43,20 +45,13 @@ class BusStopExcelDataImporter {
     ds
   }
 
-  def readExcelDataFromDb(): List[ExcelBusStopData] = {
-    Database.forDataSource(excelDs).withDynTransaction {
-      sql"""
-        select valtak_tunnus, pysakin_nimi, pysakin_nimi_se, SUUNTA_KANSALAISEN_NAKOK, PYSAKIN_SAAVUTETTAVUUS, ESTEETTOMYYS_TIEDOT, YLLAPITAJAN_SISAINEN_ID, VARUSTEET_MUOKKAUSSARAKE, X_ETRS_TM35FIN, Y_ETRS_TM35FIN from excel_unique
-      """.as[ExcelBusStopData].list
-    }
-  }
-
   def readExcelDataFromCsvFile(): List[ExcelBusStopData] = {
     val reader = CSVReader.open(new InputStreamReader(getClass.getResourceAsStream("/pysakkitiedot.csv")))
     reader.allWithHeaders().map { row =>
       new ExcelBusStopData(row("Valtakunnallinen ID").toLong, row("Pysäkin nimi"), row("Pysäkin nimi SE"), row("Suunta kansalaisen näkökulmasta"),
         row("Pysäkin saavutettavuus"), row("Esteettömyys-tiedot"), row("Ylläpitäjän sisäinen pysäkki-ID"), row("Pysäkin varusteet"),
-        row("X_ETRS-TM35FIN"), row("Y_ETRS-TM35FIN"), row.get("Pysäkin tunnus matkustajalle"))
+        row("X_ETRS-TM35FIN"), row("Y_ETRS-TM35FIN"), row("Pysäkin tunnus matkustajalle"), row("Aikataulu"), row("Katos"), row("Mainoskatos"), row("Penkki"),
+        row("Pyöräteline"), row("Sähköinen aikataulunäyttö"), row("Valaistus"))
     }
   }
 
@@ -81,16 +76,15 @@ class BusStopExcelDataImporter {
 
             insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
 
-            val equipments = trimToEmpty(row.equipments)
-            if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoiceProperty(assetId, "Penkki", Yes)
-            if (equipments.toLowerCase.contains("katos") || equipments.toLowerCase.contains("omniselter")) setSingleChoiceProperty(assetId, "Katos", Yes)
-            if (equipments.toLowerCase.contains("mainoskatos")) setSingleChoiceProperty(assetId, "Mainoskatos", Yes)
-            if (equipments.toLowerCase.contains("aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", Yes)
-            if (equipments.toLowerCase.contains("ei aikataulu")) setSingleChoiceProperty(assetId, "Aikataulu", No)
-            if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoiceProperty(assetId, "Pyöräteline", Yes)
-            if (equipments.toLowerCase.contains("ei katos")) setSingleChoiceProperty(assetId, "Katos", No)
+            setSingleChoiceProperty(assetId, "Aikataulu", row.timetable)
+            setSingleChoiceProperty(assetId, "Katos", row.shelter)
+            setSingleChoiceProperty(assetId, "Mainoskatos", row.addShelter)
+            setSingleChoiceProperty(assetId, "Penkki", row.bench)
+            setSingleChoiceProperty(assetId, "Pyöräteline", row.bicyclePark)
+            setSingleChoiceProperty(assetId, "Sähköinen aikataulunäyttö", row.electricTimetable)
+            setSingleChoiceProperty(assetId, "Valaistus", row.bicyclePark)
 
-            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Yes)
+            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Some(Yes))
 
             insertTextPropertyValue(assetId, "Liityntäpysäköinnin lisätiedot", row.reachability)
 
@@ -98,13 +92,13 @@ class BusStopExcelDataImporter {
 
             insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Lisätiedot", equipments)
+            insertTextPropertyValue(assetId, "Lisätiedot", row.equipments)
 
             insertTextPropertyValue(assetId, "Maastokoordinaatti X", row.xPosition)
 
             insertTextPropertyValue(assetId, "Maastokoordinaatti Y", row.yPosition)
 
-            insertTextPropertyValue(assetId, "Matkustajatunnus", row.passengerId.getOrElse(null))
+            insertTextPropertyValue(assetId, "Matkustajatunnus", row.passengerId)
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -140,22 +134,23 @@ class BusStopExcelDataImporter {
     }
   }
 
-  def setSingleChoiceProperty(assetId: Long, propertyName: String, value: Int) {
+  def setSingleChoiceProperty(assetId: Long, propertyName: String, status: Option[Status]) {
+    status match { case None => return }
 
     val propertyId = sql"""select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}""".as[Long].first
     val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
 
-    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + value)
+    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + status.get.dbValue)
     existingProperty match {
       case None => {
         sqlu"""
           insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by, modified_date)
-          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${value} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
+          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
         """.execute
       }
       case _ => {
         sqlu"""
-          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${value} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where property_id = $propertyId and asset_id = ${assetId}
         """.execute
       }
