@@ -138,6 +138,13 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }).sortBy(_.propertyUiIndex)
   }
 
+  def assetPropertyNames(language: String): Map[String, String] = {
+    AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.assetPropertyNames(language)
+    }
+
+  }
+
   override def getAssetsByMunicipality(municipality: Int) = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssetsByMunicipality(municipality)

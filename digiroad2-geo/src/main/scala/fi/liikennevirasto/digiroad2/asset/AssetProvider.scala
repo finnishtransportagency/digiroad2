@@ -21,6 +21,7 @@ trait AssetProvider {
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
   def availableProperties(assetTypeId: Long): Seq[Property]
+  def assetPropertyNames(language: String): Map[String, String]
 }
 case class Point(x: Double, y: Double)
 case class BoundingRectangle(leftBottom: Point, rightTop: Point)

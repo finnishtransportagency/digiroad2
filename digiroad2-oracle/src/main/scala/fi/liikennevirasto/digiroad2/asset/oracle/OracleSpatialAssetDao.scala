@@ -314,4 +314,16 @@ object OracleSpatialAssetDao {
       select p.id, p.public_id, ls.value_fi, p.property_type, p.ui_position_index, p.required from property p, localized_string ls where ls.id = p.name_localized_string_id and p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
+
+  def assetPropertyNames(language: String): Map[String, String] = {
+    val valueColumn = language match  {
+      case "fi" => "ls.value_fi"
+      case "sv" => "ls.value_sv"
+      case _ => throw new IllegalArgumentException("Language not supported: " + language)
+    }
+    val propertyNames = sql"""
+      select p.public_id, #$valueColumn from property p, localized_string ls where ls.id = p.name_localized_string_id
+    """.as[(String, String)].list.toMap
+    propertyNames
+  }
 }

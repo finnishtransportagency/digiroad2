@@ -198,6 +198,16 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("get localized property names for language") {
+    // propertyID -> value
+    getWithUserAuth("/assetPropertyNames/fi") {
+      status should equal(200)
+      val propertyNames = parse(body).extract[Map[String, String]]
+      propertyNames("ensimmainen_voimassaolopaiva") should be("Ensimmäinen voimassaolopäivä")
+      propertyNames("matkustajatunnus") should be("Matkustajatunnus")
+    }
+  }
+
   test("get national bus stop id", Tag("db")) {
     getWithUserAuth("/assets/300008") {
       val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
