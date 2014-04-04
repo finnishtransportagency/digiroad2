@@ -56,7 +56,7 @@ object OracleSpatialAssetDao {
       val row = v(0)
       AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.propertyId.toLong),
+        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.id.toLong),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
@@ -74,7 +74,7 @@ object OracleSpatialAssetDao {
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
-      Property(row.property.propertyId, row.property.publicId, row.property.propertyName, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
+      Property(row.property.propertyId, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
     }.toSeq
   }
 
@@ -307,11 +307,11 @@ object OracleSpatialAssetDao {
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
-        Property(r.nextLong, r.nextString, r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
+        Property(r.nextLong, r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
       }
     }
     sql"""
-      select p.id, p.public_id, ls.value_fi, p.property_type, p.ui_position_index, p.required from property p, localized_string ls where ls.id = p.name_localized_string_id and p.asset_type_id = $assetTypeId
+      select p.id, p.public_id, p.property_type, p.ui_position_index, p.required from property p where p.asset_type_id = $assetTypeId
     """.as[Property].list
   }
 

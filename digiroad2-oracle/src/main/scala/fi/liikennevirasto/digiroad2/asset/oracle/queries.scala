@@ -27,7 +27,7 @@ object Queries {
 
   case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
-  case class PropertyRow(propertyId: Long, publicId: String, propertyName: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String)
+  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String)
 
   case class AssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], property: PropertyRow,
@@ -51,13 +51,12 @@ object Queries {
       val pos = r.nextBytes
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
-      val propertyName = r.nextString
       val propertyType = r.nextString
       val propertyUiIndex = r.nextInt
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLong
       val propertyDisplayValue = r.nextString
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyName, propertyType, propertyUiIndex, propertyRequired, propertyValue, propertyDisplayValue)
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue, propertyDisplayValue)
       val lrmId = r.nextLong
       val startMeasure = r.nextInt
       val endMeasure = r.nextInt
@@ -130,7 +129,7 @@ object Queries {
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
-    p.id as property_id, p.public_id as property_public_id, name_ls.value_fi as property_name, p.property_type, p.ui_position_index, p.required,
+    p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required,
     case
       when e.value is not null then e.value
       else null
@@ -151,8 +150,7 @@ object Queries {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join image i on e.image_id = i.id
-        join localized_string name_ls on name_ls.id = p.name_localized_string_id"""
+          left join image i on e.image_id = i.id"""
 
   def allAssetsWithoutProperties =
     """
