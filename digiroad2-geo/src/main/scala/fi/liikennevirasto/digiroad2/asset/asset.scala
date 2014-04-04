@@ -15,7 +15,7 @@ case class AssetWithProperties(id: Long, externalId: Option[Long], assetTypeId: 
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None)
 
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
-case class Property(propertyId: Long, publicId: String, propertyName: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
+case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: Long, propertyDisplayValue: String, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
 case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None, municipalityNumber: Int)

@@ -25,7 +25,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
     val property = asset.propertyData.find(_.propertyType == "text").get
     val modifiedProperty = property.copy(values = List(PropertyValue(0, "NEW TEXT")))
     provider.updateAssetProperty(asset.id, modifiedProperty.publicId, modifiedProperty.values)
-    val updatedProperty = getTestAsset.propertyData.find(_.propertyId == modifiedProperty.propertyId).get
+    val updatedProperty = getTestAsset.propertyData.find(_.id == modifiedProperty.id).get
     updatedProperty.values.size should be(1)
     updatedProperty.values.head.propertyDisplayValue should be("NEW TEXT")
     an[IllegalArgumentException] should be thrownBy {
@@ -36,21 +36,21 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Delete and create a text property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Esteettömyys liikuntarajoitteiselle").get
+    val property = asset.propertyData.find(_.publicId == "esteettomyys_liikuntarajoitteiselle").get
     provider.deleteAssetProperty(asset.id, property.publicId)
     val updatedAsset = getTestAsset
-    updatedAsset.propertyData.find(_.propertyId == property.propertyId).get.values shouldBe empty
+    updatedAsset.propertyData.find(_.id == property.id).get.values shouldBe empty
     provider.updateAssetProperty(asset.id, property.publicId, property.values)
     val restoredAsset = getTestAsset
-    restoredAsset.propertyData.find(_.propertyId == property.propertyId).get.values should not be empty
+    restoredAsset.propertyData.find(_.id == property.id).get.values should not be empty
   }
 
   test("Update a single-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Katos").get
+    val property = asset.propertyData.find(_.publicId == "katos").get
     val modifiedProperty = property.copy(values = List(PropertyValue(2, "Kyllä")))
     provider.updateAssetProperty(asset.id, modifiedProperty.publicId, modifiedProperty.values)
-    val updatedProperty = getTestAsset.propertyData.find(_.propertyId == modifiedProperty.propertyId).get
+    val updatedProperty = getTestAsset.propertyData.find(_.id == modifiedProperty.id).get
     updatedProperty.values.size should be (1)
     updatedProperty.values.head.propertyDisplayValue should be ("Kyllä")
     an [IllegalArgumentException] should be thrownBy {
@@ -64,13 +64,13 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Delete and create a single-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Katos").get
+    val property = asset.propertyData.find(_.publicId == "katos").get
     provider.deleteAssetProperty(asset.id, property.publicId)
     val updatedAsset = getTestAsset
-    updatedAsset.propertyData.find(_.propertyId == property.propertyId).get.values shouldBe empty
+    updatedAsset.propertyData.find(_.id == property.id).get.values shouldBe empty
     provider.updateAssetProperty(asset.id, property.publicId, property.values)
     val restoredAsset = getTestAsset
-    restoredAsset.propertyData.find(_.propertyId == property.propertyId) should not be empty
+    restoredAsset.propertyData.find(_.id == property.id) should not be empty
   }
 
   test("Update multiple-choice property values", Tag("db")) {
@@ -82,19 +82,19 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
     updatedProperty.values.size should be (2)
     updatedProperty.values.map(_.propertyValue) should contain allOf (2, 3)
     provider.updateAssetProperty(asset.id, property.publicId, property.values)
-    val restoredProperty = getTestAsset.propertyData.find(_.propertyId == modifiedProperty.propertyId).get
+    val restoredProperty = getTestAsset.propertyData.find(_.id == modifiedProperty.id).get
     restoredProperty.values.size should be (1)
   }
 
   test("Delete and create a multiple-choice property value", Tag("db")) {
     val asset = getTestAsset
-    val property = asset.propertyData.find(_.propertyName == "Pysäkin tyyppi").get
+    val property = asset.propertyData.find(_.publicId == "pysakin_tyyppi").get
     provider.deleteAssetProperty(asset.id, property.publicId)
     val updatedAsset = getTestAsset
-    updatedAsset.propertyData.find(_.propertyId == property.propertyId).get.values shouldBe empty
+    updatedAsset.propertyData.find(_.id == property.id).get.values shouldBe empty
     provider.updateAssetProperty(asset.id, property.publicId,  List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
     val restoredAsset = getTestAsset
-    restoredAsset.propertyData.find(_.propertyId == property.propertyId).get.values should not be empty
+    restoredAsset.propertyData.find(_.id == property.id).get.values should not be empty
   }
 
   private def getTestAsset: AssetWithProperties = provider.getAssetById(TestAssetId).get
