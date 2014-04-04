@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+<<<<<<< HEAD:vallu_import.sh
 ./sbt ${1} 'project digiroad2' "runMain fi.liikennevirasto.digiroad2.util.ValluImport"
 zip digiroad_stops digiroad_stops.csv
 set -- $(<ftp.conf)
