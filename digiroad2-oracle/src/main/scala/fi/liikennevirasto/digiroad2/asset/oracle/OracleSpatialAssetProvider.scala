@@ -150,6 +150,12 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
+  def getMunicipalityNameByCode(code: Int): String = {
+    Database.forDataSource(ds).withDynSession {
+      OracleSpatialAssetDao.getMunicipalityNameByCode(code)
+    }
+  }
+
   override def getAssetsByMunicipality(municipality: Int) = {
     Database.forDataSource(ds).withDynSession {
       OracleSpatialAssetDao.getAssetsByMunicipality(municipality)
