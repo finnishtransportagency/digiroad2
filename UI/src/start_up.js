@@ -3,7 +3,8 @@ jQuery(document).ready(function() {
   Oskari.setLoaderMode('dev');
   var appSetup;
   var appConfig;
-  
+  var localizedStrings;
+
   var assetIdFromURL = function() {
       var matches = window.location.hash.match(/(\d+)(.*)/);
       if (matches) {
@@ -44,7 +45,24 @@ jQuery(document).ready(function() {
       }
     });
   };
-  
+    var downloadLocalizedStrings = function(notifyCallback) {
+        jQuery.ajax({
+            type : 'GET',
+            dataType : 'json',
+            url : 'api/assetPropertyNames/fi',
+            beforeSend: function(x) {
+                if (x && x.overrideMimeType) {
+                    x.overrideMimeType("application/j-son;charset=UTF-8");
+                }
+            },
+            success : function(ls) {
+                localizedStrings = ls;
+                window.localizedStrings = localizedStrings;
+                    notifyCallback();
+            }
+        });
+    };
+
   eventbus.on('application:readOnly', function(readOnly) {
       window.location.hash = '';
   });
@@ -59,7 +77,7 @@ jQuery(document).ready(function() {
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
-    if(appSetup && appConfig) {
+    if(appSetup && appConfig && localizedStrings) {
       var app = Oskari.app;
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
@@ -74,4 +92,5 @@ jQuery(document).ready(function() {
   };
   downloadAppSetup(startApplication);
   downloadConfig(startApplication);
+  downloadLocalizedStrings(startApplication);
 });

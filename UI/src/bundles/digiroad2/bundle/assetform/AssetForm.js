@@ -56,7 +56,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 this._initializeCreateNew(properties);
             }, this);
             eventbus.on('assetPropertyValue:changed', function(data) {
-                if (data.propertyData[0].propertyId == 'validityDirection') {
+                if (data.propertyData[0].publicId == 'vaikutussuunta') {
                     this._changeAssetDirection(data);
                 }
             }, this);
@@ -90,23 +90,23 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             }
             jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
                 var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-propertyId'));
+                me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-publicId'));
             });
             jQuery("select.featureattributeChoice").on("change", function () {
                 var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-propertyId'));
+                me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-publicId'));
             });
             jQuery("div.featureattributeChoice").on("change", function () {
                 var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-propertyId'));
+                me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-publicId'));
             });
             jQuery("button.featureAttributeButton").on("click", function () {
                 var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-propertyId'));
+                me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-publicId'));
             });
             jQuery(".featureAttributeDate").on("blur", function () {
                 var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-propertyId'));
+                me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-publicId'));
             });
 
             function busStopHeader(asset) {
@@ -119,7 +119,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         
         _changeAssetDirection: function(data) {
             var newValidityDirection = data.propertyData[0].values[0].propertyValue;
-            var validityDirection = jQuery('.featureAttributeButton[data-propertyid="validityDirection"]');
+            var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             validityDirection.attr('value', newValidityDirection);
             jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
         },
@@ -133,13 +133,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             featureAttributesElement.html(featureAttributesMarkup);
             me._addDatePickers();
 
-            var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-propertyid="validityDirection"]');
+            var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             var assetDirectionChangedHandler = function() {
                 var value = validityDirection.attr('value');
                 var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
                 eventbus.trigger('assetPropertyValue:changed', {
                     propertyData: [{
-                        propertyId: validityDirection.attr('data-propertyId'),
+                        publicId: validityDirection.attr('data-publicId'),
                         values: [{propertyValue: newValidityDirection}]
                     }]
                 });
@@ -150,7 +150,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
                 eventbus.trigger('assetPropertyValue:changed', {
                   propertyData: [{
-                      propertyId: jqElement.attr('data-propertyId'),
+                      publicId: jqElement.attr('data-publicId'),
                       values: values
                   }]
                 });
@@ -169,7 +169,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var textElementAttributes = _.map(textElements, function(textElement) {
                     var jqElement = jQuery(textElement);
                     return {
-                        propertyId: jqElement.attr('data-propertyId'),
+                        publicId: jqElement.attr('data-publicId'),
                         propertyValues: me._propertyValuesOfTextElement(jqElement)
                     };
                 });
@@ -178,7 +178,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
                     var jqElement = jQuery(buttonElement);
                     return {
-                        propertyId: jqElement.attr('data-propertyId'),
+                        publicId: jqElement.attr('data-publicId'),
                         propertyValues: me._propertyValuesOfButtonElement(jqElement)
                     };
                 });
@@ -187,7 +187,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
                    var jqElement = jQuery(selectionElement);
                     return {
-                        propertyId: jqElement.attr('data-propertyId'),
+                        publicId: jqElement.attr('data-publicId'),
                         propertyValues: me._propertyValuesOfSelectionElement(jqElement)
                     };
                 });
@@ -196,7 +196,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
                    var jqElement = jQuery(multiCheckboxElement);
                     return {
-                        propertyId: jqElement.attr('data-propertyId'),
+                        publicId: jqElement.attr('data-publicId'),
                         propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
                     };
                 });
@@ -205,7 +205,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var dateElementAttributes = _.map(dateElements, function(dateElement) {
                     var jqElement = jQuery(dateElement);
                     return {
-                        propertyId: jqElement.attr('data-propertyId'),
+                        publicId: jqElement.attr('data-publicId'),
                         propertyValues: me._propertyValuesOfDateElement(jqElement)
                     };
                 });
@@ -213,7 +213,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var saveAsset = function(data) {
                     var properties = _.chain(data)
                         .map(function(attr) {
-                            return {id: attr.propertyId,
+                            return {id: attr.publicId,
                                 values: attr.propertyValues};
                         })
                         .map(function(p) {
@@ -247,8 +247,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
         },
         _addDatePickers: function () {
-            var $validFrom = jQuery('.featureAttributeDate[data-propertyId=validFrom]');
-            var $validTo = jQuery('.featureAttributeDate[data-propertyId=validTo]');
+            var $validFrom = jQuery('.featureAttributeDate[data-publicId=validFrom]');
+            var $validTo = jQuery('.featureAttributeDate[data-publicId=validTo]');
             if ($validFrom.length > 0 && $validTo.length > 0) {
                 dateutil.addDependentDatePickers($validFrom, $validTo);
             }
@@ -295,9 +295,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             me._backend.getEnumeratedPropertyValues(10);
         },
-        _savePropertyData: function(propertyValue, propertyId) {
+        _savePropertyData: function(propertyValue, publicId) {
 
-            if (propertyId == 200 && _.isEmpty(propertyValue)) {
+            if (publicId == 200 && _.isEmpty(propertyValue)) {
                 propertyValue = [{
                     propertyDisplayValue: "Pysäkin tyyppi",
                     propertyValue: 99
@@ -305,7 +305,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             }
 
             var me = this;
-            me._backend.putAssetPropertyValue(this._featureDataAssetId, propertyId, propertyValue);
+            me._backend.putAssetPropertyValue(this._featureDataAssetId, publicId, propertyValue);
         },
 
         _makeContent: function(contents) {
@@ -313,6 +313,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var html = "";
             _.forEach(contents,
                 function (feature) {
+                    feature.localizedName = window.localizedStrings[feature.publicId];
                     var propertyType = feature.propertyType;
                     if (propertyType === "text" || propertyType === "long_text") {
                         feature.propertyValue = "";
@@ -330,17 +331,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                             feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
                         }
                         html += me._templates.featureDataTemplateReadOnlyText(feature);
-                    } else if (propertyType === "single_choice" && feature.propertyId !== 'validityDirection') {
-                        feature.propertyValue = me._getSelect(feature.propertyName, feature.values, feature.propertyId, '');
+                    } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
+                        feature.propertyValue = me._getSelect(feature.publicId, feature.values, feature.publicId, '');
                         html += me._templates.featureDataTemplate(feature);
-                    } else if (feature.propertyId === 'validityDirection') {
+                    } else if (feature.publicId === 'vaikutussuunta') {
                         feature.propertyValue = 2;
                         if (feature.values[0]) {
                             feature.propertyValue = feature.values[0].propertyValue === 2 ? 3 : 2;
                         }
                         html += me._templates.featureDataTemplateButton(feature);
                     } else if (feature.propertyType === "multiple_choice") {
-                        feature.propertyValue = me._getMultiCheckbox(feature.propertyName, feature.values, feature.propertyId);
+                        feature.propertyValue = me._getMultiCheckbox(feature.publicId, feature.values, feature.publicId);
                         html += me._templates.featureDataTemplate(feature);
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
@@ -361,11 +362,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         _getTextTemplate: function(propertyType, feature) {
             return propertyType === "long_text" ? this._templates.featureDataTemplateLongText(feature) : this._templates.featureDataTemplateText(feature);
         },
-        _getSelect: function(name, values, propertyId, multiple) {
+        _getSelect: function(name, values, publicId, multiple) {
             var me = this;
-            var options = '<select data-propertyId="'+propertyId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
+            var options = '<select data-publicId="'+publicId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
-            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
@@ -381,14 +382,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             return options;
         },
 
-        _getMultiCheckbox: function(name, values, propertyId) {
+        _getMultiCheckbox: function(name, values, publicId) {
             var invalidValues = [99];
             var me = this;
-            var checkboxes = '<div data-propertyId="' + propertyId +
+            var checkboxes = '<div data-publicId="' + publicId +
                 '" name="' + name +
                 '" class="featureattributeChoice">';
             var valuesNro = _.pluck(values, 'propertyValue');
-            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.propertyId === propertyId; });
+            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
                     if (!_.contains(invalidValues, inputValue.propertyValue)) {
@@ -397,8 +398,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                             checkedValue = 'checked ';
                         }
                         inputValue.checkedValue = checkedValue;
-                        inputValue.propertyId = propertyId;
-                        inputValue.name = propertyId + '_' + inputValue.propertyValue;
+                        inputValue.publicId = publicId;
+                        inputValue.name = publicId + '_' + inputValue.propertyValue;
                         checkboxes +=  me._templates.featureDataTemplateCheckbox(inputValue);
                     }
                 }
@@ -418,12 +419,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         _closeAsset: function() {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
-        },
-        _directionChange: function () {
-            var validityDirection = jQuery("[data-propertyid='validityDirection']");
-            var selection = parseInt(validityDirection.attr('value'), 10);
-            var propertyValues = [{propertyDisplayValue: "Vaikutussuunta", propertyValue: selection }];
-            this._savePropertyData(propertyValues, 'validityDirection');
         },
         stop : function() {
             var me = this;
