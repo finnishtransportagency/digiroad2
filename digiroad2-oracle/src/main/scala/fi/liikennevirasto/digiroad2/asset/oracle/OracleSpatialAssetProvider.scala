@@ -142,6 +142,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     Database.forDataSource(ds).withDynSession {
       OracleSpatialAssetDao.getMunicipalities
     }
+  }
 
   def assetPropertyNames(language: String): Map[String, String] = {
     AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ Database.forDataSource(ds).withDynTransaction {

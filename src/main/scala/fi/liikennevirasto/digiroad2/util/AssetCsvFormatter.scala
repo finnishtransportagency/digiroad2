@@ -47,13 +47,13 @@ object AssetCsvFormatter {
 
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByName("Ylläpitäjän tunnus", asset.propertyData)
+    val id = getItemsFromPropertyByPublicId("yllapitajan_tunnus", asset.propertyData)
     (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addStopCode(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByName("Matkustajatunnus", asset.propertyData)
+    val id = getItemsFromPropertyByPublicId("matkustajatunnus", asset.propertyData)
     (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
@@ -154,7 +154,7 @@ object AssetCsvFormatter {
 
   private def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByName("Liikennöintisuunta", asset.propertyData)
+    val id = getItemsFromPropertyByPublicId("liikennointisuunta", asset.propertyData)
     (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
