@@ -24,3 +24,4 @@ update property set public_id = 'saattomahdollisuus_henkiloautolla' where id = (
 update property set public_id = 'liityntapysakointipaikkojen_maara' where id = (select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Liityntäpysäköintipaikkojen määrä');
 update property set public_id = 'pysakin_omistaja' where id = (select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Pysäkin omistaja');
 update property set public_id = 'liityntapysakoinnin_lisatiedot' where id = (select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Liityntäpysäköinnin lisätiedot');
+update property set public_id = 'yllapitajan_koodi' where id = (select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Ylläpitäjän koodi');

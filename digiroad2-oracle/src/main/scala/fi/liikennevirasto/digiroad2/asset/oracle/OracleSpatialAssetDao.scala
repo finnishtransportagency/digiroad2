@@ -330,6 +330,6 @@ object OracleSpatialAssetDao {
     val propertyNames = sql"""
       select p.public_id, #$valueColumn from property p, localized_string ls where ls.id = p.name_localized_string_id
     """.as[(String, String)].list.toMap
-    propertyNames
+    propertyNames.filter(_._1 != null)
   }
 }

@@ -16,14 +16,14 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   it must "return correct csv entries from test data" in {
     val csvAll = AssetCsvFormatter.formatAssetsWithProperties(assetsByMunicipality)
     csvAll.size must be > 3
-    val csv = csvAll.find(_.startsWith("1")).get
+    val csv = csvAll.find(_.startsWith("5")).get
 
-    val propertyValue = extractPropertyValue(assetsByMunicipality.find(_.externalId.get == 1).get, _: String)
+    val propertyValue = extractPropertyValue(assetsByMunicipality.find(_.externalId.get == 5).get, _: String)
     val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
     val validFrom = propertyValue("ensimmainen_voimassaolopaiva")
     val validTo = propertyValue("viimeinen_voimassaolopaiva")
 
-    csv must equal("1;;;;;374635.608258218;6677267.45072414;;;80;;2;1;0;0;0;katos;Ei tiedossa;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";;235;;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;;2;1;1;1;0;;Ei tiedossa;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";;235;;;")
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
