@@ -47,6 +47,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("load assets by municipality number", Tag("db")) {
     val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
+println("ASSET: " + assets.head)
     assets.foreach(asset => asset.municipalityNumber shouldBe(Some(MunicipalityKauniainen)))
   }
 
