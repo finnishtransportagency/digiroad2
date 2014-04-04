@@ -112,7 +112,7 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseDown = function(asset, mouseUpFn) {
         return function(evt) {
             clickTimestamp = new Date().getTime();
-            clickCoords = [evt.x, evt.y];
+            clickCoords = [evt.clientX, evt.clientY];
             OpenLayers.Event.stop(evt);
             if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
                 eventbus.trigger('asset:unselected', selectedAsset.data.id);
@@ -452,7 +452,7 @@ window.AssetLayer = function(map, roadLayer) {
             return;
         }
         if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700 &&
-            (clickCoords && approximately(clickCoords[0], e.x) && approximately(clickCoords[1], e.y)) || assetIsMoving) {
+            (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             moveSelectedAsset(pixel);
