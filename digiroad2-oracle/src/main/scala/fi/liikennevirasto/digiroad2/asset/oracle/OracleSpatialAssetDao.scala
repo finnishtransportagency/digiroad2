@@ -60,7 +60,7 @@ object OracleSpatialAssetDao {
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection))
+        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
     }
     }
 
@@ -86,7 +86,7 @@ object OracleSpatialAssetDao {
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection))
+        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
   }
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
