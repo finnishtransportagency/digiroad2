@@ -1,10 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 
-/**
- * Created by exko on 04/04/14.
- */
 object AssetLMJFormatter {
   val fields = "stop_id,stop_name,stop_lat,stop_lon"
 
@@ -33,16 +30,7 @@ object AssetLMJFormatter {
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val name = getItemsFromPropertyByName(language, asset.propertyData)
+    val name = AssetCsvFormatter.getItemsFromPropertyByName(language, asset.propertyData)
     (asset, name.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
-  }
-
-  private def getItemsFromPropertyByName(name: String, property: Seq[Property]) = {
-    try {
-      property.find(x => x.propertyName == name).get.values
-    }
-    catch {
-      case e: Exception => println(s"""$name with $property"""); throw e
-    }
   }
 }
