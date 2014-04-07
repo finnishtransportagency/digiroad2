@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import scala.language.postfixOps
 
 object AssetLMJFormatter {
   val fields = "stop_id,stop_name,stop_lat,stop_lon"
