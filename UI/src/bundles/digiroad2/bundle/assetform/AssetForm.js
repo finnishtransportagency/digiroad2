@@ -247,8 +247,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
         },
         _addDatePickers: function () {
-            var $validFrom = jQuery('.featureAttributeDate[data-publicId=validFrom]');
-            var $validTo = jQuery('.featureAttributeDate[data-publicId=validTo]');
+            var $validFrom = jQuery('.featureAttributeDate[data-publicId=ensimmainen_voimassaolopaiva]');
+            var $validTo = jQuery('.featureAttributeDate[data-publicId=viimeinen_voimassaolopaiva]');
             if ($validFrom.length > 0 && $validTo.length > 0) {
                 dateutil.addDependentDatePickers($validFrom, $validTo);
             }
