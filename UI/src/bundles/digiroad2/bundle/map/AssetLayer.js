@@ -216,6 +216,9 @@ window.AssetLayer = function(map, roadLayer) {
                 hideAsset(asset);
             }
         });
+        if (selectedAsset && !_.contains(selectedValidityPeriods, selectedAsset.data.validityPeriod)) {
+            closeAsset(selectedAsset);
+        }
     };
 
     var handleAssetCreated = function(asset) {

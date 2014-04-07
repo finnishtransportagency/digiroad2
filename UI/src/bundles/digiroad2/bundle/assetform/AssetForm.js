@@ -63,6 +63,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             eventbus.on('application:readOnly', function(readOnly) {
                 this._readOnly = readOnly;
             }, this);
+            eventbus.on('validityPeriod:changed', function(validityPeriods) {
+                if (this._selectedAsset && !_.contains(validityPeriods, this._selectedAsset.validityPeriod)) {
+                  this._closeAsset();
+                }
+            }, this);
             eventbus.on('enumeratedPropertyValues:fetched', function(values) {
                 this._enumeratedPropertyValues = values;
             }, this);
@@ -418,6 +423,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         _closeAsset: function() {
             jQuery("#featureAttributes").html('');
             dateutil.removeDatePickersFromDom();
+            this._selectedAsset = null;
         },
         stop : function() {
             var me = this;
