@@ -454,7 +454,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (readOnly) {
             return;
         }
-        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700 &&
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 300 &&
             (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
