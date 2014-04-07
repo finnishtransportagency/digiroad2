@@ -18,48 +18,48 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
                 '</a>');
 
         this.featureDataTemplate = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">{{propertyValue}}</div>' +
             '</div>');
 
         this.featureDataTemplateText = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">' +
             '<input class="featureAttributeText" type="text"' +
-            ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
+            ' data-publicId="{{publicId}}" name="{{publicId}}"' +
             ' value="{{propertyDisplayValue}}">' +
             '</div>' +
             '</div>');
 
         this.featureDataTemplateButton = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">' +
             '<button class="featureAttributeButton"' +
-            ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
+            ' data-publicId="{{publicId}}" name="{{publicId}}"' +
             ' value="{{propertyValue}}">Vaihda suuntaa' +
             '</button>' +
             '</div>' +
             '</div>');
 
         this.featureDataTemplateLongText = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">' +
             '<textarea class="featureAttributeLongText"' +
-            ' data-propertyId="{{propertyId}}" name="{{propertyName}}">' +
+            ' data-publicId="{{publicId}}" name="{{publicId}}">' +
             '{{propertyDisplayValue}}</textarea>' +
             '</div>' +
             '</div>');
-        this.featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{propertyName}}: {{propertyDisplayValue}}</div>');
+        this.featureDataTemplateReadOnlyText = _.template('<div class=" formAttributeContentRow readOnlyRow">{{localizedName}}: {{propertyDisplayValue}}</div>');
         this.featureDataTemplateDate = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="formAttributeContent">' +
             '<input class="featureAttributeDate" type="text"' +
-            ' data-propertyId="{{propertyId}}" name="{{propertyName}}"' +
+            ' data-publicId="{{publicId}}" name="{{publicId}}"' +
             ' value="{{propertyDisplayValue}}"/>' +
             '</div>' +
             '</div>');
         this.featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
-            '<div class="formLabels">{{propertyName}}</div>' +
+            '<div class="formLabels">{{localizedName}}</div>' +
             '<div class="featureAttributeNA">{{propertyValue}}</div>' +
             '</div>');
 

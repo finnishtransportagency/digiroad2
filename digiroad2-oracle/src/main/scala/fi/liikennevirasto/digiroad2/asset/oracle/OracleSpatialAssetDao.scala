@@ -56,7 +56,7 @@ object OracleSpatialAssetDao {
       val row = v(0)
       AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.propertyId.toLong),
+        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.id.toLong),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
@@ -74,7 +74,7 @@ object OracleSpatialAssetDao {
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
-      Property(row.property.propertyId.toString, row.property.propertyName, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
+      Property(row.property.propertyId, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
     }.toSeq
   }
 
@@ -170,10 +170,10 @@ object OracleSpatialAssetDao {
     insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
     properties.foreach { property =>
       if (!property.values.isEmpty) {
-        if (AssetPropertyConfiguration.commonAssetProperties.get(property.id).isDefined) {
-          OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.id, property.values)
+        if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
+          OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.publicId, property.values)
         } else {
-          OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.id.toLong, property.values)
+          OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.publicId, property.values)
         }
       }
     }
@@ -183,7 +183,7 @@ object OracleSpatialAssetDao {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).list(assetTypeId).groupBy(_.propertyId).map { case (k, v) =>
       val row = v(0)
-      EnumeratedPropertyValue(row.propertyId.toString, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value, r.displayValue)).toSeq)
+      EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value, r.displayValue)).toSeq)
     }.toSeq
   }
 
@@ -214,48 +214,50 @@ object OracleSpatialAssetDao {
     Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
 
-  def updateAssetSpecificProperty(assetId: Long, propertyId: Long, propertyValues: Seq[PropertyValue]) {
+  def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
     val asset = getAssetById(assetId)
     if (asset.isEmpty) throw new IllegalArgumentException("Asset " + assetId + " not found")
-    val createNew = (asset.head.propertyData.exists(_.propertyId == propertyId.toString) && asset.head.propertyData.find(_.propertyId == propertyId.toString).get.values.isEmpty)
-      Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
-        case Text | LongText => {
-          if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-          if (propertyValues.size == 0) {
-            deleteTextProperty(assetId, propertyId).execute()
-          } else if (createNew) {
-            insertTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
-          } else {
-            updateTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
-          }
+    val createNew = (asset.head.propertyData.exists(_.publicId == propertyPublicId) && asset.head.propertyData.find(_.publicId == propertyPublicId).get.values.isEmpty)
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(propertyPublicId).getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
+
+    Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
+      case Text | LongText => {
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+        if (propertyValues.size == 0) {
+          deleteTextProperty(assetId, propertyId).execute()
+        } else if (createNew) {
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
+        } else {
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
         }
-        case SingleChoice => {
-          if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value")
-          if (createNew) {
-            insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
-          } else {
-            updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
-          }
-        }
-        case MultipleChoice => {
-          createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
-        }
-        case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
       }
+      case SingleChoice => {
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value")
+        if (createNew) {
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+        } else {
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+        }
+      }
+      case MultipleChoice => {
+        createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+      }
+      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
   }
 
-  def updateCommonAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {
-    val property = AssetPropertyConfiguration.commonAssetProperties(propertyId)
-    AssetPropertyConfiguration.commonAssetProperties(propertyId).propertyType match {
+  def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
+    val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
+    AssetPropertyConfiguration.commonAssetProperties(propertyPublicId).propertyType match {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.propertyId == propertyId) && (p.values.map(_.propertyValue.toString).contains(newVal))
+          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue.toString).contains(newVal))
         } match {
           case Some(propValues) => {
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute()
           }
-          case None => throw new IllegalArgumentException("Invalid property/value: " + propertyId + "/" + newVal)
+          case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }
       case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyDisplayValue).execute()
@@ -268,12 +270,12 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def deleteAssetProperty(assetId: Long, propertyId: String) {
-    val longPropertyId: Long = propertyId.toLong
-    Q.query[Long, String](propertyTypeByPropertyId).first(longPropertyId) match {
-      case Text | LongText => deleteTextProperty(assetId, longPropertyId).execute()
-      case SingleChoice => deleteSingleChoiceProperty(assetId, longPropertyId).execute()
-      case MultipleChoice => deleteMultipleChoiceProperty(assetId, longPropertyId).execute()
+  def deleteAssetProperty(assetId: Long, propertyPublicId: String) {
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(propertyPublicId).getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found, cannot delete"))
+    Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
+      case Text | LongText => deleteTextProperty(assetId, propertyId).execute()
+      case SingleChoice => deleteSingleChoiceProperty(assetId, propertyId).execute()
+      case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute()
       case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
     }
   }
@@ -311,11 +313,23 @@ object OracleSpatialAssetDao {
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
-        Property(r.nextString(), r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
+        Property(r.nextLong, r.nextString, r.nextString, r.nextInt, r.nextBoolean, Seq())
       }
     }
     sql"""
-      select p.id, ls.value_fi, p.property_type, p.ui_position_index, p.required from property p, localized_string ls where ls.id = p.name_localized_string_id and p.asset_type_id = $assetTypeId
+      select p.id, p.public_id, p.property_type, p.ui_position_index, p.required from property p where p.asset_type_id = $assetTypeId
     """.as[Property].list
+  }
+
+  def assetPropertyNames(language: String): Map[String, String] = {
+    val valueColumn = language match  {
+      case "fi" => "ls.value_fi"
+      case "sv" => "ls.value_sv"
+      case _ => throw new IllegalArgumentException("Language not supported: " + language)
+    }
+    val propertyNames = sql"""
+      select p.public_id, #$valueColumn from property p, localized_string ls where ls.id = p.name_localized_string_id
+    """.as[(String, String)].list.toMap
+    propertyNames.filter(_._1 != null)
   }
 }

@@ -30,7 +30,7 @@ object AssetLMJFormatter {
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val name = AssetCsvFormatter.getItemsFromPropertyByName(language, asset.propertyData)
+    val name = AssetCsvFormatter.getItemsFromPropertyByPublicId(language, asset.propertyData)
     (asset, name.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
   }
 }

@@ -15,8 +15,8 @@ import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  val TestPropertyId = "100"
-  val TestPropertyId2 = "200"
+  val TestPropertyId = "katos"
+  val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
 
   addServlet(classOf[Digiroad2Api], "/*")
@@ -118,13 +118,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
-        val prop = asset.propertyData.find(_.propertyId == TestPropertyId2).get
+        val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId2).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be (2)
           }
         }
       }
@@ -137,11 +137,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
-        asset.propertyData.find(_.propertyId == TestPropertyId).get.values.size should be (0)
+        asset.propertyData.find(_.publicId == TestPropertyId).get.values.size should be (0)
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.propertyId == TestPropertyId).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId).get.values.head.propertyValue should be (2)
           }
         }
       }
@@ -190,11 +190,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
       ps.size should equal(31)
-      val p1 = ps.find(_.propertyId == TestPropertyId).get
-      p1.propertyName should be ("Katos")
+      val p1 = ps.find(_.publicId == TestPropertyId).get
+      p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
       p1.required should be (true)
-      ps.find(_.propertyName == "Vaikutussuunta") should be ('defined)
+      ps.find(_.publicId == "vaikutussuunta") should be ('defined)
+    }
+  }
+
+  test("get localized property names for language") {
+    // propertyID -> value
+    getWithUserAuth("/assetPropertyNames/fi") {
+      status should equal(200)
+      val propertyNames = parse(body).extract[Map[String, String]]
+      propertyNames("ensimmainen_voimassaolopaiva") should be("Ensimmäinen voimassaolopäivä")
+      propertyNames("matkustajatunnus") should be("Matkustajatunnus")
     }
   }
 
@@ -206,12 +216,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("asset properties are in same order when creating new or editing existing", Tag("db")) {
-    val propNames = getWithUserAuth("/assetTypeProperties/10") {
-      parse(body).extract[List[Property]].map(p => p.propertyName)
+    val propIds = getWithUserAuth("/assetTypeProperties/10") {
+      parse(body).extract[List[Property]].map(p => p.publicId)
     }
     val assetPropNames = getWithUserAuth("/assets/" + CreatedTestAssetId) {
-      parse(body).extract[AssetWithProperties].propertyData.map(p => p.propertyName)
+      parse(body).extract[AssetWithProperties].propertyData.map(p => p.publicId)
     }
-    propNames should be(assetPropNames)
+    propIds should be(assetPropNames)
   }
 }

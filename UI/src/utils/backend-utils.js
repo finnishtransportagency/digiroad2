@@ -6,8 +6,8 @@
         .fail(function() { console.log( "error" ); });
     };
 
-    backend.putAssetPropertyValue = function (assetId, propertyId, data) {
-        putAssetPropertyValue(assetId, propertyId, data);
+    backend.putAssetPropertyValue = function (assetId, propertyPublicId, data) {
+        putAssetPropertyValue(assetId, propertyPublicId, data);
     };
 
     backend.getAssets =  _.throttle(function(assetTypeId, boundingBox) {
@@ -69,11 +69,11 @@
         });
     };
 
-    function putAssetPropertyValue(assetId, propertyId, data) {
+    function putAssetPropertyValue(assetId, propertyPublicId, data) {
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
-            url: "api/assets/" + assetId + "/properties/" + propertyId + "/values",
+            url: "api/assets/" + assetId + "/properties/" + propertyPublicId + "/values",
             data: JSON.stringify(data),
             dataType:"json",
             success: function(assetPropertyValue) {

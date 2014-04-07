@@ -239,10 +239,10 @@ class AssetDataImporter {
 
   def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
-      val shelterTypePropertyId = sql"select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Katos'".as[Long].first
-      val accessibilityPropertyId = sql"select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Esteettömyys liikuntarajoitteiselle'".as[Long].first
-      val administratorPropertyId = sql"select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Tietojen ylläpitäjä'".as[Long].first
-      val busStopTypePropertyId = sql"select p.id from property p, localized_string ls where p.name_localized_string_id = ls.id and ls.value_fi = 'Pysäkin tyyppi'".as[Long].first
+      val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
+      val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
+      val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
+      val busStopTypePropertyId = sql"select p.id from property p where p.public_id = 'pysakin_tyyppi'".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
       PropertyWrapper(shelterTypePropertyId, accessibilityPropertyId, administratorPropertyId,
                       busStopAssetTypeId, busStopTypePropertyId)

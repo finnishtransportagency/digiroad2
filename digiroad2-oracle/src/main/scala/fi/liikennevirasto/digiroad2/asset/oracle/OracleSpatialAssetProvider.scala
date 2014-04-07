@@ -100,16 +100,16 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def updateAssetProperty(assetId: Long, propertyId: String, propertyValues: Seq[PropertyValue]) {
+  def updateAssetProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
     if (!userCanModifyAsset(assetId)) {
       throw new IllegalArgumentException("User does not have write access to municipality")
     }
 
     Database.forDataSource(ds).withDynTransaction {
-      if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyId)) {
-        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyId, propertyValues)
+      if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyPublicId)) {
+        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyPublicId, propertyValues)
       } else {
-        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyId.toLong, propertyValues)
+        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyPublicId, propertyValues)
       }
     }
   }
@@ -141,6 +141,12 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   def getMunicipalities: Seq[Int] = {
     Database.forDataSource(ds).withDynSession {
       OracleSpatialAssetDao.getMunicipalities
+    }
+  }
+
+  def assetPropertyNames(language: String): Map[String, String] = {
+    AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.assetPropertyNames(language)
     }
   }
 
