@@ -42,6 +42,7 @@ object LMJImport {
         x =>
           writeAssetByMunicipality(x.toInt)
       }
+      printer.close()
     } else {
       println("Usage: parameters <env> <all> or <env> <municipalitycode1> <municipalitycode2>")
       println("example './LMJ_import.sh dev 179 167'")
