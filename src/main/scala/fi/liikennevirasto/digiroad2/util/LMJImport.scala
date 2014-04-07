@@ -12,7 +12,7 @@ object LMJImport {
   val provider = new OracleSpatialAssetProvider(userProvider)
 
   def getAssetsForMunicipality(municipality: Int) = {
-    println(s"Get assets for municipality $municipality")
+    print(s"$municipality,")
     provider.getAssetsByMunicipality(municipality)
   }
 
@@ -24,12 +24,25 @@ object LMJImport {
     provider.getMunicipalities
   }
 
-  def main(args:Array[String]) : Unit = {
-    getMunicipalities.foreach { x =>
-      getAssetsForMunicipality(x).map(getLMJRowsForAsset _).foreach { x =>
-        printer.write(x + '\n')
-      }
+  def writeAssetByMunicipality(municipalityCode: Int) {
+    getAssetsForMunicipality(municipalityCode).map(getLMJRowsForAsset _).foreach { x =>
+      printer.write(x + '\n')
     }
-    printer.close()
+  }
+
+  def main(args:Array[String]) : Unit = {
+    if (args.length > 0) {
+      println("Get assets for municipality:");
+      if (args.head == "all") {
+        getMunicipalities.foreach { x =>
+          writeAssetByMunicipality(x)
+        }
+      } else args.foreach {
+        x =>
+          writeAssetByMunicipality(x.toInt)
+      }
+    } else {
+      println("Usage: parameters <all> or <municipalitycode1> <municipalitycode2>")
+    }
   }
 }

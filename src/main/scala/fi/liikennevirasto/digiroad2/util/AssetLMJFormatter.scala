@@ -9,14 +9,14 @@ object AssetLMJFormatter {
   val fields = "stop_id,stop_name,stop_lat,stop_lon"
 
   def formatFromAssetWithProperties(asset: AssetWithProperties): String = {
-    (addStopId _)
+    (addExternalId _)
      .andThen ((addName _ curried)("Nimi suomeksi")(_))
       .andThen (addXCoord _)
       .andThen (addYCoord _)
       .apply(asset, List())._2.reverse.mkString(",")
   }
 
-  private def addStopId(params: (AssetWithProperties, List[String])) = {
+  private def addExternalId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     (asset, asset.externalId.getOrElse("").toString :: result)
   }
