@@ -187,7 +187,7 @@ object AssetCsvFormatter {
     (asset, virtual :: nonStopExpress :: express :: local :: result)
   }
 
-  private def getItemsFromPropertyByName(name: String, property: Seq[Property]) = {
+  def getItemsFromPropertyByName(name: String, property: Seq[Property]) = {
     try {
       property.find(x => x.propertyName == name).get.values
     }
