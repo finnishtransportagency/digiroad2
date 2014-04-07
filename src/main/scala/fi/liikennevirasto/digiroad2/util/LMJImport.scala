@@ -34,15 +34,18 @@ object LMJImport {
     if (args.length > 0) {
       println("Get assets for municipality:");
       if (args.head == "all") {
-        getMunicipalities.foreach { x =>
-          writeAssetByMunicipality(x)
+        getMunicipalities.foreach {
+          x =>
+            writeAssetByMunicipality(x)
         }
       } else args.foreach {
         x =>
           writeAssetByMunicipality(x.toInt)
       }
     } else {
-      println("Usage: parameters <all> or <municipalitycode1> <municipalitycode2>")
+      println("Usage: parameters <env> <all> or <env> <municipalitycode1> <municipalitycode2>")
+      println("example './LMJ_import.sh dev 179 167'")
+
     }
   }
 }
