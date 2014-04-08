@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.io._
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, }
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 
 object ValluImport {
 
