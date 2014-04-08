@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 
-object WalluImport {
+object ValluImport {
 
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
@@ -36,6 +36,6 @@ object WalluImport {
   }
 
   def main(args:Array[String]) : Unit = {
-    WalluImport.writeCsvToFile()
+    ValluImport.writeCsvToFile()
   }
 }
