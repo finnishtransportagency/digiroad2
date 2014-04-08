@@ -32,6 +32,7 @@ object LMJImport {
 
   def main(args:Array[String]) : Unit = {
     if (args.length > 0) {
+      printer.write(AssetLMJFormatter.fields + "\n")
       println("Get assets for municipality:");
       if (args.head == "all") {
         getMunicipalities.foreach {
