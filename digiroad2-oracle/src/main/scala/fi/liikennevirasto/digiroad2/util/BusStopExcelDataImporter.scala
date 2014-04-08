@@ -45,8 +45,8 @@ class BusStopExcelDataImporter {
     ds
   }
 
-  def readExcelDataFromCsvFile(): List[ExcelBusStopData] = {
-    val reader = CSVReader.open(new InputStreamReader(getClass.getResourceAsStream("/pysakkitiedot.csv")))
+  def readExcelDataFromCsvFile(fileName: String): List[ExcelBusStopData] = {
+    val reader = CSVReader.open(new InputStreamReader(getClass.getResourceAsStream("/" + fileName)))
     reader.allWithHeaders().map { row =>
       new ExcelBusStopData(row("Valtakunnallinen ID").toLong, row("Pysäkin nimi"), row("Pysäkin nimi SE"), row("Suunta kansalaisen näkökulmasta"),
         row("Pysäkin saavutettavuus"), row("Esteettömyys-tiedot"), row("Ylläpitäjän sisäinen pysäkki-ID"), row("Pysäkin varusteet"),
@@ -82,9 +82,10 @@ class BusStopExcelDataImporter {
             setSingleChoiceProperty(assetId, "Penkki", row.bench)
             setSingleChoiceProperty(assetId, "Pyöräteline", row.bicyclePark)
             setSingleChoiceProperty(assetId, "Sähköinen aikataulunäyttö", row.electricTimetable)
-            setSingleChoiceProperty(assetId, "Valaistus", row.bicyclePark)
+            setSingleChoiceProperty(assetId, "Valaistus", row.lightning)
 
-            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Some(Yes))
+            if (trimToEmpty(row.reachability).contains("liityntäpysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Some(Yes))
+            if (trimToEmpty(row.reachability).contains("ei liityntäpysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Some(No))
 
             insertTextPropertyValue(assetId, "Liityntäpysäköinnin lisätiedot", row.reachability)
 
@@ -135,24 +136,29 @@ class BusStopExcelDataImporter {
   }
 
   def setSingleChoiceProperty(assetId: Long, propertyName: String, status: Option[Status]) {
-    status match { case None => return }
-
-    val propertyId = sql"""select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}""".as[Long].first
-    val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
-
-    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + status.get.dbValue)
-    existingProperty match {
-      case None => {
-        sqlu"""
-          insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by, modified_date)
-          values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
-        """.execute
+    status match {
+      case None =>  {
+        println("  NOT UPDATING SINGLE CHOICE VALUE: " + propertyName)
       }
       case _ => {
-        sqlu"""
-          update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
-          where property_id = $propertyId and asset_id = ${assetId}
-        """.execute
+        val propertyId = sql"""select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}""".as[Long].first
+        val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
+
+        println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + status.get.dbValue)
+        existingProperty match {
+          case None => {
+            sqlu"""
+              insert into single_choice_value(property_id, asset_id, enumerated_value_id, modified_by, modified_date)
+              values (${propertyId}, ${assetId}, (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), ${Updater}, CURRENT_TIMESTAMP)
+            """.execute
+          }
+          case _ => {
+            sqlu"""
+              update single_choice_value set enumerated_value_id = (select id from enumerated_value where value = ${status.get.dbValue} and property_id = ${propertyId}), modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
+              where property_id = $propertyId and asset_id = ${assetId}
+            """.execute
+          }
+        }
       }
     }
   }
@@ -160,5 +166,5 @@ class BusStopExcelDataImporter {
 
 object BusStopExcelDataImporter extends App {
   val importer = new BusStopExcelDataImporter()
-  importer.insertExcelData(importer.readExcelDataFromCsvFile())
+  importer.insertExcelData(importer.readExcelDataFromCsvFile("pysakkitiedot.csv"))
 }
