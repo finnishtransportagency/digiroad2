@@ -75,11 +75,11 @@ class BusStopExcelDataImporter {
               update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId}
             """.execute
 
-            insertTextPropertyValue(assetId, "Nimi suomeksi", row.stopNameFi)
+            insertTextPropertyValue(assetId, "nimi_suomeksi", row.stopNameFi)
 
-            insertTextPropertyValue(assetId, "Nimi ruotsiksi", row.stopNameSv)
+            insertTextPropertyValue(assetId, "nimi_ruotsiksi", row.stopNameSv)
 
-            insertTextPropertyValue(assetId, "Liikennöintisuunta", row.direction)
+            insertTextPropertyValue(assetId, "liikennointisuunta", row.direction)
 
             val equipments = trimToEmpty(row.equipments)
             if (equipments.toLowerCase.contains("penkk") || equipments.toLowerCase.contains("penkillinen")) setSingleChoiceProperty(assetId, "Penkki", Yes)
@@ -90,21 +90,20 @@ class BusStopExcelDataImporter {
             if (equipments.toLowerCase.contains("pyöräteline")) setSingleChoiceProperty(assetId, "Pyöräteline", Yes)
             if (equipments.toLowerCase.contains("ei katos")) setSingleChoiceProperty(assetId, "Katos", No)
 
-            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "Saattomahdollisuus henkilöautolla", Yes)
+            if (trimToEmpty(row.reachability).contains("pysäkointi")) setSingleChoiceProperty(assetId, "saattomahdollisuus_henkiloautolla", Yes)
 
-            insertTextPropertyValue(assetId, "Liityntäpysäköinnin lisätiedot", row.reachability)
+            insertTextPropertyValue(assetId, "liityntapysakoinnin_lisatiedot", row.reachability)
 
-            insertTextPropertyValue(assetId, "Esteettömyys liikuntarajoitteiselle", row.accessibility)
+            insertTextPropertyValue(assetId, "esteettomyys_liikuntarajoitteiselle", row.accessibility)
 
-            insertTextPropertyValue(assetId, "Ylläpitäjän tunnus", row.internalId)
+            insertTextPropertyValue(assetId, "yllapitajan_tunnus", row.internalId)
 
-            insertTextPropertyValue(assetId, "Lisätiedot", equipments)
+            insertTextPropertyValue(assetId, "lisatiedot", equipments)
 
-            insertTextPropertyValue(assetId, "Maastokoordinaatti X", row.xPosition)
+            insertTextPropertyValue(assetId, "maastokoordinaatti_x", row.xPosition)
 
-            insertTextPropertyValue(assetId, "Maastokoordinaatti Y", row.yPosition)
-
-            insertTextPropertyValue(assetId, "Matkustajatunnus", row.passengerId.getOrElse(null))
+            insertTextPropertyValue(assetId, "maastokoordinaatti_y", row.yPosition)
+            insertTextPropertyValue(assetId, "matkustajatunnus", row.passengerId.getOrElse(null))
           }
         } else {
           println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
@@ -113,25 +112,25 @@ class BusStopExcelDataImporter {
     }
   }
 
-  def insertTextPropertyValue(assetId: Long, propertyName: String, value: String) {
+  def insertTextPropertyValue(assetId: Long, propertyPublicId: String, value: String) {
     if (isBlank(value)) return
 
     val propertyId = sql"""
       select id from text_property_value
-      where property_id = (select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName})
+      where property_id = (select p.id from property p where p.public_id = ${propertyPublicId})
       and asset_id = ${assetId}
     """.as[Long].firstOption
 
     propertyId match {
       case None => {
-        println("  CREATING PROPERTY VALUE: '" + propertyName + "' WITH VALUE: '" + value + "'")
+        println("  CREATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
         sqlu"""
           insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
-          values (primary_key_seq.nextval, (select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}), ${assetId}, ${value}, ${Updater})
+          values (primary_key_seq.nextval, (select p.id from property p where p.public_id = ${propertyPublicId}), ${assetId}, ${value}, ${Updater})
         """.execute
       }
       case _ => {
-        println("  UPDATING PROPERTY VALUE: '" + propertyName + "' WITH VALUE: '" + value + "'")
+        println("  UPDATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
         sqlu"""
           update text_property_value set value_fi = ${value}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
@@ -140,12 +139,12 @@ class BusStopExcelDataImporter {
     }
   }
 
-  def setSingleChoiceProperty(assetId: Long, propertyName: String, value: Int) {
+  def setSingleChoiceProperty(assetId: Long, propertyPublicId: String, value: Int) {
 
-    val propertyId = sql"""select p.id from property p, localized_string ls where ls.id = p.name_localized_string_id and ls.value_fi = ${propertyName}""".as[Long].first
+    val propertyId = sql"""select p.id from property p where p.public_id = ${propertyPublicId}""".as[Long].first
     val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
 
-    println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + value)
+    println("  SETTING SINGLE CHOICE VALUE: '" + propertyPublicId + "' TO: " + value)
     existingProperty match {
       case None => {
         sqlu"""

@@ -5,29 +5,34 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.AssetRow
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import org.joda.time.format.{DateTimeFormat}
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 
-case class CommonAssetProperty(id: String, column: String, propertyType: String, propertyDescriptor: Property, lrmPositionProperty: Boolean = false)
+case class CommonAssetProperty(publicId: String, column: String, propertyType: String, propertyDescriptor: Property, lrmPositionProperty: Boolean = false)
 object AssetPropertyConfiguration {
-  val ValidityDirectionId = "validityDirection"
-  val ValidFromId = "validFrom"
-  val ValidToId = "validTo"
-  val CreatedId = "created"
-  val ModifiedId = "modified"
+  val ValidityDirectionId = "vaikutussuunta"
+  val ValidFromId = "ensimmainen_voimassaolopaiva"
+  val ValidToId = "viimeinen_voimassaolopaiva"
+  val CreatedId = "lisatty_jarjestelmaan"
+  val ModifiedId = "muokattu_viimeksi"
   val Format = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
+    LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi"),
+    LangSv -> Map()
+  )
 
   val ValidityDirectionSame = 2
   val ValidityDirectionOpposite = 3
   val validityDirectionValues = Seq(PropertyValue(ValidityDirectionSame, "Digitointisuuntaan"),PropertyValue(ValidityDirectionOpposite, "Digitointisuuntaa vastaan"))
-  val enumeratedValidityDirectionValues = EnumeratedPropertyValue(ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = validityDirectionValues)
+  val enumeratedValidityDirectionValues = EnumeratedPropertyValue(0, ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = validityDirectionValues)
 
   val commonAssetPropertyEnumeratedValues: Seq[EnumeratedPropertyValue] = List(enumeratedValidityDirectionValues)
 
   val commonAssetProperties: Map[String, CommonAssetProperty] = Map(
-    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(ValidityDirectionId, "Vaikutussuunta", SingleChoice, 65, values = Seq()), true),
-    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(ValidFromId, "Ensimmäinen voimassaolopäivä", Date, 70, values = Seq())),
-    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(ValidToId, "Viimeinen voimassaolopäivä", Date, 80, values = Seq())),
-    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(CreatedId, "Lisätty järjestelmään", ReadOnlyText, 10, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(ModifiedId, "Muokattu viimeksi", ReadOnlyText, 20, values = Seq()))
+    ValidityDirectionId -> CommonAssetProperty(ValidityDirectionId, "side_code", SingleChoice, Property(0, ValidityDirectionId, SingleChoice, 65, values = Seq()), true),
+    ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, 70, values = Seq())),
+    ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, 80, values = Seq())),
+    CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, 10, values = Seq())),
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, 20, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: AssetRow): Seq[Property] = {

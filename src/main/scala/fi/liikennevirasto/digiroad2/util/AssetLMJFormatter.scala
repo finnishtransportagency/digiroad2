@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import scala.language.postfixOps
 
 object AssetLMJFormatter {
   val isolator = ","
@@ -8,7 +9,7 @@ object AssetLMJFormatter {
 
   def formatFromAssetWithProperties(asset: AssetWithProperties): String = {
     (addExternalId _)
-     .andThen ((addName _ curried)("Nimi suomeksi")(_))
+     .andThen ((addName _ curried)("nimi_suomeksi")(_))
       .andThen (addIsolator _)
       .andThen (addXCoord _)
       .andThen (addYCoord _)
@@ -46,7 +47,7 @@ object AssetLMJFormatter {
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val name = AssetCsvFormatter.getItemsFromPropertyByName(language, asset.propertyData)
+    val name = AssetCsvFormatter.getItemsFromPropertyByPublicId(language, asset.propertyData)
     (asset, name.headOption.map(property => "\"" + property.propertyDisplayValue  + "\"").getOrElse("") :: result)
   }
 }

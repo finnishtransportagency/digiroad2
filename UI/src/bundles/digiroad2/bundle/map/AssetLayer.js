@@ -216,6 +216,9 @@ window.AssetLayer = function(map, roadLayer) {
                 hideAsset(asset);
             }
         });
+        if (selectedAsset && !_.contains(selectedValidityPeriods, selectedAsset.data.validityPeriod)) {
+            closeAsset(selectedAsset);
+        }
     };
 
     var handleAssetCreated = function(asset) {
@@ -255,7 +258,7 @@ window.AssetLayer = function(map, roadLayer) {
         };
 
         if(_.isArray(asset.propertyData)) {
-            var validityDirectionProperty = _.find(asset.propertyData, function(property) { return property.propertyId === 'validityDirection'; });
+            var validityDirectionProperty = _.find(asset.propertyData, function(property) { return property.publicId === 'vaikutussuunta'; });
             if(_.isObject(validityDirectionProperty) &&
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
@@ -263,7 +266,7 @@ window.AssetLayer = function(map, roadLayer) {
                 turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
             }
             var assetType = _.find(asset.propertyData, function(property) {
-                return property.propertyId === '200';
+                return property.publicId === 'pysakin_tyyppi';
             });
             if (assetType) {
                 var values = _.pluck(assetType.values, 'propertyValue');
@@ -451,7 +454,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (readOnly) {
             return;
         }
-        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 700 &&
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 300 &&
             (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
