@@ -8,7 +8,7 @@ import Database.dynamicSession
 import Q.interpolation
 import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}
 import com.github.tototoshi.csv._
-import java.io.{InputStreamReader}
+import java.io.InputStreamReader
 import scala.language.implicitConversions
 import org.slf4j.LoggerFactory
 
@@ -16,7 +16,7 @@ sealed trait Status { def dbValue: Int }
 
 class BusStopExcelDataImporter {
   val Updater = "excel_data_migration"
-  val logger = LoggerFactory.getLogger(getClass)
+  //val logger = LoggerFactory.getLogger(getClass)
   lazy val convDs: DataSource = initConversionDataSource
   case object No extends Status { val dbValue = 1 }
   case object Yes extends Status { val dbValue = 2 }
@@ -68,7 +68,7 @@ class BusStopExcelDataImporter {
 
         if (assetIds.nonEmpty) {
           assetIds.foreach { assetId =>
-            logger.info("UPDATING ASSET: " + assetId + " WITH EXTERNAL ID: " + row.externalId)
+            println("UPDATING ASSET: " + assetId + " WITH EXTERNAL ID: " + row.externalId)
 
             sqlu"""
               update asset set modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP where id = ${assetId}
@@ -104,7 +104,7 @@ class BusStopExcelDataImporter {
             insertTextPropertyValue(assetId, "matkustajatunnus", row.passengerId)
           }
         } else {
-          logger.info("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
+          println("NO ASSET FOUND FOR EXTERNAL ID: " + row.externalId)
         }
       }
     }
@@ -121,14 +121,14 @@ class BusStopExcelDataImporter {
 
     propertyId match {
       case None => {
-        logger.info("  CREATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
+        println("  CREATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
         sqlu"""
           insert into text_property_value(id, property_id, asset_id, value_fi, created_by)
           values (primary_key_seq.nextval, (select p.id from property p where p.public_id = ${propertyPublicId}), ${assetId}, ${value}, ${Updater})
         """.execute
       }
       case _ => {
-        logger.info("  UPDATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
+        println("  UPDATING PROPERTY VALUE: '" + propertyPublicId + "' WITH VALUE: '" + value + "'")
         sqlu"""
           update text_property_value set value_fi = ${value}, modified_by = ${Updater}, modified_date = CURRENT_TIMESTAMP
           where id = ${propertyId}
@@ -140,10 +140,10 @@ class BusStopExcelDataImporter {
   def setSingleChoiceProperty(assetId: Long, propertyName: String, status: Option[Status]) {
     status match {
       case None =>  {
-        logger.info("  NOT UPDATING SINGLE CHOICE VALUE: " + propertyName)
+        println("  NOT UPDATING SINGLE CHOICE VALUE: " + propertyName)
       }
       case _ => {
-        logger.info("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + status.get.dbValue)
+        println("  SETTING SINGLE CHOICE VALUE: '" + propertyName + "' TO: " + status.get.dbValue)
 
         val propertyId = sql"""select p.id from property p where public_id = ${propertyName}""".as[Long].first
         val existingProperty = sql"""select property_id from single_choice_value where property_id = ${propertyId} and asset_id = ${assetId}""".as[Long].firstOption
@@ -169,5 +169,5 @@ class BusStopExcelDataImporter {
 
 object BusStopExcelDataImporter extends App {
   val importer = new BusStopExcelDataImporter()
-  importer.insertExcelData(importer.readExcelDataFromCsvFile("pysakkitiedot.csv").take(2))
+  importer.insertExcelData(importer.readExcelDataFromCsvFile("pysakkitiedot.csv"))
 }
