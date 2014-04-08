@@ -27,12 +27,12 @@ object Queries {
 
   case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
-  case class PropertyRow(propertyId: Long, propertyName: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String)
+  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String)
 
   case class AssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Int, created: Modification, modified: Modification)
+                      municipalityNumber: Int, created: Modification, modified: Modification, wgslon: Double, wgslat: Double)
 
   case class ListedAssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp],
@@ -50,13 +50,13 @@ object Queries {
       val validTo = r.nextTimestampOption
       val pos = r.nextBytes
       val propertyId = r.nextLong
-      val propertyName = r.nextString
+      val propertyPublicId = r.nextString
       val propertyType = r.nextString
       val propertyUiIndex = r.nextInt
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLong
       val propertyDisplayValue = r.nextString
-      val property = new PropertyRow(propertyId, propertyName, propertyType, propertyUiIndex, propertyRequired, propertyValue, propertyDisplayValue)
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue, propertyDisplayValue)
       val lrmId = r.nextLong
       val startMeasure = r.nextInt
       val endMeasure = r.nextInt
@@ -67,9 +67,10 @@ object Queries {
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val posGeom = JGeometry.load(pos)
+      val posWsg84 = JGeometry.load(r.nextBytes)
       (AssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        roadLinkEndDate, municipalityNumber, created, modified),
+        roadLinkEndDate, municipalityNumber, created, modified, wgslon = posWsg84.getJavaPoint.getX, wgslat = posWsg84.getJavaPoint.getY),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
     }
   }
@@ -112,11 +113,11 @@ object Queries {
     }
   }
 
-  case class EnumeratedPropertyValueRow(propertyId: Long, propertyType: String, propertyName: String, required: Boolean, value: Long, displayValue: String)
+  case class EnumeratedPropertyValueRow(propertyId: Long, propertyPublicId: String, propertyType: String, propertyName: String, required: Boolean, value: Long, displayValue: String)
 
   implicit val getEnumeratedValue = new GetResult[EnumeratedPropertyValueRow] {
     def apply(r: PositionedResult) = {
-      EnumeratedPropertyValueRow(r.nextLong, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString)
+      EnumeratedPropertyValueRow(r.nextLong, r.nextString, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString)
     }
   }
 
@@ -129,7 +130,7 @@ object Queries {
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
-    p.id as property_id, name_ls.value_fi as property_name, p.property_type, p.ui_position_index, p.required,
+    p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required,
     case
       when e.value is not null then e.value
       else null
@@ -140,7 +141,8 @@ object Queries {
       else null
     end as display_value,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
-    rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by
+    rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by,
+    SDO_CS.TRANSFORM(SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))),4326) AS position_wgs84
     from asset_type t
       join asset a on a.asset_type_id = t.id
         join lrm_position lrm on a.lrm_position_id = lrm.id
@@ -150,8 +152,7 @@ object Queries {
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join image i on e.image_id = i.id
-        join localized_string name_ls on name_ls.id = p.name_localized_string_id"""
+          left join image i on e.image_id = i.id"""
 
   def allAssetsWithoutProperties =
     """
@@ -198,6 +199,8 @@ object Queries {
       insert into asset(id, external_id, asset_type_id, lrm_position_id, bearing, valid_from, created_by)
       values ($assetId, $externalId, $assetTypeId, $roadLinkId, $bearing, ${new LocalDate()}, $creator)
     """
+
+  def propertyIdByPublicId = "select id from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
 
@@ -266,7 +269,7 @@ object Queries {
   def roadLinksAndWithinBoundingBox = "AND SDO_FILTER(geom, ?) = 'TRUE'"
 
   def enumeratedPropertyValues = """
-    select p.id, p.property_type, ls.value_fi as property_name, p.required, e.value, e.name_fi from asset_type a
+    select p.id, p.public_id, p.property_type, ls.value_fi as property_name, p.required, e.value, e.name_fi from asset_type a
     join property p on p.asset_type_id = a.id
     join enumerated_value e on e.property_id = p.id
     join localized_string ls on ls.id = p.name_localized_string_id

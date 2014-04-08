@@ -26,7 +26,6 @@ object WalluImport {
     AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
   }
 
-
   def getAssetsForMunicipality(municipality: Int) = {
     println(s"Get assets for municipality $municipality")
     provider.getAssetsByMunicipality(municipality)

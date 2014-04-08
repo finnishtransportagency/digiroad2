@@ -47,6 +47,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("load assets by municipality number", Tag("db")) {
     val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
+println("ASSET: " + assets.head)
     assets.foreach(asset => asset.municipalityNumber shouldBe(Some(MunicipalityKauniainen)))
   }
 
@@ -94,12 +95,12 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
           existingAsset.roadLinkId,
           180,
           AssetCreator,
-          List(SimpleProperty("validTo", List(PropertyValue(0, "2045-12-10")))))
+          List(SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue(0, "2045-12-10")))))
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
-      newAsset.propertyData should contain (Property("validTo", "Viimeinen voimassaolopäivä", "date", 80, false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
+      newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, false, List(PropertyValue(0, "2045-12-10 00:00:00.0", null))))
     } finally {
       executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
     }
@@ -123,8 +124,8 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
           existingAsset.roadLinkId,
           180,
           AssetCreator,
-          List(SimpleProperty("validFrom", List(PropertyValue(0, "2001-12-10"))),
-               SimpleProperty("validTo", List(PropertyValue(0, "1995-12-10")))))
+          List(SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "2001-12-10"))),
+               SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue(0, "1995-12-10")))))
       fail("Should have thrown an exception")
     } catch {
       case e: SQLIntegrityConstraintViolationException => {
@@ -195,53 +196,53 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("update a common asset property value (single choice)", Tag("db")) {
     userProvider.setCurrentUser(operatorUser)
     val asset = provider.getAssetById(TestAssetId).get
-    asset.propertyData.find(_.propertyId == "validityDirection").get.values.head.propertyValue should be (AssetPropertyConfiguration.ValidityDirectionSame)
-    provider.updateAssetProperty(TestAssetId, "validityDirection", List(PropertyValue(3, "")))
+    asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidityDirectionId).get.values.head.propertyValue should be (AssetPropertyConfiguration.ValidityDirectionSame)
+    provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidityDirectionId, List(PropertyValue(3, "")))
     val updatedAsset = provider.getAssetById(TestAssetId).get
-    updatedAsset.propertyData.find(_.propertyId == "validityDirection").get.values.head.propertyValue should be (3)
-    provider.updateAssetProperty(TestAssetId, "validityDirection", List(PropertyValue(2, "")))
+    updatedAsset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidityDirectionId).get.values.head.propertyValue should be (3)
+    provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidityDirectionId, List(PropertyValue(2, "")))
   }
 
   test("update validity date throws exception if validFrom after validTo", Tag("db")) {
     val asset = provider.getAssetById(TestAssetId).get
-    provider.updateAssetProperty(asset.id, "validTo", List(PropertyValue(0, "2045-12-10")))
-    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, "validFrom", List(PropertyValue(0, "2065-12-15")))
+    provider.updateAssetProperty(asset.id, AssetPropertyConfiguration.ValidToId, List(PropertyValue(0, "2045-12-10")))
+    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "2065-12-15")))
   }
 
 
   test("update validity date throws exception if validTo before validFrom", Tag("db")) {
     val asset = provider.getAssetById(TestAssetId).get
-    provider.updateAssetProperty(asset.id, "validFrom", List(PropertyValue(0, "2010-12-15")))
-    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, "validTo", List(PropertyValue(0, "2009-12-10")))
+    provider.updateAssetProperty(asset.id, AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "2010-12-15")))
+    an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAssetProperty(asset.id, AssetPropertyConfiguration.ValidToId, List(PropertyValue(0, "2009-12-10")))
   }
 
   test("update a common asset without write access fails", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
     val asset = provider.getAssetById(TestAssetId).get
-    asset.propertyData.find(_.propertyId == "validityDirection").get.values.head.propertyValue should be (AssetPropertyConfiguration.ValidityDirectionSame)
+    asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidityDirectionId).get.values.head.propertyValue should be (AssetPropertyConfiguration.ValidityDirectionSame)
     intercept[IllegalArgumentException] {
-      provider.updateAssetProperty(TestAssetId, "validityDirection", List(PropertyValue(1, "")))
+      provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidityDirectionId, List(PropertyValue(1, "")))
     }
   }
 
   test("update a common asset property value (text i.e. timestamp)", Tag("db")) {
     val asset = provider.getAssetById(TestAssetId).get
-    asset.propertyData.find(_.propertyId == "validFrom").get.values shouldBe 'nonEmpty
-    provider.updateAssetProperty(TestAssetId, "validFrom", List(PropertyValue(0, "2013-12-31")))
+    asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidFromId).get.values shouldBe 'nonEmpty
+    provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "2013-12-31")))
 
     val updatedAsset = provider.getAssetById(TestAssetId).get
-    updatedAsset.propertyData.find(_.propertyId == "validFrom").get.values.head.propertyDisplayValue should startWith ("2013-12-31")
+    updatedAsset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidFromId).get.values.head.propertyDisplayValue should startWith ("2013-12-31")
 
-    provider.updateAssetProperty(TestAssetId, "validFrom", List())
+    provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidFromId, List())
     val assetWithoutExpirationTime = provider.getAssetById(TestAssetId).get
-    assetWithoutExpirationTime.propertyData.find(_.propertyId == "validFrom").get.values should equal (List(PropertyValue(0, null, null)))
+    assetWithoutExpirationTime.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidFromId).get.values should equal (List(PropertyValue(0, null, null)))
 
-    provider.updateAssetProperty(TestAssetId, "validFrom", List(PropertyValue(0, "2013-12-15")))
+    provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "2013-12-15")))
   }
 
   test("validate date property values", Tag("db")) {
     val asset = provider.getAssetById(TestAssetId).get
-    an[IllegalArgumentException] should be thrownBy provider.updateAssetProperty(TestAssetId, "validFrom", List(PropertyValue(0, "INVALID DATE")))
+    an[IllegalArgumentException] should be thrownBy provider.updateAssetProperty(TestAssetId, AssetPropertyConfiguration.ValidFromId, List(PropertyValue(0, "INVALID DATE")))
   }
 
   test("asset on non-expired link is not marked as floating", Tag("db")) {
