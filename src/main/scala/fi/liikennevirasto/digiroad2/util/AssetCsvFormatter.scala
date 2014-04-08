@@ -2,6 +2,8 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
 import scala.language.postfixOps
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 
 object AssetCsvFormatter {
 
@@ -9,6 +11,8 @@ object AssetCsvFormatter {
                "ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;" +
                "VIRTUAL_STOP;EQUIPMENTS;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
+
+  val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
 
   def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
     assets.map(formatFromAssetWithPropertiesValluCsv)
@@ -77,10 +81,9 @@ object AssetCsvFormatter {
 
   private def addMunicipalityInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val code = asset.municipalityNumber.get.toString
-    // municipality name not known
-    val name = ""
-    (asset, name :: code :: result)
+    val code = asset.municipalityNumber.get
+    val name = provider.getMunicipalityNameByCode(code)
+    (asset, name :: code.toString :: result)
   }
 
   private def addXCoord(params: (AssetWithProperties, List[String])) = {
@@ -107,8 +110,8 @@ object AssetCsvFormatter {
 
   private def addMaintainerId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    // maintainer not known
-    (asset, "" :: result)
+    val maintainer = getItemsFromPropertyByPublicId("tietojen_yllapitaja", asset.propertyData)
+    (asset, maintainer.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
@@ -154,13 +157,13 @@ object AssetCsvFormatter {
 
   private def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByPublicId("liikennointisuunta", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, asset.validityDirection.getOrElse("").toString :: result)
   }
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.validityDirection.getOrElse("").toString :: result)
+    val id = getItemsFromPropertyByPublicId("liikennointisuunta", asset.propertyData)
+    (asset, id.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
   }
 
   private def addReachability(params: (AssetWithProperties, List[String])) = {
@@ -182,8 +185,7 @@ object AssetCsvFormatter {
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")
     val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
-    // virtual not known
-    val virtual = "0"
+    val virtual = (if (busstopType.contains(5)) "1" else "0")
     (asset, virtual :: nonStopExpress :: express :: local :: result)
   }
 

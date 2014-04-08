@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-./sbt ${1} 'project digiroad2' "runMain fi.liikennevirasto.digiroad2.util.WalluImport"
+./sbt ${1} 'project digiroad2' "runMain fi.liikennevirasto.digiroad2.util.ValluImport"
 zip digiroad_stops digiroad_stops.csv
 set -- $(<ftp.conf)
 curl -u $1:$2 -T digiroad_stops.zip ftp://$3/digiroad_stops.zip

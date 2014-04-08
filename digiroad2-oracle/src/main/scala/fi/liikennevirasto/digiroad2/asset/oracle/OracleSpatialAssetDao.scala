@@ -310,6 +310,12 @@ object OracleSpatialAssetDao {
     """.as[Int].list
   }
 
+  def getMunicipalityNameByCode(code: Int): String = {
+    sql"""
+      select name_fi from municipality where id = $code
+    """.as[String].first
+  }
+
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {
