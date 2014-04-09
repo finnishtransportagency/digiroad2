@@ -84,15 +84,18 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var position = {bearing: asset.bearing, lonLat: {lon: asset.lon, lat: asset.lat}, validityDirection: asset.validityDirection};
             var featureData = me._makeContent(asset.propertyData);
             var streetView = me._getStreetView(position);
-            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: null });
-            jQuery("#featureAttributes").html(featureAttributes);
+            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
+            $("#featureAttributes").html(featureAttributes);
+            var featureAttributesElement = $('#featureAttributes');
             me._addDatePickers();
             if (this._readOnly) {
               $('#featureAttributes button').prop('disabled', true);
               $('#featureAttributes input').prop('disabled', true);
               $('#featureAttributes select').prop('disabled', true);
               $('#featureAttributes textarea').prop('disabled', true);
+              $('#featureAttributes .formControls').hide();
             }
+            /*
             jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
                 var data = jQuery(this);
                 me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-publicId'));
@@ -112,6 +115,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             jQuery(".featureAttributeDate").on("blur", function () {
                 var data = jQuery(this);
                 me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-publicId'));
+            });
+            */
+             featureAttributesElement.find('button.cancel').on('click', function() {
+                eventbus.trigger('asset:cancelled');
+                eventbus.trigger('asset:unselected');
+                me._closeAsset();
+            });
+
+            featureAttributesElement.find('button.save').on('click', function() {
+                me._saveAssetProperties(featureAttributesElement);
             });
 
             function busStopHeader(asset) {

@@ -68,5 +68,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
         this.featureDataTemplateCheckbox = _.template('<input {{checkedValue}} type="checkbox" value="{{propertyValue}}"></input><label for="{{name}}">{{propertyDisplayValue}}</label><br/>');
 
         this.featureDataControls = _.template('<button class="cancel">Peruuta</button><button class="save">Luo</button>');
+
+        this.featureDataEditControls = _.template('<button class="cancel">Peruuta</button><button class="save">Tallenna</button>');
     }
 );
