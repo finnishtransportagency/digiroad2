@@ -30,7 +30,6 @@ window.AssetActionPanel = function(identifier, header, icon) {
     var editMessage = '<div class="editMessage readOnlyModeHidden">Muokkaustila: muutokset tallentuvat automaattisesti</div>';
 
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
-    var readOnly = true;
 
     var layerPeriods = [
         {id: "current", label: "Voimassaolevat", selected: true},

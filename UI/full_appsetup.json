@@ -137,21 +137,6 @@
       }
    }, {
        "instanceProps": {},
-       "bundleinstancename": "actionpanel",
-       "fi": "actionpanel",
-       "sv": "?",
-       "en": "?",
-       "bundlename": "actionpanel",
-       "metadata": {
-           "Import-Bundle": {
-               "actionpanel": {
-                   "bundlePath": "src/packages/digiroad2/bundle/"
-               }
-           },
-           "Require-Bundle-Instance": []
-       }
-   }, {
-       "instanceProps": {},
        "bundleinstancename": "assetform",
        "fi": "assetform",
        "sv": "?",
