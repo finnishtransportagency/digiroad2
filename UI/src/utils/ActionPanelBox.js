@@ -13,7 +13,7 @@ window.AssetActionPanel = function(identifier, header, icon) {
 
     var mapBusStopLayer = _.template(
         '<div class="busStopLayer">' +
-            '<div class="busStopLayerCheckbox"><input class="layerSelector_'+identifier+'" type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
+            '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
             '{{name}}' +
             '</div>');
 
