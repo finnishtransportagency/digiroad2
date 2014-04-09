@@ -463,7 +463,7 @@ window.AssetLayer = function(map, roadLayer) {
     }, true);
 
     events.register('click', map, function(e) {
-        if (selectedControl === 'Add' && isInZoomLevel()) {
+        if (selectedControl === 'Add' && 9 < map.getZoom()) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
         }
