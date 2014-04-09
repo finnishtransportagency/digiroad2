@@ -1,5 +1,5 @@
 (function(ActionPanel) {
-    console.log('prkl');
+
     var panelControl =
         '<div class="panelControl">' +
                         '<div class="panelControlLine"></div>' +
