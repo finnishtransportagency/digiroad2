@@ -170,80 +170,84 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
-                var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
-                var textElementAttributes = _.map(textElements, function(textElement) {
-                    var jqElement = jQuery(textElement);
-                    return {
-                        publicId: jqElement.attr('data-publicId'),
-                        propertyValues: me._propertyValuesOfTextElement(jqElement)
-                    };
-                });
-
-                var buttonElements = featureAttributesElement.find('.featureAttributeButton');
-                var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
-                    var jqElement = jQuery(buttonElement);
-                    return {
-                        publicId: jqElement.attr('data-publicId'),
-                        propertyValues: me._propertyValuesOfButtonElement(jqElement)
-                    };
-                });
-
-                var selectionElements = featureAttributesElement.find('select.featureattributeChoice');
-                var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
-                   var jqElement = jQuery(selectionElement);
-                    return {
-                        publicId: jqElement.attr('data-publicId'),
-                        propertyValues: me._propertyValuesOfSelectionElement(jqElement)
-                    };
-                });
-
-                var multiCheckboxElements = featureAttributesElement.find('div.featureattributeChoice');
-                var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
-                   var jqElement = jQuery(multiCheckboxElement);
-                    return {
-                        publicId: jqElement.attr('data-publicId'),
-                        propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
-                    };
-                });
-
-                var dateElements = featureAttributesElement.find('.featureAttributeDate');
-                var dateElementAttributes = _.map(dateElements, function(dateElement) {
-                    var jqElement = jQuery(dateElement);
-                    return {
-                        publicId: jqElement.attr('data-publicId'),
-                        propertyValues: me._propertyValuesOfDateElement(jqElement)
-                    };
-                });
-
-                var saveAsset = function(data) {
-                    var properties = _.chain(data)
-                        .map(function(attr) {
-                            return {publicId: attr.publicId,
-                                values: attr.propertyValues};
-                        })
-                        .map(function(p) {
-                            if (p.publicId == 'pysakin_tyyppi' && _.isEmpty(p.values)) {
-                                p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
-                                    propertyValue: 99}];
-                            }
-                            return p;
-                        })
-                        .value();
-                    me._backend.createAsset(
-                        {assetTypeId: 10,
-                            lon: me._selectedAsset.lon,
-                            lat: me._selectedAsset.lat,
-                            roadLinkId:  me._selectedAsset.roadLinkId,
-                            bearing:  me._selectedAsset.bearing,
-                            properties: properties});
-                };
-
-                saveAsset(textElementAttributes
-                    .concat(selectionElementAttributes)
-                    .concat(buttonElementAttributes)
-                    .concat(multiCheckboxElementAttributes)
-                    .concat(dateElementAttributes));
+                me._saveAssetProperties(featureAttributesElement);
             });
+        },
+        _saveAssetProperties: function(featureAttributesElement) {
+            var me = this;
+            var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
+            var textElementAttributes = _.map(textElements, function(textElement) {
+                var jqElement = jQuery(textElement);
+                return {
+                    publicId: jqElement.attr('data-publicId'),
+                    propertyValues: me._propertyValuesOfTextElement(jqElement)
+                };
+            });
+
+            var buttonElements = featureAttributesElement.find('.featureAttributeButton');
+            var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
+                var jqElement = jQuery(buttonElement);
+                return {
+                    publicId: jqElement.attr('data-publicId'),
+                    propertyValues: me._propertyValuesOfButtonElement(jqElement)
+                };
+            });
+
+            var selectionElements = featureAttributesElement.find('select.featureattributeChoice');
+            var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
+                var jqElement = jQuery(selectionElement);
+                return {
+                    publicId: jqElement.attr('data-publicId'),
+                    propertyValues: me._propertyValuesOfSelectionElement(jqElement)
+                };
+            });
+
+            var multiCheckboxElements = featureAttributesElement.find('div.featureattributeChoice');
+            var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
+                var jqElement = jQuery(multiCheckboxElement);
+                return {
+                    publicId: jqElement.attr('data-publicId'),
+                    propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
+                };
+            });
+
+            var dateElements = featureAttributesElement.find('.featureAttributeDate');
+            var dateElementAttributes = _.map(dateElements, function(dateElement) {
+                var jqElement = jQuery(dateElement);
+                return {
+                    publicId: jqElement.attr('data-publicId'),
+                    propertyValues: me._propertyValuesOfDateElement(jqElement)
+                };
+            });
+
+            var saveAsset = function(data) {
+                var properties = _.chain(data)
+                    .map(function(attr) {
+                        return {publicId: attr.publicId,
+                            values: attr.propertyValues};
+                    })
+                    .map(function(p) {
+                        if (p.publicId == 'pysakin_tyyppi' && _.isEmpty(p.values)) {
+                            p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                                propertyValue: 99}];
+                        }
+                        return p;
+                    })
+                    .value();
+                me._backend.createAsset(
+                    {assetTypeId: 10,
+                        lon: me._selectedAsset.lon,
+                        lat: me._selectedAsset.lat,
+                        roadLinkId:  me._selectedAsset.roadLinkId,
+                        bearing:  me._selectedAsset.bearing,
+                        properties: properties});
+            };
+
+            saveAsset(textElementAttributes
+                .concat(selectionElementAttributes)
+                .concat(buttonElementAttributes)
+                .concat(multiCheckboxElementAttributes)
+                .concat(dateElementAttributes));
         },
         _getStreetView: function(assetPosition) {
             var wgs84 = OpenLayers.Projection.transform(
