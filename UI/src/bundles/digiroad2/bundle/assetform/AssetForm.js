@@ -370,11 +370,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             var options = '<select data-publicId="'+publicId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
+            var selected = _.size(valuesNro) > 0 ? valuesNro : [99]; // default value 99 if none is selected
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
             _.forEach(propertyValues.values,
                 function(optionValue) {
                     var selectedValue ='';
-                    if (_.contains(valuesNro, optionValue.propertyValue)) {
+                    if (_.contains(selected, optionValue.propertyValue)) {
                         selectedValue = 'selected="true" ';
                     }
                     optionValue.selectedValue = selectedValue;
