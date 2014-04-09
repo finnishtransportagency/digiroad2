@@ -1,5 +1,7 @@
 window.AssetActionPanel = function(identifier, header, icon) {
-
+    _.templateSettings = {
+                interpolate: /\{\{(.+?)\}\}/g
+    };
     var layerGroup =jQuery(
         '<div class="actionPanel ' + identifier + '">' +
             '<div class="layerGroup">' +
@@ -12,7 +14,7 @@ window.AssetActionPanel = function(identifier, header, icon) {
     var mapBusStopLayer = _.template(
         '<div class="busStopLayer">' +
             '<div class="busStopLayerCheckbox"><input class="layerSelector_'+identifier+'" type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
-            '<div class="busStopLayerName">{{name}}</div>' +
+            '{{name}}' +
             '</div>');
 
     var actionButtons = jQuery(
@@ -50,8 +52,8 @@ window.AssetActionPanel = function(identifier, header, icon) {
     };
 
     var renderView =  function() {
+
         jQuery(".panelLayerGroup").append(layerGroup);
-        var $el = jQuery.find('.'+identifier);
 
         _.forEach(layerPeriods, function (layer) {
             layerGroup.find(".layerGroupLayers").append(mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));

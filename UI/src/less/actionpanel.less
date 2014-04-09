@@ -58,13 +58,26 @@ div.layerGroup:active {
   background-color: #5a5a57;
 }
 
-div.layerGroupLayers {
+.layerGroupLayers {
   background-color: #efefed;
   padding-bottom: 16px;
   border: 0px solid #cbcbc0;
   border-bottom-width: 1px;
-}
 
+  .busStopLayer {
+    padding-left: 20px;
+    padding-top: 13px;
+    padding-bottom: 3px;
+    font-size: 12px;
+    font-family: arial;
+    color: #000000;
+    .busStopLayerCheckbox {
+      float : left;
+      margin-top: -3;
+      padding-right: 7px;
+    }
+  }
+}
 
 .layerGroupImg_asset {
   margin-top: 15px;
@@ -104,22 +117,6 @@ div.layerGroupLabel {
   float: left;
   font-size: 13px;
   font-family: arial;
-}
-
-
-div.busStopLayerCheckbox {
-  float : left;
-  margin-top: -3;
-  padding-right: 7px;
-}
-div.busStopLayer {
-  padding-left: 20px;
-  padding-top: 13px;
-  padding-bottom: 3px;
-  background-color: #efefed;
-  font-size: 12px;
-  font-family: arial;
-  color: #000000;
 }
 
 div.actionButtons {
