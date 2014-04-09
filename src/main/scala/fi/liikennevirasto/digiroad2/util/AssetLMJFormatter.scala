@@ -11,8 +11,8 @@ object AssetLMJFormatter {
     (addExternalId _)
      .andThen ((addName _ curried)("nimi_suomeksi")(_))
       .andThen (addIsolator _)
-      .andThen (addXCoord _)
       .andThen (addYCoord _)
+      .andThen (addXCoord _)
       .andThen (addZoneId _)
       .andThen (addIsolator _)
       .andThen (addIsolator _)
@@ -48,6 +48,6 @@ object AssetLMJFormatter {
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val name = AssetCsvFormatter.getItemsFromPropertyByPublicId(language, asset.propertyData)
-    (asset, name.headOption.map(property => "\"" + property.propertyDisplayValue  + "\"").getOrElse("") :: result)
+    (asset, name.headOption.map(property => "\"" + property.propertyDisplayValue.trim  + "\"").getOrElse("\"Ei tiedossa\"") :: result)
   }
 }
