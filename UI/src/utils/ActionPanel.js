@@ -2,10 +2,10 @@
     console.log('prkl');
     var panelControl =
         '<div class="panelControl">' +
-            '<div class="panelControlLine"></div>' +
-            '<div class="panelControlLine"></div>' +
-            '<div class="panelControlLine"></div>' +
-            '</div>' +
+                        '<div class="panelControlLine"></div>' +
+                        '<div class="panelControlLine"></div>' +
+                        '<div class="panelControlLine"></div>' +
+                    '</div>'+
             '<div class="panelLayerGroup"></div>';
 
 
