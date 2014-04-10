@@ -65,6 +65,15 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
+  def updateAsset(assetId: Long, bearing: Int, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    if (!userCanModifyAsset(assetId)) {
+      throw new IllegalArgumentException("User does not have write access to municipality")
+    }
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.updateAsset(assetId, userProvider.getCurrentUser().username, properties)
+    }
+  }
+
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       Database.forDataSource(ds).withDynTransaction {
