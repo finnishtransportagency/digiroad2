@@ -83,7 +83,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             me._featureDataAssetId = asset.id;
             var position = {bearing: asset.bearing, lonLat: {lon: asset.lon, lat: asset.lat}, validityDirection: asset.validityDirection};
             var featureData = me._makeContent(asset.propertyData);
-            var streetView = me._getStreetView(position);
+            var streetView = me._getStreetView();
             var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
             $("#featureAttributes").html(featureAttributes);
             var featureAttributesElement = $('#featureAttributes');
@@ -95,8 +95,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
               $('#featureAttributes textarea').prop('disabled', true);
               $('#featureAttributes .formControls').hide();
             }
+            me._initializeTypeAndDirectionChanges(featureAttributesElement);
+
             featureAttributesElement.find('button.cancel').on('click', function() {
-                eventbus.trigger('asset:cancelled');
                 eventbus.trigger('asset:unselected');
                 me._closeAsset();
             });
@@ -117,18 +118,32 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var newValidityDirection = data.propertyData[0].values[0].propertyValue;
             var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             validityDirection.attr('value', newValidityDirection);
-            jQuery('.streetView').html(this._getStreetView(_.merge({}, this._selectedAsset.position, { validityDirection: newValidityDirection })));
+            jQuery('.streetView').html(this._getStreetView());
         },
         
         _initializeCreateNew: function(properties) {
             var me = this;
             var featureAttributesElement = jQuery('#featureAttributes');
             var featureData = me._makeContent(properties);
-            var streetView = me._getStreetView(me._selectedAsset.position);
+            var streetView = me._getStreetView();
             var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
             featureAttributesElement.html(featureAttributesMarkup);
             me._addDatePickers();
 
+            me._initializeTypeAndDirectionChanges(featureAttributesElement);
+
+            featureAttributesElement.find('button.cancel').on('click', function() {
+                eventbus.trigger('asset:cancelled');
+                eventbus.trigger('asset:unselected');
+                me._closeAsset();
+            });
+
+            featureAttributesElement.find('button.save').on('click', function() {
+                me._saveNewAsset(me._collectAssetProperties(featureAttributesElement));
+            });
+        },
+        _initializeTypeAndDirectionChanges: function(featureAttributesElement) {
+            var me = this;
             var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             var assetDirectionChangedHandler = function() {
                 var value = validityDirection.attr('value');
@@ -145,24 +160,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 var jqElement = jQuery(this);
                 var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
                 eventbus.trigger('assetPropertyValue:changed', {
-                  propertyData: [{
-                      publicId: jqElement.attr('data-publicId'),
-                      values: values
-                  }]
+                    propertyData: [{
+                        publicId: jqElement.attr('data-publicId'),
+                        values: values
+                    }]
                 });
             });
 
             validityDirection.click(assetDirectionChangedHandler);
-
-            featureAttributesElement.find('button.cancel').on('click', function() {
-                eventbus.trigger('asset:cancelled');
-                eventbus.trigger('asset:unselected');
-                me._closeAsset();
-            });
-
-            featureAttributesElement.find('button.save').on('click', function() {
-                me._saveNewAsset(me._collectAssetProperties(featureAttributesElement));
-            });
         },
         _saveNewAsset: function(featureAttributesElement) {
             var me = this;
@@ -233,7 +238,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 .concat(buttonElementAttributes)
                 .concat(multiCheckboxElementAttributes)
                 .concat(dateElementAttributes);
-            console.log("WHAAAAAT", all);
             var properties = _.chain(all)
                 .map(function(attr) {
                     return {publicId: attr.publicId,
@@ -246,14 +250,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     }
                     return p;
                 }).value();
-            console.log("PROPERTIES", properties);
             return properties;
         },
-        _getStreetView: function(assetPosition) {
+        _getStreetView: function() {
+            var asset = this._selectedAsset;
             var wgs84 = OpenLayers.Projection.transform(
-                new OpenLayers.Geometry.Point(assetPosition.lonLat.lon, assetPosition.lonLat.lat),
+                new OpenLayers.Geometry.Point(asset.lon, asset.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (assetPosition.validityDirection === 3 ? assetPosition.bearing - 90 : assetPosition.bearing + 90) });
+            return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
         },
         _addDatePickers: function () {
             var $validFrom = jQuery('.featureAttributeDate[data-publicId=ensimmainen_voimassaolopaiva]');
