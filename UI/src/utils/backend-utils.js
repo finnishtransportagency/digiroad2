@@ -53,11 +53,11 @@
         });
     };
     
-    backend.updateAsset = function(id, data) {
+    backend.updateAssetPosition = function(id, data) {
         jQuery.ajax({
           contentType: "application/json",
           type: "PUT",
-          url: "api/assets/" + id,
+          url: "api/assets/" + id + "?positionOnly=true",
           data: JSON.stringify(data),
           dataType:"json",
           success: function(asset) {
@@ -66,6 +66,22 @@
           error: function() {
               console.log("error");
           }
+        });
+    };
+
+    backend.updateAssetProperties = function(id, data) {
+        jQuery.ajax({
+            contentType: "application/json",
+            type: "PUT",
+            url: "api/assets/" + id,
+            data: JSON.stringify(data),
+            dataType:"json",
+            success: function(asset) {
+                eventbus.trigger('asset:saved asset:fetched', asset, true);
+            },
+            error: function() {
+                console.log("error");
+            }
         });
     };
 

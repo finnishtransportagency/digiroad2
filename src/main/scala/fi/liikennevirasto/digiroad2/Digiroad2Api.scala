@@ -102,18 +102,28 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: handle missing roadLinkId
   put("/assets/:id") {
-    val (lon, lat, roadLinkId, bearing) =
-      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
-      (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val updated =
-      assetProvider.updateAssetLocation(
-        id = params("id").toLong,
-        lon = lon.get,
-        lat = lat.get,
-        roadLinkId = roadLinkId.get,
-        bearing = bearing)
-    logger.debug("Asset updated: " + updated)
-    updated
+    params.get("positionOnly") match {
+      case None => {
+        assetProvider.updateAsset(
+          params("id").toLong,
+          (parsedBody \ "bearing").extract[Int],
+          (parsedBody \ "properties").extract[Seq[SimpleProperty]])
+      }
+      case _ => {
+        val (lon, lat, roadLinkId, bearing) =
+          ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
+          (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
+        val updated =
+          assetProvider.updateAssetLocation(
+            id = params("id").toLong,
+            lon = lon.get,
+            lat = lat.get,
+            roadLinkId = roadLinkId.get,
+            bearing = bearing)
+        logger.debug("Asset updated: " + updated)
+        updated
+      }
+    }
   }
 
   post("/asset") {

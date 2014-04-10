@@ -95,36 +95,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
               $('#featureAttributes textarea').prop('disabled', true);
               $('#featureAttributes .formControls').hide();
             }
-            /*
-            jQuery(".featureAttributeText , .featureAttributeLongText").on("blur", function () {
-                var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfTextElement(data), data.attr('data-publicId'));
-            });
-            jQuery("select.featureattributeChoice").on("change", function () {
-                var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfSelectionElement(data), data.attr('data-publicId'));
-            });
-            jQuery("div.featureattributeChoice").on("change", function () {
-                var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfMultiCheckboxElement(data), data.attr('data-publicId'));
-            });
-            jQuery("button.featureAttributeButton").on("click", function () {
-                var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfButtonElement(data), data.attr('data-publicId'));
-            });
-            jQuery(".featureAttributeDate").on("blur", function () {
-                var data = jQuery(this);
-                me._savePropertyData(me._propertyValuesOfDateElement(data), data.attr('data-publicId'));
-            });
-            */
-             featureAttributesElement.find('button.cancel').on('click', function() {
+            featureAttributesElement.find('button.cancel').on('click', function() {
                 eventbus.trigger('asset:cancelled');
                 eventbus.trigger('asset:unselected');
                 me._closeAsset();
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
-                me._saveAssetProperties(featureAttributesElement);
+                me._updateAsset(asset.id, featureAttributesElement);
             });
 
             function busStopHeader(asset) {
@@ -183,10 +161,28 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
-                me._saveAssetProperties(featureAttributesElement);
+                me._saveNewAsset(me._collectAssetProperties(featureAttributesElement));
             });
         },
-        _saveAssetProperties: function(featureAttributesElement) {
+        _saveNewAsset: function(featureAttributesElement) {
+            var me = this;
+            var properties = me._collectAssetProperties(featureAttributesElement);
+            me._backend.createAsset(
+                {assetTypeId: 10,
+                    lon: me._selectedAsset.lon,
+                    lat: me._selectedAsset.lat,
+                    roadLinkId:  me._selectedAsset.roadLinkId,
+                    bearing:  me._selectedAsset.bearing,
+                    properties: properties});
+        },
+        _updateAsset: function(assetId, featureAttributesElement) {
+            var me = this;
+            var properties = this._collectAssetProperties(featureAttributesElement);
+            me._backend.updateAssetProperties(assetId, {
+                bearing: me._selectedAsset.bearing,
+                properties: properties});
+        },
+        _collectAssetProperties: function(featureAttributesElement) {
             var me = this;
             var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
             var textElementAttributes = _.map(textElements, function(textElement) {
@@ -232,35 +228,26 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     propertyValues: me._propertyValuesOfDateElement(jqElement)
                 };
             });
-
-            var saveAsset = function(data) {
-                var properties = _.chain(data)
-                    .map(function(attr) {
-                        return {publicId: attr.publicId,
-                            values: attr.propertyValues};
-                    })
-                    .map(function(p) {
-                        if (p.publicId == 'pysakin_tyyppi' && _.isEmpty(p.values)) {
-                            p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
-                                propertyValue: 99}];
-                        }
-                        return p;
-                    })
-                    .value();
-                me._backend.createAsset(
-                    {assetTypeId: 10,
-                        lon: me._selectedAsset.lon,
-                        lat: me._selectedAsset.lat,
-                        roadLinkId:  me._selectedAsset.roadLinkId,
-                        bearing:  me._selectedAsset.bearing,
-                        properties: properties});
-            };
-
-            saveAsset(textElementAttributes
+            var all = textElementAttributes
                 .concat(selectionElementAttributes)
                 .concat(buttonElementAttributes)
                 .concat(multiCheckboxElementAttributes)
-                .concat(dateElementAttributes));
+                .concat(dateElementAttributes);
+            console.log("WHAAAAAT", all);
+            var properties = _.chain(all)
+                .map(function(attr) {
+                    return {publicId: attr.publicId,
+                        values: attr.propertyValues};
+                })
+                .map(function(p) {
+                    if (p.publicId == 'pysakin_tyyppi' && _.isEmpty(p.values)) {
+                        p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
+                            propertyValue: 99}];
+                    }
+                    return p;
+                }).value();
+            console.log("PROPERTIES", properties);
+            return properties;
         },
         _getStreetView: function(assetPosition) {
             var wgs84 = OpenLayers.Projection.transform(

@@ -98,7 +98,7 @@ window.AssetLayer = function(map, roadLayer) {
                     roadLinkId: asset.roadLinkId,
                     bearing: bearing
                 };
-                backend.updateAsset(asset.data.id, data);
+                backend.updateAssetPosition(asset.data.id, data);
             }
             assetIsMoving = false;
             var streetViewCoordinates = { lonLat: asset.marker.lonlat };
