@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.AssetType
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -112,8 +113,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("update asset property", Tag("db")) {
-    val body1 = write(List(PropertyValue(3, "Linja-autojen kaukoliikenne")))
-    val body2 = write(List(PropertyValue(2, "Linja-autojen paikallisliikenne")))
+    val body1 = write(List(PropertyValue(3)))
+    val body2 = write(List(PropertyValue(2)))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
@@ -132,7 +133,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("delete and create asset property", Tag("db")) {
-    val propBody = write(List(PropertyValue(2, "")))
+    val propBody = write(List(PropertyValue(2)))
     deleteWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values") {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
@@ -147,6 +148,30 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       }
     }
   }
+
+  test("update date property", Tag("db")) {
+    val currentValidTo = getWithUserAuth("/assets/" + CreatedTestAssetId) {
+      val a = parse(body).extract[AssetWithProperties]
+      val prop = a.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get
+      prop.values.head.propertyDisplayValue.get
+    }
+/*    val newValidTo = write(List(PropertyValue("2014-03-10")))
+    putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + AssetPropertyConfiguration.ValidToId + "/values", newValidTo.getBytes) {
+      status should equal(200)
+      getWithUserAuth("/assets/" + CreatedTestAssetId) {
+        val asset = parse(body).extract[AssetWithProperties]
+        val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
+        prop.values.size should be (1)
+        prop.values.head.propertyValue should be (3)
+        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
+          status should equal(200)
+          getWithUserAuth("/assets/" + CreatedTestAssetId) {
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be (2)
+          }
+        }
+      }
+    }
+*/  }
 
   test("get past assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {

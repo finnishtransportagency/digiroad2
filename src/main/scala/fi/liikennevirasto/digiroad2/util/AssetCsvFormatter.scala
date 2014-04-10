@@ -52,31 +52,31 @@ object AssetCsvFormatter {
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getItemsFromPropertyByPublicId("yllapitajan_tunnus", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addStopCode(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getItemsFromPropertyByPublicId("matkustajatunnus", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addContactEmail(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val email = getItemsFromPropertyByPublicId("palauteosoite", asset.propertyData)
-    (asset, email.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, email.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addComments(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val comments = getItemsFromPropertyByPublicId("lisatiedot", asset.propertyData)
-    (asset, comments.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, comments.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val name = getItemsFromPropertyByPublicId(language, asset.propertyData)
-    (asset, name.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
+    (asset, name.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addMunicipalityInfo(params: (AssetWithProperties, List[String])) = {
@@ -111,14 +111,14 @@ object AssetCsvFormatter {
   private def addMaintainerId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val maintainer = getItemsFromPropertyByPublicId("tietojen_yllapitaja", asset.propertyData)
-    (asset, maintainer.headOption.map(x => x.propertyDisplayValue).getOrElse("") :: result)
+    (asset, maintainer.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validFrom = getItemsFromPropertyByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
     val validTo = getItemsFromPropertyByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
-    (asset, validTo.head.propertyDisplayValue :: validFrom.head.propertyDisplayValue :: result)
+    (asset, validTo.head.propertyDisplayValue.getOrElse("") :: validFrom.head.propertyDisplayValue.getOrElse("") :: result)
   }
 
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
@@ -127,8 +127,8 @@ object AssetCsvFormatter {
     val lastModified = getItemsFromPropertyByPublicId("muokattu_viimeksi", asset.propertyData)
     val inserted = getItemsFromPropertyByPublicId("lisatty_jarjestelmaan", asset.propertyData)
 
-    val lastModifiedValue = lastModified.head.propertyDisplayValue.trim
-    val insertedValue = inserted.head.propertyDisplayValue.trim
+    val lastModifiedValue = lastModified.head.propertyDisplayValue.getOrElse("").trim
+    val insertedValue = inserted.head.propertyDisplayValue.getOrElse("").trim
 
     val modifiedTime =
       if(lastModifiedValue == "-")
@@ -139,7 +139,7 @@ object AssetCsvFormatter {
       if(lastModifiedValue == "-")
         insertedValue.take(insertedValue.length - 20).trim
       else
-        lastModifiedValue.take(lastModified.head.propertyDisplayValue.length - 20).trim
+        lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
 
     (asset, modifiedBy :: modifiedTime :: result)
   }
@@ -163,13 +163,13 @@ object AssetCsvFormatter {
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getItemsFromPropertyByPublicId("liikennointisuunta", asset.propertyData)
-    (asset, id.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
+    (asset, id.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addReachability(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val reachability = getItemsFromPropertyByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
-    (asset, reachability.headOption.map(_.propertyDisplayValue).getOrElse("") :: result)
+    (asset, reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {

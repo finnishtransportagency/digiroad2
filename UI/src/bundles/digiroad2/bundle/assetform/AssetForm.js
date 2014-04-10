@@ -300,14 +300,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             me._backend.getEnumeratedPropertyValues(10);
         },
-        _savePropertyData: function(propertyValue, publicId) {
-            if (publicId == 'pysakin_tyyppi' && _.isEmpty(propertyValue)) {
-                propertyValue = [{
-                    propertyDisplayValue: "Pysäkin tyyppi",
-                    propertyValue: 99
-                }];
+        _savePropertyData: function(propertyValues, publicId) {
+            var propertyValue;
+            if (publicId == 'pysakin_tyyppi' && _.isEmpty(propertyValues)) {
+                propertyValue = 99;
+            } else {
+                propertyValue = propertyValues.propertyValue;
             }
-
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, publicId, propertyValue);
         },
