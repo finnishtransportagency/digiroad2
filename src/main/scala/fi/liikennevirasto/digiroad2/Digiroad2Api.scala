@@ -78,6 +78,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   }
 
+  get("/user/roles") {
+    userProvider.getCurrentUser().configuration.roles
+  }
+
   get("/assets/:assetId") {
     val getAssetById = if (params.get("externalId").isDefined) {
       assetProvider.getAssetByExternalId _
@@ -153,13 +157,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/roadlinks") {
     val bboxOption = params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble);
-      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
+      val BBOXList = b.split(",").map(_.toDouble)
+      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3))
     }
 
     // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
-    response.setHeader("Access-Control-Allow-Headers", "*");
+    response.setHeader("Access-Control-Allow-Headers", "*")
 
     val rls = assetProvider.getRoadLinks(user, boundsFromParams)
     ("type" -> "FeatureCollection") ~

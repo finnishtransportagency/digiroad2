@@ -90,7 +90,11 @@ window.AssetActionPanel = function(identifier, header, icon) {
             layerGroup.find(".layerGroupLayers").append(prepareLayerSelection(layer));
         });
 
-        layerGroup.append(editButtonForGroup());
+        $.get("/api/user/roles", function(data) {
+            if(_.contains(data, "viewer") === false){
+                layerGroup.append(editButtonForGroup());
+            }
+        });
         jQuery(".container").append(editMessage);
     };
 
