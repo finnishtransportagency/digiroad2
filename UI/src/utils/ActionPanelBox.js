@@ -11,12 +11,6 @@ window.AssetActionPanel = function(identifier, header, icon) {
             '<div class="layerGroupLayers"></div>' +
         '</div>');
 
-    var mapBusStopLayer = _.template(
-        '<div class="busStopLayer">' +
-            '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} data-validity-period="{{id}}"/></div>' +
-            '{{name}}' +
-            '</div>');
-
     var actionButtons = jQuery(
         '<div class="actionButtons readOnlyModeHidden">' +
             '<div data-action="Select" class="actionButton actionButtonActive actionPanelButtonSelect">' +
@@ -51,14 +45,35 @@ window.AssetActionPanel = function(identifier, header, icon) {
         bindEvents();
     };
 
-    var renderView =  function() {
+    var selectedValidityPeriods = [];
+    var prepareLayerSelection = function(layer) {
+        var mapBusStopLayer = _.template(
+            '<div class="busStopLayer">' +
+                '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} /></div>' +
+                '{{name}}' +
+            '</div>');
+        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label}));
 
+        if (layer.selected) {
+            selectedValidityPeriods.push(layer.id);
+        }
+        layerSelection.find(':input').change(function (target) {
+            if (target.currentTarget.checked) {
+                selectedValidityPeriods.push(layer.id);
+            } else {
+                selectedValidityPeriods = _.without(selectedValidityPeriods, layer.id);
+            }
+            eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
+        });
+        return layerSelection;
+    };
+
+    var renderView =  function() {
         jQuery(".panelLayerGroup").append(layerGroup);
 
         _.forEach(layerPeriods, function (layer) {
-            layerGroup.find(".layerGroupLayers").append(mapBusStopLayer({ selected: layer.selected ? "checked" : "", id:layer.id, name: layer.label}));
+            layerGroup.find(".layerGroupLayers").append(prepareLayerSelection(layer));
         });
-
         layerGroup.append(actionButtons);
         layerGroup.append(editButton);
         layerGroup.append(readyButton);
@@ -68,15 +83,6 @@ window.AssetActionPanel = function(identifier, header, icon) {
     var bindEvents =  function() {
         jQuery(".panelControl").on("click", function() {
             togglePanel();
-        });
-
-        jQuery(".layerSelector_"+identifier).on("change", function() {
-            var selectedValidityPeriods = $('input.layerSelector_'+identifier).filter(function(_, v) {
-                return $(v).is(':checked');
-            }).map(function(_, v) {
-                return $(v).attr('data-validity-period');
-            }).toArray();
-            eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
         });
 
         jQuery(".actionButton").on("click", function() {
@@ -114,14 +120,13 @@ window.AssetActionPanel = function(identifier, header, icon) {
     };
 
     var toggleEditMode = function(readOnly) {
-            changeTool('Select');
-            eventbus.trigger('asset:unselected');
-            eventbus.trigger('application:readOnly', readOnly);
-            jQuery('.editMessage').toggleClass('readOnlyModeHidden');
-            layerGroup.find('.layerGroup').toggleClass('layerGroupSelectedMode');
-            layerGroup.find('.layerGroup').toggleClass('layerGroupEditMode');
-
-        };
+        changeTool('Select');
+        eventbus.trigger('asset:unselected');
+        eventbus.trigger('application:readOnly', readOnly);
+        jQuery('.editMessage').toggleClass('readOnlyModeHidden');
+        layerGroup.find('.layerGroup').toggleClass('layerGroupSelectedMode');
+        layerGroup.find('.layerGroup').toggleClass('layerGroupEditMode');
+    };
 
     var togglePanel = function() {
         jQuery(".actionPanel").toggleClass('actionPanelClosed');
