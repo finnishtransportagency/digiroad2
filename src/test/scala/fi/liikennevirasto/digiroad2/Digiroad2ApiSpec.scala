@@ -185,6 +185,16 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("write requests pass only if user is not in viewer role", Tag("db")) {
+    postJsonWithUserAuth("/assets/", Array(), username = "testviewer") {
+      status should equal(401)
+    }
+    postJsonWithUserAuth("/assets/", Array()) {
+      // no asset id given, returning 404 is legal
+      status should equal(404)
+    }
+  }
+
   test("get available properties for asset type", Tag("db")) {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
