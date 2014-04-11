@@ -31,7 +31,9 @@ object OracleLinearAssetDao {
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join ROAD_LINK rl on pos.road_link_id = rl.id
-        group by a.id""".as[(Long, Array[Byte])].list
+        group by a.id, rl.id
+        order by rl.id
+        """.as[(Long, Array[Byte])].list
     linearAssets.map { case (id, pos) =>
       val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
       (id, points.map { pointArray =>

@@ -213,23 +213,14 @@ class AssetDataImporter {
 
   def importSpeedLimits(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
     val segments = dataSet.database().withDynSession {
-      /*
       sql"""
-       select SEGM_ID,
-              stragg('insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, '|| tielinkki_id || ',' || alkum || ',' || loppum ||')') insert_exprs
-         from SPEED_LIMITS
-         where rownum < 10
+       select sl.SEGM_ID,
+              stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
+         from SPEED_LIMITS sl
+         left join tielinkki tl on sl.tielinkki_id = tl.id
+         where tl.kunta_nro = 091
          group by SEGM_ID
        """.as[(Int, String)].iterator()
-       */
-      sql"""
-       select SEGM_ID,
-              stragg(tielinkki_id || ';' || alkum || ';' || loppum) insert_exprs
-         from SPEED_LIMITS
-         where rownum < 10
-         group by SEGM_ID
-       """.as[(Int, String)].iterator()
-
     }
 
     Database.forDataSource(ds).withDynSession {
@@ -240,15 +231,10 @@ class AssetDataImporter {
         val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
         insertExprs.foreach { insertExpr =>
           val insertValues = insertExpr.split(";").toIterator
-          println(insertValues)
-          val decimalPattern = "#.###"
-          val newFormat = NumberFormat.getNumberInstance(Locale.US).asInstanceOf[DecimalFormat]
-          newFormat.applyPattern(decimalPattern)
           val roadLinkId = insertValues.next.toLong
-          val startMeasure = newFormat.format(insertValues.next).toDouble
-          val endMeasure   = newFormat.format(insertValues.next).toDouble
+          val startMeasure = insertValues.next.replace(',','.').toDouble
+          val endMeasure   = insertValues.next.replace(',','.').toDouble
 
-          println(roadLinkId +";"+ startMeasure + ";" + endMeasure)
 
           val lrmPositionId = generateId
           val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
@@ -257,6 +243,7 @@ class AssetDataImporter {
           ps.setDouble(3, startMeasure)
           ps.setDouble(4, endMeasure)
           ps.execute
+          ps.close
           sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrmPositionId)""".execute
         }
       }
