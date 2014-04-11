@@ -28,7 +28,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
-    asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue
+    asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue.getOrElse("")
   }
 
   private def parseCreated(s: String): String = {
