@@ -100,6 +100,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             featureAttributesElement.find('button.cancel').on('click', function() {
                 eventbus.trigger('asset:unselected');
                 me._closeAsset();
+                me._backend.getAsset(asset.id);
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
@@ -118,6 +119,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var newValidityDirection = data.propertyData[0].values[0].propertyValue;
             var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             validityDirection.attr('value', newValidityDirection);
+            this._selectedAsset.validityDirection = newValidityDirection;
             jQuery('.streetView').html(this._getStreetView());
         },
         
@@ -349,7 +351,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     } else if (feature.publicId === 'vaikutussuunta') {
                         feature.propertyValue = 2;
                         if (feature.values[0]) {
-                            feature.propertyValue = feature.values[0].propertyValue === 2 ? 3 : 2;
+                            feature.propertyValue = feature.values[0].propertyValue;
                         }
                         html += me._templates.featureDataTemplateButton(feature);
                     } else if (feature.propertyType === "multiple_choice") {

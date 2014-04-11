@@ -263,7 +263,7 @@ window.AssetLayer = function(map, roadLayer) {
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
                 var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
-                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
+                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * (validityDirection)));
             }
             var assetType = _.find(asset.propertyData, function(property) {
                 return property.publicId === 'pysakin_tyyppi';
