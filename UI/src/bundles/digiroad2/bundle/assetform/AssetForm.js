@@ -260,7 +260,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         },
         _propertyValuesOfTextElement: function(element) {
             return [{
-                propertyValue : 0,
+                propertyValue : element.val(),
                 propertyDisplayValue : element.val()
             }];
         },
@@ -292,7 +292,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
 
         _propertyValuesOfDateElement: function(element) {
             return _.isEmpty(element.val()) ? [] : [{
-                propertyValue : 0,
+                propertyValue : dateutil.finnishToIso8601(element.val()),
                 propertyDisplayValue : dateutil.finnishToIso8601(element.val())
             }];
         },
@@ -303,9 +303,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         _savePropertyData: function(propertyValues, publicId) {
             var propertyValue;
             if (publicId == 'pysakin_tyyppi' && _.isEmpty(propertyValues)) {
-                propertyValue = 99;
+                propertyValue = [{ propertyValue: 99 }];
             } else {
-                propertyValue = propertyValues.propertyValue;
+                propertyValue = propertyValues;
             }
             var me = this;
             me._backend.putAssetPropertyValue(this._featureDataAssetId, publicId, propertyValue);

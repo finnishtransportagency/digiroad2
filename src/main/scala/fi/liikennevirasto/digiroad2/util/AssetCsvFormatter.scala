@@ -174,14 +174,14 @@ object AssetCsvFormatter {
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopShelter: Seq[Long] = getItemsFromPropertyByPublicId("katos", asset.propertyData).map(x => x.propertyValue)
+    val busstopShelter: Seq[Long] = getItemsFromPropertyByPublicId("katos", asset.propertyData).map(x => x.propertyValue.toLong)
     val shelter = (if(busstopShelter.contains(2)) "katos" else "")
     (asset, shelter :: result)
   }
 
   private def addBusStopTypes(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopType: Seq[Long] = getItemsFromPropertyByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue)
+    val busstopType: Seq[Long] = getItemsFromPropertyByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")
     val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")

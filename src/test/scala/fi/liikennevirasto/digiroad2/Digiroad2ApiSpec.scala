@@ -113,19 +113,19 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("update asset property", Tag("db")) {
-    val body1 = write(List(PropertyValue(3)))
-    val body2 = write(List(PropertyValue(2)))
+    val body1 = write(List(PropertyValue("3")))
+    val body2 = write(List(PropertyValue("2")))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
         prop.values.size should be (1)
-        prop.values.head.propertyValue should be (3)
+        prop.values.head.propertyValue should be ("3")
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
           }
         }
       }
@@ -133,7 +133,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("delete and create asset property", Tag("db")) {
-    val propBody = write(List(PropertyValue(2)))
+    val propBody = write(List(PropertyValue("2")))
     deleteWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values") {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
@@ -142,7 +142,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId).get.values.head.propertyValue should be ("2")
           }
         }
       }
@@ -160,13 +160,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
-        val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
+        val prop = asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be (3)
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
+        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + AssetPropertyConfiguration.ValidToId + "/values", currentValidTo.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be (2)
+            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get.values.head.propertyValue should be (2)
           }
         }
       }

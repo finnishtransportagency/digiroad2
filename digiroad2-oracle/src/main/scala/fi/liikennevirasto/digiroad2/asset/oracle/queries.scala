@@ -27,7 +27,7 @@ object Queries {
 
   case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
-  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: Long, propertyDisplayValue: String)
+  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
   case class AssetRow(id: Long, externalId: Option[Long], assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[Timestamp], validTo: Option[Timestamp], property: PropertyRow,
@@ -54,9 +54,9 @@ object Queries {
       val propertyType = r.nextString
       val propertyUiIndex = r.nextInt
       val propertyRequired = r.nextBoolean
-      val propertyValue = r.nextLong
-      val propertyDisplayValue = r.nextString
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue, propertyDisplayValue)
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
       val lrmId = r.nextLong
       val startMeasure = r.nextInt
       val endMeasure = r.nextInt
