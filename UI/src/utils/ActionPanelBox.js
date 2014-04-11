@@ -26,10 +26,7 @@ window.AssetActionPanel = function(identifier, header, icon) {
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var handleAssetModified = function(asset) {
-        var $el = jQuery('input.layerSelector_'+identifier+'[data-validity-period=' + asset.validityPeriod + ']');
-        if (!$el.is(':checked')) {
-            $el.click();
-        }
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
     };
 
     var render =  function() {
