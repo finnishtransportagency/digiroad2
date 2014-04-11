@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
-import java.util.Properties
+import java.util.{Locale, Properties}
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
@@ -22,6 +22,8 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
+import java.sql.Statement
+import java.text.{DecimalFormat, NumberFormat}
 
 
 object AssetDataImporter {
@@ -207,6 +209,60 @@ class AssetDataImporter {
     insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
+  def generateId = sql"select primary_key_seq.nextval from dual".as[Long].first
+
+  def importSpeedLimits(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
+    val segments = dataSet.database().withDynSession {
+      /*
+      sql"""
+       select SEGM_ID,
+              stragg('insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, '|| tielinkki_id || ',' || alkum || ',' || loppum ||')') insert_exprs
+         from SPEED_LIMITS
+         where rownum < 10
+         group by SEGM_ID
+       """.as[(Int, String)].iterator()
+       */
+      sql"""
+       select SEGM_ID,
+              stragg(tielinkki_id || ';' || alkum || ';' || loppum) insert_exprs
+         from SPEED_LIMITS
+         where rownum < 10
+         group by SEGM_ID
+       """.as[(Int, String)].iterator()
+
+    }
+
+    Database.forDataSource(ds).withDynSession {
+      //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
+      segments.foreach { segment =>
+        val assetId = generateId
+        sqlu"""insert into asset (id, asset_type_id) values ($assetId, 666)""".execute
+        val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
+        insertExprs.foreach { insertExpr =>
+          val insertValues = insertExpr.split(";").toIterator
+          println(insertValues)
+          val decimalPattern = "#.###"
+          val newFormat = NumberFormat.getNumberInstance(Locale.US).asInstanceOf[DecimalFormat]
+          newFormat.applyPattern(decimalPattern)
+          val roadLinkId = insertValues.next.toLong
+          val startMeasure = newFormat.format(insertValues.next).toDouble
+          val endMeasure   = newFormat.format(insertValues.next).toDouble
+
+          println(roadLinkId +";"+ startMeasure + ";" + endMeasure)
+
+          val lrmPositionId = generateId
+          val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
+          ps.setLong(1, lrmPositionId)
+          ps.setLong(2, roadLinkId)
+          ps.setDouble(3, startMeasure)
+          ps.setDouble(4, endMeasure)
+          ps.execute
+          sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrmPositionId)""".execute
+        }
+      }
+    }
+  }
+
   private def busStopsToImport(dataSet: ImportDataSet) = {
     val table = dataSet.busStopTable
     dataSet.database().withDynSession {
@@ -218,7 +274,7 @@ class AssetDataImporter {
 
   def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition], targetDbSession: Session) {
     var elementCount = 0
-    val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
+      val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
     def batch(lrm: SimpleLRMPosition) {
       ps.setLong(1, lrm.id)
       ps.setLong(2, lrm.roadLinkId)
