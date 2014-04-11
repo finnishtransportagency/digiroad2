@@ -70,7 +70,6 @@
     };
 
     function putAssetPropertyValue(assetId, propertyPublicId, data) {
-console.log("UPDATE PROPERTY: " + JSON.stringify(data));
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
