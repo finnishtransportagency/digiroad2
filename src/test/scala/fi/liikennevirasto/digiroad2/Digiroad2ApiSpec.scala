@@ -149,30 +149,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("update date property", Tag("db")) {
-    val currentValidTo = getWithUserAuth("/assets/" + CreatedTestAssetId) {
-      val a = parse(body).extract[AssetWithProperties]
-      val prop = a.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get
-      prop.values.head.propertyDisplayValue.get
-    }
-/*    val newValidTo = write(List(PropertyValue("2014-03-10")))
-    putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + AssetPropertyConfiguration.ValidToId + "/values", newValidTo.getBytes) {
-      status should equal(200)
-      getWithUserAuth("/assets/" + CreatedTestAssetId) {
-        val asset = parse(body).extract[AssetWithProperties]
-        val prop = asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get
-        prop.values.size should be (1)
-        prop.values.head.propertyValue should be (3)
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + AssetPropertyConfiguration.ValidToId + "/values", currentValidTo.getBytes) {
-          status should equal(200)
-          getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == AssetPropertyConfiguration.ValidToId).get.values.head.propertyValue should be (2)
-          }
-        }
-      }
-    }
-*/  }
-
   test("get past assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {
       status should equal(200)
