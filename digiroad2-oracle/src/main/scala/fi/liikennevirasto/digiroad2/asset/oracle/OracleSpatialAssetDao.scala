@@ -74,7 +74,8 @@ object OracleSpatialAssetDao {
   private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
       val row = v.toSeq(0)
-      Property(row.property.propertyId, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired, v.map(r => PropertyValue(r.property.propertyValue, r.property.propertyDisplayValue, getImageId(r.image))).filter(_.propertyDisplayValue != null).toSeq)
+      Property(row.property.propertyId, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
+        v.map(r => PropertyValue(r.property.propertyValue, (if (r.property.propertyDisplayValue != null) Some(r.property.propertyDisplayValue) else None) , getImageId(r.image))).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
 
@@ -183,7 +184,7 @@ object OracleSpatialAssetDao {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).list(assetTypeId).groupBy(_.propertyId).map { case (k, v) =>
       val row = v(0)
-      EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value, r.displayValue)).toSeq)
+      EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value.toString, Some(r.displayValue))).toSeq)
     }.toSeq
   }
 
@@ -226,17 +227,17 @@ object OracleSpatialAssetDao {
         if (propertyValues.size == 0) {
           deleteTextProperty(assetId, propertyId).execute()
         } else if (createNew) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyDisplayValue).execute()
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value")
         if (createNew) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
         }
       }
       case MultipleChoice => {
@@ -252,7 +253,7 @@ object OracleSpatialAssetDao {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue.toString).contains(newVal))
+          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
         } match {
           case Some(propValues) => {
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute()
@@ -260,10 +261,10 @@ object OracleSpatialAssetDao {
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }
-      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyDisplayValue).execute()
+      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue).execute()
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
-        val optionalDateTime = propertyValues.headOption.map(_.propertyDisplayValue).map(formatter.parseDateTime)
+        val optionalDateTime = propertyValues.headOption.map(_.propertyValue).map(formatter.parseDateTime)
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute()
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
@@ -296,7 +297,7 @@ object OracleSpatialAssetDao {
       !currentValues.contains(_)
     }.foreach {
       v =>
-        insertMultipleChoiceValue(assetId, propertyId, v).execute()
+        insertMultipleChoiceValue(assetId, propertyId, v.toLong).execute()
     }
   }
 

@@ -20,9 +20,9 @@ object AssetPropertyConfiguration {
     LangSv -> Map()
   )
 
-  val ValidityDirectionSame = 2
-  val ValidityDirectionOpposite = 3
-  val validityDirectionValues = Seq(PropertyValue(ValidityDirectionSame, "Digitointisuuntaan"),PropertyValue(ValidityDirectionOpposite, "Digitointisuuntaa vastaan"))
+  val ValidityDirectionSame = "2"
+  val ValidityDirectionOpposite = "3"
+  val validityDirectionValues = Seq(PropertyValue(ValidityDirectionSame, Some("Digitointisuuntaan")),PropertyValue(ValidityDirectionOpposite, Some("Digitointisuuntaa vastaan")))
   val enumeratedValidityDirectionValues = EnumeratedPropertyValue(0, ValidityDirectionId, "Vaikutussuunta", SingleChoice, values = validityDirectionValues)
 
   val commonAssetPropertyEnumeratedValues: Seq[EnumeratedPropertyValue] = List(enumeratedValidityDirectionValues)
@@ -36,17 +36,17 @@ object AssetPropertyConfiguration {
   )
 
   def assetRowToCommonProperties(row: AssetRow): Seq[Property] = {
-    List(
+   List(
       createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
       createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
-      commonAssetProperties(ValidityDirectionId).propertyDescriptor.copy(values = Seq(validityDirectionValues.find(_.propertyValue == row.validityDirection).getOrElse(PropertyValue(0, "")))),
+      commonAssetProperties(ValidityDirectionId).propertyDescriptor.copy(values = Seq(validityDirectionValues.find(_.propertyValue.toInt == row.validityDirection).getOrElse(PropertyValue("", None)))),
       createProperty(ValidFromId, row.validFrom.map(_.toString)),
       createProperty(ValidToId, row.validTo.map(_.toString))
     )
   }
 
   private def createProperty(id: String, value: Option[String]): Property = {
-    commonAssetProperties(id).propertyDescriptor.copy(values = Seq(PropertyValue(0, value.getOrElse(null))))
+    commonAssetProperties(id).propertyDescriptor.copy(values = Seq(PropertyValue(value.getOrElse(""), value)))
   }
 
   private def createProperty(id: String, value: Option[String], dateTime: Option[DateTime]): Property = {
