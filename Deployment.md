@@ -1,0 +1,21 @@
+Käyttöönotto
+============
+
+Ympäristön käyttöönotto on automatisoitu [Capistranolla](http://capistranorb.com/).
+
+Käyttöönotto on määritelty `deploy.rb` tiedostossa. Kyseisellä Capistrano-määritelmällä voidaan Digiroad2-järjestelmä asentaa haluttuun ympäristöön.
+
+Liikennevirastolla käyttöönotto on määritelty seuraaville ympäristöille:
+* Tuotantoympäristö, jonka asetukset on määritelty `production.rb` tiedostossa
+* Testiympäristö, jonka asetukset on määritelty `staging.rb` tiedostossa.
+
+Oracle-kantojen alustus ja päivitys
+-------------------------------------
+
+Käyttöönotto alustaa tarvittaessa Oracle-tietokannan ja skeemat. Tietokannan alustuksessa tietokantayhteyden määritykseen käytetään samaa `bonecp.properties` tiedostoa kuin järjestelmän ajossa. Katso lisätietoja [Digiroad-2](README.md) artikkelista.
+
+Digiroad2:n Oracle-kanta on versioitu. Käyttöönotossa tarkistetaan onko käyttöönotettava järjestelmä riippuva uudemmasta kantaversiosta kuin käytössä oleva. Mikäli kanta on vanhempaa versiota viedään kanta automaattisesti uusimpaan versioon käyttäen tietokantamigraatiomäärityksiä jotka on tallennettu `db.migration` paketissa `digiroad2-oracle` projektissa.
+
+Tietokannan versio ylläpidetään tietokannassa itsessään taulussa `schema_version`.
+
+Tietokannan automaattinen päivitys on toteutettu [Flyway](http://flywaydb.org/) tietokantamigraatiotyökalulla.
