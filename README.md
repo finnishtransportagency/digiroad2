@@ -1,5 +1,5 @@
-digi-road-2
-===========
+Digiroad2
+=========
 
 Ympäristön pystytys
 ===================
@@ -131,3 +131,5 @@ Käyttäjiä voi päivittää ja lisätä käyttäen `import-users-from-csv.sh` 
 ./import-users-from-csv.sh <digiroad2-palvelin:portti> <ylläpitäjän-tunnus> <polku-csv-tiedostoon>
 ```
 
+[Käyttöönotto ja version päivitys](Deployment.md)
+=================================================
