@@ -80,10 +80,7 @@ window.AssetLayer = function(map, roadLayer) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
             clickTimestamp = null;
-            var bearing = "0";
-            if (selectedAsset) {
-                bearing = selectedAsset.data.roadDirection;
-            }
+
             // Opacity back
             asset.marker.setOpacity(1);
             asset.marker.actionMouseDown = false;
@@ -91,6 +88,8 @@ window.AssetLayer = function(map, roadLayer) {
             map.events.unregister("mouseup", map, mouseUpFunction);
             // Moved update
             if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
+                eventbus.trigger('asset:moved', asset);
+            /*
                 var data = {
                     assetTypeId: asset.data.assetTypeId,
                     lon: asset.marker.lonlat.lon,
@@ -99,6 +98,7 @@ window.AssetLayer = function(map, roadLayer) {
                     bearing: bearing
                 };
                 backend.updateAssetPosition(asset.data.id, data);
+            */
             }
             assetIsMoving = false;
             var streetViewCoordinates = { lonLat: asset.marker.lonlat };
@@ -131,6 +131,7 @@ window.AssetLayer = function(map, roadLayer) {
             //register up
             map.events.register("mouseup", map, mouseUpFn, true);
             mouseUpFunction = mouseUpFn;
+            // TODO show asset properties
         };
     };
 

@@ -73,6 +73,22 @@
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",
+            url: "api/assets/" + id + "?propertiesOnly=true",
+            data: JSON.stringify(data),
+            dataType:"json",
+            success: function(asset) {
+                eventbus.trigger('asset:saved asset:fetched', asset, true);
+            },
+            error: function() {
+                console.log("error");
+            }
+        });
+    };
+
+    backend.updateAsset = function(id, data) {
+        jQuery.ajax({
+            contentType: "application/json",
+            type: "PUT",
             url: "api/assets/" + id,
             data: JSON.stringify(data),
             dataType:"json",

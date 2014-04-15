@@ -102,28 +102,41 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: handle missing roadLinkId
   put("/assets/:id") {
-    params.get("positionOnly") match {
-      case None => {
-        assetProvider.updateAsset(
-          params("id").toLong,
-          (parsedBody \ "bearing").extract[Int],
-          (parsedBody \ "properties").extract[Seq[SimpleProperty]])
+    val additionalParams = (params.get("positionOnly"), params.get("propertiesOnly"))
+    additionalParams match {
+      case (None, Some(_)) => {
+        saveAssetProperties(params("id").toLong, parsedBody)
+      }
+      case (Some(_), None) => {
+        saveAssetPosition(params("id").toLong, parsedBody)
       }
       case _ => {
-        val (lon, lat, roadLinkId, bearing) =
-          ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
-          (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-        val updated =
-          assetProvider.updateAssetLocation(
-            id = params("id").toLong,
-            lon = lon.get,
-            lat = lat.get,
-            roadLinkId = roadLinkId.get,
-            bearing = bearing)
-        logger.debug("Asset updated: " + updated)
-        updated
+        saveAssetProperties(params("id").toLong, parsedBody)
+        saveAssetPosition(params("id").toLong, parsedBody)
       }
     }
+  }
+
+  private[this] def saveAssetPosition(id: Long, parsedBody: JValue) = {
+    val (lon, lat, roadLinkId, bearing) =
+      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
+        (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
+    val updated =
+      assetProvider.updateAssetLocation(
+        id = id,
+        lon = lon.get,
+        lat = lat.get,
+        roadLinkId = roadLinkId.get,
+        bearing = bearing)
+    logger.debug("Asset position updated: " + updated)
+    updated
+  }
+
+  private[this] def saveAssetProperties(id: Long, parsedBody: JValue) = {
+    assetProvider.updateAsset(
+      id,
+      (parsedBody \ "bearing").extract[Int],
+      (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
   post("/asset") {
