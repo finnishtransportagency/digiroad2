@@ -103,10 +103,18 @@ class AssetDataImporter {
     }
   }
 
-  private def getBatchDrivers(size: Int) = {
+  private def getBatchDrivers(size: Int): List[(Int, Int)] = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
-    x :+ (x.last._2 + 1, size)
+    getBatchDrivers(1, size, 500)
+  }
+
+  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
+    if (m < step) {
+      List((n, m))
+    } else {
+      val x = ((n to m by step).sliding(2).map(x => (x(0), x(1) - 1))).toList
+      x :+ (x.last._2 + 1, m)
+    }
   }
 
   private def roadLinksToImport(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
@@ -211,41 +219,106 @@ class AssetDataImporter {
 
   def generateId = sql"select primary_key_seq.nextval from dual".as[Long].first
 
+  var insertSpeedLimitsCount = 0;
+
   def importSpeedLimits(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
-    val segments = dataSet.database().withDynSession {
+
+    val count = dataSet.database().withDynSession {
+      sql"""
+        select count(segm_id)
+          from SPEED_LIMITS
+          """.as[Int].list().head
+    }
+    val min = dataSet.database().withDynSession {
+      sql"""
+        select min(segm_id)
+          from SPEED_LIMITS sl
+          order by segm_id asc
+          """.as[Int].list().head
+    }
+    val max = dataSet.database().withDynSession {
+      sql"""
+        select max(segm_id)
+          from SPEED_LIMITS sl
+          order by segm_id desc
+          """.as[Int].list().head
+    }
+
+
+
+    val startSelect = System.currentTimeMillis()
+    val queries = getBatchDrivers(min, max, 10000).view.map { case (n, m) =>
       sql"""
        select sl.SEGM_ID,
               stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
          from SPEED_LIMITS sl
-         left join tielinkki tl on sl.tielinkki_id = tl.id
-         where tl.kunta_nro = 091
+         where segm_id between $n and $m
          group by SEGM_ID
-       """.as[(Int, String)].iterator()
-    }
+         order by segm_id
+       """
+    }.par
 
-    Database.forDataSource(ds).withDynSession {
-      //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
-      segments.foreach { segment =>
-        val assetId = generateId
-        sqlu"""insert into asset (id, asset_type_id) values ($assetId, 666)""".execute
-        val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
-        insertExprs.foreach { insertExpr =>
-          val insertValues = insertExpr.split(";").toIterator
-          val roadLinkId = insertValues.next.toLong
-          val startMeasure = insertValues.next.replace(',','.').toDouble
-          val endMeasure   = insertValues.next.replace(',','.').toDouble
+    queries.tasksupport = new ForkJoinTaskSupport(taskPool)
+    queries.foreach { query =>
+      val segments = dataSet.database().withDynSession {
+        query.as[(Int, String)].iterator()
+      }
+      Database.forDataSource(ds).withDynSession {
+        //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
+        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 666)")
+        val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
+        val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+        //val startTime = System.currentTimeMillis()
+        segments.foreach { segment =>
+          val assetId = generateId
+          assetPS.setLong(1, assetId)
+          assetPS.addBatch()
 
 
-          val lrmPositionId = generateId
-          val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
-          ps.setLong(1, lrmPositionId)
-          ps.setLong(2, roadLinkId)
-          ps.setDouble(3, startMeasure)
-          ps.setDouble(4, endMeasure)
-          ps.execute
-          ps.close
-          sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrmPositionId)""".execute
+          val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
+
+          insertExprs.foreach { insertExpr =>
+            val insertValues = insertExpr.replace(',','.').split(";").toIterator
+            val roadLinkId = insertValues.next.toLong
+            val startMeasure = insertValues.next.toDouble
+            val endMeasure   = insertValues.next.toDouble
+
+
+            val lrmPositionId = generateId
+
+            ps.setLong(1, lrmPositionId)
+            ps.setLong(2, roadLinkId)
+            ps.setDouble(3, startMeasure)
+            ps.setDouble(4, endMeasure)
+            ps.addBatch()
+
+            assetLinkPS.setLong(1, assetId);
+            assetLinkPS.setLong(2, lrmPositionId);
+            assetLinkPS.addBatch();
+            insertSpeedLimitsCount += 1;
+          }
+
         }
+        assetPS.executeBatch()
+        ps.executeBatch()
+        assetLinkPS.executeBatch()
+        assetPS.close();
+        ps.close()
+        assetLinkPS.close()
+        var timeNow = System.currentTimeMillis()
+        var average =  (timeNow-startSelect)/insertSpeedLimitsCount
+        var speedLimitsLeft = count-insertSpeedLimitsCount;
+        var leftHours = speedLimitsLeft*average/(1000*60*60)
+        var leftMins = speedLimitsLeft*average/(1000*60)%60
+        //val time = timeNow - startTime
+        //if (time > 5) {
+          printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin",
+            (timeNow - startSelect)/60000,
+            count, insertSpeedLimitsCount, insertSpeedLimitsCount/(count*1.0) * 100,
+            average,
+            leftHours, leftMins);
+        //}
       }
     }
   }

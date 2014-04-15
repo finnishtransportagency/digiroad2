@@ -142,7 +142,7 @@ object DataFixture {
         importBusStopsFromConversion(dataImporter, taskPool)
 
       case Some("speedlimits") =>
-        val taskPool = new ForkJoinPool(1)
+        val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
 
       case Some("AdminIdUpdate") =>
