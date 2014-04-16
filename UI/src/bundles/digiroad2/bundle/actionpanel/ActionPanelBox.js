@@ -26,8 +26,8 @@ window.AssetActionPanel = function(identifier, header, icon) {
             '</div>');
 
     var editButton = jQuery('<button class="editMode actionModeButton">Muokkaa</button>');
-    var readyButton = jQuery('<button class="readOnlyMode actionModeButton editModeHidden">Valmis</button>');
-    var editMessage = '<div class="editMessage readOnlyModeHidden">Muokkaustila: muutokset tallentuvat automaattisesti</div>';
+    var readyButton = jQuery('<button class="readOnlyMode actionModeButton editModeHidden">Siirry katselutilaan</button>');
+    var editMessage = '<div class="editMessage readOnlyModeHidden">Olet muokkaustilassa</div>';
 
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
     var readOnly = true;
