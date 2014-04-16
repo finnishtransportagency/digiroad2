@@ -74,8 +74,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             eventbus.on('asset:moved', function(asset) {
                 this._selectedAsset.lon = asset.marker.lonlat.lon;
                 this._selectedAsset.lat = asset.marker.lonlat.lat;
-                this._selectedAsset.bearing = asset.data.roadDirection; // FIXME vaikutussuunta
                 this._selectedAsset.roadLinkId = asset.roadLinkId;
+                jQuery('.streetView').html(this._getStreetView());
             }, this);
             
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
@@ -87,7 +87,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             this._selectedAsset = asset;
             me._featureDataAssetId = asset.id;
-            var position = {bearing: asset.bearing, lonLat: {lon: asset.lon, lat: asset.lat}, validityDirection: asset.validityDirection};
             var featureData = me._makeContent(asset.propertyData);
             var streetView = me._getStreetView();
             var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });

@@ -89,27 +89,15 @@ window.AssetLayer = function(map, roadLayer) {
             // Moved update
             if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
                 eventbus.trigger('asset:moved', asset);
-            /*
-                var data = {
-                    assetTypeId: asset.data.assetTypeId,
-                    lon: asset.marker.lonlat.lon,
-                    lat: asset.marker.lonlat.lat,
-                    roadLinkId: asset.roadLinkId,
-                    bearing: bearing
-                };
-                backend.updateAssetPosition(asset.data.id, data);
-            */
             }
             assetIsMoving = false;
-            var streetViewCoordinates = { lonLat: asset.marker.lonlat };
-            mouseClickFn(evt, streetViewCoordinates);
         };
     };
 
     var clickTimestamp;
     var clickCoords;
     var assetIsMoving = false;
-    var mouseDown = function(asset, mouseUpFn) {
+    var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             clickTimestamp = new Date().getTime();
             clickCoords = [evt.clientX, evt.clientY];
@@ -131,7 +119,7 @@ window.AssetLayer = function(map, roadLayer) {
             //register up
             map.events.register("mouseup", map, mouseUpFn, true);
             mouseUpFunction = mouseUpFn;
-            // TODO show asset properties
+            mouseClickFn(asset);
         };
     };
 
@@ -159,7 +147,7 @@ window.AssetLayer = function(map, roadLayer) {
         asset.directionArrow = directionArrow;
         var mouseClickFn = mouseClick(asset);
         var mouseUpFn = mouseUp(asset, mouseClickFn);
-        var mouseDownFn = mouseDown(asset, mouseUpFn);
+        var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
         marker.validityPeriod = assetData.validityPeriod;
         if (!_.contains(selectedValidityPeriods, assetData.validityPeriod)) {
