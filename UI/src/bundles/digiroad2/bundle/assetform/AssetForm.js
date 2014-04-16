@@ -391,7 +391,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             var options = '<select data-publicId="'+publicId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
             var valuesNro = _.map(values, function(x) { return x.propertyValue;});
-            var selected = _.size(valuesNro) > 0 ? valuesNro : [99]; // default value 99 if none is selected
+            var selected = _.size(valuesNro) > 0 ? valuesNro : ['99']; // default value 99 if none is selected
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
             _.forEach(propertyValues.values,
                 function(optionValue) {
@@ -411,7 +411,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
         },
         _getMultiCheckbox: function(name, values, publicId) {
-            var invalidValues = [99];
+            var invalidValue = '99';
             var me = this;
             var checkboxes = '<div data-publicId="' + publicId +
                 '" name="' + name +
@@ -420,7 +420,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
             _.forEach(propertyValues.values,
                 function(inputValue) {
-                    if (!_.contains(invalidValues, inputValue.propertyValue)) {
+                    if (invalidValue !== inputValue.propertyValue) {
                         var checkedValue = '';
                         if (_.contains(valuesNro, inputValue.propertyValue)) {
                             checkedValue = 'checked ';
