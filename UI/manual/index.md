@@ -276,7 +276,7 @@ _Joukkoliikenteen pysäkin siirtäminen._
 5.1.3 Uuden pysäkin lisääminen
 ----------------------------
 
-Uusia pysäkkejä voi lisätä, kun mittakaavataso on 1:10 000 (9) tai tarkempi. Uusi pysäkki luodaan klikkaamalla kartan tiestöstä haluttu sijainti pysäkille lisäystyökalulla (13). Jos valitulla kohdalla ei ole tielinkkiä, muodostuu pysäkki lähimmälle tielinkille. Jos pysäkin yrittää luoda liian kauas lähimmästä tielinkistä, ei pysäkkiä muodostu. Uusi pysäkki on korostettu sinisellä värillä (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustietonäkymä (6), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot. 
+Uusia pysäkkejä voi lisätä, kun mittakaavataso on 10 tai tarkempi. Tämä mittakaavataso on yhtä tasoa tarkempi kuin uloin mittakaavataso jolla pysäkit näytetään. Uusi pysäkki luodaan klikkaamalla kartan tiestöstä haluttu sijainti pysäkille lisäystyökalulla (13). Jos valitulla kohdalla ei ole tielinkkiä, muodostuu pysäkki lähimmälle tielinkille. Jos pysäkin yrittää luoda liian kauas lähimmästä tielinkistä, ei pysäkkiä muodostu. Uusi pysäkki on korostettu sinisellä värillä (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustietonäkymä (6), jossa pysäkille tallennetaan tiedossa olevat ominaisuustiedot.
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niitä ei määritetä. “Ensimmäinen voimassaolopäivä” oletetaan meneillään olevaksi päivämääräksi. Pysäkin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Ylläpitäjä oletetaan kunnaksi. Pysäkin tyypiksi asetetaan “ei tietoa”. Kaikkien varusteiden oletusarvo on “ei”. Lisäksi valtakunnallinen tunnus muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eikä käyttäjän tarvitse sitä itse asettaa. 
 
