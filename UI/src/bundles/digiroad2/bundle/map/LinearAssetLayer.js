@@ -31,15 +31,17 @@ window.LinearAssetLayer = function(map, roadLayer) {
             }
             controls.select.activate();
             if (8 < map.getZoom() && vectorLayer.map) {
-              Backend.getLinearAssets(666, map.getExtent);
+              Backend.getLinearAssets(666, map.getExtent());
             }
         }
     }, this);
 
     eventbus.on('map:moved', function(state) {
-      if (8 < state.zoom && vectorLayer.map) {
-          Backend.getLinearAssets(666, state.bbox);
-      }
+        if (8 < state.zoom && vectorLayer.map) {
+            Backend.getLinearAssets(666, state.bbox);
+        } else {
+            vectorLayer.removeAllFeatures();  
+        }
     }, this);
 
     eventbus.on('linearAssets:fetched', function(linearAssets) {
