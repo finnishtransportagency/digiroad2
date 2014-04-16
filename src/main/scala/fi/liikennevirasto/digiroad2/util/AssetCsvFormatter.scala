@@ -9,7 +9,7 @@ object AssetCsvFormatter {
 
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
                "ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;" +
-               "VIRTUAL_STOP;EQUIPMENTS;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
+               "VIRTUAL_STOP;EQUIPMENT;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
   val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
@@ -169,7 +169,8 @@ object AssetCsvFormatter {
   private def addReachability(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val reachability = getItemsFromPropertyByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
-    (asset, reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    val value = reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
+    (asset, (if(value.equalsIgnoreCase("ei tiedossa")) "" else value) :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
