@@ -62,7 +62,7 @@ object OracleSpatialAssetDao {
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
     }
-    }
+  }
 
   private[oracle] def getImageId(image: Image) = {
     image.imageId match {
@@ -169,6 +169,18 @@ object OracleSpatialAssetDao {
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
+    updateProperties(assetId, properties)
+    getAssetById(assetId).get
+  }
+
+  def updateAsset(assetId: Long, updater: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    // FIXME update bearing
+    updateProperties(assetId, properties)
+    updateAssetModified(assetId, updater)
+    getAssetById(assetId).get
+  }
+
+  private[this] def updateProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.foreach { property =>
       if (!property.values.isEmpty) {
         if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
@@ -178,7 +190,6 @@ object OracleSpatialAssetDao {
         }
       }
     }
-    getAssetById(assetId).get
   }
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
