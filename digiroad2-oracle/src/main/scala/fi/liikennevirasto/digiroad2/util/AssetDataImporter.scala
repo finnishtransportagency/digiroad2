@@ -247,7 +247,7 @@ class AssetDataImporter {
 
 
     val startSelect = System.currentTimeMillis()
-    val queries = getBatchDrivers(min, max, 10000).view.map { case (n, m) =>
+    val queries = getBatchDrivers(min, max, 500).view.map { case (n, m) =>
       sql"""
        select sl.SEGM_ID,
               stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
@@ -260,8 +260,9 @@ class AssetDataImporter {
 
     queries.tasksupport = new ForkJoinTaskSupport(taskPool)
     queries.foreach { query =>
+      var selectStartTime = System.currentTimeMillis();
       val segments = dataSet.database().withDynSession {
-        query.as[(Int, String)].iterator()
+        query.as[(Int, String)].list()
       }
       Database.forDataSource(ds).withDynSession {
         //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
@@ -306,20 +307,23 @@ class AssetDataImporter {
         assetPS.close();
         ps.close()
         assetLinkPS.close()
-        var timeNow = System.currentTimeMillis()
-        var average =  (timeNow-startSelect)/insertSpeedLimitsCount
-        var speedLimitsLeft = count-insertSpeedLimitsCount;
-        var leftHours = speedLimitsLeft*average/(1000*60*60)
-        var leftMins = speedLimitsLeft*average/(1000*60)%60
+
         //val time = timeNow - startTime
         //if (time > 5) {
-          printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin",
-            (timeNow - startSelect)/60000,
-            count, insertSpeedLimitsCount, insertSpeedLimitsCount/(count*1.0) * 100,
-            average,
-            leftHours, leftMins);
+
         //}
       }
+      var timeNow = System.currentTimeMillis()
+      var average =  (timeNow-startSelect)/insertSpeedLimitsCount
+      var speedLimitsLeft = count-insertSpeedLimitsCount;
+      var leftHours = speedLimitsLeft*average/(1000*60*60)
+      var leftMins = speedLimitsLeft*average/(1000*60)%60
+      printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin | select time: %dms",
+        (timeNow - startSelect)/60000,
+        count, insertSpeedLimitsCount, insertSpeedLimitsCount/(count*1.0) * 100,
+        average,
+        leftHours, leftMins,
+        timeNow - selectStartTime);
     }
   }
 
