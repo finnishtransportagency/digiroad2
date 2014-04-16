@@ -3,7 +3,7 @@ __DIGIROAD-SOVELLUKSEN KÄYTTÖOHJE__
 
 ###Katselutila###
 
-![Katselutila](/UI/manual/k0.jpg)
+![Katselutila](k0.jpg)
 
 _Katselutila._
 
@@ -20,7 +20,7 @@ _Katselutila._
 
 ###Muokkaustila###
 
-![Muokkaustila](/UI/manual/k1.jpg)
+![Muokkaustila](k1.jpg)
 
 _Muokkaustila._
 
@@ -65,13 +65,13 @@ pysakit@digiroad.fi
 
 Digiroad-selainsovellukseen kirjaudutaan osoitteessa: https://testiextranet.liikennevirasto.fi/digiroad/. Kirjautumiseen tarvitaan voimassa olevat Liikenneviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. s.5).
 
-![Kirjautuminen Digiroadiin.](/UI/manual/k2.PNG)
+![Kirjautuminen Digiroadiin.](k2.PNG)
 
 _Kirjautuminen Digiroadiin._
 
 Kirjautumisen jälkeen avautuu Digiroad-selainsovelluksen karttakäyttöliittymän katselutila. Maantieteellisesti kartalla on näkyvissä alue, johon käyttäjällä on päivitysoikeudet (kts. s.5).
 
-![Katselutila](/UI/manual/k3.jpg)
+![Katselutila](k3.jpg)
 
 _Karttakäyttöliittymän katselutila._
 
@@ -84,11 +84,11 @@ Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen jälkeen a
 
 Muokkaustilan saa aktivoitua klikkaamalla “Muokkaa”-painiketta (3). Muokkaustilassa kartan yläosassa on teksti “Muokkaustila: muutokset tallentuvat automaattisesti” (14). Muokkaustilassa kaikki tehdyt muutokset tallentuvat automaattisesti. Takaisin katselutilaan pääsee klikkaamalla “Valmis”-painiketta (11).
 
-![Katselutila](/UI/manual/k3.jpg)
+![Katselutila](k3.jpg)
 
 _Katselutila._
 
-![Muokkaustila](/UI/manual/k4.jpg)
+![Muokkaustila](k4.jpg)
 
 _Muokkaustila._
 
@@ -107,7 +107,7 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+
 
 Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
 
-![Karttanäkymän muokkaus](/UI/manual/k5.jpg)
+![Karttanäkymän muokkaus](k5.jpg)
 
 _Karttanäkymän muokkaus._
 
@@ -118,7 +118,7 @@ Karttanäkymään voi valita pysäkkejä klikkaamalla “Joukkoliikenteen pysäk
 
 Joukkoliikenteen pysäkit näkyvät vain tarpeeksi tarkalla mittakaavatasolla, joka on  1:20 000 tai tarkempi (9). Sovellus ilmoittaa, kun mittakaavataso on liian epätarkka pysäkkien näkymiselle. Mittakaavataso pysäkkien näkymiselle on sama sekä katselu- että muokkaustilassa.
 
-![Pysäkkien valinta](/UI/manual/k7.jpg)
+![Pysäkkien valinta](k7.jpg)
 
 _Joukkoliikenteen pysäkkien valinta._
 
@@ -130,7 +130,7 @@ https://testiextranet.liikennevirasto.fi/digiroad/#/asset/95374  (15)
 
 missä numerosarja 95374 on pysäkin kansallinen ID. Toiminto tarkentaa karttakäyttöliittymän katselutilan haetun pysäkin kohdalle. Pysäkki saa sinisen korostusvärin (4) ja sen ominaisuustietonäkymä (6) aukeaa sivun oikealle puolelle.
 
-![Pysäkkien haku](/UI/manual/k6.jpg)
+![Pysäkkien haku](k6.jpg)
 
 _Joukkoliikenteen pysäkkien haku._
 
@@ -139,7 +139,7 @@ _Joukkoliikenteen pysäkkien haku._
 
 Karttanäkymään voi valita nopeusrajoitukset klikkaamalla “Nopeusrajoitukset”-painiketta (2).
 
-![Nopeusrajoitusten valinta](/UI/manual/k8.jpg)
+![Nopeusrajoitusten valinta](k8.jpg)
 
 _Nopeusrajoitusten valinta._
 
@@ -155,7 +155,7 @@ Pysäkit tulevat näkyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (
 
 Ominaisuustieto -näkymässä kaikki kentät ovat disabloituja eli niitä ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu Google Street View uudelle välilehdelle.
 
-![Pysäkin tietojen katselu](/UI/manual/k9.jpg)
+![Pysäkin tietojen katselu](k9.jpg)
 
 _Joukkoliikenteen pysäkin tietojen katselu._
 
@@ -164,7 +164,7 @@ _Joukkoliikenteen pysäkin tietojen katselu._
 
 Nopeusrajoituksia voi katsella valitsemalla nopeusrajoitukset "Nopeusrajoitus"-painikkeella kartalle. (2)
 
-![Nopeusrajoitusten tietojen katselu](/UI/manual/k18.jpg)
+![Nopeusrajoitusten tietojen katselu](k18.jpg)
 
 _Nopeusrajoitusten tietojen katselu._
 
@@ -175,11 +175,11 @@ Muokkaustila aktivoidaan painamalla “Muokkaa”-painiketta (3). Muokkaustila o
 
 Muokkaustilassa kaikki muutokset tallentuvat automattisesti heti niiden tekemisen jälkeen. Muokkaustilasta pääsee katselutilaan klikkaamalla “Valmis”-painiketta (11).
 
-![Muokkaustila](/UI/manual/k10.jpg)
+![Muokkaustila](k10.jpg)
 
 _Muokkaustilaan pääsee klikkaamalla “Muokkaa”-painiketta (3)._
 
-![Muokkaustila](/UI/manual/k11.jpg)
+![Muokkaustila](k11.jpg)
 
 _Muokkaustilasta pääsee pois klikkaamalla “Valmis”-painiketta (11)._
 
@@ -194,7 +194,7 @@ Yksittäisen pysäkin ominaisuustietoja voi muokata valitsemalla muokkaustyökal
 
 Valittu pysäkki näkyy sinisellä korostusvärillä (4). Sivun oikeaan laitaan avautuu Google Street View -näkymä (5) pysäkistä sekä pysäkin ominaisuustiedot (6).
 
-![Pysäkin ominaisuustietojen muokkaus.](/UI/manual/k12.jpg)
+![Pysäkin ominaisuustietojen muokkaus.](k12.jpg)
 
 _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
 
@@ -204,7 +204,7 @@ Googlen Street View -näkymä (5) sivun oikeassa laidassa on suunnattu suuntaan,
 
 Pysäkin vaikutussuunnan voi muuttaa ominaisuustietonäkymässä (6) painamalla “Vaihda suuntaa”-painiketta (16). Pysäkin vaikutussuuntaa muutettaessa Googlen Street View -näkymä (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta kääntyy.
 
-![Pysäkin vaikutussuunnan muuttaminen.](/UI/manual/k13.jpg)
+![Pysäkin vaikutussuunnan muuttaminen.](k13.jpg)
 
 _Joukkoliikenteen pysäkin vaikutussuunnan voi muuttaa painamalla “Vaihda suuntaa”-painiketta (16)._
 
@@ -216,7 +216,7 @@ Päivämääriä ei voi asettaa ristiin siten, että “Ensimmäinen voimassaolo
 
 Jos “Ensimmäinen voimassaolopäivä” tai “Viimeinen voimassaolopäivä” ei ole tiedossa, voi kalenterista valita “ei tietoa”.
 
-![Pysäkin voimassaolopäivien muokkaus.](/UI/manual/k14.jpg)
+![Pysäkin voimassaolopäivien muokkaus.](k14.jpg)
 
 _Pysäkin voimassaolopäivien muokkaus._
 
@@ -224,7 +224,7 @@ _Pysäkin voimassaolopäivien muokkaus._
 
 Muita ominaisuustietoja voi muokata oikeassa laidassa olevan ominaisuustietonäkymän (5) kautta. Tietoja muokataan joko kirjoittamalla tietokenttään, valitsemalla pudotusvalikosta tieto tai merkitsemällä rasti ruutuun oikean/oikeiden tietojen kohdalle.
 
-![Pysäkin muiden ominaisuustietojen muokkaus.](/UI/manual/k15.jpg)
+![Pysäkin muiden ominaisuustietojen muokkaus.](k15.jpg)
 
 _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
 
@@ -267,7 +267,7 @@ Pysäkkiä siirretään käyttämällä muokkaustyökalua (12). Pysäkkejä voi 
 
 Siirtäminen tapahtuu tarttumalla pysäkkiin kiinni ja raahaamalla se oikeaan paikkaan. Virheellisten siirtojen estämiseksi pysäkki lähtee liikkumaan 0,3 sekunnin kuluttua siitä, kun pysäkistä on tarrattu kiinni. Pysäkki liikkuu vain olemassa olevia tielinkkejä pitkin ja käyttäjän päivitysoikeuksien sallimien maantieteellisten rajojen sisäpuolella. Jos pysäkin irrottaa tielinkistä, kiinnittyy se automaattisesti lähimpään tielinkkiin, joka on käyttäjän päivitysoikeuksien sallimalla maantietellisellä alueella. Jos riittävän lähellä  ei ole toista tielinkkiä, ei pysäkki irtoa linkiltä, jolla se on. Tielinkki, jonka päällä pysäkki on, näkyy sinisellä korostusvärillä. Kun pysäkistä päästetään irti (lasketaan se uuteen sijaintiin), korostuu siirretty pysäkki sinisellä korostusvärillä (4) ja oikealle avautuu Google Street View (5) ja ominaisuustieto -näkymä (6), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pysäkin siirtäminen ei muuta pysäkin mitattuja maastokoordinaatteja vaan ne säilyvät ennallaan.
 
-![Pysäkin siirtäminen.](/UI/manual/k12.jpg)
+![Pysäkin siirtäminen.](k12.jpg)
 
 _Joukkoliikenteen pysäkin siirtäminen._
 
@@ -291,7 +291,7 @@ Uuden pysäkin lisäämisen vaiheet:
 1. Jos et haluakaan luoda ko. pysäkkiä, paina “Peruuta” -painiketta (20).
 1. Kun olet lisännyt haluamasi tiedot, paina “Luo” -painiketta (19).
 
-![Pysäkin siirtäminen.](/UI/manual/k16.jpg)
+![Pysäkin siirtäminen.](k16.jpg)
 
 _Joukkoliikenteen pysäkin siirtäminen._
 
@@ -313,7 +313,7 @@ Vanhan pysäkin poistamisen vaiheet:
 1. Jos et halua poistaa pysäkkiä, valitse kalenterista “Ei tietoa”.
 1. Pysäkin viimeinen voimassaolopäivämäärä tallentuu automaattisesti.
 
-![Pysäkin poistaminen.](/UI/manual/k17.jpg)
+![Pysäkin poistaminen.](k17.jpg)
 
 _Joukkoliikenteen pysäkin poistaminen._
 
