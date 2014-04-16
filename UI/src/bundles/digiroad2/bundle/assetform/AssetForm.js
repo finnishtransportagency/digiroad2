@@ -147,7 +147,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
-                me._saveNewAsset(me._collectAssetProperties(featureAttributesElement));
+                me._saveNewAsset(featureAttributesElement);
             });
         },
         _initializeTypeAndDirectionChanges: function(featureAttributesElement) {
