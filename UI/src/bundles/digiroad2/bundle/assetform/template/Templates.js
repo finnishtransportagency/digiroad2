@@ -8,8 +8,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
             '<div class="featureAttributesWrapper">' +
             '<div class="streetView">{{streetView}}</div>' +
             '<div class="formContent">{{attributes}}</div>' +
-            '<div class="formControls">{{controls}}</div>' +
-            '</div>');
+            '</div>' +
+            '<div class="formControls">{{controls}}</div>');
 
         this.streetViewTemplate  = _.template(
             '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +

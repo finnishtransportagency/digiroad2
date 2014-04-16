@@ -90,7 +90,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var featureData = me._makeContent(asset.propertyData);
             var streetView = me._getStreetView();
             var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
-            $("#featureAttributes").html(featureAttributes);
+            jQuery("#featureAttributes").html(featureAttributes);
             var featureAttributesElement = $('#featureAttributes');
             me._addDatePickers();
             if (this._readOnly) {
@@ -109,6 +109,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
+                featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
                 me._updateAsset(asset.id, featureAttributesElement);
             });
 
