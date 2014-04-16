@@ -169,7 +169,8 @@ object AssetCsvFormatter {
   private def addReachability(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val reachability = getItemsFromPropertyByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
-    (asset, reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    val value = reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
+    (asset, (if(value.equalsIgnoreCase("ei tiedossa")) "" else value) :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
