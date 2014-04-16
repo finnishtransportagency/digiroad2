@@ -89,7 +89,12 @@ window.AssetLayer = function(map, roadLayer) {
             map.events.unregister("mouseup", map, mouseUpFunction);
             // Moved update
             if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
-                eventbus.trigger('asset:moved', asset);
+                eventbus.trigger('asset:moved', {
+                    lon: asset.marker.lonlat.lon,
+                    lat: asset.marker.lonlat.lat,
+                    bearing: asset.data.bearing,
+                    roadLinkId: asset.roadLinkId
+                });
             }
             assetIsMoving = false;
         };

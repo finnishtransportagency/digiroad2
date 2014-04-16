@@ -71,11 +71,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             eventbus.on('enumeratedPropertyValues:fetched', function(values) {
                 this._enumeratedPropertyValues = values;
             }, this);
-            eventbus.on('asset:moved', function(asset) {
-                this._selectedAsset.lon = asset.marker.lonlat.lon;
-                this._selectedAsset.lat = asset.marker.lonlat.lat;
-                this._selectedAsset.bearing = asset.data.bearing;
-                this._selectedAsset.roadLinkId = asset.roadLinkId;
+            eventbus.on('asset:moved', function(position) {
+                this._selectedAsset.lon = position.lon;
+                this._selectedAsset.lat = position.lat;
+                this._selectedAsset.bearing = position.bearing;
+                this._selectedAsset.roadLinkId = position.roadLinkId;
                 jQuery('.streetView').html(this._getStreetView());
             }, this);
             
