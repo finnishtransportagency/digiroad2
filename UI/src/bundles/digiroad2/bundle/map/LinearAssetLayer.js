@@ -20,32 +20,37 @@ window.LinearAssetLayer = function(map, roadLayer) {
             }
         } else {
             map.addLayer(vectorLayer);
-            // TODO: Move to backend
-            $.get('api/linearassets', function(linearAssets) {
-                var features = _.map(linearAssets, function(linearAsset) {
-                    var points = _.map(linearAsset.points, function (point) {
-                        return new OpenLayers.Geometry.Point(point.x, point.y);
-                    });
-                    return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
-                });
-                vectorLayer.addFeatures(features);
-            });
-
             vectorLayer.setVisibility(true);
-
             var controls = {
                 select: new OpenLayers.Control.SelectFeature(vectorLayer, {
                     standalone: true
                 })
             };
-
-            for(var key in controls) {
+            for (var key in controls) {
                 map.addControl(controls[key]);
             }
             controls.select.activate();
-
+            if (8 < map.getZoom() && vectorLayer.map) {
+              Backend.getLinearAssets(666, map.getExtent);
+            }
         }
     }, this);
 
+    eventbus.on('map:moved', function(state) {
+      if (8 < state.zoom && vectorLayer.map) {
+          Backend.getLinearAssets(666, state.bbox);
+      }
+    }, this);
+
+    eventbus.on('linearAssets:fetched', function(linearAssets) {
+        var sorted = _.sortBy(linearAssets, 'id');
+        var features = _.map(linearAssets, function(linearAsset) {
+            var points = _.map(linearAsset.points, function (point) {
+                return new OpenLayers.Geometry.Point(point.x, point.y);
+            });
+            return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
+        });
+        vectorLayer.addFeatures(features);
+    }, this);
 
 };
