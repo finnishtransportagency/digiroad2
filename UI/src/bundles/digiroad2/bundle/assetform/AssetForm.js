@@ -74,6 +74,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             eventbus.on('asset:moved', function(asset) {
                 this._selectedAsset.lon = asset.marker.lonlat.lon;
                 this._selectedAsset.lat = asset.marker.lonlat.lat;
+                this._selectedAsset.bearing = asset.data.bearing;
                 this._selectedAsset.roadLinkId = asset.roadLinkId;
                 jQuery('.streetView').html(this._getStreetView());
             }, this);
