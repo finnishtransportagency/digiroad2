@@ -6,8 +6,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.assetform.template.Templates',
 
         this.featureDataWrapper = _.template('<div class="featureAttributesHeader">{{header}}</div>' +
             '<div class="featureAttributesWrapper">' +
-            '<div class="streetView">{{streetView}}</div>' +
-            '<div class="formContent">{{attributes}}</div>' +
+                '<div class="streetView">{{streetView}}</div>' +
+                '<div class="formContent">{{attributes}}</div>' +
             '</div>' +
             '<div class="formControls">{{controls}}</div>');
 

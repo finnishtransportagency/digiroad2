@@ -109,7 +109,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
-                featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
+                me._activateSaveModal(featureAttributesElement);
                 me._updateAsset(asset.id, featureAttributesElement);
             });
 
@@ -147,6 +147,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             });
 
             featureAttributesElement.find('button.save').on('click', function() {
+                me._activateSaveModal(featureAttributesElement);
                 me._saveNewAsset(featureAttributesElement);
             });
         },
@@ -406,7 +407,9 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             options +="</select>";
             return options;
         },
-
+        _activateSaveModal: function(featureAttributesElement) {
+            featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
+        },
         _getMultiCheckbox: function(name, values, publicId) {
             var invalidValues = [99];
             var me = this;

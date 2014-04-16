@@ -29,15 +29,15 @@
 .formControls {
     width: 100%;
     position: absolute;
-    bottom: 0;
-    left: 0;
+    bottom: 10px;
+    padding-top: 10px;
 }
 
 .featureAttributesWrapper {
     position: absolute;
     padding: 10px;
     top: 49px;
-    bottom: 0;
+    bottom: 57px;
     left: 0;
     right: 0;
     overflow-y: auto;

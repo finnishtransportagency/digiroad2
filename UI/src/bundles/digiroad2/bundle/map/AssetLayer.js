@@ -15,6 +15,7 @@ window.AssetLayer = function(map, roadLayer) {
     var assets = null;
     var overlay;
     var selectedControl;
+    var assetMoveWaitTime = 300;
 
     var isInZoomLevel = function() {
         return (8 < map.getZoom());
@@ -443,7 +444,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (readOnly) {
             return;
         }
-        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 300 &&
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
             (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
