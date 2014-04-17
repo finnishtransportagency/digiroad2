@@ -65,7 +65,7 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def updateAsset(assetId: Long, bearing: Int, properties: Seq[SimpleProperty]): AssetWithProperties = {
+  def updateAsset(assetId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
     if (!userCanModifyAsset(assetId)) {
       throw new IllegalArgumentException("User does not have write access to municipality")
     }

@@ -174,9 +174,8 @@ object OracleSpatialAssetDao {
   }
 
   def updateAsset(assetId: Long, updater: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    // FIXME update bearing
     updateProperties(assetId, properties)
-    updateAssetModified(assetId, updater)
+    updateAssetModified(assetId, updater).execute()
     getAssetById(assetId).get
   }
 

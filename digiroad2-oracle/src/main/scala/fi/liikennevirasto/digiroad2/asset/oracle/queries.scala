@@ -127,8 +127,8 @@ object Queries {
 
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
-      update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId"
-    """"
+      update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId
+    """
 
   def allAssets =
     """

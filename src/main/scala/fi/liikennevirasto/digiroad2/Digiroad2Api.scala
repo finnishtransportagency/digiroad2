@@ -135,7 +135,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   private[this] def saveAssetProperties(id: Long, parsedBody: JValue) = {
     assetProvider.updateAsset(
       id,
-      (parsedBody \ "bearing").extract[Int],
       (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
