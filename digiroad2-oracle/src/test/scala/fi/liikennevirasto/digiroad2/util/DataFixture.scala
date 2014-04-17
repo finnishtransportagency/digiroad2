@@ -135,15 +135,12 @@ object DataFixture {
         importBusStopsFromConversion(dataImporter, taskPool)
         BusStopIconImageData.insertImages("dr1conversion")
         importMunicipalityCodes()
-
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
-
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
-
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {
           val adminCodeWriter = new PrintWriter(new File("admincode.sql"))

@@ -243,9 +243,6 @@ class AssetDataImporter {
           order by segm_id desc
           """.as[Int].list().head
     }
-
-
-
     val startSelect = System.currentTimeMillis()
     val queries = getBatchDrivers(min, max, 500).view.map { case (n, m) =>
       sql"""
@@ -265,20 +262,16 @@ class AssetDataImporter {
         query.as[(Int, String)].list()
       }
       Database.forDataSource(ds).withDynSession {
-        //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
         val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 20)")
-        val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
+        val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
         val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
-        //val startTime = System.currentTimeMillis()
         segments.foreach { segment =>
           val assetId = generateId
           assetPS.setLong(1, assetId)
           assetPS.addBatch()
 
-
           val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
-
           insertExprs.foreach { insertExpr =>
             val insertValues = insertExpr.replace(',','.').split(";").toIterator
             val roadLinkId = insertValues.next.toLong
@@ -286,24 +279,25 @@ class AssetDataImporter {
             val endMeasure   = insertValues.next.toDouble
             val lrmPositionId = generateId
 
-            ps.setLong(1, lrmPositionId)
-            ps.setLong(2, roadLinkId)
-            ps.setDouble(3, startMeasure)
-            ps.setDouble(4, endMeasure)
-            ps.addBatch()
+            lrmPositionPS.setLong(1, lrmPositionId)
+            lrmPositionPS.setLong(2, roadLinkId)
+            lrmPositionPS.setDouble(3, startMeasure)
+            lrmPositionPS.setDouble(4, endMeasure)
+            lrmPositionPS.addBatch()
 
             assetLinkPS.setLong(1, assetId);
             assetLinkPS.setLong(2, lrmPositionId);
             assetLinkPS.addBatch();
-            insertSpeedLimitsCount += 1;
+            this.synchronized {
+              insertSpeedLimitsCount += 1;
+            }
           }
-
         }
         assetPS.executeBatch()
-        ps.executeBatch()
+        lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
         assetPS.close();
-        ps.close()
+        lrmPositionPS.close()
         assetLinkPS.close()
       }
       var timeNow = System.currentTimeMillis()
