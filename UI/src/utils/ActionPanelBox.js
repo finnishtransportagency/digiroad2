@@ -24,11 +24,11 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             '</div>' +
             '</div>');
 
-
     var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var handleAssetModified = function(asset) {
+        // TODO: select from DOM && add to validityPeriods
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
     };
 
@@ -65,32 +65,23 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         var editMode = function () {
             readOnly = false;
             showEditMode();
-            // actionButtons.show();
             button.off().click(readMode);
         };
         var readMode = function () {
             readOnly = true;
             (function() {
-
-                // actions piiloon
-                // värit tummix
-                // message poist TODO: refactor message pois tästä
-
                 // TODO: remove this?
                 eventbus.trigger('asset:unselected');
                 eventbus.trigger('application:readOnly', readOnly);
 
                 changeTool('Select');
 
-
                 button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
 
                 actionButtons.hide();
-                // layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
                 layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
                 editMessage.hide();
             })();
-            // actionButtons.hide();
             button.off().click(editMode);
         };
 
@@ -149,12 +140,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
 
 
     var showEditMode = function() {
-
-        console.log('fe');
-        // actions buttons näkyviin
-        // värit sinisix
-        // message näkyviin TODO: refactor message pois tästä
-
         // TODO: remove this?
         eventbus.trigger('asset:unselected');
         eventbus.trigger('application:readOnly', readOnly);
@@ -179,23 +164,16 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             button.show();
             (function() {
 
-                // actions piiloon
-                // värit tummix
-                // message poist TODO: refactor message pois tästä
-
                 // TODO: remove this?
                 eventbus.trigger('asset:unselected');
                 eventbus.trigger('application:readOnly', readOnly);
 
                 changeTool('Select');
 
-
                 button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
 
-                // actionButtons.hide();
                 layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
                 layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-                // jQuery('.editMessage').addClass('readOnlyModeHidden');
             })();
 
             layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
@@ -206,17 +184,11 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             layerGroup.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
             button.hide();
             (function() {
-
-                // actions piiloon
-                // värit tummix
-                // message poist TODO: refactor message pois tästä
-
                 // TODO: remove this?
                 eventbus.trigger('asset:unselected');
                 eventbus.trigger('application:readOnly', readOnly);
 
                 changeTool('Select');
-
 
                 button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
 
@@ -224,7 +196,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
                 layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
                 layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
                 editMessage.hide();
-                // jQuery('.editMessage').addClass('readOnlyModeHidden');
             })();
         }
     };
