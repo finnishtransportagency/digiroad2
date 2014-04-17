@@ -15,7 +15,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         '</div>');
 
     var actionButtons = jQuery(
-        '<div class="actionButtons readOnlyModeHidden">' +
+        '<div class="actionButtons">' +
             '<div data-action="Select" class="actionButton actionButtonActive actionPanelButtonSelect">' +
             '<div class="actionPanelButtonSelectImage actionPanelButtonSelectActiveImage"></div>' +
             '</div>' +
@@ -25,7 +25,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             '</div>');
 
 
-    var editMessage = '<div class="editMessage readOnlyModeHidden">Muokkaustila: muutokset tallentuvat automaattisesti</div>';
+    var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var handleAssetModified = function(asset) {
@@ -60,20 +60,37 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         return layerSelection;
     };
 
-    var button = $('<button class="editMode actionModeButton"></button>');
+    var button = $('<button class="readOnlyMode actionModeButton"></button>');
     var editButtonForGroup = function() {
         var editMode = function () {
             readOnly = false;
-            toggleEditMode(false);
-            actionButtons.show();
-            button.removeClass('editMode').addClass('readOnlyMode').text('Siirry katselutilaan');
+            showEditMode();
+            // actionButtons.show();
             button.off().click(readMode);
         };
         var readMode = function () {
             readOnly = true;
-            toggleEditMode(true);
-            actionButtons.hide();
-            button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
+            (function() {
+
+                // actions piiloon
+                // värit tummix
+                // message poist TODO: refactor message pois tästä
+
+                // TODO: remove this?
+                eventbus.trigger('asset:unselected');
+                eventbus.trigger('application:readOnly', readOnly);
+
+                changeTool('Select');
+
+
+                button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
+
+                actionButtons.hide();
+                // layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+                editMessage.hide();
+            })();
+            // actionButtons.hide();
             button.off().click(editMode);
         };
 
@@ -94,29 +111,34 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
 
         $.get("/api/user/roles", function(data) {
             if(_.contains(data, "viewer") === false){
+                layerGroup.append(actionButtons.hide());
                 layerGroup.append(editButtonForGroup());
             }
         });
-        jQuery(".container").append(editMessage);
+        jQuery(".container").append(editMessage.hide());
+
+        if(isExpanded){
+            layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
+        }
     };
 
     var bindEvents =  function() {
-        jQuery(".panelControl").on("click", function() {
-            togglePanel();
-        });
 
-        jQuery(".actionButton").on("click", function() {
+
+        actionButtons.find(".actionButton").on("click", function() {
             var data = jQuery(this);
             var action = data.attr('data-action');
             changeTool(action);
         });
 
         layerGroup.find('.layerGroup').on('click', function() {
+            isExpanded = true;
             eventbus.trigger('layer:selected',identifier);
         });
     };
 
     var changeTool = function(action) {
+        // TODO: scoping!
         jQuery(".actionButtonActive").removeClass("actionButtonActive");
         jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
         jQuery(".actionPanelButtonSelectActiveImage").removeClass("actionPanelButtonSelectActiveImage");
@@ -125,40 +147,85 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         eventbus.trigger('tool:changed', action);
     };
 
-    var toggleEditMode = function() {
-        changeTool('Select');
+
+    var showEditMode = function() {
+
+        console.log('fe');
+        // actions buttons näkyviin
+        // värit sinisix
+        // message näkyviin TODO: refactor message pois tästä
+
         // TODO: remove this?
         eventbus.trigger('asset:unselected');
         eventbus.trigger('application:readOnly', readOnly);
-        jQuery('.editMessage').toggleClass('readOnlyModeHidden');
-        layerGroup.find('.layerGroup').toggleClass('layerGroupSelectedMode');
-        layerGroup.find('.layerGroup').toggleClass('layerGroupEditMode');
-    };
 
-    var togglePanel = function() {
-        jQuery(".actionPanel").toggleClass('actionPanelClosed');
-    };
+        changeTool('Select');
 
-    var hideEditMode = function() {
-        actionButtons.hide();
-        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
-        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-        jQuery('.editMessage').addClass('readOnlyModeHidden');
+        actionButtons.show();
+        button.removeClass('readOnlyMode').addClass('editMode').text('Siirry katselutilaan');
+
+        layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
+        layerGroup.find('.layerGroup').addClass('layerGroupEditMode');
+        editMessage.show();
     };
 
     var handleGroupSelect = function(id) {
-        readOnly = true;
-        if (identifier === id) {
-            layerGroup.find('.layerGroupLayers').removeClass('readOnlyModeHidden');
+        if(identifier === id && readOnly === false) {
+            return;
+        }
+        if(identifier === id) {
+            layerGroup.find('.layerGroupLayers').show();
             layerGroup.find('.layerGroupImg_unselected_'+id).addClass('layerGroupImg_selected_'+id);
             button.show();
-            hideEditMode();
+            (function() {
+
+                // actions piiloon
+                // värit tummix
+                // message poist TODO: refactor message pois tästä
+
+                // TODO: remove this?
+                eventbus.trigger('asset:unselected');
+                eventbus.trigger('application:readOnly', readOnly);
+
+                changeTool('Select');
+
+
+                button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
+
+                // actionButtons.hide();
+                layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+                // jQuery('.editMessage').addClass('readOnlyModeHidden');
+            })();
+
             layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
         } else {
-            layerGroup.find('.layerGroupLayers').addClass('readOnlyModeHidden');
+            isExpanded = false;
+            readOnly = true;
+            layerGroup.find('.layerGroupLayers').hide();
             layerGroup.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
             button.hide();
-            hideEditMode();
+            (function() {
+
+                // actions piiloon
+                // värit tummix
+                // message poist TODO: refactor message pois tästä
+
+                // TODO: remove this?
+                eventbus.trigger('asset:unselected');
+                eventbus.trigger('application:readOnly', readOnly);
+
+                changeTool('Select');
+
+
+                button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
+
+                actionButtons.hide();
+                layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+                editMessage.hide();
+                // jQuery('.editMessage').addClass('readOnlyModeHidden');
+            })();
         }
     };
 
