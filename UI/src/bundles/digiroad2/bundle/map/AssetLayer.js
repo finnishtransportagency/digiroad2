@@ -15,6 +15,7 @@ window.AssetLayer = function(map, roadLayer) {
     var assets = null;
     var overlay;
     var selectedControl;
+    var assetMoveWaitTime = 300;
 
     var isInZoomLevel = function() {
         return (8 < map.getZoom());
@@ -80,10 +81,7 @@ window.AssetLayer = function(map, roadLayer) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
             clickTimestamp = null;
-            var bearing = "0";
-            if (selectedAsset) {
-                bearing = selectedAsset.data.roadDirection;
-            }
+
             // Opacity back
             asset.marker.setOpacity(1);
             asset.marker.actionMouseDown = false;
@@ -91,25 +89,21 @@ window.AssetLayer = function(map, roadLayer) {
             map.events.unregister("mouseup", map, mouseUpFunction);
             // Moved update
             if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
-                var data = {
-                    assetTypeId: asset.data.assetTypeId,
+                eventbus.trigger('asset:moved', {
                     lon: asset.marker.lonlat.lon,
                     lat: asset.marker.lonlat.lat,
-                    roadLinkId: asset.roadLinkId,
-                    bearing: bearing
-                };
-                backend.updateAsset(asset.data.id, data);
+                    bearing: asset.data.bearing,
+                    roadLinkId: asset.roadLinkId
+                });
             }
             assetIsMoving = false;
-            var streetViewCoordinates = { lonLat: asset.marker.lonlat };
-            mouseClickFn(evt, streetViewCoordinates);
         };
     };
 
     var clickTimestamp;
     var clickCoords;
     var assetIsMoving = false;
-    var mouseDown = function(asset, mouseUpFn) {
+    var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             clickTimestamp = new Date().getTime();
             clickCoords = [evt.clientX, evt.clientY];
@@ -131,6 +125,7 @@ window.AssetLayer = function(map, roadLayer) {
             //register up
             map.events.register("mouseup", map, mouseUpFn, true);
             mouseUpFunction = mouseUpFn;
+            mouseClickFn(asset);
         };
     };
 
@@ -158,7 +153,7 @@ window.AssetLayer = function(map, roadLayer) {
         asset.directionArrow = directionArrow;
         var mouseClickFn = mouseClick(asset);
         var mouseUpFn = mouseUp(asset, mouseClickFn);
-        var mouseDownFn = mouseDown(asset, mouseUpFn);
+        var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
         marker.validityPeriod = assetData.validityPeriod;
         if (!_.contains(selectedValidityPeriods, assetData.validityPeriod)) {
@@ -263,7 +258,7 @@ window.AssetLayer = function(map, roadLayer) {
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
                 var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
-                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
+                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * (validityDirection)));
             }
             var assetType = _.find(asset.propertyData, function(property) {
                 return property.publicId === 'pysakin_tyyppi';
@@ -454,7 +449,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (readOnly) {
             return;
         }
-        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > 300 &&
+        if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
             (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);

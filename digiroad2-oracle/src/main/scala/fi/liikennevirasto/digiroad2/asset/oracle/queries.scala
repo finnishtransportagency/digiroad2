@@ -125,6 +125,11 @@ object Queries {
 
   def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
 
+  def updateAssetModified(assetId: Long, updater: String) =
+    sqlu"""
+      update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId"
+    """"
+
   def allAssets =
     """
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
