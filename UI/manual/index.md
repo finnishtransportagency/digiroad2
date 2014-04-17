@@ -82,7 +82,7 @@ Mikäli kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, 
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Kirjautumisen jälkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pysäkkejä tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa näkyvät ainoastaan ne tietolajit, joihin käyttäjällä on päivitysoikeudet (kts. ["Miten päästä alkuun"](#1._Miten_päästä_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pysäkit. Tietolaji valitaan sivun vasemman laidan valikosta.
 
-Muokkaustilan saa aktivoitua klikkaamalla “Muokkaa”-painiketta (3). Muokkaustilassa kartan yläosassa on teksti “Muokkaustila: muutokset tallentuvat automaattisesti” (14). Muokkaustilassa kaikki tehdyt muutokset tallentuvat automaattisesti. Takaisin katselutilaan pääsee klikkaamalla “Valmis”-painiketta (11).
+Muokkaustilan saa aktivoitua klikkaamalla “Muokkaa”-painiketta (3). Muokkaustilassa kartan yläosassa on teksti “Olet muokkaustilassa” (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta. Takaisin katselutilaan pääsee klikkaamalla “Siirry katselutilaan”-painiketta (11).
 
 ![Katselutila](k3.jpg)
 
