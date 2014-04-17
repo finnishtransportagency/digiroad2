@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.linearasset.Point
 import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
 import scala.slick.driver.JdbcDriver.backend.Database
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
   private def toLinearAsset(entity: (Long, Seq[(Double, Double)])): LinearAsset = {
@@ -19,9 +20,9 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     }
   }
 
-  override def getAll(): Seq[LinearAsset] = {
+  override def getAll(bounds: Option[BoundingRectangle]): Seq[LinearAsset] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.getAll().map(toLinearAsset)
+      OracleLinearAssetDao.getAll(bounds).map(toLinearAsset)
     }
   }
 }
