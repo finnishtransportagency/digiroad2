@@ -211,8 +211,12 @@ window.AssetLayer = function(map, roadLayer) {
                 hideAsset(asset);
             }
         });
+        if (selectedAsset && selectedAsset.data.validityPeriod === undefined) {
+            return;
+        }
+
         if (selectedAsset && !_.contains(selectedValidityPeriods, selectedAsset.data.validityPeriod)) {
-            closeAsset(selectedAsset);
+            closeAsset();
         }
     };
 
