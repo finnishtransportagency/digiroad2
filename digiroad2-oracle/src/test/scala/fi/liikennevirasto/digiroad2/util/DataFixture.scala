@@ -129,7 +129,6 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("conversion") =>
         tearDown()
-        //migrateTo("0.1")
         migrateAll()
         val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)

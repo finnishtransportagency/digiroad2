@@ -266,7 +266,7 @@ class AssetDataImporter {
       }
       Database.forDataSource(ds).withDynSession {
         //sqlu"""insert into asset_type (id, name, geometry_type) values(666, 'Nopeusrajoitukset', 'linear')""".execute
-        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 666)")
+        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 20)")
         val ps = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
         val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
@@ -284,8 +284,6 @@ class AssetDataImporter {
             val roadLinkId = insertValues.next.toLong
             val startMeasure = insertValues.next.toDouble
             val endMeasure   = insertValues.next.toDouble
-
-
             val lrmPositionId = generateId
 
             ps.setLong(1, lrmPositionId)
@@ -307,11 +305,6 @@ class AssetDataImporter {
         assetPS.close();
         ps.close()
         assetLinkPS.close()
-
-        //val time = timeNow - startTime
-        //if (time > 5) {
-
-        //}
       }
       var timeNow = System.currentTimeMillis()
       var average =  (timeNow-startSelect)/insertSpeedLimitsCount
