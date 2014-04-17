@@ -1,9 +1,6 @@
 __DIGIROAD-SOVELLUKSEN KÄYTTÖOHJE__
 ===================================
 
-Selitteet
----------
-
 ###Katselutila###
 
 ![Katselutila](/UI/manual/k0.jpg)
