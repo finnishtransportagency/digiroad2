@@ -10,7 +10,7 @@
 
 
     jQuery("#maptools").append(panelControl);
-    AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', 'bus-stop.png');
-    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', 'speed-limit.png');
+    AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', true, 'bus-stop.png');
+    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, 'speed-limit.png');
     eventbus.trigger('layer:selected','asset');
 }(window.ActionPanel = window.ActionPanel));
