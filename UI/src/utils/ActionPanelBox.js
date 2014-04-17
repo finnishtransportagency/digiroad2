@@ -69,19 +69,14 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         };
         var readMode = function () {
             readOnly = true;
-            (function() {
-                // TODO: remove this?
-                eventbus.trigger('asset:unselected');
-                eventbus.trigger('application:readOnly', readOnly);
+            eventbus.trigger('application:readOnly', readOnly);
+            changeTool('Select');
 
-                changeTool('Select');
+            button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
 
-                button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
-
-                actionButtons.hide();
-                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-                editMessage.hide();
-            })();
+            actionButtons.hide();
+            layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+            editMessage.hide();
             button.off().click(editMode);
         };
 
@@ -114,8 +109,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     };
 
     var bindEvents =  function() {
-
-
         actionButtons.find(".actionButton").on("click", function() {
             var data = jQuery(this);
             var action = data.attr('data-action');
@@ -138,12 +131,8 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         eventbus.trigger('tool:changed', action);
     };
 
-
     var showEditMode = function() {
-        // TODO: remove this?
-        eventbus.trigger('asset:unselected');
         eventbus.trigger('application:readOnly', readOnly);
-
         changeTool('Select');
 
         actionButtons.show();
@@ -154,6 +143,28 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         editMessage.show();
     };
 
+    var collapse = function () {
+        eventbus.trigger('application:readOnly', readOnly);
+        changeTool('Select');
+
+        button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
+
+        actionButtons.hide();
+        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+        editMessage.hide();
+    };
+
+    var expand = function() {
+        eventbus.trigger('application:readOnly', readOnly);
+        changeTool('Select');
+
+        button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
+
+        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+    };
+
     var handleGroupSelect = function(id) {
         if(identifier === id && readOnly === false) {
             return;
@@ -161,42 +172,16 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         if(identifier === id) {
             layerGroup.find('.layerGroupLayers').show();
             layerGroup.find('.layerGroupImg_unselected_'+id).addClass('layerGroupImg_selected_'+id);
-            button.show();
-            (function() {
-
-                // TODO: remove this?
-                eventbus.trigger('asset:unselected');
-                eventbus.trigger('application:readOnly', readOnly);
-
-                changeTool('Select');
-
-                button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
-
-                layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
-                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-            })();
-
             layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
+            button.show();
+            expand();
         } else {
             isExpanded = false;
             readOnly = true;
             layerGroup.find('.layerGroupLayers').hide();
             layerGroup.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
             button.hide();
-            (function() {
-                // TODO: remove this?
-                eventbus.trigger('asset:unselected');
-                eventbus.trigger('application:readOnly', readOnly);
-
-                changeTool('Select');
-
-                button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
-
-                actionButtons.hide();
-                layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
-                layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-                editMessage.hide();
-            })();
+            collapse();
         }
     };
 
