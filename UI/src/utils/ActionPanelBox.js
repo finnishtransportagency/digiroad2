@@ -28,12 +28,15 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var handleAssetModified = function(asset) {
-        if (isExpanded) {
-            selectedValidityPeriods.push(asset.validityPeriod);
-            layerGroup.find('input[name=' + asset.validityPeriod + ']').prop('checked', true);
-            selectedValidityPeriods = _.uniq(selectedValidityPeriods);
-            eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
-        }
+        var layerToChange =  _.find(selectedValidityPeriods, function(x) { return asset.validityPeriod === x.id; });
+        layerToChange.selected = true;
+        layerToChange.dom.find('input').prop('checked', true);
+        triggerValidityPeriodsToBus();
+    };
+
+    var triggerValidityPeriodsToBus = function() {
+        var selectedLayers = _.filter(selectedValidityPeriods, function(x) { return x.selected; });
+        eventbus.trigger('validityPeriod:changed', _.pluck(selectedLayers, 'id'));
     };
 
     var render =  function() {
@@ -45,21 +48,15 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     var prepareLayerSelection = function(layer) {
         var mapBusStopLayer = _.template(
             '<div class="busStopLayer">' +
-                '<div class="busStopLayerCheckbox"><input name="{{id}}" type="checkbox" {{selected}} /></div>' +
+                '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} /></div>' +
                 '{{name}}' +
             '</div>');
-        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", id: layer.id, name: layer.label}));
-
-        if (layer.selected) {
-            selectedValidityPeriods.push(layer.id);
-        }
+        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label }));
+        var periodSelection = {id: layer.id, selected: layer.selected, dom: layerSelection };
+        selectedValidityPeriods.push(periodSelection);
         layerSelection.find(':input').change(function (target) {
-            if (target.currentTarget.checked) {
-                selectedValidityPeriods.push(layer.id);
-            } else {
-                selectedValidityPeriods = _.without(selectedValidityPeriods, layer.id);
-            }
-            eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
+            periodSelection.selected = target.currentTarget.checked;
+            triggerValidityPeriodsToBus();
         });
         return layerSelection;
     };
