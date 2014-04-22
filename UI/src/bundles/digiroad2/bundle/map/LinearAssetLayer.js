@@ -4,7 +4,7 @@ window.LinearAssetLayer = function(map) {
             "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
                 strokeColor: "#B22222",
                 strokeWidth: 8
-            }, OpenLayers.Feature.Vector.style["default"]))
+            }))
         })
     });
     vectorLayer.setOpacity(1);
