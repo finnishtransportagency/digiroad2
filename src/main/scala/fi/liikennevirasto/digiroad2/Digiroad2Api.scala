@@ -233,4 +233,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
     }
   }
+
+  get("/linearassets") {
+    linearAssetProvider.getAll(boundsFromParams)
+  }
+
+  get("/linearassets/:id") {
+    val id = params("id").toLong
+    linearAssetProvider.get(id)
+  }
 }
