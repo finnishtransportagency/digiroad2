@@ -40,7 +40,7 @@ window.LinearAssetLayer = function(map) {
         }
     }, this);
 
-    eventbus.on('linearAssets:fetched', function(linearAssets) {
+    var drawLinearAssets = function(linearAssets) {
         var features = _.map(linearAssets, function(linearAsset) {
             var points = _.map(linearAsset.points, function (point) {
                 return new OpenLayers.Geometry.Point(point.x, point.y);
@@ -48,5 +48,7 @@ window.LinearAssetLayer = function(map) {
             return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
         });
         vectorLayer.addFeatures(features);
-    }, this);
+    };
+
+    eventbus.on('linearAssets:fetched', drawLinearAssets, this);
 };
