@@ -9,20 +9,26 @@ window.LinearAssetLayer = function(map) {
     });
     vectorLayer.setOpacity(1);
 
-    var isZoomed = function(map) { return 8 < map.getZoom(); }
-    var layerIsVisible = function() { return !!vectorLayer.map; }
+    var isZoomed = function(map) { return 8 < map.getZoom(); };
+    var layerIsVisible = function() { return !!vectorLayer.map; };
+    var showLayer = function() {
+        map.addLayer(vectorLayer);
+        vectorLayer.setVisibility(true);
+        if (isZoomed(map) && layerIsVisible()) {
+            Backend.getLinearAssets(map.getExtent());
+        }
+    };
+    var hideLayer = function() {
+        if (layerIsVisible()) {
+            map.removeLayer(vectorLayer);
+        }
+    };
 
     eventbus.on('layer:selected', function(layer) {
-        if (layer !== 'linearAsset') {
-            if (layerIsVisible()) {
-                map.removeLayer(vectorLayer);
-            }
+        if (layer === 'linearAsset') {
+            showLayer();
         } else {
-            map.addLayer(vectorLayer);
-            vectorLayer.setVisibility(true);
-            if (isZoomed(map) && layerIsVisible()) {
-              Backend.getLinearAssets(map.getExtent());
-            }
+            hideLayer();
         }
     }, this);
 
