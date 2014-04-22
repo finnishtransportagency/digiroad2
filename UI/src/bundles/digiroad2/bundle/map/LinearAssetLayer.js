@@ -45,7 +45,6 @@ window.LinearAssetLayer = function(map) {
     }, this);
 
     eventbus.on('linearAssets:fetched', function(linearAssets) {
-        var sorted = _.sortBy(linearAssets, 'id');
         var features = _.map(linearAssets, function(linearAsset) {
             var points = _.map(linearAsset.points, function (point) {
                 return new OpenLayers.Geometry.Point(point.x, point.y);
