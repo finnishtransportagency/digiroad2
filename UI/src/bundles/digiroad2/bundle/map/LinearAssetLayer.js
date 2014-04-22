@@ -1,4 +1,4 @@
-window.LinearAssetLayer = function(map, roadLayer) {
+window.LinearAssetLayer = function(map) {
     var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
         styleMap: new OpenLayers.StyleMap({
             "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
