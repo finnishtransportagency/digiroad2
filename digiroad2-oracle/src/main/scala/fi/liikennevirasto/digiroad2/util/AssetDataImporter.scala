@@ -225,39 +225,40 @@ class AssetDataImporter {
 
     val count = dataSet.database().withDynSession {
       sql"""
-        select count(segm_id)
-          from SPEED_LIMITS
+        select count(sl.segm_id)
+          from SPEED_LIMITS sl
           """.as[Int].list().head
     }
     val min = dataSet.database().withDynSession {
       sql"""
         select min(segm_id)
           from SPEED_LIMITS sl
-          order by segm_id asc
+          order by sl.segm_id asc
           """.as[Int].list().head
     }
     val max = dataSet.database().withDynSession {
       sql"""
         select max(segm_id)
           from SPEED_LIMITS sl
-          order by segm_id desc
+          order by sl.segm_id desc
           """.as[Int].list().head
     }
     val startSelect = System.currentTimeMillis()
+
     val queries = getBatchDrivers(min, max, 500).view.map { case (n, m) =>
       sql"""
        select sl.SEGM_ID,
               stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
          from SPEED_LIMITS sl
          where segm_id between $n and $m
-         group by SEGM_ID
-         order by segm_id
+         group by sl.SEGM_ID
+         order by sl.SEGM_ID
        """
     }.par
 
     queries.tasksupport = new ForkJoinTaskSupport(taskPool)
     queries.foreach { query =>
-      var selectStartTime = System.currentTimeMillis();
+      val selectStartTime = System.currentTimeMillis();
       val segments = dataSet.database().withDynSession {
         query.as[(Int, String)].list()
       }
@@ -300,17 +301,22 @@ class AssetDataImporter {
         lrmPositionPS.close()
         assetLinkPS.close()
       }
-      var timeNow = System.currentTimeMillis()
-      var average =  (timeNow-startSelect)/insertSpeedLimitsCount
-      var speedLimitsLeft = count-insertSpeedLimitsCount;
-      var leftHours = speedLimitsLeft*average/(1000*60*60)
-      var leftMins = speedLimitsLeft*average/(1000*60)%60
-      printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin | select time: %dms",
-        (timeNow - startSelect)/60000,
-        count, insertSpeedLimitsCount, insertSpeedLimitsCount/(count*1.0) * 100,
-        average,
-        leftHours, leftMins,
-        timeNow - selectStartTime);
+
+      this.synchronized {
+        if (insertSpeedLimitsCount > 0) {
+          val speedLimitsLeft = count-insertSpeedLimitsCount;
+          val timeNow = System.currentTimeMillis()
+          val average =  (timeNow-startSelect)/insertSpeedLimitsCount
+          val leftHours = speedLimitsLeft*average/(1000*60*60)
+          val leftMins = speedLimitsLeft*average/(1000*60)%60
+          printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin | select time: %dms",
+            (timeNow - startSelect)/60000,
+            insertSpeedLimitsCount, count, insertSpeedLimitsCount/(count*1.0) * 100,
+            average,
+            leftHours, leftMins,
+            timeNow - selectStartTime);
+        }
+      }
     }
   }
 
