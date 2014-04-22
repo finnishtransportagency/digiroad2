@@ -27,39 +27,47 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
-    var handleAssetModified = function(asset) {
-        var layerToChange =  _.find(selectedValidityPeriods, function(x) { return asset.validityPeriod === x.id; });
-        layerToChange.selected = true;
-        layerToChange.dom.find('input').prop('checked', true);
-        triggerValidityPeriodsToBus();
-    };
-
-    var triggerValidityPeriodsToBus = function() {
-        var selectedLayers = _.filter(selectedValidityPeriods, function(x) { return x.selected; });
-        eventbus.trigger('validityPeriod:changed', _.pluck(selectedLayers, 'id'));
-    };
-
     var render =  function() {
         renderView();
         bindEvents();
     };
 
-    var selectedValidityPeriods = [];
-    var prepareLayerSelection = function(layer) {
-        var mapBusStopLayer = _.template(
-            '<div class="busStopLayer">' +
-                '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} /></div>' +
-                '{{name}}' +
-            '</div>');
-        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label }));
-        var periodSelection = {id: layer.id, selected: layer.selected, dom: layerSelection };
-        selectedValidityPeriods.push(periodSelection);
-        layerSelection.find(':input').change(function (target) {
-            periodSelection.selected = target.currentTarget.checked;
+    var layerFunc = (function() {
+        var selectedValidityPeriods = [];
+
+        var handleAssetModified = function(asset) {
+            var layerToChange =  _.find(selectedValidityPeriods, function(x) { return asset.validityPeriod === x.id; });
+            layerToChange.selected = true;
+            layerToChange.dom.find('input').prop('checked', true);
             triggerValidityPeriodsToBus();
-        });
-        return layerSelection;
-    };
+        };
+
+        var triggerValidityPeriodsToBus = function() {
+            var selectedLayers = _.filter(selectedValidityPeriods, function(x) { return x.selected; });
+            eventbus.trigger('validityPeriod:changed', _.pluck(selectedLayers, 'id'));
+        };
+
+        var prepareLayerSelection = function(layer) {
+            var mapBusStopLayer = _.template(
+                '<div class="busStopLayer">' +
+                    '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} /></div>' +
+                    '{{name}}' +
+                '</div>');
+            var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label }));
+            var periodSelection = {id: layer.id, selected: layer.selected, dom: layerSelection };
+            selectedValidityPeriods.push(periodSelection);
+            layerSelection.find(':input').change(function (target) {
+                periodSelection.selected = target.currentTarget.checked;
+                triggerValidityPeriodsToBus();
+            });
+            return layerSelection;
+        };
+
+        return {
+            prepareLayer: prepareLayerSelection,
+            handleAssetModified: handleAssetModified
+        };
+    })();
 
     var button = $('<button class="readOnlyMode actionModeButton"></button>');
     var editButtonForGroup = function() {
@@ -93,7 +101,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             {id: "past", label: "Käytöstä poistuneet"}
         ];
         _.forEach(layerPeriods, function (layer) {
-            layerGroup.find(".layerGroupLayers").append(prepareLayerSelection(layer));
+            layerGroup.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
         });
 
         $.get("/api/user/roles", function(data) {
@@ -187,7 +195,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         }
     };
 
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', handleAssetModified, this);
+    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', layerFunc.handleAssetModified, this);
     eventbus.on('layer:selected', handleGroupSelect, this);
 
     render();
