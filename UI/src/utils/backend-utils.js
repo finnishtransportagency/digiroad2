@@ -37,6 +37,12 @@
         });
     };
 
+    backend.getUserRoles = function () {
+        $.get('/api/user/roles', function(roles) {
+            eventbus.trigger('roles:fetched', roles);
+        });
+    };
+
     backend.createAsset = function(data) {
         jQuery.ajax({
             contentType: "application/json",
