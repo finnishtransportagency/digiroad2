@@ -18,14 +18,14 @@ window.LinearAssetLayer = function(map) {
             map.addLayer(vectorLayer);
             vectorLayer.setVisibility(true);
             if (8 < map.getZoom() && vectorLayer.map) {
-              Backend.getLinearAssets(666, map.getExtent());
+              Backend.getLinearAssets(map.getExtent());
             }
         }
     }, this);
 
     eventbus.on('map:moved', function(state) {
         if (8 < state.zoom && vectorLayer.map) {
-            Backend.getLinearAssets(666, state.bbox);
+            Backend.getLinearAssets(state.bbox);
         } else {
             vectorLayer.removeAllFeatures();  
         }

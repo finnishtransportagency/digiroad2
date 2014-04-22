@@ -18,8 +18,8 @@
         });
     }, 1000);
 
-    backend.getLinearAssets = _.throttle(function(assetTypeId, boundingBox) {
-        jQuery.getJSON('api/linearassets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function(linearAssets) {
+    backend.getLinearAssets = _.throttle(function(boundingBox) {
+        jQuery.getJSON('api/linearassets?bbox=' + boundingBox, function(linearAssets) {
             eventbus.trigger('linearAssets:fetched', linearAssets);
         });
     }, 1000);
