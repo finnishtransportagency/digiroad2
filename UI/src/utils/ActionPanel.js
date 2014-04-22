@@ -13,4 +13,5 @@
     AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', true, 'bus-stop.png');
     AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, 'speed-limit.png');
     eventbus.trigger('layer:selected','asset');
+    Backend.getUserRoles();
 }(window.ActionPanel = window.ActionPanel));

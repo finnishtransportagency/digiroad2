@@ -104,12 +104,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             layerGroup.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
         });
 
-        $.get("/api/user/roles", function(data) {
-            if(_.contains(data, "viewer") === false){
-                layerGroup.append(actionButtons.hide());
-                layerGroup.append(editButtonForGroup());
-            }
-        });
         jQuery(".container").append(editMessage.hide());
 
         if(isExpanded){
@@ -195,8 +189,15 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         }
     };
 
+    var handleRoles = function(roles) {
+        if(_.contains(roles, "viewer") === false){
+            layerGroup.append(actionButtons.hide());
+            layerGroup.append(editButtonForGroup());
+        }
+    };
+
+    eventbus.on('roles:fetched', handleRoles);
     eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', layerFunc.handleAssetModified, this);
     eventbus.on('layer:selected', handleGroupSelect, this);
-
     render();
 };
