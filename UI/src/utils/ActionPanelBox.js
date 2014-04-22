@@ -5,7 +5,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
                 interpolate: /\{\{(.+?)\}\}/g
     };
 
-    var layerGroup =jQuery(
+    var actionPanel =jQuery(
         '<div class="actionPanel ' + identifier + '">' +
             '<div class="layerGroup">' +
                 '<div class="layerGroupImg_'+identifier+' layerGroupImg_unselected_'+identifier+'"></div>' +
@@ -13,6 +13,8 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             '</div>' +
             '<div class="layerGroupLayers"></div>' +
         '</div>');
+
+    var layerGroup = actionPanel.find('.layerGroup');
 
     var actionButtons = jQuery(
         '<div class="actionButtons">' +
@@ -24,7 +26,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             '</div>' +
             '</div>');
 
-    var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var render =  function() {
@@ -84,8 +85,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
 
             actionButtons.hide();
-            layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-            editMessage.hide();
+            layerGroup.removeClass('layerGroupEditMode');
             button.off().click(editMode);
         };
 
@@ -93,7 +93,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     };
 
     var renderView = function() {
-        jQuery(".panelLayerGroup").append(layerGroup);
+        jQuery(".panelLayerGroup").append(actionPanel);
 
         var layerPeriods = [
             {id: "current", label: "Voimassaolevat", selected: true},
@@ -101,14 +101,14 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             {id: "past", label: "Käytöstä poistuneet"}
         ];
         _.forEach(layerPeriods, function (layer) {
-            layerGroup.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
+            actionPanel.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
         });
 
-        jQuery(".container").append(editMessage.hide());
-
         if(isExpanded){
-            layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
-            layerGroup.find('.layerGroupImg_unselected_' + identifier).addClass('layerGroupImg_selected_' + identifier);
+            layerGroup.addClass('layerGroupSelectedMode');
+            actionPanel.find('.layerGroupImg_unselected_' + identifier).addClass('layerGroupImg_selected_' + identifier);
+        } else {
+            layerGroup.on('click', handleLayerGrpClick);
         }
     };
 
@@ -117,11 +117,6 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
             var data = jQuery(this);
             var action = data.attr('data-action');
             changeTool(action);
-        });
-
-        layerGroup.find('.layerGroup').on('click', function() {
-            isExpanded = true;
-            eventbus.trigger('layer:selected',identifier);
         });
     };
 
@@ -142,9 +137,12 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         actionButtons.show();
         button.removeClass('readOnlyMode').addClass('editMode').text('Siirry katselutilaan');
 
-        layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
-        layerGroup.find('.layerGroup').addClass('layerGroupEditMode');
-        editMessage.show();
+        layerGroup.addClass('layerGroupSelectedMode');
+        layerGroup.addClass('layerGroupEditMode');
+    };
+
+    var handleLayerGrpClick = function(){
+        eventbus.trigger('layer:selected', identifier);
     };
 
     var collapse = function () {
@@ -154,36 +152,31 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
         button.removeClass('readOnlyMode').addClass('editMode').text('Siirry muokkaustilaan');
 
         actionButtons.hide();
-        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
-        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
-        editMessage.hide();
+        layerGroup.removeClass('layerGroupSelectedMode');
+        layerGroup.removeClass('layerGroupEditMode');
+        layerGroup.on('click', handleLayerGrpClick);
     };
 
     var expand = function() {
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
-
         button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
-
-        layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
-        layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
+        layerGroup.addClass('layerGroupSelectedMode');
+        layerGroup.removeClass('layerGroupEditMode');
+        layerGroup.off();
     };
 
     var handleGroupSelect = function(id) {
-        if(identifier === id && readOnly === false) {
-            return;
-        }
         if(identifier === id) {
-            layerGroup.find('.layerGroupLayers').show();
-            layerGroup.find('.layerGroupImg_unselected_'+id).addClass('layerGroupImg_selected_'+id);
-            layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
+            actionPanel.find('.layerGroupLayers').show();
+            actionPanel.find('.layerGroupImg_unselected_'+id).addClass('layerGroupImg_selected_'+id);
+            layerGroup.addClass('layerGroupSelectedMode');
             button.show();
             expand();
         } else {
-            isExpanded = false;
             readOnly = true;
-            layerGroup.find('.layerGroupLayers').hide();
-            layerGroup.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
+            actionPanel.find('.layerGroupLayers').hide();
+            actionPanel.find('.layerGroupImg_selected_'+identifier).removeClass('layerGroupImg_selected_'+identifier);
             button.hide();
             collapse();
         }
@@ -191,8 +184,8 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
 
     var handleRoles = function(roles) {
         if(_.contains(roles, "viewer") === false){
-            layerGroup.append(actionButtons.hide());
-            layerGroup.append(editButtonForGroup());
+            actionPanel.append(actionButtons.hide());
+            actionPanel.append(editButtonForGroup());
         }
     };
 

@@ -14,4 +14,18 @@
     AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, 'speed-limit.png');
     eventbus.trigger('layer:selected','asset');
     Backend.getUserRoles();
+
+    var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
+    jQuery(".container").append(editMessage.hide());
+
+    var handleEditMessage = function(readOnly) {
+        if(readOnly) {
+            editMessage.hide();
+        } else {
+            editMessage.show();
+        }
+    };
+
+    eventbus.on('application:readOnly', handleEditMessage);
+
 }(window.ActionPanel = window.ActionPanel));
