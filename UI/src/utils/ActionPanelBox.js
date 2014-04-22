@@ -28,8 +28,12 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
 
     var handleAssetModified = function(asset) {
-        // TODO: select from DOM && add to validityPeriods
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
+        if (isExpanded) {
+            selectedValidityPeriods.push(asset.validityPeriod);
+            layerGroup.find('input[name=' + asset.validityPeriod + ']').prop('checked', true);
+            selectedValidityPeriods = _.uniq(selectedValidityPeriods);
+            eventbus.trigger('validityPeriod:changed', selectedValidityPeriods);
+        }
     };
 
     var render =  function() {
@@ -41,10 +45,10 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
     var prepareLayerSelection = function(layer) {
         var mapBusStopLayer = _.template(
             '<div class="busStopLayer">' +
-                '<div class="busStopLayerCheckbox"><input type="checkbox" {{selected}} /></div>' +
+                '<div class="busStopLayerCheckbox"><input name="{{id}}" type="checkbox" {{selected}} /></div>' +
                 '{{name}}' +
             '</div>');
-        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label}));
+        var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", id: layer.id, name: layer.label}));
 
         if (layer.selected) {
             selectedValidityPeriods.push(layer.id);
