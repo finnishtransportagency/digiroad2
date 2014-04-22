@@ -4,11 +4,7 @@ window.LinearAssetLayer = function(map) {
             "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
                 strokeColor: "#B22222",
                 strokeWidth: 8
-            }, OpenLayers.Feature.Vector.style["default"])),
-            "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-                strokeColor: "#4B0082",
-                strokeWidth: 8
-            }, OpenLayers.Feature.Vector.style.select))
+            }, OpenLayers.Feature.Vector.style["default"]))
         })
     });
     vectorLayer.setOpacity(1);
@@ -21,15 +17,6 @@ window.LinearAssetLayer = function(map) {
         } else {
             map.addLayer(vectorLayer);
             vectorLayer.setVisibility(true);
-            var controls = {
-                select: new OpenLayers.Control.SelectFeature(vectorLayer, {
-                    standalone: true
-                })
-            };
-            for (var key in controls) {
-                map.addControl(controls[key]);
-            }
-            controls.select.activate();
             if (8 < map.getZoom() && vectorLayer.map) {
               Backend.getLinearAssets(666, map.getExtent());
             }
