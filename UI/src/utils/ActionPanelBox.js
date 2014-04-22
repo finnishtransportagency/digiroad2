@@ -105,6 +105,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
 
         if(isExpanded){
             layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
+            layerGroup.find('.layerGroupImg_unselected_' + identifier).addClass('layerGroupImg_selected_' + identifier);
         }
     };
 
@@ -161,7 +162,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
 
         button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
 
-        layerGroup.find('.layerGroup').removeClass('layerGroupSelectedMode');
+        layerGroup.find('.layerGroup').addClass('layerGroupSelectedMode');
         layerGroup.find('.layerGroup').removeClass('layerGroupEditMode');
     };
 
