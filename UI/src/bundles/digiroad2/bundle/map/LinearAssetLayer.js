@@ -1,4 +1,6 @@
-window.LinearAssetLayer = function(map) {
+window.LinearAssetLayer = function(map, backend) {
+    backend = backend || Backend;
+
     var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
         styleMap: new OpenLayers.StyleMap({
             "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -15,7 +17,7 @@ window.LinearAssetLayer = function(map) {
         map.addLayer(vectorLayer);
         vectorLayer.setVisibility(true);
         if (isZoomed(map) && layerIsVisible()) {
-            Backend.getLinearAssets(map.getExtent());
+            backend.getLinearAssets(map.getExtent());
         }
     };
     var hideLayer = function() {
@@ -34,9 +36,9 @@ window.LinearAssetLayer = function(map) {
 
     eventbus.on('map:moved', function(state) {
         if (isZoomed(map) && layerIsVisible()) {
-            Backend.getLinearAssets(state.bbox);
+            backend.getLinearAssets(state.bbox);
         } else {
-            vectorLayer.removeAllFeatures();  
+            vectorLayer.removeAllFeatures();
         }
     }, this);
 
