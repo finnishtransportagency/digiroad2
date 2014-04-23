@@ -8,3 +8,5 @@ logs/
 bower_components/
 flag.txt
 ftp.conf
+digiroad_stops.csv
+digiroad_stops.zip

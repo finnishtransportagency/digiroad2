@@ -75,6 +75,15 @@ object DataFixture {
     println("\n")
   }
 
+  def importSpeedLimitsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
+    print("\nCommencing speed limit import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importSpeedLimits(Conversion, taskPool)
+    print("Speed limit import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -120,16 +129,18 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("conversion") =>
         tearDown()
-        migrateTo("0.1")
+        migrateAll()
         val taskPool = new ForkJoinPool(8)
         importRoadlinksFromConversion(dataImporter, taskPool)
         importBusStopsFromConversion(dataImporter, taskPool)
         BusStopIconImageData.insertImages("dr1conversion")
         importMunicipalityCodes()
-        migrateAll()
       case Some("busstops") =>
         val taskPool = new ForkJoinPool(8)
         importBusStopsFromConversion(dataImporter, taskPool)
+      case Some("speedlimits") =>
+        val taskPool = new ForkJoinPool(8)
+        importSpeedLimitsFromConversion(dataImporter, taskPool)
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {
           val adminCodeWriter = new PrintWriter(new File("admincode.sql"))
@@ -151,7 +162,7 @@ object DataFixture {
           })
           nameWriter.close()
         }
-      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate")
+      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate | speedlimits")
     }
   }
 }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
-import java.util.Properties
+import java.util.{Locale, Properties}
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
@@ -22,6 +22,8 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
+import java.sql.Statement
+import java.text.{DecimalFormat, NumberFormat}
 
 
 object AssetDataImporter {
@@ -101,10 +103,18 @@ class AssetDataImporter {
     }
   }
 
-  private def getBatchDrivers(size: Int) = {
+  private def getBatchDrivers(size: Int): List[(Int, Int)] = {
     println(s"""creating batching for $size items""")
-    val x = ((1 to size by 500).sliding(2).map(x => (x(0), x(1) - 1))).toList
-    x :+ (x.last._2 + 1, size)
+    getBatchDrivers(1, size, 500)
+  }
+
+  private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
+    if (m < step) {
+      List((n, m))
+    } else {
+      val x = ((n to m by step).sliding(2).map(x => (x(0), x(1) - 1))).toList
+      x :+ (x.last._2 + 1, m)
+    }
   }
 
   private def roadLinksToImport(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
@@ -207,6 +217,109 @@ class AssetDataImporter {
     insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
+  def generateId = sql"select primary_key_seq.nextval from dual".as[Long].first
+
+  var insertSpeedLimitsCount = 0;
+
+  def importSpeedLimits(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
+
+    val count = dataSet.database().withDynSession {
+      sql"""
+        select count(sl.segm_id)
+          from SPEED_LIMITS sl
+          """.as[Int].list().head
+    }
+    val min = dataSet.database().withDynSession {
+      sql"""
+        select min(segm_id)
+          from SPEED_LIMITS sl
+          order by sl.segm_id asc
+          """.as[Int].list().head
+    }
+    val max = dataSet.database().withDynSession {
+      sql"""
+        select max(segm_id)
+          from SPEED_LIMITS sl
+          order by sl.segm_id desc
+          """.as[Int].list().head
+    }
+    val startSelect = System.currentTimeMillis()
+
+    val queries = getBatchDrivers(min, max, 500).view.map { case (n, m) =>
+      sql"""
+       select sl.SEGM_ID,
+              stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
+         from SPEED_LIMITS sl
+         where segm_id between $n and $m
+         group by sl.SEGM_ID
+         order by sl.SEGM_ID
+       """
+    }.par
+
+    queries.tasksupport = new ForkJoinTaskSupport(taskPool)
+    queries.foreach { query =>
+      val selectStartTime = System.currentTimeMillis();
+      val segments = dataSet.database().withDynSession {
+        query.as[(Int, String)].list()
+      }
+      Database.forDataSource(ds).withDynSession {
+        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 20)")
+        val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
+        val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+        segments.foreach { segment =>
+          val assetId = generateId
+          assetPS.setLong(1, assetId)
+          assetPS.addBatch()
+
+          val insertExprs = segment._2.split("@").map(_.trim).filter(!_.isEmpty)
+          insertExprs.foreach { insertExpr =>
+            val insertValues = insertExpr.replace(',','.').split(";").toIterator
+            val roadLinkId = insertValues.next.toLong
+            val startMeasure = insertValues.next.toDouble
+            val endMeasure   = insertValues.next.toDouble
+            val lrmPositionId = generateId
+
+            lrmPositionPS.setLong(1, lrmPositionId)
+            lrmPositionPS.setLong(2, roadLinkId)
+            lrmPositionPS.setDouble(3, startMeasure)
+            lrmPositionPS.setDouble(4, endMeasure)
+            lrmPositionPS.addBatch()
+
+            assetLinkPS.setLong(1, assetId);
+            assetLinkPS.setLong(2, lrmPositionId);
+            assetLinkPS.addBatch();
+            this.synchronized {
+              insertSpeedLimitsCount += 1;
+            }
+          }
+        }
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        assetPS.close();
+        lrmPositionPS.close()
+        assetLinkPS.close()
+      }
+
+      this.synchronized {
+        if (insertSpeedLimitsCount > 0) {
+          val speedLimitsLeft = count-insertSpeedLimitsCount;
+          val timeNow = System.currentTimeMillis()
+          val average =  (timeNow-startSelect)/insertSpeedLimitsCount
+          val leftHours = speedLimitsLeft*average/(1000*60*60)
+          val leftMins = speedLimitsLeft*average/(1000*60)%60
+          printf("\r run time: %dmin | count: %d/%d %1.2f%% | average: %dms | time left: %dh %dmin | select time: %dms",
+            (timeNow - startSelect)/60000,
+            insertSpeedLimitsCount, count, insertSpeedLimitsCount/(count*1.0) * 100,
+            average,
+            leftHours, leftMins,
+            timeNow - selectStartTime);
+        }
+      }
+    }
+  }
+
   private def busStopsToImport(dataSet: ImportDataSet) = {
     val table = dataSet.busStopTable
     dataSet.database().withDynSession {
@@ -218,7 +331,7 @@ class AssetDataImporter {
 
   def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition], targetDbSession: Session) {
     var elementCount = 0
-    val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
+      val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
     def batch(lrm: SimpleLRMPosition) {
       ps.setLong(1, lrm.id)
       ps.setLong(2, lrm.roadLinkId)
