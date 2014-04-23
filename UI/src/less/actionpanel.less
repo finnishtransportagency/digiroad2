@@ -22,6 +22,14 @@ div.panelControlLine {
   background-color: #efefed;
   border: 0px solid #cbcbc9;
   border-bottom-width: 1px;
+  button.editMode {
+    background-color: #196eb8;
+    border-color: #236085;
+  }
+
+  button.readOnlyMode {
+    background-color: #979793;
+  }
 }
 
 .actionPanelClosed {
@@ -58,13 +66,25 @@ div.layerGroup:active {
   background-color: #5a5a57;
 }
 
-div.layerGroupLayers {
+.layerGroupLayers {
   background-color: #efefed;
   padding-bottom: 16px;
   border: 0px solid #cbcbc0;
   border-bottom-width: 1px;
-}
 
+  .busStopLayer {
+    padding-left: 20px;
+    padding-top: 13px;
+    padding-bottom: 3px;
+    font-size: 12px;
+    font-family: arial;
+    color: #000000;
+    .busStopLayerCheckbox {
+      float : left;
+      padding-right: 7px;
+    }
+  }
+}
 
 .layerGroupImg_asset {
   margin-top: 15px;
@@ -104,22 +124,6 @@ div.layerGroupLabel {
   float: left;
   font-size: 13px;
   font-family: arial;
-}
-
-
-div.busStopLayerCheckbox {
-  float : left;
-  margin-top: -3;
-  padding-right: 7px;
-}
-div.busStopLayer {
-  padding-left: 20px;
-  padding-top: 13px;
-  padding-bottom: 3px;
-  background-color: #efefed;
-  font-size: 12px;
-  font-family: arial;
-  color: #000000;
 }
 
 div.actionButtons {
@@ -170,14 +174,6 @@ div.actionButtonActive {
   border-radius: 2px;
 }
 
-button.readOnlyMode {
-  background-color: #196eb8;
-  border-color: #236085;
-}
-.readOnlyModeHidden {
-  display: none;
-}
-
 button.actionModeButton {
   border: 0px solid;
   border-radius: 3px;
@@ -190,10 +186,6 @@ button.actionModeButton {
   margin: 5px;
   font-size: 11px;
   width: 96%;
-}
-
-button.editMode {
-  background-color: #979793;
 }
 
 button.editModeHidden {

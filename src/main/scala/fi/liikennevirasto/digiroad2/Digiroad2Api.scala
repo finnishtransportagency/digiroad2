@@ -24,6 +24,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     contentType = formats("json")
     try {
       authenticateForApi(request)(userProvider)
+      // oskari makes POSTs to /layers, allow those to pass
+      if(request.isWrite
+            && request.getPathInfo.equalsIgnoreCase("/layers") == false
+            && userProvider.getCurrentUser().hasWriteAccess() == false){
+        halt(Unauthorized("No write permissions"))
+      }
     } catch {
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
@@ -76,6 +82,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   get("/assets/municipality/:municipality") {
     assetProvider.getAssetsByMunicipality(params("municipality").toInt)
 
+  }
+
+  get("/user/roles") {
+    userProvider.getCurrentUser().configuration.roles
   }
 
   get("/assets/:assetId") {
@@ -152,13 +162,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/roadlinks") {
     val bboxOption = params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble);
-      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3));
+      val BBOXList = b.split(",").map(_.toDouble)
+      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3))
     }
 
     // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
-    response.setHeader("Access-Control-Allow-Headers", "*");
+    response.setHeader("Access-Control-Allow-Headers", "*")
 
     val rls = assetProvider.getRoadLinks(user, boundsFromParams)
     ("type" -> "FeatureCollection") ~
