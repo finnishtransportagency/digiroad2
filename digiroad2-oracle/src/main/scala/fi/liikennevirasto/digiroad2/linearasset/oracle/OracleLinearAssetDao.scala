@@ -22,9 +22,8 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getAll(bounds: Option[BoundingRectangle]): Seq[(Long, Seq[(Double, Double)])] = {
-    val b = bounds.get
-    val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
+  def getAll(bounds: BoundingRectangle): Seq[(Long, Seq[(Double, Double)])] = {
+    val boundingBox = new JGeometry(bounds.leftBottom.x, bounds.leftBottom.y, bounds.rightTop.x, bounds.rightTop.y, 3067)
     val geometry = storeGeometry(boundingBox, dynamicSession.conn)
     val linearAssets = sql"""
       select a.id, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))

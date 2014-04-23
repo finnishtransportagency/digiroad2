@@ -196,13 +196,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   private[this] def boundsFromParams: Option[BoundingRectangle] = {
-    params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble)
-      BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
-    }
+    params.get("bbox").map(constructBoundingRectangle)
+  }
+
+  private[this] def constructBoundingRectangle(bbox: String) = {
+    val BBOXList = bbox.split(",").map(_.toDouble)
+    BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
   get("/linearassets") {
-    linearAssetProvider.getAll(boundsFromParams)
+    params.get("bbox").map { bbox =>
+      linearAssetProvider.getAll(constructBoundingRectangle(bbox))
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
   }
 }
