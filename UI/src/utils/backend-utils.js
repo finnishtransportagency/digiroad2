@@ -53,7 +53,7 @@
         jQuery.ajax({
             contentType: "application/json",
             type: "POST",
-            url: "api/asset",
+            url: "api/assets",
             data: JSON.stringify(data),
             dataType: "json",
             success: function(asset) {

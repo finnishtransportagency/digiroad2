@@ -149,7 +149,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
-  post("/asset") {
+  post("/assets") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
       (parsedBody \ "assetTypeId").extract[Long],
