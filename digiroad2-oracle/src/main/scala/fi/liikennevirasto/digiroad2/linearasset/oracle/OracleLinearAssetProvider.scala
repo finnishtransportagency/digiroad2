@@ -13,13 +13,6 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     LinearAsset(id, points.map { case (x, y) => Point(x, y) })
   }
 
-  // TODO: Return Option[LinearAsset]
-  override def get(id: Long): LinearAsset = {
-    Database.forDataSource(ds).withDynTransaction {
-      toLinearAsset(OracleLinearAssetDao.get(id))
-    }
-  }
-
   override def getAll(bounds: Option[BoundingRectangle]): Seq[LinearAsset] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleLinearAssetDao.getAll(bounds).map(toLinearAsset)

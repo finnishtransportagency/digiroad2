@@ -12,16 +12,6 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 
 object OracleLinearAssetDao {
-  def get(id: Long): (Long, Seq[(Double, Double)]) = {
-    (15, Seq(
-      (292545.465942562, 6824449.3763405),
-      (292537.36220989,6824447.14768917),
-      (292530.875310699,6824446.07626144),
-      (292517.699818906,6824443.85193657),
-      (292503.884685422,6824441.10446331),
-      (292493.333123626,6824437.88088131)))
-  }
-
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }

@@ -205,9 +205,4 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   get("/linearassets") {
     linearAssetProvider.getAll(boundsFromParams)
   }
-
-  get("/linearassets/:id") {
-    val id = params("id").toLong
-    linearAssetProvider.get(id)
-  }
 }
