@@ -38,7 +38,7 @@
     };
 
     backend.getUserRoles = function () {
-        $.get('/api/user/roles', function(roles) {
+        $.get('api/user/roles', function(roles) {
             eventbus.trigger('roles:fetched', roles);
         });
     };
