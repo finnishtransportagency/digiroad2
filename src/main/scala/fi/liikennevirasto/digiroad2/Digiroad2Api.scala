@@ -54,10 +54,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/assetTypes") {
-    assetProvider.getAssetTypes
-  }
-
   get("/assets") {
     val user = userProvider.getCurrentUser
     val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {

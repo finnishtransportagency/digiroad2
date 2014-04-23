@@ -35,10 +35,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def getAssetTypes: Seq[AssetType] = {
-    assetTypes.as[AssetType].list
-  }
-
   def nextPrimaryKeySeqValue = {
     nextPrimaryKeyId.as[Long].first
   }

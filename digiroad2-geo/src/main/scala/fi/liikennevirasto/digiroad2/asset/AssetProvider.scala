@@ -5,7 +5,6 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.user.User
 
 trait AssetProvider {
-  def getAssetTypes: Seq[AssetType]
   def getAssetById(assetId: Long): Option[AssetWithProperties]
   def getAssetByExternalId(assetId: Long): Option[AssetWithProperties]
   def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)]

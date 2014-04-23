@@ -26,12 +26,6 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
     getRoadLinkById(roadLinkId).map(rl => userCanModifyMunicipality(rl.municipalityNumber)).getOrElse(false)
 
-  def getAssetTypes: Seq[AssetType] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getAssetTypes
-    }
-  }
-
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssetById(assetId)
