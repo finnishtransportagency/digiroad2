@@ -56,13 +56,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-/*  test("get assets without municipality authorization", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10", "testnone") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be (0)
-      }
-  }
-*/
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
