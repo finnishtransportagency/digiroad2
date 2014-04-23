@@ -55,13 +55,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-/*  test("get assets without municipality authorization", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10", "testnone") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be (0)
-      }
-  }
-*/
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10", "test2") {
       status should equal(200)
@@ -76,13 +69,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
     getWithUserAuth("/assets/9999999999999999") {
       status should equal(404)
-    }
-  }
-
-  test("get asset types", Tag("db")) {
-    getWithUserAuth("/assetTypes") {
-      status should equal(200)
-      parse(body).extract[List[AssetType]].size should be(1)
     }
   }
 

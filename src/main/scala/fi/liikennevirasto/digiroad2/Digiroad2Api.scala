@@ -54,10 +54,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/assetTypes") {
-    assetProvider.getAssetTypes
-  }
-
   get("/assets") {
     val user = userProvider.getCurrentUser
     val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {
@@ -123,7 +119,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
-  post("/asset") {
+  post("/assets") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
       (parsedBody \ "assetTypeId").extract[Long],
@@ -189,9 +185,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   private[this] def boundsFromParams: Option[BoundingRectangle] = {
-    params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble)
-      BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
+    params.get("bbox").map(constructBoundingRectangle)
+  }
+
+  private[this] def constructBoundingRectangle(bbox: String) = {
+    val BBOXList = bbox.split(",").map(_.toDouble)
+    BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
+  }
+
+  get("/linearassets") {
+    params.get("bbox").map { bbox =>
+      linearAssetProvider.getAll(constructBoundingRectangle(bbox))
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
 }

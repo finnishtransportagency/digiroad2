@@ -18,6 +18,12 @@
         });
     }, 1000);
 
+    backend.getLinearAssets = _.throttle(function(boundingBox) {
+        jQuery.getJSON('api/linearassets?bbox=' + boundingBox, function(linearAssets) {
+            eventbus.trigger('linearAssets:fetched', linearAssets);
+        });
+    }, 1000);
+
     backend.getAsset = function (assetId) {
         $.get('api/assets/' + assetId, function(asset) {
             eventbus.trigger('asset:fetched', asset);
@@ -38,7 +44,7 @@
     };
 
     backend.getUserRoles = function () {
-        $.get('/api/user/roles', function(roles) {
+        $.get('api/user/roles', function(roles) {
             eventbus.trigger('roles:fetched', roles);
         });
     };
@@ -47,7 +53,7 @@
         jQuery.ajax({
             contentType: "application/json",
             type: "POST",
-            url: "api/asset",
+            url: "api/assets",
             data: JSON.stringify(data),
             dataType: "json",
             success: function(asset) {

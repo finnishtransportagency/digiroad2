@@ -56,12 +56,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     assets.size shouldBe(1)
   }
 
-  test("load assetTypes from Oracle", Tag("db")) {
-    val assetTypes = provider.getAssetTypes
-    assetTypes shouldBe 'nonEmpty
-    assetTypes.size shouldBe(1)
-  }
-
   test("load enumerated values for asset type", Tag("db")) {
     val values = provider.getEnumeratedPropertyValues(TestAssetTypeId)
     values shouldBe 'nonEmpty

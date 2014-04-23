@@ -144,9 +144,16 @@ object AssetCsvFormatter {
     (asset, modifiedBy :: modifiedTime :: result)
   }
 
-  private def addBearing(params: (AssetWithProperties, List[String])) = {
+  private[util] def addBearing(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.bearing.getOrElse("").toString :: result)
+    val validityDirection = asset.validityDirection.getOrElse(1)
+    if(validityDirection != 3) {
+      (asset, asset.bearing.getOrElse("").toString :: result)
+    }
+    else {
+      val recalculated = asset.bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
+      (asset, recalculated.getOrElse("").toString :: result)
+    }
   }
 
   private def addSpecialNeeds(params: (AssetWithProperties, List[String])) = {
