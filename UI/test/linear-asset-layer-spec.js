@@ -12,7 +12,7 @@ describe('LinearAssetLayer', function () {
         };
         before(function() {
             layer = new LinearAssetLayer(map, {
-                getLinearAssets: function(bbox) {
+                getLinearAssets: function() {
                     eventbus.trigger('linearAssets:fetched', [
                         {id: 1, points: [{x: 0, y: 0}]},
                         {id: 2, points: [{x: 10, y: 10}]}
@@ -24,8 +24,15 @@ describe('LinearAssetLayer', function () {
         });
 
         it('should contain each speed limit only once', function() {
+            var getFirstPointOfFeature = function(feature) {
+                return feature.geometry.getVertices()[0];
+            };
+
             assert.equal(vectorLayer.features.length, 2);
+            assert.equal(getFirstPointOfFeature(vectorLayer.features[0]).x, 0);
+            assert.equal(getFirstPointOfFeature(vectorLayer.features[0]).y, 0);
+            assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).x, 10);
+            assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).y, 10);
         });
     });
-
 });
