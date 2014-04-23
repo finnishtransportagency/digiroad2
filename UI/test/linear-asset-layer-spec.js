@@ -3,7 +3,7 @@ describe('LinearAssetLayer', function () {
         var layer;
         var vectorLayer;
         var map = {
-            getZoom: function() { return 12; },
+            getZoom: function() { return 9; },
             addLayer: function(vecLayer) {
                 vectorLayer = vecLayer;
                 vectorLayer.map = this;
@@ -20,7 +20,7 @@ describe('LinearAssetLayer', function () {
                 }
             });
             eventbus.trigger('layer:selected', 'linearAsset');
-            eventbus.trigger('map:moved', {bbox: null});
+            eventbus.trigger('map:moved', {bbox: null, zoom: 9});
         });
 
         it('should contain each speed limit only once', function() {
@@ -33,6 +33,26 @@ describe('LinearAssetLayer', function () {
             assert.equal(getFirstPointOfFeature(vectorLayer.features[0]).y, 0);
             assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).x, 10);
             assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).y, 10);
+        });
+
+        describe('and zooming out', function() {
+            before(function() {
+                eventbus.trigger('map:moved', {bbox: null, zoom: 8});
+            });
+
+            it('should not contain speed limits', function() {
+                assert.equal(vectorLayer.features.length, 0);
+            });
+
+            describe('and zooming in', function() {
+                before(function() {
+                    eventbus.trigger('map:moved', {bbox: null, zoom: 9});
+                });
+
+                it('should contain speed limits', function() {
+                    assert.equal(vectorLayer.features.length, 2);
+                });
+            });
         });
     });
 });

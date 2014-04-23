@@ -12,12 +12,12 @@ window.LinearAssetLayer = function(map, backend) {
     });
     vectorLayer.setOpacity(1);
 
-    var isZoomed = function(map) { return 8 < map.getZoom(); };
+    var isZoomed = function(level) { return 8 < level; };
     var layerIsVisible = function() { return !!vectorLayer.map; };
     var showLayer = function() {
         map.addLayer(vectorLayer);
         vectorLayer.setVisibility(true);
-        if (isZoomed(map) && layerIsVisible()) {
+        if (isZoomed(map.getZoom()) && layerIsVisible()) {
             backend.getLinearAssets(map.getExtent());
         }
     };
@@ -36,10 +36,11 @@ window.LinearAssetLayer = function(map, backend) {
     }, this);
 
     eventbus.on('map:moved', function(state) {
-        if (isZoomed(map) && layerIsVisible()) {
+        if (isZoomed(state.zoom) && layerIsVisible()) {
             backend.getLinearAssets(state.bbox);
         } else {
             vectorLayer.removeAllFeatures();
+            allLinearAssets = {};
         }
     }, this);
 
