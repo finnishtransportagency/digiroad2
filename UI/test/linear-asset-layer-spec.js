@@ -24,7 +24,7 @@ describe('LinearAssetLayer', function () {
         });
 
         it('should contain each speed limit only once', function() {
-            console.log('number of features on ' + vectorLayer.id + ' is ' + vectorLayer.features.length);
+            assert.equal(vectorLayer.features.length, 2);
         });
     });
 

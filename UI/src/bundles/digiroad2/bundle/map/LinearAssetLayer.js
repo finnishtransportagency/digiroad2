@@ -1,6 +1,7 @@
 window.LinearAssetLayer = function(map, backend) {
     backend = backend || Backend;
 
+    var allLinearAssets = {};
     var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
         styleMap: new OpenLayers.StyleMap({
             "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -43,12 +44,20 @@ window.LinearAssetLayer = function(map, backend) {
     }, this);
 
     var drawLinearAssets = function(linearAssets) {
-        var features = _.map(linearAssets, function(linearAsset) {
-            var points = _.map(linearAsset.points, function (point) {
-                return new OpenLayers.Geometry.Point(point.x, point.y);
-            });
-            return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
-        });
+        var features = _.chain(linearAssets)
+            .reject(function(linearAsset) { return !!allLinearAssets[linearAsset.id]; })
+            .map(function(linearAsset) {
+                var points = _.map(linearAsset.points, function (point) {
+                    return new OpenLayers.Geometry.Point(point.x, point.y);
+                });
+                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
+            })
+            .value();
+        allLinearAssets = _.merge({}, allLinearAssets, _.reduce(linearAssets,
+            function (acc, linearAsset) {
+                acc[linearAsset.id] = true;
+                return acc;
+            }, {}));
         vectorLayer.addFeatures(features);
     };
 
