@@ -162,7 +162,7 @@ object DataFixture {
           })
           nameWriter.close()
         }
-      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate")
+      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate | speedlimits")
     }
   }
 }
