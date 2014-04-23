@@ -169,24 +169,20 @@ object OracleSpatialAssetDao {
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
-    updateProperties(assetId, properties)
+    updateAssetProperties(assetId, properties)
     getAssetById(assetId).get
   }
 
-  def updateAsset(assetId: Long, updater: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    updateProperties(assetId, properties)
+  def updateAssetLastModified(assetId: Long, updater: String) {
     updateAssetModified(assetId, updater).execute()
-    getAssetById(assetId).get
   }
 
-  private[this] def updateProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.foreach { property =>
-      if (!property.values.isEmpty) {
-        if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
-          OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.publicId, property.values)
-        } else {
-          OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.publicId, property.values)
-        }
+      if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
+        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.publicId, property.values)
+      } else {
+        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.publicId, property.values)
       }
     }
   }
@@ -198,7 +194,7 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]): AssetWithProperties = {
+  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
     val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
@@ -207,7 +203,6 @@ object OracleSpatialAssetDao {
       case Some(b) => updateAssetBearing(id, b).execute()
       case None => // do nothing
     }
-    getAssetById(id).get
   }
 
   def getRoadLinks(user: User, bounds: Option[BoundingRectangle]): Seq[RoadLink] = {

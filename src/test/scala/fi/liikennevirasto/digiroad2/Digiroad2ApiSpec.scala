@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.AssetType
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -113,36 +112,19 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("update asset property", Tag("db")) {
-    val body1 = write(List(PropertyValue("3")))
-    val body2 = write(List(PropertyValue("2")))
-    putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body1.getBytes) {
+    val body1 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
+    val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
+    putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body1.getBytes) {
       status should equal(200)
       getWithUserAuth("/assets/" + CreatedTestAssetId) {
         val asset = parse(body).extract[AssetWithProperties]
         val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be ("3")
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId2 + "/values", body2.getBytes) {
+        putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body2.getBytes) {
           status should equal(200)
           getWithUserAuth("/assets/" + CreatedTestAssetId) {
             parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
-          }
-        }
-      }
-    }
-  }
-
-  test("delete and create asset property", Tag("db")) {
-    val propBody = write(List(PropertyValue("2")))
-    deleteWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values") {
-      status should equal(200)
-      getWithUserAuth("/assets/" + CreatedTestAssetId) {
-        val asset = parse(body).extract[AssetWithProperties]
-        asset.propertyData.find(_.publicId == TestPropertyId).get.values.size should be (0)
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId + "/properties/" + TestPropertyId + "/values", propBody.getBytes) {
-          status should equal(200)
-          getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId).get.values.head.propertyValue should be ("2")
           }
         }
       }
@@ -234,5 +216,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       parse(body).extract[AssetWithProperties].propertyData.map(p => p.publicId)
     }
     propIds should be(assetPropNames)
+  }
+
+  private[this] def propertiesToJson(prop: SimpleProperty): String = {
+    val json = write(Seq(prop))
+    s"""{"properties":$json}"""
   }
 }

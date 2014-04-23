@@ -65,13 +65,21 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def updateAsset(assetId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
+  def updateAsset(assetId: Long, position: Option[Position], properties: Option[Seq[SimpleProperty]]): AssetWithProperties = {
     if (!userCanModifyAsset(assetId)) {
       throw new IllegalArgumentException("User does not have write access to municipality")
     }
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.updateAsset(assetId, userProvider.getCurrentUser().username, properties)
+      OracleSpatialAssetDao.updateAssetLastModified(assetId, userProvider.getCurrentUser().username)
+      properties match {
+        case None => logger.debug("not updating properties")
+        case Some(props) => OracleSpatialAssetDao.updateAssetProperties(assetId, props)}
+      position match {
+        case None => logger.debug("not updating position")
+        case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+      }
     }
+    getAssetById(assetId).get
   }
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
@@ -79,15 +87,6 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
       Database.forDataSource(ds).withDynTransaction {
         OracleSpatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
       }
-  }
-
-  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]): AssetWithProperties = {
-    Database.forDataSource(ds).withDynTransaction {
-      if (!userCanModifyAsset(id)) {
-        throw new IllegalArgumentException("User does not have write access to municipality")
-      }
-      OracleSpatialAssetDao.updateAssetLocation(id = id, lon = lon, lat = lat, roadLinkId = roadLinkId, bearing = bearing)
-    }
   }
 
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit = {
@@ -106,32 +105,6 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinkById(roadLinkId)
-    }
-  }
-
-  def updateAssetProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
-    if (!userCanModifyAsset(assetId)) {
-      throw new IllegalArgumentException("User does not have write access to municipality")
-    }
-
-    Database.forDataSource(ds).withDynTransaction {
-      if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyPublicId)) {
-        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyPublicId, propertyValues)
-      } else {
-        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyPublicId, propertyValues)
-      }
-    }
-  }
-
-  def deleteAssetProperty(assetId: Long, propertyId: String) {
-    if (AssetPropertyConfiguration.commonAssetProperties.keySet.contains(propertyId)) {
-      throw new IllegalArgumentException("Cannot delete common asset property value: " + propertyId)
-    }
-    Database.forDataSource(ds).withDynTransaction {
-      if (!userCanModifyAsset(assetId)) {
-        throw new IllegalArgumentException("User does not have write access to municipality")
-      }
-      OracleSpatialAssetDao.deleteAssetProperty(assetId, propertyId)
     }
   }
 
