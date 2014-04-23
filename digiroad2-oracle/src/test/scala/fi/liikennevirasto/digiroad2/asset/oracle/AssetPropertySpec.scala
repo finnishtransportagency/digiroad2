@@ -87,12 +87,8 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
     restoredAsset.propertyData.find(_.id == property.id).get.values should not be empty
   }
 
-  private[this] def updateAssetProperties(assetId: Long, propertyId: String, values: Seq[PropertyValue]) {
+  private[this] def updateAssetProperties(assetId: Long, propertyId: String, values: Seq[PropertyValue] = Seq()) {
     provider.updateAsset(assetId, None, Some(Seq(new SimpleProperty(propertyId, values))))
-  }
-
-  private[this] def updateAssetProperties(assetId: Long, propertyId: String) {
-    provider.updateAsset(assetId, None, Some(Seq(new SimpleProperty(propertyId, Seq()))))
   }
 
   private def getTestAsset: AssetWithProperties = provider.getAssetById(TestAssetId).get
