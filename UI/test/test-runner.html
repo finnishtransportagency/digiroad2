@@ -19,7 +19,6 @@
 <script type="text/javascript" src="../bower_components/momentjs/min/moment.min.js"></script>
 <script type="text/javascript" src="../bower_components/pikaday/pikaday.js"></script>
 <script type="text/javascript" src="../bower_components/oskari.org/libraries/OpenLayers/OpenLayers-2.12.js"></script>
-<script type="text/javascript" src="../bower_components/oskari.org/bundles/framework/bundle/divmanazer/bundle.js"></script>
 <script src="../src/bundles/digiroad2/bundle/map/template/Templates.js"></script>
 <script src="../src/bundles/digiroad2/bundle/map/AssetLayer.js"></script>
 <script src="../src/bundles/digiroad2/bundle/map/LinearAssetLayer.js"></script>
@@ -34,7 +33,7 @@
 <script src="linear-asset-layer-spec.js"></script>
 <script>
   mocha.checkLeaks();
-  mocha.run();
+  if (navigator.userAgent.indexOf('PhantomJS') < 0) { mocha.run(); }
 </script>
 </body>
 </html>
