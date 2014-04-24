@@ -1,4 +1,4 @@
-window.AssetActionPanel = function(identifier, header, isExpanded, validityPeriods) {
+window.AssetActionPanel = function(identifier, header, isExpanded, validityPeriods, hasEditButton) {
     var readOnly = false;
 
     _.templateSettings = {
@@ -11,8 +11,9 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
                 '<div class="layerGroupImg_'+identifier+' layerGroupImg_unselected_'+identifier+'"></div>' +
                 '<div class="layerGroupLabel">'+header+'</div>' +
             '</div>' +
-            '<div class="layerGroupLayers"></div>' +
         '</div>');
+
+    var validityPeriodContainer = '<div class="layerGroupLayers"></div>';
 
     var layerGroup = actionPanel.find('.layerGroup');
 
@@ -95,9 +96,12 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
     var renderView = function() {
         jQuery(".panelLayerGroup").append(actionPanel);
 
-        _.forEach(validityPeriods, function (layer) {
-            actionPanel.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
-        });
+        if(validityPeriods.length > 0) {
+            actionPanel.append(validityPeriodContainer);
+            _.forEach(validityPeriods, function (layer) {
+                actionPanel.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
+            });
+        }
 
         if(isExpanded){
             layerGroup.addClass('layerGroupSelectedMode');
@@ -180,7 +184,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
     var handleRoles = function(roles) {
         if(_.contains(roles, "viewer") === false){
             actionPanel.append(actionButtons.hide());
-            actionPanel.append(editButtonForGroup());
+            if(hasEditButton) actionPanel.append(editButtonForGroup());
         }
     };
 

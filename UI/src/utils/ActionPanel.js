@@ -14,8 +14,8 @@
         {id: "current", label: "Voimassaolevat", selected: true},
         {id: "future", label: "Tulevat"},
         {id: "past", label: "Käytöstä poistuneet"}
-    ]);
-    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, []);
+    ], true);
+    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, [], false);
     eventbus.trigger('layer:selected','asset');
     Backend.getUserRoles();
 
