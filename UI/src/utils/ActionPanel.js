@@ -10,8 +10,12 @@
 
 
     jQuery("#maptools").append(panelControl);
-    AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', true, 'bus-stop.png');
-    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, 'speed-limit.png');
+    AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', true, [
+        {id: "current", label: "Voimassaolevat", selected: true},
+        {id: "future", label: "Tulevat"},
+        {id: "past", label: "Käytöstä poistuneet"}
+    ]);
+    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, []);
     eventbus.trigger('layer:selected','asset');
     Backend.getUserRoles();
 

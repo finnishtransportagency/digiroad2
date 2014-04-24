@@ -1,4 +1,4 @@
-window.AssetActionPanel = function(identifier, header, isExpanded) {
+window.AssetActionPanel = function(identifier, header, isExpanded, validityPeriods) {
     var readOnly = false;
 
     _.templateSettings = {
@@ -95,12 +95,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded) {
     var renderView = function() {
         jQuery(".panelLayerGroup").append(actionPanel);
 
-        var layerPeriods = [
-            {id: "current", label: "Voimassaolevat", selected: true},
-            {id: "future", label: "Tulevat"},
-            {id: "past", label: "Käytöstä poistuneet"}
-        ];
-        _.forEach(layerPeriods, function (layer) {
+        _.forEach(validityPeriods, function (layer) {
             actionPanel.find(".layerGroupLayers").append(layerFunc.prepareLayer(layer));
         });
 
