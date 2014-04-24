@@ -39,9 +39,11 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
 
         var handleAssetModified = function(asset) {
             var layerToChange =  _.find(selectedValidityPeriods, function(x) { return asset.validityPeriod === x.id; });
-            layerToChange.selected = true;
-            layerToChange.dom.find('input').prop('checked', true);
-            triggerValidityPeriodsToBus();
+            if(!!layerToChange) {
+                layerToChange.selected = true;
+                layerToChange.dom.find('input').prop('checked', true);
+                triggerValidityPeriodsToBus();
+            }
         };
 
         var triggerValidityPeriodsToBus = function() {
