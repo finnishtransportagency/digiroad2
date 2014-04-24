@@ -3,13 +3,13 @@ __DIGIROAD-SOVELLUKSEN KÄYTTÖOHJE__
 
 ###Katselutila - päivittäjän roolissa###
 
-![Katselutila - päivittäjän roolissa](k0.JPG)
+![Katselutila - päivittäjän roolissa](k0.jpg)
 
 _Katselutila._
 
 1. Pysäkit -paletti
 1. Nopeusrajoitukset -paletti
-1. “Muokkaa”-painike
+1. “Siirry muokkaustilaan”-painike
 1. Valittu pysäkki
 1. Google Street View
 1. Ominaisuustieto -näkymä
@@ -20,9 +20,9 @@ _Katselutila._
 
 ###Katselutila - katselijan roolissa###
 
-![Katselutila - katselijan roolissa](k19.jpg)
+![Katselutila - katselijan roolissa](k19.JPG)
 
-_Katselijan roolissa karttakäyttöliittymässä ei ole Muokkaa-nappia._
+_Katselijan roolissa karttakäyttöliittymässä ei ole "Siirry muokkaustilaan"-nappia._
 
 ###Muokkaustila###
 
@@ -131,7 +131,8 @@ Joukkoliikenteen pysäkit näkyvät vain tarpeeksi tarkalla mittakaavatasolla, j
 
 _Joukkoliikenteen pysäkkien valinta._
 
-####Joukkoliikenteen pysäkkien haku####
+3.2.1 Joukkoliikenteen pysäkkien haku
+-------------------------------------
 
 Joukkoliikenteen pysäkkejä haetaan pysäkin kansallisella ID:llä yksilöidyllä URL-osoitteella. Esimerkki URL-osoitteesta:
 
@@ -146,9 +147,9 @@ _Joukkoliikenteen pysäkkien haku._
 3.3 Nopeusrajoitusten valinta
 -----------------------------
 
-Karttanäkymään voi valita nopeusrajoitukset klikkaamalla “Nopeusrajoitukset”-painiketta (2).
+Karttanäkymään voi valita nopeusrajoitukset klikkaamalla “Nopeusrajoitukset”-painiketta (2). Nopeusrajoitukset näkyvät, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Nopeusrajoitukset on visualisoitu purpuran punaisella värillä tielinkeille.
 
-![Nopeusrajoitusten valinta](k8.jpg)
+![Nopeusrajoitusten valinta](k18.jpg)
 
 _Nopeusrajoitusten valinta._
 
@@ -171,22 +172,16 @@ _Joukkoliikenteen pysäkin tietojen katselu._
 4.2 Nopeusrajoitusten tietojen katselu
 --------------------------------------
 
-Nopeusrajoituksia voi katsella valitsemalla nopeusrajoitukset "Nopeusrajoitus"-painikkeella kartalle. (2)
-
-![Nopeusrajoitusten tietojen katselu](k18.jpg)
-
-_Nopeusrajoitusten tietojen katselu._
-
 5. Muokkaustila
 ---------------
 
-Muokkaustila aktivoidaan painamalla “Muokkaa”-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yläosassa on teksti: ”Olet muokkaustilassa”.
+Muokkaustila aktivoidaan painamalla “Siirry muokkaustilaan”-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yläosassa on teksti: ”Olet muokkaustilassa”.
 
 Muokkaustilasta pääsee takaisin katselutilaan klikkaamalla “Siirry katselutilaan” -painiketta (11).
 
-![Muokkaustila](k10.jpg)
+![Muokkaustila](k3.jpg)
 
-_Muokkaustilaan pääsee klikkaamalla “Muokkaa”-painiketta (3)._
+_Muokkaustilaan pääsee klikkaamalla “Siirry muokkaustilaan”-painiketta (3)._
 
 ![Muokkaustila](k11.jpg)
 
@@ -201,7 +196,7 @@ Joukkoliikenteen pysäkit ovat julkisen liikenteen käytössä olevia pysäkkej�
 --------------------------------------------------------
 Yksittäisen pysäkin ominaisuustietoja voi muokata valitsemalla muokkaustyökalun (12). Muokattava pysäkki valitaan hiirellä klikkaamalla. Pysäkkiä valittaessa kartan mittakaavatason täytyy olla 1:20 000 tai tarkempi, jotta pysäkin ominaisuustietojen muokkaaminen on mahdollista (9). Sovellus ilmoittaa, kun mittakaavataso on liian epätarkka pysäkkien muokkaamista varten.
 
-Muokkaustilassa tehdyt muutokset (sekä pysäkin ominaisuustietojen että sijainnin) tallentuvat painamalla ruudun oikeassa alareunassa olevaa "Tallenna"-painiketta (15). Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pysäkki palautetaan muutoksia edeltäneeseen tilaan. Valittu pysäkki näkyy sinisellä korostusvärillä (4). Sivun oikeaan laitaan avautuu Google Street View -näkymä (5) pysäkistä sekä pysäkin ominaisuustiedot (6).
+Muokkaustilassa tehdyt muutokset (sekä pysäkin ominaisuustietojen että sijainnin) tallentuvat painamalla ruudun oikeassa alareunassa olevaa "Tallenna"-painiketta (15). Muutosten tallentamisen jälkeen pysäkille tallentuu tieto viimeisestä muokkaajasta ja muokkaushetkestä. Pysäkin ominaisuustietonäkymässä näkyy kohdassa "Muokattu viimeksi" sovellukseen kirjautuneen käyttäjän käyttäjätunnus ja muokkausajankohdan päivämäärä ja kellonaika. Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pysäkki palautetaan muutoksia edeltäneeseen tilaan. Valittu pysäkki näkyy sinisellä korostusvärillä (4). Sivun oikeaan laitaan avautuu Google Street View -näkymä (5) pysäkistä sekä pysäkin ominaisuustiedot (6).
 
 ![Pysäkin ominaisuustietojen muokkaus.](k12.jpg)
 
@@ -243,7 +238,7 @@ __Nimi suomeksi:__ Pysäkin nimi suomen kielellä.
 __Nimi ruotsiksi:__ Pysäkin nimi ruotsin kielellä.
 __Tietojen ylläpitäjä:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Ylläpitäjän tunnus:__ Tietojen ylläpitäjän sisäinen tunnus pysäkille.
-__Ylläpitäjän koodi:__ Pysäkin omistajan sisäinen tunnus pysäkille.
+__Omistajan tunnus:__ Pysäkin omistajan sisäinen tunnus pysäkille.
 __Matkustajatunnus:__ Pysäkin tunnus, joka näkyy matkustajalle.
 __Maastokoordinaatti X:__ Pysäkin sijainnin mitattu X-koordinaatti.
 __Maastokoordinaatti Y:__ Pysäkin sijainnin mitattu Y-koordinaatti.
