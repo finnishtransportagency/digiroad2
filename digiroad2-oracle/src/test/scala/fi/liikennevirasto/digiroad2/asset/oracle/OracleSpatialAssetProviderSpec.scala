@@ -259,7 +259,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("provide road link geometry by municipality", Tag("db")) {
     provider.getRoadLinks(unauthorizedUser).size should be (0)
     val rls = provider.getRoadLinks(user, Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
-    rls.size should be (23)
+    rls.size should be (479)
     rls.foreach { rl =>
       rl.id should (be > 1l)
       rl.lonLat.foreach { pt =>
@@ -267,7 +267,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
     }
-    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (24)
+    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (303)
   }
 
   test("Load image by id", Tag("db")) {
