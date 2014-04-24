@@ -1,4 +1,4 @@
-window.AssetActionPanel = function(identifier, header, isExpanded, icon) {
+window.AssetActionPanel = function(identifier, header, isExpanded) {
     var readOnly = false;
 
     _.templateSettings = {
