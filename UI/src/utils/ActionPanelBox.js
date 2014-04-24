@@ -74,24 +74,26 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
     })();
 
     var button = $('<button class="readOnlyMode actionModeButton"></button>');
+
+    var editMode = function () {
+        readOnly = false;
+        showEditMode();
+        button.off().click(readMode);
+    };
+
+    var readMode = function () {
+        readOnly = true;
+        eventbus.trigger('application:readOnly', readOnly);
+        changeTool('Select');
+
+        button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
+
+        actionButtons.hide();
+        layerGroup.removeClass('layerGroupEditMode');
+        button.off().click(editMode);
+    };
+
     var editButtonForGroup = function() {
-        var editMode = function () {
-            readOnly = false;
-            showEditMode();
-            button.off().click(readMode);
-        };
-        var readMode = function () {
-            readOnly = true;
-            eventbus.trigger('application:readOnly', readOnly);
-            changeTool('Select');
-
-            button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
-
-            actionButtons.hide();
-            layerGroup.removeClass('layerGroupEditMode');
-            button.off().click(editMode);
-        };
-
         return button.text('Siirry muokkaustilaan').click(editMode);
     };
 
@@ -162,6 +164,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
         button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
+        button.off().click(editMode);
         layerGroup.addClass('layerGroupSelectedMode');
         layerGroup.removeClass('layerGroupEditMode');
         layerGroup.off();
