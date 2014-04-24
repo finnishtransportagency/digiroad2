@@ -108,41 +108,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   // TODO: handle missing roadLinkId
   put("/assets/:id") {
-    val additionalParams = (params.get("positionOnly"), params.get("propertiesOnly"))
-    additionalParams match {
-      case (None, Some(_)) => {
-        saveAssetProperties(params("id").toLong, parsedBody)
-      }
-      case (Some(_), None) => {
-        saveAssetPosition(params("id").toLong, parsedBody)
-      }
-      case _ => {
-        saveAssetProperties(params("id").toLong, parsedBody)
-        saveAssetPosition(params("id").toLong, parsedBody)
-      }
-    }
-  }
-
-  private[this] def saveAssetPosition(id: Long, parsedBody: JValue) = {
     val (lon, lat, roadLinkId, bearing) =
       ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
         (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val updated =
-      assetProvider.updateAssetLocation(
-        id = id,
-        lon = lon.get,
-        lat = lat.get,
-        roadLinkId = roadLinkId.get,
-        bearing = bearing)
-    logger.debug("Asset position updated: " + updated)
-    updated
-  }
-
-  private[this] def saveAssetProperties(id: Long, parsedBody: JValue) = {
-    assetProvider.updateAsset(
-      id,
-      (parsedBody \ "bearing").extract[Int],
-      (parsedBody \ "properties").extract[Seq[SimpleProperty]])
+    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val position = lon match {
+      case Some(_) => Some(Position(lon.get, lat.get, roadLinkId.get, bearing))
+      case None => None
+    }
+    assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
   post("/assets") {
@@ -176,19 +150,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
           }) ~ ("crs" -> ("type" -> "OGC") ~ ("properties" -> ("urn" -> "urn:ogc:def:crs:OGC:1.3:ETRS89")))
         )
       })
-  }
-
-  put("/assets/:assetId/properties/:propertyId/values") {
-    val propertyValues = parsedBody.extract[List[PropertyValue]]
-    val assetId = params("assetId").toLong
-    assetProvider.updateAssetProperty(assetId, params("propertyId"), propertyValues)
-    assetProvider.getAssetById(assetId)
-  }
-
-  delete("/assets/:assetId/properties/:propertyId/values") {
-    val assetId = params("assetId").toLong
-    assetProvider.deleteAssetProperty(assetId, params("propertyId"))
-    assetProvider.getAssetById(assetId)
   }
 
   get("/images/:imageId") {
