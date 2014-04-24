@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.asset.EnumeratedPropertyValue
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
-import fi.liikennevirasto.digiroad2.asset.AssetType
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec {

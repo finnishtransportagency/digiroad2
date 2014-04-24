@@ -59,15 +59,15 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
     }
   }
 
-  def updateAsset(assetId: Long, position: Option[Position], properties: Option[Seq[SimpleProperty]]): AssetWithProperties = {
+  def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
     if (!userCanModifyAsset(assetId)) {
       throw new IllegalArgumentException("User does not have write access to municipality")
     }
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.updateAssetLastModified(assetId, userProvider.getCurrentUser().username)
-      properties match {
-        case None => logger.debug("not updating properties")
-        case Some(props) => OracleSpatialAssetDao.updateAssetProperties(assetId, props)}
+      if (!properties.isEmpty) {
+        OracleSpatialAssetDao.updateAssetProperties(assetId, properties)
+      }
       position match {
         case None => logger.debug("not updating position")
         case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)

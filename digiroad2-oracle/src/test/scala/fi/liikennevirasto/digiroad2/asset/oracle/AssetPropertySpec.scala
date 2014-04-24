@@ -88,7 +88,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private[this] def updateAssetProperties(assetId: Long, propertyId: String, values: Seq[PropertyValue] = Seq()) {
-    provider.updateAsset(assetId, None, Some(Seq(new SimpleProperty(propertyId, values))))
+    provider.updateAsset(assetId, None, Seq(new SimpleProperty(propertyId, values)))
   }
 
   private def getTestAsset: AssetWithProperties = provider.getAssetById(TestAssetId).get

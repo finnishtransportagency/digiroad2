@@ -111,7 +111,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val (lon, lat, roadLinkId, bearing) =
       ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
         (parsedBody \ "roadLinkId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]]
+    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val position = lon match {
       case Some(_) => Some(Position(lon.get, lat.get, roadLinkId.get, bearing))
       case None => None
