@@ -81,6 +81,29 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
   }
 
+  post("/newuser") {
+
+    //TODO: check operator permissions
+    val (username, elyNumber, municipalities, hasWriteAccess) =
+      (request.getParameter("username"), request.getParameter("elyNumber"),
+        request.getParameter("municipalityNumbers"), request.getParameter("hasWriteAccess"))
+
+    val municipalitiesOfEly = splitToInts(elyNumber) match {
+      case None => Set()
+      case Some(numbers) => municipalityProvider.getMunicipalities(numbers.toSet)
+    }
+    val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
+
+    userProvider.getUser(username) match {
+      case Some(u) =>
+        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet))
+        userProvider.saveUser(updatedUser)
+      case None =>
+        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet))
+    }
+    redirect("/newuser.html?username="+username)
+  }
+
   put("/user/:username/roles") {
     val newRoles = parsedBody.extract[List[String]].toSet
     params.get("username").flatMap {
@@ -97,7 +120,11 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   def parseInputToInts(input: Seq[String], position: Int): Option[Seq[Int]] = {
     if (!input.isDefinedAt(position)) return None
-    val split = input(position).split(",").filterNot(_.trim.isEmpty)
+    splitToInts(input(position))
+  }
+
+  def splitToInts(numbers: String) : Option[Seq[Int]] = {
+    val split = numbers.split(",").filterNot(_.trim.isEmpty)
     split match {
       case Array() => None
       case _ => Some(split.map(_.trim.toInt).toSeq)
