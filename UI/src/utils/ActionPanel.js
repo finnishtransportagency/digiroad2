@@ -19,7 +19,7 @@
     eventbus.trigger('layer:selected','asset');
     Backend.getUserRoles();
 
-    var editMessage = $('<div class="editMessage">Muokkaustila: muutokset tallentuvat automaattisesti</div>');
+    var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');
     jQuery(".container").append(editMessage.hide());
 
     var handleEditMessage = function(readOnly) {
