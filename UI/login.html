@@ -63,28 +63,11 @@
 <body id="main">
 <div id="loginForm">
     <div class="formHeader">Digiroad 2 kirjautuminen (testi)</div>
-
     <form method="post" action="api/auth/session">
         <div class="formAttributeContentRow">
             <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
             <input type="text" name="username"/></div>
         <input type="submit" value="Kirjaudu">
-    </form>
-</div>
-<div id="registerForm">
-    <div class="formHeader">Luo uusi k&auml;ytt&auml;j&auml;</div>
-
-    <form method="post" action="api/auth/user">
-        <div class="formAttributeContentRow">
-            <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
-            <input type="text" name="username"/></div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Kunnan nimi:</div>
-            <select name="municipalityNumber">
-                <option value="235">Kauniainen</option>
-                <option value="837">Tampere</option>
-            </select></div>
-        <input type="submit" value="Luo k&auml;ytt&auml;j&auml;">
     </form>
 </div>
 </body>

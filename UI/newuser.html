@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+
+    <script type="text/javascript">
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+            return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        function showCreatedUser() {
+            var userName = getParameterByName('username')
+            if (userName) {
+                alert('Uusi käyttäjä "' + getParameterByName('username') + '" luotu');
+                window.location.search='';
+            }
+        }
+    </script>
+    <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
+    <title>Digiroad 2 uuden käyttäjän luominen</title>
+</head>
+<body id="main" onload="showCreatedUser()">
+<div id="registerForm">
+    <div class="formHeader">Luo uusi k&auml;ytt&auml;j&auml;</div>
+    <form method="post" action="api/userconfig/newuser">
+        <div class="formAttributeContentRow">
+            <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
+            <input type="text" name="username"/></div>
+        <div class="formAttributeContentRow">
+            <div class="formLabels">Ely nro:</div>
+            <input type="text" id="elyNumber" name="elyNumber"/>
+            <label for="elyNumber">(esim, 3 tai 3, 4)</label>
+        </div>
+        <div class="formAttributeContentRow">
+            <div class="formLabels">Kunta nro:</div>
+            <input type="text" id="municipalityNumbers" name="municipalityNumbers"/>
+             <label for="municipalityNumbers">(esim, 091 tai 091, 092)</label>
+        </div>
+        <div class="formAttributeContentRow">
+            <div class="formLabels">Oikeuden tyyppi:</div>
+            <select name="hasWriteAccess">
+                <option value="true">Muokkausoikeus</option>
+                <option value="false">Lukuoikeus</option>
+            </select>
+        </div>
+        <input type="submit" value="Luo k&auml;ytt&auml;j&auml;">
+    </form>
+</div>
