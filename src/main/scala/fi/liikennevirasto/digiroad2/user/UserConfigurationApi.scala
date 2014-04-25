@@ -82,8 +82,9 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   }
 
   post("/newuser") {
-
-    //TODO: check operator permissions
+    if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
+      halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
+    }
     val (username, elyNumber, municipalities, hasWriteAccess) =
       (request.getParameter("username"), request.getParameter("elyNumber"),
         request.getParameter("municipalityNumbers"), request.getParameter("hasWriteAccess"))
@@ -94,9 +95,14 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
+    val role = hasWriteAccess match {
+      case "true" => Set("")
+      case _ => Set("viewer")
+    }
+
     userProvider.getUser(username) match {
       case Some(u) =>
-        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet))
+        val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, roles = role))
         userProvider.saveUser(updatedUser)
       case None =>
         userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet))
