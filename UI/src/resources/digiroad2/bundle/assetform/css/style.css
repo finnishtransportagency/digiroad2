@@ -43,15 +43,6 @@
     overflow-y: auto;
 }
 
-.featureAttributesWrapper .formAttributeContentRow *:disabled {
-    border: 0px;
-}
-
-.featureAttributesWrapper .formAttributeContentRow button:disabled {
-    color: #2D2D2D;
-    background-color: #2D2D2D;
-}
-
 .streetView {
     padding-top: 4px;
     padding-bottom: 4px;
@@ -123,6 +114,7 @@
 
 .featureAttributeChoice input[type='checkbox'] {
     vertical-align: middle;
+    margin: 0px 3px;
 }
 
 .formContent {
@@ -405,4 +397,14 @@ div.divmanazerpopup .actions input:hover {
 
 .featureAttributeButton:disabled {
     cursor: default;
+    color: #2D2D2D;
+    background-color: #2D2D2D;
+}
+
+.featureAttributesWrapper .formAttributeContentRow *:disabled {
+    border: 0px;
+}
+
+.featureAttributesWrapper .featureattributeChoice > input:disabled {
+    border: 0px;
 }
