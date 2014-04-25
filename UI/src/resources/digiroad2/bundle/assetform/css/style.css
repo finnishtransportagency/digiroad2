@@ -43,6 +43,15 @@
     overflow-y: auto;
 }
 
+.featureAttributesWrapper .formAttributeContentRow *:disabled {
+    border: 0px;
+}
+
+.featureAttributesWrapper .formAttributeContentRow button:disabled {
+    color: #2D2D2D;
+    background-color: #2D2D2D;
+}
+
 .streetView {
     padding-top: 4px;
     padding-bottom: 4px;
