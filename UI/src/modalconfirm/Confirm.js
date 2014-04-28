@@ -14,7 +14,7 @@ window.Confirm = function() {
         '</div>';
 
     var renderConfirmDialog = function() {
-        jQuery(".container").append(confirmDiv);
+        jQuery('.container').append(confirmDiv);
     };
 
     var bindEvents = function() {
@@ -32,7 +32,7 @@ window.Confirm = function() {
     };
 
     var purge = function() {
-        jQuery(".confirm-modal").remove();
+        jQuery('.confirm-modal').remove();
     };
     show();
 };
