@@ -76,8 +76,9 @@
     font-size: 12px;
     font-family: "Arial";
     width: 210px;
-    height: 63px;
+    height: 66px;
     padding-left: 4px;
+    line-height: 1.2;
 }
 .featureAttributeDate {
     border: 1px solid #646461;
