@@ -1,12 +1,13 @@
 describe('ConfirmDialogController', function() {
     var confirmDialogShown = false;
+    var controller = ConfirmDialogController.initialize();
 
     before(function() {
         eventbus.on('confirm:show', function() { confirmDialogShown = true; });
     });
 
     var resetTest = function() {
-        ConfirmDialogController.initialize();
+        controller.reset();
         confirmDialogShown = false;
     };
 
