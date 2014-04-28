@@ -82,6 +82,10 @@ jQuery(document).ready(function() {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
+          ConfirmDialogController.initialize();
+          eventbus.on('confirm:show', function() {
+             new Confirm();
+          });
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();
           if (data && data.externalId) {
