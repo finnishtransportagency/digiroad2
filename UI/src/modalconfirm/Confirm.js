@@ -19,9 +19,11 @@ window.Confirm = function() {
 
     var bindEvents = function() {
         jQuery('.confirm-modal-button-cancel').on('click', function() {
-           purge();
+            eventbus.trigger('confirm:cancel');
+            purge();
         });
         jQuery('.confirm-modal-button-ok').on('click', function() {
+            eventbus.trigger('confirm:ok');
             purge();
         });
     };
