@@ -84,4 +84,21 @@ describe('ConfirmDialogController', function() {
             });
         });
     });
+
+    describe('when asset property is changed', function () {
+        before(function () {
+            resetTest();
+            eventbus.trigger('assetPropertyValue:changed');
+        });
+
+        describe('and another asset is selected', function () {
+            before(function () {
+                eventbus.trigger('asset:unselected');
+            });
+
+            it('should show confirm dialog', function () {
+                assert.isTrue(confirmDialogShown);
+            });
+        });
+    });
 });

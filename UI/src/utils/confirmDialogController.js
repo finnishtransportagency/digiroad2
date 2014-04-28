@@ -10,6 +10,9 @@
         eventbus.on('asset:moved', function() {
             assetHasBeenModified = true;
         });
+        eventbus.on('assetPropertyValue:changed', function() {
+            assetHasBeenModified = true;
+        });
         eventbus.on('asset:saved', function() {
             assetIsSaved = true;
         });
