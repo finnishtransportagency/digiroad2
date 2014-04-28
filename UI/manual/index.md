@@ -1,9 +1,9 @@
 __DIGIROAD-SOVELLUKSEN KÄYTTÖOHJE__
 ===================================
 
-###Katselutila - päivittäjän roolissa###
+###Katselutila - muokkaajan roolissa###
 
-![Katselutila - päivittäjän roolissa](k0.jpg)
+![Katselutila - muokkaajan roolissa](k0.jpg)
 
 _Katselutila._
 
@@ -44,10 +44,10 @@ _Muokkaustila._
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: https://testiextranet.liikennevirasto.fi/digiroad/.
 
-1. Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila alueelta, johon käyttäjällä on oikeudet. Oikeudet on rajattu maantieteellisesti sekä käyttäjän roolin mukaan. Käyttäjän rooli on joko katselija tai päivittäjä. Katselijan roolissa aineistoja voi ainoastaan katsella. Päivittäjän roolissa aineistoja voi sekä katsella että muokata.
+1. Kirjautumisen jälkeen avautuu karttakäyttöliittymässä katselutila alueelta, johon käyttäjällä on oikeudet. Oikeudet on rajattu maantieteellisesti sekä käyttäjän roolin mukaan. Käyttäjän rooli on joko katselija tai muokkaaja. Katselijan roolissa aineistoja voi ainoastaan katsella. Muokkaajan roolissa aineistoja voi sekä katsella että muokata.
 
 
-Oikeudet jakautuvat seuraavasti:
+Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 - Kuntakäyttäjällä on oikeudet oman kunnan maantieteellisen kuntarajan sisäpuolella oleviin aineistoihin.
 - ELY-käyttäjällä on oikeudet oman ELY-alueensa maantieteellisen rajan sisäpuolella oleviin aineistoihin.
@@ -89,7 +89,7 @@ Mikäli kirjautumisen jälkeen ei avaudu karttakäyttöliittymän katselutilaa, 
 3. Yleistä
 ----------
 
-Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos käyttäjän rooli on katselija, hän pääsee vain katselutilaan. Päivittäjän roolissa oleva käyttäjä pääsee sekä katselu- että muokkaustilaan. Kirjautumisen jälkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pysäkkejä tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa näkyvät ainoastaan ne tietolajit, joihin käyttäjällä on oikeudet (kts. [Miten päästä alkuun](#1._Miten_päästä_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pysäkit. Tietolaji valitaan sivun vasemman laidan valikosta.
+Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos käyttäjän rooli on katselija, hän pääsee vain katselutilaan. Muokkaajan roolissa oleva käyttäjä pääsee sekä katselu- että muokkaustilaan. Kirjautumisen jälkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pysäkkejä tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa näkyvät ainoastaan ne tietolajit, joihin käyttäjällä on oikeudet (kts. [Miten päästä alkuun](#1._Miten_päästä_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pysäkit. Tietolaji valitaan sivun vasemman laidan valikosta.
 
 Muokkaustilan saa aktivoitua klikkaamalla “Muokkaa”-painiketta (3). Muokkaustilassa kartan yläosassa on teksti “Olet muokkaustilassa” (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan pääsee klikkaamalla “Siirry katselutilaan”-painiketta (11).
 
