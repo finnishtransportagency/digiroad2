@@ -126,7 +126,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
 
-  grunt.registerTask('server', ['configureProxies:server', 'connect', 'watch']);
+  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
