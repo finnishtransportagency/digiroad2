@@ -6,6 +6,8 @@ describe('ConfirmDialogController', function() {
         eventbus.on('confirm:show', function() { confirmDialogShown = true; });
     });
 
+    // TODO: show confirmation dialog when properties has been changed
+
     describe('when asset is moved', function() {
         before(function() {
             eventbus.trigger('asset:moved');
@@ -18,6 +20,23 @@ describe('ConfirmDialogController', function() {
 
             it('should show confirm dialog', function() {
                 assert.isTrue(confirmDialogShown);
+            });
+        });
+
+        describe('and changes are saved', function() {
+            before(function() {
+                confirmDialogShown = false;
+                eventbus.trigger('asset:saved');
+            });
+
+            describe('and another asset is selected', function() {
+                before(function() {
+                    eventbus.trigger('asset:unselected');
+                });
+
+                it('should not show confirm dialog', function() {
+                    assert.isFalse(confirmDialogShown);
+                });
             });
         });
     });
