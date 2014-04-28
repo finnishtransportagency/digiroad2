@@ -10,7 +10,17 @@ describe('ConfirmDialogController', function() {
         confirmDialogShown = false;
     };
 
-    // TODO: show confirmation dialog when properties has been changed
+    var unselectAssetAndAssertDialogShown = function(shown) {
+        return function() {
+            before(function() {
+                eventbus.trigger('asset:unselected');
+            });
+
+            it('should show/hide confirm dialog correctly', function() {
+                assert.equal(confirmDialogShown, shown);
+            });
+        };
+    };
 
     describe('when asset is moved', function() {
         before(function() {
@@ -18,15 +28,7 @@ describe('ConfirmDialogController', function() {
             eventbus.trigger('asset:moved');
         });
 
-        describe('and another asset is selected', function() {
-            before(function() {
-                eventbus.trigger('asset:unselected');
-            });
-
-            it('should show confirm dialog', function() {
-                assert.isTrue(confirmDialogShown);
-            });
-        });
+        describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
 
         describe('and changes are saved', function() {
             before(function() {
@@ -34,15 +36,7 @@ describe('ConfirmDialogController', function() {
                 eventbus.trigger('asset:saved');
             });
 
-            describe('and another asset is selected', function() {
-                before(function() {
-                    eventbus.trigger('asset:unselected');
-                });
-
-                it('should not show confirm dialog', function() {
-                    assert.isFalse(confirmDialogShown);
-                });
-            });
+            describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
         });
     });
 
@@ -57,15 +51,7 @@ describe('ConfirmDialogController', function() {
                 eventbus.trigger('asset:saved');
             });
 
-            describe('and another asset is selected', function() {
-                before(function() {
-                    eventbus.trigger('asset:unselected');
-                });
-
-                it('should not show confirm dialog', function() {
-                    assert.isFalse(confirmDialogShown);
-                });
-            });
+            describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
         });
     });
 
@@ -74,15 +60,7 @@ describe('ConfirmDialogController', function() {
             resetTest();
         });
 
-        describe('and another asset is selected', function () {
-            before(function () {
-                eventbus.trigger('asset:unselected');
-            });
-
-            it('should not show confirm dialog', function () {
-                assert.isFalse(confirmDialogShown);
-            });
-        });
+        describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
     });
 
     describe('when asset property is changed', function () {
@@ -91,14 +69,6 @@ describe('ConfirmDialogController', function() {
             eventbus.trigger('assetPropertyValue:changed');
         });
 
-        describe('and another asset is selected', function () {
-            before(function () {
-                eventbus.trigger('asset:unselected');
-            });
-
-            it('should show confirm dialog', function () {
-                assert.isTrue(confirmDialogShown);
-            });
-        });
+        describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
     });
 });
