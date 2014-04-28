@@ -68,4 +68,20 @@ describe('ConfirmDialogController', function() {
             });
         });
     });
+
+    describe('when asset is not moved', function () {
+        before(function() {
+            resetTest();
+        });
+
+        describe('and another asset is selected', function () {
+            before(function () {
+                eventbus.trigger('asset:unselected');
+            });
+
+            it('should not show confirm dialog', function () {
+                assert.isFalse(confirmDialogShown);
+            });
+        });
+    });
 });
