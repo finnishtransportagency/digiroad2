@@ -1,6 +1,6 @@
-describe('ConfirmDialogController', function() {
+describe('SelectedAssetController', function() {
     var confirmDialogShown = false;
-    var controller = ConfirmDialogController.initialize();
+    var controller = SelectedAssetController.initialize();
 
     before(function() {
         eventbus.on('confirm:show', function() { confirmDialogShown = true; });

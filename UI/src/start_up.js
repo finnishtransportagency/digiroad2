@@ -82,12 +82,12 @@ jQuery(document).ready(function() {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
-          var confirmController = ConfirmDialogController.initialize();
+          var selectedAssetController = SelectedAssetController.initialize();
           eventbus.on('confirm:show', function() {
               new Confirm();
           });
           eventbus.on('confirm:cancel confirm:ok', function() {
-              confirmController.reset();
+              selectedAssetController.reset();
           });
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();

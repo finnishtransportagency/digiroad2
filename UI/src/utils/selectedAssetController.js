@@ -1,5 +1,5 @@
-(function (confirmDialogController){
-    confirmDialogController.initialize = function() {
+(function (selectedAssetController){
+    selectedAssetController.initialize = function() {
         var assetIsSaved = false;
         var assetHasBeenModified = false;
 
@@ -25,4 +25,4 @@
             }
         };
     };
-})(window.ConfirmDialogController = window.ConfirmDialogController || {});
+})(window.SelectedAssetController = window.SelectedAssetController || {});
