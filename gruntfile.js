@@ -65,7 +65,7 @@ module.exports = function(grunt) {
     less: {
       development: {
         files: {
-          "dist/css/digiroad2.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
       production: {
@@ -73,7 +73,7 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist/css/digiroad2.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       }
     },
