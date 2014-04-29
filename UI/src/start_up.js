@@ -82,12 +82,9 @@ jQuery(document).ready(function() {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
-          var selectedAssetController = SelectedAssetController.initialize();
+          var selectedAssetController = SelectedAssetController.initialize(Backend);
           eventbus.on('confirm:show', function() {
               new Confirm();
-          });
-          eventbus.on('confirm:cancel confirm:ok', function() {
-              selectedAssetController.reset();
           });
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();

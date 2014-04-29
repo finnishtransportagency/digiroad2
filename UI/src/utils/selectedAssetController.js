@@ -4,13 +4,17 @@
         var assetIsSaved = false;
         var assetHasBeenModified = false;
 
+        var reset = function() {
+            assetIsSaved = false;
+            assetHasBeenModified = false;
+            propertyData = [];
+        };
+
         eventbus.on('asset:unselected', function() {
             if(assetHasBeenModified && !assetIsSaved) {
                 eventbus.once('confirm:ok', function() {
-                    backend.updateAsset(0, {
-                        propertyData: propertyData
-                    });
-                    assetIsSaved = true;
+                    eventbus.once('asset:saved', function() { reset(); }, this);
+                    backend.updateAsset(0, { propertyData: propertyData });
                 }, this);
                 eventbus.trigger('confirm:show');
             }
@@ -26,12 +30,6 @@
             assetIsSaved = true;
         });
 
-        return {
-            reset: function() {
-                assetIsSaved = false;
-                assetHasBeenModified = false;
-                propertyData = [];
-            }
-        };
+        return { reset: reset };
     };
 })(window.SelectedAssetController = window.SelectedAssetController || {});
