@@ -1,8 +1,10 @@
 describe('SelectedAssetController', function() {
     var confirmDialogShown = false;
-    var assetUpdatedToBackend = false;
+    var assetSentToBackend = null;
     var mockBackend = {
-        updateAsset: function() { assetUpdatedToBackend = true; }
+        updateAsset: function(id, data) {
+            assetSentToBackend = data;
+        }
     };
     var controller = SelectedAssetController.initialize(mockBackend);
 
@@ -13,7 +15,7 @@ describe('SelectedAssetController', function() {
     var resetTest = function() {
         controller.reset();
         confirmDialogShown = false;
-        assetUpdatedToBackend = false;
+        assetSentToBackend = null;
     };
 
     var unselectAssetAndAssertDialogShown = function(shown) {
@@ -72,7 +74,12 @@ describe('SelectedAssetController', function() {
     describe('when asset property is changed', function () {
         before(function () {
             resetTest();
-            eventbus.trigger('assetPropertyValue:changed');
+            eventbus.trigger('assetPropertyValue:changed', {
+                propertyData: [{
+                    publicId: 'vaikutussuunta',
+                    values: [{ propertyValue: 2 }]
+                }]
+            });
         });
 
         describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
@@ -83,7 +90,7 @@ describe('SelectedAssetController', function() {
             });
 
             it('should send updated asset to backend', function() {
-                assert.isTrue(assetUpdatedToBackend);
+                assert.equal(assetSentToBackend.propertyData[0].values[0].propertyValue, "2");
             });
         });
     });
