@@ -1,7 +1,6 @@
 (function (selectedAssetController){
     selectedAssetController.initialize = function(backend) {
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
-        var propertyData = [];
         var assetIsSaved = false;
         var assetHasBeenModified = false;
         var currentAsset = {};
@@ -9,7 +8,7 @@
         var reset = function() {
             assetIsSaved = false;
             assetHasBeenModified = false;
-            propertyData = [];
+            currentAsset = {};
         };
 
         eventbus.on('asset:unselected', function() {
@@ -36,7 +35,6 @@
               });
             };
             currentAsset.properties = transformProperties(currentAsset.properties);
-            propertyData = changedProperties.propertyData;
             assetHasBeenModified = true;
         });
         eventbus.on('asset:saved', function() {
