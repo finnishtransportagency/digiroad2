@@ -1,10 +1,14 @@
 (function (selectedAssetController){
-    selectedAssetController.initialize = function() {
+    selectedAssetController.initialize = function(backend) {
         var assetIsSaved = false;
         var assetHasBeenModified = false;
 
         eventbus.on('asset:unselected', function() {
             if(assetHasBeenModified && !assetIsSaved) {
+                eventbus.once('confirm:ok', function() {
+                    backend.updateAsset();
+                    assetIsSaved = true;
+                }, this);
                 eventbus.trigger('confirm:show');
             }
         });

@@ -16,7 +16,7 @@
     "momentjs": "2.5.0",
     "pikaday": "1.2.0",
     "oskari.org": "https://github.com/uhef/oskari.git#FIXED_OVERLAY_1.17",
-    "backbone-events" : "https://github.com/jrf0110/backbone-events.git"
+    "backbone": "1.1.2"
   },
   "devDependencies": {
     "mocha": "1.13.0",

@@ -1,6 +1,10 @@
 describe('SelectedAssetController', function() {
     var confirmDialogShown = false;
-    var controller = SelectedAssetController.initialize();
+    var assetUpdatedToBackend = false;
+    var mockBackend = {
+        updateAsset: function() { assetUpdatedToBackend = true; }
+    };
+    var controller = SelectedAssetController.initialize(mockBackend);
 
     before(function() {
         eventbus.on('confirm:show', function() { confirmDialogShown = true; });
@@ -9,6 +13,7 @@ describe('SelectedAssetController', function() {
     var resetTest = function() {
         controller.reset();
         confirmDialogShown = false;
+        assetUpdatedToBackend = false;
     };
 
     var unselectAssetAndAssertDialogShown = function(shown) {
@@ -71,5 +76,15 @@ describe('SelectedAssetController', function() {
         });
 
         describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
+
+        describe('and save button is pressed', function() {
+            before(function() {
+               eventbus.trigger('confirm:ok');
+            });
+
+            it('should send updated asset to backend', function() {
+                assert.isTrue(assetUpdatedToBackend);
+            });
+        });
     });
 });
