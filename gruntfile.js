@@ -65,7 +65,7 @@ module.exports = function(grunt) {
     less: {
       development: {
         files: {
-          "dist/css/digiroad2.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       },
       production: {
@@ -73,7 +73,7 @@ module.exports = function(grunt) {
           cleancss: true
         },
         files: {
-          "dist/css/digiroad2.css": "UI/src/**/*.less"
+          "dist/css/digiroad2.css": "UI/src/less/main.less"
         }
       }
     },
@@ -126,7 +126,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
 
-  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less', 'watch']);
+  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
