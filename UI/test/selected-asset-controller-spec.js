@@ -1,9 +1,12 @@
 describe('SelectedAssetController', function() {
     var confirmDialogShown = false;
-    var assetSentToBackend = null;
+    var assetSentToBackend = {};
     var mockBackend = {
         updateAsset: function(id, data) {
-            assetSentToBackend = data;
+            assetSentToBackend = {
+                id: id,
+                data: data
+            };
         }
     };
     var controller = SelectedAssetController.initialize(mockBackend);
@@ -15,7 +18,7 @@ describe('SelectedAssetController', function() {
     var resetTest = function() {
         controller.reset();
         confirmDialogShown = false;
-        assetSentToBackend = null;
+        assetSentToBackend = {};
         eventbus.trigger('asset:fetched', createAsset());
     };
 
@@ -91,7 +94,8 @@ describe('SelectedAssetController', function() {
             });
 
             it('should send updated asset to backend', function() {
-                assert.deepEqual(assetSentToBackend, createBackendMessagePayload());
+                assert.equal(assetSentToBackend.id, 300000);
+                assert.deepEqual(assetSentToBackend.data, createBackendMessagePayload());
             });
         });
     });

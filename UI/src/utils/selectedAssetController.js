@@ -15,7 +15,7 @@
             if(assetHasBeenModified && !assetIsSaved) {
                 eventbus.once('confirm:ok', function() {
                     eventbus.once('asset:saved', function() { reset(); }, this);
-                    backend.updateAsset(0, currentAsset);
+                    backend.updateAsset(currentAsset.id, currentAsset.payload);
                 }, this);
                 eventbus.trigger('confirm:show');
             }
@@ -34,7 +34,7 @@
                   }
               });
             };
-            currentAsset.properties = transformProperties(currentAsset.properties);
+            currentAsset.payload.properties = transformProperties(currentAsset.payload.properties);
             assetHasBeenModified = true;
         });
         eventbus.on('asset:saved', function() {
@@ -64,7 +64,8 @@
                     properties: _.map(propertyData.propertyData, transformProperty)
                 };
             };
-            currentAsset = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+            currentAsset.id = asset.id;
+            currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
         });
 
         return { reset: reset };
