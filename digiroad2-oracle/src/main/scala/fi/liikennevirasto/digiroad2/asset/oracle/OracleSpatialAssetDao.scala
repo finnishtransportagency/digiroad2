@@ -174,12 +174,29 @@ object OracleSpatialAssetDao {
     updateAssetModified(assetId, modifier).execute()
   }
 
+  def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
+    propertyWithType match {
+      case (SingleChoice, _, property) => property.values.size > 0
+      case _ => true
+    }
+  }
+
+  def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+    if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
+      (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
+    }
+    else {
+      val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(property.publicId).getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      (Q.query[Long, String](propertyTypeByPropertyId).first(propertyId), Some(propertyId), property)
+    }
+  }
+
   def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
-    properties.foreach { property =>
-      if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
-        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, property.publicId, property.values)
+    properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
+      if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
+        OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       } else {
-        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, property.publicId, property.values)
+        OracleSpatialAssetDao.updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       }
     }
   }
@@ -217,13 +234,12 @@ object OracleSpatialAssetDao {
     Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
 
-  def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
+  def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
     val asset = getAssetById(assetId)
     if (asset.isEmpty) throw new IllegalArgumentException("Asset " + assetId + " not found")
     val createNew = (asset.head.propertyData.exists(_.publicId == propertyPublicId) && asset.head.propertyData.find(_.publicId == propertyPublicId).get.values.isEmpty)
-    val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(propertyPublicId).getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
 
-    Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
+    propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.size == 0) {
@@ -235,7 +251,7 @@ object OracleSpatialAssetDao {
         }
       }
       case SingleChoice => {
-        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value")
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (createNew) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
         } else {
@@ -252,9 +268,9 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyValues: Seq[PropertyValue]) {
+  def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[PropertyValue]) {
     val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
-    AssetPropertyConfiguration.commonAssetProperties(propertyPublicId).propertyType match {
+    propertyType match {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
