@@ -362,6 +362,20 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             me._backend.putAssetPropertyValue(this._featureDataAssetId, publicId, propertyValue);
         },
 
+        readOnlyHandler : function(property){
+            var render = function(){
+                var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
+                // TODO: hack, because form is rendered using html as string
+                return $('<div />').append(
+                    jQuery('<div />').addClass('formAttributeContentRow')
+                                     .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal));
+            };
+
+            return {
+                render: render
+            };
+        },
+
         _makeContent: function(contents) {
             var me = this;
             var html = "";
@@ -378,13 +392,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                         }
                         html += me._getTextTemplate(propertyType, feature);
                     } else if (propertyType === "read_only_text") {
-                        feature.propertyValue = "";
-                        feature.propertyDisplayValue = "";
-                        if (feature.values[0]) {
-                            feature.propertyValue = feature.values[0].propertyValue;
-                            feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
-                        }
-                        html += me._templates.featureDataTemplateReadOnlyText(feature);
+                        // TODO: use jquery objects instead of string
+                        html += me.readOnlyHandler(feature).render().html();
                     } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
                         feature.propertyValue = me._getSelect(feature.publicId, feature.values, feature.publicId, '');
                         html += me._templates.featureDataTemplate(feature);
