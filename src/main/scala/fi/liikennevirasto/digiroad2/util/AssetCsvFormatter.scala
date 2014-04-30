@@ -147,12 +147,14 @@ object AssetCsvFormatter {
   private[util] def addBearing(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validityDirection = asset.validityDirection.getOrElse(1)
+    (asset, calculateActualBearing(validityDirection, asset.bearing).getOrElse("").toString :: result)
+  }
+  
+  private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
     if(validityDirection != 3) {
-      (asset, asset.bearing.getOrElse("").toString :: result)
-    }
-    else {
-      val recalculated = asset.bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
-      (asset, recalculated.getOrElse("").toString :: result)
+      bearing
+    } else {
+      bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
     }
   }
 
@@ -164,7 +166,7 @@ object AssetCsvFormatter {
 
   private[util] def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val description = asset.bearing.getOrElse(0) match {
+    val description = calculateActualBearing(asset.validityDirection.getOrElse(1), asset.bearing).getOrElse(0) match {
       case x if 46 until 136 contains x => "Itään"
       case x if 135 until 226 contains x => "Etelään"
       case x if 225 until 316 contains x => "Länteen"
