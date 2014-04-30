@@ -27,17 +27,19 @@
 }
 
 .formControls {
+    clear:both;
     width: 100%;
     position: absolute;
-    bottom: 10px;
+    bottom: 50px;
     padding-top: 10px;
+    border-top: 1px solid #646461;
 }
 
 .featureAttributesWrapper {
     position: absolute;
     padding: 10px;
     top: 49px;
-    bottom: 57px;
+    bottom: 93px;
     left: 0;
     right: 0;
     overflow-y: auto;
@@ -192,6 +194,7 @@
     font-family: arial, sans-serif;
     font-size: 11px;
     padding: 10px 15px;
+    margin-right: 10px;
     font-weight: bold;
     background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
     background-image: -moz-linear-gradient(#7f7f7c,#5a5a57);
