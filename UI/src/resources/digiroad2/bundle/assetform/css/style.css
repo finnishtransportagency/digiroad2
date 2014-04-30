@@ -409,18 +409,3 @@ div.divmanazerpopup .actions input:hover {
 .featureAttributesWrapper .featureattributeChoice > input:disabled {
     border: 0px;
 }
-
-#headerBar {
-    background-color: #282826;
-    border-bottom: 1px #171717;
-    width: 100%;
-    height: 40px;
-}
-
-.linkToManual {
-    text-decoration: none;
-    color: #fff;
-    float: right;
-    padding: 14px 20px 0 0;
-    font-size: 11px;
-}
