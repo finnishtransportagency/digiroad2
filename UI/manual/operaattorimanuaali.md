@@ -17,7 +17,7 @@ Käyttöliittymässä on lomake, johon tulee täydentää seuraavat tiedot:
 
 Kun lomake on täytetty, painetaan "Luo käyttäjä". Sovellus ilmoittaa onnistuneesta käyttäjän lisäämisestä. Jos käyttäjäksi lisätään jo olemassa olevan käyttäjän, sovellus poistaa vanhan ja korvaa sen uudella käyttäjällä.
 
-![Käyttäjän lisääminen](k20.jpg)
+![Käyttäjän lisääminen](k20.JPG)
 
 _Uuden käyttäjän lisääminen._
 
