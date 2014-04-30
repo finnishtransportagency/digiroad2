@@ -22,6 +22,7 @@ import fi.liikennevirasto.digiroad2.user.{Role, User, UserProvider}
 import fi.liikennevirasto.digiroad2.asset.ValidityPeriod
 import org.joda.time.Interval
 import org.joda.time.DateTime
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 // TODO: trait + class?
 object OracleSpatialAssetDao {
@@ -140,12 +141,12 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  private def validityPeriod(validFrom: Option[Timestamp], validTo: Option[Timestamp]): Option[String] = {
-    val beginningOfTime = new DateTime(0, 1, 1, 0, 0)
-    val endOfTime = new DateTime(9999, 1, 1, 0, 0)
-    val from = validFrom.map(new DateTime(_)).getOrElse(beginningOfTime)
-    val to = validTo.map(new DateTime(_)).getOrElse(endOfTime)
-    val interval = new Interval(from, to)
+  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
+    val beginningOfTime = new LocalDate(0, 1, 1)
+    val endOfTime = new LocalDate(9999, 1, 1)
+    val from = validFrom.getOrElse(beginningOfTime)
+    val to = validTo.getOrElse(endOfTime)
+    val interval = new Interval(from.toDateMidnight(), to.toDateMidnight)
     val now = DateTime.now
     val status = if (interval.isBefore(now)) {
       ValidityPeriod.Past
