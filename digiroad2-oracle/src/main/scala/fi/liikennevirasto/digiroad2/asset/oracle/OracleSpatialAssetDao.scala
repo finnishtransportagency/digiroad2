@@ -244,6 +244,9 @@ object OracleSpatialAssetDao {
       case MultipleChoice => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
+      case ReadOnly => {
+        logger.debug("Ignoring read only property in update: " + propertyPublicId)
+      }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
   }
@@ -268,7 +271,10 @@ object OracleSpatialAssetDao {
         val optionalDateTime = propertyValues.headOption.map(_.propertyValue).map(formatter.parseDateTime)
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute()
       }
-      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+      case ReadOnlyText => {
+        logger.debug("Ignoring read only text property in update: " + propertyPublicId)
+      }
+      case t: String => throw new UnsupportedOperationException("Asset: " + propertyPublicId + " property type: " + t + " not supported")
     }
   }
 
