@@ -162,9 +162,15 @@ object AssetCsvFormatter {
     (asset, "" :: result)
   }
 
-  private def addBearingDescription(params: (AssetWithProperties, List[String])) = {
+  private[util] def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    (asset, asset.validityDirection.getOrElse("").toString :: result)
+    val description = asset.bearing.getOrElse(0) match {
+      case x if 46 until 136 contains x => "Itään"
+      case x if 135 until 226 contains x => "Etelään"
+      case x if 225 until 316 contains x => "Länteen"
+      case _ => "Pohjoiseen"
+    }
+    (asset, description :: result)
   }
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {

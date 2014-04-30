@@ -24,7 +24,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val validFrom = propertyValue("ensimmainen_voimassaolopaiva")
     val validTo = propertyValue("viimeinen_voimassaolopaiva")
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;2;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelään;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56)
@@ -34,6 +34,17 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2)), List())._2 must equal (List("3"))
     AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2), bearing = Some(195)), List())._2 must equal (List("195"))
     AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3), bearing = Some(195)), List())._2 must equal (List("15"))
+  }
+
+  it must "describe bearing correctly" in {
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(316)), List())._2 must equal (List("Pohjoiseen"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(45)), List())._2 must equal (List("Pohjoiseen"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(46)), List())._2 must equal (List("Itään"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(135)), List())._2 must equal (List("Itään"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(136)), List())._2 must equal (List("Etelään"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(314)), List())._2 must equal (List("Länteen"))
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {

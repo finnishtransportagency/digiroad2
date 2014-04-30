@@ -1,10 +1,14 @@
 Testiin / tuotantoonsiirto omalta koneelta:
 
-Ssh avain pitää olla koneen web käyttäjän authorized keys listalla, jotta pystyt loggaamaan sisään ilman salasalaa.
+Ssh avain pitää olla koneen web käyttäjän authorized keys listalla, jotta pystyt loggaamaan sisään ilman salasanaa.
 Ssh konfit omalla koneella:
 
 Host gateway
 	ProxyCommand ssh reaktor nc -q0 80.248.164.107 22
+
+Host education
+    User ktunnus
+    ProxyCommand ssh gateway nc 10.129.47.165 22
 
 Host production1
     User ktunnus
@@ -35,18 +39,17 @@ Logataksesi web käyttäjänä kopioi ssh-add -L antama avain web-käyttäjän: 
 
 Pannujen valmistelu:
 - kopioi jenkinsin (livi ci:ltä) id_rsa (web-käyttäjä:  ~/.ssh/)
--
 - mikäli portti 22 on suljettu: aseta github .ssh/configissa näin:
 
 Host github.com
   Hostname ssh.github.com
   Port 443
 
-- asenna java
-- asenna git
-- asenna node (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
-- asenna bower (npm install -g bower)
-- asenna grunt (npm install -g grunt-cli)
+- asenna Java (sudo yum install java-1.7.0-openjdk.x86_64)
+- asenna Git (sudo yum install git.x86_64)
+- asenna Node (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager#rhelcentosscientific-linux-6)
+- asenna Bower (npm install -g bower)
+- asenna Grunt (npm install -g grunt-cli)
 
 
 (bower "fix": git config --global url."https://".insteadOf git://)
