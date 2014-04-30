@@ -164,12 +164,12 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             };
 
             var triggerChanges = function(publicId, values) {
-                eventbus.trigger('assetPropertyValue:changed',gatherPropertyChangedPayload(publicId, values));
+                eventbus.trigger('assetPropertyValue:changed', gatherPropertyChangedPayload(publicId, values));
             };
 
-            var handleChange = function(jqElement, valueHandlerFn) {
-                var values = valueHandlerFn(jqElement);
-                triggerChanges(jqElement.attr('data-publicId'),values);
+            var handleChange = function(jqElement, valueDomExtractor) {
+                var values = valueDomExtractor(jqElement);
+                triggerChanges(jqElement.attr('data-publicId'), values);
             };
 
             var me = this;
