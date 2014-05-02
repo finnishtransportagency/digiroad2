@@ -88,10 +88,16 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var me = this;
             this._selectedAsset = asset;
             me._featureDataAssetId = asset.id;
+
+            //TODO: refactor this
             var featureData = me._makeContent(asset.propertyData);
-            var streetView = me._getStreetView();
+            var streetView = $(me._getStreetView());
+
+            var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
+            var wrapper = $('<div />').addClass('featureAttributesWrapper');
+            wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
             var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
-            var featureAttributesElement = jQuery("#featureAttributes").html(featureAttributes);
+            var featureAttributesElement = jQuery("#featureAttributes").append(element).append(wrapper);
             me._addDatePickers();
             if (this._readOnly) {
               $('#featureAttributes button').prop('disabled', true);
@@ -366,9 +372,42 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var render = function(){
                 var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
                 // TODO: hack, because form is rendered using html as string
-                return $('<div />').append(
-                    jQuery('<div />').addClass('formAttributeContentRow')
-                                     .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal));
+                // TODO: use cleaner html
+                return jQuery('<div />').addClass('formAttributeContentRow')
+                                     .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
+            };
+
+            return {
+                render: render
+            };
+        },
+
+        textHandler : function(property){
+            var html = $('<div />');
+            var label = $('<label />');
+            var input = $('<input type="text"/>').keyup(_.debounce(function(target){
+                // tab press
+                if(target.keyCode === 9){
+                    return;
+                }
+                //TODO: trigger eventbus change
+                console.log('Send change to eventbus');
+                console.log({ publicId: property.publicId, val: target.currentTarget.value });
+            }, 500));
+            var readOnlyText = $('<span />');
+
+            var render = function(){
+                // TODO: use cleaner html
+                var outer = $('<div />').addClass('formAttributeContentRow');
+                outer.append($('<div />').addClass('formLabels').text(property.localizedName));
+                input.addClass('featureAttributeText');
+                outer.append($('<div />').addClass('formAttributeContent').append(input));
+                // label.text(getLabel(property.publicId));
+                if(property.values[0]) {
+                    input.val(property.values[0].propertyDisplayValue);
+                }
+                // TODO: readonly handling
+                return outer;
             };
 
             return {
@@ -378,34 +417,29 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
 
         _makeContent: function(contents) {
             var me = this;
-            var html = "";
+            var html = $('<div />');
             _.forEach(contents,
                 function (feature) {
                     feature.localizedName = window.localizedStrings[feature.publicId];
                     var propertyType = feature.propertyType;
                     if (propertyType === "text" || propertyType === "long_text") {
-                        feature.propertyValue = "";
-                        feature.propertyDisplayValue = "";
-                        if (feature.values[0]) {
-                            feature.propertyValue = feature.values[0].propertyValue;
-                            feature.propertyDisplayValue = feature.values[0].propertyDisplayValue;
-                        }
-                        html += me._getTextTemplate(propertyType, feature);
+                        // TODO: check long text
+                        html.append(me.textHandler(feature).render());
                     } else if (propertyType === "read_only_text") {
                         // TODO: use jquery objects instead of string
-                        html += me.readOnlyHandler(feature).render().html();
+                        html.append(me.readOnlyHandler(feature).render());
                     } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
                         feature.propertyValue = me._getSelect(feature.publicId, feature.values, feature.publicId, '');
-                        html += me._templates.featureDataTemplate(feature);
+                        html.append($(me._templates.featureDataTemplate(feature)));
                     } else if (feature.publicId === 'vaikutussuunta') {
                         feature.propertyValue = 2;
                         if (feature.values[0]) {
                             feature.propertyValue = feature.values[0].propertyValue;
                         }
-                        html += me._templates.featureDataTemplateButton(feature);
+                        html.append($(me._templates.featureDataTemplateButton(feature)));
                     } else if (feature.propertyType === "multiple_choice") {
                         feature.propertyValue = me._getMultiCheckbox(feature.publicId, feature.values, feature.publicId);
-                        html += me._templates.featureDataTemplate(feature);
+                        html.append($(me._templates.featureDataTemplate(feature)));
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
@@ -413,10 +447,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                             feature.propertyValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                             feature.propertyDisplayValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
                         }
-                        html += me._templates.featureDataTemplateDate(feature);
+                        html.append($(me._templates.featureDataTemplateDate(feature)));
                     }  else {
                         feature.propertyValue ='Ei toteutettu';
-                        html += me._templates.featureDataTemplateNA(feature);
+                        html.append($(me._templates.featureDataTemplateNA(feature)));
                     }
                 }
             );
