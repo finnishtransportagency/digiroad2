@@ -76,7 +76,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 this._selectedAsset.lat = position.lat;
                 this._selectedAsset.bearing = position.bearing;
                 this._selectedAsset.roadLinkId = position.roadLinkId;
-                jQuery('.streetView').html(this._getStreetView());
+                jQuery('.streetView').html(this._getStreetView(this._selectedAsset));
             }, this);
             
             this._templates = Oskari.clazz.create('Oskari.digiroad2.bundle.assetform.template.Templates');
@@ -89,14 +89,14 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             this._selectedAsset = asset;
             me._featureDataAssetId = asset.id;
 
-            //TODO: refactor this
+            // TODO: refactor this (duplication with _initializeCreateNew)
             var featureData = me._makeContent(asset.propertyData);
-            var streetView = $(me._getStreetView());
+            var streetView = $(me._getStreetView(asset));
 
             var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
             var wrapper = $('<div />').addClass('featureAttributesWrapper');
             wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
-            var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
+            // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
             var featureAttributesElement = jQuery("#featureAttributes").append(element).append(wrapper);
             me._addDatePickers();
             if (this._readOnly) {
@@ -133,16 +133,23 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             validityDirection.attr('value', newValidityDirection);
             this._selectedAsset.validityDirection = newValidityDirection;
-            jQuery('.streetView').html(this._getStreetView());
+            jQuery('.streetView').html(this._getStreetView(this._selectedAsset));
         },
         
         _initializeCreateNew: function(properties) {
             var me = this;
-            var featureAttributesElement = jQuery('#featureAttributes');
+            // var featureAttributesElement = jQuery('#featureAttributes');
+
+            // TODO: refactor this (duplication with _initializeEditExisting)
             var featureData = me._makeContent(properties);
-            var streetView = me._getStreetView();
-            var featureAttributesMarkup = me._templates.featureDataWrapper({ header : 'Uusi Pysäkki', streetView : streetView, attributes : featureData, controls: me._templates.featureDataControls({}) });
-            featureAttributesElement.html(featureAttributesMarkup);
+            var streetView = $(me._getStreetView(this._selectedAsset));
+
+            var element = $('<div />').addClass('featureAttributesHeader').text('Uusi pysäkki');
+            var wrapper = $('<div />').addClass('featureAttributesWrapper');
+            wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
+            // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
+            var featureAttributesElement = jQuery("#featureAttributes").append(element).append(wrapper);
+
             me._addDatePickers();
 
             me.bindEventHandlersForChanges(featureAttributesElement);
@@ -301,8 +308,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 }).value();
             return properties;
         },
-        _getStreetView: function() {
-            var asset = this._selectedAsset;
+        _getStreetView: function(asset) {
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
@@ -454,6 +460,36 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             };
         },
 
+        directionChoiceHandler : function(property){
+            // TODO: ugliness, remove
+            var me = this;
+            var validityDirection = 2;
+            var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
+                validityDirection = validityDirection === 2 ? 3 : 2;
+                //TODO: update streetview without using globals
+                me._selectedAsset.validityDirection = validityDirection;
+                jQuery('.streetView').empty().append($(me._getStreetView(me._selectedAsset)));
+                //TODO: trigger eventbus change
+                console.log({ publicId: property.publicId, val: validityDirection });
+            });
+
+            var render = function(){
+                //TODO: cleaner html
+                var label = $('<div />').addClass('formLabels');
+                label.text(property.localizedName);
+                if(property.values && property.values[0]) {
+                    validityDirection = property.values[0].propertyValue;
+                }
+                var wrapper = $('<div />').addClass('formAttributeContent');
+                // TODO: readonly
+                return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
+            };
+
+            return {
+                render: render
+            };
+        },
+
         _makeContent: function(contents) {
             var me = this;
             var html = $('<div />');
@@ -469,11 +505,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
                         html.append(me.singleChoiceHandler(feature, me._enumeratedPropertyValues).render());
                     } else if (feature.publicId === 'vaikutussuunta') {
-                        feature.propertyValue = 2;
-                        if (feature.values[0]) {
-                            feature.propertyValue = feature.values[0].propertyValue;
-                        }
-                        html.append($(me._templates.featureDataTemplateButton(feature)));
+                        html.append(me.directionChoiceHandler(feature).render());
                     } else if (feature.propertyType === "multiple_choice") {
                         feature.propertyValue = me._getMultiCheckbox(feature.publicId, feature.values, feature.publicId);
                         html.append($(me._templates.featureDataTemplate(feature)));
