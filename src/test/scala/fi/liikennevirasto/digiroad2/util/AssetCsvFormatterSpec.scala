@@ -44,7 +44,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(136)), List())._2 must equal (List("Etelään"))
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(314)), List())._2 must equal (List("Länteen"))
+    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(315)), List())._2 must equal (List("Länteen"))
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
