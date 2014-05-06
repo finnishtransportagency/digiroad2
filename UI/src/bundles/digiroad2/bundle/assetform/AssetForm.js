@@ -467,6 +467,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 validityDirection = validityDirection === 2 ? 3 : 2;
                 //TODO: update streetview without using globals
                 me._selectedAsset.validityDirection = validityDirection;
+                property.values[0].propertyValue = validityDirection;
+                eventbus.trigger('assetPropertyValue:changed', me._selectedAsset);
                 jQuery('.streetView').empty().append($(me._getStreetView(me._selectedAsset)));
                 //TODO: trigger eventbus change
                 console.log({ publicId: property.publicId, val: validityDirection });
