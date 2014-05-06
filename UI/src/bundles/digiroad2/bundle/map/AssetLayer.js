@@ -106,27 +106,36 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             if (selectedControl === 'Select') {
-                clickTimestamp = new Date().getTime();
-                clickCoords = [evt.clientX, evt.clientY];
-                OpenLayers.Event.stop(evt);
-                if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
-                    eventbus.trigger('asset:unselected', selectedAsset.data.id);
+
+                var anotherAssetHasBeenModified = function() {
+                    return (selectedAsset && selectedAsset.data.id !== asset.data.id && selectedAssetController.isDirty());
+                };
+
+                if (anotherAssetHasBeenModified()) {
+                    new Confirm();
+                } else {
+                    clickTimestamp = new Date().getTime();
+                    clickCoords = [evt.clientX, evt.clientY];
+                    OpenLayers.Event.stop(evt);
+                    if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
+                        eventbus.trigger('asset:unselected', selectedAsset.data.id);
+                    }
+                    selectedAsset = asset;
+                    // push marker up
+                    assetLayer.removeMarker(asset.marker);
+                    assetLayer.addMarker(asset.marker);
+                    // Opacity because we want know what is moving
+                    asset.marker.setOpacity(0.6);
+                    // Mouse need to be down until can be moved
+                    asset.marker.actionMouseDown = true;
+                    //Save original position
+                    asset.marker.actionDownX = evt.clientX;
+                    asset.marker.actionDownY = evt.clientY;
+                    //register up
+                    map.events.register("mouseup", map, mouseUpFn, true);
+                    mouseUpFunction = mouseUpFn;
+                    mouseClickFn(asset);
                 }
-                selectedAsset = asset;
-                // push marker up
-                assetLayer.removeMarker(asset.marker);
-                assetLayer.addMarker(asset.marker);
-                // Opacity because we want know what is moving
-                asset.marker.setOpacity(0.6);
-                // Mouse need to be down until can be moved
-                asset.marker.actionMouseDown = true;
-                //Save original position
-                asset.marker.actionDownX = evt.clientX;
-                asset.marker.actionDownY = evt.clientY;
-                //register up
-                map.events.register("mouseup", map, mouseUpFn, true);
-                mouseUpFunction = mouseUpFn;
-                mouseClickFn(asset);
             }
         };
     };
@@ -329,7 +338,9 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var removeOverlay = function() {
-        overlay.close();
+        if (overlay) {
+            overlay.close();
+        }
     };
 
     var addNewAsset = function(asset) {

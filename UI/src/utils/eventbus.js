@@ -5,4 +5,4 @@
             console.log(eventName, entity);
         }
     });
-})(BackboneEvents);
+})(Backbone.Events);

@@ -29,6 +29,7 @@ object PropertyTypes {
   val LongText = "long_text"
   val ReadOnlyText = "read_only_text"
   val Date = "date"
+  val ReadOnly = "read-only"
 }
 
 object AssetStatus {

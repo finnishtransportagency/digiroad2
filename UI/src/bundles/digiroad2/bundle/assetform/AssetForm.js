@@ -100,9 +100,10 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
               $('#featureAttributes textarea').prop('disabled', true);
               $('#featureAttributes .formControls').hide();
             }
-            me._initializeTypeAndDirectionChanges(featureAttributesElement);
+            me.bindEventHandlersForChanges(featureAttributesElement);
 
             featureAttributesElement.find('button.cancel').on('click', function() {
+                eventbus.trigger('asset:cancelled');
                 eventbus.trigger('asset:unselected');
                 me._closeAsset();
                 me._backend.getAsset(asset.id);
@@ -138,7 +139,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             featureAttributesElement.html(featureAttributesMarkup);
             me._addDatePickers();
 
-            me._initializeTypeAndDirectionChanges(featureAttributesElement);
+            me.bindEventHandlersForChanges(featureAttributesElement);
 
             featureAttributesElement.find('button.cancel').on('click', function() {
                 eventbus.trigger('asset:cancelled');
@@ -151,32 +152,60 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 me._saveNewAsset(featureAttributesElement);
             });
         },
-        _initializeTypeAndDirectionChanges: function(featureAttributesElement) {
+        bindEventHandlersForChanges: function(featureAttributesElement) {
+
+            var gatherPropertyChangedPayload = function(publicId, values) {
+                var payload = {
+                    propertyData: [{
+                        publicId: publicId,
+                        values: values
+                    }]
+                };
+                return payload;
+            };
+
+            var triggerChanges = function(publicId, values) {
+                eventbus.trigger('assetPropertyValue:changed', gatherPropertyChangedPayload(publicId, values));
+            };
+
+            var handleChange = function(jqElement, valueDomExtractor) {
+                var values = valueDomExtractor(jqElement);
+                triggerChanges(jqElement.attr('data-publicId'), values);
+            };
+
             var me = this;
             var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-publicId="vaikutussuunta"]');
             var assetDirectionChangedHandler = function() {
                 var value = validityDirection.attr('value');
                 var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
-                eventbus.trigger('assetPropertyValue:changed', {
-                    propertyData: [{
-                        publicId: validityDirection.attr('data-publicId'),
-                        values: [{propertyValue: newValidityDirection}]
-                    }]
-                });
+                triggerChanges(validityDirection.attr('data-publicId'),[{propertyValue: newValidityDirection}]);
             };
+            validityDirection.click(assetDirectionChangedHandler);
+
+            featureAttributesElement.find('input.featureAttributeText').on('keyup', function() {
+                var jqElement = jQuery(this);
+                handleChange(jqElement, me._propertyValuesOfTextElement);
+            });
+
+            featureAttributesElement.find('textarea.featureAttributeLongText').on('keyup', function() {
+                var jqElement = jQuery(this);
+                handleChange(jqElement, me._propertyValuesOfTextElement);
+            });
+
+            featureAttributesElement.find('input.featureAttributeDate').on('change' ,function() {
+                var jqElement = jQuery(this);
+                handleChange(jqElement, me._propertyValuesOfTextElement);
+            });
 
             featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
                 var jqElement = jQuery(this);
-                var values = me._propertyValuesOfMultiCheckboxElement(jqElement);
-                eventbus.trigger('assetPropertyValue:changed', {
-                    propertyData: [{
-                        publicId: jqElement.attr('data-publicId'),
-                        values: values
-                    }]
-                });
+                handleChange(jqElement, me._propertyValuesOfMultiCheckboxElement);
             });
 
-            validityDirection.click(assetDirectionChangedHandler);
+            featureAttributesElement.find('div.formAttributeContent').find('select').on('change', function() {
+                var jqElement = jQuery(this);
+                handleChange(jqElement, me._propertyValuesOfSelectionElement);
+            });
         },
         _saveNewAsset: function(featureAttributesElement) {
             var me = this;
