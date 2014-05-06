@@ -196,11 +196,17 @@ Joukkoliikenteen pysäkit ovat julkisen liikenteen käytössä olevia pysäkkej�
 --------------------------------------------------------
 Yksittäisen pysäkin ominaisuustietoja voi muokata valitsemalla muokkaustyökalun (12). Muokattava pysäkki valitaan hiirellä klikkaamalla. Pysäkkiä valittaessa kartan mittakaavatason täytyy olla 1:20 000 tai tarkempi, jotta pysäkin ominaisuustietojen muokkaaminen on mahdollista (9). Sovellus ilmoittaa, kun mittakaavataso on liian epätarkka pysäkkien muokkaamista varten.
 
-Muokkaustilassa tehdyt muutokset (sekä pysäkin ominaisuustietojen että sijainnin) tallentuvat painamalla ruudun oikeassa alareunassa olevaa "Tallenna"-painiketta (15). Muutosten tallentamisen jälkeen pysäkille tallentuu tieto viimeisestä muokkaajasta ja muokkaushetkestä. Pysäkin ominaisuustietonäkymässä näkyy kohdassa "Muokattu viimeksi" sovellukseen kirjautuneen käyttäjän käyttäjätunnus ja muokkausajankohdan päivämäärä ja kellonaika. Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pysäkki palautetaan muutoksia edeltäneeseen tilaan. Valittu pysäkki näkyy sinisellä korostusvärillä (4). Sivun oikeaan laitaan avautuu Google Street View -näkymä (5) pysäkistä sekä pysäkin ominaisuustiedot (6).
+Muokkaustilassa tehdyt muutokset (sekä pysäkin ominaisuustietojen että sijainnin) tallentuvat painamalla ruudun oikeassa alareunassa olevaa "Tallenna"-painiketta (15). Muutosten tallentamisen jälkeen pysäkille tallentuu tieto viimeisestä muokkaajasta ja muokkaushetkestä. Pysäkin ominaisuustietonäkymässä näkyy kohdassa "Muokattu viimeksi" sovellukseen kirjautuneen käyttäjän käyttäjätunnus ja muokkausajankohdan päivämäärä ja kellonaika. Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pysäkki palautetaan muutoksia edeltäneeseen tilaan. Valittu pysäkki näkyy sinisellä korostusvärillä (4). Sivun oikeaan laitaan avautuu Google Street View -näkymä (5) pysäkistä sekä pysäkin ominaisuustiedot (6). 
+
+Jos pysäkin muutoksia ei peru tai tallenna ennen kuin siirtyy muokkaamaan muita pysäkkejä tai pois pysäkkien muokkaustilasta, sovellus tulostaa muutos-dialogin. Muutos-dialogi kertoo, että muutoksia on tehty ja ne tulee tallentaa tai peruuttaa. 
 
 ![Pysäkin ominaisuustietojen muokkaus.](k12.jpg)
 
 _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
+
+![Muutos-dialogi.](k21.jpg)
+
+_Muutos-dialogi._
 
 ####Pysäkin vaikutussuunnan muuttaminen####
 
@@ -272,6 +278,8 @@ __Lisätiedot:__ Julkiset kommentit. Esimerkiksi: “Alueella tietöitä”.
 Pysäkkiä siirretään käyttämällä muokkaustyökalua (12). Pysäkkejä voi siirtää vain tarpeeksi tarkalta mittakaavatasolta, joka on 1:10 000 tai tarkempi (9).
 
 Siirtäminen tapahtuu tarttumalla pysäkkiin kiinni ja raahaamalla se oikeaan paikkaan. Virheellisten siirtojen estämiseksi pysäkki lähtee liikkumaan 0,3 sekunnin kuluttua siitä, kun pysäkistä on tarrattu kiinni. Pysäkki liikkuu vain olemassa olevia tielinkkejä pitkin ja käyttäjän päivitysoikeuksien sallimien maantieteellisten rajojen sisäpuolella. Jos pysäkin irrottaa tielinkistä, kiinnittyy se automaattisesti lähimpään tielinkkiin, joka on käyttäjän päivitysoikeuksien sallimalla maantietellisellä alueella. Jos riittävän lähellä  ei ole toista tielinkkiä, ei pysäkki irtoa linkiltä, jolla se on. Tielinkki, jonka päällä pysäkki on, näkyy sinisellä korostusvärillä. Kun pysäkistä päästetään irti (lasketaan se uuteen sijaintiin), korostuu siirretty pysäkki sinisellä korostusvärillä (4) ja oikealle avautuu Google Street View (5) ja ominaisuustieto -näkymä (6), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pysäkin siirtäminen ei muuta pysäkin mitattuja maastokoordinaatteja vaan ne säilyvät ennallaan. Pysäkin uusi sijainti tallettuu painamalla Tallenna-painiketta (15). Painamalla Peruuta-painiketta (16) pysäkki palautuu alkuperäiselle paikalleen.
+
+Pysäkin siirto täytyy tallentaa tai peruuttaa ennen kuin voi siirtyä muokkaamaan muita pysäkkejä tai pois muokkaustilasta. Sovellus ilmoittaa tehdystä muutoksesta muutos-dialogilla.
 
 ![Pysäkin siirtäminen.](k12.jpg)
 
