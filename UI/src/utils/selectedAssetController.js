@@ -11,7 +11,6 @@
 
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
-            currentAsset.validityDirection = 2;
             var transformPropertyData = function(propertyData) {
                 var transformValues = function(publicId, values) {
                     var transformValue = function(value) {
@@ -37,8 +36,14 @@
             };
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
-                currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
-
+                var validityDirection = _.find(currentAsset.propertyData, function(property) {
+                    return property.publicId === 'vaikutussuunta';
+                });
+                validityDirection.values = [{
+                    propertyValue: 2,
+                    propertyDisplayValue: 2
+                }];
+                currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
                 eventbus.trigger('asset:initialized', currentAsset);
             });
             backend.getAssetTypeProperties(10);
@@ -64,10 +69,8 @@
 
         eventbus.on('asset:save', function(){
             if(currentAsset.id === undefined){
-                console.log(currentAsset);
                 backend.createAsset(currentAsset.payload);
             } else {
-                console.log(currentAsset);
                 currentAsset.payload.id = currentAsset.id;
                 backend.updateAsset(currentAsset.id, currentAsset.payload);
             }
@@ -90,7 +93,6 @@
                             propertyDisplayValue: publicId.publicId
                         };
                     };
-
                     return _.map(values.values, transformValue);
                 };
                 var transformProperty = function(property) {
