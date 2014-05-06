@@ -1,25 +1,14 @@
 (function (selectedAssetController){
     selectedAssetController.initialize = function(backend) {
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
-        var assetIsSaved = false;
         var assetHasBeenModified = false;
         var currentAsset = {};
 
         var reset = function() {
-            assetIsSaved = false;
             assetHasBeenModified = false;
             currentAsset = {};
         };
 
-        eventbus.on('asset:unselected', function() {
-            if(assetHasBeenModified && !assetIsSaved) {
-                eventbus.once('confirm:ok', function() {
-                    eventbus.once('asset:saved', function() { reset(); }, this);
-                    backend.updateAsset(currentAsset.id, currentAsset.payload);
-                }, this);
-                eventbus.trigger('confirm:show');
-            }
-        });
         eventbus.on('asset:moved', function() {
             assetHasBeenModified = true;
         });
@@ -37,8 +26,8 @@
             currentAsset.payload.properties = transformProperties(currentAsset.payload.properties);
             assetHasBeenModified = true;
         });
-        eventbus.on('asset:saved', function() {
-            assetIsSaved = true;
+        eventbus.on('asset:saved asset:cancelled', function() {
+            assetHasBeenModified = false;
         });
         eventbus.on('asset:fetched', function(asset) {
             var transformPropertyData = function(propertyData) {
@@ -68,6 +57,8 @@
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
         });
 
-        return { reset: reset };
+        return { reset: reset,
+                 isDirty: function() { return assetHasBeenModified; }};
     };
+
 })(window.SelectedAssetController = window.SelectedAssetController || {});

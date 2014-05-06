@@ -34,12 +34,23 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         bindEvents();
     };
 
+    var confirmable = function(clean, dirty) {
+        return function(data) {
+            if (window.selectedAssetController && selectedAssetController.isDirty()) {
+                if (dirty) { dirty(data); }
+                new Confirm();
+            } else {
+                return clean(data);
+            }
+        };
+    };
+
     var layerFunc = (function() {
         var selectedValidityPeriods = [];
 
         var handleAssetModified = function(asset) {
             var layerToChange =  _.find(selectedValidityPeriods, function(x) { return asset.validityPeriod === x.id; });
-            if(!!layerToChange) {
+            if (!!layerToChange) {
                 layerToChange.selected = true;
                 layerToChange.dom.find('input').prop('checked', true);
                 triggerValidityPeriodsToBus();
@@ -60,10 +71,12 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
             var layerSelection = $(mapBusStopLayer({ selected: layer.selected ? "checked" : "", name: layer.label }));
             var periodSelection = {id: layer.id, selected: layer.selected, dom: layerSelection };
             selectedValidityPeriods.push(periodSelection);
-            layerSelection.find(':input').change(function (target) {
+            layerSelection.find(':input').change(confirmable(function(target) {
                 periodSelection.selected = target.currentTarget.checked;
                 triggerValidityPeriodsToBus();
-            });
+            }, function(target) {
+                $(target.currentTarget).prop('checked', !target.currentTarget.checked);
+            }));
             return layerSelection;
         };
 
@@ -75,13 +88,13 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
 
     var button = $('<button class="readOnlyMode actionModeButton"></button>');
 
-    var editMode = function () {
+    var editMode = confirmable(function () {
         readOnly = false;
         showEditMode();
         button.off().click(readMode);
-    };
+    });
 
-    var readMode = function () {
+    var readMode = confirmable(function () {
         readOnly = true;
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
@@ -91,7 +104,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         actionButtons.hide();
         layerGroup.removeClass('layerGroupEditMode');
         button.off().click(editMode);
-    };
+    });
 
     var editButtonForGroup = function() {
         return button.text('Siirry muokkaustilaan').click(editMode);
@@ -123,7 +136,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         });
     };
 
-    var changeTool = function(action) {
+    var changeTool = confirmable(function(action) {
         // TODO: scoping!
         jQuery(".actionButtonActive").removeClass("actionButtonActive");
         jQuery(".actionPanelButton"+action).addClass("actionButtonActive");
@@ -131,9 +144,9 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         jQuery(".actionPanelButtonAddActiveImage").removeClass("actionPanelButtonAddActiveImage");
         jQuery(".olMap").css('cursor', cursor[action]);
         eventbus.trigger('tool:changed', action);
-    };
+    });
 
-    var showEditMode = function() {
+    var showEditMode = confirmable(function() {
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
 
@@ -142,13 +155,13 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
 
         layerGroup.addClass('layerGroupSelectedMode');
         layerGroup.addClass('layerGroupEditMode');
-    };
+    });
 
-    var handleLayerGrpClick = function(){
+    var handleLayerGrpClick = confirmable(function(){
         eventbus.trigger('layer:selected', identifier);
-    };
+    });
 
-    var collapse = function () {
+    var collapse = confirmable(function () {
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
 
@@ -158,9 +171,9 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         layerGroup.removeClass('layerGroupSelectedMode');
         layerGroup.removeClass('layerGroupEditMode');
         layerGroup.on('click', handleLayerGrpClick);
-    };
+    });
 
-    var expand = function() {
+    var expand = confirmable(function() {
         eventbus.trigger('application:readOnly', readOnly);
         changeTool('Select');
         button.removeClass('editMode').addClass('readOnlyMode').text('Siirry muokkaustilaan');
@@ -168,7 +181,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
         layerGroup.addClass('layerGroupSelectedMode');
         layerGroup.removeClass('layerGroupEditMode');
         layerGroup.off();
-    };
+    });
 
     var handleGroupSelect = function(id) {
         if(identifier === id) {
@@ -194,7 +207,7 @@ window.AssetActionPanel = function(identifier, header, isExpanded, validityPerio
     };
 
     eventbus.on('roles:fetched', handleRoles);
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created', layerFunc.handleAssetModified, this);
+    eventbus.on('asset:saved asset:created', layerFunc.handleAssetModified, this);
     eventbus.on('layer:selected', handleGroupSelect, this);
     render();
 };

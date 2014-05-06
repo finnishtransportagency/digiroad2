@@ -22,14 +22,18 @@ describe('SelectedAssetController', function() {
         eventbus.trigger('asset:fetched', createAsset());
     };
 
-    var unselectAssetAndAssertDialogShown = function(shown) {
+    var assetStateIsDirty = function() {
         return function() {
-            before(function() {
-                eventbus.trigger('asset:unselected');
+            it('asset state should be dirty', function() {
+                assert.equal(controller.isDirty(), true);
             });
+        };
+    };
 
-            it('should show/hide confirm dialog correctly', function() {
-                assert.equal(confirmDialogShown, shown);
+    var assetStateIsClean = function() {
+        return function() {
+            it('asset state should be clean', function() {
+                assert.equal(controller.isDirty(), false);
             });
         };
     };
@@ -40,7 +44,7 @@ describe('SelectedAssetController', function() {
             eventbus.trigger('asset:moved');
         });
 
-        describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
+        describe('and another asset is selected', assetStateIsDirty());
 
         describe('and changes are saved', function() {
             before(function() {
@@ -48,7 +52,7 @@ describe('SelectedAssetController', function() {
                 eventbus.trigger('asset:saved');
             });
 
-            describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
+            describe('and another asset is selected', assetStateIsClean());
         });
     });
 
@@ -63,7 +67,7 @@ describe('SelectedAssetController', function() {
                 eventbus.trigger('asset:saved');
             });
 
-            describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
+            describe('and another asset is selected', assetStateIsClean());
         });
     });
 
@@ -72,32 +76,7 @@ describe('SelectedAssetController', function() {
             resetTest();
         });
 
-        describe('and another asset is selected', unselectAssetAndAssertDialogShown(false));
-    });
-
-    describe('when asset property is changed', function () {
-        before(function () {
-            resetTest();
-            eventbus.trigger('assetPropertyValue:changed', {
-                propertyData: [{
-                    publicId: 'vaikutussuunta',
-                    values: [{ propertyValue: '3' }]
-                }]
-            });
-        });
-
-        describe('and another asset is selected', unselectAssetAndAssertDialogShown(true));
-
-        describe('and save button is pressed', function() {
-            before(function() {
-               eventbus.trigger('confirm:ok');
-            });
-
-            it('should send updated asset to backend', function() {
-                assert.equal(assetSentToBackend.id, 300000);
-                assert.deepEqual(assetSentToBackend.data, createBackendMessagePayload());
-            });
-        });
+        describe('and another asset is selected', assetStateIsClean());
     });
 
     function createAsset() {
@@ -146,32 +125,6 @@ describe('SelectedAssetController', function() {
             validityPeriod: 'current',
             wgslat: 60.2128746641816,
             wgslon: 24.7375812322645
-        };
-    }
-
-    function createBackendMessagePayload() {
-        return {
-            assetTypeId: 10,
-            bearing: 80,
-            lat: 6677267.45072414,
-            lon: 374635.608258218,
-            roadLinkId: 1140018963,
-            properties: [{
-                publicId: 'vaikutussuunta',
-                values: [{
-                    propertyValue: '3',
-                    propertyDisplayValue: 'vaikutussuunta'
-                }]
-            }, {
-                publicId: 'pysakin_tyyppi',
-                values: [{
-                    propertyValue: '2',
-                    propertyDisplayValue: 'pysakin_tyyppi'
-                }, {
-                    propertyValue: '3',
-                    propertyDisplayValue: 'pysakin_tyyppi'
-                }]
-            }]
         };
     }
 });

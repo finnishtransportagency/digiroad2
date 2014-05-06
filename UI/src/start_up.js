@@ -63,17 +63,20 @@ jQuery(document).ready(function() {
         });
     };
 
-  eventbus.on('application:readOnly', function(readOnly) {
+  eventbus.on('application:readOnly tool:changed validityPeriod:changed', function(readOnly) {
       window.location.hash = '';
   });
   
   $(window).on('hashchange', function(evt) {
       var data = assetIdFromURL();
       if (data && data.externalId) {
+          eventbus.trigger('asset:unselected');
           Backend.getIdFromExternalId(data.externalId, data.keepPosition);
       }
   });
-  
+
+    window.selectedAssetController = SelectedAssetController.initialize(Backend);
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -82,7 +85,6 @@ jQuery(document).ready(function() {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
-          var selectedAssetController = SelectedAssetController.initialize(Backend);
           eventbus.on('confirm:show', function() {
               new Confirm();
           });
