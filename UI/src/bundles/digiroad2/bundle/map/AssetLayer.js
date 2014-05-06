@@ -452,7 +452,11 @@ window.AssetLayer = function(map, roadLayer) {
         if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
             backend.getAssets(10, state.bbox);
         } else {
-            removeAssetsFromLayer();
+            if (selectedAssetController.isDirty()) {
+                new Confirm();
+            } else {
+                removeAssetsFromLayer();
+            }
         }
     }, this);
 
