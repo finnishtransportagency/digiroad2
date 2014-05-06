@@ -376,11 +376,22 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 container.append($('<div />').addClass('formLabels').text(property.localizedName));
                 var inputContainer = $('<div />').addClass('featureattributeChoice');
                 _.forEach(enumValues, function(x) {
-
                     var input = $('<input type="checkbox" />').change(function(evt){
                         x.checked = evt.currentTarget.checked;
-                        // TODO: fire change to eventbus
-                        console.log(['change', _.filter(enumValues, function(value) { return value.checked; })]);
+                        eventbus.trigger('assetPropertyValue:changed',
+                            {
+                                propertyData: [{
+                                    publicId: property.publicId,
+                                    values: _.chain(enumValues)
+                                             .filter(function(value) { return value.checked; })
+                                             .map(function(value) {
+                                                return {
+                                                    propertyValue: value.propertyValue,
+                                                    propertyDisplayValue: value.propertyDisplayValue };
+                                             })
+                                             .value()
+                                }]
+                            });
                     });
                     x.checked = _.any(currentValue.values, function(prop){
                         return prop.propertyValue === x.propertyValue;
