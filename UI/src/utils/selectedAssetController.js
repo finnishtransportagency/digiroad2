@@ -26,6 +26,20 @@
             currentAsset.payload.properties = transformProperties(currentAsset.payload.properties);
             assetHasBeenModified = true;
         });
+
+        eventbus.on('asset:save', function(){
+            backend.updateAsset(currentAsset.id, currentAsset.payload);
+        });
+
+        eventbus.on('asset:cancelled', function(){
+           backend.getAsset(currentAsset.id);
+        });
+
+        eventbus.on('assetTypeProperties:fetched', function(properties) {
+            //currentAsset.payload = properties;
+            eventbus.trigger('asset:fetched', properties, this);
+        }, this);
+
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             assetHasBeenModified = false;
         });

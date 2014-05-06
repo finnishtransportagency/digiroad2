@@ -52,9 +52,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 this._selectedAsset = asset;
                 this._backend.getAssetTypeProperties(10);
             }, this);
-            eventbus.on('assetTypeProperties:fetched', function(properties) {
-                this._initializeCreateNew(properties);
-            }, this);
             eventbus.on('assetPropertyValue:changed', function(data) {
                 if (data.propertyData[0].publicId == 'vaikutussuunta') {
                     this._changeAssetDirection(data);
@@ -85,10 +82,13 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             return null;
         },
         _initializeEditExisting : function(asset) {
+            // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
+            var container = jQuery("#featureAttributes").empty();
+
             var me = this;
             this._selectedAsset = asset;
-            me._featureDataAssetId = asset.id;
 
+            me._featureDataAssetId = asset.id;
             // TODO: refactor this (duplication with _initializeCreateNew)
             var featureData = me._makeContent(asset.propertyData);
             var streetView = $(me._getStreetView(asset));
@@ -96,9 +96,20 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
             var wrapper = $('<div />').addClass('featureAttributesWrapper');
             wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
-            // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
-            var featureAttributesElement = jQuery("#featureAttributes").append(element).append(wrapper);
+            var featureAttributesElement = container.append(element).append(wrapper);
             me._addDatePickers();
+
+            var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
+                eventbus.trigger('asset:cancelled');
+            });
+
+            var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
+                eventbus.trigger('asset:save');
+            });
+
+            // TODO: cleaner html
+            featureAttributesElement.append($('<div />').addClass('formControls').append(cancelBtn).append(saveBtn));
+
             if (this._readOnly) {
               $('#featureAttributes button').prop('disabled', true);
               $('#featureAttributes input').prop('disabled', true);
@@ -106,18 +117,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
               $('#featureAttributes textarea').prop('disabled', true);
               $('#featureAttributes .formControls').hide();
             }
-
-            featureAttributesElement.find('button.cancel').on('click', function() {
-                eventbus.trigger('asset:cancelled');
-                eventbus.trigger('asset:unselected');
-                me._closeAsset();
-                me._backend.getAsset(asset.id);
-            });
-
-            featureAttributesElement.find('button.save').on('click', function() {
-                me._activateSaveModal(featureAttributesElement);
-                me._updateAsset(asset.id, featureAttributesElement);
-            });
 
             function busStopHeader(asset) {
                 if (_.isNumber(asset.externalId)) {
@@ -162,63 +161,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 me._saveNewAsset(featureAttributesElement);
             });
         },
-
-        bindEventHandlersForChanges: function(featureAttributesElement) {
-
-            var gatherPropertyChangedPayload = function(publicId, values) {
-                var payload = {
-                    propertyData: [{
-                        publicId: publicId,
-                        values: values
-                    }]
-                };
-                return payload;
-            };
-
-            var triggerChanges = function(publicId, values) {
-                eventbus.trigger('assetPropertyValue:changed', gatherPropertyChangedPayload(publicId, values));
-            };
-
-            var handleChange = function(jqElement, valueDomExtractor) {
-                var values = valueDomExtractor(jqElement);
-                triggerChanges(jqElement.attr('data-publicId'), values);
-            };
-
-            var me = this;
-            var validityDirection = featureAttributesElement.find('.featureAttributeButton[data-publicId="vaikutussuunta"]');
-            var assetDirectionChangedHandler = function() {
-                var value = validityDirection.attr('value');
-                var newValidityDirection = validityDirection.attr('value') == 2 ? 3 : 2;
-                triggerChanges(validityDirection.attr('data-publicId'),[{propertyValue: newValidityDirection}]);
-            };
-            validityDirection.click(assetDirectionChangedHandler);
-
-            featureAttributesElement.find('input.featureAttributeText').on('keyup', function() {
-                var jqElement = jQuery(this);
-                handleChange(jqElement, me._propertyValuesOfTextElement);
-            });
-
-            featureAttributesElement.find('textarea.featureAttributeLongText').on('keyup', function() {
-                var jqElement = jQuery(this);
-                handleChange(jqElement, me._propertyValuesOfTextElement);
-            });
-
-            featureAttributesElement.find('input.featureAttributeDate').on('change' ,function() {
-                var jqElement = jQuery(this);
-                handleChange(jqElement, me._propertyValuesOfTextElement);
-            });
-
-            featureAttributesElement.find('div.featureattributeChoice').on('change', function() {
-                var jqElement = jQuery(this);
-                handleChange(jqElement, me._propertyValuesOfMultiCheckboxElement);
-            });
-
-            featureAttributesElement.find('div.formAttributeContent').find('select').on('change', function() {
-                var jqElement = jQuery(this);
-                handleChange(jqElement, me._propertyValuesOfSelectionElement);
-            });
-        },
-
         _saveNewAsset: function(featureAttributesElement) {
             var me = this;
             var properties = me._collectAssetProperties(featureAttributesElement);
@@ -242,71 +184,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 bearing: me._selectedAsset.bearing,
                 properties: properties});
         },
-        _collectAssetProperties: function(featureAttributesElement) {
-            var me = this;
-            var textElements = featureAttributesElement.find('.featureAttributeText , .featureAttributeLongText');
-            var textElementAttributes = _.map(textElements, function(textElement) {
-                var jqElement = jQuery(textElement);
-                return {
-                    publicId: jqElement.attr('data-publicId'),
-                    propertyValues: me._propertyValuesOfTextElement(jqElement)
-                };
-            });
-
-            var buttonElements = featureAttributesElement.find('.featureAttributeButton');
-            var buttonElementAttributes = _.map(buttonElements, function(buttonElement) {
-                var jqElement = jQuery(buttonElement);
-                return {
-                    publicId: jqElement.attr('data-publicId'),
-                    propertyValues: me._propertyValuesOfButtonElement(jqElement)
-                };
-            });
-
-            var selectionElements = featureAttributesElement.find('select.featureattributeChoice');
-            var selectionElementAttributes = _.map(selectionElements, function(selectionElement) {
-                var jqElement = jQuery(selectionElement);
-                return {
-                    publicId: jqElement.attr('data-publicId'),
-                    propertyValues: me._propertyValuesOfSelectionElement(jqElement)
-                };
-            });
-
-            var multiCheckboxElements = featureAttributesElement.find('div.featureattributeChoice');
-            var multiCheckboxElementAttributes = _.map(multiCheckboxElements, function(multiCheckboxElement) {
-                var jqElement = jQuery(multiCheckboxElement);
-                return {
-                    publicId: jqElement.attr('data-publicId'),
-                    propertyValues: me._propertyValuesOfMultiCheckboxElement(jqElement)
-                };
-            });
-
-            var dateElements = featureAttributesElement.find('.featureAttributeDate');
-            var dateElementAttributes = _.map(dateElements, function(dateElement) {
-                var jqElement = jQuery(dateElement);
-                return {
-                    publicId: jqElement.attr('data-publicId'),
-                    propertyValues: me._propertyValuesOfDateElement(jqElement)
-                };
-            });
-            var all = textElementAttributes
-                .concat(selectionElementAttributes)
-                .concat(buttonElementAttributes)
-                .concat(multiCheckboxElementAttributes)
-                .concat(dateElementAttributes);
-            var properties = _.chain(all)
-                .map(function(attr) {
-                    return {publicId: attr.publicId,
-                        values: attr.propertyValues};
-                })
-                .map(function(p) {
-                    if (p.publicId == 'pysakin_tyyppi' && _.isEmpty(p.values)) {
-                        p.values = [{propertyDisplayValue: "Pysäkin tyyppi",
-                            propertyValue: 99}];
-                    }
-                    return p;
-                }).value();
-            return properties;
-        },
         _getStreetView: function(asset) {
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
@@ -319,44 +196,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             if ($validFrom.length > 0 && $validTo.length > 0) {
                 dateutil.addDependentDatePickers($validFrom, $validTo);
             }
-        },
-        _propertyValuesOfTextElement: function(element) {
-            return [{
-                propertyValue : element.val(),
-                propertyDisplayValue : element.val()
-            }];
-        },
-        _propertyValuesOfButtonElement: function(element) {
-            return [{
-                propertyValue: element.attr('value') == 2 ? 2 : 3,
-                propertyDisplayValue: element.attr('name')
-            }];
-        },
-        _propertyValuesOfSelectionElement: function(element) {
-            return [{
-                propertyValue : Number(element.val()),
-                propertyDisplayValue : element.attr('name')
-            }];
-        },
-        _propertyValuesOfMultiCheckboxElement: function(element) {
-            return _.chain(element.find('input'))
-                    .filter(function(childElement) {
-                        return $(childElement).is(':checked');
-                    })
-                    .map(function(childElement) {
-                      return {
-                        propertyValue: Number(childElement.value),
-                        propertyDisplayValue: element.attr('name')
-                      };
-                    })
-                    .value();
-        },
-
-        _propertyValuesOfDateElement: function(element) {
-            return _.isEmpty(element.val()) ? [] : [{
-                propertyValue : dateutil.finnishToIso8601(element.val()),
-                propertyDisplayValue : dateutil.finnishToIso8601(element.val())
-            }];
         },
         _getPropertyValues: function() {
             var me = this;
@@ -388,18 +227,23 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         },
 
         textHandler : function(property){
-            var html = $('<div />');
-            var label = $('<label />');
             var input = $('<input type="text"/>').keyup(_.debounce(function(target){
                 // tab press
                 if(target.keyCode === 9){
                     return;
                 }
-                //TODO: trigger eventbus change
-                console.log('Send change to eventbus');
-                console.log({ publicId: property.publicId, val: target.currentTarget.value });
+
+                eventbus.trigger('assetPropertyValue:changed',
+                 {
+                    propertyData: [{
+                        publicId: property.publicId,
+                        values:  [{
+                            propertyValue : target.currentTarget.value,
+                            propertyDisplayValue : target.currentTarget.value
+                        }]
+                    }]
+                 });
             }, 500));
-            var readOnlyText = $('<span />');
 
             var render = function(){
                 // TODO: use cleaner html
@@ -407,7 +251,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 outer.append($('<div />').addClass('formLabels').text(property.localizedName));
                 input.addClass('featureAttributeText');
                 outer.append($('<div />').addClass('formAttributeContent').append(input));
-                // label.text(getLabel(property.publicId));
                 if(property.values[0]) {
                     input.val(property.values[0].propertyDisplayValue);
                 }
@@ -419,7 +262,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 render: render
             };
         },
-
 
         singleChoiceHandler : function(property, choices){
             var enumValues = _.find(choices, function(choice){
