@@ -51,7 +51,6 @@ Host github.com
 - asenna Bower (npm install -g bower)
 - asenna Grunt (npm install -g grunt-cli)
 
-
 (bower "fix": git config --global url."https://".insteadOf git://)
 
 update git (http://www.halyph.com/2013/08/how-to-install-git-1834-on-centos-64.html)
@@ -61,3 +60,7 @@ Oracle libit pitää olla kopioituna web-käyttäjän ~/digiroad2/oracle/ alle
 New Relic pitää olla kopioituna: ~/digiroad/newrelic hakemistoon
 
 bonecp properties pitää olla ~/digiroad/ hakemistossa
+
+Määrittele valluviennissä käytetty ftp-yhteys ~/digiroad/ftp.conf - tiedostossa
+
+Määrittele digiroad2.properties tiedosto uudelle ympäristölle ellei ympäristö käytä olemassa olevan ympäristön properties - tiedostoa
