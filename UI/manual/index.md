@@ -136,7 +136,7 @@ _Joukkoliikenteen pysäkkien valinta._
 
 Joukkoliikenteen pysäkkejä haetaan pysäkin kansallisella ID:llä yksilöidyllä URL-osoitteella. Esimerkki URL-osoitteesta:
 
-https://testiextranet.liikennevirasto.fi/digiroad/#/asset/95374  (15)
+https://testiextranet.liikennevirasto.fi/digiroad/#/asset/95374  (17)
 
 missä numerosarja 95374 on pysäkin kansallinen ID. Toiminto tarkentaa karttakäyttöliittymän katselutilan haetun pysäkin kohdalle. Pysäkki saa sinisen korostusvärin (4) ja sen ominaisuustietonäkymä (6) aukeaa sivun oikealle puolelle.
 
@@ -206,15 +206,15 @@ _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
 
 Googlen Street View -näkymä (5) sivun oikeassa laidassa on suunnattu suuntaan, jossa pysäkin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla näkymää avautuu Googlen Street View -välilehti, jossa pysäkin ympäristöä voi tarkastella tarkemmin. Kartalla pysäkin vaikutussuunta näkyy pisarana pysäkkikuvakkeella (10). Pisaran kärki osoittaa pysäkin liikennevirran suuntaan.
 
-Pysäkin vaikutussuunnan voi muuttaa ominaisuustietonäkymässä (6) painamalla “Vaihda suuntaa”-painiketta (17). Pysäkin vaikutussuuntaa muutettaessa Googlen Street View -näkymä (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta kääntyy.
+Pysäkin vaikutussuunnan voi muuttaa ominaisuustietonäkymässä (6) painamalla “Vaihda suuntaa”-painiketta (18). Pysäkin vaikutussuuntaa muutettaessa Googlen Street View -näkymä (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta kääntyy.
 
 ![Pysäkin vaikutussuunnan muuttaminen.](k13.jpg)
 
-_Joukkoliikenteen pysäkin vaikutussuunnan voi muuttaa painamalla “Vaihda suuntaa”-painiketta (17)._
+_Joukkoliikenteen pysäkin vaikutussuunnan voi muuttaa painamalla “Vaihda suuntaa”-painiketta (18)._
 
 ####Pysäkin voimassaolopäivien muokkaus####
 
-Ensimmäinen voimassaolopäivä (18) tarkoittaa päivämäärää, josta lähtien pysäkki on käytössä. Viimeinen voimassaolopäivä (19) tarkoittaa päivämäärää, jolloin pysäkki on viimeisen kerran käytössä. Molempia päivämääriä voi muokata ominaisuustieto -näkymän (6) kautta. Päivämääriä voi muokata joko kirjoittamalla ne päivämääräkenttään muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun päivämääräkenttää klikkaa.
+Ensimmäinen voimassaolopäivä (19) tarkoittaa päivämäärää, josta lähtien pysäkki on käytössä. Viimeinen voimassaolopäivä (20) tarkoittaa päivämäärää, jolloin pysäkki on viimeisen kerran käytössä. Molempia päivämääriä voi muokata ominaisuustieto -näkymän (6) kautta. Päivämääriä voi muokata joko kirjoittamalla ne päivämääräkenttään muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun päivämääräkenttää klikkaa.
 
 Päivämääriä ei voi asettaa ristiin siten, että “Ensimmäinen voimassaolopäivä” olisi myöhemmin kuin “Viimeinen voimassaolopäivä”. Kalenterissa ei-sallitut päivämäärät ovat disabloituja. Jos päivämääräkenttään kirjoittaa päivämäärän, joka asettaa päivämäärät ristiin, ei päivämäärä tallennu.
 
@@ -234,15 +234,17 @@ _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
 
 ####Ominaisuustiedot:####
 
+__Lisätty järjestelmään:__ Tiedon luojan käyttäjätunnus tai massaimportin lähde ja tiedon lisäyshetki.
+__Muokattu viimeksi:__ Muokkaajan käyttäjätunnus ja tiedon muokkaushetki.
 __Nimi suomeksi:__ Pysäkin nimi suomen kielellä.
 __Nimi ruotsiksi:__ Pysäkin nimi ruotsin kielellä.
-__Tietojen ylläpitäjä:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
+__Tietojen ylläpitäjä:__ Ylläpitävä viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Ylläpitäjän tunnus:__ Tietojen ylläpitäjän sisäinen tunnus pysäkille.
 __Omistajan tunnus:__ Pysäkin omistajan sisäinen tunnus pysäkille.
 __Matkustajatunnus:__ Pysäkin tunnus, joka näkyy matkustajalle.
-__Maastokoordinaatti X:__ Pysäkin sijainnin mitattu X-koordinaatti.
-__Maastokoordinaatti Y:__ Pysäkin sijainnin mitattu Y-koordinaatti.
-__Maastokoordinaatti Z:__ Pysäkin sijainnin mitattu Z-koordinaatti.
+__Maastokoordinaatti X:__ Pysäkin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.
+__Maastokoordinaatti Y:__ Pysäkin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.
+__Maastokoordinaatti Z:__ Pysäkin sijainnin mitattu Z-koordinaatti: N2000 korkeusjärjestelmässä.
 __Liikennöintisuunta:__ Pysäkin suunta sanallisesti kuvattuna. Esimerkiksi:”Keskustaan”.
 __Vaikutussuunta:__ Vaikutussuunta on visualisoitu pysäkin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pysäkin kuuluisi olla.
 __Liikennöintisuuntima:__ Ei toteutettu
@@ -282,7 +284,7 @@ Uusia pysäkkejä voi lisätä, kun mittakaavataso on 10 tai tarkempi. Tämä mi
 
 Sovellus muodostaa osan ominaisuustiedoista itse, jos niitä ei määritetä. “Ensimmäinen voimassaolopäivä” oletetaan meneillään olevaksi päivämääräksi. Pysäkin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Ylläpitäjä oletetaan kunnaksi. Pysäkin tyypiksi asetetaan “ei tietoa”. Kaikkien varusteiden oletusarvo on “ei”. Lisäksi valtakunnallinen tunnus muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eikä käyttäjän tarvitse sitä itse asettaa.
 
-Kun ominaisuustiedot on kirjattu, painetaan Luo-painiketta (20) tietojen tallentamiseksi tietokantaan. Jos pysäkkiä ei halutakaan luoda, painetaan Peruutapainiketta (21). Sovellus antaa muokata vain luotavan pysäkin ominaisuustietoja niin kauan, kunnes on klikattu joko “Luo” tai “Peruuta”.
+Kun ominaisuustiedot on kirjattu, painetaan Luo-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pysäkkiä ei halutakaan luoda, painetaan Peruutapainiketta (22). Sovellus antaa muokata vain luotavan pysäkin ominaisuustietoja niin kauan, kunnes on klikattu joko “Luo” tai “Peruuta”.
 
 Uuden pysäkin lisäämisen vaiheet:
 
@@ -292,17 +294,17 @@ Uuden pysäkin lisäämisen vaiheet:
 1. Valitse lisäystyökalu (13).
 1. Klikkaa linkin kohtaa, johon haluat lisätä pysäkin.
 1. Lisää ominaisuustieto -näkymään (6) olemassa olevat tiedot pysäkistä.
-1. Jos et haluakaan luoda ko. pysäkkiä, paina Peruuta-painiketta (21).
-1. Kun olet lisännyt haluamasi tiedot, paina Luopainiketta (20).
+1. Jos et haluakaan luoda ko. pysäkkiä, paina Peruuta-painiketta (22).
+1. Kun olet lisännyt haluamasi tiedot, paina Luopainiketta (21).
 
-![Pysäkin siirtäminen.](k16.jpg)
+![Pysäkin lisääminen.](k16.jpg)
 
 _Joukkoliikenteen pysäkin lisääminen._
 
 5.1.4 Vanhan pysäkin poistaminen
 ------------------------------
 
-Olemassa oleva pysäkki poistetaan muokkaustyökalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pysäkkejä voi poistaa (9). Poistettava pysäkki valitaan klikkaamalla pysäkkikuvaketta, jolloin avautuu ominaisuustietonäkymä (6). Valittu pysäkki korostuu sinisellä huomiovärillä (4). Poisto suoritetaan asettamalla ominaisuustietonäkymän (6) “Viimeinen voimassaolopäivä” -kenttään (19) pysäkin viimeinen voimassaolopäivämäärä. Pysäkin tila muuttuu käytöstä poistuneeksi viimeistä voimassaolopäivämäärää seuraavana päivänä. Pysäkin poistamisen voi perua valitsemalla “Viimeinen voimassaolopäivä” -kenttään “Ei tietoa” avautuvasta kalenterista tai pyyhkimällä kentän tyhjäksi.
+Olemassa oleva pysäkki poistetaan muokkaustyökalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pysäkkejä voi poistaa (9). Poistettava pysäkki valitaan klikkaamalla pysäkkikuvaketta, jolloin avautuu ominaisuustietonäkymä (6). Valittu pysäkki korostuu sinisellä huomiovärillä (4). Poisto suoritetaan asettamalla ominaisuustietonäkymän (6) “Viimeinen voimassaolopäivä” -kenttään (20) pysäkin viimeinen voimassaolopäivämäärä. Pysäkin tila muuttuu käytöstä poistuneeksi viimeistä voimassaolopäivämäärää seuraavana päivänä. Pysäkin poistamisen voi perua valitsemalla “Viimeinen voimassaolopäivä” -kenttään “Ei tietoa” avautuvasta kalenterista tai pyyhkimällä kentän tyhjäksi.
 
 Jos pysäkin viimeinen voimassaolopäivä on menneisyydessä, aktivoituu kartalla “Käytöstä poistuneet” -pysäkkivalinta. Pysäkin kuvake häviää kartalta, kun “Käytöstä poistuneet” -pysäkkivalinnan sulkee.
 
@@ -313,7 +315,7 @@ Vanhan pysäkin poistamisen vaiheet:
 1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (9).
 1. Valitse muokkaustyökalu (12).
 1. Klikkaa pysäkkiä (4).
-1. Aseta pysäkille “Viimeinen voimassaolopäivä” -kenttään (19) viimeinen voimassaolopäivämäärä kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla “Viimeinen voimassaolopäivä” -kenttää.
+1. Aseta pysäkille “Viimeinen voimassaolopäivä” -kenttään (20) viimeinen voimassaolopäivämäärä kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla “Viimeinen voimassaolopäivä” -kenttää.
 1. Jos et halua poistaa pysäkkiä, valitse kalenterista “Ei tietoa”.
 1. Pysäkin viimeinen voimassaolopäivämäärä tallentuu painamalla Tallenna-nappia (15).
 
