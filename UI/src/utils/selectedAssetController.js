@@ -26,7 +26,7 @@
             currentAsset.payload.properties = transformProperties(currentAsset.payload.properties);
             assetHasBeenModified = true;
         });
-        eventbus.on('asset:saved asset:cancelled', function() {
+        eventbus.on('asset:saved asset:created asset:cancelled', function() {
             assetHasBeenModified = false;
         });
         eventbus.on('asset:fetched', function(asset) {
