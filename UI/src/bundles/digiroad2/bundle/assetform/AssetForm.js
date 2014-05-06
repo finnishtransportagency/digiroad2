@@ -106,7 +106,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
               $('#featureAttributes textarea').prop('disabled', true);
               $('#featureAttributes .formControls').hide();
             }
-            me.bindEventHandlersForChanges(featureAttributesElement);
 
             featureAttributesElement.find('button.cancel').on('click', function() {
                 eventbus.trigger('asset:cancelled');
@@ -152,8 +151,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
 
             me._addDatePickers();
 
-            me.bindEventHandlersForChanges(featureAttributesElement);
-
             featureAttributesElement.find('button.cancel').on('click', function() {
                 eventbus.trigger('asset:cancelled');
                 eventbus.trigger('asset:unselected');
@@ -165,6 +162,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 me._saveNewAsset(featureAttributesElement);
             });
         },
+
         bindEventHandlersForChanges: function(featureAttributesElement) {
 
             var gatherPropertyChangedPayload = function(publicId, values) {
@@ -220,6 +218,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 handleChange(jqElement, me._propertyValuesOfSelectionElement);
             });
         },
+
         _saveNewAsset: function(featureAttributesElement) {
             var me = this;
             var properties = me._collectAssetProperties(featureAttributesElement);
@@ -562,57 +561,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             );
             return html;
         },
-        _getTextTemplate: function(propertyType, feature) {
-            return propertyType === "long_text" ? this._templates.featureDataTemplateLongText(feature) : this._templates.featureDataTemplateText(feature);
-        },
-        _getSelect: function(name, values, publicId, multiple) {
-            var me = this;
-            var options = '<select data-publicId="'+publicId+'" name="'+name+'" class="featureattributeChoice" ' + multiple +'>';
-            var valuesNro = _.map(values, function(x) { return x.propertyValue;});
-            var selected = _.size(valuesNro) > 0 ? valuesNro : ['99']; // default value 99 if none is selected
-            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
-            _.forEach(propertyValues.values,
-                function(optionValue) {
-                    var selectedValue ='';
-                    if (_.contains(selected, optionValue.propertyValue)) {
-                        selectedValue = 'selected="true" ';
-                    }
-                    optionValue.selectedValue = selectedValue;
-                    options +=  me._templates.featureDataTemplateChoice(optionValue);
-                }
-            );
-
-            options +="</select>";
-            return options;
-        },
         _activateSaveModal: function(featureAttributesElement) {
             featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
-        },
-        _getMultiCheckbox: function(name, values, publicId) {
-            var invalidValue = '99';
-            var me = this;
-            var checkboxes = '<div data-publicId="' + publicId +
-                '" name="' + name +
-                '" class="featureattributeChoice">';
-            var valuesNro = _.pluck(values, 'propertyValue');
-            var propertyValues = _.find(me._enumeratedPropertyValues, function(property) { return property.publicId === publicId; });
-            _.forEach(propertyValues.values,
-                function(inputValue) {
-                    if (invalidValue !== inputValue.propertyValue) {
-                        var checkedValue = '';
-                        if (_.contains(valuesNro, inputValue.propertyValue)) {
-                            checkedValue = 'checked ';
-                        }
-                        inputValue.checkedValue = checkedValue;
-                        inputValue.publicId = publicId;
-                        inputValue.name = publicId + '_' + inputValue.propertyValue;
-                        checkboxes +=  me._templates.featureDataTemplateCheckbox(inputValue);
-                    }
-                }
-            );
-
-            checkboxes +="</div>";
-            return checkboxes;
         },
         onEvent : function(event) {
             var me = this;
