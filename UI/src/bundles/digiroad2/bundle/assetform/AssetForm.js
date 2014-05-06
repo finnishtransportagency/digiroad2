@@ -490,6 +490,44 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             };
         },
 
+        multiChoiceHandler : function(property, choices){
+            var currentValue = _.cloneDeep(property);
+            var enumValues = _.chain(choices)
+                .filter(function(choice){
+                    return choice.publicId === property.publicId;
+                })
+                .flatten('values')
+                .filter(function(x){
+                    return x.propertyValue !== '99';
+                }).value();
+            var render = function(){
+                var container = $('<div />').addClass('formAttributeContentRow');
+                container.append($('<div />').addClass('formLabels').text(property.localizedName));
+                var inputContainer = $('<div />').addClass('featureattributeChoice');
+                _.forEach(enumValues, function(x) {
+
+                    var input = $('<input type="checkbox" />').change(function(evt){
+                        x.checked = evt.currentTarget.checked;
+                        // TODO: fire change to eventbus
+                        console.log(['change', _.filter(enumValues, function(value) { return value.checked; })]);
+                    });
+                    x.checked = _.any(currentValue.values, function(prop){
+                        return prop.propertyValue === x.propertyValue;
+                    });
+
+                    input.prop('checked', x.checked);
+                    var label = $('<label />').text(x.propertyDisplayValue);
+                    inputContainer.append(input).append(label).append($('<br>'));
+                });
+
+                return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
+            };
+
+            return {
+                render: render
+            };
+        },
+
         _makeContent: function(contents) {
             var me = this;
             var html = $('<div />');
@@ -507,8 +545,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     } else if (feature.publicId === 'vaikutussuunta') {
                         html.append(me.directionChoiceHandler(feature).render());
                     } else if (feature.propertyType === "multiple_choice") {
-                        feature.propertyValue = me._getMultiCheckbox(feature.publicId, feature.values, feature.publicId);
-                        html.append($(me._templates.featureDataTemplate(feature)));
+                        html.append(me.multiChoiceHandler(feature, me._enumeratedPropertyValues).render());
                     } else if (propertyType === "date") {
                         feature.propertyValue = "";
                         feature.propertyDisplayValue = "";
