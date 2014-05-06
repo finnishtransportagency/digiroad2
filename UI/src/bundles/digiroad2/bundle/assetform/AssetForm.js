@@ -314,8 +314,8 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             return this._templates.streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
         },
         _addDatePickers: function () {
-            var $validFrom = jQuery('.featureAttributeDate[data-publicId=ensimmainen_voimassaolopaiva]');
-            var $validTo = jQuery('.featureAttributeDate[data-publicId=viimeinen_voimassaolopaiva]');
+            var $validFrom = jQuery('#ensimmainen_voimassaolopaiva');
+            var $validTo = jQuery('#viimeinen_voimassaolopaiva');
             if ($validFrom.length > 0 && $validTo.length > 0) {
                 dateutil.addDependentDatePickers($validFrom, $validTo);
             }
@@ -489,6 +489,37 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             };
         },
 
+        dateHandler : function(property){
+            var input = $('<input />').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
+                // tab press
+                if(target.keyCode === 9){
+                    return;
+                }
+
+                var value = target.currentTarget.value;
+
+                // TODO: send to eventbus
+                console.log(['change on', property.publicId, value]);
+            }, 500));
+
+            var render = function(){
+                //TODO: cleaner html
+                var outer = $('<div />').addClass('formAttributeContentRow');
+
+                var label = $('<div />').addClass('formLabels').text(property.localizedName);
+                if(property.values[0]) {
+                    input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
+                }
+                input.addClass('featureAttributeDate');
+                // TODO: readonly
+                return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
+            };
+
+            return {
+                render: render
+            };
+        },
+
         multiChoiceHandler : function(property, choices){
             var currentValue = _.cloneDeep(property);
             var enumValues = _.chain(choices)
@@ -546,13 +577,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     } else if (feature.propertyType === "multiple_choice") {
                         html.append(me.multiChoiceHandler(feature, me._enumeratedPropertyValues).render());
                     } else if (propertyType === "date") {
-                        feature.propertyValue = "";
-                        feature.propertyDisplayValue = "";
-                        if (feature.values[0]) {
-                            feature.propertyValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
-                            feature.propertyDisplayValue = dateutil.iso8601toFinnish(feature.values[0].propertyDisplayValue);
-                        }
-                        html.append($(me._templates.featureDataTemplateDate(feature)));
+                        html.append(me.dateHandler(feature).render());
                     }  else {
                         feature.propertyValue ='Ei toteutettu';
                         html.append($(me._templates.featureDataTemplateNA(feature)));

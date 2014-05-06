@@ -50,9 +50,11 @@
         var datePickers;
         var fromCallback = function() {
             datePickers.to.setMinDate(datePickers.from.getDate());
+            fromElement.trigger('datechange');
         };
         var toCallback = function() {
             datePickers.from.setMaxDate(datePickers.to.getDate());
+            toElement.trigger('datechange');
         };
         datePickers = {from: dateutil.addNullableFinnishDatePicker(fromElement, fromCallback),
                        to: dateutil.addNullableFinnishDatePicker(toElement, toCallback)};
