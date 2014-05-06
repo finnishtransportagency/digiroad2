@@ -103,6 +103,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             me.bindEventHandlersForChanges(featureAttributesElement);
 
             featureAttributesElement.find('button.cancel').on('click', function() {
+                eventbus.trigger('asset:cancelled');
                 eventbus.trigger('asset:unselected');
                 me._closeAsset();
                 me._backend.getAsset(asset.id);
