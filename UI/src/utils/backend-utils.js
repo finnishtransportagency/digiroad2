@@ -32,7 +32,6 @@
     
     backend.getIdFromExternalId = function(externalId, keepPosition) {
         $.get('api/assets/' + externalId + '?externalId=true', function(asset) {
-            eventbus.trigger('asset:unselected');
             eventbus.trigger('asset:fetched', asset, keepPosition);
         });
     };
@@ -60,38 +59,6 @@
                 eventbus.trigger('asset:created', asset);
             },
             error: function () {
-                console.log("error");
-            }
-        });
-    };
-    
-    backend.updateAssetPosition = function(id, data) {
-        jQuery.ajax({
-          contentType: "application/json",
-          type: "PUT",
-          url: "api/assets/" + id + "?positionOnly=true",
-          data: JSON.stringify(data),
-          dataType:"json",
-          success: function(asset) {
-              eventbus.trigger('asset:saved asset:fetched', asset, true);
-          },
-          error: function() {
-              console.log("error");
-          }
-        });
-    };
-
-    backend.updateAssetProperties = function(id, data) {
-        jQuery.ajax({
-            contentType: "application/json",
-            type: "PUT",
-            url: "api/assets/" + id + "?propertiesOnly=true",
-            data: JSON.stringify(data),
-            dataType:"json",
-            success: function(asset) {
-                eventbus.trigger('asset:saved asset:fetched', asset, true);
-            },
-            error: function() {
                 console.log("error");
             }
         });
