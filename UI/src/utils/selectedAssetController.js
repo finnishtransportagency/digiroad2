@@ -9,6 +9,39 @@
             currentAsset = {};
         };
 
+        eventbus.on('asset:placed', function(asset) {
+            currentAsset = asset;
+            var transformPropertyData = function(propertyData) {
+                var transformValues = function(publicId, values) {
+                    var transformValue = function(value) {
+                        return {
+                            propertyValue: value.propertyValue,
+                            propertyDisplayValue: publicId.publicId
+                        };
+                    };
+
+                    return _.map(values.values, transformValue);
+                };
+                var transformProperty = function(property) {
+                    return _.merge(
+                        {},
+                        _.pick(property, 'publicId'),
+                        {
+                            values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
+                        });
+                };
+                return {
+                    properties: _.map(propertyData.propertyData, transformProperty)
+                };
+            };
+            eventbus.once('assetTypeProperties:fetched', function(properties) {
+                currentAsset.propertyData = properties;
+                currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+                eventbus.trigger('asset:initialized', currentAsset);
+            });
+            backend.getAssetTypeProperties(10);
+        }, this);
+
         eventbus.on('asset:moved', function() {
             assetHasBeenModified = true;
         });
@@ -28,21 +61,22 @@
         });
 
         eventbus.on('asset:save', function(){
-            backend.updateAsset(currentAsset.id, currentAsset.payload);
+            if(currentAsset.id === undefined){
+                console.log(currentAsset);
+                backend.createAsset(currentAsset.payload);
+            } else {
+                backend.updateAsset(currentAsset.id, currentAsset.payload);
+            }
         });
 
         eventbus.on('asset:cancelled', function(){
            backend.getAsset(currentAsset.id);
         });
 
-        eventbus.on('assetTypeProperties:fetched', function(properties) {
-            //currentAsset.payload = properties;
-            eventbus.trigger('asset:fetched', properties, this);
-        }, this);
-
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             assetHasBeenModified = false;
         });
+
         eventbus.on('asset:fetched', function(asset) {
             var transformPropertyData = function(propertyData) {
                 var transformValues = function(publicId, values) {
