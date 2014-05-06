@@ -230,6 +230,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     return;
                 }
 
+                // TODO: extract method
                 eventbus.trigger('assetPropertyValue:changed',
                  {
                     propertyData: [{
@@ -337,10 +338,17 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                     return;
                 }
 
-                var value = target.currentTarget.value;
-
-                // TODO: send to eventbus
-                console.log(['change on', property.publicId, value]);
+                // TODO: extract method
+                eventbus.trigger('assetPropertyValue:changed',
+                    {
+                        propertyData: [{
+                            publicId: property.publicId,
+                            values:  [{
+                                propertyValue : dateutil.finnishToIso8601(target.currentTarget.value),
+                                propertyDisplayValue : dateutil.finnishToIso8601(target.currentTarget.value)
+                            }]
+                        }]
+                    });
             }, 500));
 
             var render = function(){
@@ -386,7 +394,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                                              .filter(function(value) { return value.checked; })
                                              .map(function(value) {
                                                 return {
-                                                    propertyValue: value.propertyValue,
+                                                    propertyValue: parseInt(value.propertyValue, 10),
                                                     propertyDisplayValue: value.propertyDisplayValue };
                                              })
                                              .value()

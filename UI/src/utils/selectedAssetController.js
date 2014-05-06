@@ -11,6 +11,7 @@
 
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
+            currentAsset.validityDirection = 2;
             var transformPropertyData = function(propertyData) {
                 var transformValues = function(publicId, values) {
                     var transformValue = function(value) {
@@ -37,6 +38,7 @@
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+
                 eventbus.trigger('asset:initialized', currentAsset);
             });
             backend.getAssetTypeProperties(10);
@@ -65,6 +67,8 @@
                 console.log(currentAsset);
                 backend.createAsset(currentAsset.payload);
             } else {
+                console.log(currentAsset);
+                currentAsset.payload.id = currentAsset.id;
                 backend.updateAsset(currentAsset.id, currentAsset.payload);
             }
         });
