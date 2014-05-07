@@ -3,14 +3,18 @@
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
         var assetHasBeenModified = false;
         var currentAsset = {};
+        var changedProps = [];
 
         var reset = function() {
             assetHasBeenModified = false;
             currentAsset = {};
+            changedProps = [];
         };
 
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
+
+            // TODO: copy paste
             var transformPropertyData = function(propertyData) {
                 var transformValues = function(publicId, values) {
                     var transformValue = function(value) {
@@ -45,18 +49,13 @@
         eventbus.on('asset:moved', function() {
             assetHasBeenModified = true;
         });
-        eventbus.on('assetPropertyValue:changed', function(changedProperties) {
-            var transformProperties = function(properties) {
-              return _.map(properties, function(property) {
-                  var changedProperty = _.find(changedProperties.propertyData, function(p) { return p.publicId === property.publicId; });
-                  if(changedProperty) {
-                      return _.merge({}, property, _.pick(changedProperty, 'values'));
-                  } else {
-                      return property;
-                  }
-              });
-            };
-            currentAsset.payload.properties = transformProperties(currentAsset.payload.properties);
+
+        eventbus.on('assetPropertyValue:changed', function(changedProperty) {
+            changedProps = _.reject(changedProps, function(x){
+                return x[0].publicId === changedProperty.propertyData[0].publicId;
+            });
+            changedProps.push(changedProperty.propertyData);
+            currentAsset.payload.properties = changedProps;
             assetHasBeenModified = true;
         });
 
@@ -74,10 +73,12 @@
         });
 
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
+            changedProps = [];
             assetHasBeenModified = false;
         });
 
         eventbus.on('asset:fetched', function(asset) {
+            // TODO: copy paste
             var transformPropertyData = function(propertyData) {
                 var transformValues = function(publicId, values) {
                     var transformValue = function(value) {
