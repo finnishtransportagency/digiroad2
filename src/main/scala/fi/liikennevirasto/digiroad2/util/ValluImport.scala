@@ -4,6 +4,7 @@ import java.io._
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 object ValluImport {
 
@@ -34,17 +35,24 @@ object ValluImport {
       val valluImportData = scala.io.Source.fromFile(fileName).getLines
       valluImportData
         .map(_.split(";"))
-        .foldLeft(Map[Long, String]()) {
-        (map, entry) =>
+        .foldLeft(Map[Long, String]()) { (map, entry) =>
           map + (entry(1).toLong -> entry(0))
-      }
+        }
     } else {
       Map()
     }
   }
 
   def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
-    asset
+    val indexOfName = asset.propertyData.zipWithIndex.filter(_._1.publicId == "nimi_suomeksi").map(_._2).head
+    val nameProperty = asset.propertyData.find(_.publicId == "nimi_suomeksi").get
+    val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
+    if (nameProperty.values.isEmpty && complementaryName.isDefined) {
+      val updatedNameProperty = nameProperty.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
+      asset.copy(propertyData = asset.propertyData.updated(indexOfName, updatedNameProperty))
+    } else {
+      asset
+    }
   }
 
   def getCsvRowsForAsset(asset: AssetWithProperties) = {
