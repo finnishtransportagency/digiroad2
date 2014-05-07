@@ -106,7 +106,6 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             if (selectedControl === 'Select') {
-
                 var anotherAssetHasBeenModified = function() {
                     return (selectedAsset && selectedAsset.data.id !== asset.data.id && selectedAssetController.isDirty());
                 };
@@ -286,9 +285,15 @@ window.AssetLayer = function(map, roadLayer) {
                 var imageIds = _.map(values, function(v) {
                     return v + '_' + new Date().getMilliseconds();
                 });
+                var effectDirection = selectedAsset.marker.effectDirection;
                 assetLayer.removeMarker(selectedAsset.marker);
-                selectedAsset.marker.icon = getIcon(imageIds);
+                selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), getIcon(imageIds));
+                selectedAsset.marker.effectDirection = effectDirection;
                 assetLayer.addMarker(selectedAsset.marker);
+                var mouseClickFn = mouseClick(selectedAsset);
+                var mouseUpFn = mouseUp(selectedAsset, mouseClickFn);
+                var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
+                selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
                 assetLayer.redraw();
             }
 
