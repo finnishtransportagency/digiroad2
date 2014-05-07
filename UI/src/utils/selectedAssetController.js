@@ -46,7 +46,11 @@
             backend.getAssetTypeProperties(10);
         }, this);
 
-        eventbus.on('asset:moved', function() {
+        eventbus.on('asset:moved', function(position) {
+            currentAsset.payload.bearing = position.bearing;
+            currentAsset.payload.lon = position.lon;
+            currentAsset.payload.lat = position.lat;
+            currentAsset.payload.roadLinkId = position.roadLinkId;
             assetHasBeenModified = true;
         });
 
