@@ -39,6 +39,7 @@
                 var validityDirection = _.find(currentAsset.propertyData, function(property) {
                     return property.publicId === 'vaikutussuunta';
                 });
+                // must have default value
                 validityDirection.values = [{
                     propertyValue: 2,
                     propertyDisplayValue: 2
