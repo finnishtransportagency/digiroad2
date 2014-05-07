@@ -285,7 +285,11 @@ object OracleSpatialAssetDao {
       case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue).execute()
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
-        val optionalDateTime = propertyValues.headOption.map(_.propertyValue).map(formatter.parseDateTime)
+        val optionalDateTime = propertyValues.headOption match {
+          case None => None
+          case Some(x) if x.propertyValue.trim.isEmpty => None
+          case Some(x) => Some(formatter.parseDateTime(x.propertyValue))
+        }
         updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute()
       }
       case ReadOnlyText => {
