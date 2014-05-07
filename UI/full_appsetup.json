@@ -135,20 +135,5 @@
          },
          "Require-Bundle-Instance": []
       }
-   }, {
-       "instanceProps": {},
-       "bundleinstancename": "assetform",
-       "fi": "assetform",
-       "sv": "?",
-       "en": "?",
-       "bundlename": "assetform",
-       "metadata": {
-           "Import-Bundle": {
-               "assetform": {
-                   "bundlePath": "src/packages/digiroad2/bundle/"
-               }
-           },
-           "Require-Bundle-Instance": []
-       }
    } ]
 }
