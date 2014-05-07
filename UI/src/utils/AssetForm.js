@@ -92,7 +92,9 @@
     };
 
     var textHandler = function(property){
-        var input = $('<input type="text"/>').keyup(_.debounce(function(target){
+        var inputElement = property.propertyType === 'long_text' ?
+                $('<textarea />').addClass('featureAttributeLongText') : $('<input type="text"/>').addClass('featureAttributeText');
+        var input = inputElement.keyup(_.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
                 return;
@@ -103,7 +105,7 @@
         // TODO: use cleaner html
         var outer = $('<div />').addClass('formAttributeContentRow');
         outer.append($('<div />').addClass('formLabels').text(property.localizedName));
-        input.addClass('featureAttributeText');
+
         outer.append($('<div />').addClass('formAttributeContent').append(input));
         if(property.values[0]) {
             input.val(property.values[0].propertyDisplayValue);
@@ -226,7 +228,6 @@
                 feature.localizedName = window.localizedStrings[feature.publicId];
                 var propertyType = feature.propertyType;
                 if (propertyType === "text" || propertyType === "long_text") {
-                    // TODO: check long text
                     html.append(textHandler(feature));
                 } else if (propertyType === "read_only_text") {
                     html.append(readOnlyHandler(feature));
