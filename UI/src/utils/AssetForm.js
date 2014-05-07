@@ -80,24 +80,24 @@
             .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
     };
 
+    var triggerEventBusChange = function(publicId, values) {
+        eventbus.trigger('assetPropertyValue:changed', {
+            propertyData: [
+                {
+                    publicId: publicId,
+                    values: values
+                }
+            ]
+        });
+    };
+
     var textHandler = function(property){
         var input = $('<input type="text"/>').keyup(_.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
                 return;
             }
-
-            // TODO: extract method
-            eventbus.trigger('assetPropertyValue:changed',
-                {
-                    propertyData: [{
-                        publicId: property.publicId,
-                        values:  [{
-                            propertyValue : target.currentTarget.value,
-                            propertyDisplayValue : target.currentTarget.value
-                        }]
-                    }]
-                });
+            triggerEventBusChange(property.publicId, [{ propertyValue: target.currentTarget.value }]);
         }, 500));
 
         // TODO: use cleaner html
@@ -113,28 +113,12 @@
     };
 
     var singleChoiceHandler = function(property, choices){
-        function triggerEventBusChange(publicId, value) {
-            eventbus.trigger('assetPropertyValue:changed', {
-                propertyData: [
-                    {
-                        publicId: publicId,
-                        values: [
-                            {
-                                propertyValue: value,
-                                propertyDisplayValue: value
-                            }
-                        ]
-                    }
-                ]
-            });
-        }
-
         var enumValues = _.find(choices, function(choice){
             return choice.publicId === property.publicId;
         }).values;
 
         var input = $('<select />').addClass('featureattributeChoice').change(function(x){
-            triggerEventBusChange(property.publicId, x.currentTarget.value);
+            triggerEventBusChange(property.publicId, [{ propertyValue: x.currentTarget.value }]);
         });
 
         var readOnlyText = $('<span />');
@@ -158,18 +142,10 @@
         // TODO: ugliness, remove
         var validityDirection = 2;
         var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
-            validityDirection = validityDirection === 2 ? 3 : 2;
+            validityDirection = validityDirection == 2 ? 3 : 2;
             //TODO: update streetview without using globals
             _selectedAsset.validityDirection = validityDirection;
-            eventbus.trigger('assetPropertyValue:changed', {
-                propertyData: [{
-                    publicId: property.publicId,
-                    values:  [{
-                        propertyValue : validityDirection,
-                        propertyDisplayValue : validityDirection
-                    }]
-                }]
-            });
+            triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
             jQuery('.streetView').empty().append($(_getStreetView(_selectedAsset)));
         });
 
@@ -190,18 +166,7 @@
             if(target.keyCode === 9){
                 return;
             }
-
-            // TODO: extract method
-            eventbus.trigger('assetPropertyValue:changed',
-                {
-                    propertyData: [{
-                        publicId: property.publicId,
-                        values:  [{
-                            propertyValue : dateutil.finnishToIso8601(target.currentTarget.value),
-                            propertyDisplayValue : dateutil.finnishToIso8601(target.currentTarget.value)
-                        }]
-                    }]
-                });
+            triggerEventBusChange(property.publicId, [{ propertyValue: dateutil.finnishToIso8601(target.currentTarget.value) }]);
         }, 500));
 
         //TODO: cleaner html
@@ -232,24 +197,15 @@
         _.forEach(enumValues, function (x) {
             var input = $('<input type="checkbox" />').change(function (evt) {
                 x.checked = evt.currentTarget.checked;
-                eventbus.trigger('assetPropertyValue:changed',
-                    {
-                        propertyData: [
-                            {
-                                publicId: property.publicId,
-                                values: _.chain(enumValues)
-                                    .filter(function (value) {
-                                        return value.checked;
-                                    })
-                                    .map(function (value) {
-                                        return {
-                                            propertyValue: parseInt(value.propertyValue, 10),
-                                            propertyDisplayValue: value.propertyDisplayValue };
-                                    })
-                                    .value()
-                            }
-                        ]
-                    });
+                var values = _.chain(enumValues)
+                    .filter(function (value) {
+                        return value.checked;
+                    })
+                    .map(function (value) {
+                        return { propertyValue: parseInt(value.propertyValue, 10) };
+                    })
+                    .value();
+                triggerEventBusChange(property.publicId, values);
             });
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
