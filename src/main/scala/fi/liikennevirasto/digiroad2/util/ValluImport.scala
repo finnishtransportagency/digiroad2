@@ -44,15 +44,18 @@ object ValluImport {
   }
 
   def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
-    val indexOfName = asset.propertyData.zipWithIndex.filter(_._1.publicId == "nimi_suomeksi").map(_._2).head
-    val nameProperty = asset.propertyData.find(_.publicId == "nimi_suomeksi").get
-    val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
-    if (nameProperty.values.isEmpty && complementaryName.isDefined) {
-      val updatedNameProperty = nameProperty.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
-      asset.copy(propertyData = asset.propertyData.updated(indexOfName, updatedNameProperty))
-    } else {
-      asset
-    }
+    asset.copy(propertyData = asset.propertyData.map { property =>
+      if (property.publicId != "nimi_suomeksi") {
+        property
+      } else {
+        val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
+        if (property.values.isEmpty && complementaryName.isDefined) {
+          property.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
+        } else {
+          property
+        }
+      }
+    })
   }
 
   def getCsvRowsForAsset(asset: AssetWithProperties) = {
