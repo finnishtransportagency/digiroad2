@@ -1,6 +1,6 @@
 (function() {
     var _enumeratedPropertyValues = null;
-    var _readOnly = true;
+    var readonly = true;
     var _selectedAsset = {};
     _.templateSettings = {
         interpolate: /\{\{(.+?)\}\}/g
@@ -33,11 +33,7 @@
         // TODO: cleaner html
         featureAttributesElement.append($('<div />').addClass('formControls').append(cancelBtn).append(saveBtn));
 
-        if (_readOnly) {
-            $('#featureAttributes button').prop('disabled', true);
-            $('#featureAttributes input').prop('disabled', true);
-            $('#featureAttributes select').prop('disabled', true);
-            $('#featureAttributes textarea').prop('disabled', true);
+        if (readonly) {
             $('#featureAttributes .formControls').hide();
         }
 
@@ -110,7 +106,7 @@
         if(property.values[0]) {
             input.val(property.values[0].propertyDisplayValue);
         }
-        // TODO: readonly handling
+        input.attr('disabled', readonly);
         return outer;
     };
 
@@ -136,7 +132,7 @@
             readOnlyText.text(property.values[0].propertyDisplayValue);
         }
         var wrapper = $('<div />').addClass('formAttributeContent');
-        // TODO: readonly
+        input.attr('disabled', readonly);
         return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
@@ -158,7 +154,7 @@
             validityDirection = property.values[0].propertyValue;
         }
         var wrapper = $('<div />').addClass('formAttributeContent');
-        // TODO: readonly
+        input.attr('disabled', readonly);
         return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
@@ -179,7 +175,7 @@
             input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
         }
         input.addClass('featureAttributeDate');
-        // TODO: readonly
+        input.attr('disabled', readonly);
         return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
     };
 
@@ -214,6 +210,7 @@
             });
 
             input.prop('checked', x.checked);
+            input.attr('disabled', readonly);
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
         });
@@ -276,8 +273,8 @@
     }, this);
 
     eventbus.on('application:readOnly', function(readOnly) {
-        _readOnly = readOnly;
-    }, this);
+        readonly = readOnly;
+    });
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
         if (_selectedAsset && !_.contains(validityPeriods, _selectedAsset.validityPeriod)) {
