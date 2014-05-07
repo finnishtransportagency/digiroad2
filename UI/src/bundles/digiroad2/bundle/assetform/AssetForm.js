@@ -130,57 +130,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             this._selectedAsset.validityDirection = newValidityDirection;
             jQuery('.streetView').html(this._getStreetView(this._selectedAsset));
         },
-        
-        _initializeCreateNew: function(properties) {
-            var me = this;
-            // var featureAttributesElement = jQuery('#featureAttributes');
 
-            // TODO: refactor this (duplication with _initializeEditExisting)
-            var featureData = me._makeContent(properties);
-            var streetView = $(me._getStreetView(this._selectedAsset));
-
-            var element = $('<div />').addClass('featureAttributesHeader').text('Uusi pysäkki');
-            var wrapper = $('<div />').addClass('featureAttributesWrapper');
-            wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
-            // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
-            var featureAttributesElement = jQuery("#featureAttributes").append(element).append(wrapper);
-
-            me._addDatePickers();
-
-            featureAttributesElement.find('button.cancel').on('click', function() {
-                eventbus.trigger('asset:cancelled');
-                eventbus.trigger('asset:unselected');
-                me._closeAsset();
-            });
-
-            featureAttributesElement.find('button.save').on('click', function() {
-                me._activateSaveModal(featureAttributesElement);
-                me._saveNewAsset(featureAttributesElement);
-            });
-        },
-        _saveNewAsset: function(featureAttributesElement) {
-            var me = this;
-            var properties = me._collectAssetProperties(featureAttributesElement);
-            me._backend.createAsset(
-                {assetTypeId: 10,
-                    lon: me._selectedAsset.lon,
-                    lat: me._selectedAsset.lat,
-                    roadLinkId:  me._selectedAsset.roadLinkId,
-                    bearing:  me._selectedAsset.bearing,
-                    properties: properties});
-        },
-        _updateAsset: function(assetId, featureAttributesElement) {
-            var me = this;
-            // TODO: only save changed properties and position
-            var properties = this._collectAssetProperties(featureAttributesElement);
-            me._backend.updateAsset(assetId, {
-                assetTypeId: me._selectedAsset.assetTypeId,
-                lon: me._selectedAsset.lon,
-                lat: me._selectedAsset.lat,
-                roadLinkId: me._selectedAsset.roadLinkId,
-                bearing: me._selectedAsset.bearing,
-                properties: properties});
-        },
         _getStreetView: function(asset) {
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
@@ -197,16 +147,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         _getPropertyValues: function() {
             var me = this;
             me._backend.getEnumeratedPropertyValues(10);
-        },
-        _savePropertyData: function(propertyValues, publicId) {
-            var propertyValue;
-            if (publicId == 'pysakin_tyyppi' && _.isEmpty(propertyValues)) {
-                propertyValue = [{ propertyValue: 99 }];
-            } else {
-                propertyValue = propertyValues;
-            }
-            var me = this;
-            me._backend.putAssetPropertyValue(this._featureDataAssetId, publicId, propertyValue);
         },
 
         readOnlyHandler : function(property){
@@ -444,9 +384,7 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
             );
             return html;
         },
-        _activateSaveModal: function(featureAttributesElement) {
-            featureAttributesElement.append('<div class="featureAttributesDisabled">&nbsp;</div>');
-        },
+
         onEvent : function(event) {
             var me = this;
             var handler = me.eventHandlers[event.getName()];
