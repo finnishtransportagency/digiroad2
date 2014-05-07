@@ -36,14 +36,6 @@
             };
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
-                var validityDirection = _.find(currentAsset.propertyData, function(property) {
-                    return property.publicId === 'vaikutussuunta';
-                });
-                // must have default value
-                validityDirection.values = [{
-                    propertyValue: 2,
-                    propertyDisplayValue: 2
-                }];
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
                 eventbus.trigger('asset:initialized', currentAsset);
             });
