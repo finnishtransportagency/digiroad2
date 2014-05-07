@@ -202,16 +202,28 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
         },
 
         singleChoiceHandler : function(property, choices){
+            function triggerEventBusChange(publicId, value) {
+                eventbus.trigger('assetPropertyValue:changed', {
+                    propertyData: [
+                        {
+                            publicId: publicId,
+                            values: [
+                                {
+                                    propertyValue: value,
+                                    propertyDisplayValue: value
+                                }
+                            ]
+                        }
+                    ]
+                });
+            }
+
             var enumValues = _.find(choices, function(choice){
                 return choice.publicId === property.publicId;
             }).values;
 
             var input = $('<select />').addClass('featureattributeChoice').change(function(x){
-                var prop = _.find(enumValues, function(enumVal){
-                    return enumVal.propertyValue === x.currentTarget.value;
-                });
-                //TODO: trigger eventbus change
-                console.log({ publicId: property.publicId, val: x.currentTarget.value, prop: prop });
+                triggerEventBusChange(property.publicId, x.currentTarget.value);
             });
 
             var readOnlyText = $('<span />');
@@ -221,13 +233,11 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 label.text(property.localizedName);
                 _.forEach(enumValues, function(x) {
                     var attr = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
-                    attr.propertyVal = x;
                     input.append(attr);
                 });
                 if(property.values && property.values[0]) {
                     input.val(property.values[0].propertyValue);
                     readOnlyText.text(property.values[0].propertyDisplayValue);
-                    // currentValue = property.values[0].propertyValue;
                 }
                 var wrapper = $('<div />').addClass('formAttributeContent');
                 // TODO: readonly
@@ -247,7 +257,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 validityDirection = validityDirection === 2 ? 3 : 2;
                 //TODO: update streetview without using globals
                 me._selectedAsset.validityDirection = validityDirection;
-                // property.values[0].propertyValue = validityDirection;
                 eventbus.trigger('assetPropertyValue:changed', {
                     propertyData: [{
                         publicId: property.publicId,
