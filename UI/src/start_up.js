@@ -75,7 +75,19 @@ jQuery(document).ready(function() {
       }
   });
 
-    window.selectedAssetController = SelectedAssetController.initialize(Backend);
+  window.selectedAssetController = SelectedAssetController.initialize(Backend);
+
+  var indicatorOverlay = function() {
+    jQuery('.container').append('<div class="spinner"></div>');
+  };
+
+  eventbus.on('asset:save', function() {
+    indicatorOverlay();
+  });
+
+  eventbus.on('asset:fetched asset:created', function() {
+    jQuery('.spinner').remove();
+  });
 
   var startApplication = function() {
     // check that both setup and config are loaded 
