@@ -310,8 +310,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.assetform.AssetForm",
                 property.values[0].propertyValue = validityDirection;
                 eventbus.trigger('assetPropertyValue:changed', me._selectedAsset);
                 jQuery('.streetView').empty().append($(me._getStreetView(me._selectedAsset)));
-                //TODO: trigger eventbus change
-                console.log({ publicId: property.publicId, val: validityDirection });
             });
 
             var render = function(){
