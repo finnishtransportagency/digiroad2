@@ -72,20 +72,12 @@
         }
     };
 
-    window.Backend.getEnumeratedPropertyValues(10);
-
     var readOnlyHandler = function(property){
-        var render = function(){
-            var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
-            // TODO: hack, because form is rendered using html as string
-            // TODO: use cleaner html
-            return jQuery('<div />').addClass('formAttributeContentRow')
-                .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
-        };
-
-        return {
-            render: render
-        };
+        var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
+        // TODO: hack, because form is rendered using html as string
+        // TODO: use cleaner html
+        return jQuery('<div />').addClass('formAttributeContentRow')
+            .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
     };
 
     var textHandler = function(property){
@@ -108,22 +100,16 @@
                 });
         }, 500));
 
-        var render = function(){
-            // TODO: use cleaner html
-            var outer = $('<div />').addClass('formAttributeContentRow');
-            outer.append($('<div />').addClass('formLabels').text(property.localizedName));
-            input.addClass('featureAttributeText');
-            outer.append($('<div />').addClass('formAttributeContent').append(input));
-            if(property.values[0]) {
-                input.val(property.values[0].propertyDisplayValue);
-            }
-            // TODO: readonly handling
-            return outer;
-        };
-
-        return {
-            render: render
-        };
+        // TODO: use cleaner html
+        var outer = $('<div />').addClass('formAttributeContentRow');
+        outer.append($('<div />').addClass('formLabels').text(property.localizedName));
+        input.addClass('featureAttributeText');
+        outer.append($('<div />').addClass('formAttributeContent').append(input));
+        if(property.values[0]) {
+            input.val(property.values[0].propertyDisplayValue);
+        }
+        // TODO: readonly handling
+        return outer;
     };
 
     var singleChoiceHandler = function(property, choices){
@@ -152,26 +138,20 @@
         });
 
         var readOnlyText = $('<span />');
-        var render = function(){
-            //TODO: cleaner html
-            var label = $('<div />').addClass('formLabels');
-            label.text(property.localizedName);
-            _.forEach(enumValues, function(x) {
-                var attr = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
-                input.append(attr);
-            });
-            if(property.values && property.values[0]) {
-                input.val(property.values[0].propertyValue);
-                readOnlyText.text(property.values[0].propertyDisplayValue);
-            }
-            var wrapper = $('<div />').addClass('formAttributeContent');
-            // TODO: readonly
-            return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
-        };
-
-        return {
-            render: render
-        };
+        //TODO: cleaner html
+        var label = $('<div />').addClass('formLabels');
+        label.text(property.localizedName);
+        _.forEach(enumValues, function(x) {
+            var attr = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
+            input.append(attr);
+        });
+        if(property.values && property.values[0]) {
+            input.val(property.values[0].propertyValue);
+            readOnlyText.text(property.values[0].propertyDisplayValue);
+        }
+        var wrapper = $('<div />').addClass('formAttributeContent');
+        // TODO: readonly
+        return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
     var directionChoiceHandler = function(property){
@@ -193,21 +173,15 @@
             jQuery('.streetView').empty().append($(_getStreetView(_selectedAsset)));
         });
 
-        var render = function(){
-            //TODO: cleaner html
-            var label = $('<div />').addClass('formLabels');
-            label.text(property.localizedName);
-            if(property.values && property.values[0]) {
-                validityDirection = property.values[0].propertyValue;
-            }
-            var wrapper = $('<div />').addClass('formAttributeContent');
-            // TODO: readonly
-            return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
-        };
-
-        return {
-            render: render
-        };
+        //TODO: cleaner html
+        var label = $('<div />').addClass('formLabels');
+        label.text(property.localizedName);
+        if(property.values && property.values[0]) {
+            validityDirection = property.values[0].propertyValue;
+        }
+        var wrapper = $('<div />').addClass('formAttributeContent');
+        // TODO: readonly
+        return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
     var dateHandler = function(property){
@@ -230,22 +204,16 @@
                 });
         }, 500));
 
-        var render = function(){
-            //TODO: cleaner html
-            var outer = $('<div />').addClass('formAttributeContentRow');
+        //TODO: cleaner html
+        var outer = $('<div />').addClass('formAttributeContentRow');
 
-            var label = $('<div />').addClass('formLabels').text(property.localizedName);
-            if(property.values[0]) {
-                input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
-            }
-            input.addClass('featureAttributeDate');
-            // TODO: readonly
-            return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
-        };
-
-        return {
-            render: render
-        };
+        var label = $('<div />').addClass('formLabels').text(property.localizedName);
+        if(property.values[0]) {
+            input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
+        }
+        input.addClass('featureAttributeDate');
+        // TODO: readonly
+        return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
     };
 
     var multiChoiceHandler = function(property, choices){
@@ -258,43 +226,41 @@
             .filter(function(x){
                 return x.propertyValue !== '99';
             }).value();
-        var render = function(){
-            var container = $('<div />').addClass('formAttributeContentRow');
-            container.append($('<div />').addClass('formLabels').text(property.localizedName));
-            var inputContainer = $('<div />').addClass('featureattributeChoice');
-            _.forEach(enumValues, function(x) {
-                var input = $('<input type="checkbox" />').change(function(evt){
-                    x.checked = evt.currentTarget.checked;
-                    eventbus.trigger('assetPropertyValue:changed',
-                        {
-                            propertyData: [{
+        var container = $('<div />').addClass('formAttributeContentRow');
+        container.append($('<div />').addClass('formLabels').text(property.localizedName));
+        var inputContainer = $('<div />').addClass('featureattributeChoice');
+        _.forEach(enumValues, function (x) {
+            var input = $('<input type="checkbox" />').change(function (evt) {
+                x.checked = evt.currentTarget.checked;
+                eventbus.trigger('assetPropertyValue:changed',
+                    {
+                        propertyData: [
+                            {
                                 publicId: property.publicId,
                                 values: _.chain(enumValues)
-                                    .filter(function(value) { return value.checked; })
-                                    .map(function(value) {
+                                    .filter(function (value) {
+                                        return value.checked;
+                                    })
+                                    .map(function (value) {
                                         return {
                                             propertyValue: parseInt(value.propertyValue, 10),
                                             propertyDisplayValue: value.propertyDisplayValue };
                                     })
                                     .value()
-                            }]
-                        });
-                });
-                x.checked = _.any(currentValue.values, function(prop){
-                    return prop.propertyValue === x.propertyValue;
-                });
-
-                input.prop('checked', x.checked);
-                var label = $('<label />').text(x.propertyDisplayValue);
-                inputContainer.append(input).append(label).append($('<br>'));
+                            }
+                        ]
+                    });
+            });
+            x.checked = _.any(currentValue.values, function (prop) {
+                return prop.propertyValue === x.propertyValue;
             });
 
-            return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
-        };
+            input.prop('checked', x.checked);
+            var label = $('<label />').text(x.propertyDisplayValue);
+            inputContainer.append(input).append(label).append($('<br>'));
+        });
 
-        return {
-            render: render
-        };
+        return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
     };
 
     var _makeContent = function(contents) {
@@ -305,17 +271,17 @@
                 var propertyType = feature.propertyType;
                 if (propertyType === "text" || propertyType === "long_text") {
                     // TODO: check long text
-                    html.append(textHandler(feature).render());
+                    html.append(textHandler(feature));
                 } else if (propertyType === "read_only_text") {
-                    html.append(readOnlyHandler(feature).render());
+                    html.append(readOnlyHandler(feature));
                 } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
-                    html.append(singleChoiceHandler(feature, _enumeratedPropertyValues).render());
+                    html.append(singleChoiceHandler(feature, _enumeratedPropertyValues));
                 } else if (feature.publicId === 'vaikutussuunta') {
-                    html.append(directionChoiceHandler(feature).render());
+                    html.append(directionChoiceHandler(feature));
                 } else if (feature.propertyType === "multiple_choice") {
-                    html.append(multiChoiceHandler(feature, _enumeratedPropertyValues).render());
+                    html.append(multiChoiceHandler(feature, _enumeratedPropertyValues));
                 } else if (propertyType === "date") {
-                    html.append(dateHandler(feature).render());
+                    html.append(dateHandler(feature));
                 }  else {
                     feature.propertyValue ='Ei toteutettu';
                     html.append($(featureDataTemplateNA(feature)));
@@ -373,5 +339,7 @@
         _selectedAsset.roadLinkId = position.roadLinkId;
         jQuery('.streetView').html(_getStreetView(_selectedAsset));
     }, this);
+
+    window.Backend.getEnumeratedPropertyValues(10);
 })();
 
