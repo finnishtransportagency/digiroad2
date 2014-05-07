@@ -350,7 +350,6 @@ window.AssetLayer = function(map, roadLayer) {
 
     var addNewAsset = function(asset) {
         var lonLat = { lon : asset.lon, lat : asset.lat};
-        var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
         asset.position = {
