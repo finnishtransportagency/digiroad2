@@ -81,7 +81,7 @@ jQuery(document).ready(function() {
     jQuery('.container').append('<div class="spinner"></div>');
   };
 
-  eventbus.on('asset:save', function() {
+  eventbus.on('asset:saving asset:creating', function() {
     indicatorOverlay();
   });
 
