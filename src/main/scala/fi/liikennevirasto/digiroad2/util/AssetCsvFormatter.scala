@@ -221,7 +221,7 @@ object AssetCsvFormatter {
 
   def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
     propertyType match {
-      case PropertyTypes.Text => values.map { value =>
+      case PropertyTypes.Text | PropertyTypes.LongText => values.map { value =>
         value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))
       }
       case _ => values
