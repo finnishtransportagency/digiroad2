@@ -131,7 +131,7 @@ object AssetCsvFormatter {
       result)
   }
 
-  def formatOutputDateTime(dateTime: String): String = {
+  private def formatOutputDateTime(dateTime: String): String = {
     OutputDateTimeFormat.print(AssetPropertyConfiguration.Format.parseDateTime(dateTime))
   }
 
@@ -229,11 +229,11 @@ object AssetCsvFormatter {
     }
   }
 
-  def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
+  private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
     displayValue.map { value => value.replace("\n", " ") }
   }
 
-  def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
+  private def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
     propertyType match {
       case PropertyTypes.Text | PropertyTypes.LongText => values.map { value =>
         value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))

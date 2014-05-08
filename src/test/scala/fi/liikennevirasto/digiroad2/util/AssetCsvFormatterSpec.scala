@@ -76,12 +76,12 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }
 
-  def parseDate(date: String): DateTime = {
+  private def parseDate(date: String): DateTime = {
     val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
     dateFormat.parseDateTime(date)
   }
 
-  def textPropertyValue(value: String): PropertyValue = {
+  private def textPropertyValue(value: String): PropertyValue = {
     PropertyValue(propertyValue = value, propertyDisplayValue = Some(value))
   }
 
