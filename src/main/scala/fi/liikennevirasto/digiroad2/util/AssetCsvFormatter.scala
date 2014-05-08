@@ -117,11 +117,18 @@ object AssetCsvFormatter {
     (asset, maintainer.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
+  private def formatOutputDate(date: String): String = {
+    val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    OutputDateTimeFormat.print(dateFormat.parseDateTime(date))
+  }
+
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validFrom = getItemsFromPropertyByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
     val validTo = getItemsFromPropertyByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
-    (asset, validTo.head.propertyDisplayValue.getOrElse("") :: validFrom.head.propertyDisplayValue.getOrElse("") :: result)
+    (asset, validTo.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
+      validFrom.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
+      result)
   }
 
   def formatOutputDateTime(dateTime: String): String = {
