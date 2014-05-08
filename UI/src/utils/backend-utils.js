@@ -49,6 +49,7 @@
     };
 
     backend.createAsset = function(data) {
+        eventbus.trigger('asset:creating');
         jQuery.ajax({
             contentType: "application/json",
             type: "POST",
@@ -65,6 +66,7 @@
     };
 
     backend.updateAsset = function(id, data) {
+        eventbus.trigger('asset:saving');
         jQuery.ajax({
             contentType: "application/json",
             type: "PUT",

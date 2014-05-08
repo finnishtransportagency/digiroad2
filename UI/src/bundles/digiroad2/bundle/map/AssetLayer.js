@@ -271,7 +271,7 @@ window.AssetLayer = function(map, roadLayer) {
             if(_.isObject(validityDirectionProperty) &&
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
-                var validityDirection = (validityDirectionProperty.values[0].propertyValue === 3) ? 1 : -1;
+                var validityDirection = (validityDirectionProperty.values[0].propertyValue == 3) ? 1 : -1;
                 turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * (validityDirection)));
             }
             var assetType = _.find(asset.propertyData, function(property) {
@@ -350,7 +350,6 @@ window.AssetLayer = function(map, roadLayer) {
 
     var addNewAsset = function(asset) {
         var lonLat = { lon : asset.lon, lat : asset.lat};
-        var validityDirection = (asset.validityDirection === 3) ? 1 : -1;
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
         asset.position = {

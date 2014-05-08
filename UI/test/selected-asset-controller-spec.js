@@ -41,7 +41,12 @@ describe('SelectedAssetController', function() {
     describe('when asset is moved', function() {
         before(function() {
             resetTest();
-            eventbus.trigger('asset:moved');
+            eventbus.trigger('asset:moved',{
+                lon: 1,
+                lat: 1,
+                bearing: 180,
+                roadLinkId: 3
+            });
         });
 
         describe('and another asset is selected', assetStateIsDirty());
@@ -59,7 +64,12 @@ describe('SelectedAssetController', function() {
     describe('when asset is moved', function() {
         before(function() {
             resetTest();
-            eventbus.trigger('asset:moved');
+            eventbus.trigger('asset:moved',{
+                lon: 1,
+                lat: 2,
+                bearing: 90,
+                roadLinkId: 4
+            });
         });
 
         describe('and changes are saved', function() {

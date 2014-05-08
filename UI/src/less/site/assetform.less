@@ -1,0 +1,414 @@
+.featureAttributesHeader {
+  font-size: 14px;
+  font-family: "Arial";
+  color: rgb( 255, 255, 255 );
+  line-height: 1.286;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  height: 18px;
+  border: 0 solid #000000;
+  border-bottom-width: 1px;
+  padding-left: 10px;
+  background-image: -moz-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+  background-image: -webkit-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+  background-image: -ms-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.featureAttributesDisabled {
+  position: relative;
+  opacity: 0.7;
+  width: 100%;
+  height: 100%;
+  background: white url('../../../../../../images/loading.gif') no-repeat center;
+}
+
+.formControls {
+  clear:both;
+  width: 100%;
+  position: absolute;
+  bottom: 50px;
+  padding-top: 10px;
+  border-top: 1px solid #646461;
+}
+
+.featureAttributesWrapper {
+  position: absolute;
+  padding: 10px;
+  top: 49px;
+  bottom: 93px;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.streetView {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.streetView img {
+  width: 360px;
+  height: 180px;
+  color: #ffffff;
+  font-family: arial, sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.featureAttributeText {
+  border: 1px solid #646461;
+  border-radius: 2px;
+  background-color: rgb( 51, 51, 51 );
+  color: rgb( 230, 230, 230 );
+  width: 210px;
+  height: 21px;
+  font-size: 12px;
+  padding-left: 4px;
+}
+/* TODO copy paste from above!!! */
+.featureAttributeLongText {
+  border: 1px solid #646461;
+  border-radius: 2px;
+  background-color: rgb( 51, 51, 51 );
+  color: rgb( 230, 230, 230 );
+  font-size: 12px;
+  font-family: "Arial";
+  width: 210px;
+  height: 66px;
+  padding-left: 4px;
+  line-height: 1.2;
+}
+.featureAttributeDate {
+  border: 1px solid #646461;
+  border-radius: 2px;
+  background-color: rgb( 51, 51, 51 );
+  color: rgb( 230, 230, 230 );
+  height: 21px;
+  width: 210px;
+  padding-left: 4px;
+  margin-bottom: 0;
+  font-size: 12px;
+}
+
+.attributeFormat {
+  font-style: italic;
+  color: #8F8F8F;
+  display: inline;
+  height: 21px;
+}
+
+.featureattributeChoice {
+  border: 1px solid #646461;
+  border-radius: 2px;
+  background-color: rgb( 51, 51, 51 );
+  color: rgb( 230, 230, 230 );
+  width: 210px;
+  line-height: 25px;
+  font-size: 12px;
+}
+
+.featureattributeChoice label {
+  vertical-align: middle;
+}
+
+.featureAttributeChoice input[type='checkbox'] {
+  vertical-align: middle;
+  margin: 0px 3px;
+}
+
+.formContent {
+  font-size: 12px;
+  font-family: "Arial";
+  color: rgb( 255, 255, 255 );
+  line-height:2.5;
+  text-align: left;
+  padding-top: 10px;
+}
+
+.formLabels {
+  font-size: 12px;
+  font-family: "Arial";
+  color: rgb( 230, 230, 230 );
+  line-height: 1.5;
+  text-align: right;
+  float: left;
+  width:140px;
+  padding-top: 6px;
+  padding-right: 10px;
+  vertical-align: middle;
+
+}
+
+.formAttributeContentRow[data-required="true"] .formLabels {
+  color: #e6d7b1;
+}
+
+.formAttributeContentRow[data-required="true"] .formLabels:before {
+  content: "*";
+}
+
+.featureAttributeNA {
+  font-size: 12px;
+  font-family: "Arial";
+  color: rgb( 230, 230, 230 );
+  line-height: 2.5;
+  text-align: left;
+  float: left;
+  vertical-align: middle;
+}
+
+.formAttributeContent {
+  float:left;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.formAttributeContentRow:last-child .formAttributeContent{
+  margin-bottom: 24px;
+}
+
+.formAttributeContentRow {
+  clear:both;
+}
+
+.formControls {
+  clear:both;
+  border-top: 1px solid #646461;
+  padding-top: 10px;
+}
+
+.readOnlyRow {
+  color: #8A8A8A;
+  float: left;
+  font-size: 11px;
+}
+
+.formControls button {
+  float: right;
+  border: 0;
+  color: #ffffff;
+  font-family: arial, sans-serif;
+  font-size: 11px;
+  padding: 10px 15px;
+  margin-right: 10px;
+  font-weight: bold;
+  background-image: -webkit-linear-gradient(#7f7f7c,#5a5a57);
+  background-image: -moz-linear-gradient(#7f7f7c,#5a5a57);
+  background-image: -o-linear-gradient(#7f7f7c,#5a5a57);
+  background-image: linear-gradient(#7f7f7c,#5a5a57);
+  background-color: #7f7f7c;
+}
+
+.formControls .save:disabled {
+  background-image: -webkit-linear-gradient(#646461,#5a5a57);
+  background-image: -moz-linear-gradient(#646461,#5a5a57);
+  background-image: -o-linear-gradient(#646461,#5a5a57);
+  background-image: linear-gradient(#646461,#5a5a57);
+  background-color: #646461;
+  color: #a4a4a2;
+}
+
+.formDescriptor {
+  font-size: 10px;
+  font-family: "Arial";
+  color: rgb( 132, 132, 132 );
+}
+
+.sidebarContainer {
+  background-color: rgb( 45, 45, 45 );
+  box-shadow: 0 0 3px 0 rgb( 0, 0, 0 );
+}
+
+select option.selected {
+  margin:40px;
+  background: rgba(0,0,0,0.3);
+  color:#fff;
+  text-shadow:0 1px 0 rgba(0,0,0,0.4);
+}
+
+.formInputStyle {
+  border-color: rgb( 75, 75, 75 ); background-color: rgb( 51, 51, 51 );
+}
+
+.formInputStyle:active {
+  border-color: rgb( 51, 51, 51 ); background-color: rgb( 75, 75, 75 );
+}
+
+.formInputStyleError {
+  border-color: rgb( 115, 52, 52 ); background-color: rgb( 184, 133, 133 );
+}
+
+/* Pikaday styling */
+
+.pika-title {
+  margin: 0 6px;
+  border-bottom: 1px solid #646461;
+}
+
+.pika-prev,
+.is-rtl .pika-next {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADaxo44AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAytpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RjAzMkExN0U4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RjAzMkExN0Q4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChNYWNpbnRvc2gpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5kaWQ6NzYzNTc3MjUtNGQ2Zi00MzlhLWE3NzItMjAyNzRkMmIyYTg2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjc2MzU3NzI1LTRkNmYtNDM5YS1hNzcyLTIwMjc0ZDJiMmE4NiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgeE9ZsAAABISURBVHjaYlyyZBEDGhAD4sksaIKhQDwFJMmCpGoKVAIMmKCcy8iCMAlGKGZAl1gFxDpAvAZdAgReQY0KB+LXyBIwANcNEGAAkqYLqTLaB2sAAAAASUVORK5CYII=);
+  background-size: 6px 8px;
+}
+
+.pika-next,
+.is-rtl .pika-prev {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAICAYAAADaxo44AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyNpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChNYWNpbnRvc2gpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkYwMzJBMTc5ODY4MTExRTM5OUEzQTVDQTY2RkY5RUI4IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkYwMzJBMTdBODY4MTExRTM5OUEzQTVDQTY2RkY5RUI4Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RjAzMkExNzc4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RjAzMkExNzg4NjgxMTFFMzk5QTNBNUNBNjZGRjlFQjgiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz6tS2KJAAAAUElEQVR42mJcsmTRSgYGhlwgfsWABJiAOAyILwNxKLoECIgB8SooFkOWgIFQmG50CRBgBGEWNME1QJwNcghMx2sgDocaBXYdC7IqZK0AAQYATMEO/nKqQ+MAAAAASUVORK5CYII=);
+  background-size: 6px 8px;
+}
+
+div.pika-single {
+  color: #fff;
+  background: #444444;
+  border: 1px solid #555;
+  width: 225px;
+  z-index: 10001; /* default is 9999 and is not visible over oskari.org popups that have z-index of 10000 */
+}
+
+table.pika-table th {
+  padding-top: 5px;
+}
+
+.pika-table th abbr {
+  color: #fff;
+  border-bottom-width: 0;
+}
+
+.pika-label {
+  color: #fff;
+  font-size: 12px;
+  background-color: #444444;
+  font-weight: normal;
+}
+
+.pika-button {
+  color: #fff;
+  font-family: arial, sans-serif;
+  font-size: 11px;
+  line-height: 20px;
+  margin: 3px 0 0;
+  padding: 0 8px 0 0;
+  background: #444444;
+  border: 0 #444444;
+}
+
+.is-today .pika-button {
+  color: #3ab4ff;
+  font-weight: bold;
+}
+
+.is-selected .pika-button {
+  background: #000;
+  box-shadow: inset 0 1px 3px #000;
+}
+
+.pika-button:hover {
+  color: #fff !important;
+  background: #5a5a57 !important;
+}
+
+.pikaday-footer {
+  border-top: 1px solid #646461;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.deselect-button {
+  background: none repeat scroll 0 0 #444444;
+  border: 1px solid #646461;
+  border-radius: 2px;
+  font-family: arial,sans-serif;
+  font-size: 12px;
+  margin: 11px auto 5px;
+  padding: 5px;
+  text-align: center;
+  width: 80px;
+  cursor: default;
+}
+
+/* Pikaday styling end */
+
+/* oskari.org popup styling */
+div.divmanazerpopup h3.popupHeader {
+  color: #fff;
+  background-color: #333333;
+  border-radius: 5px 5px 0 0;
+  font-family: "Arial";
+  font-size: 12px;
+  line-height: 1.286;
+  padding: 5px 10px;
+  font-weight: normal;
+}
+
+div.divmanazerpopup {
+  color: #fff;
+  font-family: "Arial";
+  font-size: 12px;
+  line-height: 1.286;
+  text-align: center;
+  background-clip: content-box;
+  background-color: #333333;
+  border-radius: 3px;
+  min-width: 175px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+div.divmanazerpopup div.content {
+  margin: 10px 4px;
+}
+
+div.divmanazerpopup div.actions {
+  margin: 10px 4px;
+}
+
+div.divmanazerpopup .actions input {
+  background-color: #333333;
+  border: 1px solid #666666;
+  padding: 5px;
+  color: #fff;
+  font-family: "Arial";
+  font-size: 12px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  text-align: center;
+}
+
+div.divmanazerpopup .actions input:hover {
+  background-color: #3F3F3F;
+}
+
+.featureAttributeButton {
+  border: 1px solid #000000;
+  border-radius: 3px;
+  font-family: "Arial";
+  color: rgb( 255, 255, 255 );
+  line-height: 1.286;
+  text-align:center;
+  background-color: #666666;
+  padding: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  width: 210px;
+  padding-top: 2px;
+  padding-bottom: 3px;
+}
+
+.featureAttributeButton:disabled {
+  cursor: default;
+  color: #2D2D2D;
+  background-color: #2D2D2D;
+}
+
+.featureAttributesWrapper .formAttributeContentRow *:disabled {
+  border: 0px;
+}
+
+.featureAttributesWrapper .featureattributeChoice > input:disabled {
+  border: 0px;
+}
