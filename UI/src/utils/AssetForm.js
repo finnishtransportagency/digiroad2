@@ -209,7 +209,7 @@
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
-            input.prop('checked', x.checked);§
+            input.prop('checked', x.checked);
             input.attr('disabled', readonly);
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
