@@ -70,7 +70,9 @@
         });
 
         eventbus.on('asset:cancelled', function(){
-           backend.getAsset(currentAsset.id);
+           if (currentAsset.id) {
+               backend.getAsset(currentAsset.id);
+           }
         });
 
         eventbus.on('asset:saved asset:created asset:cancelled', function() {

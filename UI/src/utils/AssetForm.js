@@ -22,6 +22,7 @@
         _addDatePickers();
 
         var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
+            jQuery("#featureAttributes").empty();
             eventbus.trigger('asset:cancelled');
         });
 
