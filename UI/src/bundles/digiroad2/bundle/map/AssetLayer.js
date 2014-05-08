@@ -453,15 +453,13 @@ window.AssetLayer = function(map, roadLayer) {
         renderAssets(assets);
     }, this);
     eventbus.on('map:moved', function(state) {
-        if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
-            backend.getAssets(10, state.bbox);
-        } else {
-            if (selectedAssetController.isDirty()) {
-                new Confirm();
-            } else {
-                removeAssetsFromLayer();
-            }
-        }
+      if (selectedAssetController.isDirty()) {
+          new Confirm();
+      } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
+          backend.getAssets(10, state.bbox);
+      } else {
+          removeAssetsFromLayer();
+      }
     }, this);
 
     var approximately = function(n, m) {
