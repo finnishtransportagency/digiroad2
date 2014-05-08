@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
 import scala.language.postfixOps
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
+import org.joda.time.format.DateTimeFormat
 
 object AssetCsvFormatter {
 
@@ -13,6 +14,8 @@ object AssetCsvFormatter {
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
   val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+
+  val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
     assets.map(formatFromAssetWithPropertiesValluCsv)
@@ -121,6 +124,10 @@ object AssetCsvFormatter {
     (asset, validTo.head.propertyDisplayValue.getOrElse("") :: validFrom.head.propertyDisplayValue.getOrElse("") :: result)
   }
 
+  def formatOutputDateTime(dateTime: String): String = {
+    OutputDateTimeFormat.print(AssetPropertyConfiguration.Format.parseDateTime(dateTime))
+  }
+
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
 
@@ -141,7 +148,7 @@ object AssetCsvFormatter {
       else
         lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
 
-    (asset, modifiedBy :: modifiedTime :: result)
+    (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
   }
 
   private[util] def addBearing(params: (AssetWithProperties, List[String])) = {

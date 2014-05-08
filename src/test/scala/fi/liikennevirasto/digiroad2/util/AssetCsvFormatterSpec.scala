@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import org.joda.time.format.DateTimeFormat
 
 class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
@@ -84,6 +85,6 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   private def parseCreated(s: String): String = {
-    s.split(" ").drop(1).mkString(" ")
+    AssetCsvFormatter.OutputDateTimeFormat.print(AssetPropertyConfiguration.Format.parseDateTime(s.split(" ").drop(1).mkString(" ")))
   }
 }
