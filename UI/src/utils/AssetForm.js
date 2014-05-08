@@ -42,8 +42,8 @@
         }
     };
 
-    var getStreetView = function(asset) {
-        var asset = _.cloneDeep(asset);
+    var getStreetView = function(assetForInit) {
+        var asset = _.cloneDeep(assetForInit);
         var render = function() {
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
@@ -68,7 +68,7 @@
             render: render,
             changeDirection: changeDirection,
             changePosition: changePosition
-        }
+        };
     };
 
     var addDatePickers = function () {
@@ -217,12 +217,8 @@
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
-<<<<<<< HEAD
-            input.prop('checked', x.checked);
-            input.attr('disabled', readonly);
-=======
+
             input.prop('checked', x.checked).attr('disabled', readonly);
->>>>>>> Asset form make content is more functional, renaming functions
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
         });
