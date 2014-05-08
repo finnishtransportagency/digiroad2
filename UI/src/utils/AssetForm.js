@@ -6,20 +6,20 @@
         interpolate: /\{\{(.+?)\}\}/g
     };
 
-    var _initializeEditExisting = function(asset) {
+    var initializeEditExisting = function(asset) {
         var container = jQuery("#featureAttributes").empty();
 
         _selectedAsset = asset;
 
         // TODO: refactor this (duplication with _initializeCreateNew)
-        var featureData = _makeContent(asset.propertyData);
-        var streetView = $(_getStreetView(asset));
+        var featureData = makeContent(asset.propertyData);
+        var streetView = $(getStreetView(asset));
 
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
         wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
         var featureAttributesElement = container.append(element).append(wrapper);
-        _addDatePickers();
+        addDatePickers();
 
         var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
             jQuery("#featureAttributes").empty();
@@ -45,22 +45,22 @@
         }
     };
 
-    var _changeAssetDirection = function(data) {
+    var changeAssetDirection = function(data) {
         var newValidityDirection = data.propertyData[0].values[0].propertyValue;
         var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
         validityDirection.attr('value', newValidityDirection);
         _selectedAsset.validityDirection = newValidityDirection;
-        jQuery('.streetView').html(_getStreetView(_selectedAsset));
+        jQuery('.streetView').html(getStreetView(_selectedAsset));
     };
 
-    var _getStreetView = function(asset) {
+    var getStreetView = function(asset) {
         var wgs84 = OpenLayers.Projection.transform(
             new OpenLayers.Geometry.Point(asset.lon, asset.lat),
             new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
         return streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
     };
 
-    var _addDatePickers = function () {
+    var addDatePickers = function () {
         var $validFrom = jQuery('#ensimmainen_voimassaolopaiva');
         var $validTo = jQuery('#viimeinen_voimassaolopaiva');
         if ($validFrom.length > 0 && $validTo.length > 0) {
@@ -144,7 +144,7 @@
             //TODO: update streetview without using globals
             _selectedAsset.validityDirection = validityDirection;
             triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
-            jQuery('.streetView').empty().append($(_getStreetView(_selectedAsset)));
+            jQuery('.streetView').empty().append($(getStreetView(_selectedAsset)));
         });
 
         //TODO: cleaner html
@@ -209,8 +209,12 @@
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
+<<<<<<< HEAD
             input.prop('checked', x.checked);
             input.attr('disabled', readonly);
+=======
+            input.prop('checked', x.checked).attr('disabled', readonly);
+>>>>>>> Asset form make content is more functional, renaming functions
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
         });
@@ -218,31 +222,29 @@
         return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
     };
 
-    var _makeContent = function(contents) {
-        var html = $('<div />');
-        _.forEach(contents,
-            function (feature) {
-                feature.localizedName = window.localizedStrings[feature.publicId];
-                var propertyType = feature.propertyType;
-                if (propertyType === "text" || propertyType === "long_text") {
-                    html.append(textHandler(feature));
-                } else if (propertyType === "read_only_text") {
-                    html.append(readOnlyHandler(feature));
-                } else if (propertyType === "single_choice" && feature.publicId !== 'vaikutussuunta') {
-                    html.append(singleChoiceHandler(feature, _enumeratedPropertyValues));
-                } else if (feature.publicId === 'vaikutussuunta') {
-                    html.append(directionChoiceHandler(feature));
-                } else if (feature.propertyType === "multiple_choice") {
-                    html.append(multiChoiceHandler(feature, _enumeratedPropertyValues));
-                } else if (propertyType === "date") {
-                    html.append(dateHandler(feature));
-                }  else {
-                    feature.propertyValue ='Ei toteutettu';
-                    html.append($(featureDataTemplateNA(feature)));
-                }
+    var makeContent = function(contents) {
+        var components =_.map(contents, function(feature){
+            feature.localizedName = window.localizedStrings[feature.publicId];
+            var propertyType = feature.propertyType;
+            if (propertyType === "text" || propertyType === "long_text") {
+                return textHandler(feature);
+            } else if (propertyType === "read_only_text") {
+                return readOnlyHandler(feature);
+            } else if (feature.publicId === 'vaikutussuunta') {
+                return directionChoiceHandler(feature);
+            } else if (propertyType === "single_choice") {
+               return singleChoiceHandler(feature, _enumeratedPropertyValues);
+            } else if (feature.propertyType === "multiple_choice") {
+                return multiChoiceHandler(feature, _enumeratedPropertyValues);
+            } else if (propertyType === "date") {
+                 return dateHandler(feature);
+            }  else {
+                feature.propertyValue = 'Ei toteutettu';
+                return $(featureDataTemplateNA(feature));
             }
-        );
-        return html;
+        });
+
+        return $('<div />').append(components);
     };
 
     var streetViewTemplate  = _.template(
@@ -256,19 +258,19 @@
         '<div class="featureAttributeNA">{{propertyValue}}</div>' +
         '</div>');
 
-    var _closeAsset = function() {
+    var closeAsset = function() {
         jQuery("#featureAttributes").html('');
         dateutil.removeDatePickersFromDom();
         _selectedAsset = null;
     };
 
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', _initializeEditExisting, this);
-    eventbus.on('asset:unselected', _closeAsset, this);
-    eventbus.on('layer:selected', _closeAsset, this);
+    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', initializeEditExisting, this);
+    eventbus.on('asset:unselected', closeAsset, this);
+    eventbus.on('layer:selected', closeAsset, this);
 
     eventbus.on('assetPropertyValue:changed', function(data) {
         if (data.propertyData[0].publicId == 'vaikutussuunta') {
-            _changeAssetDirection(data);
+            changeAssetDirection(data);
         }
     }, this);
 
@@ -278,7 +280,7 @@
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
         if (_selectedAsset && !_.contains(validityPeriods, _selectedAsset.validityPeriod)) {
-            _closeAsset();
+            closeAsset();
         }
     }, this);
 
@@ -291,7 +293,7 @@
         _selectedAsset.lat = position.lat;
         _selectedAsset.bearing = position.bearing;
         _selectedAsset.roadLinkId = position.roadLinkId;
-        jQuery('.streetView').html(_getStreetView(_selectedAsset));
+        jQuery('.streetView').html(getStreetView(_selectedAsset));
     }, this);
 
     window.Backend.getEnumeratedPropertyValues(10);
