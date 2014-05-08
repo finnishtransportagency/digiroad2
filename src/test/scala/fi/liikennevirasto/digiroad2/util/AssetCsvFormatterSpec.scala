@@ -52,12 +52,13 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val testProperties = sourceAsset.propertyData.map { property =>
       property.publicId match {
         case "yllapitajan_tunnus" => property.copy(values = List(PropertyValue(propertyValue = "id\n", propertyDisplayValue = Some("id\n"))))
+        case "matkustajatunnus" => property.copy(values = List(PropertyValue(propertyValue = "matkustaja\ntunnus", propertyDisplayValue = Some("matkustaja\ntunnus"))))
         case _ => property
       }
     }
     val asset = sourceAsset.copy(propertyData = testProperties)
     val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
-    csv must equal("1;id;;;;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;06.05.2014 15:44:35;Hannu;2013-12-15;2045-12-10;Liikennevirasto;235;Kauniainen;;")
+    csv must equal("1;id;matkustajatunnus;;;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;06.05.2014 15:44:35;Hannu;2013-12-15;2045-12-10;Liikennevirasto;235;Kauniainen;;")
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
