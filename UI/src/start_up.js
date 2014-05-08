@@ -86,7 +86,7 @@ jQuery(document).ready(function() {
   });
 
   eventbus.on('asset:fetched asset:created', function() {
-    jQuery('.spinner').remove();
+    jQuery('.spinner-overlay').remove();
   });
 
   var startApplication = function() {

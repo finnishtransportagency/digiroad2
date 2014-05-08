@@ -69,14 +69,10 @@
             assetHasBeenModified = true;
         });
 
-        eventbus.on('asset:cancelled', function(){
+        eventbus.on('asset:cancelled application:readOnly', function(){
            if (currentAsset.id) {
                backend.getAsset(currentAsset.id);
            }
-        });
-
-        eventbus.on("application:readOnly", function(readOnly) {
-            backend.getAsset(currentAsset.id);
         });
 
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
