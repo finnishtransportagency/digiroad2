@@ -11,7 +11,7 @@
 
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
-        wrapper.append($(getStreetView(asset)).addClass('streetView')).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
+        wrapper.append($(getStreetView(asset).render()).addClass('streetView')).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
@@ -40,10 +40,16 @@
     };
 
     var getStreetView = function(asset) {
-        var wgs84 = OpenLayers.Projection.transform(
-            new OpenLayers.Geometry.Point(asset.lon, asset.lat),
-            new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-        return streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
+        var render = function() {
+            var wgs84 = OpenLayers.Projection.transform(
+                new OpenLayers.Geometry.Point(asset.lon, asset.lat),
+                new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
+            return streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
+        };
+
+        return {
+            render: render
+        }
     };
 
     var addDatePickers = function () {
@@ -129,7 +135,7 @@
             //TODO: update streetview without using globals
             selectedAsset.validityDirection = validityDirection;
             triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
-            jQuery('.streetView').empty().append($(getStreetView(selectedAsset)));
+            jQuery('.streetView').empty().append($(getStreetView(selectedAsset).render()));
         });
 
         //TODO: cleaner html
@@ -276,7 +282,7 @@
         selectedAsset.lat = position.lat;
         selectedAsset.bearing = position.bearing;
         selectedAsset.roadLinkId = position.roadLinkId;
-        jQuery('.streetView').html(getStreetView(selectedAsset));
+        jQuery('.streetView').html(getStreetView(selectedAsset).render());
     });
 
     window.Backend.getEnumeratedPropertyValues(10);
