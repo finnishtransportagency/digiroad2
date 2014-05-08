@@ -60,12 +60,13 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
         case "matkustajatunnus" => property.copy(values = List(PropertyValue(propertyValue = "matkustaja\ntunnus", propertyDisplayValue = Some("matkustaja\ntunnus"))))
         case "nimi_suomeksi" => property.copy(values = List(PropertyValue(propertyValue = "n\nimi\n suomeksi", propertyDisplayValue = Some("n\nimi\n suomeksi"))))
         case "nimi_ruotsiksi" => property.copy(values = List(PropertyValue(propertyValue = "\nnimi ruotsiksi\n", propertyDisplayValue = Some("\nnimi ruotsiksi\n"))))
+        case "liikennointisuunta" => property.copy(values = List(PropertyValue(propertyValue = "\nliikennointisuunta\n", propertyDisplayValue = Some("\nliikennointisuunta\n"))))
         case _ => property
       }
     }
     val asset = sourceAsset.copy(propertyData = testProperties)
     val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
-    csv must equal("1;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;"
+    csv must equal("1;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374635.608258218;6677267.45072414;;;80;Itään;liikennointisuunta;1;0;0;0;katos;;;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
