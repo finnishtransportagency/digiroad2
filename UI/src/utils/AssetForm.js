@@ -202,12 +202,12 @@
                         return { propertyValue: parseInt(value.propertyValue, 10) };
                     })
                     .value();
-                triggerEventBusChange(property.publicId, values);
+                var propertyValues = values.size < 1 ? [ { propertyValue: 99 } ] : values;
+                triggerEventBusChange(property.publicId, propertyValues);
             });
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
-
             input.prop('checked', x.checked);
             input.attr('disabled', readonly);
             var label = $('<label />').text(x.propertyDisplayValue);
