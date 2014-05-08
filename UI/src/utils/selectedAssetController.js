@@ -75,6 +75,10 @@
            }
         });
 
+        eventbus.on("application:readOnly", function(readOnly) {
+            backend.getAsset(currentAsset.id);
+        });
+
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             changedProps = [];
             assetHasBeenModified = false;
