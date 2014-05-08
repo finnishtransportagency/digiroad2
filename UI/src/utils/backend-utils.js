@@ -24,9 +24,9 @@
         });
     }, 1000);
 
-    backend.getAsset = function (assetId) {
+    backend.getAsset = function(assetId, keepPosition) {
         $.get('api/assets/' + assetId, function(asset) {
-            eventbus.trigger('asset:fetched', asset);
+            eventbus.trigger('asset:fetched', asset, keepPosition);
         });
     };
     

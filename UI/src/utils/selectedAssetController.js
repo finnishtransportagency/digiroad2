@@ -71,7 +71,7 @@
 
         eventbus.on('asset:cancelled application:readOnly', function(){
            if (currentAsset.id) {
-               backend.getAsset(currentAsset.id);
+               backend.getAsset(currentAsset.id, true);
            }
         });
 

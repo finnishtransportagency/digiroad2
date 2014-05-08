@@ -242,12 +242,12 @@ window.AssetLayer = function(map, roadLayer) {
 
     var handleAssetFetched = function(assetData, keepPosition) {
         if (assets[assetData.id]) {
+            removeAssetFromMap(assets[assetData.id]);
             assets[assetData.id].data = assetData;
             selectedAsset = assets[assetData.id];
             highlightAsset(selectedAsset);
-        } else {
-            addNewAsset(assetData);
         }
+        addNewAsset(assetData);
         if (!keepPosition) {
             Oskari.getSandbox().postRequestByName('MapMoveRequest', [selectedAsset.data.lon, selectedAsset.data.lat, 12]);
         }
