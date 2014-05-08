@@ -2,6 +2,8 @@
     var enumeratedPropertyValues = null;
     var readonly = true;
     var selectedAsset = {};
+    var streetViewHandler;
+
     _.templateSettings = {
         interpolate: /\{\{(.+?)\}\}/g
     };
@@ -11,7 +13,8 @@
 
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
-        wrapper.append($(getStreetView(asset).render()).addClass('streetView')).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
+        streetViewHandler = getStreetView(asset);
+        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
@@ -40,15 +43,31 @@
     };
 
     var getStreetView = function(asset) {
+        var asset = _.cloneDeep(asset);
         var render = function() {
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            return streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) });
+            return $(streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) }))
+                    .addClass('streetView');
+        };
+
+        var changeDirection = function(newDirection){
+            asset.validityDirection = newDirection;
+            $('.streetView').empty().append(render());
+        };
+
+        var changePosition = function(position){
+            asset.lon = position.lon;
+            asset.lat = position.lat;
+            asset.bearing = position.bearing;
+            $('.streetView').empty().append(render());
         };
 
         return {
-            render: render
+            render: render,
+            changeDirection: changeDirection,
+            changePosition: changePosition
         }
     };
 
@@ -132,10 +151,8 @@
         var validityDirection = 2;
         var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
             validityDirection = validityDirection == 2 ? 3 : 2;
-            //TODO: update streetview without using globals
-            selectedAsset.validityDirection = validityDirection;
             triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
-            $('.streetView').empty().append($(getStreetView(selectedAsset).render()));
+            streetViewHandler.changeDirection(validityDirection);
         });
 
         //TODO: cleaner html
@@ -278,11 +295,7 @@
     });
 
     eventbus.on('asset:moved', function(position) {
-        selectedAsset.lon = position.lon;
-        selectedAsset.lat = position.lat;
-        selectedAsset.bearing = position.bearing;
-        selectedAsset.roadLinkId = position.roadLinkId;
-        $('.streetView').html(getStreetView(selectedAsset).render());
+        streetViewHandler.changePosition(position);
     });
 
     window.Backend.getEnumeratedPropertyValues(10);
