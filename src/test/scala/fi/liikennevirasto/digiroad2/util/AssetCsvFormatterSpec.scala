@@ -56,14 +56,14 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
 
     val testProperties = sourceAsset.propertyData.map { property =>
       property.publicId match {
-        case "yllapitajan_tunnus" => property.copy(values = List(PropertyValue(propertyValue = "id\n", propertyDisplayValue = Some("id\n"))))
-        case "matkustajatunnus" => property.copy(values = List(PropertyValue(propertyValue = "matkustaja\ntunnus", propertyDisplayValue = Some("matkustaja\ntunnus"))))
-        case "nimi_suomeksi" => property.copy(values = List(PropertyValue(propertyValue = "n\nimi\n suomeksi", propertyDisplayValue = Some("n\nimi\n suomeksi"))))
-        case "nimi_ruotsiksi" => property.copy(values = List(PropertyValue(propertyValue = "\nnimi ruotsiksi\n", propertyDisplayValue = Some("\nnimi ruotsiksi\n"))))
-        case "liikennointisuunta" => property.copy(values = List(PropertyValue(propertyValue = "\nliikennointisuunta\n", propertyDisplayValue = Some("\nliikennointisuunta\n"))))
-        case "esteettomyys_liikuntarajoitteiselle" => property.copy(values = List(PropertyValue(propertyValue = "\nesteettomyys\n liikuntarajoitteiselle\n", propertyDisplayValue = Some("\nesteettomyys\n liikuntarajoitteiselle\n"))))
-        case "lisatiedot" => property.copy(values = List(PropertyValue(propertyValue = "\nlisatiedot", propertyDisplayValue = Some("\nlisatiedot"))))
-        case "palauteosoite" => property.copy(values = List(PropertyValue(propertyValue = "palauteosoite\n", propertyDisplayValue = Some("palauteosoite\n"))))
+        case "yllapitajan_tunnus" => property.copy(values = List(textPropertyValue("id\n")))
+        case "matkustajatunnus" => property.copy(values = List(textPropertyValue("matkustaja\ntunnus")))
+        case "nimi_suomeksi" => property.copy(values = List(textPropertyValue("n\nimi\n suomeksi")))
+        case "nimi_ruotsiksi" => property.copy(values = List(textPropertyValue("\nnimi ruotsiksi\n")))
+        case "liikennointisuunta" => property.copy(values = List(textPropertyValue("\nliikennointisuunta\n")))
+        case "esteettomyys_liikuntarajoitteiselle" => property.copy(values = List(textPropertyValue("\nesteettomyys\n liikuntarajoitteiselle\n")))
+        case "lisatiedot" => property.copy(values = List(textPropertyValue("\nlisatiedot")))
+        case "palauteosoite" => property.copy(values = List(textPropertyValue("palauteosoite\n")))
         case _ => property
       }
     }
@@ -72,6 +72,11 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     csv must equal("5;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374792.096855508;6677566.77442972;;;210;Etelään;liikennointisuunta;1;1;1;0;;esteettomyys liikuntarajoitteiselle;;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;lisatiedot;palauteosoite")
+  }
+
+
+  def textPropertyValue(value: String): PropertyValue = {
+    PropertyValue(propertyValue = value, propertyDisplayValue = Some(value))
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
