@@ -216,7 +216,7 @@ object AssetCsvFormatter {
   }
 
   def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
-    displayValue.map { value => value.replace("\n", "") }
+    displayValue.map { value => value.replace("\n", " ") }
   }
 
   def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {

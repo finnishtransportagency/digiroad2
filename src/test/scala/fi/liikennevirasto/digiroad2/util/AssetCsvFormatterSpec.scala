@@ -58,10 +58,10 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
       property.publicId match {
         case "yllapitajan_tunnus" => property.copy(values = List(textPropertyValue("id\n")))
         case "matkustajatunnus" => property.copy(values = List(textPropertyValue("matkustaja\ntunnus")))
-        case "nimi_suomeksi" => property.copy(values = List(textPropertyValue("n\nimi\n suomeksi")))
+        case "nimi_suomeksi" => property.copy(values = List(textPropertyValue("n\nimi\nsuomeksi")))
         case "nimi_ruotsiksi" => property.copy(values = List(textPropertyValue("\nnimi ruotsiksi\n")))
         case "liikennointisuunta" => property.copy(values = List(textPropertyValue("\nliikennointisuunta\n")))
-        case "esteettomyys_liikuntarajoitteiselle" => property.copy(values = List(textPropertyValue("\nesteettomyys\n liikuntarajoitteiselle\n")))
+        case "esteettomyys_liikuntarajoitteiselle" => property.copy(values = List(textPropertyValue("\nesteettomyys\nliikuntarajoitteiselle\n")))
         case "lisatiedot" => property.copy(values = List(textPropertyValue("\nlisatiedot")))
         case "palauteosoite" => property.copy(values = List(textPropertyValue("palauteosoite\n")))
         case _ => property
@@ -69,9 +69,9 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     }
     val asset = sourceAsset.copy(propertyData = testProperties)
     val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
-    csv must equal("5;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374792.096855508;6677566.77442972;;;210;Etelään;liikennointisuunta;1;1;1;0;;esteettomyys liikuntarajoitteiselle;;"
+    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelään; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
       + created
-      + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;lisatiedot;palauteosoite")
+      + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }
 
 
