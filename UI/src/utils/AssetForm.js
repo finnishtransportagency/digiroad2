@@ -1,17 +1,16 @@
 (function() {
-    var _enumeratedPropertyValues = null;
+    var enumeratedPropertyValues = null;
     var readonly = true;
-    var _selectedAsset = {};
+    var selectedAsset = {};
     _.templateSettings = {
         interpolate: /\{\{(.+?)\}\}/g
     };
 
-    var initializeEditExisting = function(asset) {
+    var renderAssetForm = function(asset) {
         var container = jQuery("#featureAttributes").empty();
 
-        _selectedAsset = asset;
+        selectedAsset = asset;
 
-        // TODO: refactor this (duplication with _initializeCreateNew)
         var featureData = makeContent(asset.propertyData);
         var streetView = $(getStreetView(asset));
 
@@ -49,8 +48,8 @@
         var newValidityDirection = data.propertyData[0].values[0].propertyValue;
         var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
         validityDirection.attr('value', newValidityDirection);
-        _selectedAsset.validityDirection = newValidityDirection;
-        jQuery('.streetView').html(getStreetView(_selectedAsset));
+        selectedAsset.validityDirection = newValidityDirection;
+        jQuery('.streetView').html(getStreetView(selectedAsset));
     };
 
     var getStreetView = function(asset) {
@@ -142,9 +141,9 @@
         var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
             validityDirection = validityDirection == 2 ? 3 : 2;
             //TODO: update streetview without using globals
-            _selectedAsset.validityDirection = validityDirection;
+            selectedAsset.validityDirection = validityDirection;
             triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
-            jQuery('.streetView').empty().append($(getStreetView(_selectedAsset)));
+            jQuery('.streetView').empty().append($(getStreetView(selectedAsset)));
         });
 
         //TODO: cleaner html
@@ -233,9 +232,9 @@
             } else if (feature.publicId === 'vaikutussuunta') {
                 return directionChoiceHandler(feature);
             } else if (propertyType === "single_choice") {
-               return singleChoiceHandler(feature, _enumeratedPropertyValues);
+               return singleChoiceHandler(feature, enumeratedPropertyValues);
             } else if (feature.propertyType === "multiple_choice") {
-                return multiChoiceHandler(feature, _enumeratedPropertyValues);
+                return multiChoiceHandler(feature, enumeratedPropertyValues);
             } else if (propertyType === "date") {
                  return dateHandler(feature);
             }  else {
@@ -261,40 +260,40 @@
     var closeAsset = function() {
         jQuery("#featureAttributes").html('');
         dateutil.removeDatePickersFromDom();
-        _selectedAsset = null;
+        selectedAsset = null;
     };
 
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', initializeEditExisting, this);
-    eventbus.on('asset:unselected', closeAsset, this);
-    eventbus.on('layer:selected', closeAsset, this);
+    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', renderAssetForm);
+    eventbus.on('asset:unselected', closeAsset);
+    eventbus.on('layer:selected', closeAsset);
 
     eventbus.on('assetPropertyValue:changed', function(data) {
         if (data.propertyData[0].publicId == 'vaikutussuunta') {
             changeAssetDirection(data);
         }
-    }, this);
+    });
 
     eventbus.on('application:readOnly', function(readOnly) {
         readonly = readOnly;
     });
 
     eventbus.on('validityPeriod:changed', function(validityPeriods) {
-        if (_selectedAsset && !_.contains(validityPeriods, _selectedAsset.validityPeriod)) {
+        if (selectedAsset && !_.contains(validityPeriods, selectedAsset.validityPeriod)) {
             closeAsset();
         }
-    }, this);
+    });
 
     eventbus.on('enumeratedPropertyValues:fetched', function(values) {
-        _enumeratedPropertyValues = values;
-    }, this);
+        enumeratedPropertyValues = values;
+    });
 
     eventbus.on('asset:moved', function(position) {
-        _selectedAsset.lon = position.lon;
-        _selectedAsset.lat = position.lat;
-        _selectedAsset.bearing = position.bearing;
-        _selectedAsset.roadLinkId = position.roadLinkId;
-        jQuery('.streetView').html(getStreetView(_selectedAsset));
-    }, this);
+        selectedAsset.lon = position.lon;
+        selectedAsset.lat = position.lat;
+        selectedAsset.bearing = position.bearing;
+        selectedAsset.roadLinkId = position.roadLinkId;
+        jQuery('.streetView').html(getStreetView(selectedAsset));
+    });
 
     window.Backend.getEnumeratedPropertyValues(10);
 })();
