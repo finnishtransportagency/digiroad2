@@ -7,7 +7,7 @@
     };
 
     var renderAssetForm = function(asset) {
-        var container = jQuery("#featureAttributes").empty();
+        var container = $("#featureAttributes").empty();
 
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
@@ -16,7 +16,7 @@
         addDatePickers();
 
         var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
-            jQuery("#featureAttributes").empty();
+            $("#featureAttributes").empty();
             eventbus.trigger('asset:cancelled');
         });
 
@@ -53,8 +53,8 @@
     };
 
     var addDatePickers = function () {
-        var $validFrom = jQuery('#ensimmainen_voimassaolopaiva');
-        var $validTo = jQuery('#viimeinen_voimassaolopaiva');
+        var $validFrom = $('#ensimmainen_voimassaolopaiva');
+        var $validTo = $('#viimeinen_voimassaolopaiva');
         if ($validFrom.length > 0 && $validTo.length > 0) {
             dateutil.addDependentDatePickers($validFrom, $validTo);
         }
@@ -63,7 +63,7 @@
     var readOnlyHandler = function(property){
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
         // TODO: use cleaner html
-        return jQuery('<div />').addClass('formAttributeContentRow')
+        return $('<div />').addClass('formAttributeContentRow')
             .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
     };
 
@@ -135,7 +135,7 @@
             //TODO: update streetview without using globals
             selectedAsset.validityDirection = validityDirection;
             triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
-            jQuery('.streetView').empty().append($(getStreetView(selectedAsset).render()));
+            $('.streetView').empty().append($(getStreetView(selectedAsset).render()));
         });
 
         //TODO: cleaner html
@@ -250,7 +250,7 @@
         '</div>');
 
     var closeAsset = function() {
-        jQuery("#featureAttributes").html('');
+        $("#featureAttributes").html('');
         dateutil.removeDatePickersFromDom();
         selectedAsset = null;
     };
@@ -282,7 +282,7 @@
         selectedAsset.lat = position.lat;
         selectedAsset.bearing = position.bearing;
         selectedAsset.roadLinkId = position.roadLinkId;
-        jQuery('.streetView').html(getStreetView(selectedAsset).render());
+        $('.streetView').html(getStreetView(selectedAsset).render());
     });
 
     window.Backend.getEnumeratedPropertyValues(10);
