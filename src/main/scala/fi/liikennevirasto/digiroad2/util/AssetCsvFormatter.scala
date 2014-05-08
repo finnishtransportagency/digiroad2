@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
 import scala.language.postfixOps
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
@@ -205,12 +205,26 @@ object AssetCsvFormatter {
     (asset, virtual :: nonStopExpress :: express :: local :: result)
   }
 
-  def getItemsFromPropertyByPublicId(name: String, property: Seq[Property]) = {
+  def getItemsFromPropertyByPublicId(name: String, properties: Seq[Property]) = {
     try {
-      property.find(x => x.publicId == name).get.values
+      val property = properties.find(x => x.publicId == name).get
+      sanitizedPropertyValues(property.propertyType, property.values)
     }
     catch {
-      case e: Exception => println(s"""$name with $property"""); throw e
+      case e: Exception => println(s"""$name with $properties"""); throw e
+    }
+  }
+
+  def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
+    displayValue.map { value => value.replace("\n", "") }
+  }
+
+  def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
+    propertyType match {
+      case PropertyTypes.Text => values.map { value =>
+        value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))
+      }
+      case _ => values
     }
   }
 }

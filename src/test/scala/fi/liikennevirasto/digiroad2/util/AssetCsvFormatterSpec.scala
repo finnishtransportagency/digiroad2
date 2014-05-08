@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 
@@ -45,6 +45,19 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
     AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(315)), List())._2 must equal (List("Länteen"))
+  }
+
+  it must "filter out newlines from text fields" in {
+    val sourceAsset = assetsByMunicipality.head
+    val testProperties = sourceAsset.propertyData.map { property =>
+      property.publicId match {
+        case "yllapitajan_tunnus" => property.copy(values = List(PropertyValue(propertyValue = "id\n", propertyDisplayValue = Some("id\n"))))
+        case _ => property
+      }
+    }
+    val asset = sourceAsset.copy(propertyData = testProperties)
+    val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
+    csv must equal("1;id;;;;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;06.05.2014 15:44:35;Hannu;2013-12-15;2045-12-10;Liikennevirasto;235;Kauniainen;;")
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
