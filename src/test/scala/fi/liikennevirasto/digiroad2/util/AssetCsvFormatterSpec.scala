@@ -48,7 +48,12 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   it must "filter out newlines from text fields" in {
-    val sourceAsset = assetsByMunicipality.head
+    val sourceAsset = assetsByMunicipality.find(_.externalId.get == 1).get
+    val propertyValue = extractPropertyValue(sourceAsset, _: String)
+    val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
+    val validFrom = propertyValue("ensimmainen_voimassaolopaiva")
+    val validTo = propertyValue("viimeinen_voimassaolopaiva")
+
     val testProperties = sourceAsset.propertyData.map { property =>
       property.publicId match {
         case "yllapitajan_tunnus" => property.copy(values = List(PropertyValue(propertyValue = "id\n", propertyDisplayValue = Some("id\n"))))
@@ -60,7 +65,9 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     }
     val asset = sourceAsset.copy(propertyData = testProperties)
     val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
-    csv must equal("1;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;06.05.2014 15:44:35;Hannu;2013-12-15;2045-12-10;Liikennevirasto;235;Kauniainen;;")
+    csv must equal("1;id;matkustajatunnus;nimi suomeksi;nimi ruotsiksi;374635.608258218;6677267.45072414;;;80;Itään;;1;0;0;0;katos;;;"
+      + created
+      + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
