@@ -39,14 +39,6 @@
         }
     };
 
-    var changeAssetDirection = function(data) {
-        var newValidityDirection = data.propertyData[0].values[0].propertyValue;
-        var validityDirection = jQuery('.featureAttributeButton[data-publicId="vaikutussuunta"]');
-        validityDirection.attr('value', newValidityDirection);
-        selectedAsset.validityDirection = newValidityDirection;
-        jQuery('.streetView').html(getStreetView(selectedAsset));
-    };
-
     var getStreetView = function(asset) {
         var wgs84 = OpenLayers.Projection.transform(
             new OpenLayers.Geometry.Point(asset.lon, asset.lat),
@@ -264,12 +256,6 @@
 
     eventbus.on('asset:unselected', closeAsset);
     eventbus.on('layer:selected', closeAsset);
-
-    eventbus.on('assetPropertyValue:changed', function(data) {
-        if (data.propertyData[0].publicId == 'vaikutussuunta') {
-            changeAssetDirection(data);
-        }
-    });
 
     eventbus.on('application:readOnly', function(readOnly) {
         readonly = readOnly;
