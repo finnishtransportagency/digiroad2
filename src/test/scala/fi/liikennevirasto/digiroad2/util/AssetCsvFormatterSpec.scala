@@ -21,7 +21,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val csv = csvAll.find(_.startsWith("5")).get
 
     val propertyValue = extractPropertyValue(assetsByMunicipality.find(_.externalId.get == 5).get, _: String)
-    val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
+    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
 
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
@@ -52,7 +52,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   it must "filter out newlines from text fields" in {
     val sourceAsset = assetsByMunicipality.find(_.externalId.get == 5).get
     val propertyValue = extractPropertyValue(sourceAsset, _: String)
-    val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
+    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
@@ -89,8 +89,8 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue.getOrElse("")
   }
 
-  private def parseCreated(s: String): String = {
-    inOutputDateFormat(AssetPropertyConfiguration.Format.parseDateTime(s.split(" ").drop(1).mkString(" ")))
+  private def parseCreationDateTime(s: String): DateTime = {
+    AssetPropertyConfiguration.Format.parseDateTime(s.split(" ").drop(1).mkString(" "))
   }
 
   private def inOutputDateFormat(date: DateTime): String = {
