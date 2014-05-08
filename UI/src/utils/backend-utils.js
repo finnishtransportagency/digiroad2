@@ -59,8 +59,10 @@
             success: function(asset) {
                 eventbus.trigger('asset:created', asset);
             },
-            error: function () {
-                console.log("error");
+            error: function(xhr, status, error) {
+                console.log("error", error);
+                alert('Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.');
+                eventbus.trigger('asset:cancelled');
             }
         });
     };
@@ -76,27 +78,13 @@
             success: function(asset) {
                 eventbus.trigger('asset:saved asset:fetched', asset, true);
             },
-            error: function() {
-                console.log("error");
+            error: function(xhr, status, error) {
+                console.log("error", error);
+                alert('Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.');
+                eventbus.trigger('asset:cancelled');
             }
         });
     };
-
-    function putAssetPropertyValue(assetId, propertyPublicId, data) {
-        jQuery.ajax({
-            contentType: "application/json",
-            type: "PUT",
-            url: "api/assets/" + assetId + "/properties/" + propertyPublicId + "/values",
-            data: JSON.stringify(data),
-            dataType:"json",
-            success: function(assetPropertyValue) {
-              eventbus.trigger('assetPropertyValue:saved assetPropertyValue:fetched', assetPropertyValue);
-            },
-            error: function() {
-                console.log("error");
-            }
-        });
-    }
 
     // FIXME: Dummy implementation
     var id = 0;
