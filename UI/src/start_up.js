@@ -78,7 +78,7 @@ jQuery(document).ready(function() {
   window.selectedAssetController = SelectedAssetController.initialize(Backend);
 
   var indicatorOverlay = function() {
-    jQuery('.container').append('<div class="spinner"></div>');
+    jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
   };
 
   eventbus.on('asset:saving asset:creating', function() {
