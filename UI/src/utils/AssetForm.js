@@ -203,13 +203,13 @@
                         return { propertyValue: parseInt(value.propertyValue, 10) };
                     })
                     .value();
-                var propertyValues = values.size < 1 ? [ { propertyValue: 99 } ] : values;
-                triggerEventBusChange(property.publicId, propertyValues);
+                if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
+                triggerEventBusChange(property.publicId, values);
             });
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
-            input.prop('checked', x.checked);
+            input.prop('checked', x.checked);§
             input.attr('disabled', readonly);
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
