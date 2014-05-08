@@ -9,14 +9,9 @@
     var renderAssetForm = function(asset) {
         var container = jQuery("#featureAttributes").empty();
 
-        selectedAsset = asset;
-
-        var featureData = makeContent(asset.propertyData);
-        var streetView = $(getStreetView(asset));
-
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
-        wrapper.append(streetView.addClass('streetView')).append($('<div />').addClass('formContent').append(featureData));
+        wrapper.append($(getStreetView(asset)).addClass('streetView')).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
@@ -69,7 +64,6 @@
 
     var readOnlyHandler = function(property){
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
-        // TODO: hack, because form is rendered using html as string
         // TODO: use cleaner html
         return jQuery('<div />').addClass('formAttributeContentRow')
             .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
@@ -221,7 +215,7 @@
         return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
     };
 
-    var makeContent = function(contents) {
+    var getAssetForm = function(contents) {
         var components =_.map(contents, function(feature){
             feature.localizedName = window.localizedStrings[feature.publicId];
             var propertyType = feature.propertyType;
@@ -263,7 +257,11 @@
         selectedAsset = null;
     };
 
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', renderAssetForm);
+    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', function(asset){
+        selectedAsset = asset;
+        renderAssetForm(asset);
+    });
+
     eventbus.on('asset:unselected', closeAsset);
     eventbus.on('layer:selected', closeAsset);
 
