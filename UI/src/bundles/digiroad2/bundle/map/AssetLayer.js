@@ -287,7 +287,7 @@ window.AssetLayer = function(map, roadLayer) {
                 });
                 var effectDirection = selectedAsset.marker.effectDirection;
                 assetLayer.removeMarker(selectedAsset.marker);
-                selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), getIcon(imageIds));
+                selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), getIcon(imageIds));
                 selectedAsset.marker.effectDirection = effectDirection;
                 assetLayer.addMarker(selectedAsset.marker);
                 var mouseClickFn = mouseClick(selectedAsset);
