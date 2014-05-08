@@ -7,7 +7,6 @@
     };
 
     var _initializeEditExisting = function(asset) {
-        // var featureAttributes = me._templates.featureDataWrapper({ header: busStopHeader(asset), streetView: streetView, attributes: featureData, controls: me._templates.featureDataEditControls({}) });
         var container = jQuery("#featureAttributes").empty();
 
         _selectedAsset = asset;
@@ -27,7 +26,7 @@
         });
 
         var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
-            eventbus.trigger('asset:save');
+            selectedAssetController.save();
         });
 
         // TODO: cleaner html

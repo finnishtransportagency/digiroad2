@@ -63,15 +63,6 @@
             assetHasBeenModified = true;
         });
 
-        eventbus.on('asset:save', function(){
-            if(currentAsset.id === undefined){
-                backend.createAsset(currentAsset.payload);
-            } else {
-                currentAsset.payload.id = currentAsset.id;
-                backend.updateAsset(currentAsset.id, currentAsset.payload);
-            }
-        });
-
         eventbus.on('asset:cancelled', function(){
            backend.getAsset(currentAsset.id);
         });
@@ -109,7 +100,17 @@
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
         });
 
+        var save = function() {
+            if(currentAsset.id === undefined){
+                backend.createAsset(currentAsset.payload);
+            } else {
+                currentAsset.payload.id = currentAsset.id;
+                backend.updateAsset(currentAsset.id, currentAsset.payload);
+            }
+        };
+
         return { reset: reset,
+                 save: save,
                  isDirty: function() { return assetHasBeenModified; }};
     };
 
