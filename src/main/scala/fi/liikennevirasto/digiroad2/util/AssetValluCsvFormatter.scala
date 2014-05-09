@@ -49,8 +49,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def isOnlyTramStop(asset: AssetWithProperties): Boolean = {
     val tramStopType = 1L
-    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
-    busstopType.contains(tramStopType) && (busstopType.size == 1)
+    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1)
   }
 
   private def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
