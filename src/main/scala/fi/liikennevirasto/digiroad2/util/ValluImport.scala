@@ -20,11 +20,8 @@ object ValluImport {
     // BOM for excel
     printer.write("\uFEFF")
     printer.write(header + "\n")
-    getMunicipalities.foreach(x => {
-      getAssetsForMunicipality(x)
-        .map(fetchNameFromValluImport(valluComplementaryBusStopNames, _))
-        .map(getCsvRowsForAsset _)
-        .foreach(x => printer.write(x + "\n"))
+    getMunicipalities.foreach(municipality => {
+      AssetCsvFormatter.valluCsvRowsFromAssets(getAssetsForMunicipality(municipality), valluComplementaryBusStopNames).foreach(x => printer.write(x + "\n"))
     })
     printer.close
   }
@@ -41,25 +38,6 @@ object ValluImport {
     } else {
       Map()
     }
-  }
-
-  def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
-    asset.copy(propertyData = asset.propertyData.map { property =>
-      if (property.publicId != "nimi_suomeksi") {
-        property
-      } else {
-        val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
-        if (property.values.isEmpty && complementaryName.isDefined) {
-          property.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
-        } else {
-          property
-        }
-      }
-    })
-  }
-
-  def getCsvRowsForAsset(asset: AssetWithProperties) = {
-    AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
   }
 
   def getAssetsForMunicipality(municipality: Int) = {

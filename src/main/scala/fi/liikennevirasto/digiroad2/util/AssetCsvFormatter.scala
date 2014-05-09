@@ -5,9 +5,9 @@ import scala.language.postfixOps
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
 import org.joda.time.format.DateTimeFormat
+import scala.collection.immutable
 
 object AssetCsvFormatter {
-
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
                "ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;" +
                "VIRTUAL_STOP;EQUIPMENT;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
@@ -16,6 +16,10 @@ object AssetCsvFormatter {
   val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
 
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
+
+  def valluCsvRowsFromAssets(assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
+    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).map(formatFromAssetWithPropertiesValluCsv)
+  }
 
   def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
     assets.map(formatFromAssetWithPropertiesValluCsv)
@@ -45,6 +49,21 @@ object AssetCsvFormatter {
         .andThen (addComments _)
         .andThen (addContactEmail _)
         .apply(asset, List())._2.reverse.mkString(";")
+  }
+
+  private def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
+    asset.copy(propertyData = asset.propertyData.map { property =>
+      if (property.publicId != "nimi_suomeksi") {
+        property
+      } else {
+        val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
+        if (property.values.isEmpty && complementaryName.isDefined) {
+          property.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
+        } else {
+          property
+        }
+      }
+    })
   }
 
   private def addStopId(params: (AssetWithProperties, List[String])) = {
