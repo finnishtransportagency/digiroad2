@@ -11,6 +11,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
   var assetsByMunicipality: Iterable[AssetWithProperties] = null
+
   before {
     assetsByMunicipality = provider.getAssetsByMunicipality(235)
   }
@@ -20,26 +21,12 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvAll.size must be > 3
     val csv = csvAll.find(_.startsWith("5")).get
 
-    val propertyValue = extractPropertyValue(assetsByMunicipality.find(_.externalId.get == 5).get, _: String)
+    val propertyValue = extractPropertyValue(testAsset, _: String)
     val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
-
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelään;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
-  }
-
-  def createStop(stopType: Seq[Long]): AssetWithProperties = {
-    def typeToPropertyValue(typeCode: Long): PropertyValue = { PropertyValue(typeCode.toString, Some(typeCode.toString)) }
-
-    val sourceAsset = assetsByMunicipality.find(_.externalId.get == 5).get
-    val properties = sourceAsset.propertyData.map { property =>
-      property.publicId match {
-        case "pysakin_tyyppi" => property.copy(values = stopType.map(typeToPropertyValue))
-        case _ => property
-      }
-    }
-    sourceAsset.copy(propertyData = properties)
   }
 
   it must "filter tram stops from test data" in {
@@ -73,13 +60,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
   }
 
   it must "filter out newlines from text fields" in {
-    val sourceAsset = assetsByMunicipality.find(_.externalId.get == 5).get
-    val propertyValue = extractPropertyValue(sourceAsset, _: String)
-    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
-
-    val testProperties = sourceAsset.propertyData.map { property =>
+    val testProperties = testAsset.propertyData.map { property =>
       property.publicId match {
         case "yllapitajan_tunnus" => property.copy(values = List(textPropertyValue("id\n")))
         case "matkustajatunnus" => property.copy(values = List(textPropertyValue("matkustaja\ntunnus")))
@@ -92,11 +73,32 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
         case _ => property
       }
     }
-    val asset = sourceAsset.copy(propertyData = testProperties)
+    val asset = testAsset.copy(propertyData = testProperties)
+    val propertyValue = extractPropertyValue(asset, _: String)
+    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
+    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
+    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
     csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelään; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
+  }
+
+  def createStop(stopType: Seq[Long]): AssetWithProperties = {
+    def typeToPropertyValue(typeCode: Long): PropertyValue = { PropertyValue(typeCode.toString, Some(typeCode.toString)) }
+
+    val properties = testAsset.propertyData.map { property =>
+      property.publicId match {
+        case "pysakin_tyyppi" => property.copy(values = stopType.map(typeToPropertyValue))
+        case _ => property
+      }
+    }
+    testAsset.copy(propertyData = properties)
+  }
+
+  private def testAsset(): AssetWithProperties = {
+    assetsByMunicipality.find(_.externalId.get == 5).get
   }
 
   private def parseDate(date: String): DateTime = {
