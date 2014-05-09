@@ -150,7 +150,7 @@ window.AssetLayer = function(map, roadLayer) {
         var validityDirection = (assetData.validityDirection === 3) ? 1 : -1;
         var directionArrow = getDirectionArrow(assetData.bearing, validityDirection, assetData.lon, assetData.lat);
         assetDirectionLayer.addFeatures(directionArrow);
-        var imageIds = assetData.imageIds;
+        var imageIds = assetData.imageIds.length > 0 ? assetData.imageIds : [unknownAssetType + '_'];
         var icon = getIcon(imageIds);
         // new bus stop marker
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
@@ -283,7 +283,7 @@ window.AssetLayer = function(map, roadLayer) {
                     values.push([unknownAssetType]);
                 }
                 var imageIds = _.map(values, function(v) {
-                    return v + '_' + new Date().getMilliseconds();
+                    return v + '_';
                 });
                 var effectDirection = selectedAsset.marker.effectDirection;
                 assetLayer.removeMarker(selectedAsset.marker);
@@ -296,7 +296,6 @@ window.AssetLayer = function(map, roadLayer) {
                 selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
                 assetLayer.redraw();
             }
-
         }
     };
 
@@ -325,8 +324,7 @@ window.AssetLayer = function(map, roadLayer) {
                 lat: projectionOnNearestLine.y,
                 roadLinkId: nearestLine.roadLinkId}};
         highlightAsset(selectedAsset);
-        var imageIds = [unknownAssetType+'_' + (new Date().getMilliseconds())];
-        var icon = getIcon(imageIds);
+        var icon = getIcon([unknownAssetType + '_']);
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
         assetLayer.addMarker(marker);
         selectedAsset.marker = marker;
