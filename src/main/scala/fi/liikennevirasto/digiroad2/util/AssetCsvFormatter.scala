@@ -12,7 +12,7 @@ trait AssetCsvFormatter {
     (asset, asset.externalId.getOrElse("").toString :: result)
   }
 
-  protected def getItemsFromPropertyByPublicId(name: String, properties: Seq[Property]) = {
+  protected def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
     try {
       val property = properties.find(x => x.publicId == name).get
       sanitizedPropertyValues(property.propertyType, property.values)

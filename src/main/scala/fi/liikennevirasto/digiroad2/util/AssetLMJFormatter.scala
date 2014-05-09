@@ -42,7 +42,7 @@ object AssetLMJFormatter extends AssetCsvFormatter {
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val name = getItemsFromPropertyByPublicId(language, asset.propertyData)
+    val name = getPropertyValuesByPublicId(language, asset.propertyData)
     (asset, name.headOption.map(property => "\"" + property.propertyDisplayValue.getOrElse("").trim  + "\"").getOrElse("\"Ei tiedossa\"") :: result)
   }
 }

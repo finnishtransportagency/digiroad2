@@ -49,7 +49,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def isOnlyTramStop(asset: AssetWithProperties): Boolean = {
     val tramStopType = 1L
-    val busstopType: Seq[Long] = getItemsFromPropertyByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
     busstopType.contains(tramStopType) && (busstopType.size == 1)
   }
 
@@ -80,31 +80,31 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val name = getItemsFromPropertyByPublicId(language, asset.propertyData)
+    val name = getPropertyValuesByPublicId(language, asset.propertyData)
     (asset, name.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByPublicId("yllapitajan_tunnus", asset.propertyData)
+    val id = getPropertyValuesByPublicId("yllapitajan_tunnus", asset.propertyData)
     (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addStopCode(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByPublicId("matkustajatunnus", asset.propertyData)
+    val id = getPropertyValuesByPublicId("matkustajatunnus", asset.propertyData)
     (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addContactEmail(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val email = getItemsFromPropertyByPublicId("palauteosoite", asset.propertyData)
+    val email = getPropertyValuesByPublicId("palauteosoite", asset.propertyData)
     (asset, email.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addComments(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val comments = getItemsFromPropertyByPublicId("lisatiedot", asset.propertyData)
+    val comments = getPropertyValuesByPublicId("lisatiedot", asset.propertyData)
     (asset, comments.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
@@ -129,14 +129,14 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addMaintainerId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val maintainer = getItemsFromPropertyByPublicId("tietojen_yllapitaja", asset.propertyData)
+    val maintainer = getPropertyValuesByPublicId("tietojen_yllapitaja", asset.propertyData)
     (asset, maintainer.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val validFrom = getItemsFromPropertyByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
-    val validTo = getItemsFromPropertyByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
+    val validFrom = getPropertyValuesByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
+    val validTo = getPropertyValuesByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
     (asset, validTo.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
       validFrom.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
       result)
@@ -156,8 +156,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
 
-    val lastModified = getItemsFromPropertyByPublicId("muokattu_viimeksi", asset.propertyData)
-    val inserted = getItemsFromPropertyByPublicId("lisatty_jarjestelmaan", asset.propertyData)
+    val lastModified = getPropertyValuesByPublicId("muokattu_viimeksi", asset.propertyData)
+    val inserted = getPropertyValuesByPublicId("lisatty_jarjestelmaan", asset.propertyData)
 
     val lastModifiedValue = lastModified.head.propertyDisplayValue.getOrElse("").trim
     val insertedValue = inserted.head.propertyDisplayValue.getOrElse("").trim
@@ -207,27 +207,27 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val id = getItemsFromPropertyByPublicId("liikennointisuunta", asset.propertyData)
+    val id = getPropertyValuesByPublicId("liikennointisuunta", asset.propertyData)
     (asset, id.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addReachability(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val reachability = getItemsFromPropertyByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
+    val reachability = getPropertyValuesByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
     val value = reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
     (asset, (if(value.equalsIgnoreCase("ei tiedossa")) "" else value) :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopShelter: Seq[Long] = getItemsFromPropertyByPublicId("katos", asset.propertyData).map(x => x.propertyValue.toLong)
+    val busstopShelter: Seq[Long] = getPropertyValuesByPublicId("katos", asset.propertyData).map(x => x.propertyValue.toLong)
     val shelter = (if(busstopShelter.contains(2)) "katos" else "")
     (asset, shelter :: result)
   }
 
   private def addBusStopTypes(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopType: Seq[Long] = getItemsFromPropertyByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
+    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")
     val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
