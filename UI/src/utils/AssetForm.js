@@ -3,12 +3,16 @@
     var readonly = true;
     var selectedAsset = {};
     var streetViewHandler;
+    var activeLayer = 'asset';
 
     _.templateSettings = {
         interpolate: /\{\{(.+?)\}\}/g
     };
 
     var renderAssetForm = function(asset) {
+        if (activeLayer !== 'asset') {
+            return;
+        }
         var container = $("#featureAttributes").empty();
 
         var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
@@ -274,7 +278,10 @@
     });
 
     eventbus.on('asset:unselected', closeAsset);
-    eventbus.on('layer:selected', closeAsset);
+    eventbus.on('layer:selected', function(layer) {
+      activeLayer = layer;
+      closeAsset();
+    });
 
     eventbus.on('application:readOnly', function(readOnly) {
         readonly = readOnly;
