@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 
-class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
+class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(userProvider)
   var assetsByMunicipality: Iterable[AssetWithProperties] = null
@@ -16,7 +16,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   it must "return correct csv entries from test data" in {
-    val csvAll = AssetCsvFormatter.formatAssetsWithProperties(assetsByMunicipality)
+    val csvAll = AssetValluCsvFormatter.formatAssetsWithProperties(assetsByMunicipality)
     csvAll.size must be > 3
     val csv = csvAll.find(_.startsWith("5")).get
 
@@ -48,28 +48,28 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val tramStop = createStop(tramStopType)
     val localBusStop = createStop(localBusStopType)
     val tramAndLocalBusStop = createStop(tramStopType ++ localBusStopType)
-    val csvRows = AssetCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop, tramAndLocalBusStop), Map())
+    val csvRows = AssetValluCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop, tramAndLocalBusStop), Map())
     csvRows must have size 2
   }
 
   val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56)
   it must "recalculate bearings in validity direction" in {
-    AssetCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))
-    AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3)), List())._2 must equal (List("183"))
-    AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2)), List())._2 must equal (List("3"))
-    AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2), bearing = Some(195)), List())._2 must equal (List("195"))
-    AssetCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3), bearing = Some(195)), List())._2 must equal (List("15"))
+    AssetValluCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))
+    AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3)), List())._2 must equal (List("183"))
+    AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2)), List())._2 must equal (List("3"))
+    AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2), bearing = Some(195)), List())._2 must equal (List("195"))
+    AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3), bearing = Some(195)), List())._2 must equal (List("15"))
   }
 
   it must "describe bearing correctly" in {
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(316)), List())._2 must equal (List("Pohjoiseen"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(45)), List())._2 must equal (List("Pohjoiseen"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(46)), List())._2 must equal (List("Itään"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(135)), List())._2 must equal (List("Itään"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(136)), List())._2 must equal (List("Etelään"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
-    AssetCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(315)), List())._2 must equal (List("Länteen"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(316)), List())._2 must equal (List("Pohjoiseen"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(45)), List())._2 must equal (List("Pohjoiseen"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(46)), List())._2 must equal (List("Itään"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(135)), List())._2 must equal (List("Itään"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(136)), List())._2 must equal (List("Etelään"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
+    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(315)), List())._2 must equal (List("Länteen"))
   }
 
   it must "filter out newlines from text fields" in {
@@ -93,7 +93,7 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
       }
     }
     val asset = sourceAsset.copy(propertyData = testProperties)
-    val csv = AssetCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
+    val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
     csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelään; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
@@ -117,6 +117,6 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   }
 
   private def inOutputDateFormat(date: DateTime): String = {
-    AssetCsvFormatter.OutputDateTimeFormat.print(date)
+    AssetValluCsvFormatter.OutputDateTimeFormat.print(date)
   }
 }

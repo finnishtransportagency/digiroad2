@@ -21,7 +21,7 @@ object ValluImport {
     printer.write("\uFEFF")
     printer.write(header + "\n")
     getMunicipalities.foreach(municipality => {
-      AssetCsvFormatter.valluCsvRowsFromAssets(getAssetsForMunicipality(municipality), valluComplementaryBusStopNames).foreach(x => printer.write(x + "\n"))
+      AssetValluCsvFormatter.valluCsvRowsFromAssets(getAssetsForMunicipality(municipality), valluComplementaryBusStopNames).foreach(x => printer.write(x + "\n"))
     })
     printer.close
   }
