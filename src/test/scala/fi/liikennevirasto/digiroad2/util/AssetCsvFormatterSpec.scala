@@ -47,8 +47,9 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val localBusStopType = List(2L)
     val tramStop = createStop(tramStopType)
     val localBusStop = createStop(localBusStopType)
-    val csvRows = AssetCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop), Map())
-    csvRows must have size 1
+    val tramAndLocalBusStop = createStop(tramStopType ++ localBusStopType)
+    val csvRows = AssetCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop, tramAndLocalBusStop), Map())
+    csvRows must have size 2
   }
 
   val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56)
