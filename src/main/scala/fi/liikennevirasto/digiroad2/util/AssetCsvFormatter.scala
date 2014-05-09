@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
 import scala.language.postfixOps
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
+import org.joda.time.format.DateTimeFormat
 
 object AssetCsvFormatter {
 
@@ -13,6 +14,8 @@ object AssetCsvFormatter {
                "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
   val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+
+  val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
     assets.map(formatFromAssetWithPropertiesValluCsv)
@@ -114,11 +117,22 @@ object AssetCsvFormatter {
     (asset, maintainer.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
+  private def formatOutputDate(date: String): String = {
+    val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    OutputDateTimeFormat.print(dateFormat.parseDateTime(date))
+  }
+
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validFrom = getItemsFromPropertyByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
     val validTo = getItemsFromPropertyByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
-    (asset, validTo.head.propertyDisplayValue.getOrElse("") :: validFrom.head.propertyDisplayValue.getOrElse("") :: result)
+    (asset, validTo.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
+      validFrom.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
+      result)
+  }
+
+  private def formatOutputDateTime(dateTime: String): String = {
+    OutputDateTimeFormat.print(AssetPropertyConfiguration.Format.parseDateTime(dateTime))
   }
 
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
@@ -141,7 +155,7 @@ object AssetCsvFormatter {
       else
         lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
 
-    (asset, modifiedBy :: modifiedTime :: result)
+    (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
   }
 
   private[util] def addBearing(params: (AssetWithProperties, List[String])) = {
@@ -215,11 +229,11 @@ object AssetCsvFormatter {
     }
   }
 
-  def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
+  private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
     displayValue.map { value => value.replace("\n", " ") }
   }
 
-  def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
+  private def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
     propertyType match {
       case PropertyTypes.Text | PropertyTypes.LongText => values.map { value =>
         value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))

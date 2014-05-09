@@ -16,7 +16,6 @@
         {id: "past", label: "Käytöstä poistuneet"}
     ], true);
     AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, [], false);
-    eventbus.trigger('layer:selected','asset');
     Backend.getUserRoles();
 
     var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');

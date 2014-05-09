@@ -271,8 +271,10 @@ window.AssetLayer = function(map, roadLayer) {
             if(_.isObject(validityDirectionProperty) &&
                 _.isArray(validityDirectionProperty.values) &&
                 _.isObject(validityDirectionProperty.values[0])) {
-                var validityDirection = (validityDirectionProperty.values[0].propertyValue == 3) ? 1 : -1;
-                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * (validityDirection)));
+                var value = validityDirectionProperty.values[0].propertyValue;
+                selectedAsset.data.validityDirection = value;
+                var validityDirection = (value == 3) ? 1 : -1;
+                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
             }
             var assetType = _.find(asset.propertyData, function(property) {
                 return property.publicId === 'pysakin_tyyppi';
@@ -404,7 +406,7 @@ window.AssetLayer = function(map, roadLayer) {
             var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
             selectedAsset.data.bearing = angle;
             selectedAsset.data.roadDirection = angle;
-            selectedAsset.directionArrow.style.rotation = angle + (90 * selectedAsset.marker.effectDirection);
+            selectedAsset.directionArrow.style.rotation = angle + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
             var position = geometrycalculator.nearestPointOnLine(
                 nearestLine,
                 { x: lonlat.lon, y: lonlat.lat});

@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.DateTime
 
 class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
@@ -19,10 +21,10 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     val csv = csvAll.find(_.startsWith("5")).get
 
     val propertyValue = extractPropertyValue(assetsByMunicipality.find(_.externalId.get == 5).get, _: String)
-    val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
+    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
 
-    val validFrom = propertyValue("ensimmainen_voimassaolopaiva")
-    val validTo = propertyValue("viimeinen_voimassaolopaiva")
+    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
+    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelään;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
@@ -50,9 +52,9 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
   it must "filter out newlines from text fields" in {
     val sourceAsset = assetsByMunicipality.find(_.externalId.get == 5).get
     val propertyValue = extractPropertyValue(sourceAsset, _: String)
-    val created = parseCreated(propertyValue("lisatty_jarjestelmaan"))
-    val validFrom = propertyValue("ensimmainen_voimassaolopaiva")
-    val validTo = propertyValue("viimeinen_voimassaolopaiva")
+    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
+    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
+    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
     val testProperties = sourceAsset.propertyData.map { property =>
       property.publicId match {
@@ -74,8 +76,12 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }
 
+  private def parseDate(date: String): DateTime = {
+    val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    dateFormat.parseDateTime(date)
+  }
 
-  def textPropertyValue(value: String): PropertyValue = {
+  private def textPropertyValue(value: String): PropertyValue = {
     PropertyValue(propertyValue = value, propertyDisplayValue = Some(value))
   }
 
@@ -83,7 +89,11 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue.getOrElse("")
   }
 
-  private def parseCreated(s: String): String = {
-    s.split(" ").drop(1).mkString(" ")
+  private def parseCreationDateTime(s: String): DateTime = {
+    AssetPropertyConfiguration.Format.parseDateTime(s.split(" ").drop(1).mkString(" "))
+  }
+
+  private def inOutputDateFormat(date: DateTime): String = {
+    AssetCsvFormatter.OutputDateTimeFormat.print(date)
   }
 }
