@@ -29,6 +29,28 @@ class AssetCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAft
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelään;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
+  def createStop(stopType: Seq[Long]): AssetWithProperties = {
+    def typeToPropertyValue(typeCode: Long): PropertyValue = { PropertyValue(typeCode.toString, Some(typeCode.toString)) }
+
+    val sourceAsset = assetsByMunicipality.find(_.externalId.get == 5).get
+    val properties = sourceAsset.propertyData.map { property =>
+      property.publicId match {
+        case "pysakin_tyyppi" => property.copy(values = stopType.map(typeToPropertyValue))
+        case _ => property
+      }
+    }
+    sourceAsset.copy(propertyData = properties)
+  }
+
+  it must "filter tram stops from test data" in {
+    val tramStopType = List(1L)
+    val localBusStopType = List(2L)
+    val tramStop = createStop(tramStopType)
+    val localBusStop = createStop(localBusStopType)
+    val csvRows = AssetCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop), Map())
+    csvRows must have size 1
+  }
+
   val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56)
   it must "recalculate bearings in validity direction" in {
     AssetCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))

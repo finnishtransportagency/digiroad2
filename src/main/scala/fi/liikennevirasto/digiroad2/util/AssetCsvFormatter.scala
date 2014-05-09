@@ -18,7 +18,7 @@ object AssetCsvFormatter {
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def valluCsvRowsFromAssets(assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
-    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).map(formatFromAssetWithPropertiesValluCsv)
+    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(isTramStop).map(formatFromAssetWithPropertiesValluCsv)
   }
 
   def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
@@ -64,6 +64,12 @@ object AssetCsvFormatter {
         }
       }
     })
+  }
+
+  private def isTramStop(asset: AssetWithProperties): Boolean = {
+    val tramStopType = 1L
+    val busstopType: Seq[Long] = getItemsFromPropertyByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    busstopType.contains(tramStopType)
   }
 
   private def addStopId(params: (AssetWithProperties, List[String])) = {
