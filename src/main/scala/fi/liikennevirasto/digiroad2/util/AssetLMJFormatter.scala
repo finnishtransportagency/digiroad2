@@ -8,7 +8,7 @@ object AssetLMJFormatter extends AssetCsvFormatter {
   val fields = "stop_id,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station"
 
   def formatFromAssetWithProperties(asset: AssetWithProperties): String = {
-    (addExternalId _)
+    (addStopId _)
      .andThen ((addName _ curried)("nimi_suomeksi")(_))
       .andThen (addIsolator _)
       .andThen (addYCoord _)
@@ -30,22 +30,17 @@ object AssetLMJFormatter extends AssetCsvFormatter {
     (asset, "1" :: result)
   }
 
-  private def addExternalId(params: (AssetWithProperties, List[String])) = {
-    val (asset, result) = params
-    (asset, asset.externalId.getOrElse("").toString :: result)
-  }
-
-  override protected def addXCoord(params: (AssetWithProperties, List[String])) = {
+  private def addXCoord(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     (asset, asset.wgslon.toString :: result)
   }
 
-  override protected def addYCoord(params: (AssetWithProperties, List[String])) = {
+  private def addYCoord(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     (asset, asset.wgslat.toString :: result)
   }
 
-  override protected def addName(language: String, params: (AssetWithProperties, List[String])) = {
+  private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val name = getItemsFromPropertyByPublicId(language, asset.propertyData)
     (asset, name.headOption.map(property => "\"" + property.propertyDisplayValue.getOrElse("").trim  + "\"").getOrElse("\"Ei tiedossa\"") :: result)
