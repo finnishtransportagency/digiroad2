@@ -1,34 +1,41 @@
-(function(ActionPanel) {
+(function(ActionPanelBoxes) {
+  var panelControl = [
+    '<div class="panelControl">',
+    '  <div class="panelControlLine"></div>',
+    '  <div class="panelControlLine"></div>',
+    '  <div class="panelControlLine"></div>',
+    '</div>',
+    '<div class="panelLayerGroup"></div>'].join('');
 
-    var panelControl =
-        '<div class="panelControl">' +
-                        '<div class="panelControlLine"></div>' +
-                        '<div class="panelControlLine"></div>' +
-                        '<div class="panelControlLine"></div>' +
-                    '</div>'+
-            '<div class="panelLayerGroup"></div>';
+  $('#maptools').append(panelControl);
 
+  var assetBox = new ActionPanelBoxes.AssetBox();
+  $('.panelLayerGroup').append(assetBox.element);
 
-    jQuery("#maptools").append(panelControl);
-    AssetActionPanel('asset', 'Joukkoliikenteen pysäkit', true, [
-        {id: "current", label: "Voimassaolevat", selected: true},
-        {id: "future", label: "Tulevat"},
-        {id: "past", label: "Käytöstä poistuneet"}
-    ], true);
-    AssetActionPanel('linearAsset', 'Nopeusrajoitukset', false, [], false);
-    Backend.getUserRoles();
+  var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
+  $('.panelLayerGroup').append(linearAssetBox.element);
 
-    var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');
-    jQuery(".container").append(editMessage.hide());
+  Backend.getUserRoles();
 
-    var handleEditMessage = function(readOnly) {
-        if(readOnly) {
-            editMessage.hide();
-        } else {
-            editMessage.show();
-        }
-    };
+  // FIXME: This definitely doesn't belong here (top bar or somewhere else)
+  var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');
+  $('.container').append(editMessage.hide());
 
-    eventbus.on('application:readOnly', handleEditMessage);
+  var handleEditMessage = function(readOnly) {
+    if (readOnly) {
+      editMessage.hide();
+    } else {
+      editMessage.show();
+    }
+  };
 
-}(window.ActionPanel = window.ActionPanel));
+  eventbus.on('layer:selected', function() {
+    eventbus.trigger('application:readOnly', true);
+  });
+
+  eventbus.on('application:readOnly', function() {
+    eventbus.trigger('tool:changed', 'Select');
+  });
+
+  eventbus.on('application:readOnly', handleEditMessage);
+}(window.ActionPanelBoxes));
