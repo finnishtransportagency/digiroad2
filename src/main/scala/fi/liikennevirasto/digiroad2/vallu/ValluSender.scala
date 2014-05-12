@@ -46,7 +46,7 @@ object ValluSender {
   }
 
   private def postToVallu(payload: String) = {
-    val entity = new StringEntity(payload, ContentType.create("text/plain", "UTF-8"))
+    val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
