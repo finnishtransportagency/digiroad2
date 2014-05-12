@@ -39,3 +39,10 @@ username password localhost/valluexport
 Vienti luo FTP-palvelimelle pysäkkitiedot zip-pakattuna .csv-tiedostona nimellä 'digiroad_stops.zip' sekä 'flag.txt'-tiedoston, joka sisältää Vallu-viennin aikaleiman muodossa vuosi (4 merkkiä), kuukausi (2 merkkiä), päivä (2 merkkiä), tunti (2 merkkiä), minuutti (2 merkkiä), sekunti (2 merkkiä). Esimerkiksi '20140417133227'.
 
 Käyttöönotto kopioi ympäristökohtaisen 'ftp.conf'-tiedoston käyttöönottoympäristön deployment-hakemistosta release-hakemistoon osana käyttöönottoa. Näin ympäristökohtaista 'ftp.conf'-tiedostoa, joka sisältää kirjautumistietoja, voidaan ylläpitää tietoturvallisesti käyttöönottopalvelimella. 
+
+Lähdekoodi
+----------
+
+Digiroad 2 -sovelluksen avoin lähdekoodi löytyy GitHubista:
+
+https://github.com/finnishtransportagency/digiroad2
