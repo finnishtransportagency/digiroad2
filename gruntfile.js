@@ -141,5 +141,5 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
 
-  grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch'])
+  grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 };
