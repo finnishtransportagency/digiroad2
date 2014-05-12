@@ -135,9 +135,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-connect-proxy');
   grunt.loadNpmTasks('grunt-execute');
 
-  grunt.registerTask('server', ['configureProxies:server', 'execute:vallu_local_test', 'connect', 'less:development', 'watch']);
+  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
   grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
+
+  grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch'])
 };
