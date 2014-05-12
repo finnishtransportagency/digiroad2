@@ -23,7 +23,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   it must "create xml message containing correct external id" in {
     val message: String = ValluStoreStopChangeMessage.create(testAsset)
     val rootElement = XML.loadString(message)
-    val stopId = rootElement \ "StopId"
+    val stopId = rootElement \ "Stop" \ "StopId"
     stopId.text must equal("123")
   }
 }

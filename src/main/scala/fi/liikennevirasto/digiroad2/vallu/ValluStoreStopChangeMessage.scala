@@ -6,7 +6,9 @@ object ValluStoreStopChangeMessage {
   def create(asset: AssetWithProperties): String = {
       val message =
       <Stops>
-        <StopId>{asset.externalId.get}</StopId>
+        <Stop>
+          <StopId>{asset.externalId.get}</StopId>
+        </Stop>
       </Stops>
     """<?xml version="1.0" encoding="UTF-8"?>""" + message.toString
   }
