@@ -70,6 +70,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._selectControl.unselectAll();
             }, this);
 
+            eventbus.on('tool:changed', function(action) {
+                var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
+                $('.olMap').css('cursor', cursor[action]);
+            });
+
+
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
