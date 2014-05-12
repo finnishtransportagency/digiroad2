@@ -21,6 +21,10 @@ window.AssetLayer = function(map, roadLayer) {
         return (8 < map.getZoom());
     };
 
+    var isInRoadLinkZoomLevel = function() {
+        return map.getZoom() >= 10;
+    };
+
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
             return (bearing) ? bearing + (90 * validityDirection): 90;
@@ -389,10 +393,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var moveSelectedAsset = function(pxPosition) {
-        if (readOnly) {
-            return;
-        }
-        if (!selectedAsset) {
+        if (readOnly || !selectedAsset || !isInRoadLinkZoomLevel()) {
             return;
         }
         if (selectedAsset.marker && selectedAsset.marker.actionMouseDown) {
