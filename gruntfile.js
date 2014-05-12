@@ -113,6 +113,14 @@ module.exports = function(grunt) {
       options: {
         livereload: true
       }
+    },
+    execute: {
+      vallu_local_test: {
+        options: {
+          args: ['localhost', 9002]
+        },
+        src: ['vallu_test_server.js']
+      }
     }
   });
 
@@ -125,8 +133,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
+  grunt.loadNpmTasks('grunt-execute');
 
-  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
+  grunt.registerTask('server', ['configureProxies:server', 'execute:vallu_local_test', 'connect', 'less:development', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
