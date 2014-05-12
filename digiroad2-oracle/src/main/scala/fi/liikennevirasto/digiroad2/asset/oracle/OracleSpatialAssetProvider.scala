@@ -72,8 +72,8 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         case None => logger.debug("not updating position")
         case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
       }
+      OracleSpatialAssetDao.getAssetById(assetId).get
     }
-    getAssetById(assetId).get
   }
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
