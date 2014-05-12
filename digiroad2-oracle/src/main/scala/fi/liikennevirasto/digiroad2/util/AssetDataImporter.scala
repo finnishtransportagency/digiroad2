@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
 import java.sql.Statement
 import java.text.{DecimalFormat, NumberFormat}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 
 object AssetDataImporter {
@@ -68,7 +69,7 @@ object AssetDataImporter {
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
-  lazy val assetProvider = new OracleSpatialAssetProvider(new OracleUserProvider)
+  lazy val assetProvider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
 
   val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))

@@ -4,12 +4,13 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import java.io.{FileOutputStream, OutputStreamWriter, BufferedWriter}
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 object LMJImport {
 
   val printer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("stops.txt"), "UTF-8"))
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(userProvider)
+  val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)
 
   def getAssetsForMunicipality(municipality: Int) = {
     print(s"$municipality,")

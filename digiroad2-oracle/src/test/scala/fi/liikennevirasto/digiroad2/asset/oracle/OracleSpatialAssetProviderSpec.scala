@@ -14,12 +14,13 @@ import fi.liikennevirasto.digiroad2.user.{Role, Configuration, User}
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.util.DataFixture.{TestAssetId, TestAssetTypeId, MunicipalityEspoo, MunicipalityKauniainen}
 import java.sql.SQLIntegrityConstraintViolationException
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val AssetCreator = "integration_test_add_asset"
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(userProvider)
+  val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)
   val user = User(
     id = 1,
     username = "Hannu",
@@ -271,13 +272,13 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("Load image by id", Tag("db")) {
-    val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+    val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val image = provider.getImage(2)
     image.size should (be > 1)
   }
 
   test("Loads all asset with properties in municipality find", Tag("db")) {
-    val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+    val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val municipalities = provider.getAssetsByMunicipality(235)
     municipalities.size should be(5)
   }

@@ -6,10 +6,11 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Or
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(userProvider)
+  val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)
   var assetsByMunicipality: Iterable[AssetWithProperties] = null
 
   before {
