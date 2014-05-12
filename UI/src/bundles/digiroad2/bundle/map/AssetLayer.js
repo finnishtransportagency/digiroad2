@@ -21,14 +21,6 @@ window.AssetLayer = function(map, roadLayer) {
     var clickCoords;
     var assetIsMoving = false;
 
-    var isInZoomLevel = function() {
-        return (8 < map.getZoom());
-    };
-
-    var isInRoadLinkZoomLevel = function() {
-        return map.getZoom() >= 10;
-    };
-
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
             return (bearing) ? bearing + (90 * validityDirection): 90;
@@ -450,7 +442,7 @@ window.AssetLayer = function(map, roadLayer) {
         renderAssets(assets);
     }, this);
     eventbus.on('map:moved', function(state) {
-      if (!isInZoomLevel() && selectedAssetController.isDirty()) {
+      if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetController.isDirty()) {
         new Confirm();
       } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
           backend.getAssets(10, state.bbox);
@@ -466,7 +458,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var events = map.events;
     events.register('mousemove', map, function(e) {
-        if (readOnly || !selectedAsset || !isInRoadLinkZoomLevel()) {
+        if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
             return;
         }
         if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
@@ -478,7 +470,7 @@ window.AssetLayer = function(map, roadLayer) {
     }, true);
 
     events.register('click', map, function(e) {
-        if (selectedControl === 'Add' && 9 < map.getZoom()) {
+        if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
         }
@@ -493,7 +485,7 @@ window.AssetLayer = function(map, roadLayer) {
         } else {
             map.addLayer(assetDirectionLayer);
             map.addLayer(assetLayer);
-            if (isInZoomLevel()) {
+            if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
                 backend.getAssets(10, map.getExtent());
             }
         }
