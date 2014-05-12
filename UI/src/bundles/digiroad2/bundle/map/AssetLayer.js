@@ -183,7 +183,7 @@ window.AssetLayer = function(map, roadLayer) {
         _.each(assetDatas, function(asset) {
             var isAssetSelectedAndDirty = function(asset) {
               return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetController.isDirty();
-            }
+            };
             if (isAssetSelectedAndDirty(asset)) {
               return;
             }
