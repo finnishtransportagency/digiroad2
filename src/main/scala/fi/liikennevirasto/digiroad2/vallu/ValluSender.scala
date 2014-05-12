@@ -10,8 +10,8 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 object ValluSender {
 
   // TODO: read from config
-  val httppost = new HttpPost("http://localhost:9002")
-  val httpclient = HttpClients.createDefault()
+  val httpPost = new HttpPost("http://localhost:9002")
+  val httpClient = HttpClients.createDefault()
 
   def postToVallu(asset: AssetWithProperties) {
     val payload =
@@ -47,8 +47,8 @@ object ValluSender {
 
   private def postToVallu(payload: String) = {
     val entity = new StringEntity(payload, ContentType.create("text/plain", "UTF-8"))
-    httppost.setEntity(entity)
-    val response = httpclient.execute(httppost)
+    httpPost.setEntity(entity)
+    val response = httpClient.execute(httpPost)
     try {
       // TODO: println "handling" out
       println(EntityUtils.toString(response.getEntity , Charset.forName("UTF-8")))
