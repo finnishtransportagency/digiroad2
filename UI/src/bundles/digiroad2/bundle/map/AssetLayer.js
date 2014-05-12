@@ -181,22 +181,20 @@ window.AssetLayer = function(map, roadLayer) {
     var renderAssets = function(assetDatas) {
         assetLayer.setVisibility(true);
         _.each(assetDatas, function(asset) {
-            if (!_.contains(_.pluck(assetLayer.markers, "id"), asset.id)) {
-                assets = assets || {};
-                if (assets[asset.id]) {
-                    removeAssetFromMap(assets[asset.id]);
-                }
-                assets[asset.id] = insertAsset(asset);
-                var assetIdFromURL = function() {
-                    var matches = window.location.hash.match(/\#\/asset\/(\d+)/);
-                    if (matches) {
-                        return matches[1];
-                    }
-                };
-                if (selectedAsset && selectedAsset.data.id == asset.id) {
-                    selectedAsset = assets[asset.id];
-                    highlightAsset(selectedAsset);
-                }
+            var isAssetSelectedAndDirty = function(asset) {
+              return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetController.isDirty();
+            }
+            if (isAssetSelectedAndDirty(asset)) {
+              return;
+            }
+            assets = assets || {};
+            if (assets[asset.id]) {
+              removeAssetFromMap(assets[asset.id]);
+            }
+            assets[asset.id] = insertAsset(asset);
+            if (selectedAsset && selectedAsset.data.id == asset.id) {
+              selectedAsset = assets[asset.id];
+              highlightAsset(selectedAsset);
             }
         });
 
@@ -453,8 +451,8 @@ window.AssetLayer = function(map, roadLayer) {
         renderAssets(assets);
     }, this);
     eventbus.on('map:moved', function(state) {
-      if (selectedAssetController.isDirty()) {
-          new Confirm();
+      if (!isInZoomLevel() && selectedAssetController.isDirty()) {
+        new Confirm();
       } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
           backend.getAssets(10, state.bbox);
       } else {
