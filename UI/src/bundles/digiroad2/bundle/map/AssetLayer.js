@@ -17,6 +17,10 @@ window.AssetLayer = function(map, roadLayer) {
     var selectedControl = 'Select';
     var assetMoveWaitTime = 300;
 
+    var clickTimestamp;
+    var clickCoords;
+    var assetIsMoving = false;
+
     var isInZoomLevel = function() {
         return (8 < map.getZoom());
     };
@@ -104,9 +108,6 @@ window.AssetLayer = function(map, roadLayer) {
         };
     };
 
-    var clickTimestamp;
-    var clickCoords;
-    var assetIsMoving = false;
     var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             if (selectedControl === 'Select') {
@@ -393,9 +394,6 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var moveSelectedAsset = function(pxPosition) {
-        if (readOnly || !selectedAsset || !isInRoadLinkZoomLevel()) {
-            return;
-        }
         if (selectedAsset.marker && selectedAsset.marker.actionMouseDown) {
             //var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(lon, lat));
             var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
@@ -468,11 +466,11 @@ window.AssetLayer = function(map, roadLayer) {
 
     var events = map.events;
     events.register('mousemove', map, function(e) {
-        if (readOnly) {
+        if (readOnly || !selectedAsset || !isInRoadLinkZoomLevel()) {
             return;
         }
         if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
-            (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
+                (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
             assetIsMoving = true;
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             moveSelectedAsset(pixel);
