@@ -77,7 +77,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
-    var mouseUp = function(asset, mouseClickFn) {
+    var mouseUp = function(asset) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
             clickTimestamp = null;
@@ -159,7 +159,7 @@ window.AssetLayer = function(map, roadLayer) {
         asset.data = assetData;
         asset.directionArrow = directionArrow;
         var mouseClickFn = mouseClick(asset);
-        var mouseUpFn = mouseUp(asset, mouseClickFn);
+        var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
         marker.validityPeriod = assetData.validityPeriod;
@@ -288,7 +288,7 @@ window.AssetLayer = function(map, roadLayer) {
                 selectedAsset.marker.effectDirection = effectDirection;
                 assetLayer.addMarker(selectedAsset.marker);
                 var mouseClickFn = mouseClick(selectedAsset);
-                var mouseUpFn = mouseUp(selectedAsset, mouseClickFn);
+                var mouseUpFn = mouseUp(selectedAsset);
                 var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
                 selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
                 assetLayer.redraw();
