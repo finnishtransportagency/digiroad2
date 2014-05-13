@@ -24,6 +24,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val stopElement = parseTestAssetMessage(testAsset)
     stopElement \ "AdminStopId" must be ('empty)
     stopElement \ "StopCode" must be ('empty)
+    stopElement \ "Names" must be ('empty)
   }
 
   it must "specify external id" in {
