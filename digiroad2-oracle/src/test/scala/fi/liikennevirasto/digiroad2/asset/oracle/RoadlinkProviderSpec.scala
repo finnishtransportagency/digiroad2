@@ -21,7 +21,7 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.asset.RoadLink
-
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll
   with MockitoSugar {
@@ -49,7 +49,7 @@ class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfte
     id = 3,
     username = "User",
     configuration = Configuration(authorizedMunicipalities = Set(99995)))
-  val provider = new OracleSpatialAssetProvider(new OracleUserProvider)
+  val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
   val ds = OracleDatabase.initDataSource
   val mockedProvider = mock[NodeProvider]
   val originalProvider = RoadlinkProvider.roadNodeProvider

@@ -7,10 +7,11 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
+import fi.liikennevirasto.digiroad2.DummyEventBus
 
 class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(userProvider)
+  val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)
   val user = User(
     id = 1,
     username = "Hannu",
