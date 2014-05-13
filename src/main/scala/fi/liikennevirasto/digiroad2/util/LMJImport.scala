@@ -1,20 +1,19 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import java.io.{FileOutputStream, OutputStreamWriter, BufferedWriter}
-import fi.liikennevirasto.digiroad2.DummyEventBus
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import scala.slick.driver.JdbcDriver.backend.Database
 
 object LMJImport {
-
   val printer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("stops.txt"), "UTF-8"))
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)
 
   def getAssetsForMunicipality(municipality: Int) = {
     print(s"$municipality,")
-    provider.getAssetsByMunicipality(municipality)
+    OracleSpatialAssetDao.getAssetsByMunicipality(municipality)
   }
 
   def getLMJRowsForAsset(asset: AssetWithProperties) = {
@@ -22,7 +21,7 @@ object LMJImport {
   }
 
   def getMunicipalities = {
-    provider.getMunicipalities
+    OracleSpatialAssetDao.getMunicipalities
   }
 
   def writeAssetByMunicipality(municipalityCode: Int) {
@@ -34,15 +33,17 @@ object LMJImport {
   def main(args:Array[String]) : Unit = {
     if (args.length > 0) {
       printer.write(AssetLMJFormatter.fields + "\n")
-      println("Get assets for municipality:");
-      if (args.head == "all") {
-        getMunicipalities.foreach {
+      println("Get assets for municipality:")
+      Database.forDataSource(ds).withDynSession {
+        if (args.head == "all") {
+          getMunicipalities.foreach {
+            x =>
+              writeAssetByMunicipality(x)
+          }
+        } else args.foreach {
           x =>
-            writeAssetByMunicipality(x)
+            writeAssetByMunicipality(x.toInt)
         }
-      } else args.foreach {
-        x =>
-          writeAssetByMunicipality(x.toInt)
       }
       printer.close()
     } else {
