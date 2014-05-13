@@ -204,7 +204,7 @@ Jos pysäkin muutoksia ei peru tai tallenna ennen kuin siirtyy muokkaamaan muita
 
 _Joukkoliikenteen pysäkin ominaisuustietojen muokkaus._
 
-![Muutos-dialogi.](k21.jpg)
+![Muutos-dialogi.](k21.JPG)
 
 _Muutos-dialogi._
 
@@ -333,3 +333,5 @@ _Joukkoliikenteen pysäkin poistaminen._
 
 5.2 Nopeusrajoitukset
 ---------------------
+
+
