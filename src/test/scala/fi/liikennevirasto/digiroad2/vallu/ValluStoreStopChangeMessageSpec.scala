@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
-import scala.xml.XML
+import scala.xml.{Elem, XML}
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val testAsset = AssetWithProperties(
@@ -20,9 +20,14 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     message startsWith("""<?xml version="1.0" encoding="UTF-8"?>""")
   }
 
+  it must "exclude optional elements" in {
+    val rootElement = parseTestAssetMessage()
+    val stopElement = rootElement \ "Stop"
+    stopElement \ "AdminStopId" must be ('empty)
+  }
+
   it must "specify external id" in {
-    val message: String = ValluStoreStopChangeMessage.create(testAsset)
-    val rootElement = XML.loadString(message)
+    val rootElement = parseTestAssetMessage()
     val stopId = rootElement \ "Stop" \ "StopId"
     stopId.text must equal("123")
   }
@@ -33,6 +38,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val rootElement = XML.loadString(message)
     val stopId = rootElement \ "Stop" \ "AdminStopId"
     stopId.text must equal("Livi83857")
+  }
+
+  private def parseTestAssetMessage(): Elem = {
+    val message: String = ValluStoreStopChangeMessage.create(testAsset)
+    XML.loadString(message)
   }
 
   private def testAssetWithProperty(propertyPublicId: String, propertyValue: String) = {
