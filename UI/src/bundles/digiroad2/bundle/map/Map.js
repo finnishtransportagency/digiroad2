@@ -48,7 +48,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         init: function (sandbox) {
             eventbus.on('application:initialized', function() {
                 this._zoomNotInMessage = this._getNotInZoomRange();
-                this._oldZoomLevel = this._isInZoomLevel() ? this._map.getZoom() : -1;
+                this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
 
             }, this);
@@ -111,7 +111,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             'AfterMapMoveEvent': function(event) {
                 this._handleRoadsVisibility();
                 eventbus.trigger('map:moved', {zoom: this._map.getZoom(), bbox: this._map.getExtent()});
-                if (!this._isInZoomLevel()) {
+                if (!zoomlevels.isInAssetZoomLevel(this._map.getZoom())) {
                     if(this._zoomNotInMessage) {
                         this._zoomNotInMessage();
                     }
@@ -128,12 +128,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._addMapLayerToMap(layer);
             }
         },
-        _isInRoadLinkZoomLevel: function() {
-            return this._map.getZoom() >= this._visibilityZoomLevelForRoads;
-        },
         _handleRoadsVisibility: function() {
             if (this._layers && _.isObject(this._layers.road)) {
-                this._layers.road.setVisibility(this._isInRoadLinkZoomLevel());
+                this._layers.road.setVisibility(zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom()));
             }
         },
         _afterMapLayerAddEvent: function (event) {
@@ -161,9 +158,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this._layers = {road: roadLayer};
             new AssetLayer(this._map, roadLayer);
             new LinearAssetLayer(this._map);
-        },
-        _isInZoomLevel: function() {
-            return this._map.getZoom() > 8;
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {

@@ -21,14 +21,6 @@ window.AssetLayer = function(map, roadLayer) {
     var clickCoords;
     var assetIsMoving = false;
 
-    var isInZoomLevel = function() {
-        return (8 < map.getZoom());
-    };
-
-    var isInRoadLinkZoomLevel = function() {
-        return map.getZoom() >= 10;
-    };
-
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
             return (bearing) ? bearing + (90 * validityDirection): 90;
@@ -85,7 +77,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
-    var mouseUp = function(asset, mouseClickFn) {
+    var mouseUp = function(asset) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
             clickTimestamp = null;
@@ -167,7 +159,7 @@ window.AssetLayer = function(map, roadLayer) {
         asset.data = assetData;
         asset.directionArrow = directionArrow;
         var mouseClickFn = mouseClick(asset);
-        var mouseUpFn = mouseUp(asset, mouseClickFn);
+        var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
         marker.validityPeriod = assetData.validityPeriod;
@@ -296,7 +288,7 @@ window.AssetLayer = function(map, roadLayer) {
                 selectedAsset.marker.effectDirection = effectDirection;
                 assetLayer.addMarker(selectedAsset.marker);
                 var mouseClickFn = mouseClick(selectedAsset);
-                var mouseUpFn = mouseUp(selectedAsset, mouseClickFn);
+                var mouseUpFn = mouseUp(selectedAsset);
                 var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
                 selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
                 assetLayer.redraw();
@@ -450,7 +442,7 @@ window.AssetLayer = function(map, roadLayer) {
         renderAssets(assets);
     }, this);
     eventbus.on('map:moved', function(state) {
-      if (!isInZoomLevel() && selectedAssetController.isDirty()) {
+      if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetController.isDirty()) {
         new Confirm();
       } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
           backend.getAssets(10, state.bbox);
@@ -466,7 +458,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var events = map.events;
     events.register('mousemove', map, function(e) {
-        if (readOnly || !selectedAsset || !isInRoadLinkZoomLevel()) {
+        if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
             return;
         }
         if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
@@ -478,7 +470,7 @@ window.AssetLayer = function(map, roadLayer) {
     }, true);
 
     events.register('click', map, function(e) {
-        if (selectedControl === 'Add' && 9 < map.getZoom()) {
+        if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
         }
@@ -493,7 +485,7 @@ window.AssetLayer = function(map, roadLayer) {
         } else {
             map.addLayer(assetDirectionLayer);
             map.addLayer(assetLayer);
-            if (isInZoomLevel()) {
+            if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
                 backend.getAssets(10, map.getExtent());
             }
         }
