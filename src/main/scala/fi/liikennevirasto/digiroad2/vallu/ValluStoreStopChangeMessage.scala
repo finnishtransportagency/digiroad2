@@ -7,7 +7,7 @@ object ValluStoreStopChangeMessage {
 
   def create(asset: AssetWithProperties): String = {
     val mandatoryProperties = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
-    val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>))
+    val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
 
     val childElements = optionalProperties
       .foldLeft(mandatoryProperties) {

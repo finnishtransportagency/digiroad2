@@ -34,14 +34,21 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "specify administrator stop id" in {
     val asset = testAssetWithProperty("yllapitajan_tunnus", "Livi83857")
-    val message: String = ValluStoreStopChangeMessage.create(asset)
+    val message = ValluStoreStopChangeMessage.create(asset)
     val rootElement = XML.loadString(message)
     val stopId = rootElement \ "Stop" \ "AdminStopId"
     stopId.text must equal("Livi83857")
   }
 
+  it must "specify stop code for stop" in {
+    val asset = testAssetWithProperty("matkustajatunnus", "Poliisilaitos")
+    val message = ValluStoreStopChangeMessage.create(asset)
+    val stopCode = XML.loadString(message) \ "Stop" \ "StopCode"
+    stopCode.text must equal("Poliisilaitos")
+  }
+
   private def parseTestAssetMessage(): Elem = {
-    val message: String = ValluStoreStopChangeMessage.create(testAsset)
+    val message = ValluStoreStopChangeMessage.create(testAsset)
     XML.loadString(message)
   }
 
