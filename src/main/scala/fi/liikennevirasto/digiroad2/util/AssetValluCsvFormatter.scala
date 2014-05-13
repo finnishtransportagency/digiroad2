@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -13,15 +14,15 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
-  def valluCsvRowsFromAssets(assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
-    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(isOnlyTramStop).map(formatFromAssetWithPropertiesValluCsv)
+  def valluCsvRowsFromAssets(municipalityId: Long, municipalityName: String, assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
+    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(isOnlyTramStop).map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
   }
 
-  def formatAssetsWithProperties(assets: Iterable[AssetWithProperties]): Iterable[String] = {
-    assets.map(formatFromAssetWithPropertiesValluCsv)
+  def formatAssetsWithProperties(municipalityId: Long, municipalityName: String, assets: Iterable[AssetWithProperties]): Iterable[String] = {
+    assets.map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
   }
 
-  def formatFromAssetWithPropertiesValluCsv(asset: AssetWithProperties): String = {
+  def formatFromAssetWithPropertiesValluCsv(municipalityId: Long, municipalityName: String, asset: AssetWithProperties): String = {
     (addStopId _)
       .andThen (addAdminStopId _)
       .andThen (addStopCode _)
@@ -41,7 +42,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
       .andThen (addModifiedInfo _)
       .andThen (addValidityPeriods _)
       .andThen (addMaintainerId _)
-      .andThen (addMunicipalityInfo _)
+      .andThen (addMunicipalityInfo(municipalityId, municipalityName, _))
       .andThen (addComments _)
       .andThen (addContactEmail _)
       .apply(asset, List())._2.reverse.mkString(";")
@@ -108,11 +109,9 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     (asset, comments.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
-  private def addMunicipalityInfo(params: (AssetWithProperties, List[String])) = {
+  private def addMunicipalityInfo(municipalityId: Long, municipalityName: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val code = asset.municipalityNumber.get
-    val name = provider.getMunicipalityNameByCode(code)
-    (asset, name :: code.toString :: result)
+    (asset, municipalityName :: municipalityId.toString :: result)
   }
 
   private def addAddress(params: (AssetWithProperties, List[String])) = {
