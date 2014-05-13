@@ -6,11 +6,11 @@ import scala.xml.{Node, XML, Elem}
 object ValluStoreStopChangeMessage {
 
   def create(asset: AssetWithProperties): String = {
-    val mandatoryElements = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
+    val mandatoryProperties = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
     val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>))
 
     val childElements = optionalProperties
-      .foldLeft(mandatoryElements) {
+      .foldLeft(mandatoryProperties) {
       (elements, optionalProperty) =>
         val (propertyPublicId, wrapperElement) = optionalProperty
         val optionalElement = propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
