@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
-import scala.xml.{Elem, XML}
+import scala.xml.{NodeSeq, Node, Elem, XML}
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val testAsset = AssetWithProperties(
@@ -21,36 +21,32 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   }
 
   it must "exclude optional elements" in {
-    val rootElement = parseTestAssetMessage()
-    val stopElement = rootElement \ "Stop"
+    val stopElement = parseTestAssetMessage(testAsset)
     stopElement \ "AdminStopId" must be ('empty)
     stopElement \ "StopCode" must be ('empty)
   }
 
   it must "specify external id" in {
-    val rootElement = parseTestAssetMessage()
-    val stopId = rootElement \ "Stop" \ "StopId"
+    val stopElement = parseTestAssetMessage(testAsset)
+    val stopId = stopElement \ "StopId"
     stopId.text must equal("123")
   }
 
   it must "specify administrator stop id" in {
-    val asset = testAssetWithProperty("yllapitajan_tunnus", "Livi83857")
-    val message = ValluStoreStopChangeMessage.create(asset)
-    val rootElement = XML.loadString(message)
-    val stopId = rootElement \ "Stop" \ "AdminStopId"
+    val stopElement = parseTestAssetMessage(testAssetWithProperty("yllapitajan_tunnus", "Livi83857"))
+    val stopId = stopElement \ "AdminStopId"
     stopId.text must equal("Livi83857")
   }
 
   it must "specify stop code for stop" in {
-    val asset = testAssetWithProperty("matkustajatunnus", "Poliisilaitos")
-    val message = ValluStoreStopChangeMessage.create(asset)
-    val stopCode = XML.loadString(message) \ "Stop" \ "StopCode"
+    val stopElement = parseTestAssetMessage(testAssetWithProperty("matkustajatunnus", "Poliisilaitos"))
+    val stopCode = stopElement \ "StopCode"
     stopCode.text must equal("Poliisilaitos")
   }
 
-  private def parseTestAssetMessage(): Elem = {
-    val message = ValluStoreStopChangeMessage.create(testAsset)
-    XML.loadString(message)
+  private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
+    val message = ValluStoreStopChangeMessage.create(asset)
+    XML.loadString(message) \ "Stop"
   }
 
   private def testAssetWithProperty(propertyPublicId: String, propertyValue: String) = {
