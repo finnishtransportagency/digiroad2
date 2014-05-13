@@ -33,22 +33,24 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   }
 
   it must "specify administrator stop id" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperty("yllapitajan_tunnus", "Livi83857"))
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
     val stopId = stopElement \ "AdminStopId"
     stopId.text must equal("Livi83857")
   }
 
   it must "specify stop code for stop" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperty("matkustajatunnus", "Poliisilaitos"))
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
     val stopCode = stopElement \ "StopCode"
     stopCode.text must equal("Poliisilaitos")
   }
 
   it must "specify stop name in Finnish and Swedish" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperty("nimi_suomeksi", "Puutarhatie"))
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"), ("nimi_ruotsiksi", "Trädgårdvägen"))))
     val nameElements = stopElement \ "Names" \ "Name"
     val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
+    val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
     nameFi.text must equal("Puutarhatie")
+    nameSv.text must equal("Trädgårdvägen")
   }
 
   private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
@@ -56,11 +58,14 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     XML.loadString(message) \ "Stop"
   }
 
-  private def testAssetWithProperty(propertyPublicId: String, propertyValue: String) = {
-    testAsset.copy(propertyData = List(Property(
-      id = 1,
-      publicId = propertyPublicId,
-      propertyType = PropertyTypes.Text,
-      values = List(PropertyValue(propertyValue)))))
+  private def testAssetWithProperties(properties: List[(String, String)]) = {
+    testAsset.copy(propertyData = properties.map { property =>
+      Property(
+        id = 1,
+        publicId = property._1,
+        propertyType = PropertyTypes.Text,
+        values = List(PropertyValue(property._2))
+      )
+    }.toSeq)
   }
 }

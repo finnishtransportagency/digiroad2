@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.xml._
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
@@ -10,14 +9,17 @@ object ValluStoreStopChangeMessage {
   def create(asset: AssetWithProperties): String = {
     val mandatoryProperties = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
     val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
+    val nameProperties = List(("nimi_suomeksi", "fi"), ("nimi_ruotsiksi", "sv"))
 
-    val nameElements = elementListFromProperties(Seq[Node](), List(("nimi_suomeksi", <Name/>)), {(propertyPublicId, wrapperElement) =>
-      propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
-        .map(_.copy(attributes = new UnprefixedAttribute("lang", "fi", Null)))
+    val nameElements = appendOptionalElements(Seq[Node](), nameProperties.map { property =>
+      val (propertyPublicId, attributeValue) = property
+      propertyValueToXmlElement(asset, propertyPublicId, <Name/>)
+        .map(_.copy(attributes = new UnprefixedAttribute("lang", attributeValue, Null)))
     })
     val namesElement = <Names/>.copy(child = nameElements)
 
-    val childElements = elementListFromProperties(mandatoryProperties, optionalProperties, {(propertyPublicId, wrapperElement) =>
+    val childElements = appendOptionalElements(mandatoryProperties, optionalProperties.map { property =>
+      val (propertyPublicId, wrapperElement) = property
       propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
     }) :+ namesElement
 
@@ -27,10 +29,8 @@ object ValluStoreStopChangeMessage {
     """<?xml version="1.0" encoding="UTF-8"?>""" + message.toString
   }
 
-  private def elementListFromProperties(headElements: Seq[Node], properties: Seq[(String, Elem)], elementGenerator: (String, Elem) => Option[Elem]): Seq[Node] = {
-    properties.foldLeft(headElements) {(elements, property) =>
-      val (propertyPublicId, wrapperElement) = property
-      val optionalElement = elementGenerator(propertyPublicId, wrapperElement)
+  private def appendOptionalElements(headElements: Seq[Node], optionalElements: Seq[Option[Elem]]): Seq[Node] = {
+    optionalElements.foldLeft(headElements) {(elements, optionalElement) =>
       optionalElement match {
         case Some(element) => elements :+ element
         case _ => elements
