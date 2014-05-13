@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import scala.xml.{Node, XML, Elem}
+import scala.xml._
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import scala.Some
 
 object ValluStoreStopChangeMessage {
 
@@ -9,21 +11,31 @@ object ValluStoreStopChangeMessage {
     val mandatoryProperties = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
     val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
 
-    val childElements = optionalProperties
-      .foldLeft(mandatoryProperties) {
-      (elements, optionalProperty) =>
-        val (propertyPublicId, wrapperElement) = optionalProperty
-        val optionalElement = propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
-        optionalElement match {
-          case Some(element) => elements :+ element
-          case _ => elements
-        }
-    }
+    val nameElements = elementListFromProperties(Seq[Node](), List(("nimi_suomeksi", <Name/>)), {(propertyPublicId, wrapperElement) =>
+      propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
+        .map(_.copy(attributes = new UnprefixedAttribute("lang", "fi", Null)))
+    })
+    val namesElement = <Names/>.copy(child = nameElements)
+
+    val childElements = elementListFromProperties(mandatoryProperties, optionalProperties, {(propertyPublicId, wrapperElement) =>
+      propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
+    }) :+ namesElement
 
     val stopElement= <Stop/>.copy(child = childElements)
     val message = <Stops/>.copy(child = stopElement)
 
     """<?xml version="1.0" encoding="UTF-8"?>""" + message.toString
+  }
+
+  private def elementListFromProperties(headElements: Seq[Node], properties: Seq[(String, Elem)], elementGenerator: (String, Elem) => Option[Elem]): Seq[Node] = {
+    properties.foldLeft(headElements) {(elements, property) =>
+      val (propertyPublicId, wrapperElement) = property
+      val optionalElement = elementGenerator(propertyPublicId, wrapperElement)
+      optionalElement match {
+        case Some(element) => elements :+ element
+        case _ => elements
+      }
+    }
   }
 
   private def propertyValueToXmlElement(asset: AssetWithProperties, propertyPublicId: String, wrapperElement: Elem): Option[Elem] = {

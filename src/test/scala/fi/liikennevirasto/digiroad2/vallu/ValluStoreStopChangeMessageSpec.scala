@@ -44,6 +44,13 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     stopCode.text must equal("Poliisilaitos")
   }
 
+  it must "specify stop name in Finnish and Swedish" in {
+    val stopElement = parseTestAssetMessage(testAssetWithProperty("nimi_suomeksi", "Puutarhatie"))
+    val nameElements = stopElement \ "Names" \ "Name"
+    val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
+    nameFi.text must equal("Puutarhatie")
+  }
+
   private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
     val message = ValluStoreStopChangeMessage.create(asset)
     XML.loadString(message) \ "Stop"
