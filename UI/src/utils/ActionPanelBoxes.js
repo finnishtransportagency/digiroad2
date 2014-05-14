@@ -152,6 +152,8 @@
         }
         elements.editMode.hide();
         elements.expanded.show();
+        actionButtons.removeClass('actionButtonActive');
+        actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
         eventbus.trigger('application:readOnly', true);
       });
 
