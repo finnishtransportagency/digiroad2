@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Modification, Image, PropertyRow, AssetRow}
+import org.joda.time.LocalDate
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
@@ -24,5 +26,12 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
     OracleSpatialAssetDao.getBearingDescription(3, Some(225)) must equal("Pohjoinen")
     OracleSpatialAssetDao.getBearingDescription(3, Some(226)) must equal("Itä")
     OracleSpatialAssetDao.getBearingDescription(3, Some(315)) must equal("Itä")
+  }
+
+  test("bearing property row generates bearing description") {
+    val propertyRow = PropertyRow(1, "liikennointisuuntima", "", 1, false, "", "")
+    val properties = OracleSpatialAssetDao.assetRowToProperty(List(AssetRow(1, None, 1, 1, 1, 1, Some(180),
+      2, None, None, propertyRow, Image(None, None), None, 1, Modification(None, None), Modification(None, None), 1, 1)))
+    properties.head.values.head.propertyDisplayValue must equal(Some("Etelä"))
   }
 }
