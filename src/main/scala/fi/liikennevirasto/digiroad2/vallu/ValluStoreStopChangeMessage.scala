@@ -5,16 +5,23 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
 
 object ValluStoreStopChangeMessage {
-
   def create(asset: AssetWithProperties): String = {
     val mandatoryElements: List[Node] = List(
       <StopId>{asset.externalId.get}</StopId>,
       <Coordinate>
         <xCoordinate>{asset.wgslon}</xCoordinate>
         <yCoordinate>{asset.wgslat}</yCoordinate>
-      </Coordinate>)
+      </Coordinate>,
+      <Bearing>{asset.bearing.flatMap { bearing =>
+        asset.validityDirection.map { validityDirection =>
+          ValluTransformer.calculateActualBearing(validityDirection, bearing)
+        }
+      }.getOrElse("")}</Bearing>)
 
-    val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
+    val optionalProperties =
+      List(
+        ("yllapitajan_tunnus", <AdminStopId/>),
+        ("matkustajatunnus", <StopCode/>))
     val nameProperties = List(("nimi_suomeksi", "fi"), ("nimi_ruotsiksi", "sv"))
 
     val nameElements = createOptionalElements(nameProperties.map { property =>

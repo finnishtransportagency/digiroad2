@@ -13,11 +13,13 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     id = 1,
     externalId = Some(123),
     assetTypeId = 1,
+    validityDirection = Some(2),
     lon = 1,
     lat = 1,
     roadLinkId = 1,
     wgslon = 1,
-    wgslat = 1
+    wgslat = 1,
+    bearing = Some(120)
   )
 
   it must "specify encoding" in {
@@ -49,6 +51,12 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val xml = parseTestAssetMessage(testAsset)
     val yCoordinate = xml \ "Coordinate" \ "yCoordinate"
     yCoordinate.text.toDouble must equal(1.0)
+  }
+
+  it must "specify bearing" in {
+    val xml = parseTestAssetMessage(testAsset)
+    val bearing = xml \ "Bearing"
+    bearing.text must equal("120")
   }
 
   it must "specify administrator stop id" in {
