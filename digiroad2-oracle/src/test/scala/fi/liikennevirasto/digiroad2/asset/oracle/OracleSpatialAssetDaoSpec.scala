@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Modification, Image, PropertyRow, AssetRow}
-import org.joda.time.LocalDate
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
@@ -30,8 +29,21 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
   test("bearing property row generates bearing description") {
     val propertyRow = PropertyRow(1, "liikennointisuuntima", "", 1, false, "", "")
-    val properties = OracleSpatialAssetDao.assetRowToProperty(List(AssetRow(1, None, 1, 1, 1, 1, Some(180),
-      2, None, None, propertyRow, Image(None, None), None, 1, Modification(None, None), Modification(None, None), 1, 1)))
+    val properties = OracleSpatialAssetDao.assetRowToProperty(List(createAssetRow(propertyRow)))
+    properties.head.publicId must equal("liikennointisuuntima")
     properties.head.values.head.propertyDisplayValue must equal(Some("Etelä"))
+  }
+
+  test("asset row values are mapped correctly to property row") {
+    val propertyRow = PropertyRow(1, "sometestproperty", "", 1, false, "123", "foo")
+    val properties = OracleSpatialAssetDao.assetRowToProperty(List(createAssetRow(propertyRow)))
+    properties.head.publicId must equal("sometestproperty")
+    properties.head.values.head.propertyDisplayValue must equal(Some("foo"))
+    properties.head.values.head.propertyValue must equal("123")
+  }
+
+  private def createAssetRow(propertyRow: PropertyRow) = {
+    AssetRow(1, None, 1, 1, 1, 1, Some(180), 2, None, None, propertyRow, Image(None, None),
+      None, 1, Modification(None, None), Modification(None, None), 1, 1)
   }
 }

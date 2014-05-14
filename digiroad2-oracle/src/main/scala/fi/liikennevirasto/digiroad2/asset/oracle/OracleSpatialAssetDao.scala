@@ -69,18 +69,22 @@ object OracleSpatialAssetDao {
   }
 
   private[oracle] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
-    assetRows.groupBy(_.property.propertyId).map { case (key, propertyValues) =>
-      val row = propertyValues.head
+    assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
+      val row = assetRows.head
       Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
-        propertyValues.map(propertyValue =>
+        assetRows.map(assetRow =>
           PropertyValue(
-            propertyValue.property.propertyValue,
-            if (row.property.publicId == "liikennointisuuntima") Some(getBearingDescription(row.validityDirection, row.bearing))
-            else if (propertyValue.property.propertyDisplayValue != null) Some(propertyValue.property.propertyDisplayValue)
-            else None,
-            getImageId(propertyValue.image))
+            assetRow.property.propertyValue,
+            propertyDisplayValueFromAssetRow(assetRow),
+            getImageId(assetRow.image))
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
+  }
+  
+  private def propertyDisplayValueFromAssetRow(assetRow: AssetRow): Option[String] = {
+    if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
+    else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
+    else None
   }
 
   private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
