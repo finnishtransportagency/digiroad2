@@ -7,8 +7,10 @@ var server = http.createServer( function(req, res) {
         req.on('data', function (data) {
             body += data;
         });
+
         req.on('end', function () {
             res.writeHead(200, {'Content-Type': 'text/xml'});
+            console.log(body);
             res.end(body);
         });
     }
