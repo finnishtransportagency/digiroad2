@@ -195,13 +195,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private[util] def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val description = calculateActualBearing(asset.validityDirection.getOrElse(1), asset.bearing).getOrElse(0) match {
-      case x if 46 to 135 contains x => "Itään"
-      case x if 136 to 225 contains x => "Etelään"
-      case x if 226 to 315 contains x => "Länteen"
-      case _ => "Pohjoiseen"
-    }
-    (asset, description :: result)
+    val bearingDescription = getPropertyValuesByPublicId("liikennointisuuntima", asset.propertyData)
+    (asset, bearingDescription.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
