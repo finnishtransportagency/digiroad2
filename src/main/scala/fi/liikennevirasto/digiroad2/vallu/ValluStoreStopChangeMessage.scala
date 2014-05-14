@@ -7,7 +7,13 @@ import scala.Some
 object ValluStoreStopChangeMessage {
 
   def create(asset: AssetWithProperties): String = {
-    val mandatoryElements = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
+    val mandatoryElements: List[Node] = List(
+      <StopId>{asset.externalId.get}</StopId>,
+      <Coordinate>
+        <xCoordinate>{asset.wgslon}</xCoordinate>
+        <yCoordinate>{asset.wgslat}</yCoordinate>
+      </Coordinate>)
+
     val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
     val nameProperties = List(("nimi_suomeksi", "fi"), ("nimi_ruotsiksi", "sv"))
 
