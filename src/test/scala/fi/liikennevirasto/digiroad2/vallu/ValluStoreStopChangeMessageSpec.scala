@@ -3,6 +3,10 @@ package fi.liikennevirasto.digiroad2.vallu
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
 import scala.xml.{NodeSeq, Node, Elem, XML}
+import javax.xml.validation.SchemaFactory
+import javax.xml.XMLConstants
+import java.io.{StringReader, ByteArrayInputStream}
+import javax.xml.transform.stream.StreamSource
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val testAsset = AssetWithProperties(
@@ -17,6 +21,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "specify encoding" in {
     val message: String = ValluStoreStopChangeMessage.create(testAsset)
+    validateValluMessage(message)
     message startsWith("""<?xml version="1.0" encoding="UTF-8"?>""")
   }
 
@@ -52,6 +57,13 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
     nameFi.text must equal("Puutarhatie")
     nameSv.text must equal("Trädgårdvägen")
+  }
+
+  private def validateValluMessage(valluMessage: String) = {
+    val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+    val source = new StreamSource(getClass.getResourceAsStream("/StopChange.xsd"))
+    val schema = schemaFactory.newSchema(source)
+    schema.newValidator().validate(new StreamSource(new StringReader(valluMessage)))
   }
 
   private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
