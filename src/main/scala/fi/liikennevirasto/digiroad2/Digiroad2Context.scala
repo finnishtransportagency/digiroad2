@@ -28,7 +28,6 @@ object Digiroad2Context {
 
   val system = ActorSystem("Digiroad2")
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
-  val eventbus = new DigiroadEventBus
   eventbus.subscribe(vallu, "asset:saved")
 
   lazy val authenticationTestModeEnabled: Boolean = {
@@ -52,6 +51,10 @@ object Digiroad2Context {
 
   lazy val municipalityProvider: MunicipalityProvider = {
     Class.forName(properties.getProperty("digiroad2.municipalityProvider")).newInstance().asInstanceOf[MunicipalityProvider]
+  }
+
+  lazy val eventbus: DigiroadEventBus = {
+    Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
   val env = System.getProperty("env")

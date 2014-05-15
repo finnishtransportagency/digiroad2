@@ -13,6 +13,7 @@ object Digiroad2Build extends Build {
   val ScalaVersion = "2.10.2"
   val ScalatraVersion = "2.2.1"
   val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
+  val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
   lazy val geoJar = Project (
     Digiroad2GeoName,
     file(Digiroad2GeoName),
@@ -57,7 +58,9 @@ object Digiroad2Build extends Build {
         "com.github.tototoshi" %% "scala-csv" % "1.0.0",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3" % "test"
-      ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
+      ),
+      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
+      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
   ) dependsOn(geoJar)
 
@@ -88,7 +91,9 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.14.v20131031" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "8.1.14.v20131031" % "container;compile",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      ), unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env
+      ),
+      unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
+      unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
   ) dependsOn(geoJar, oracleJar) aggregate(oracleJar)
 
