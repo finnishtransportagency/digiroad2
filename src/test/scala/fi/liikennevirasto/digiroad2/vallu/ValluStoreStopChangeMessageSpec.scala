@@ -26,32 +26,32 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   }
 
   it must "exclude optional elements" in {
-    val stopElement = parseTestAssetMessage(testAsset)
+    val stopElement = validateAndParseTestAssetMessage(testAsset)
     stopElement \ "AdminStopId" must be ('empty)
     stopElement \ "StopCode" must be ('empty)
     stopElement \ "Names" must be ('empty)
   }
 
   it must "specify external id" in {
-    val stopElement = parseTestAssetMessage(testAsset)
+    val stopElement = validateAndParseTestAssetMessage(testAsset)
     val stopId = stopElement \ "StopId"
     stopId.text must equal("123")
   }
 
   it must "specify administrator stop id" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
+    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
     val stopId = stopElement \ "AdminStopId"
     stopId.text must equal("Livi83857")
   }
 
   it must "specify stop code for stop" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
+    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
     val stopCode = stopElement \ "StopCode"
     stopCode.text must equal("Poliisilaitos")
   }
 
   it must "specify stop name in Finnish and Swedish" in {
-    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"), ("nimi_ruotsiksi", "Trädgårdvägen"))))
+    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"), ("nimi_ruotsiksi", "Trädgårdvägen"))))
     val nameElements = stopElement \ "Names" \ "Name"
     val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
     val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
@@ -66,8 +66,9 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     schema.newValidator().validate(new StreamSource(new StringReader(valluMessage)))
   }
 
-  private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
+  private def validateAndParseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
     val message = ValluStoreStopChangeMessage.create(asset)
+    validateValluMessage(message)
     XML.loadString(message) \ "Stop"
   }
 
