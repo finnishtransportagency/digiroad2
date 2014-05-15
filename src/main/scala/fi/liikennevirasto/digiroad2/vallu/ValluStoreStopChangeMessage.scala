@@ -1,64 +1,45 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import scala.xml._
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import scala.Some
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 
 object ValluStoreStopChangeMessage {
   def create(asset: AssetWithProperties): String = {
-    val mandatoryElements: List[Node] = List(
-      <StopId>{asset.externalId.get}</StopId>,
-      <Coordinate>
-        <xCoordinate>{asset.wgslon}</xCoordinate>
-        <yCoordinate>{asset.wgslat}</yCoordinate>
-      </Coordinate>,
-      <Bearing>{asset.bearing.flatMap { bearing =>
-        asset.validityDirection.map { validityDirection =>
-          ValluTransformer.calculateActualBearing(validityDirection, bearing)
-        }
-      }.getOrElse("")}</Bearing>)
+    <Stops>
+      <Stop>
+        <StopId>{asset.externalId.get}</StopId>
+        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId>
+        <StopCode>{extractPropertyValue(asset, "matkustajatunnus").getOrElse("")}</StopCode>
+        <Coordinate>
+          <xCoordinate>{asset.wgslon}</xCoordinate>
+          <yCoordinate>{asset.wgslat}</yCoordinate>
+        </Coordinate>
+            <Names>
+              <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
+              <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
+            </Names>
+        <Bearing>{asset.bearing.flatMap { bearing =>
+          asset.validityDirection.map { validityDirection =>
+            ValluTransformer.calculateActualBearing(validityDirection, bearing)
+          }
+        }.getOrElse("")}</Bearing>
+        <StopAttribute>
+          <StopType name="LOCAL_BUS">0</StopType>
+          <StopType name="EXPRESS_BUS">1</StopType>
+          <StopType name="NON_STOP_EXPRESS_BUS">0</StopType>
+          <StopType name="VIRTUAL_STOP">0</StopType>
+        </StopAttribute>
+        <Equipment/>
+        <ModifiedTimestamp>{extractPropertyValue(asset, "muokattu_viimeksi").getOrElse("").takeRight(20).trim}</ModifiedTimestamp>
+        <ModifiedBy>Digiroad 2 app</ModifiedBy>
+        <AdministratorCode>{extractPropertyValue(asset, "yllapitajan_koodi").getOrElse("")}</AdministratorCode>
+        <MunicipalityName>Alajärvi</MunicipalityName>
+        <Comments>{extractPropertyValue(asset, "lisatiedot")}</Comments>
+        <ContactEmails>
+          <Contact>{extractPropertyValue(asset, "palauteosoite")}</Contact>
+        </ContactEmails>
+      </Stop>
+    </Stops>.toString()
 
-    val optionalProperties =
-      List(
-        ("yllapitajan_tunnus", <AdminStopId/>),
-        ("matkustajatunnus", <StopCode/>))
-    val nameProperties = List(("nimi_suomeksi", "fi"), ("nimi_ruotsiksi", "sv"))
-
-    val nameElements = createOptionalElements(nameProperties.map { property =>
-      val (propertyPublicId, attributeValue) = property
-      propertyValueToXmlElement(asset, propertyPublicId, <Name/>)
-        .map(_.copy(attributes = new UnprefixedAttribute("lang", attributeValue, Null)))
-    })
-
-    val namesElement: Seq[Node] = nameElements match {
-      case x :: _ => <Names/>.copy(child = nameElements)
-      case _ => Seq()
-    }
-
-    val optionalElements = createOptionalElements(optionalProperties.map { property =>
-      val (propertyPublicId, wrapperElement) = property
-      propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
-    })
-
-    val stopElement= <Stop/>.copy(child = mandatoryElements ++ optionalElements ++ namesElement)
-    val message = <Stops/>.copy(child = stopElement)
-
-    """<?xml version="1.0" encoding="UTF-8"?>""" + message.toString
-  }
-
-  private def createOptionalElements(optionalElements: Seq[Option[Elem]]): Seq[Node] = {
-    optionalElements.foldLeft(Seq[Node]()) { (elements, optionalElement) =>
-      optionalElement match {
-        case Some(element) => elements :+ element
-        case _ => elements
-      }
-    }
-  }
-
-  private def propertyValueToXmlElement(asset: AssetWithProperties, propertyPublicId: String, wrapperElement: Elem): Option[Elem] = {
-    extractPropertyValue(asset, propertyPublicId).map(value => {
-      wrapperElement.copy(child = List(scala.xml.Text(value)))
-    })
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
