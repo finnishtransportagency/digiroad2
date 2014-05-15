@@ -4,19 +4,20 @@ import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 
 object ValluStoreStopChangeMessage {
   def create(asset: AssetWithProperties): String = {
-    <Stops>
+    """<?xml version="1.0" encoding="UTF-8"?>""" +
+    (<Stops>
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId>
+        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").map(stringToNumber).getOrElse("")}</AdminStopId>
         <StopCode>{extractPropertyValue(asset, "matkustajatunnus").getOrElse("")}</StopCode>
+        <Names>
+          <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
+          <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
+        </Names>
         <Coordinate>
-          <xCoordinate>{asset.wgslon}</xCoordinate>
-          <yCoordinate>{asset.wgslat}</yCoordinate>
+          <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
+          <yCoordinate>{asset.wgslat.toInt}</yCoordinate>
         </Coordinate>
-            <Names>
-              <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
-              <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
-            </Names>
         <Bearing>{asset.bearing.flatMap { bearing =>
           asset.validityDirection.map { validityDirection =>
             ValluTransformer.calculateActualBearing(validityDirection, bearing)
@@ -35,11 +36,22 @@ object ValluStoreStopChangeMessage {
         <MunicipalityName>Alajärvi</MunicipalityName>
         <Comments>{extractPropertyValue(asset, "lisatiedot")}</Comments>
         <ContactEmails>
-          <Contact>{extractPropertyValue(asset, "palauteosoite")}</Contact>
+          <Contact>rewre@gfdgfd.fi</Contact>
         </ContactEmails>
       </Stop>
-    </Stops>.toString()
+    </Stops>).toString()
+  }
 
+  private def stringToNumber(s: String): Long = {
+    s.map { c =>
+      if (Character.isDigit(c)) {
+        Character.digit(c, 10)
+      } else {
+        c.toInt
+      }
+    }.dropWhile { c =>
+      c == 0
+    }.mkString.toLong
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {

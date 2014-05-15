@@ -30,9 +30,9 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "exclude optional elements" in {
     val stopElement = parseTestAssetMessage(testAsset)
-    stopElement \ "AdminStopId" must be ('empty)
-    stopElement \ "StopCode" must be ('empty)
-    stopElement \ "Names" must be ('empty)
+    (stopElement \ "AdminStopId").text must equal ("")
+    (stopElement \ "StopCode").text must equal ("")
+    (stopElement \ "Names" \ "Name").map(_.text) must equal (List("", ""))
   }
 
   it must "specify external id" in {
@@ -61,8 +61,9 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "specify administrator stop id" in {
     val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
-    val stopId = stopElement \ "AdminStopId"
-    stopId.text must equal("Livi83857")
+    val adminStopId = stopElement \ "AdminStopId"
+    // NOTE: We transform characters into numerical values due to the XSD spec
+    adminStopId.text must equal("7610511810583857")
   }
 
   it must "specify stop code for stop" in {
