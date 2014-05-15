@@ -40,6 +40,30 @@ Vienti luo FTP-palvelimelle pys&auml;kkitiedot zip-pakattuna .csv-tiedostona nim
 
 K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedoston k&auml;ytt&ouml;&ouml;nottoymp&auml;rist&ouml;n deployment-hakemistosta release-hakemistoon osana k&auml;ytt&ouml;&ouml;nottoa. N&auml;in ymp&auml;rist&ouml;kohtaista 'ftp.conf'-tiedostoa, joka sis&auml;lt&auml;&auml; kirjautumistietoja, voidaan yll&auml;pit&auml;&auml; tietoturvallisesti k&auml;ytt&ouml;&ouml;nottopalvelimella. 
 
+3. Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
+---------------------------------------------------------------
+
+Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle.
+
+Tarvittavat tiedostot ovat bonecp.properties ja vallu_import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; Taru Vainikaiselta tai kehitystiimilt&auml;. Bonecp.properties tallennetaan sijaintiin:
+
+```
+digi-road-2\digiroad2-oracle\conf\properties\
+```
+
+Kun bonecp.properties on tallennettu, voidaan vallu_import.sh-skripti ajaa Linux-ymp&auml;rist&ouml;ss&auml; komentorivill&auml;. Jos k&auml;yt&ouml;ss&auml; on Windows-ymp&auml;rist&ouml;, skriptin&auml; ajetaan:
+
+```
+sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport <kuntanumerot välillä erotettuna>"
+```
+
+Esimerkiksi:
+```
+ sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport 89 90 91"
+```
+ 
+Sovellus luo Stops.txt-tiedoston samaan hakemistoon vallu_import.sh-skriptin kanssa.
+ 
 L&auml;hdekoodi
 ----------
 
