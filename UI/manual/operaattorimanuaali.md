@@ -1,34 +1,34 @@
 Operaattorin manuaali Digiroad 2 -sovellukseen
 ----------------------------------------------
 
-1. Uuden käyttäjän lisääminen
+1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
 
-Vain operaattori-käyttäjä voi lisätä uuden käyttäjän. Uusi käyttäjä lisätään osoitteessa:
+Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n osoitteessa:
 
 https://testiextranet.liikennevirasto.fi/digiroad/newuser.html 
 
-Käyttöliittymässä on lomake, johon tulee täydentää seuraavat tiedot:
+K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&auml; seuraavat tiedot:
 
-1. Käyttäjätunnus: Käyttäjän tunnus Liikenneviraston järjestelmiin
+1. K&auml;ytt&auml;j&auml;tunnus: K&auml;ytt&auml;j&auml;n tunnus Liikenneviraston j&auml;rjestelmiin
 1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3)
 1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092)
 1. Oikeuden tyyppi: Muokkausoikeus tai Katseluoikeus
 
-Kun lomake on täytetty, painetaan "Luo käyttäjä". Sovellus ilmoittaa onnistuneesta käyttäjän lisäämisestä. Jos käyttäjäksi lisätään jo olemassa olevan käyttäjän, sovellus poistaa vanhan ja korvaa sen uudella käyttäjällä.
+Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus ilmoittaa onnistuneesta k&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml;. Jos k&auml;ytt&auml;j&auml;ksi lis&auml;t&auml;&auml;n jo olemassa olevan k&auml;ytt&auml;j&auml;n, sovellus poistaa vanhan ja korvaa sen uudella k&auml;ytt&auml;j&auml;ll&auml;.
 
-![Käyttäjän lisääminen](k20.JPG)
+![K&auml;ytt&auml;j&auml;n lis&auml;&auml;minen](k20.JPG)
 
-_Uuden käyttäjän lisääminen._
+_Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 
-2. Pysäkkitietojen vienti Vallu-järjestelmään
+2. Pys&auml;kkitietojen vienti Vallu-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------
 
-Järjestelmä tukee pysäkkitietojen vientiä Vallu-järjestelmään. Pysäkkitiedot toimitetaan .csv-tiedostona FTP-palvelimelle. Vienti käynnistetään ajamalla 'vallu_import.sh' skripti. Skripti hakee pysäkkitiedot tietokannasta käyttäen projektille määriteltyä kohdetieto-tietolähdettä.
+J&auml;rjestelm&auml; tukee pys&auml;kkitietojen vienti&auml; Vallu-j&auml;rjestelm&auml;&auml;n. Pys&auml;kkitiedot toimitetaan .csv-tiedostona FTP-palvelimelle. Vienti k&auml;ynnistet&auml;&auml;n ajamalla 'vallu_import.sh' skripti. Skripti hakee pys&auml;kkitiedot tietokannasta k&auml;ytt&auml;en projektille m&auml;&auml;ritelty&auml; kohdetieto-tietol&auml;hdett&auml;.
 
-FTP-yhteys ja kohdekansio tulee määritellä 'ftp.conf'-tiedostossa joka on tallennettu samaan 'vallu_import.sh' skriptin kanssa. 'ftp.conf'-tiedostossa yhteys ja kohdekansio määritellään seuraavalla tavalla:
+FTP-yhteys ja kohdekansio tulee m&auml;&auml;ritell&auml; 'ftp.conf'-tiedostossa joka on tallennettu samaan 'vallu_import.sh' skriptin kanssa. 'ftp.conf'-tiedostossa yhteys ja kohdekansio m&auml;&auml;ritell&auml;&auml;n seuraavalla tavalla:
 ```
-<käyttäjänimi> <salasana> <palvelin ja kohdehakemisto>
+<k&auml;ytt&auml;j&auml;nimi> <salasana> <palvelin ja kohdehakemisto>
 ```
 
 Esimerkiksi:
@@ -36,13 +36,13 @@ Esimerkiksi:
 username password localhost/valluexport
 ```
 
-Vienti luo FTP-palvelimelle pysäkkitiedot zip-pakattuna .csv-tiedostona nimellä 'digiroad_stops.zip' sekä 'flag.txt'-tiedoston, joka sisältää Vallu-viennin aikaleiman muodossa vuosi (4 merkkiä), kuukausi (2 merkkiä), päivä (2 merkkiä), tunti (2 merkkiä), minuutti (2 merkkiä), sekunti (2 merkkiä). Esimerkiksi '20140417133227'.
+Vienti luo FTP-palvelimelle pys&auml;kkitiedot zip-pakattuna .csv-tiedostona nimell&auml; 'digiroad_stops.zip' sek&auml; 'flag.txt'-tiedoston, joka sis&auml;lt&auml;&auml; Vallu-viennin aikaleiman muodossa vuosi (4 merkki&auml;), kuukausi (2 merkki&auml;), p&auml;iv&auml; (2 merkki&auml;), tunti (2 merkki&auml;), minuutti (2 merkki&auml;), sekunti (2 merkki&auml;). Esimerkiksi '20140417133227'.
 
-Käyttöönotto kopioi ympäristökohtaisen 'ftp.conf'-tiedoston käyttöönottoympäristön deployment-hakemistosta release-hakemistoon osana käyttöönottoa. Näin ympäristökohtaista 'ftp.conf'-tiedostoa, joka sisältää kirjautumistietoja, voidaan ylläpitää tietoturvallisesti käyttöönottopalvelimella. 
+K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedoston k&auml;ytt&ouml;&ouml;nottoymp&auml;rist&ouml;n deployment-hakemistosta release-hakemistoon osana k&auml;ytt&ouml;&ouml;nottoa. N&auml;in ymp&auml;rist&ouml;kohtaista 'ftp.conf'-tiedostoa, joka sis&auml;lt&auml;&auml; kirjautumistietoja, voidaan yll&auml;pit&auml;&auml; tietoturvallisesti k&auml;ytt&ouml;&ouml;nottopalvelimella. 
 
-Lähdekoodi
+L&auml;hdekoodi
 ----------
 
-Digiroad 2 -sovelluksen avoin lähdekoodi löytyy GitHubista:
+Digiroad 2 -sovelluksen avoin l&auml;hdekoodi l&ouml;ytyy GitHubista:
 
 https://github.com/finnishtransportagency/digiroad2

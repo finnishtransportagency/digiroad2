@@ -133,7 +133,6 @@
             triggerEventBusChange(property.publicId, [{ propertyValue: x.currentTarget.value }]);
         });
 
-        var readOnlyText = $('<span />');
         //TODO: cleaner html
         var label = $('<div />').addClass('formLabels');
         label.text(property.localizedName);
@@ -143,8 +142,10 @@
         });
         if(property.values && property.values[0]) {
             input.val(property.values[0].propertyValue);
-            readOnlyText.text(property.values[0].propertyDisplayValue);
+        } else {
+            input.val('99');
         }
+
         var wrapper = $('<div />').addClass('formAttributeContent');
         input.attr('disabled', readonly);
         return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));

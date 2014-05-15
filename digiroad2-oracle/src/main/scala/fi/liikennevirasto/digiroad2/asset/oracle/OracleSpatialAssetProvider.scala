@@ -3,16 +3,15 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.slick.driver.JdbcDriver.backend.Database
-
 import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
+import fi.liikennevirasto.digiroad2.DigiroadEventBus
 
-class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvider {
+class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
@@ -55,7 +54,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
-      OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, properties)
+      val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, properties)
+      eventbus.publish("asset:saved", asset)
+      asset
     }
   }
 
@@ -72,7 +73,9 @@ class OracleSpatialAssetProvider(userProvider: UserProvider) extends AssetProvid
         case None => logger.debug("not updating position")
         case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
       }
-      OracleSpatialAssetDao.getAssetById(assetId).get
+      val asset = OracleSpatialAssetDao.getAssetById(assetId).get
+      eventbus.publish("asset:saved", asset)
+      asset
     }
   }
 

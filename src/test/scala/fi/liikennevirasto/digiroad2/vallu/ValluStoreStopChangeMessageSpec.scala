@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
-import scala.xml.XML
+import scala.xml.{NodeSeq, Node, Elem, XML}
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val testAsset = AssetWithProperties(
@@ -20,26 +20,53 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     message startsWith("""<?xml version="1.0" encoding="UTF-8"?>""")
   }
 
+  it must "exclude optional elements" in {
+    val stopElement = parseTestAssetMessage(testAsset)
+    stopElement \ "AdminStopId" must be ('empty)
+    stopElement \ "StopCode" must be ('empty)
+    stopElement \ "Names" must be ('empty)
+  }
+
   it must "specify external id" in {
-    val message: String = ValluStoreStopChangeMessage.create(testAsset)
-    val rootElement = XML.loadString(message)
-    val stopId = rootElement \ "Stop" \ "StopId"
+    val stopElement = parseTestAssetMessage(testAsset)
+    val stopId = stopElement \ "StopId"
     stopId.text must equal("123")
   }
 
   it must "specify administrator stop id" in {
-    val asset = testAssetWithProperty("yllapitajan_tunnus", "Livi83857")
-    val message: String = ValluStoreStopChangeMessage.create(asset)
-    val rootElement = XML.loadString(message)
-    val stopId = rootElement \ "Stop" \ "AdminStopId"
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
+    val stopId = stopElement \ "AdminStopId"
     stopId.text must equal("Livi83857")
   }
 
-  private def testAssetWithProperty(propertyPublicId: String, propertyValue: String) = {
-    testAsset.copy(propertyData = List(Property(
-      id = 1,
-      publicId = propertyPublicId,
-      propertyType = PropertyTypes.Text,
-      values = List(PropertyValue(propertyValue)))))
+  it must "specify stop code for stop" in {
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
+    val stopCode = stopElement \ "StopCode"
+    stopCode.text must equal("Poliisilaitos")
+  }
+
+  it must "specify stop name in Finnish and Swedish" in {
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"), ("nimi_ruotsiksi", "Trädgårdvägen"))))
+    val nameElements = stopElement \ "Names" \ "Name"
+    val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
+    val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
+    nameFi.text must equal("Puutarhatie")
+    nameSv.text must equal("Trädgårdvägen")
+  }
+
+  private def parseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
+    val message = ValluStoreStopChangeMessage.create(asset)
+    XML.loadString(message) \ "Stop"
+  }
+
+  private def testAssetWithProperties(properties: List[(String, String)]) = {
+    testAsset.copy(propertyData = properties.map { property =>
+      Property(
+        id = 1,
+        publicId = property._1,
+        propertyType = PropertyTypes.Text,
+        values = List(PropertyValue(property._2))
+      )
+    }.toSeq)
   }
 }

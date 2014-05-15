@@ -68,12 +68,23 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private[this] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
-    assetRows.groupBy(_.property.propertyId).map { case (k, v) =>
-      val row = v.toSeq(0)
-      Property(row.property.propertyId, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
-        v.map(r => PropertyValue(r.property.propertyValue, (if (r.property.propertyDisplayValue != null) Some(r.property.propertyDisplayValue) else None) , getImageId(r.image))).filter(_.propertyDisplayValue.isDefined).toSeq)
+  private[oracle] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
+    assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
+      val row = assetRows.head
+      Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
+        assetRows.map(assetRow =>
+          PropertyValue(
+            assetRow.property.propertyValue,
+            propertyDisplayValueFromAssetRow(assetRow),
+            getImageId(assetRow.image))
+        ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
+  }
+  
+  private def propertyDisplayValueFromAssetRow(assetRow: AssetRow): Option[String] = {
+    if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
+    else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
+    else None
   }
 
   private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
@@ -85,6 +96,23 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
+  }
+
+  private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
+    if (validityDirection != 3) {
+      bearing
+    } else {
+      bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
+    }
+  }
+
+  private[oracle] def getBearingDescription(validityDirection: Int, bearing: Option[Int]): String = {
+    calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
+      case x if 46 to 135 contains x => "Itä"
+      case x if 136 to 225 contains x => "Etelä"
+      case x if 226 to 315 contains x => "Länsi"
+      case _ => "Pohjoinen"
+    }
   }
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {

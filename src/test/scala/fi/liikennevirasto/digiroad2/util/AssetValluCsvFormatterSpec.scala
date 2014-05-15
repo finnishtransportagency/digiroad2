@@ -2,22 +2,25 @@ package fi.liikennevirasto.digiroad2.util
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import scala.slick.driver.JdbcDriver.backend.Database
 
 class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
-  val provider = new OracleSpatialAssetProvider(userProvider)
   var assetsByMunicipality: Iterable[AssetWithProperties] = null
 
   before {
-    assetsByMunicipality = provider.getAssetsByMunicipality(235)
+    Database.forDataSource(ds).withDynSession {
+      assetsByMunicipality = OracleSpatialAssetDao.getAssetsByMunicipality(235)
+    }
   }
 
   it must "return correct csv entries from test data" in {
-    val csvAll = AssetValluCsvFormatter.formatAssetsWithProperties(assetsByMunicipality)
+    val csvAll = AssetValluCsvFormatter.formatAssetsWithProperties(235, "Kauniainen", assetsByMunicipality)
     csvAll.size must be > 3
     val csv = csvAll.find(_.startsWith("5")).get
 
@@ -26,7 +29,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelään;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   it must "filter tram stops from test data" in {
@@ -35,7 +38,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val tramStop = createStop(tramStopType)
     val localBusStop = createStop(localBusStopType)
     val tramAndLocalBusStop = createStop(tramStopType ++ localBusStopType)
-    val csvRows = AssetValluCsvFormatter.valluCsvRowsFromAssets(List(tramStop, localBusStop, tramAndLocalBusStop), Map())
+    val csvRows = AssetValluCsvFormatter.valluCsvRowsFromAssets(235, "Kauniainen", List(tramStop, localBusStop, tramAndLocalBusStop), Map())
     csvRows must have size 2
   }
 
@@ -46,17 +49,6 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2)), List())._2 must equal (List("3"))
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(2), bearing = Some(195)), List())._2 must equal (List("195"))
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3), bearing = Some(195)), List())._2 must equal (List("15"))
-  }
-
-  it must "describe bearing correctly" in {
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(316)), List())._2 must equal (List("Pohjoiseen"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(45)), List())._2 must equal (List("Pohjoiseen"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(46)), List())._2 must equal (List("Itään"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(135)), List())._2 must equal (List("Itään"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(136)), List())._2 must equal (List("Etelään"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(225)), List())._2 must equal (List("Etelään"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(226)), List())._2 must equal (List("Länteen"))
-    AssetValluCsvFormatter.addBearingDescription(testasset.copy(bearing = Some(315)), List())._2 must equal (List("Länteen"))
   }
 
   it must "filter out newlines from text fields" in {
@@ -79,8 +71,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
-    val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(asset)
-    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelään; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
+    val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
+    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelä; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }

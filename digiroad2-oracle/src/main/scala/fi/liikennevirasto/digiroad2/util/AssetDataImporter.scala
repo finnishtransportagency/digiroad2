@@ -24,7 +24,7 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
 import java.sql.Statement
 import java.text.{DecimalFormat, NumberFormat}
-
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 
 object AssetDataImporter {
 
@@ -68,7 +68,6 @@ object AssetDataImporter {
 class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
-  lazy val assetProvider = new OracleSpatialAssetProvider(new OracleUserProvider)
 
   val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
   val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
@@ -371,9 +370,9 @@ class AssetDataImporter {
         values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
       """.execute
 
-      val bearing = assetProvider.getAssetById(assetId) match {
+      val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
         case Some(a) =>
-          assetProvider.getRoadLinkById(a.roadLinkId) match {
+          OracleSpatialAssetDao.getRoadLinkById(a.roadLinkId) match {
             case Some(rl) => GeometryUtils.calculateBearing(a, rl)
             case None =>
               println(s"No road link found for Asset: $assetId")

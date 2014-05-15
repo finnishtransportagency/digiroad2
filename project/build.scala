@@ -25,7 +25,8 @@ object Digiroad2Build extends Build {
       resolvers += Classpaths.typesafeReleases,
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "1.2",
-        "joda-time" % "joda-time" % "2.2"
+        "joda-time" % "joda-time" % "2.2",
+        "com.typesafe.akka" %% "akka-actor" % "2.3.2"
       )
     )
   )
