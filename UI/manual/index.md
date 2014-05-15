@@ -9,7 +9,7 @@ _Katselutila._
 
 1. Pys&auml;kit -paletti
 1. Nopeusrajoitukset -paletti
-1. “Siirry muokkaustilaan”-painike
+1. "Siirry muokkaustilaan"-painike
 1. Valittu pys&auml;kki
 1. Google Street View
 1. Ominaisuustieto -n&auml;kym&auml;
@@ -30,7 +30,7 @@ _Katselijan roolissa karttak&auml;ytt&ouml;liittym&auml;ss&auml; ei ole "Siirry 
 
 _Muokkaustila._
 
-11.“Siirry katselutilaan”-painike
+11."Siirry katselutilaan"-painike
 12.Muokkausty&ouml;kalu
 13.Lis&auml;ysty&ouml;kalu
 14.Muokkaustilan tunnusteksti
@@ -91,7 +91,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman laidan valikosta.
 
-Muokkaustilan saa aktivoitua klikkaamalla “Muokkaa”-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti “Olet muokkaustilassa” (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan p&auml;&auml;see klikkaamalla “Siirry katselutilaan”-painiketta (11).
+Muokkaustilan saa aktivoitua klikkaamalla "Muokkaa"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
 ![Katselutila](k3.jpg)
 
@@ -123,7 +123,7 @@ _Karttan&auml;kym&auml;n muokkaus._
 3.2 Joukkoliikenteen pys&auml;kkien valinta
 --------------------------------------
 
-Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; klikkaamalla “Joukkoliikenteen pys&auml;kit”-painiketta (1). Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa. Joukkoliikenteen pys&auml;kit -paletti sulkeutuu painamalla vasemmassa yl&auml;kulmassa olevaa kuvaketta.
+Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; klikkaamalla "Joukkoliikenteen pys&auml;kit"-painiketta (1). Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa. Joukkoliikenteen pys&auml;kit -paletti sulkeutuu painamalla vasemmassa yl&auml;kulmassa olevaa kuvaketta.
 
 Joukkoliikenteen pys&auml;kit n&auml;kyv&auml;t vain tarpeeksi tarkalla mittakaavatasolla, joka on 1:20 000 tai tarkempi (9). Sovellus ilmoittaa, kun mittakaavataso on liian ep&auml;tarkka pys&auml;kkien n&auml;kymiselle. Mittakaavataso pys&auml;kkien n&auml;kymiselle on sama sek&auml; katselu- ett&auml; muokkaustilassa.
 
@@ -147,7 +147,7 @@ _Joukkoliikenteen pys&auml;kkien haku._
 3.3 Nopeusrajoitusten valinta
 -----------------------------
 
-Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset klikkaamalla “Nopeusrajoitukset”-painiketta (2). Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Nopeusrajoitukset on visualisoitu purpuran punaisella v&auml;rill&auml; tielinkeille.
+Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset klikkaamalla "Nopeusrajoitukset"-painiketta (2). Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Nopeusrajoitukset on visualisoitu purpuran punaisella v&auml;rill&auml; tielinkeille.
 
 ![Nopeusrajoitusten valinta](k18.jpg)
 
@@ -175,17 +175,17 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 5. Muokkaustila
 ---------------
 
-Muokkaustila aktivoidaan painamalla “Siirry muokkaustilaan”-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yl&auml;osassa on teksti: ”Olet muokkaustilassa”.
+Muokkaustila aktivoidaan painamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yl&auml;osassa on teksti: "Olet muokkaustilassa".
 
-Muokkaustilasta p&auml;&auml;see takaisin katselutilaan klikkaamalla “Siirry katselutilaan” -painiketta (11).
+Muokkaustilasta p&auml;&auml;see takaisin katselutilaan klikkaamalla "Siirry katselutilaan" -painiketta (11).
 
 ![Muokkaustila](k3.jpg)
 
-_Muokkaustilaan p&auml;&auml;see klikkaamalla “Siirry muokkaustilaan”-painiketta (3)._
+_Muokkaustilaan p&auml;&auml;see klikkaamalla "Siirry muokkaustilaan"-painiketta (3)._
 
 ![Muokkaustila](k11.jpg)
 
-_Muokkaustilasta p&auml;&auml;see pois klikkaamalla “Siirry katselutilaan” -painiketta (11)._
+_Muokkaustilasta p&auml;&auml;see pois klikkaamalla "Siirry katselutilaan" -painiketta (11)._
 
 5.1 Joukkoliikenteen pys&auml;kit
 ----------------------------
@@ -212,19 +212,19 @@ _Muutos-dialogi._
 
 Googlen Street View -n&auml;kym&auml; (5) sivun oikeassa laidassa on suunnattu suuntaan, jossa pys&auml;kin tallennetun vaikutussuunnan mukaan kuuluisi olla. Painamalla n&auml;kym&auml;&auml; avautuu Googlen Street View -v&auml;lilehti, jossa pys&auml;kin ymp&auml;rist&ouml;&auml; voi tarkastella tarkemmin. Kartalla pys&auml;kin vaikutussuunta n&auml;kyy pisarana pys&auml;kkikuvakkeella (10). Pisaran k&auml;rki osoittaa pys&auml;kin liikennevirran suuntaan.
 
-Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustieton&auml;kym&auml;ss&auml; (6) painamalla “Vaihda suuntaa”-painiketta (18). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy.
+Pys&auml;kin vaikutussuunnan voi muuttaa ominaisuustieton&auml;kym&auml;ss&auml; (6) painamalla "Vaihda suuntaa"-painiketta (18). Pys&auml;kin vaikutussuuntaa muutettaessa Googlen Street View -n&auml;kym&auml; (5) muuttuu vastaamaan uutta vaikutussuuntaa ja pisaran suunta k&auml;&auml;ntyy.
 
 ![Pys&auml;kin vaikutussuunnan muuttaminen.](k13.jpg)
 
-_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla “Vaihda suuntaa”-painiketta (18)._
+_Joukkoliikenteen pys&auml;kin vaikutussuunnan voi muuttaa painamalla "Vaihda suuntaa"-painiketta (18)._
 
 ####Pys&auml;kin voimassaolop&auml;ivien muokkaus####
 
 Ensimm&auml;inen voimassaolop&auml;iv&auml; (19) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, josta l&auml;htien pys&auml;kki on k&auml;yt&ouml;ss&auml;. Viimeinen voimassaolop&auml;iv&auml; (20) tarkoittaa p&auml;iv&auml;m&auml;&auml;r&auml;&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;. Molempia p&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata ominaisuustieto -n&auml;kym&auml;n (6) kautta. P&auml;iv&auml;m&auml;&auml;ri&auml; voi muokata joko kirjoittamalla ne p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n muodossa pp.kk.vvvv tai valitsemalla ne kalenterista, joka avautuu, kun p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml; klikkaa.
 
-P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; “Ensimm&auml;inen voimassaolop&auml;iv&auml;” olisi my&ouml;hemmin kuin “Viimeinen voimassaolop&auml;iv&auml;”. Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t ovat disabloituja. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
+P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t ovat disabloituja. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
-Jos “Ensimm&auml;inen voimassaolop&auml;iv&auml;” tai “Viimeinen voimassaolop&auml;iv&auml;” ei ole tiedossa, voi kalenterista valita “ei tietoa”.
+Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
 
 ![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](k14.jpg)
 
@@ -251,26 +251,26 @@ __Matkustajatunnus:__ Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.
 __Maastokoordinaatti X:__ Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.
 __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.
 __Maastokoordinaatti Z:__ Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.
-__Liikenn&ouml;intisuunta:__ Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:”Keskustaan”.
+__Liikenn&ouml;intisuunta:__ Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".
 __Vaikutussuunta:__ Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.
 __Liikenn&ouml;intisuuntima:__ Ei toteutettu
 __Ensimm&auml;inen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isten kerran k&auml;yt&ouml;ss&auml;.
 __Viimeinen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.
-__Pys&auml;kin tyyppi:__ Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro, virtuaalipys&auml;kki tai “ei tietoa”.
-__Aikataulu:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Katos:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Mainoskatos:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Penkki:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Py&ouml;r&auml;teline:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Valaistus:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
-__Esteett&ouml;myys liikuntarajoitteiselle:__ Liikuntarajoitteisen henkil&ouml;n p&auml;&auml;sy pys&auml;kille. Esimerkiksi:“Matala reunakivi, p&auml;&auml;sy py&ouml;r&auml;tuolilla”. Oletuksena on “ei tiedossa”.
-__Saattomahdollisuus henkil&ouml;autolla:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on “ei tietoa”.
+__Pys&auml;kin tyyppi:__ Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro, virtuaalipys&auml;kki tai "ei tietoa".
+__Aikataulu:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Katos:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Mainoskatos:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Penkki:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Py&ouml;r&auml;teline:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Valaistus:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
+__Esteett&ouml;myys liikuntarajoitteiselle:__ Liikuntarajoitteisen henkil&ouml;n p&auml;&auml;sy pys&auml;kille. Esimerkiksi:"Matala reunakivi, p&auml;&auml;sy py&ouml;r&auml;tuolilla". Oletuksena on "ei tiedossa".
+__Saattomahdollisuus henkil&ouml;autolla:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
 __Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;.
 __Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.
 __Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Palauteosoite:__ Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.
-__Lis&auml;tiedot:__ Julkiset kommentit. Esimerkiksi: “Alueella tiet&ouml;it&auml;”.
+__Lis&auml;tiedot:__ Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".
 
 5.1.2 Pys&auml;kin siirt&auml;minen
 -----------------------
@@ -290,9 +290,9 @@ _Joukkoliikenteen pys&auml;kin siirt&auml;minen._
 
 Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 10 tai tarkempi. T&auml;m&auml; mittakaavataso on yht&auml; tasoa tarkempi kuin uloin mittakaavataso jolla pys&auml;kit n&auml;ytet&auml;&auml;n. Uusi pys&auml;kki luodaan klikkaamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (13). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustieton&auml;kym&auml; (6), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
 
-Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml;ritet&auml;. “Ensimm&auml;inen voimassaolop&auml;iv&auml;” oletetaan meneill&auml;&auml;n olevaksi p&auml;iv&auml;m&auml;&auml;r&auml;ksi. Pys&auml;kin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Yll&auml;pit&auml;j&auml; oletetaan kunnaksi. Pys&auml;kin tyypiksi asetetaan “ei tietoa”. Kaikkien varusteiden oletusarvo on “ei”. Lis&auml;ksi valtakunnallinen tunnus muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eik&auml; k&auml;ytt&auml;j&auml;n tarvitse sit&auml; itse asettaa.
+Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml;ritet&auml;. "Ensimm&auml;inen voimassaolop&auml;iv&auml;" oletetaan meneill&auml;&auml;n olevaksi p&auml;iv&auml;m&auml;&auml;r&auml;ksi. Pys&auml;kin vaikutussuunta oletetaan alla olevan linkin digitointisuunnaksi. Yll&auml;pit&auml;j&auml; oletetaan kunnaksi. Pys&auml;kin tyypiksi asetetaan "ei tietoa". Kaikkien varusteiden oletusarvo on "ei". Lis&auml;ksi valtakunnallinen tunnus muodostuu automaattisesti Digiroadin omasta numeroavaruudesta eik&auml; k&auml;ytt&auml;j&auml;n tarvitse sit&auml; itse asettaa.
 
-Kun ominaisuustiedot on kirjattu, painetaan Luo-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruutapainiketta (22). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko “Luo” tai “Peruuta”.
+Kun ominaisuustiedot on kirjattu, painetaan Luo-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruutapainiketta (22). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Luo" tai "Peruuta".
 
 Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:
 
@@ -312,9 +312,9 @@ _Joukkoliikenteen pys&auml;kin lis&auml;&auml;minen._
 5.1.4 Vanhan pys&auml;kin poistaminen
 ------------------------------
 
-Olemassa oleva pys&auml;kki poistetaan muokkausty&ouml;kalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kkej&auml; voi poistaa (9). Poistettava pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (6). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (4). Poisto suoritetaan asettamalla ominaisuustieton&auml;kym&auml;n (6) “Viimeinen voimassaolop&auml;iv&auml;” -kentt&auml;&auml;n (20) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Pys&auml;kin tila muuttuu k&auml;yt&ouml;st&auml; poistuneeksi viimeist&auml; voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;&auml; seuraavana p&auml;iv&auml;n&auml;. Pys&auml;kin poistamisen voi perua valitsemalla “Viimeinen voimassaolop&auml;iv&auml;” -kentt&auml;&auml;n “Ei tietoa” avautuvasta kalenterista tai pyyhkim&auml;ll&auml; kent&auml;n tyhj&auml;ksi.
+Olemassa oleva pys&auml;kki poistetaan muokkausty&ouml;kalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kkej&auml; voi poistaa (9). Poistettava pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (6). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (4). Poisto suoritetaan asettamalla ominaisuustieton&auml;kym&auml;n (6) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Pys&auml;kin tila muuttuu k&auml;yt&ouml;st&auml; poistuneeksi viimeist&auml; voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;&auml; seuraavana p&auml;iv&auml;n&auml;. Pys&auml;kin poistamisen voi perua valitsemalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n "Ei tietoa" avautuvasta kalenterista tai pyyhkim&auml;ll&auml; kent&auml;n tyhj&auml;ksi.
 
-Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla “K&auml;yt&ouml;st&auml; poistuneet” -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun “K&auml;yt&ouml;st&auml; poistuneet” -pys&auml;kkivalinnan sulkee.
+Jos pys&auml;kin viimeinen voimassaolop&auml;iv&auml; on menneisyydess&auml;, aktivoituu kartalla "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinta. Pys&auml;kin kuvake h&auml;vi&auml;&auml; kartalta, kun "K&auml;yt&ouml;st&auml; poistuneet" -pys&auml;kkivalinnan sulkee.
 
 Vanhan pys&auml;kin poistamisen vaiheet:
 
@@ -323,8 +323,8 @@ Vanhan pys&auml;kin poistamisen vaiheet:
 1. Tarkenna kartan mittakaava 1:20 000 tai tarkemmaksi (9).
 1. Valitse muokkausty&ouml;kalu (12).
 1. Klikkaa pys&auml;kki&auml; (4).
-1. Aseta pys&auml;kille “Viimeinen voimassaolop&auml;iv&auml;” -kentt&auml;&auml;n (20) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla “Viimeinen voimassaolop&auml;iv&auml;” -kentt&auml;&auml;.
-1. Jos et halua poistaa pys&auml;kki&auml;, valitse kalenterista “Ei tietoa”.
+1. Aseta pys&auml;kille "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; kirjoittamalla tai valitsemalla se kalenterista, joka avautuu klikkaamalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;.
+1. Jos et halua poistaa pys&auml;kki&auml;, valitse kalenterista "Ei tietoa".
 1. Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml; tallentuu painamalla Tallenna-nappia (15).
 
 ![Pys&auml;kin poistaminen.](k17.jpg)
