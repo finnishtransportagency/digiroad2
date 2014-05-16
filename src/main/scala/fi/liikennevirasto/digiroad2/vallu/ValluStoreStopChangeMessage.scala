@@ -30,7 +30,6 @@ object ValluStoreStopChangeMessage {
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
         <Equipment/>
-        <ModifiedTimestamp>{extractPropertyValue(asset, "muokattu_viimeksi").getOrElse("").takeRight(20).trim}</ModifiedTimestamp>
         <ModifiedBy>Digiroad 2 app</ModifiedBy>
         <AdministratorCode>{extractPropertyValue(asset, "yllapitajan_koodi").getOrElse("")}</AdministratorCode>
         <MunicipalityName>Alajärvi</MunicipalityName>

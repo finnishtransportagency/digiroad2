@@ -108,7 +108,7 @@
 							</xs:element>
 							-->
 
-					 <xs:element name="ModifiedTimestamp" nillable="true">
+					 <!--<xs:element name="ModifiedTimestamp" nillable="true">
 								<xs:annotation>
 									<xs:documentation>datetime value when this stop details where
 										last edited.</xs:documentation>
@@ -116,7 +116,7 @@
 								<xs:simpleType>
 								<xs:union memberTypes="xs:dateTime emptyString"/>
 								</xs:simpleType>
-							</xs:element>
+							</xs:element>-->
 
 							<xs:element name="ModifiedBy" type="xs:string">
 								<xs:annotation>
