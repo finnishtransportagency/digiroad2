@@ -14,6 +14,7 @@ import Q._
 import org.joda.time.{LocalDate, DateTime}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
+import fi.liikennevirasto.digiroad2.asset.Modification
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -25,7 +26,6 @@ object Queries {
     }
   }
 
-  case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 

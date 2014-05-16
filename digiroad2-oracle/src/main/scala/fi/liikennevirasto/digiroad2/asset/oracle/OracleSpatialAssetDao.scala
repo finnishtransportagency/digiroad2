@@ -57,7 +57,8 @@ object OracleSpatialAssetDao {
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
+        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat,
+        created = row.created, modified = row.modified)
     }
   }
 
@@ -80,7 +81,7 @@ object OracleSpatialAssetDao {
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
-  
+
   private def propertyDisplayValueFromAssetRow(assetRow: AssetRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
@@ -95,7 +96,8 @@ object OracleSpatialAssetDao {
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat)
+        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat,
+        created = row.created, modified = row.modified)
   }
 
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {

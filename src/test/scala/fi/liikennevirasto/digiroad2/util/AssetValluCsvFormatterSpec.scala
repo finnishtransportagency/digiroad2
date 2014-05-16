@@ -8,6 +8,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import scala.slick.driver.JdbcDriver.backend.Database
+import fi.liikennevirasto.digiroad2.asset.Modification
 
 class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
@@ -42,7 +43,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvRows must have size 2
   }
 
-  val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56)
+  val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
+      created = Modification(None, None), modified = Modification(None, None))
   it must "recalculate bearings in validity direction" in {
     AssetValluCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3)), List())._2 must equal (List("183"))
@@ -65,7 +67,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
         case _ => property
       }
     }
-    val asset = testAsset.copy(propertyData = testProperties)
+    val asset: AssetWithProperties = testAsset.copy(propertyData = testProperties)
     val propertyValue = extractPropertyValue(asset, _: String)
     val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
