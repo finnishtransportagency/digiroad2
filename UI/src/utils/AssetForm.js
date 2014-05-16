@@ -84,10 +84,16 @@
     };
 
     var readOnlyHandler = function(property){
-        var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyValue : '';
+        var outer = $('<div />').addClass('formAttributeContentRow');
+        var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
         // TODO: use cleaner html
-        return $('<div />').addClass('formAttributeContentRow')
-            .addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
+        if (property.propertyType === 'read_only_text') {
+            outer.addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
+        } else {
+            outer.append($('<div />').addClass('formLabels').text(property.localizedName));
+            outer.append($('<div />').addClass('formAttributeContent readOnlyText').attr('disabled', readonly).text(propertyVal));
+        }
+        return outer;
     };
 
     var triggerEventBusChange = function(publicId, values) {
@@ -113,7 +119,7 @@
         }, 500));
 
         // TODO: use cleaner html
-        var outer = $('<div />').addClass('formAttributeContentRow');
+        var outer = $('<div />').addClass('formAttributeContentRow').attr('data-required', property.required);
         outer.append($('<div />').addClass('formLabels').text(property.localizedName));
 
         outer.append($('<div />').addClass('formAttributeContent').append(input));
@@ -237,7 +243,7 @@
             var propertyType = feature.propertyType;
             if (propertyType === "text" || propertyType === "long_text") {
                 return textHandler(feature);
-            } else if (propertyType === "read_only_text") {
+            } else if (propertyType === "read_only_text" || propertyType === 'read-only') {
                 return readOnlyHandler(feature);
             } else if (feature.publicId === 'vaikutussuunta') {
                 return directionChoiceHandler(feature);
