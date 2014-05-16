@@ -147,12 +147,12 @@
 							</xs:element>
 							-->
 
-							<xs:element name="AdministratorCode" type="xs:string">
+							<!--<xs:element name="AdministratorCode" type="xs:string">
 								<xs:annotation>
 									<xs:documentation>public authority who owns this stop.
 									</xs:documentation>
 								</xs:annotation>
-							</xs:element>
+							</xs:element>-->
 
 							<!--
 							<xs:element name="MunicipalityCode" nillable="true" minOccurs="0">

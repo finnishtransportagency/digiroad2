@@ -31,7 +31,6 @@ object ValluStoreStopChangeMessage {
         </StopAttribute>
         <Equipment/>
         <ModifiedBy>Digiroad 2 app</ModifiedBy>
-        <AdministratorCode>{extractPropertyValue(asset, "yllapitajan_koodi").getOrElse("")}</AdministratorCode>
         <MunicipalityName>Alajärvi</MunicipalityName>
         <Comments>{extractPropertyValue(asset, "lisatiedot")}</Comments>
         <ContactEmails>
