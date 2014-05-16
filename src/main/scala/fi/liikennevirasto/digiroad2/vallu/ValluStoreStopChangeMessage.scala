@@ -8,7 +8,7 @@ object ValluStoreStopChangeMessage {
     (<Stops>
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").map(stringToNumber).getOrElse("")}</AdminStopId>
+        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId>
         <StopCode>{extractPropertyValue(asset, "matkustajatunnus").getOrElse("")}</StopCode>
         <Names>
           <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
@@ -37,18 +37,6 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
-  }
-
-  private def stringToNumber(s: String): Long = {
-    s.map { c =>
-      if (Character.isDigit(c)) {
-        Character.digit(c, 10)
-      } else {
-        c.toInt
-      }
-    }.dropWhile { c =>
-      c == 0
-    }.mkString.toLong
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
