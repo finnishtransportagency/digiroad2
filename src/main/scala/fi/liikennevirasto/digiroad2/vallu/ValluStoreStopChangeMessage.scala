@@ -32,7 +32,6 @@ object ValluStoreStopChangeMessage {
         <Equipment/>
         <ModifiedBy>Digiroad 2 app</ModifiedBy>
         <MunicipalityName>Alajärvi</MunicipalityName>
-        <Comments>{extractPropertyValue(asset, "lisatiedot")}</Comments>
         <ContactEmails>
           <Contact>rewre@gfdgfd.fi</Contact>
         </ContactEmails>

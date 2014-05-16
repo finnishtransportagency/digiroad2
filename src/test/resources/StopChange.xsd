@@ -173,12 +173,12 @@
 								</xs:annotation>
 							</xs:element>
 
-							<xs:element name="Comments" type="xs:string">
+							<!--<xs:element name="Comments" type="xs:string">
 								<xs:annotation>
 									<xs:documentation>comment
 									</xs:documentation>
 								</xs:annotation>
-							</xs:element>
+							</xs:element>-->
 
 							<xs:element name="ContactEmails" type="ContactEmailsType">
 								<xs:annotation>
