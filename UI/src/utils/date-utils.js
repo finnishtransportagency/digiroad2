@@ -35,6 +35,7 @@
         }, onSelect);
         resetButton.on('click', function () {
             elem.val(null);
+            elem.trigger('datechange');
             picker.hide();
             elem.blur();
         });
