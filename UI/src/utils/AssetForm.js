@@ -183,7 +183,8 @@
             if(target.keyCode === 9){
                 return;
             }
-            triggerEventBusChange(property.publicId, [{ propertyValue: dateutil.finnishToIso8601(target.currentTarget.value) }]);
+            var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
+            triggerEventBusChange(property.publicId, [{ propertyValue: propertyValue }]);
         }, 500));
 
         //TODO: cleaner html
