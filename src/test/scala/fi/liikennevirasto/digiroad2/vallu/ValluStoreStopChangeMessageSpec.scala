@@ -80,6 +80,15 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     nameSv.text must equal("Trädgårdvägen")
   }
 
+  it must "specify only Finnish name" in {
+    val stopElement = parseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"))))
+    val nameElements = stopElement \ "Names" \ "Name"
+    val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
+    val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
+    nameFi.text must equal("Puutarhatie")
+    nameSv must be('empty)
+  }
+
   private def validateValluMessage(valluMessage: String) = {
     val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
     val source = new StreamSource(getClass.getResourceAsStream("/StopChange.xsd"))
