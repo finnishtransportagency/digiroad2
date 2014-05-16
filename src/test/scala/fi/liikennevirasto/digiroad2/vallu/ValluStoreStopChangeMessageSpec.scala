@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties, Modification}
 import scala.xml.{NodeSeq, Node, Elem, XML}
 import javax.xml.validation.SchemaFactory
 import javax.xml.XMLConstants
 import java.io.{StringReader, ByteArrayInputStream}
 import javax.xml.transform.stream.StreamSource
+import fi.liikennevirasto.digiroad2.asset.Modification
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val testAsset = AssetWithProperties(
@@ -19,7 +20,9 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     roadLinkId = 1,
     wgslon = 1,
     wgslat = 1,
-    bearing = Some(120)
+    bearing = Some(120),
+    created = Modification(None, None),
+    modified = Modification(None, None)
   )
 
   it must "specify encoding" in {

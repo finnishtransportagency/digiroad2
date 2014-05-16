@@ -1,7 +1,10 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Modification, Image, PropertyRow, AssetRow}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, AssetRow}
+import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.asset.Modification
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
