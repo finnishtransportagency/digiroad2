@@ -13,11 +13,14 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     id = 1,
     externalId = Some(123),
     assetTypeId = 1,
+    validityDirection = Some(2),
     lon = 1,
     lat = 1,
     roadLinkId = 1,
     wgslon = 1,
-    wgslat = 1)
+    wgslat = 1,
+    bearing = Some(120)
+  )
 
   it must "specify encoding" in {
     val message: String = ValluStoreStopChangeMessage.create(testAsset)
@@ -27,15 +30,33 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "exclude optional elements" in {
     val stopElement = validateAndParseTestAssetMessage(testAsset)
-    stopElement \ "AdminStopId" must be ('empty)
-    stopElement \ "StopCode" must be ('empty)
-    stopElement \ "Names" must be ('empty)
+    (stopElement \ "AdminStopId") must be ('empty)
+    (stopElement \ "StopCode") must be ('empty)
+    (stopElement \ "Names" ) must be ('empty)
   }
 
   it must "specify external id" in {
     val stopElement = validateAndParseTestAssetMessage(testAsset)
     val stopId = stopElement \ "StopId"
     stopId.text must equal("123")
+  }
+
+  it must "specify xCoordinate" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val xCoordinate = xml \ "Coordinate" \ "xCoordinate"
+    xCoordinate.text.toDouble must equal(1.0)
+  }
+
+  it must "specify yCoordinate" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val yCoordinate = xml \ "Coordinate" \ "yCoordinate"
+    yCoordinate.text.toDouble must equal(1.0)
+  }
+
+  it must "specify bearing" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val bearing = xml \ "Bearing"
+    bearing.text must equal("120")
   }
 
   it must "specify administrator stop id" in {
@@ -57,6 +78,15 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
     nameFi.text must equal("Puutarhatie")
     nameSv.text must equal("Trädgårdvägen")
+  }
+
+  it must "specify only Finnish name" in {
+    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("nimi_suomeksi", "Puutarhatie"))))
+    val nameElements = stopElement \ "Names" \ "Name"
+    val nameFi = nameElements filter { _ \ "@lang" exists(_.text == "fi") }
+    val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
+    nameFi.text must equal("Puutarhatie")
+    nameSv must be('empty)
   }
 
   private def validateValluMessage(valluMessage: String) = {

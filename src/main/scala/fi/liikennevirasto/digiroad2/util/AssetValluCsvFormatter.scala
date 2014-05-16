@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -182,15 +182,10 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
   private[util] def addBearing(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validityDirection = asset.validityDirection.getOrElse(1)
-    (asset, calculateActualBearing(validityDirection, asset.bearing).getOrElse("").toString :: result)
-  }
-
-  private def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
-    if(validityDirection != 3) {
-      bearing
-    } else {
-      bearing.map(_  - 180).map(x => if(x < 0) x + 360 else x)
-    }
+    val actualBearing = asset.bearing.map { bearing =>
+      ValluTransformer.calculateActualBearing(validityDirection, bearing)
+    }.getOrElse("").toString
+    (asset, actualBearing :: result)
   }
 
   private[util] def addBearingDescription(params: (AssetWithProperties, List[String])) = {

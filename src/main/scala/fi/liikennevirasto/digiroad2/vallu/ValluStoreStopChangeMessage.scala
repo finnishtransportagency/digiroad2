@@ -1,54 +1,60 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import scala.xml._
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import scala.Some
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 
 object ValluStoreStopChangeMessage {
 
   def create(asset: AssetWithProperties): String = {
-    val mandatoryElements = Seq[Node]() :+ <StopId>{asset.externalId.get}</StopId>
-    val optionalProperties = List(("yllapitajan_tunnus", <AdminStopId/>), ("matkustajatunnus", <StopCode/>))
-    val nameProperties = List(("nimi_suomeksi", "fi"), ("nimi_ruotsiksi", "sv"))
-
-    val nameElements = createOptionalElements(nameProperties.map { property =>
-      val (propertyPublicId, attributeValue) = property
-      propertyValueToXmlElement(asset, propertyPublicId, <Name/>)
-        .map(_.copy(attributes = new UnprefixedAttribute("lang", attributeValue, Null)))
-    })
-
-    val namesElement: Seq[Node] = nameElements match {
-      case x :: _ => <Names/>.copy(child = nameElements)
-      case _ => Seq()
-    }
-
-    val optionalElements = createOptionalElements(optionalProperties.map { property =>
-      val (propertyPublicId, wrapperElement) = property
-      propertyValueToXmlElement(asset, propertyPublicId, wrapperElement)
-    })
-
-    val stopElement= <Stop/>.copy(child = mandatoryElements ++ optionalElements ++ namesElement)
-    val message = <Stops/>.copy(child = stopElement)
-
-    """<?xml version="1.0" encoding="UTF-8"?>""" + message.toString
+    """<?xml version="1.0" encoding="UTF-8"?>""" +
+    (<Stops>
+      <Stop>
+        <StopId>{asset.externalId.get}</StopId>
+        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
+        { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus") }</StopCode> }
+        { if (localizedNameIsDefined(asset))
+            <Names>
+            { if (propertyIsDefined(asset, "nimi_suomeksi")) <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi") }</Name> }
+            { if (propertyIsDefined(asset, "nimi_ruotsiksi")) <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi") }</Name> }
+            </Names>
+        }
+        <Coordinate>
+          <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
+          <yCoordinate>{asset.wgslat.toInt}</yCoordinate>
+        </Coordinate>
+        <Bearing>{asset.bearing.flatMap { bearing =>
+          asset.validityDirection.map { validityDirection =>
+            ValluTransformer.calculateActualBearing(validityDirection, bearing)
+          }
+        }.getOrElse("")}</Bearing>
+        <StopAttribute>
+          <StopType name="LOCAL_BUS">0</StopType>
+          <StopType name="EXPRESS_BUS">1</StopType>
+          <StopType name="NON_STOP_EXPRESS_BUS">0</StopType>
+          <StopType name="VIRTUAL_STOP">0</StopType>
+        </StopAttribute>
+        <Equipment/>
+        <ModifiedBy>Digiroad 2 app</ModifiedBy>
+        <MunicipalityName>Alajärvi</MunicipalityName>
+        <ContactEmails>
+          <Contact>rewre@gfdgfd.fi</Contact>
+        </ContactEmails>
+      </Stop>
+    </Stops>).toString()
   }
 
-  private def createOptionalElements(optionalElements: Seq[Option[Elem]]): Seq[Node] = {
-    optionalElements.foldLeft(Seq[Node]()) { (elements, optionalElement) =>
-      optionalElement match {
-        case Some(element) => elements :+ element
-        case _ => elements
-      }
-    }
+  private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
+    propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
-  private def propertyValueToXmlElement(asset: AssetWithProperties, propertyPublicId: String, wrapperElement: Elem): Option[Elem] = {
-    extractPropertyValue(asset, propertyPublicId).map(value => {
-      wrapperElement.copy(child = List(scala.xml.Text(value)))
-    })
+  private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
+   extractPropertyValueOption(asset, propertyPublicId).isDefined
   }
 
-  private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
+  private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
+    extractPropertyValueOption(asset, propertyPublicId).get
+  }
+
+  private def extractPropertyValueOption(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
     asset.propertyData
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)
