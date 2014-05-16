@@ -9,8 +9,8 @@ object ValluStoreStopChangeMessage {
     (<Stops>
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId> }
-        <StopCode>{extractPropertyValue(asset, "matkustajatunnus").getOrElse("")}</StopCode>
+        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").get }</AdminStopId> }
+        { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus").get }</StopCode> }
         <Names>
           <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
           <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
