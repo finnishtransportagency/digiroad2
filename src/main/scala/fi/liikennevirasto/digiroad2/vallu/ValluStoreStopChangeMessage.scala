@@ -42,7 +42,7 @@ object ValluStoreStopChangeMessage {
     </Stops>).toString()
   }
 
-  def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
+  private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
     propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
