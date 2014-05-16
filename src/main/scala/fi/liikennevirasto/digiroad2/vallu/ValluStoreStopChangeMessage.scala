@@ -12,10 +12,11 @@ object ValluStoreStopChangeMessage {
         { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
         { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus") }</StopCode> }
         { if (localizedNameIsDefined(asset))
-        <Names>
-          { if (propertyIsDefined(asset, "nimi_suomeksi")) <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi") }</Name> }
-          { if (propertyIsDefined(asset, "nimi_ruotsiksi")) <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi") }</Name> }
-        </Names> }
+            <Names>
+            { if (propertyIsDefined(asset, "nimi_suomeksi")) <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi") }</Name> }
+            { if (propertyIsDefined(asset, "nimi_ruotsiksi")) <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi") }</Name> }
+            </Names>
+        }
         <Coordinate>
           <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
           <yCoordinate>{asset.wgslat.toInt}</yCoordinate>
