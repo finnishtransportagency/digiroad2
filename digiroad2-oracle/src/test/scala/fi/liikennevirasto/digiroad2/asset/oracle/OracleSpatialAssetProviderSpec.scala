@@ -14,7 +14,8 @@ import fi.liikennevirasto.digiroad2.user.{Role, Configuration, User}
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.util.DataFixture.{TestAssetId, TestAssetTypeId, MunicipalityEspoo, MunicipalityKauniainen}
 import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.DummyEventBus
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
+import org.mockito.Mockito.verify
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -64,13 +65,16 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("add asset to database", Tag("db")) {
+    val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
+    val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
     userProvider.setCurrentUser(creatingUser)
-    val existingAsset = provider.getAssetById(TestAssetId).get
+    val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     try {
-      val newAsset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
+      verify(eventBus).publish("asset:saved", ("Kauniainen", newAsset))
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
       newAsset.externalId.get should (be >= 300000L)
     } finally {

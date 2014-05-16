@@ -55,7 +55,10 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
       val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, properties)
-      eventbus.publish("asset:saved", asset)
+      val municipalityId = OracleSpatialAssetDao.getRoadLinkById(roadLinkId).get.municipalityNumber
+      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(municipalityId)
+
+      eventbus.publish("asset:saved", (municipalityName, asset))
       asset
     }
   }
