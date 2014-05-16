@@ -9,11 +9,11 @@ object ValluStoreStopChangeMessage {
     (<Stops>
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").get }</AdminStopId> }
-        { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus").get }</StopCode> }
+        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
+        { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus") }</StopCode> }
         <Names>
-          <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
-          <Name lang="sv">{extractPropertyValue(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
+          <Name lang="fi">{extractPropertyValueOption(asset, "nimi_suomeksi").getOrElse("")}</Name>
+          <Name lang="sv">{extractPropertyValueOption(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
         </Names>
         <Coordinate>
           <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
@@ -41,10 +41,14 @@ object ValluStoreStopChangeMessage {
   }
 
   private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
-   extractPropertyValue(asset, propertyPublicId).isDefined
+   extractPropertyValueOption(asset, propertyPublicId).isDefined
   }
 
-  private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
+  private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
+    extractPropertyValueOption(asset, propertyPublicId).get
+  }
+
+  private def extractPropertyValueOption(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
     asset.propertyData
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)
