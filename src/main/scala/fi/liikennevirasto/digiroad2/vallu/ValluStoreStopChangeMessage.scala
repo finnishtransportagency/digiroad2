@@ -11,10 +11,11 @@ object ValluStoreStopChangeMessage {
         <StopId>{asset.externalId.get}</StopId>
         { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
         { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus") }</StopCode> }
+        { if (localizedNameIsDefined(asset))
         <Names>
           <Name lang="fi">{extractPropertyValueOption(asset, "nimi_suomeksi").getOrElse("")}</Name>
           <Name lang="sv">{extractPropertyValueOption(asset, "nimi_ruotsiksi").getOrElse("")}</Name>
-        </Names>
+        </Names> }
         <Coordinate>
           <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
           <yCoordinate>{asset.wgslat.toInt}</yCoordinate>
@@ -38,6 +39,10 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
+    propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
   private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
