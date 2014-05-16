@@ -14,6 +14,11 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
+  private def getMunicipalityName(roadLinkId: Long): String = {
+    val municipalityId = OracleSpatialAssetDao.getRoadLinkById(roadLinkId).get.municipalityNumber
+    OracleSpatialAssetDao.getMunicipalityNameByCode(municipalityId)
+  }
+
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
     val user = userProvider.getCurrentUser()
     user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber)
@@ -55,10 +60,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
       val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, properties)
-      val municipalityId = OracleSpatialAssetDao.getRoadLinkById(roadLinkId).get.municipalityNumber
-      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(municipalityId)
-
-      eventbus.publish("asset:saved", (municipalityName, asset))
+      eventbus.publish("asset:saved", (getMunicipalityName(roadLinkId), asset))
       asset
     }
   }
@@ -77,7 +79,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
         case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
       }
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
-      eventbus.publish("asset:saved", asset)
+      eventbus.publish("asset:saved", (getMunicipalityName(asset.roadLinkId), asset))
       asset
     }
   }

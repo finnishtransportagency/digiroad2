@@ -13,7 +13,6 @@ import akka.actor.Props
 
 class ValluActor extends Actor {
   def receive = {
-    case asset: AssetWithProperties      => ValluSender.postToVallu(asset)
     case (_, asset: AssetWithProperties) => ValluSender.postToVallu(asset)
     case _                               => println("received unknown message")
   }

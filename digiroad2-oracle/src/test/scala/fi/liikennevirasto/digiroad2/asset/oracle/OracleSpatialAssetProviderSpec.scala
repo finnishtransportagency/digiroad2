@@ -149,15 +149,18 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update the position of an asset within a road link", Tag("db")) {
-    val asset = provider.getAssetById(TestAssetId).get
+    val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
+    val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
+    val asset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     val lon1 = asset.lon
     val lat1 = asset.lat
     val lon2 = lon1 + 4.0
     val lat2 = lat1 + 4.0
     val b2 = Random.nextInt(360)
-    provider.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))))
-    val updated = provider.getAssetById(asset.id).get
-    provider.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))))
+    val updated = providerWithMockedEventBus.getAssetById(asset.id).get
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
+    verify(eventBus).publish("asset:saved", ("Kauniainen", updated))
     Math.abs(updated.lat - lat1) should (be > 0.5)
     Math.abs(updated.lon - lon1) should (be > 0.5)
     updated.bearing.get should be (b2)
