@@ -3,12 +3,13 @@ package fi.liikennevirasto.digiroad2.vallu
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 
 object ValluStoreStopChangeMessage {
+
   def create(asset: AssetWithProperties): String = {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
     (<Stops>
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId>
+        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus").getOrElse("")}</AdminStopId> }
         <StopCode>{extractPropertyValue(asset, "matkustajatunnus").getOrElse("")}</StopCode>
         <Names>
           <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi").getOrElse("")}</Name>
@@ -37,6 +38,10 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
+   extractPropertyValue(asset, propertyPublicId).isDefined
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {

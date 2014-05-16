@@ -30,7 +30,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "exclude optional elements" in {
     val stopElement = parseTestAssetMessage(testAsset)
-    (stopElement \ "AdminStopId").text must equal ("")
+    (stopElement \ "AdminStopId") must be ('empty)
     (stopElement \ "StopCode").text must equal ("")
     (stopElement \ "Names" \ "Name").map(_.text) must equal (List("", ""))
   }
