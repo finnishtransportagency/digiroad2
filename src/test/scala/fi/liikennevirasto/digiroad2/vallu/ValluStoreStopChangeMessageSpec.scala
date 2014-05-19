@@ -42,6 +42,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "AdminStopId").text must equal("")
     (xml \ "StopCode").text must equal("")
     (xml \ "Names" ) must be ('empty)
+    (xml \ "SpecialNeeds").text must equal("")
   }
 
   it must "specify external id" in {

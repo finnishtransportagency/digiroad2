@@ -36,7 +36,7 @@ object ValluStoreStopChangeMessage {
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
         <Equipment/>
-        { if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) <SpecialNeeds>{extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds> }
+        <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
         { val modification = asset.modified.modificationTime match {
             case Some(_) => asset.modified
             case _ => asset.created
