@@ -156,23 +156,6 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
 
-    val lastModified = getPropertyValuesByPublicId("muokattu_viimeksi", asset.propertyData)
-    val inserted = getPropertyValuesByPublicId("lisatty_jarjestelmaan", asset.propertyData)
-
-    val lastModifiedValue = lastModified.head.propertyDisplayValue.getOrElse("").trim
-    val insertedValue = inserted.head.propertyDisplayValue.getOrElse("").trim
-
-    val modifiedTime =
-      if(lastModifiedValue == "-")
-        insertedValue.takeRight(20).trim
-      else
-        lastModifiedValue.takeRight(20).trim
-    val modifiedBy =
-      if(lastModifiedValue == "-")
-        insertedValue.take(insertedValue.length - 20).trim
-      else
-        lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
-
     def creationTimeOrEmpty(time: Option[DateTime]): String = {
       time.map(OutputDateTimeFormat.print).getOrElse("")
     }
