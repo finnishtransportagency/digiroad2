@@ -25,10 +25,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvAll.size must be > 3
     val csv = csvAll.find(_.startsWith("5")).get
 
-    val propertyValue = extractPropertyValue(testAsset, _: String)
     val created = inOutputDateFormat(testAsset.created.modificationTime.get)
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+    val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
@@ -37,9 +35,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val asset = testAsset.copy(created = Modification(None, None), modified = Modification(None, None))
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
 
-    val propertyValue = extractPropertyValue(testAsset, _: String)
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+    val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;;;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
@@ -49,10 +45,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val asset = testAsset.copy(created = Modification(Some(creationDate), Some("testCreator")))
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
 
-    val propertyValue = extractPropertyValue(testAsset, _: String)
     val created = inOutputDateFormat(creationDate)
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+    val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";testCreator;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
@@ -63,10 +57,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val asset = testAsset.copy(created = creationInformation, modified = modificationInformation)
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
 
-    val propertyValue = extractPropertyValue(testAsset, _: String)
     val modified = inOutputDateFormat(modificationInformation.modificationTime.get)
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+    val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
@@ -106,10 +98,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
       }
     }
     val asset: AssetWithProperties = testAsset.copy(propertyData = testProperties)
-    val propertyValue = extractPropertyValue(asset, _: String)
     val created = inOutputDateFormat(asset.created.modificationTime.get)
-    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
-    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+    val (validFrom: String, validTo: String) = assetValidityPeriod(asset)
 
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
     csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelä; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
@@ -127,6 +117,12 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
       }
     }
     testAsset.copy(propertyData = properties)
+  }
+
+  private def assetValidityPeriod(asset: AssetWithProperties): (String, String) = {
+    val validFrom = inOutputDateFormat(parseDate(extractPropertyValue(asset, "ensimmainen_voimassaolopaiva")))
+    val validTo = inOutputDateFormat(parseDate(extractPropertyValue(asset, "viimeinen_voimassaolopaiva")))
+    (validFrom, validTo)
   }
 
   private def testAsset(): AssetWithProperties = {
