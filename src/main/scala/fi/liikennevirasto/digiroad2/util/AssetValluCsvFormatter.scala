@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import scala.collection.immutable
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{Modification, PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
@@ -172,7 +172,12 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
       else
         lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
 
-    (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
+    asset.created match {
+      case Modification(Some(creationTime), Some(creator)) => (asset, creator :: OutputDateTimeFormat.print(creationTime) :: result)
+      case Modification(Some(creationTime), None)          => (asset, modifiedBy :: OutputDateTimeFormat.print(creationTime) :: result)
+      case Modification(None, Some(creator))               => (asset, creator :: formatOutputDateTime(modifiedTime) :: result)
+      case _                                               => (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
+    }
   }
 
   private def formatOutputDateTime(dateTime: String): String = {
