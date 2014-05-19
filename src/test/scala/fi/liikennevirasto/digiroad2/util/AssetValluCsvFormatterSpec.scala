@@ -26,7 +26,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val csv = csvAll.find(_.startsWith("5")).get
 
     val propertyValue = extractPropertyValue(testAsset, _: String)
-    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
+    val created = inOutputDateFormat(testAsset.created.modificationTime.get)
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
@@ -107,7 +107,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     }
     val asset: AssetWithProperties = testAsset.copy(propertyData = testProperties)
     val propertyValue = extractPropertyValue(asset, _: String)
-    val created = inOutputDateFormat(parseCreationDateTime(propertyValue("lisatty_jarjestelmaan")))
+    val created = inOutputDateFormat(asset.created.modificationTime.get)
     val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
 
@@ -144,10 +144,6 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
     asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue.getOrElse("")
-  }
-
-  private def parseCreationDateTime(s: String): DateTime = {
-    AssetPropertyConfiguration.Format.parseDateTime(s.split(" ").drop(1).mkString(" "))
   }
 
   private def inOutputDateFormat(date: DateTime): String = {
