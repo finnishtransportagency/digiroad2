@@ -26,7 +26,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   )
 
   it must "specify encoding" in {
-    val message: String = ValluStoreStopChangeMessage.create(testAsset)
+    val message: String = ValluStoreStopChangeMessage.create("Kauniainen", testAsset)
     validateValluMessage(message)
     message startsWith("""<?xml version="1.0" encoding="UTF-8"?>""")
   }
@@ -60,6 +60,12 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val xml = validateAndParseTestAssetMessage(testAsset)
     val bearing = xml \ "Bearing"
     bearing.text must equal("120")
+  }
+
+  it must "specify municipality name" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val municapilityName = xml \ "MunicipalityName"
+    municapilityName.text must equal("Kauniainen")
   }
 
   it must "specify administrator stop id" in {
@@ -100,7 +106,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   }
 
   private def validateAndParseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
-    val message = ValluStoreStopChangeMessage.create(asset)
+    val message = ValluStoreStopChangeMessage.create("Kauniainen", asset)
     validateValluMessage(message)
     XML.loadString(message) \ "Stop"
   }

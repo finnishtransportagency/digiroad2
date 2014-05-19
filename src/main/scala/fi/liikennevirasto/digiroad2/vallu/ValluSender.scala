@@ -13,8 +13,8 @@ object ValluSender {
   val httpPost = new HttpPost("http://localhost:9002")
   val httpClient = HttpClients.createDefault()
 
-  def postToVallu(asset: AssetWithProperties) {
-    val payload = ValluStoreStopChangeMessage.create(asset)
+  def postToVallu(municipalityName: String, asset: AssetWithProperties) {
+    val payload = ValluStoreStopChangeMessage.create(municipalityName, asset)
     postToVallu(payload)
   }
 
