@@ -6,6 +6,7 @@ import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
+import org.joda.time.DateTime
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -172,11 +173,15 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
       else
         lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
 
-    asset.created match {
-      case Modification(Some(creationTime), Some(creator)) => (asset, creator :: OutputDateTimeFormat.print(creationTime) :: result)
-      case Modification(Some(creationTime), None)          => (asset, modifiedBy :: OutputDateTimeFormat.print(creationTime) :: result)
-      case Modification(None, Some(creator))               => (asset, creator :: formatOutputDateTime(modifiedTime) :: result)
-      case _                                               => (asset, "" :: "" :: result)
+    def creationTimeOrEmpty(time: Option[DateTime]): String = {
+      time.map(OutputDateTimeFormat.print).getOrElse("")
+    }
+
+    asset.modified match {
+      case Modification(Some(modificationTime), Some(modifier)) => (asset, modifier :: OutputDateTimeFormat.print(modificationTime) :: result)
+      case Modification(Some(modificationTime), None)           => (asset, asset.created.modifier.getOrElse("") :: OutputDateTimeFormat.print(modificationTime) :: result)
+      case Modification(None, Some(modifier))                   => (asset, modifier :: creationTimeOrEmpty(asset.created.modificationTime) :: result)
+      case _                                                    => (asset, asset.created.modifier.getOrElse("") :: creationTimeOrEmpty(asset.created.modificationTime) :: result)
     }
   }
 

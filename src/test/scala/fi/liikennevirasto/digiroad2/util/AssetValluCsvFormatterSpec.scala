@@ -57,6 +57,20 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";testCreator;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
+  it must "specify modification date" in {
+    val creationInformation = Modification(Some(new DateTime(2013, 11, 14, 14, 35)), Some("testCreator"))
+    val modificationInformation = Modification(Some(new DateTime(2014, 1, 3, 11, 12)), Some("testModifier"))
+    val asset = testAsset.copy(created = creationInformation, modified = modificationInformation)
+    val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
+
+    val propertyValue = extractPropertyValue(testAsset, _: String)
+    val modified = inOutputDateFormat(modificationInformation.modificationTime.get)
+    val validFrom = inOutputDateFormat(parseDate(propertyValue("ensimmainen_voimassaolopaiva")))
+    val validTo = inOutputDateFormat(parseDate(propertyValue("viimeinen_voimassaolopaiva")))
+
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+  }
+
   it must "filter tram stops from test data" in {
     val tramStopType = List(1L)
     val localBusStopType = List(2L)
