@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 
 object ValluStoreStopChangeMessage {
 
-  def create(asset: AssetWithProperties): String = {
+  def create(municipalityName: String, asset: AssetWithProperties): String = {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
     (<Stops>
       <Stop>
@@ -34,7 +34,7 @@ object ValluStoreStopChangeMessage {
         </StopAttribute>
         <Equipment/>
         <ModifiedBy>Digiroad 2 app</ModifiedBy>
-        <MunicipalityName>Alajärvi</MunicipalityName>
+        <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
           <Contact>rewre@gfdgfd.fi</Contact>
         </ContactEmails>
