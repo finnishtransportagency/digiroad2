@@ -44,6 +44,7 @@ object ValluStoreStopChangeMessage {
           <ModifiedBy>{modification.modifier.get}</ModifiedBy>
         }
         <ValidFrom>{transformToXsdDate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>
+        <ValidTo>{transformToXsdDate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>

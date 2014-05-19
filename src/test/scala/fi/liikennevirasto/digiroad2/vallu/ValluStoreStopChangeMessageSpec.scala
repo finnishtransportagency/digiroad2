@@ -147,8 +147,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   it must "specify validity start period" in {
     val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", "2014-05-21"))))
     (xml \ "ValidFrom").text must equal("2014-05-21T00:00:00")
-    val xml2 = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", "2014-10-23"))))
-    (xml2 \ "ValidFrom").text must equal("2014-10-23T00:00:00")
+  }
+
+  it must "specify validity end period" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("viimeinen_voimassaolopaiva", "2014-05-21"))))
+    (xml \ "ValidTo").text must equal("2014-05-21T00:00:00")
   }
 
   private def validateValluMessage(valluMessage: String) = {
