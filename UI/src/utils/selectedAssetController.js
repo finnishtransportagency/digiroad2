@@ -39,12 +39,6 @@
                 };
             };
             eventbus.once('assetTypeProperties:fetched', function(properties) {
-                // must have default
-                properties.push({
-                        publicId : 'pysakin_tyyppi',
-                        values : [{propertyValue : 99}]
-                    }
-                );
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
                 eventbus.trigger('asset:initialized', currentAsset);
