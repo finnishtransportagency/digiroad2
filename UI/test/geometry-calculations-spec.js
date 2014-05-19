@@ -111,6 +111,27 @@ describe('Geometry calculations: degree to radian', function(){
     });
 });
 
+describe('Geometry calculations: distance between points', function(){
+    var fut = geometrycalculator.getDistanceBetweenPoints;
+
+    it ('returns 0 on same point', function() {
+        assert.equal(0, fut({ lat: 0, lon: 0 }, { lat: 0, lon: 0}));
+        assert.equal(0, fut({ lat: 10, lon: 10 }, { lat: 10, lon: 10}));
+        assert.equal(0, fut({ lat: 10.05, lon: 10.00 }, { lat: 10.05, lon: 10.00 }));
+    });
+
+    it ('calculates correct distances in points', function() {
+        assert.equal(1.4142135623730951, fut({ lat: 0, lon: 0 }, { lat: 1, lon: 1}));
+        assert.equal(2.23606797749979, fut({ lat: 0, lon: 0 }, { lat: 1, lon: 2}));
+    });
+
+    it ('calculations are assosiative', function() {
+        assert.equal(1.4142135623730951, fut({ lat: 1, lon: 1 }, { lat: 0, lon: 0}));
+        assert.equal(2.23606797749979, fut({ lat: 1, lon: 2 }, { lat: 0, lon: 0}));
+    });
+});
+
+
 describe('Geometry calculations: line direction angle', function(){
     var fut = geometrycalculator.getLineDirectionRadAngle;
     var fut2 = geometrycalculator.getLineDirectionDegAngle;
