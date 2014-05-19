@@ -77,14 +77,12 @@
 								</xs:annotation>
 							</xs:element>
 
-							<!--
 							<xs:element name="Direction" type="xs:string" minOccurs="0">
 								<xs:annotation>
 									<xs:documentation> Textual representation of direction to the stop.
 									</xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							-->
 
 							<xs:element ref="StopAttribute"/>
 

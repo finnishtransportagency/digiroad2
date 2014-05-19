@@ -36,16 +36,15 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   }
 
   it must "exclude optional elements" in {
-    val stopElement = validateAndParseTestAssetMessage(testAsset)
-    (stopElement \ "AdminStopId") must be ('empty)
-    (stopElement \ "StopCode") must be ('empty)
-    (stopElement \ "Names" ) must be ('empty)
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    (xml \ "AdminStopId") must be ('empty)
+    (xml \ "StopCode") must be ('empty)
+    (xml \ "Names" ) must be ('empty)
   }
 
   it must "specify external id" in {
-    val stopElement = validateAndParseTestAssetMessage(testAsset)
-    val stopId = stopElement \ "StopId"
-    stopId.text must equal("123")
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    (xml \ "StopId").text must equal("123")
   }
 
   it must "specify xCoordinate" in {
@@ -62,56 +61,52 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "specify bearing" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
-    val bearing = xml \ "Bearing"
-    bearing.text must equal("120")
+    (xml \ "Bearing").text must equal("120")
   }
 
   it must "specify bearing description" in {
-    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("liikennointisuuntima", "Itä"))))
-    val stopId = stopElement \ "BearingDescription"
-    stopId.text must equal("Itä")
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("liikennointisuuntima", "Itä"))))
+    (xml \ "BearingDescription").text must equal("Itä")
+  }
+
+  it must "specify direction" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("liikennointisuunta", "johonkin"))))
+    (xml \ "Direction").text must equal("johonkin")
   }
 
   it must "specify modified by" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
-    val modifiedBy = xml \ "ModifiedBy"
-    modifiedBy.text must equal("testUser")
+    (xml \ "ModifiedBy").text must equal("testUser")
   }
 
   it must "specify modified timestamp" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
-    val modifiedBy = xml \ "ModifiedTimestamp"
-    modifiedBy.text must equal("2014-05-19T10:21:00")
+    (xml \ "ModifiedTimestamp").text must equal("2014-05-19T10:21:00")
   }
 
   it must "specify modified by when creating new bus stop" in {
     val xml = validateAndParseTestAssetMessage(testAsset.copy(modified = new Modification(None, None)))
-    val modifiedBy = xml \ "ModifiedBy"
-    modifiedBy.text must equal("creator")
+    (xml \ "ModifiedBy").text must equal("creator")
   }
 
   it must "specify modified timestamp when creating new bus stop" in {
     val xml = validateAndParseTestAssetMessage(testAsset.copy(modified = new Modification(None, None)))
-    val modifiedBy = xml \ "ModifiedTimestamp"
-    modifiedBy.text must equal("2013-04-18T10:21:00")
+    (xml \ "ModifiedTimestamp").text must equal("2013-04-18T10:21:00")
   }
 
   it must "specify municipality name" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
-    val municapilityName = xml \ "MunicipalityName"
-    municapilityName.text must equal("Kauniainen")
+    (xml \ "MunicipalityName").text must equal("Kauniainen")
   }
 
   it must "specify administrator stop id" in {
-    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
-    val stopId = stopElement \ "AdminStopId"
-    stopId.text must equal("Livi83857")
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
+    (xml \ "AdminStopId").text must equal("Livi83857")
   }
 
   it must "specify stop code for stop" in {
-    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
-    val stopCode = stopElement \ "StopCode"
-    stopCode.text must equal("Poliisilaitos")
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("matkustajatunnus", "Poliisilaitos"))))
+    (xml \ "StopCode").text must equal("Poliisilaitos")
   }
 
   it must "specify stop name in Finnish and Swedish" in {

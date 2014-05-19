@@ -28,6 +28,7 @@ object ValluStoreStopChangeMessage {
           }
         }.getOrElse("")}</Bearing>
         { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
+        { if (propertyIsDefined(asset, "liikennointisuunta")) <Direction>{extractPropertyValue(asset, "liikennointisuunta") }</Direction> }
         <StopAttribute>
           <StopType name="LOCAL_BUS">0</StopType>
           <StopType name="EXPRESS_BUS">1</StopType>
@@ -44,7 +45,7 @@ object ValluStoreStopChangeMessage {
         }
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
-          <Contact>rewre@gfdgfd.fi</Contact>
+          <Contact>pysakit@liikennevirasto.fi</Contact>
         </ContactEmails>
       </Stop>
     </Stops>).toString()
