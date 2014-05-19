@@ -34,8 +34,13 @@ object ValluStoreStopChangeMessage {
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
         <Equipment/>
-        <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(asset.modified.modificationTime.get)}</ModifiedTimestamp>
-        <ModifiedBy>{asset.modified.modifier.get}</ModifiedBy>
+        { val modification = asset.modified.modificationTime match {
+            case Some(_) => asset.modified
+            case _ => asset.created
+          }
+          <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(modification.modificationTime.get)}</ModifiedTimestamp>
+          <ModifiedBy>{modification.modifier.get}</ModifiedBy>
+        }
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
           <Contact>rewre@gfdgfd.fi</Contact>

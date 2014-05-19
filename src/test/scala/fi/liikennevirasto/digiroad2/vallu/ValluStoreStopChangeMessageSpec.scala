@@ -12,6 +12,7 @@ import org.joda.time.DateTime
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val modifiedDatetime = new DateTime(2014, 5, 19, 10, 21, 0)
+  val createdDateTime = modifiedDatetime.minusYears(1).minusMonths(1).minusDays(1)
 
   val testAsset = AssetWithProperties(
     id = 1,
@@ -24,7 +25,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     wgslon = 1,
     wgslat = 1,
     bearing = Some(120),
-    created = Modification(None, None),
+    created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser"))
   )
 
@@ -75,6 +76,18 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val xml = validateAndParseTestAssetMessage(testAsset)
     val modifiedBy = xml \ "ModifiedTimestamp"
     modifiedBy.text must equal("2014-05-19T10:21:00")
+  }
+
+  it must "specify modified by when creating new bus stop" in {
+    val xml = validateAndParseTestAssetMessage(testAsset.copy(modified = new Modification(None, None)))
+    val modifiedBy = xml \ "ModifiedBy"
+    modifiedBy.text must equal("creator")
+  }
+
+  it must "specify modified timestamp when creating new bus stop" in {
+    val xml = validateAndParseTestAssetMessage(testAsset.copy(modified = new Modification(None, None)))
+    val modifiedBy = xml \ "ModifiedTimestamp"
+    modifiedBy.text must equal("2013-04-18T10:21:00")
   }
 
   it must "specify municipality name" in {
