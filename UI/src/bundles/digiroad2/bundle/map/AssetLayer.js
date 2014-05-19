@@ -443,7 +443,9 @@ window.AssetLayer = function(map, roadLayer) {
         readOnly = value;
     }, this);
     eventbus.on('assets:fetched', function(assets) {
-        renderAssets(assets);
+        if (zoomlevels.isInAssetZoomLevel(map.getZoom())) { 
+            renderAssets(assets);
+        }
     }, this);
     eventbus.on('map:moved', function(state) {
       if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetController.isDirty()) {
