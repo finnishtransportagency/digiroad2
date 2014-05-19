@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
-import scala.xml.{NodeSeq, XML}
+import scala.xml.{Elem, NodeSeq, XML}
 import javax.xml.validation.SchemaFactory
 import javax.xml.XMLConstants
 import java.io.{StringReader}
@@ -147,6 +147,28 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val nameSv = nameElements filter { _ \ "@lang" exists(_.text == "sv") }
     nameFi.text must equal("Puutarhatie")
     nameSv must be('empty)
+  }
+
+  it must "specify validity start period" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", "2014-05-21"))))
+    (xml \ "ValidFrom").text must equal("2014-05-21T00:00:00")
+  }
+
+  it must "specify nil validity start period if not present" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", ""))))
+    val validFrom = (xml \ "ValidFrom").head
+    validFrom.attribute("http://www.w3.org/2001/XMLSchema-instance", "nil").get.text must equal("true")
+  }
+
+  it must "specify nil validity end period if not present" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("viimeinen_voimassaolopaiva", ""))))
+    val validFrom = (xml \ "ValidTo").head
+    validFrom.attribute("http://www.w3.org/2001/XMLSchema-instance", "nil").get.text must equal("true")
+  }
+
+  it must "specify validity end period" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("viimeinen_voimassaolopaiva", "2014-05-21"))))
+    (xml \ "ValidTo").text must equal("2014-05-21T00:00:00")
   }
 
   private def validateValluMessage(valluMessage: String) = {

@@ -168,10 +168,6 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     }
   }
 
-  private def formatOutputDateTime(dateTime: String): String = {
-    OutputDateTimeFormat.print(AssetPropertyConfiguration.Format.parseDateTime(dateTime))
-  }
-
   private[util] def addBearing(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val validityDirection = asset.validityDirection.getOrElse(1)
