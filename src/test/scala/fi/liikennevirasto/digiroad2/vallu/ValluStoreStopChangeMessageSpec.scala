@@ -76,6 +76,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "Direction").text must equal("johonkin")
   }
 
+  it must "specify special needs" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("esteettomyys_liikuntarajoitteiselle", "Tuoli"))))
+    (xml \ "SpecialNeeds").text must equal("Tuoli")
+  }
+
   it must "specify modified by" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
     (xml \ "ModifiedBy").text must equal("testUser")

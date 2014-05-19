@@ -98,13 +98,13 @@
 									<xs:documentation>Additional information such as parking space or link to map</xs:documentation>
 								</xs:annotation>
 							</xs:element>
+							-->
 
 							<xs:element name="SpecialNeeds" type="xs:string" minOccurs="0">
 								<xs:annotation>
 									<xs:documentation>Information of stop accessibility such as wheelchair</xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							-->
 
 					        <xs:element name="ModifiedTimestamp" nillable="true">
 								<xs:annotation>
