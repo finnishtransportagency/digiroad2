@@ -43,6 +43,7 @@ object ValluStoreStopChangeMessage {
           <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(modification.modificationTime.get)}</ModifiedTimestamp>
           <ModifiedBy>{modification.modifier.get}</ModifiedBy>
         }
+        <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>

@@ -27,7 +27,8 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     bearing = Some(120),
     municipalityNumber = Some(235),
     created = Modification(Some(createdDateTime), Some("creator")),
-    modified = Modification(Some(modifiedDatetime), Some("testUser"))
+    modified = Modification(Some(modifiedDatetime), Some("testUser")),
+    propertyData = List(Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa")))))
   )
 
   it must "specify encoding" in {
@@ -95,6 +96,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "ModifiedTimestamp").text must equal("2013-04-18T10:21:00")
   }
 
+  it must "specify administrator  code" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("tietojen_yllapitaja", "Ei tiedossa"))))
+    (xml \ "AdministratorCode").text must equal("Ei tiedossa")
+  }
+
   it must "specify municipality code" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
     (xml \ "MunicipalityCode").text must equal("235")
@@ -152,8 +158,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
         id = 1,
         publicId = property._1,
         propertyType = PropertyTypes.Text,
-        values = List(PropertyValue(property._2, Some(property._2)))
-      )
-    }.toSeq)
+        values = List(PropertyValue(property._2, Some(property._2))))
+    }.toSeq ++ testAsset.propertyData)
   }
 }
