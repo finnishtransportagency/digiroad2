@@ -443,7 +443,7 @@ window.AssetLayer = function(map, roadLayer) {
         readOnly = value;
     }, this);
     eventbus.on('assets:fetched', function(assets) {
-        if (zoomlevels.isInAssetZoomLevel(map.getZoom())) { 
+        if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
             renderAssets(assets);
         }
     }, this);
