@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 object ValluStoreStopChangeMessage {
 
@@ -43,6 +43,7 @@ object ValluStoreStopChangeMessage {
           <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(modification.modificationTime.get)}</ModifiedTimestamp>
           <ModifiedBy>{modification.modifier.get}</ModifiedBy>
         }
+        <ValidFrom>{transformToXsdDate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
@@ -52,6 +53,11 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  private def transformToXsdDate(dateOption: Option[String]) = {
+    val inputDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
   }
 
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {

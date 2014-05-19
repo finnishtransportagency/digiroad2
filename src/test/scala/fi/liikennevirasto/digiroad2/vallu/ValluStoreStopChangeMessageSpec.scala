@@ -144,6 +144,13 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     nameSv must be('empty)
   }
 
+  it must "specify validity start period" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", "2014-05-21"))))
+    (xml \ "ValidFrom").text must equal("2014-05-21T00:00:00")
+    val xml2 = validateAndParseTestAssetMessage(testAssetWithProperties(List(("ensimmainen_voimassaolopaiva", "2014-10-23"))))
+    (xml2 \ "ValidFrom").text must equal("2014-10-23T00:00:00")
+  }
+
   private def validateValluMessage(valluMessage: String) = {
     val schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
     val source = new StreamSource(getClass.getResourceAsStream("/StopChange.xsd"))
