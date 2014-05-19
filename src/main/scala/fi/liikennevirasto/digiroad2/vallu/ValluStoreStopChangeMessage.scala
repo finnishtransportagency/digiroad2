@@ -33,7 +33,7 @@ object ValluStoreStopChangeMessage {
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
         <Equipment/>
-        <ModifiedBy>Digiroad 2 app</ModifiedBy>
+        <ModifiedBy>{asset.modified.modifier.get}</ModifiedBy>
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
           <Contact>rewre@gfdgfd.fi</Contact>

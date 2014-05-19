@@ -22,7 +22,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     wgslat = 1,
     bearing = Some(120),
     created = Modification(None, None),
-    modified = Modification(None, None)
+    modified = Modification(None, Some("testUser"))
   )
 
   it must "specify encoding" in {
@@ -60,6 +60,12 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val xml = validateAndParseTestAssetMessage(testAsset)
     val bearing = xml \ "Bearing"
     bearing.text must equal("120")
+  }
+
+  it must "specify modified by" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val modifiedBy = xml \ "ModifiedBy"
+    modifiedBy.text must equal("testUser")
   }
 
   it must "specify municipality name" in {
