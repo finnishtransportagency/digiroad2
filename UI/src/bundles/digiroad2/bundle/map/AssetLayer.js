@@ -23,7 +23,11 @@ window.AssetLayer = function(map, roadLayer) {
 
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
-            return (bearing) ? bearing + (90 * validityDirection): 90;
+            if (bearing == null) {
+              console.log('Bearing was null, find out why');
+              return 90;
+            }
+            return bearing + (90 * validityDirection);
         };
         var angle = getAngleFromBearing(bearing, validityDirection);
         return new OpenLayers.Feature.Vector(
