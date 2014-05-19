@@ -23,7 +23,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var getDirectionArrow = function(bearing, validityDirection, lon, lat) {
         var getAngleFromBearing = function(bearing, validityDirection) {
-            if (bearing == null) {
+            if (bearing === null || bearing === undefined) {
               console.log('Bearing was null, find out why');
               return 90;
             }
