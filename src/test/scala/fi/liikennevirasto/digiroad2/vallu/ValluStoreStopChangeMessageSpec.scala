@@ -1,15 +1,18 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties, Modification}
-import scala.xml.{NodeSeq, Node, Elem, XML}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
+import scala.xml.{NodeSeq, XML}
 import javax.xml.validation.SchemaFactory
 import javax.xml.XMLConstants
-import java.io.{StringReader, ByteArrayInputStream}
+import java.io.{StringReader}
 import javax.xml.transform.stream.StreamSource
 import fi.liikennevirasto.digiroad2.asset.Modification
+import org.joda.time.DateTime
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
+  val modifiedDatetime = new DateTime(2014, 5, 19, 10, 21, 0)
+
   val testAsset = AssetWithProperties(
     id = 1,
     externalId = Some(123),
@@ -22,7 +25,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     wgslat = 1,
     bearing = Some(120),
     created = Modification(None, None),
-    modified = Modification(None, Some("testUser"))
+    modified = Modification(Some(modifiedDatetime), Some("testUser"))
   )
 
   it must "specify encoding" in {
@@ -66,6 +69,12 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     val xml = validateAndParseTestAssetMessage(testAsset)
     val modifiedBy = xml \ "ModifiedBy"
     modifiedBy.text must equal("testUser")
+  }
+
+  it must "specify modified timestamp" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    val modifiedBy = xml \ "ModifiedTimestamp"
+    modifiedBy.text must equal("2014-05-19T10:21:00")
   }
 
   it must "specify municipality name" in {

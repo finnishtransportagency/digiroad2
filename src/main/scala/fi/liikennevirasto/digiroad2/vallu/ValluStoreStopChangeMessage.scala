@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
+import org.joda.time.format.ISODateTimeFormat
 
 object ValluStoreStopChangeMessage {
 
@@ -33,6 +34,7 @@ object ValluStoreStopChangeMessage {
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
         <Equipment/>
+        <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(asset.modified.modificationTime.get)}</ModifiedTimestamp>
         <ModifiedBy>{asset.modified.modifier.get}</ModifiedBy>
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
