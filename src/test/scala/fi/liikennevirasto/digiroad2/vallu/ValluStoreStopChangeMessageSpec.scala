@@ -28,7 +28,9 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     municipalityNumber = Some(235),
     created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser")),
-    propertyData = List(Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa")))))
+    propertyData = List(
+        Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa"))))
+    )
   )
 
   it must "specify encoding" in {
@@ -81,6 +83,28 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   it must "specify special needs" in {
     val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("esteettomyys_liikuntarajoitteiselle", "Tuoli"))))
     (xml \ "SpecialNeeds").text must equal("Tuoli")
+  }
+
+  it must "specify reachability" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
+      ("saattomahdollisuus_henkiloautolla", "2"),
+      ("liityntapysakointipaikkojen_maara", "10"),
+      ("liityntapysakoinnin_lisatiedot", "sähköautoille"))))
+    (xml \ "Reachability").text must equal("Liityntäpysäköinti, 10 pysäköintipaikkaa, sähköautoille")
+  }
+
+  it must "specify reachability without continuous parking" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
+      ("saattomahdollisuus_henkiloautolla", "86"),
+      ("liityntapysakointipaikkojen_maara", "10"),
+      ("liityntapysakoinnin_lisatiedot", "sähköautoille"))))
+    (xml \ "Reachability").text must equal("10 pysäköintipaikkaa, sähköautoille")
+  }
+
+  it must "specify reachability without continuous parking and parking space" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
+      ("liityntapysakoinnin_lisatiedot", "sähköautoille"))))
+    (xml \ "Reachability").text must equal("sähköautoille")
   }
 
   it must "specify modified by" in {

@@ -37,6 +37,7 @@ object ValluStoreStopChangeMessage {
         </StopAttribute>
         <Equipment/>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
+        { if (!getReachability(asset).equals("")) <Reachability>{getReachability(asset)}</Reachability> }
         { val modification = asset.modified.modificationTime match {
             case Some(_) => asset.modified
             case _ => asset.created
@@ -61,6 +62,18 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  private def getReachability(asset: AssetWithProperties): String = {
+    val result = List(
+      extractPropertyValueOption(asset, "saattomahdollisuus_henkiloautolla").map { continuousParking =>
+          if (continuousParking == "2") "Liityntäpysäköinti" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "liityntapysakointipaikkojen_maara").map { parkingSpaces =>
+        parkingSpaces + " pysäköintipaikkaa"
+      },
+      extractPropertyValueOption(asset, "liityntapysakoinnin_lisatiedot")).flatten.mkString(", ")
+    result
   }
 
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
