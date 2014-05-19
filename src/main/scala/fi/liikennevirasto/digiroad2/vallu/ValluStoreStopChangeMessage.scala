@@ -27,6 +27,7 @@ object ValluStoreStopChangeMessage {
             ValluTransformer.calculateActualBearing(validityDirection, bearing)
           }
         }.getOrElse("")}</Bearing>
+        { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
         <StopAttribute>
           <StopType name="LOCAL_BUS">0</StopType>
           <StopType name="EXPRESS_BUS">1</StopType>
@@ -66,5 +67,10 @@ object ValluStoreStopChangeMessage {
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)
       .map(value => value.propertyValue)
+  }
+
+  private def extractPropertyDisplayValue(asset: AssetWithProperties, propertyPublicId: String): String = {
+    asset.propertyData.find(property => property.publicId == propertyPublicId)
+      .head.values.head.propertyDisplayValue.get
   }
 }

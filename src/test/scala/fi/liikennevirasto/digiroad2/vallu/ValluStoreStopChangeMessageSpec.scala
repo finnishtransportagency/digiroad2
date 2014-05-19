@@ -66,6 +66,12 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     bearing.text must equal("120")
   }
 
+  it must "specify bearing description" in {
+    val stopElement = validateAndParseTestAssetMessage(testAssetWithProperties(List(("liikennointisuuntima", "Itä"))))
+    val stopId = stopElement \ "BearingDescription"
+    stopId.text must equal("Itä")
+  }
+
   it must "specify modified by" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
     val modifiedBy = xml \ "ModifiedBy"
@@ -145,7 +151,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
         id = 1,
         publicId = property._1,
         propertyType = PropertyTypes.Text,
-        values = List(PropertyValue(property._2))
+        values = List(PropertyValue(property._2, Some(property._2)))
       )
     }.toSeq)
   }
