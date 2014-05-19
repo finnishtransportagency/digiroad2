@@ -10,8 +10,8 @@ object ValluStoreStopChangeMessage {
     (<Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
-        { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
-        { if (propertyIsDefined(asset, "matkustajatunnus")) <StopCode>{extractPropertyValue(asset, "matkustajatunnus") }</StopCode> }
+        <AdminStopId>{if (propertyIsDefined(asset, "yllapitajan_tunnus")) extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId>
+        <StopCode>{if (propertyIsDefined(asset, "matkustajatunnus")) extractPropertyValue(asset, "matkustajatunnus") }</StopCode>
         { if (localizedNameIsDefined(asset))
             <Names>
             { if (propertyIsDefined(asset, "nimi_suomeksi")) <Name lang="fi">{extractPropertyValue(asset, "nimi_suomeksi") }</Name> }
