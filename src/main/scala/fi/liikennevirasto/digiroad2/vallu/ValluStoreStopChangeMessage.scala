@@ -35,7 +35,7 @@ object ValluStoreStopChangeMessage {
           <StopType name="NON_STOP_EXPRESS_BUS">0</StopType>
           <StopType name="VIRTUAL_STOP">0</StopType>
         </StopAttribute>
-        <Equipment/>
+        <Equipment>{getEquipment(asset)}</Equipment>
         <Reachability>{getReachability(asset)}</Reachability>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
         { val modification = asset.modified.modificationTime match {
@@ -62,6 +62,31 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  private def getEquipment(asset: AssetWithProperties): String = {
+    val result = List(
+      extractPropertyValueOption(asset, "aikataulu").map { continuousParking =>
+        if (continuousParking == "2") "Aikataulu" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "katos").map { continuousParking =>
+        if (continuousParking == "2") "Katos" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "mainoskatos").map { continuousParking =>
+        if (continuousParking == "2") "Mainoskatos" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "penkki").map { continuousParking =>
+        if (continuousParking == "2") "Penkki" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "pyorateline").map { continuousParking =>
+        if (continuousParking == "2") "Pyöräteline" else ""
+      }.filterNot(_.isEmpty),
+      extractPropertyValueOption(asset, "sahkoinen_aikataulunaytto").map { continuousParking =>
+        if (continuousParking == "2") "Sähköinen aikataulunnäyttö" else ""
+      }.filterNot(_.isEmpty),extractPropertyValueOption(asset, "valaistus").map { continuousParking =>
+        if (continuousParking == "2") "Valaistus" else ""
+      }.filterNot(_.isEmpty)).flatten.mkString(", ")
+      result
   }
 
   private def getReachability(asset: AssetWithProperties): String = {

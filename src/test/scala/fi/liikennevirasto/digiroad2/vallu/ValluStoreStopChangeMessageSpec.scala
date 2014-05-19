@@ -85,6 +85,20 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "SpecialNeeds").text must equal("Tuoli")
   }
 
+  it must "specify equipment" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
+      ("aikataulu", "2"),
+      ("katos", "2"))))
+    (xml \ "Equipment").text must equal("Aikataulu, Katos")
+  }
+
+  it must "specify equipments without schedule" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
+      ("aikataulu", "1"),
+      ("katos", "2"))))
+    (xml \ "Equipment").text must equal("Katos")
+  }
+
   it must "specify reachability" in {
     val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(
       ("saattomahdollisuus_henkiloautolla", "2"),
