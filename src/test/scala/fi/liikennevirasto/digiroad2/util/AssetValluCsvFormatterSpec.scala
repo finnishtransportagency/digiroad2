@@ -28,7 +28,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val created = inOutputDateFormat(testAsset.created.modificationTime.get)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   it must "leave modification info empty if creation and modification info are unspecified" in {
@@ -37,7 +37,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
 
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;;;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;;;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   it must "specify creation date" in {
@@ -48,7 +48,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val created = inOutputDateFormat(creationDate)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + created + ";testCreator;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";testCreator;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   it must "specify modification date" in {
@@ -60,7 +60,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val modified = inOutputDateFormat(modificationInformation.modificationTime.get)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
+    csv must equal("5;;;;;374792.096855508;6677566.77442972;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen;;")
   }
 
   it must "filter tram stops from test data" in {
@@ -91,7 +91,6 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
         case "nimi_suomeksi" => property.copy(values = List(textPropertyValue("n\nimi\nsuomeksi")))
         case "nimi_ruotsiksi" => property.copy(values = List(textPropertyValue("\nnimi ruotsiksi\n")))
         case "liikennointisuunta" => property.copy(values = List(textPropertyValue("\nliikennointisuunta\n")))
-        case "esteettomyys_liikuntarajoitteiselle" => property.copy(values = List(textPropertyValue("\nesteettomyys\nliikuntarajoitteiselle\n")))
         case "lisatiedot" => property.copy(values = List(textPropertyValue("\nlisatiedot")))
         case "palauteosoite" => property.copy(values = List(textPropertyValue("palauteosoite\n")))
         case _ => property
@@ -102,7 +101,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val (validFrom: String, validTo: String) = assetValidityPeriod(asset)
 
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
-    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelä; liikennointisuunta ;1;1;1;0;; esteettomyys liikuntarajoitteiselle ;;"
+    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374792.096855508;6677566.77442972;;;210;Etelä; liikennointisuunta ;1;1;1;0;;;Ei tiedossa;"
       + created
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }

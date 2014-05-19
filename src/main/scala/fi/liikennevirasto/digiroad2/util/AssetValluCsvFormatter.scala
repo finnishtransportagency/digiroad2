@@ -4,7 +4,6 @@ import scala.collection.immutable
 import fi.liikennevirasto.digiroad2.asset.{Modification, PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
 import org.joda.time.DateTime
 
@@ -144,8 +143,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addSpecialNeeds(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    // special needs not known
-    (asset, "" :: result)
+    val specialNeeds = getPropertyValuesByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
+    (asset, specialNeeds.headOption.map(x => x.propertyDisplayValue.get).getOrElse("") :: result)
   }
 
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
