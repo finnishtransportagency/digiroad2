@@ -176,7 +176,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
       case Modification(Some(creationTime), Some(creator)) => (asset, creator :: OutputDateTimeFormat.print(creationTime) :: result)
       case Modification(Some(creationTime), None)          => (asset, modifiedBy :: OutputDateTimeFormat.print(creationTime) :: result)
       case Modification(None, Some(creator))               => (asset, creator :: formatOutputDateTime(modifiedTime) :: result)
-      case _                                               => (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
+      case _                                               => (asset, "" :: "" :: result)
     }
   }
 
