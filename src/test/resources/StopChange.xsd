@@ -152,7 +152,7 @@
 								</xs:annotation>
 							</xs:element>-->
 
-							<!--
+
 							<xs:element name="MunicipalityCode" nillable="true" minOccurs="0">
 								<xs:annotation>
 									<xs:documentation>code of municipality where stop exists.
@@ -162,7 +162,6 @@
 									<xs:union memberTypes="xs:nonNegativeInteger emptyString"/>
 								</xs:simpleType>
 							</xs:element>
-							-->
 
 							<xs:element name="MunicipalityName" type="xs:string">
 								<xs:annotation>

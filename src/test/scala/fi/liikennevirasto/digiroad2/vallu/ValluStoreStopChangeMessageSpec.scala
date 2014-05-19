@@ -25,6 +25,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     wgslon = 1,
     wgslat = 1,
     bearing = Some(120),
+    municipalityNumber = Some(235),
     created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser"))
   )
@@ -92,6 +93,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   it must "specify modified timestamp when creating new bus stop" in {
     val xml = validateAndParseTestAssetMessage(testAsset.copy(modified = new Modification(None, None)))
     (xml \ "ModifiedTimestamp").text must equal("2013-04-18T10:21:00")
+  }
+
+  it must "specify municipality code" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
+    (xml \ "MunicipalityCode").text must equal("235")
   }
 
   it must "specify municipality name" in {

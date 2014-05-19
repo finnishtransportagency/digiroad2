@@ -43,6 +43,7 @@ object ValluStoreStopChangeMessage {
           <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(modification.modificationTime.get)}</ModifiedTimestamp>
           <ModifiedBy>{modification.modifier.get}</ModifiedBy>
         }
+        <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <ContactEmails>
           <Contact>pysakit@liikennevirasto.fi</Contact>
