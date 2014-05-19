@@ -12,7 +12,7 @@ window.AssetLayer = function(map, roadLayer) {
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
 
-    var assets = null;
+    var assets = {};
     var overlay;
     var selectedControl = 'Select';
     var assetMoveWaitTime = 300;
