@@ -1,13 +1,13 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 object ValluStoreStopChangeMessage {
 
   def create(municipalityName: String, asset: AssetWithProperties): String = {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
-    (<Stops>
+    (<Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <Stop>
         <StopId>{asset.externalId.get}</StopId>
         { if (propertyIsDefined(asset, "yllapitajan_tunnus")) <AdminStopId>{extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId> }
@@ -43,6 +43,14 @@ object ValluStoreStopChangeMessage {
           <ModifiedTimestamp>{ISODateTimeFormat.dateHourMinuteSecond.print(modification.modificationTime.get)}</ModifiedTimestamp>
           <ModifiedBy>{modification.modifier.get}</ModifiedBy>
         }
+        {if (! propertyIsDefined(asset, "ensimmainen_voimassaolopaiva") || propertyIsEmpty(asset, "ensimmainen_voimassaolopaiva"))
+            <ValidFrom xsi:nil="true" />
+         else
+            <ValidFrom>{transformToXsdDate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
+        {if (! propertyIsDefined(asset, "viimeinen_voimassaolopaiva") || propertyIsEmpty(asset, "viimeinen_voimassaolopaiva"))
+          <ValidTo xsi:nil="true" />
+         else
+          <ValidTo>{transformToXsdDate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
@@ -54,12 +62,21 @@ object ValluStoreStopChangeMessage {
     </Stops>).toString()
   }
 
+  private def transformToXsdDate(dateOption: Option[String]) = {
+    val inputDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
+  }
+
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
     propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
   private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
    extractPropertyValueOption(asset, propertyPublicId).isDefined
+  }
+
+  private def propertyIsEmpty(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
+    propertyIsDefined(asset, propertyPublicId) && extractPropertyValue(asset, propertyPublicId).isEmpty
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
