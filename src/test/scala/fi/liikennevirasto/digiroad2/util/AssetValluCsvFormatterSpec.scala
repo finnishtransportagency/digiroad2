@@ -107,7 +107,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
       + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
   }
 
-  def createStop(stopType: Seq[Long]): AssetWithProperties = {
+  private def createStop(stopType: Seq[Long]): AssetWithProperties = {
     def typeToPropertyValue(typeCode: Long): PropertyValue = { PropertyValue(typeCode.toString, Some(typeCode.toString)) }
 
     val properties = testAsset.propertyData.map { property =>
