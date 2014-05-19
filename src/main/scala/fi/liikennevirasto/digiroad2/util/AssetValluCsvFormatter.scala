@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import scala.collection.immutable
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{Modification, PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
+import org.joda.time.DateTime
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -155,24 +156,16 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
 
-    val lastModified = getPropertyValuesByPublicId("muokattu_viimeksi", asset.propertyData)
-    val inserted = getPropertyValuesByPublicId("lisatty_jarjestelmaan", asset.propertyData)
+    def creationTimeOrEmpty(time: Option[DateTime]): String = {
+      time.map(OutputDateTimeFormat.print).getOrElse("")
+    }
 
-    val lastModifiedValue = lastModified.head.propertyDisplayValue.getOrElse("").trim
-    val insertedValue = inserted.head.propertyDisplayValue.getOrElse("").trim
-
-    val modifiedTime =
-      if(lastModifiedValue == "-")
-        insertedValue.takeRight(20).trim
-      else
-        lastModifiedValue.takeRight(20).trim
-    val modifiedBy =
-      if(lastModifiedValue == "-")
-        insertedValue.take(insertedValue.length - 20).trim
-      else
-        lastModifiedValue.take(lastModified.head.propertyDisplayValue.getOrElse("").length - 20).trim
-
-    (asset, modifiedBy :: formatOutputDateTime(modifiedTime) :: result)
+    asset.modified match {
+      case Modification(Some(modificationTime), Some(modifier)) => (asset, modifier :: OutputDateTimeFormat.print(modificationTime) :: result)
+      case Modification(Some(modificationTime), None)           => (asset, asset.created.modifier.getOrElse("") :: OutputDateTimeFormat.print(modificationTime) :: result)
+      case Modification(None, Some(modifier))                   => (asset, modifier :: creationTimeOrEmpty(asset.created.modificationTime) :: result)
+      case _                                                    => (asset, asset.created.modifier.getOrElse("") :: creationTimeOrEmpty(asset.created.modificationTime) :: result)
+    }
   }
 
   private def formatOutputDateTime(dateTime: String): String = {
