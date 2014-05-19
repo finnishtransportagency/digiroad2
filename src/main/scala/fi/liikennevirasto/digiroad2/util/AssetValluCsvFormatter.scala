@@ -137,8 +137,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     val (asset, result) = params
     val validFrom = getPropertyValuesByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
     val validTo = getPropertyValuesByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
-    (asset, validTo.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
-      validFrom.head.propertyDisplayValue.map(formatOutputDate).getOrElse("") ::
+    (asset, ValluTransformer.transformToISODate(validTo.head.propertyDisplayValue) ::
+      ValluTransformer.transformToISODate(validFrom.head.propertyDisplayValue) ::
       result)
   }
 
@@ -146,11 +146,6 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     val (asset, result) = params
     // special needs not known
     (asset, "" :: result)
-  }
-
-  private def formatOutputDate(date: String): String = {
-    val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
-    OutputDateTimeFormat.print(dateFormat.parseDateTime(date))
   }
 
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {

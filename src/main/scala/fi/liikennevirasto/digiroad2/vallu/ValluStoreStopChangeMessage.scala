@@ -47,11 +47,11 @@ object ValluStoreStopChangeMessage {
         {if (! propertyIsDefined(asset, "ensimmainen_voimassaolopaiva") || propertyIsEmpty(asset, "ensimmainen_voimassaolopaiva"))
             <ValidFrom xsi:nil="true" />
          else
-            <ValidFrom>{transformToXsdDate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
+            <ValidFrom>{ValluTransformer.transformToISODate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
         {if (! propertyIsDefined(asset, "viimeinen_voimassaolopaiva") || propertyIsEmpty(asset, "viimeinen_voimassaolopaiva"))
           <ValidTo xsi:nil="true" />
          else
-          <ValidTo>{transformToXsdDate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
+          <ValidTo>{ValluTransformer.transformToISODate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
@@ -61,11 +61,6 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
-  }
-
-  private def transformToXsdDate(dateOption: Option[String]) = {
-    val inputDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
-    dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
   }
 
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {

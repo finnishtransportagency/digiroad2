@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.vallu
 
+import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
+
 object ValluTransformer {
   def calculateActualBearing(validityDirection: Int, bearing: Int): Int = {
     if (validityDirection != 3) {
@@ -12,5 +14,10 @@ object ValluTransformer {
         flippedBearing
       }
     }
+  }
+
+  def transformToISODate(dateOption: Option[String]) = {
+    val inputDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+    dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
   }
 }
