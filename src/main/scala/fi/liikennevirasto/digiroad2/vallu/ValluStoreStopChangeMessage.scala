@@ -46,6 +46,7 @@ object ValluStoreStopChangeMessage {
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
+        { if (propertyIsDefined(asset, "lisatiedot")) <Comments>{extractPropertyValue(asset, "lisatiedot") }</Comments> }
         <ContactEmails>
           <Contact>pysakit@liikennevirasto.fi</Contact>
         </ContactEmails>

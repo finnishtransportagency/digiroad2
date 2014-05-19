@@ -111,6 +111,11 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "MunicipalityName").text must equal("Kauniainen")
   }
 
+  it must "specify comments" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("lisatiedot", "No comments"))))
+    (xml \ "Comments").text must equal("No comments")
+  }
+
   it must "specify administrator stop id" in {
     val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("yllapitajan_tunnus", "Livi83857"))))
     (xml \ "AdminStopId").text must equal("Livi83857")
