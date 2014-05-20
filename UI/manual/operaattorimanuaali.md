@@ -63,6 +63,11 @@ Esimerkiksi:
 ```
  
 Sovellus luo Stops.txt-tiedoston samaan hakemistoon vallu_import.sh-skriptin kanssa.
+
+Linkki k&auml;ytt&ouml;ohjeeseen
+--------------------------------
+
+https://devtest.liikennevirasto.fi/digiroad/manual
  
 L&auml;hdekoodi
 ----------
@@ -70,3 +75,14 @@ L&auml;hdekoodi
 Digiroad 2 -sovelluksen avoin l&auml;hdekoodi l&ouml;ytyy GitHubista:
 
 https://github.com/finnishtransportagency/digiroad2
+
+Yhteystiedot
+------------
+
+__Digiroadin kehitystiimi:__
+
+digiroad2@reaktor.fi
+
+__Palaute operaattorin manuaalista:__
+
+taru.vainikainen@karttakeskus.fi

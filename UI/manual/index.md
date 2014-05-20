@@ -253,7 +253,7 @@ __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF F
 __Maastokoordinaatti Z:__ Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.
 __Liikenn&ouml;intisuunta:__ Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".
 __Vaikutussuunta:__ Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.
-__Liikenn&ouml;intisuuntima:__ Ei toteutettu
+__Liikenn&ouml;intisuuntima:__ Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros myötäpäivään 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, itä, etelä tai länsi.
 __Ensimm&auml;inen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isten kerran k&auml;yt&ouml;ss&auml;.
 __Viimeinen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.
 __Pys&auml;kin tyyppi:__ Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro, virtuaalipys&auml;kki tai "ei tietoa".
