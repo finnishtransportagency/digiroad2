@@ -67,7 +67,6 @@ object ValluStoreStopChangeMessage {
 
   private def getBusStopTypes(asset: AssetWithProperties) =  {
     val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
-    println(busstopType)
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")
     val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
