@@ -17,17 +17,23 @@
   <script type="text/javascript" src="src/utils/date-utils.js"></script>
   <script type="text/javascript" src="src/utils/backend-utils.js"></script>
   <script type="text/javascript" src="src/utils/zoomLevels.js"></script>
-
+  <script>
+    $(function() {
+      if (window.location.href.indexOf('testiextranet') > -1) {
+        var message = ['Tietokanta on palautettu torstain 15.05.2014 klo 14:30 tilanteeseen',
+                       'ja pysäkkien muokkausta voi tehdä nyt. Palautuksen vuoksi ajanjaksolta',
+                       'to 15.5. klo 14:30 - ma 19.5. klo 16:30 tehdyt pysäkkimuutokset tulee',
+                       'tehdä uudestaan sovellukseen.'].join('');
+        $('#headerBar span.notification').text(message);
+      }
+    });
+  </script>
 
   <title>Digiroad 2</title>
 </head>
 <body>
 <div id="headerBar">
   <span class="notification">
-    Tietokanta on palautettu torstain 15.05.2014 klo 14:30 tilanteeseen
-    ja pysäkkien muokkausta voi tehdä nyt. Palautuksen vuoksi ajanjaksolta
-    to 15.5. klo 14:30 - ma 19.5. klo 16:30 tehdyt pysäkkimuutokset tulee
-    tehdä uudestaan sovellukseen.
   </span>
   <a href="manual/index.html" target="_blank" class="linkToManual">K&auml;ytt&ouml;ohje</a></div>
 <div class="container">
