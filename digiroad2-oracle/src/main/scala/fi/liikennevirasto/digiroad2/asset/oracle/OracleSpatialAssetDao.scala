@@ -9,10 +9,6 @@ import Database.dynamicSession
 import Queries._
 import Q.interpolation
 import PropertyTypes._
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
-import java.sql.Timestamp
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import org.joda.time.format.ISODateTimeFormat
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.slf4j.LoggerFactory
@@ -196,7 +192,8 @@ object OracleSpatialAssetDao {
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
-    updateAssetProperties(assetId, properties)
+    val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    updateAssetProperties(assetId, properties ++ defaultValues)
     getAssetById(assetId).get
   }
 
@@ -396,5 +393,17 @@ object OracleSpatialAssetDao {
       select p.public_id, #$valueColumn from property p, localized_string ls where ls.id = p.name_localized_string_id
     """.as[(String, String)].list.toMap
     propertyNames.filter(_._1 != null)
+  }
+
+  def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
+    implicit val getDefaultValue = new GetResult[SimpleProperty] {
+      def apply(r: PositionedResult) = {
+        SimpleProperty(publicId = r.nextString, values = List(PropertyValue(r.nextString)))
+      }
+    }
+    sql"""
+      select p.public_id, p.default_value from asset_type a
+      join property p on p.asset_type_id = a.id
+      where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
   }
 }
