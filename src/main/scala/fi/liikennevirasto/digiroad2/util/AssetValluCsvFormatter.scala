@@ -59,7 +59,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
       if (property.publicId != "nimi_suomeksi") {
         property
       } else {
-        val complementaryName = asset.externalId.flatMap(complementaryBusStopNames.get)
+        val complementaryName = complementaryBusStopNames.get(asset.externalId)
         if (property.values.isEmpty && complementaryName.isDefined) {
           property.copy(values = List(PropertyValue(propertyValue = complementaryName.get, propertyDisplayValue = Some(complementaryName.get))))
         } else {

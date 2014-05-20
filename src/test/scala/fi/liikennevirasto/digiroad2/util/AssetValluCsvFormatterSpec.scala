@@ -73,7 +73,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvRows must have size 2
   }
 
-  val testasset = AssetWithProperties(1, None, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
+  val testasset = AssetWithProperties(1, 1, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
       created = Modification(None, None), modified = Modification(None, None))
   it must "recalculate bearings in validity direction" in {
     AssetValluCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))
@@ -125,7 +125,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
   }
 
   private def testAsset(): AssetWithProperties = {
-    assetsByMunicipality.find(_.externalId.get == 5).get
+    assetsByMunicipality.find(_.externalId == 5).get
   }
 
   private def parseDate(date: String): DateTime = {
