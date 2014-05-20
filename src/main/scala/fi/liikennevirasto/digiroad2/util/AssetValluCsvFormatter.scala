@@ -185,16 +185,14 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addReachability(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val reachability = getPropertyValuesByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
-    val value = reachability.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
-    (asset, (if(value.equalsIgnoreCase("ei tiedossa")) "" else value) :: result)
+    val reachability = ValluTransformer.getReachability(asset);
+    (asset, reachability :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopShelter: Seq[Long] = getPropertyValuesByPublicId("katos", asset.propertyData).map(x => x.propertyValue.toLong)
-    val shelter = (if(busstopShelter.contains(2)) "katos" else "")
-    (asset, shelter :: result)
+    val equipments = ValluTransformer.getEquipment(asset)
+    (asset, equipments :: result)
   }
 
   private def addBusStopTypes(params: (AssetWithProperties, List[String])) = {

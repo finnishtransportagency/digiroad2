@@ -30,8 +30,8 @@ object ValluStoreStopChangeMessage {
         { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
         { if (propertyIsDefined(asset, "liikennointisuunta")) <Direction>{extractPropertyValue(asset, "liikennointisuunta") }</Direction> }
         <StopAttribute>{getBusstopBlock(asset)}</StopAttribute>
-        <Equipment>{getEquipment(asset)}</Equipment>
-        <Reachability>{getReachability(asset)}</Reachability>
+        <Equipment>{ValluTransformer.getEquipment(asset)}</Equipment>
+        <Reachability>{ValluTransformer.getReachability(asset)}</Reachability>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
         { val modification = asset.modified.modificationTime match {
             case Some(_) => asset.modified
@@ -43,11 +43,11 @@ object ValluStoreStopChangeMessage {
         {if (! propertyIsDefined(asset, "ensimmainen_voimassaolopaiva") || propertyIsEmpty(asset, "ensimmainen_voimassaolopaiva"))
             <ValidFrom xsi:nil="true" />
          else
-            <ValidFrom>{ValluTransformer.transformToISODate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
+            <ValidFrom>{ValluTransformer.transformToISODate(ValluTransformer.extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
         {if (! propertyIsDefined(asset, "viimeinen_voimassaolopaiva") || propertyIsEmpty(asset, "viimeinen_voimassaolopaiva"))
           <ValidTo xsi:nil="true" />
          else
-          <ValidTo>{ValluTransformer.transformToISODate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
+          <ValidTo>{ValluTransformer.transformToISODate(ValluTransformer.extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
@@ -99,49 +99,12 @@ object ValluStoreStopChangeMessage {
     displayValue.map { value => value.replace("\n", " ") }
   }
 
-  private def getEquipment(asset: AssetWithProperties): String = {
-    val result = List(
-      extractPropertyValueOption(asset, "aikataulu").map { continuousParking =>
-        if (continuousParking == "2") "Aikataulu" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "katos").map { continuousParking =>
-        if (continuousParking == "2") "Katos" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "mainoskatos").map { continuousParking =>
-        if (continuousParking == "2") "Mainoskatos" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "penkki").map { continuousParking =>
-        if (continuousParking == "2") "Penkki" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "pyorateline").map { continuousParking =>
-        if (continuousParking == "2") "Pyöräteline" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "sahkoinen_aikataulunaytto").map { continuousParking =>
-        if (continuousParking == "2") "Sähköinen aikataulunnäyttö" else ""
-      }.filterNot(_.isEmpty),extractPropertyValueOption(asset, "valaistus").map { continuousParking =>
-        if (continuousParking == "2") "Valaistus" else ""
-      }.filterNot(_.isEmpty)).flatten.mkString(", ")
-      result
-  }
-
-  private def getReachability(asset: AssetWithProperties): String = {
-    val result = List(
-      extractPropertyValueOption(asset, "saattomahdollisuus_henkiloautolla").map { continuousParking =>
-          if (continuousParking == "2") "Liityntäpysäköinti" else ""
-      }.filterNot(_.isEmpty),
-      extractPropertyValueOption(asset, "liityntapysakointipaikkojen_maara").map { parkingSpaces =>
-        parkingSpaces + " pysäköintipaikkaa"
-      },
-      extractPropertyValueOption(asset, "liityntapysakoinnin_lisatiedot")).flatten.mkString(", ")
-    result
-  }
-
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
     propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
   private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
-   extractPropertyValueOption(asset, propertyPublicId).isDefined
+    ValluTransformer.extractPropertyValueOption(asset, propertyPublicId).isDefined
   }
 
   private def propertyIsEmpty(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
@@ -149,14 +112,7 @@ object ValluStoreStopChangeMessage {
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
-    extractPropertyValueOption(asset, propertyPublicId).get
-  }
-
-  private def extractPropertyValueOption(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
-    asset.propertyData
-      .find(property => property.publicId == propertyPublicId)
-      .flatMap(property => property.values.headOption)
-      .map(value => value.propertyValue)
+    ValluTransformer.extractPropertyValueOption(asset, propertyPublicId).get
   }
 
   private def extractPropertyDisplayValue(asset: AssetWithProperties, propertyPublicId: String): String = {
