@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 object ValluStoreStopChangeMessage {
@@ -29,12 +29,7 @@ object ValluStoreStopChangeMessage {
         }.getOrElse("")}</Bearing>
         { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
         { if (propertyIsDefined(asset, "liikennointisuunta")) <Direction>{extractPropertyValue(asset, "liikennointisuunta") }</Direction> }
-        <StopAttribute>
-          <StopType name="LOCAL_BUS">0</StopType>
-          <StopType name="EXPRESS_BUS">1</StopType>
-          <StopType name="NON_STOP_EXPRESS_BUS">0</StopType>
-          <StopType name="VIRTUAL_STOP">0</StopType>
-        </StopAttribute>
+        <StopAttribute>{getBusstopBlock(asset)}</StopAttribute>
         <Equipment>{getEquipment(asset)}</Equipment>
         <Reachability>{getReachability(asset)}</Reachability>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
@@ -62,6 +57,46 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  def getBusstopBlock(asset: AssetWithProperties) = {
+    val busStopTypes = getBusStopTypes(asset)
+    <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
+    <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
+    <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
+    <StopType name="VIRTUAL_STOP">{busStopTypes._4}</StopType>
+  }
+
+  private def getBusStopTypes(asset: AssetWithProperties) =  {
+    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
+    val local = (if (busstopType.contains(2)) "1" else "0")
+    val express = (if (busstopType.contains(3)) "1" else "0")
+    val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
+    val virtual = (if (busstopType.contains(5)) "1" else "0")
+    (local, express, nonStopExpress, virtual)
+  }
+
+  protected def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
+    try {
+      val property = properties.find(x => x.publicId == name).get
+      sanitizedPropertyValues(property.propertyType, property.values)
+    }
+    catch {
+      case e: Exception => println(s"""$name with $properties"""); throw e
+    }
+  }
+
+  private def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
+    propertyType match {
+      case PropertyTypes.Text | PropertyTypes.LongText => values.map { value =>
+        value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))
+      }
+      case _ => values
+    }
+  }
+
+  private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
+    displayValue.map { value => value.replace("\n", " ") }
   }
 
   private def getEquipment(asset: AssetWithProperties): String = {
