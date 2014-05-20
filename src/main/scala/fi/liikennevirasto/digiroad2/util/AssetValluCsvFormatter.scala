@@ -197,11 +197,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addBusStopTypes(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
-    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
-    val local = (if (busstopType.contains(2)) "1" else "0")
-    val express = (if (busstopType.contains(3)) "1" else "0")
-    val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
-    val virtual = (if (busstopType.contains(5)) "1" else "0")
-    (asset, virtual :: nonStopExpress :: express :: local :: result)
+    val busStopTypes = ValluTransformer.getBusStopTypes(asset).toList
+    (asset, busStopTypes :: result)
   }
 }
