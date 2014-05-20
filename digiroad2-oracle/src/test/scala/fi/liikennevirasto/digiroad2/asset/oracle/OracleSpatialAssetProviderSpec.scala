@@ -78,7 +78,20 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
       newAsset.externalId.get should (be >= 300000L)
     } finally {
-      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+      deleteCreatedTestAsset
+    }
+  }
+
+  test("add asset to database sets default values for properties", Tag("db")) {
+    val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
+    val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
+    userProvider.setCurrentUser(creatingUser)
+    val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
+    try {
+      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+      newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe("99")
+    } finally {
+      deleteCreatedTestAsset
     }
   }
 
@@ -100,7 +113,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
       newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
     } finally {
-      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+      deleteCreatedTestAsset
     }
   }
 
@@ -132,7 +145,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         }
       }
     } finally {
-      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+      deleteCreatedTestAsset
     }
   }
 
@@ -144,8 +157,14 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       }
     } finally {
-      executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+      deleteCreatedTestAsset
     }
+  }
+
+  private def deleteCreatedTestAsset() {
+    executeStatement("DELETE FROM multiple_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')");
+    executeStatement("DELETE FROM single_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')");
+    executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
   }
 
   test("update the position of an asset within a road link", Tag("db")) {
