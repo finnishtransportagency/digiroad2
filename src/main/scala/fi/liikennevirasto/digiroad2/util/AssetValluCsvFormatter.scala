@@ -6,6 +6,7 @@ import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
 import org.joda.time.DateTime
+import java.io.Serializable
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -183,21 +184,30 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     (asset, id.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
   }
 
-  private def addReachability(params: (AssetWithProperties, List[String])) = {
+  private def addReachability(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
-    val reachability = ValluTransformer.getReachability(asset);
+    val reachability = ValluTransformer.getReachability(asset)
     (asset, reachability :: result)
   }
 
-  private def addEquipment(params: (AssetWithProperties, List[String])) = {
+  private def addEquipment(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
     val equipments = ValluTransformer.getEquipment(asset)
     (asset, equipments :: result)
   }
 
-  private def addBusStopTypes(params: (AssetWithProperties, List[String])) = {
+  private def addBusStopTypes(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
-    val busStopTypes = ValluTransformer.getBusStopTypes(asset).toList
-    (asset, busStopTypes :: result)
+    val (local, express, nonStopExpress, virtual) = ValluTransformer.getBusStopTypes(asset)
+    (asset, handleStopTypes(local, express, nonStopExpress, virtual) :: result)
+  }
+
+  private def handleStopTypes(local: String, express: String, nonStopExpress: String, virtual: String): String = {
+    val stopTypes =  List(
+        if (local == "1") "Linja-autojen paikallisliikenne" else "",
+        if (express == "1") "Linja-autojen pikavuoro" else "",
+        if (nonStopExpress == "1") "Linja-autojen kaukoliikenne" else "",
+        if (virtual == "1") "Virtuaalipysäkki" else "").flatten.mkString(", ")
+    stopTypes
   }
 }

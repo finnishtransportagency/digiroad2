@@ -66,7 +66,7 @@ object ValluTransformer {
       .map(value => value.propertyValue)
   }
 
-  def getBusStopTypes(asset: AssetWithProperties) = {
+  def getBusStopTypes(asset: AssetWithProperties): (String, String, String, String) = {
     val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")
