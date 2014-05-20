@@ -29,13 +29,7 @@ object ValluStoreStopChangeMessage {
         }.getOrElse("")}</Bearing>
         { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
         { if (propertyIsDefined(asset, "liikennointisuunta")) <Direction>{extractPropertyValue(asset, "liikennointisuunta") }</Direction> }
-        <StopAttribute>
-          { val busStopTypes = getBusStopTypes(asset)
-          <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
-          <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
-          <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
-          <StopType name="VIRTUAL_STOP">{busStopTypes._4}</StopType> }
-        </StopAttribute>
+        <StopAttribute>{getBusstopBlock(asset)}</StopAttribute>
         <Equipment>{getEquipment(asset)}</Equipment>
         <Reachability>{getReachability(asset)}</Reachability>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
@@ -63,6 +57,14 @@ object ValluStoreStopChangeMessage {
         </ContactEmails>
       </Stop>
     </Stops>).toString()
+  }
+
+  def getBusstopBlock(asset: AssetWithProperties) = {
+    val busStopTypes = getBusStopTypes(asset)
+    <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
+    <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
+    <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
+    <StopType name="VIRTUAL_STOP">{busStopTypes._4}</StopType>
   }
 
   private def getBusStopTypes(asset: AssetWithProperties) =  {
