@@ -242,7 +242,7 @@
         var components =_.map(contents, function(feature){
             feature.localizedName = window.localizedStrings[feature.publicId];
             var propertyType = feature.propertyType;
-            if (propertyType === "text" || propertyType === "long_text") {
+            if (propertyType === "text" || propertyType === "long_text") {
                 return textHandler(feature);
             } else if (propertyType === "read_only_text" || propertyType === 'read-only') {
                 return readOnlyHandler(feature);
