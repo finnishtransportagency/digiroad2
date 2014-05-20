@@ -60,43 +60,11 @@ object ValluStoreStopChangeMessage {
   }
 
   def getBusstopBlock(asset: AssetWithProperties) = {
-    val busStopTypes = getBusStopTypes(asset)
+    val busStopTypes = ValluTransformer.getBusStopTypes(asset)
     <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
     <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
     <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
     <StopType name="VIRTUAL_STOP">{busStopTypes._4}</StopType>
-  }
-
-  private def getBusStopTypes(asset: AssetWithProperties) =  {
-    val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
-    val local = (if (busstopType.contains(2)) "1" else "0")
-    val express = (if (busstopType.contains(3)) "1" else "0")
-    val nonStopExpress = (if (busstopType.contains(4)) "1" else "0")
-    val virtual = (if (busstopType.contains(5)) "1" else "0")
-    (local, express, nonStopExpress, virtual)
-  }
-
-  protected def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
-    try {
-      val property = properties.find(x => x.publicId == name).get
-      sanitizedPropertyValues(property.propertyType, property.values)
-    }
-    catch {
-      case e: Exception => println(s"""$name with $properties"""); throw e
-    }
-  }
-
-  private def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
-    propertyType match {
-      case PropertyTypes.Text | PropertyTypes.LongText => values.map { value =>
-        value.copy(propertyDisplayValue = sanitizePropertyDisplayValue(value.propertyDisplayValue))
-      }
-      case _ => values
-    }
-  }
-
-  private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
-    displayValue.map { value => value.replace("\n", " ") }
   }
 
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
