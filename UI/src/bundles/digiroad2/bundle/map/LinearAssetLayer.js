@@ -52,5 +52,9 @@ window.LinearAssetLayer = function(map, backend) {
         vectorLayer.addFeatures(features);
     };
 
-    eventbus.on('linearAssets:fetched', drawLinearAssets, this);
+    eventbus.on('linearAssets:fetched', function(linearAssets) {
+        if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+            drawLinearAssets(linearAssets);
+        }
+    }, this);
 };
