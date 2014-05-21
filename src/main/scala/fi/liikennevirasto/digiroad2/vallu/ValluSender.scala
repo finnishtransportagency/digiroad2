@@ -12,10 +12,8 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context
 object ValluSender {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
-
   val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
   val address = Digiroad2Context.getProperty("digiroad2.vallu.server.address")
-
   val httpClient = HttpClients.createDefault()
 
   def postToVallu(municipalityName: String, asset: AssetWithProperties) {
@@ -24,14 +22,14 @@ object ValluSender {
       postToVallu
     }
   }
+
   private def postToVallu(payload: String) = {
     val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
     val httpPost = new HttpPost(address)
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      // TODO: println "handling" out
-      println(EntityUtils.toString(response.getEntity , Charset.forName("UTF-8")))
+      messageLogger.info(s"Got response ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
@@ -41,10 +39,10 @@ object ValluSender {
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
       if(sendingEnabled) {
+        messageLogger.info(s"Sending to vallu: $payload")
         thunk(payload)
-        messageLogger.info(payload)
       } else {
-        messageLogger.info(s"messaging is disabled, xml was $payload")
+        messageLogger.info(s"Messaging is disabled, xml was $payload")
       }
     } catch {
       case e: Exception => {
