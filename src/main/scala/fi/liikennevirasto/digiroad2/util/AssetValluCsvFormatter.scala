@@ -199,15 +199,6 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
   private def addBusStopTypes(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
     val (local, express, nonStopExpress, virtual) = ValluTransformer.getBusStopTypes(asset)
-    (asset, handleStopTypes(local, express, nonStopExpress, virtual) :: result)
-  }
-
-  private def handleStopTypes(local: String, express: String, nonStopExpress: String, virtual: String): String = {
-    val stopTypes =  List(
-        if (local == "1") "Linja-autojen paikallisliikenne" else "",
-        if (express == "1") "Linja-autojen pikavuoro" else "",
-        if (nonStopExpress == "1") "Linja-autojen kaukoliikenne" else "",
-        if (virtual == "1") "Virtuaalipysäkki" else "").flatten.mkString(", ")
-    stopTypes
+    (asset, virtual :: nonStopExpress :: express :: local :: result)
   }
 }
