@@ -22,7 +22,7 @@ object ValluTransformer {
     dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
   }
 
-  def getReachability(asset: AssetWithProperties): String = {
+  def describeReachability(asset: AssetWithProperties): String = {
     val result = List(
       extractPropertyValueOption(asset, "saattomahdollisuus_henkiloautolla").map { continuousParking =>
         if (continuousParking == "2") "Liityntäpysäköinti" else ""
@@ -34,7 +34,7 @@ object ValluTransformer {
     result
   }
 
-  def getEquipment(asset: AssetWithProperties): String = {
+  def describeEquipments(asset: AssetWithProperties): String = {
     val result = List(
       extractPropertyValueOption(asset, "aikataulu").map { x =>
         if (x == "2") "Aikataulu" else ""
@@ -66,7 +66,7 @@ object ValluTransformer {
       .map(value => value.propertyValue)
   }
 
-  def getBusStopTypes(asset: AssetWithProperties): (String, String, String, String) = {
+  def describeBusStopTypes(asset: AssetWithProperties): (String, String, String, String) = {
     val busstopType: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
     val local = (if (busstopType.contains(2)) "1" else "0")
     val express = (if (busstopType.contains(3)) "1" else "0")

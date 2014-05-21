@@ -4,9 +4,8 @@ import scala.collection.immutable
 import fi.liikennevirasto.digiroad2.asset.{Modification, PropertyValue, AssetWithProperties}
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
-import fi.liikennevirasto.digiroad2.vallu.ValluTransformer
+import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.DateTime
-import java.io.Serializable
 
 object AssetValluCsvFormatter extends AssetCsvFormatter {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
@@ -137,8 +136,8 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     val (asset, result) = params
     val validFrom = getPropertyValuesByPublicId("ensimmainen_voimassaolopaiva", asset.propertyData)
     val validTo = getPropertyValuesByPublicId("viimeinen_voimassaolopaiva", asset.propertyData)
-    (asset, ValluTransformer.transformToISODate(validTo.head.propertyDisplayValue) ::
-      ValluTransformer.transformToISODate(validFrom.head.propertyDisplayValue) ::
+    (asset, transformToISODate(validTo.head.propertyDisplayValue) ::
+      transformToISODate(validFrom.head.propertyDisplayValue) ::
       result)
   }
 
@@ -167,7 +166,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
     val (asset, result) = params
     val validityDirection = asset.validityDirection.getOrElse(1)
     val actualBearing = asset.bearing.map { bearing =>
-      ValluTransformer.calculateActualBearing(validityDirection, bearing)
+      calculateActualBearing(validityDirection, bearing)
     }.getOrElse("").toString
     (asset, actualBearing :: result)
   }
@@ -186,19 +185,19 @@ object AssetValluCsvFormatter extends AssetCsvFormatter {
 
   private def addReachability(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
-    val reachability = ValluTransformer.getReachability(asset)
+    val reachability = describeReachability(asset)
     (asset, reachability :: result)
   }
 
   private def addEquipment(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
-    val equipments = ValluTransformer.getEquipment(asset)
+    val equipments = describeEquipments(asset)
     (asset, equipments :: result)
   }
 
   private def addBusStopTypes(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
     val (asset, result) = params
-    val (local, express, nonStopExpress, virtual) = ValluTransformer.getBusStopTypes(asset)
+    val (local, express, nonStopExpress, virtual) = describeBusStopTypes(asset)
     (asset, virtual :: nonStopExpress :: express :: local :: result)
   }
 }

@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
-import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
+import org.joda.time.format.{ISODateTimeFormat}
+import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 
 object ValluStoreStopChangeMessage {
 
@@ -24,14 +25,14 @@ object ValluStoreStopChangeMessage {
         </Coordinate>
         <Bearing>{asset.bearing.flatMap { bearing =>
           asset.validityDirection.map { validityDirection =>
-            ValluTransformer.calculateActualBearing(validityDirection, bearing)
+            calculateActualBearing(validityDirection, bearing)
           }
         }.getOrElse("")}</Bearing>
         { if (propertyIsDefined(asset, "liikennointisuuntima")) <BearingDescription>{ extractPropertyDisplayValue(asset, "liikennointisuuntima") }</BearingDescription>}
         { if (propertyIsDefined(asset, "liikennointisuunta")) <Direction>{extractPropertyValue(asset, "liikennointisuunta") }</Direction> }
         <StopAttribute>{getBusstopBlock(asset)}</StopAttribute>
-        <Equipment>{ValluTransformer.getEquipment(asset)}</Equipment>
-        <Reachability>{ValluTransformer.getReachability(asset)}</Reachability>
+        <Equipment>{describeEquipments(asset)}</Equipment>
+        <Reachability>{describeReachability(asset)}</Reachability>
         <SpecialNeeds>{if (propertyIsDefined(asset, "esteettomyys_liikuntarajoitteiselle")) extractPropertyValue(asset, "esteettomyys_liikuntarajoitteiselle") }</SpecialNeeds>
         { val modification = asset.modified.modificationTime match {
             case Some(_) => asset.modified
@@ -43,11 +44,11 @@ object ValluStoreStopChangeMessage {
         {if (! propertyIsDefined(asset, "ensimmainen_voimassaolopaiva") || propertyIsEmpty(asset, "ensimmainen_voimassaolopaiva"))
             <ValidFrom xsi:nil="true" />
          else
-            <ValidFrom>{ValluTransformer.transformToISODate(ValluTransformer.extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
+            <ValidFrom>{transformToISODate(extractPropertyValueOption(asset, "ensimmainen_voimassaolopaiva"))}</ValidFrom>}
         {if (! propertyIsDefined(asset, "viimeinen_voimassaolopaiva") || propertyIsEmpty(asset, "viimeinen_voimassaolopaiva"))
           <ValidTo xsi:nil="true" />
          else
-          <ValidTo>{ValluTransformer.transformToISODate(ValluTransformer.extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
+          <ValidTo>{transformToISODate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
         <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
@@ -60,7 +61,7 @@ object ValluStoreStopChangeMessage {
   }
 
   def getBusstopBlock(asset: AssetWithProperties) = {
-    val busStopTypes = ValluTransformer.getBusStopTypes(asset)
+    val busStopTypes = describeBusStopTypes(asset)
     <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
     <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
     <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
@@ -72,7 +73,7 @@ object ValluStoreStopChangeMessage {
   }
 
   private def propertyIsDefined(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
-    ValluTransformer.extractPropertyValueOption(asset, propertyPublicId).isDefined
+    extractPropertyValueOption(asset, propertyPublicId).isDefined
   }
 
   private def propertyIsEmpty(asset: AssetWithProperties, propertyPublicId: String): Boolean = {
@@ -80,7 +81,7 @@ object ValluStoreStopChangeMessage {
   }
 
   private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
-    ValluTransformer.extractPropertyValueOption(asset, propertyPublicId).get
+    extractPropertyValueOption(asset, propertyPublicId).get
   }
 
   private def extractPropertyDisplayValue(asset: AssetWithProperties, propertyPublicId: String): String = {
