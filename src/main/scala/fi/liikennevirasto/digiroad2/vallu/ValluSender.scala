@@ -7,13 +7,15 @@ import org.apache.http.util.EntityUtils
 import java.nio.charset.Charset
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 
 object ValluSender {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
 
-  // TODO: read from config
-  val httpPost = new HttpPost("http://localhost:9002")
+  val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
+  val address = Digiroad2Context.getProperty("digiroad2.vallu.server.address")
+
   val httpClient = HttpClients.createDefault()
 
   def postToVallu(municipalityName: String, asset: AssetWithProperties) {
@@ -22,9 +24,9 @@ object ValluSender {
       postToVallu
     }
   }
-
   private def postToVallu(payload: String) = {
     val entity = new StringEntity(payload, ContentType.create("text/xml", "UTF-8"))
+    val httpPost = new HttpPost(address)
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
@@ -38,8 +40,12 @@ object ValluSender {
 
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
-      thunk(payload)
-      messageLogger.info(payload)
+      if(sendingEnabled) {
+        thunk(payload)
+        messageLogger.info(payload)
+      } else {
+        messageLogger.info(s"messaging is disabled, xml was $payload")
+      }
     } catch {
       case e: Exception => {
         applicationLogger.error("Error occurred", e)
