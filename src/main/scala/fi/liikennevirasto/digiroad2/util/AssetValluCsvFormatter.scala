@@ -7,7 +7,7 @@ import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.DateTime
 
-object AssetValluCsvFormatter extends AssetCsvFormatter {
+object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesReader {
   val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
     "ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;" +
     "VIRTUAL_STOP;EQUIPMENT;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +

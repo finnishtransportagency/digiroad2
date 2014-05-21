@@ -3,8 +3,9 @@ package fi.liikennevirasto.digiroad2.vallu
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties}
 import org.joda.time.format.{ISODateTimeFormat}
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
+import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 
-object ValluStoreStopChangeMessage {
+object ValluStoreStopChangeMessage extends AssetPropertiesReader {
 
   def create(municipalityName: String, asset: AssetWithProperties): String = {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
@@ -57,7 +58,7 @@ object ValluStoreStopChangeMessage {
           <Contact>pysakit@liikennevirasto.fi</Contact>
         </ContactEmails>
       </Stop>
-    </Stops>).toString()
+    </Stops>).toString
   }
 
   def getBusstopBlock(asset: AssetWithProperties) = {
