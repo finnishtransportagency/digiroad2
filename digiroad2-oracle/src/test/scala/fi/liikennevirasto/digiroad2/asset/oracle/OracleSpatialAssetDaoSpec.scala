@@ -44,7 +44,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {
-    AssetRow(1, None, 1, 1, 1, 1, Some(180), 2, None, None, propertyRow, Image(None, None),
+    AssetRow(1, 1, 1, 1, 1, 1, Some(180), 2, None, None, propertyRow, Image(None, None),
       None, 1, Modification(None, None), Modification(None, None), 1, 1)
   }
 }

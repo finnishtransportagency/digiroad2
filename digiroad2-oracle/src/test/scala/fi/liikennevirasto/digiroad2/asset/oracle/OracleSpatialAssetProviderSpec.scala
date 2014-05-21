@@ -76,7 +76,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       verify(eventBus).publish("asset:saved", ("Kauniainen", newAsset))
       newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
-      newAsset.externalId.get should (be >= 300000L)
+      newAsset.externalId should (be >= 300000L)
     } finally {
       deleteCreatedTestAsset
     }
