@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.getPropertyValuesByPublicId
 import scala.language.postfixOps
 
-object AssetLMJFormatter extends AssetCsvFormatter {
+object AssetLMJFormatter extends AssetCsvFormatter with AssetPropertiesReader {
   val isolator = ","
   val fields = "stop_id,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station"
 
