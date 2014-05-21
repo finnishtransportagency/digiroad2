@@ -8,13 +8,20 @@ import java.nio.charset.Charset
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.Digiroad2Context
+import org.apache.http.client.config.RequestConfig
 
 object ValluSender {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
   val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
   val address = Digiroad2Context.getProperty("digiroad2.vallu.server.address")
-  val httpClient = HttpClients.createDefault()
+
+  val config = RequestConfig.custom()
+    .setSocketTimeout(60 * 1000)
+    .setConnectTimeout(60 * 1000)
+    .build()
+
+  val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
 
   def postToVallu(municipalityName: String, asset: AssetWithProperties) {
     val payload = ValluStoreStopChangeMessage.create(municipalityName, asset)
