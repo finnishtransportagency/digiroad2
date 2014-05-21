@@ -12,13 +12,15 @@ import scala.Some
 import scala.language.implicitConversions
 import fi.liikennevirasto.digiroad2.user.{Role, Configuration, User}
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.util.DataFixture.{TestAssetId, TestAssetTypeId, MunicipalityEspoo, MunicipalityKauniainen}
+import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
 import org.mockito.Mockito.verify
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
-
+  val MunicipalityKauniainen = 235
+  val MunicipalityEspoo = 49
+  val TestAssetTypeId = 10
   val AssetCreator = "integration_test_add_asset"
   val userProvider = new OracleUserProvider
   val provider = new OracleSpatialAssetProvider(new DummyEventBus, userProvider)

@@ -15,9 +15,6 @@ import Database.dynamicSession
 
 object DataFixture {
   val TestAssetId = 300000
-  val TestAssetTypeId = 10
-  val MunicipalityKauniainen = 235
-  val MunicipalityEspoo = 49
   lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
