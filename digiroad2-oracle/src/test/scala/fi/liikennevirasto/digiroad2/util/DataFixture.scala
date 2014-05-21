@@ -101,7 +101,7 @@ object DataFixture {
         while (true) {
           val input = Console.readLine()
           if (input.trim() == "YES") {
-            break
+            break()
           }
         }
       }

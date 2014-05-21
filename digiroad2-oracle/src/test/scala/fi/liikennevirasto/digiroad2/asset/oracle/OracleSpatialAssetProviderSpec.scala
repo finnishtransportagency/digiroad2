@@ -51,19 +51,19 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("load assets by municipality number", Tag("db")) {
     val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
-    assets.foreach(asset => asset.municipalityNumber shouldBe(Some(MunicipalityKauniainen)))
+    assets.foreach(asset => asset.municipalityNumber shouldBe Some(MunicipalityKauniainen))
   }
 
   test("load assets with spatial bounds", Tag("db")) {
     val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
-    assets.size shouldBe(1)
+    assets.size shouldBe 1
   }
 
   test("load enumerated values for asset type", Tag("db")) {
     val values = provider.getEnumeratedPropertyValues(TestAssetTypeId)
     values shouldBe 'nonEmpty
-    values.exists(_.propertyName == "Vaikutussuunta") should be (true)
+    values.map(_.propertyName) should contain ("Vaikutussuunta")
   }
 
   test("add asset to database", Tag("db")) {
@@ -77,10 +77,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       verify(eventBus).publish("asset:saved", ("Kauniainen", newAsset))
-      newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
+      newAsset.roadLinkId shouldBe existingAsset.roadLinkId
       newAsset.externalId should (be >= 300000L)
     } finally {
-      deleteCreatedTestAsset
+      deleteCreatedTestAsset()
     }
   }
 
@@ -91,9 +91,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     try {
       val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
-      newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe("99")
+      newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe "99"
     } finally {
-      deleteCreatedTestAsset
+      deleteCreatedTestAsset()
     }
   }
 
@@ -112,10 +112,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
-      newAsset.roadLinkId shouldBe(existingAsset.roadLinkId)
-      newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
+      newAsset.roadLinkId shouldBe existingAsset.roadLinkId
+      newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, required = false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
     } finally {
-      deleteCreatedTestAsset
+      deleteCreatedTestAsset()
     }
   }
 
@@ -141,13 +141,12 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
                SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10")))))
       fail("Should have thrown an exception")
     } catch {
-      case e: SQLIntegrityConstraintViolationException => {
+      case e: SQLIntegrityConstraintViolationException =>
         Database.forDataSource(ds).withDynSession {
           oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
         }
-      }
     } finally {
-      deleteCreatedTestAsset
+      deleteCreatedTestAsset()
     }
   }
 
@@ -159,14 +158,14 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       }
     } finally {
-      deleteCreatedTestAsset
+      deleteCreatedTestAsset()
     }
   }
 
   private def deleteCreatedTestAsset() {
-    executeStatement("DELETE FROM multiple_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')");
-    executeStatement("DELETE FROM single_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')");
-    executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'");
+    executeStatement("DELETE FROM multiple_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')")
+    executeStatement("DELETE FROM single_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')")
+    executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'")
   }
 
   test("update the position of an asset within a road link", Tag("db")) {
@@ -272,7 +271,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       user = espooUser,
       validFrom = Some(new LocalDate(2013, 6, 1)),
       validTo = Some(new LocalDate(2013, 6, 1)))
-    assets should have length(1)
+    assets should have length 1
     assets.head.status should be(None)
   }
 
@@ -281,7 +280,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       user = espooUser,
       validFrom = Some(new LocalDate(2014, 6, 1)),
       validTo = Some(new LocalDate(2014, 6, 1)))
-    assets should have length(1)
+    assets should have length 1
     assets.head.status should be(Some(Floating))
   }
 
