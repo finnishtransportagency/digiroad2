@@ -19,8 +19,8 @@ object ValluStoreStopChangeMessage {
             </Names>
         }
         <Coordinate>
-          <xCoordinate>{asset.wgslon.toInt}</xCoordinate>
-          <yCoordinate>{asset.wgslat.toInt}</yCoordinate>
+          <xCoordinate>{asset.lon.toInt}</xCoordinate>
+          <yCoordinate>{asset.lat.toInt}</yCoordinate>
         </Coordinate>
         <Bearing>{asset.bearing.flatMap { bearing =>
           asset.validityDirection.map { validityDirection =>
