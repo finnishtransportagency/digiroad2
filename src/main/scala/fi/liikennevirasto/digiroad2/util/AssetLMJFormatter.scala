@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.getPropertyValuesByPublicId
 import scala.language.postfixOps
 
 object AssetLMJFormatter extends AssetCsvFormatter {
