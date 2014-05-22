@@ -7,11 +7,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._supportedFormats = {};
         this._localization = null;
         this._state = undefined;
-        this._selectedControl = 'Select';
-        this._backend = defineDependency('backend', window.Backend);
-        this._geometryCalculations = defineDependency('geometryCalculations', window.geometrycalculator);
-        this._oskari = defineDependency('oskari', window.Oskari);
-        this._readOnly = true;
 
         function defineDependency(dependencyName, defaultImplementation) {
             var dependency = _.isObject(config) ? config[dependencyName] : null;
@@ -50,6 +45,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
+                new MoveByCoordinates();
 
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {
@@ -75,6 +71,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 $('.olMap').css('cursor', cursor[action]);
             });
 
+            eventbus.on('coordinates:selected', function(position) {
+                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, 11]);
+            }, this);
 
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
@@ -137,10 +136,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
         },
 
-        _toolSelectionChange: function(action) {
-            this._selectedControl = action;
-            this._selectControl.unselectAll();
-        },
         addLayersToMap: function(templates) {
             var me = this;
             var roadLayer = new OpenLayers.Layer.Vector("road", {
