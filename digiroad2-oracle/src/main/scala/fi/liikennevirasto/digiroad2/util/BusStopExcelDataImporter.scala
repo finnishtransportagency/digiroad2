@@ -24,7 +24,7 @@ class BusStopExcelDataImporter {
 
   case class ExcelBusStopData(externalId: Long, stopNameFi: String, stopNameSv: String, direction: String, reachability: String, accessibility: String,
                               internalId: String, equipments: String, xPosition: String, yPosition: String, passengerId: String, timetable: Option[Status],
-                              shelter: Option[Status], addShelter: Option[Status], bench: Option[Status], bicyclePark: Option[Status], electricTimetable: Option[Status], lightning: Option[Status])
+                              shelter: Option[Status], addShelter: Option[Status], bench: Option[Status], bicyclePark: Option[Status], electricTimetable: Option[Status], lighting: Option[Status])
 
   implicit def GetStatus(status: String) = {
     status match {
@@ -50,7 +50,6 @@ class BusStopExcelDataImporter {
 
   def readExcelDataFromCsvFile(fileName: String): List[ExcelBusStopData] = {
     val reader = CSVReader.open(new InputStreamReader(getClass.getResourceAsStream("/" + fileName)))
-
     reader.allWithHeaders().map { row =>
       new ExcelBusStopData(row("Valtakunnallinen ID").toLong, row("Pysäkin nimi"), row("Pysäkin nimi SE"), row("Suunta kansalaisen näkökulmasta"),
         row("Pysäkin saavutettavuus"), row("Esteettömyys-tiedot"), row("Ylläpitäjän sisäinen pysäkki-ID"), row("Pysäkin varusteet"),
@@ -85,7 +84,7 @@ class BusStopExcelDataImporter {
             setSingleChoiceProperty(assetId, "penkki", row.bench)
             setSingleChoiceProperty(assetId, "pyorateline", row.bicyclePark)
             setSingleChoiceProperty(assetId, "sahkoinen_aikataulunaytto", row.electricTimetable)
-            setSingleChoiceProperty(assetId, "valaistus", row.lightning)
+            setSingleChoiceProperty(assetId, "valaistus", row.lighting)
 
             if (trimToEmpty(row.reachability).contains("liityntäpysäkointi")) setSingleChoiceProperty(assetId, "saattomahdollisuus_henkiloautolla", Some(Yes))
             if (trimToEmpty(row.reachability).contains("ei liityntäpysäkointi")) setSingleChoiceProperty(assetId, "saattomahdollisuus_henkiloautolla", Some(No))
