@@ -45,7 +45,6 @@
 								</xs:annotation>
 							</xs:element>
 
-							<!--
 							<xs:element name="Address" type="xs:string" minOccurs="0">
 								<xs:annotation>
 									<xs:documentation>stop address.</xs:documentation>
@@ -58,7 +57,6 @@
 									</xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							-->
 
 							<xs:element name="Bearing">
 								<xs:annotation>
