@@ -22,13 +22,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("require authentication", Tag("db")) {
-    get("/assets?assetTypeId=10&municipalityNumber=235") {
+    get("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
       status should equal(401)
     }
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "nonexistent") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235", username = "nonexistent") {
       status should equal(403)
     }
-    getWithUserAuth("/assets?assetTypeId=10&municipalityNumber=235", username = "test") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235", username = "test") {
       status should equal(200)
     }
   }
@@ -48,14 +48,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get assets without bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084") {
       status should equal(200)
       parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(4)
     }
   }
 
   test("get assets without bounding box for multiple municipalities", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10", "test2") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084", "test2") {
       status should equal(200)
       parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(5)
     }
@@ -117,21 +117,40 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get past assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=past") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=past") {
+      status should equal(200)
+      parse(body).extract[List[Asset]].size should be(1)
+    }
+  }
+
+  test("assets cannot be retrieved without bounding box", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10") {
+      status should equal(500)
+    }
+  }
+
+  test("assets cannot be retrieved with massive bounding box", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=324702,6677462,374870,6697780") {
+      status should equal(500)
+    }
+  }
+
+  test("return failure if bounding box missing", Tag("db")) {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=past") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("get future assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityPeriod=future") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=future") {
       status should equal(200)
       parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("mark asset on expired link as floating", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&validityDate=2014-06-01&validityPeriod=current", "test49") {
+    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084&validityDate=2014-06-01&validityPeriod=current", "test49") {
       status should equal(200)
       val assets = parse(body).extract[List[Asset]]
       assets should have length 1

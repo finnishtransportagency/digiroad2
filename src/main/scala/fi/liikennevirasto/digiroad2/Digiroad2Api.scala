@@ -18,6 +18,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
+  // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
+  val MAX_BOUNDING_BOX = 100000000
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -132,16 +134,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
-    val bboxOption = params.get("bbox").map { b =>
-      val BBOXList = b.split(",").map(_.toDouble)
-      (BBOXList(0), BBOXList(1), BBOXList(2), BBOXList(3))
-    }
-
     // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*")
 
-    val rls = assetProvider.getRoadLinks(user, boundsFromParams)
+    val bboxOption = boundsFromParams
+
+    val rls = assetProvider.getRoadLinks(user, bboxOption)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
         ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id)) ~ ("geometry" ->
@@ -185,7 +184,22 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   private[this] def boundsFromParams: Option[BoundingRectangle] = {
-    params.get("bbox").map(constructBoundingRectangle)
+    val bboxOption = params.get("bbox").map(constructBoundingRectangle)
+    bboxOption.foreach(validateBoundingBox)
+    if (bboxOption.isEmpty) {
+      throw new IllegalArgumentException("Bounding box was missing")
+    }
+    bboxOption
+  }
+
+  private def validateBoundingBox(bbox: BoundingRectangle): Unit = {
+    val leftBottom = bbox.leftBottom
+    val rightTop = bbox.rightTop
+    val width = Math.abs(rightTop.x - leftBottom.x).toLong
+    val height = Math.abs(rightTop.y - leftBottom.y).toLong
+    if ((width * height) > MAX_BOUNDING_BOX) {
+      throw new IllegalArgumentException("Bounding box was too big: " + bbox)
+    }
   }
 
   private[this] def constructBoundingRectangle(bbox: String) = {
@@ -195,7 +209,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/linearassets") {
     params.get("bbox").map { bbox =>
-      linearAssetProvider.getAll(constructBoundingRectangle(bbox))
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      linearAssetProvider.getAll(boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
