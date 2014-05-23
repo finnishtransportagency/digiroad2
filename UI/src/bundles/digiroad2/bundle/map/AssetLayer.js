@@ -482,8 +482,10 @@ window.AssetLayer = function(map, roadLayer) {
         }
     });
 
-    eventbus.on('add:asset', function() {
-        createNewAsset(map.getCenter());
+    eventbus.on('tool:changed', function(action) {
+        if (action === "AddToCenter") {
+            createNewAsset(map.getCenter());
+        }
     });
 
     eventbus.on('layer:selected', function(layer) {

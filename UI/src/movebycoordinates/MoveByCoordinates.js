@@ -2,11 +2,10 @@ window.MoveByCoordinates = function() {
     var coordinatesSpan = $('<span class="moveToCoordinates"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
     var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
-    var coordinatesAdd = $('<input type="button" class="addToButton" value="Lisää"/>');
 
     var renderCoordinatesMoveElement = function() {
         $('.mapplugin.coordinates').append(
-            coordinatesSpan.append(coordinatesText).append(coordinatesMove).append(coordinatesAdd)
+            coordinatesSpan.append(coordinatesText).append(coordinatesMove)
         );
     };
 
@@ -35,24 +34,11 @@ window.MoveByCoordinates = function() {
                 eventbus.trigger('coordinates:selected',transformToPosition(lonlat));
             }
         });
-
-        coordinatesAdd.on('click' , function() {
-            eventbus.trigger('add:asset');
-        });
     };
 
     var show = function() {
-        coordinatesAdd.hide();
         renderCoordinatesMoveElement();
         bindEvents();
     };
-
-    eventbus.on('application:readOnly', function (readOnly) {
-        if (readOnly) {
-            coordinatesAdd.hide();
-        } else {
-            coordinatesAdd.show();
-        }
-    });
     show();
 };
