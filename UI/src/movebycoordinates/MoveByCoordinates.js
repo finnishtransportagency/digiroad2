@@ -1,16 +1,16 @@
 window.MoveByCoordinates = function() {
-    var coordinatesSpan =
-        $('<span class="moveToCoordinates">'+
-            '<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>'+
-            '<input type="button" class="moveToButton" value="Siirry"/>'+
-        '</span>');
-
+    var coordinatesSpan = $('<span class="moveToCoordinates"/>');
+    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
+    var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
+    
     var renderCoordinatesMoveElement = function() {
-        $('.mapplugin.coordinates').append(coordinatesSpan);
+        $('.mapplugin.coordinates').append(
+            coordinatesSpan.append(coordinatesText).append(coordinatesMove)
+        );
     };
 
     var bindEvents = function() {
-        coordinatesSpan.on('click', function() {
+        coordinatesMove.on('click', function() {
         var lonlat = $('.coordinates .lonlat').val();
         if (lonlat.match("[A-z]")) {
             var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
