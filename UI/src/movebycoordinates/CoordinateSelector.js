@@ -21,7 +21,7 @@ window.CoordinateSelector = function(parentElement) {
                 eventbus.trigger('coordinates:selected', position);
             } else {
                 var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                dialog.show('Käytää koortinaateissa lon,lat numeroarvoja');
+                dialog.show('Käytä koortinaateissa lon,lat numeroarvoja');
                 dialog.fadeout(2000);
             }
         });
