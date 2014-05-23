@@ -1,6 +1,7 @@
 window.CoordinateSelector = function(parentElement) {
+    var tooltip = "Koordinaattien syöttö: pohjoinen (7 merkkiä), itä (6 merkkiä). Esim. 6901839, 435323";
     var coordinatesSpan = $('<span class="moveToCoordinates"/>');
-    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
+    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="' + tooltip +'"/>');
     var submitButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
     var render = function() {
