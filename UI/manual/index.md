@@ -112,7 +112,17 @@ Karttaa liikutetaan raahaamalla tai nuolin&auml;pp&auml;imill&auml;.
 
 Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan vasemmassa alakulmassa (9).
 
-####Muita toimintoja####
+####Koordinaattihaku####
+
+K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku, joka keskitt&auml;&auml; kartan keskipisteen haettuun pisteeseen. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla ja pilkun j&auml;lkeen ei j&auml;tet&auml; v&auml;li&auml;. Esimerkiksi:
+
+```
+6901839,435323
+```
+
+Siirry-painiketta klikkaamalla kartta keskittyy haluttuun pisteeseen.
+
+####Taustakartat####
 
 Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
 
