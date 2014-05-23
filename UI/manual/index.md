@@ -114,7 +114,7 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+
 
 ####Koordinaattihaku####
 
-K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku, joka keskitt&auml;&auml; kartan keskipisteen haettuun pisteeseen. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla ja pilkun j&auml;lkeen ei j&auml;tet&auml; v&auml;li&auml;. Esimerkiksi:
+K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku, joka keskitt&auml;&auml; kartan keskipisteen haettuun pisteeseen. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla. Esimerkiksi:
 
 ```
 6901839,435323
