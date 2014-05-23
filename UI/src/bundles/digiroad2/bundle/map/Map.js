@@ -45,7 +45,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
-                new MoveByCoordinates();
+                new CoordinateSelector();
 
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {

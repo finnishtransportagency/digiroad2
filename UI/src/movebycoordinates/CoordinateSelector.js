@@ -1,4 +1,4 @@
-window.MoveByCoordinates = function() {
+window.CoordinateSelector = function() {
     var coordinatesSpan = $('<span class="moveToCoordinates"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
     var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
