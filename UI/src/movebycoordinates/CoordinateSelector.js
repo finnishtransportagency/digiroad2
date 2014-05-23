@@ -3,7 +3,7 @@ window.CoordinateSelector = function() {
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
     var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
-    var renderCoordinatesMoveElement = function() {
+    var render = function() {
         $('.mapplugin.coordinates').append(
             coordinatesSpan.append(coordinatesText).append(coordinatesMove)
         );
@@ -28,7 +28,7 @@ window.CoordinateSelector = function() {
     };
 
     var show = function() {
-        renderCoordinatesMoveElement();
+        render();
         bindEvents();
     };
     show();
