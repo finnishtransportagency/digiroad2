@@ -10,11 +10,12 @@ window.CoordinateSelector = function(parentElement) {
     var bindEvents = function() {
         submitButton.on('click', function() {
             var lonlat = $('.coordinates .lonlat').val();
-            var regex = /^\s*\d+\s*,\s*\d+\s*$/;
-            if (regex.test(lonlat)) {
+            var regex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
+            var result = lonlat.match(regex);
+            if (result) {
                 var position = {
-                    lon: lonlat.split(',')[0].trim(),
-                    lat: lonlat.split(',')[1].trim()
+                    lon: result[1],
+                    lat: result[2]
                 };
                 eventbus.trigger('coordinates:selected', position);
             } else {
