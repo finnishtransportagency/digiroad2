@@ -482,6 +482,10 @@ window.AssetLayer = function(map, roadLayer) {
         }
     });
 
+    eventbus.on('add:asset', function(position) {
+        createNewAsset(new OpenLayers.LonLat(position.lon, position.lat));
+    });
+
     eventbus.on('layer:selected', function(layer) {
         if (layer !== 'asset') {
             if (assetLayer.map && assetDirectionLayer.map) {
