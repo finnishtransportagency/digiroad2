@@ -1,12 +1,10 @@
-window.CoordinateSelector = function() {
+window.CoordinateSelector = function(parentElement) {
     var coordinatesSpan = $('<span class="moveToCoordinates"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
     var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
     var render = function() {
-        $('.mapplugin.coordinates').append(
-            coordinatesSpan.append(coordinatesText).append(coordinatesMove)
-        );
+        parentElement.append(coordinatesSpan.append(coordinatesText).append(coordinatesMove));
     };
 
     var bindEvents = function() {
