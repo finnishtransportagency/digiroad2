@@ -108,11 +108,6 @@
       '    <div data-action="Add" class="actionButton actionPanelButtonAdd">',
       '      <div class="actionPanelButtonAddImage"></div>',
       '    </div>',
-/*
-      '    <div data-action="AddToCenter" class="actionButton actionPanelButtonAdd">',
-      '      <div class="actionPanelButtonAddByCoordinateImage"></div>',
-      '    </div>',
-*/
       '  </div>',
       '  <button class="actionModeButton readOnlyMode" style="display: none;">Siirry katselutilaan</button>',
       '</div>'].join('');
@@ -215,14 +210,6 @@
         validityPeriods[asset.validityPeriod] = true;
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       }, this);
-
-      /*
-      eventbus.on('asset:cancelled', function() {
-          actionButtons.removeClass('actionButtonActive');
-          actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
-          eventbus.trigger('tool:changed', 'Select');
-      });
-      */
 
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== 'asset') {
