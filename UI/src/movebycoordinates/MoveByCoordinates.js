@@ -10,10 +10,10 @@ window.MoveByCoordinates = function() {
     };
 
     var bindEvents = function() {
-        var sanityCheck = function(lonlat) {
+        var validateCoordinates = function(lonlat) {
             if (lonlat.match("[A-z]")) {
                 var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                dialog.show('Käytää koortinaateissa lon,lat numeroarvoja');
+                dialog.show('Käytä koortinaateissa lon,lat numeroarvoja');
                 dialog.fadeout(2000);
                 return false;
             }
@@ -30,7 +30,7 @@ window.MoveByCoordinates = function() {
 
         coordinatesMove.on('click', function() {
             var lonlat = $('.coordinates .lonlat').val();
-            if(sanityCheck(lonlat)) {
+            if (validateCoordinates(lonlat)) {
                 eventbus.trigger('coordinates:selected',transformToPosition(lonlat));
             }
         });
