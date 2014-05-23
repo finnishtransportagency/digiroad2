@@ -4,9 +4,7 @@ Operaattorin manuaali Digiroad 2 -sovellukseen
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
 
-Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n osoitteessa:
-
-https://testiextranet.liikennevirasto.fi/digiroad/newuser.html 
+Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&auml;j&auml;n. Uusi k&auml;ytt&auml;j&auml; lis&auml;t&auml;&auml;n [k&auml;ytt&auml;j&auml;nhallinnassa.](https://testiextranet.liikennevirasto.fi/digiroad/newuser.html )
 
 K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&auml; seuraavat tiedot:
 
@@ -75,17 +73,100 @@ Esimerkiksi:
  
 Sovellus luo Stops.txt-tiedoston samaan hakemistoon vallu_import.sh-skriptin kanssa.
 
-Linkki k&auml;ytt&ouml;ohjeeseen
---------------------------------
+4. Kehitysymp&auml;rist&ouml;n asennus
+----------------------------
 
-https://devtest.liikennevirasto.fi/digiroad/manual
+__Projekti GitHubissa__
+
+Projektin kloonaaminen omalle koneelle edellytt&auml;&auml; tunnuksia [GitHubiin](https://github.com/), jossa versionhallinta toteutetaan. Lis&auml;ksi tarvitaan [Git client](http://git-scm.com/downloads) omalle koneelle. Client on k&auml;ytt&ouml;liittym&auml;, joita on olemassa sek&auml; graafisia ett&auml; komentorivipohjaisia. 
+
+Projektin kloonaaminen suoritetaan clientilla. Ensimm&auml;ist&auml; kertaa clienttia k&auml;ytett&auml;ess&auml; suoritetaan seuraavat komennot (komentorivipohjaisissa clienteissa):
+
+M&auml;&auml;ritell&auml;&auml;n nimimerkki, joka n&auml;kyy, kun commitoi uutta koodia GitHubiin. K&auml;yt&auml;nn&ouml;ss&auml; operaattorin ei tarvitse commitoida.
+
+```
+git config --global user.name "Nimimerkkisi"
+```
+
+Kloonataan projekti omalle koneelle.
+
+```
+git clone https://github.com/finnishtransportagency/digi-road-2.git
+```
+
+__Kehitysymp&auml;rist&ouml;__
+
+- Asenna [node.js](http://howtonode.org/how-to-install-nodejs) (samalla asentuu npm).
+
+- Asenna bower. Ajetaan komentorivill&auml; komento:
+
+```
+npm install -g bower
+```
+
+- Hae ja asenna projektin tarvitsemat riippuvuudet:
+
+```
+npm install && bower install
+```
+
+- Asenna grunt:
+
+```
+npm install -g grunt-cli
+```
+
+- Alusta ja konfiguroi tietokantaymp&auml;rist&ouml;. Luo tiedosto bonecp.properties sijaintiin: digiroad2/digiroad2-oracle/conf/dev/bonecp.properties. Bonecp.properties sis&auml;lt&auml;&auml; tietokantayhteyden tiedot:
+
+```
+bonecp.jdbcUrl=jdbc:oracle:thin:@<tietokannan_osoite>:<portti>/<skeeman_nimi>
+bonecp.username=<k&auml;ytt&auml;j&auml;tunnus>
+bonecp.password=<salasana>
+```
+
+Tietokantayhteyden tiedoista voi kysy&auml; Taru Vainikaiselta.
+
+Tietokanta ja skeema t&auml;ytyy alustaa aika ajoin (huomaa, kun kehitysymp&auml;rist&ouml; ei en&auml;&auml; toimi). Alustus suoritetaan ajamalla fixture-reset.sh-skripti komentorivill&auml;:
+
+```
+fixture-reset.sh
+```
+
+__Kehitysymp&auml;rist&ouml;n ajaminen__
+
+Kehitysymp&auml;rist&ouml;&auml; ajetaan koneella ajamalla seuraavat komennot aina, kun kehitysymp&auml;rist&ouml; k&auml;ynnistet&auml;&auml;n uudelleen:
+
+Kehitysserverin pystytys:
+
+```
+grunt server
+```
+
+API-palvelin:
+
+__Windows:__
+
+```
+sbt
+```
+
+```
+container:start
+```
+
+__Linux:__
+
+```
+./sbt '~;container:start /'
+```
+
+Linkit:
+------
+
+[Loppuk&auml;ytt&auml;j&auml;n ohje](https://testiextranet.liikennevirasto.fi/digiroad/manual)
  
-L&auml;hdekoodi
-----------
+[L&auml;hdekoodi](https://github.com/finnishtransportagency/digiroad2)
 
-Digiroad 2 -sovelluksen avoin l&auml;hdekoodi l&ouml;ytyy GitHubista:
-
-https://github.com/finnishtransportagency/digiroad2
 
 Yhteystiedot
 ------------
