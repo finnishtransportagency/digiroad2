@@ -1,14 +1,14 @@
 window.CoordinateSelector = function(parentElement) {
     var coordinatesSpan = $('<span class="moveToCoordinates"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="lon,lat esim. 6901839,435323"/>');
-    var coordinatesMove = $('<input type="button" class="moveToButton" value="Siirry"/>');
+    var submitButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
     var render = function() {
-        parentElement.append(coordinatesSpan.append(coordinatesText).append(coordinatesMove));
+        parentElement.append(coordinatesSpan.append(coordinatesText).append(submitButton));
     };
 
     var bindEvents = function() {
-        coordinatesMove.on('click', function() {
+        submitButton.on('click', function() {
             var lonlat = $('.coordinates .lonlat').val();
             if (lonlat.match("[A-z]")) {
                 var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
