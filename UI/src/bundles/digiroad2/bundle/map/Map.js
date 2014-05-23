@@ -71,7 +71,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             });
 
             eventbus.on('coordinates:selected', function(position) {
-                this._sandbox.postRequestByName('MapMoveRequest', [position.lon, position.lat, 11]);
+                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, 11]);
             }, this);
 
             // register domain builder
