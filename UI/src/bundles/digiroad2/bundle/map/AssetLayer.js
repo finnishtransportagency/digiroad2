@@ -482,8 +482,8 @@ window.AssetLayer = function(map, roadLayer) {
         }
     });
 
-    eventbus.on('add:asset', function(position) {
-        createNewAsset(new OpenLayers.LonLat(position.lon, position.lat));
+    eventbus.on('add:asset', function() {
+        createNewAsset(map.getCenter());
     });
 
     eventbus.on('layer:selected', function(layer) {

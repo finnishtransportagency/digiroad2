@@ -108,6 +108,9 @@
       '    <div data-action="Add" class="actionButton actionPanelButtonAdd">',
       '      <div class="actionPanelButtonAddImage"></div>',
       '    </div>',
+      '    <div data-action="AddToCenter" class="actionButton actionPanelButtonAdd">',
+      '      <div class="actionPanelButtonAddImage"></div>',
+      '    </div>',
       '  </div>',
       '  <button class="actionModeButton readOnlyMode" style="display: none;">Siirry katselutilaan</button>',
       '</div>'].join('');

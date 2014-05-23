@@ -37,10 +37,7 @@ window.MoveByCoordinates = function() {
         });
 
         coordinatesAdd.on('click' , function() {
-            var lonlat = $('.coordinates .lonlat').val();
-            if(sanityCheck(lonlat)) {
-                eventbus.trigger('add:asset', transformToPosition(lonlat));
-            }
+            eventbus.trigger('add:asset');
         });
     };
 
