@@ -1,7 +1,7 @@
 window.CoordinateSelector = function(parentElement) {
     var tooltip = "Koordinaattien syöttö: pohjoinen (7 merkkiä), itä (6 merkkiä). Esim. 6901839, 435323";
-    var crosshairToggle = $('<div class="crosshairToggle"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> kohdistin</div>');
-    var coordinatesDiv = $('<div class="moveToCoordinates"/>');
+    var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> kohdistin</div>');
+    var coordinatesDiv = $('<div class="coordinatesContainer"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lon, lat" title="' + tooltip +'"/>');
     var submitButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
