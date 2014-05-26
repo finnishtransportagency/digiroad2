@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.user.{Role, User}
+import com.newrelic.api.agent.NewRelic
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -179,6 +180,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
     case e: Exception => {
       logger.error("API Error", e)
+      NewRelic.noticeError(e)
       halt(InternalServerError("API error"))
     }
   }

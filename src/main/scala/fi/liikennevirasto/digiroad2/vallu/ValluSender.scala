@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.Digiroad2Context
 import org.apache.http.client.config.RequestConfig
+import com.newrelic.api.agent.NewRelic
 
 object ValluSender {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
@@ -53,6 +54,7 @@ object ValluSender {
       }
     } catch {
       case e: Exception => {
+        NewRelic.noticeError(e)
         applicationLogger.error("Error occurred", e)
         messageLogger.error("=====Error in sending Message to Vallu, message below ======")
         messageLogger.error(payload)
