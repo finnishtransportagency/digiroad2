@@ -10,7 +10,7 @@ window.CoordinateSelector = function(parentElement) {
     };
 
     var bindEvents = function() {
-        submitButton.on('click', function() {
+        var moveToCoordinates = function() {
             var lonlat = $('.coordinates .lonlat').val();
             var regex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
             var result = lonlat.match(regex);
@@ -25,6 +25,15 @@ window.CoordinateSelector = function(parentElement) {
                 dialog.show('Käytä koortinaateissa lon,lat numeroarvoja');
                 dialog.fadeout(2000);
             }
+        };
+
+        coordinatesText.keypress(function(event) {
+            if (event.keyCode == 13) {
+                moveToCoordinates();
+            }
+        });
+        submitButton.on('click', function() {
+            moveToCoordinates();
         });
 
         $('input', crosshairToggle).change(function() {
