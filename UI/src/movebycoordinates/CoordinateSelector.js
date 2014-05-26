@@ -1,15 +1,16 @@
 window.CoordinateSelector = function(parentElement) {
     var tooltip = "Koordinaattien syöttö: pohjoinen (7 merkkiä), itä (6 merkkiä). Esim. 6901839, 435323";
-    var coordinatesSpan = $('<span class="moveToCoordinates"/>');
-    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" title="' + tooltip +'"/>');
+    var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/>Näytä kohdistin</div>');
+    var coordinatesDiv = $('<div class="coordinatesContainer"/>');
+    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lon, lat" title="' + tooltip +'"/>');
     var submitButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
     
     var render = function() {
-        parentElement.append(coordinatesSpan.append(coordinatesText).append(submitButton));
+        parentElement.append(crosshairToggle).append(coordinatesDiv.append(coordinatesText).append(submitButton));
     };
 
     var bindEvents = function() {
-        submitButton.on('click', function() {
+        var moveToCoordinates = function() {
             var lonlat = $('.coordinates .lonlat').val();
             var regex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
             var result = lonlat.match(regex);
@@ -24,6 +25,19 @@ window.CoordinateSelector = function(parentElement) {
                 dialog.show('Käytä koortinaateissa lon,lat numeroarvoja');
                 dialog.fadeout(2000);
             }
+        };
+
+        coordinatesText.keypress(function(event) {
+            if (event.keyCode == 13) {
+                moveToCoordinates();
+            }
+        });
+        submitButton.on('click', function() {
+            moveToCoordinates();
+        });
+
+        $('input', crosshairToggle).change(function() {
+            $('.crosshair').toggle(this.checked);
         });
     };
 
