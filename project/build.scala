@@ -87,6 +87,7 @@ object Digiroad2Build extends Build {
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
         "commons-io" % "commons-io" % "2.4",
+        "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.eclipse.jetty" % "jetty-webapp" % "8.1.14.v20131031" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "8.1.14.v20131031" % "container;compile",
