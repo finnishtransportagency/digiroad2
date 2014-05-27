@@ -26,11 +26,12 @@
         });
     }, 1000);
 
+    var roadTypes = ['privateRoad', 'street', 'road'];
     backend.getRoadLinks = _.throttle(function(boundingBox) {
         jQuery.getJSON('api/roadlinks?bbox=' + boundingBox, function(roadLinks) {
             var data = _.map(roadLinks.features, function(feature) {
                 var id = feature.properties.roadLinkId;
-                var type = feature.properties.type;
+                var type = feature.properties.type || (window.DR2_LOGGING && roadTypes[_.random(0, 2)]);
                 var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
                     return {x: coordinate[0], y: coordinate[1]};
                 });
