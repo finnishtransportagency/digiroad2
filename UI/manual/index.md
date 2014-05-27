@@ -250,10 +250,18 @@ _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
 
 ####Ominaisuustiedot:####
 
-__Lis&auml;tty j&auml;rjestelm&auml;&auml;n:__ Tiedon luojan k&auml;ytt&auml;j&auml;tunnus tai massaimportin l&auml;hde ja tiedon lis&auml;yshetki.
-__Muokattu viimeksi:__ Muokkaajan k&auml;ytt&auml;j&auml;tunnus ja tiedon muokkaushetki.
-__Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;.
-__Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;.
+__Sovellus generoi automaattisesti:__
+
+__Lis&auml;tty j&auml;rjestelm&auml;&auml;n:__ Tiedon luojan k&auml;ytt&auml;j&auml;tunnus tai massaimportin l&auml;hde ja tiedon lis&auml;yshetki. 
+__Muokattu viimeksi:__ Muokkaajan k&auml;ytt&auml;j&auml;tunnus ja tiedon muokkaushetki. 
+__Liikenn&ouml;intisuuntima:__ Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.
+
+__K&auml;ytt&auml;j&auml; lis&auml;&auml; j&auml;rjestelm&auml;&auml;n:__
+
+Ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkovalintoja, joista voi valita yhden vaihtoehdon.
+
+__Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;. 
+__Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
 __Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
 __Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille.
@@ -263,8 +271,7 @@ __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF F
 __Maastokoordinaatti Z:__ Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.
 __Liikenn&ouml;intisuunta:__ Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".
 __Vaikutussuunta:__ Vaikutussuunta on visualisoitu pys&auml;kin liikennevirran suunnaksi pisaralla (9). Google Street View (4) osoittaa suuntaan, jossa pys&auml;kin kuuluisi olla.
-__Liikenn&ouml;intisuuntima:__ Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.
-__Ensimm&auml;inen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isten kerran k&auml;yt&ouml;ss&auml;.
+__Ensimm&auml;inen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on ensimm&auml;isen kerran k&auml;yt&ouml;ss&auml;.
 __Viimeinen voimassaolop&auml;iv&auml;:__ P&auml;iv&auml;m&auml;&auml;r&auml;, jolloin pys&auml;kki on viimeisen kerran k&auml;yt&ouml;ss&auml;.
 __Pys&auml;kin tyyppi:__ Linja-autojen paikallisliikenne, raitiovaunu, linja-autojen kaukoliikenne, linja-autojen pikavuoro, virtuaalipys&auml;kki tai "ei tietoa".
 __Aikataulu:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
