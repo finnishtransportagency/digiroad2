@@ -37,7 +37,7 @@ window.CoordinateSelector = function(parentElement) {
         });
 
         $('input', crosshairToggle).change(function() {
-            $('.crosshair').toggle(this.checked);
+            $('.crossHair').toggle(this.checked);
         });
     };
 
