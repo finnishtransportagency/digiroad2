@@ -54,13 +54,13 @@ L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vall
 
 Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle.
 
-Tarvittavat tiedostot ovat bonecp.properties ja vallu_import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; Taru Vainikaiselta tai kehitystiimilt&auml;. Bonecp.properties tallennetaan sijaintiin:
+Tarvittavat tiedostot ovat bonecp.properties ja LMJ-import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; Taru Vainikaiselta tai kehitystiimilt&auml;. Bonecp.properties tallennetaan sijaintiin:
 
 ```
 digi-road-2\digiroad2-oracle\conf\properties\
 ```
 
-Kun bonecp.properties on tallennettu, voidaan vallu_import.sh-skripti ajaa Linux-ymp&auml;rist&ouml;ss&auml; komentorivill&auml;. Jos k&auml;yt&ouml;ss&auml; on Windows-ymp&auml;rist&ouml;, skriptin&auml; ajetaan:
+Kun bonecp.properties on tallennettu, voidaan LMJ-import.sh-skripti ajaa Linux-ymp&auml;rist&ouml;ss&auml; komentorivill&auml;. Jos k&auml;yt&ouml;ss&auml; on Windows-ymp&auml;rist&ouml;, skriptin&auml; ajetaan:
 
 ```
 sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport <kuntanumerot välillä erotettuna>"
@@ -71,7 +71,7 @@ Esimerkiksi:
  sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport 89 90 91"
 ```
  
-Sovellus luo Stops.txt-tiedoston samaan hakemistoon vallu_import.sh-skriptin kanssa.
+Sovellus luo Stops.txt-tiedoston samaan hakemistoon LMJ_import.sh-skriptin kanssa.
 
 4. Kehitysymp&auml;rist&ouml;n asennus
 ----------------------------
