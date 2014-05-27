@@ -49,9 +49,9 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   }
 
   private def isUnknownStop(asset: AssetWithProperties): Boolean = {
-    val tramStopType = 99L
+    val unknownType = 99L
     val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
-    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1))
+    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
   }
 
   private def isTramStop(asset: AssetWithProperties): Boolean = {
