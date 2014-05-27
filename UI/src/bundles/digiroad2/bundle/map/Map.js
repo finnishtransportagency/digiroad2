@@ -131,6 +131,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             'AfterMapMoveEvent': function(event) {
                 if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
                     Backend.getRoadLinks(this._map.getExtent());
+                } else {
+                    this.roadLayer.removeAllFeatures();
                 }
 
                 this._handleRoadsVisibility();
