@@ -10,8 +10,9 @@ import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.Digiroad2Context
 import org.apache.http.client.config.RequestConfig
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 
-object ValluSender {
+object ValluSender extends AssetPropertiesReader {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
   val applicationLogger = LoggerFactory.getLogger(getClass)
   val sendingEnabled = Digiroad2Context.getProperty("digiroad2.vallu.server.sending_enabled").toBoolean
@@ -25,6 +26,7 @@ object ValluSender {
   val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
 
   def postToVallu(municipalityName: String, asset: AssetWithProperties) {
+    if (isTramStop(asset) || isUnknownStop(asset)) return
     val payload = ValluStoreStopChangeMessage.create(municipalityName, asset)
     withLogging(payload) {
       postToVallu
@@ -46,7 +48,7 @@ object ValluSender {
 
   def withLogging[A](payload: String)(thunk: String => Unit) {
     try {
-      if(sendingEnabled) {
+      if (sendingEnabled) {
         messageLogger.info(s"Sending to vallu: $payload")
         thunk(payload)
       } else {
