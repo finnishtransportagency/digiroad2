@@ -73,6 +73,26 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvRows must have size 2
   }
 
+  it must "filter unknown stop types from test data" in {
+    val localBusStopType = List(2L)
+    val unknownType = List(99L)
+    val localBusStop = createStop(localBusStopType)
+    val unknownStop = createStop(unknownType)
+    val unknownAndLocalBusStop = createStop(unknownType ++ localBusStopType)
+    val csvRows = AssetValluCsvFormatter.valluCsvRowsFromAssets(235, "Kauniainen", List(unknownStop, localBusStop, unknownAndLocalBusStop), Map())
+    csvRows must have size 2
+  }
+
+  it must "filter empty stop types from test data" in {
+    val localBusStopType = List(2L)
+    val unknownType = List()
+    val localBusStop = createStop(localBusStopType)
+    val unknownStop = createStop(unknownType)
+    val unknownAndLocalBusStop = createStop(unknownType ++ localBusStopType)
+    val csvRows = AssetValluCsvFormatter.valluCsvRowsFromAssets(235, "Kauniainen", List(unknownStop, localBusStop, unknownAndLocalBusStop), Map())
+    csvRows must have size 2
+  }
+
   val testasset = AssetWithProperties(1, 1, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
       created = Modification(None, None), modified = Modification(None, None))
   it must "recalculate bearings in validity direction" in {

@@ -15,7 +15,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def valluCsvRowsFromAssets(municipalityId: Long, municipalityName: String, assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
-    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(isOnlyTramStop).map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
+    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(x => isTramStop(x) || isUnknownStop(x)).map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
   }
 
   def formatAssetsWithProperties(municipalityId: Long, municipalityName: String, assets: Iterable[AssetWithProperties]): Iterable[String] = {
@@ -24,31 +24,37 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
 
   def formatFromAssetWithPropertiesValluCsv(municipalityId: Long, municipalityName: String, asset: AssetWithProperties): String = {
     (addStopId _)
-      .andThen (addAdminStopId _)
-      .andThen (addStopCode _)
+      .andThen (addAdminStopId)
+      .andThen (addStopCode)
       .andThen ((addName _ curried)("nimi_suomeksi")(_))
       .andThen ((addName _ curried)("nimi_ruotsiksi")(_))
-      .andThen (addXCoord _)
-      .andThen (addYCoord _)
-      .andThen (addAddress _)
-      .andThen (addRoadNumber _)
-      .andThen (addBearing _)
-      .andThen (addBearingDescription _)
-      .andThen (addValidityDirection _)
-      .andThen (addBusStopTypes _)
-      .andThen (addEquipment _)
-      .andThen (addReachability _)
-      .andThen (addSpecialNeeds _)
-      .andThen (addModifiedInfo _)
-      .andThen (addValidityPeriods _)
-      .andThen (addMaintainerId _)
+      .andThen (addXCoord)
+      .andThen (addYCoord)
+      .andThen (addAddress)
+      .andThen (addRoadNumber)
+      .andThen (addBearing)
+      .andThen (addBearingDescription)
+      .andThen (addValidityDirection)
+      .andThen (addBusStopTypes)
+      .andThen (addEquipment)
+      .andThen (addReachability)
+      .andThen (addSpecialNeeds)
+      .andThen (addModifiedInfo)
+      .andThen (addValidityPeriods)
+      .andThen (addMaintainerId)
       .andThen (addMunicipalityInfo(municipalityId, municipalityName, _))
-      .andThen (addComments _)
-      .andThen (addContactEmail _)
+      .andThen (addComments)
+      .andThen (addContactEmail)
       .apply(asset, List())._2.reverse.mkString(";")
   }
 
-  private def isOnlyTramStop(asset: AssetWithProperties): Boolean = {
+  private def isUnknownStop(asset: AssetWithProperties): Boolean = {
+    val unknownType = 99L
+    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
+  }
+
+  private def isTramStop(asset: AssetWithProperties): Boolean = {
     val tramStopType = 1L
     val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
     massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1)
@@ -82,31 +88,31 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   private def addName(language: String, params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val name = getPropertyValuesByPublicId(language, asset.propertyData)
-    (asset, name.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, name.headOption.fold("")(_.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addAdminStopId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getPropertyValuesByPublicId("yllapitajan_tunnus", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, id.headOption.fold("")(x => x.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addStopCode(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getPropertyValuesByPublicId("matkustajatunnus", asset.propertyData)
-    (asset, id.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, id.headOption.fold("")(x => x.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addContactEmail(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val email = getPropertyValuesByPublicId("palauteosoite", asset.propertyData)
-    (asset, email.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, email.headOption.fold("")(x => x.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addComments(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val comments = getPropertyValuesByPublicId("lisatiedot", asset.propertyData)
-    (asset, comments.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, comments.headOption.fold("")(x => x.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addMunicipalityInfo(municipalityId: Long, municipalityName: String, params: (AssetWithProperties, List[String])) = {
@@ -129,7 +135,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   private def addMaintainerId(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val maintainer = getPropertyValuesByPublicId("tietojen_yllapitaja", asset.propertyData)
-    (asset, maintainer.headOption.map(x => x.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, maintainer.headOption.fold("")(x => x.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addValidityPeriods(params: (AssetWithProperties, List[String])) = {
@@ -144,14 +150,14 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   private def addSpecialNeeds(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val specialNeeds = getPropertyValuesByPublicId("esteettomyys_liikuntarajoitteiselle", asset.propertyData)
-    (asset, specialNeeds.headOption.map(x => x.propertyDisplayValue.get).getOrElse("") :: result)
+    (asset, specialNeeds.headOption.fold("")(x => x.propertyDisplayValue.get) :: result)
   }
 
   private def addModifiedInfo(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
 
     def creationTimeOrEmpty(time: Option[DateTime]): String = {
-      time.map(OutputDateTimeFormat.print).getOrElse("")
+      time.fold("")(OutputDateTimeFormat.print)
     }
 
     asset.modified match {
@@ -174,13 +180,13 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   private[util] def addBearingDescription(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val bearingDescription = getPropertyValuesByPublicId("liikennointisuuntima", asset.propertyData)
-    (asset, bearingDescription.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, bearingDescription.headOption.fold("")(_.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addValidityDirection(params: (AssetWithProperties, List[String])) = {
     val (asset, result) = params
     val id = getPropertyValuesByPublicId("liikennointisuunta", asset.propertyData)
-    (asset, id.headOption.map(_.propertyDisplayValue.getOrElse("")).getOrElse("") :: result)
+    (asset, id.headOption.fold("")(_.propertyDisplayValue.getOrElse("")) :: result)
   }
 
   private def addReachability(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
