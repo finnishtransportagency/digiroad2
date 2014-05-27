@@ -52,7 +52,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._selectControl.unselectAll();
             }, this);
             eventbus.on('asset:moving', function(nearestLine) {
-                var nearestFeature = _.find(this._layers.road.features, function(feature) {
+                var nearestFeature = _.find(this.roadLayer.features, function(feature) {
                     return feature.id == nearestLine.id;
                 });
                 this._selectControl.unselectAll();
@@ -131,8 +131,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             }
         },
         _handleRoadsVisibility: function() {
-            if (this._layers && _.isObject(this._layers.road)) {
-                this._layers.road.setVisibility(zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom()));
+            if (_.isObject(this.roadLayer)) {
+                this.roadLayer.setVisibility(zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom()));
             }
         },
         _afterMapLayerAddEvent: function (event) {
@@ -140,22 +140,21 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
 
         addLayersToMap: function(templates) {
-            var roadLayer = new OpenLayers.Layer.Vector("road", {
+            this.roadLayer = new OpenLayers.Layer.Vector("road", {
                 styleMap: templates.roadStyles
             });
-            roadLayer.setVisibility(false);
-            this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
+            this.roadLayer.setVisibility(false);
+            this._selectControl = new OpenLayers.Control.SelectFeature(this.roadLayer);
 
-            this._map.addLayer(roadLayer);
-            this._layers = {road: roadLayer};
-            new AssetLayer(this._map, roadLayer);
+            this._map.addLayer(this.roadLayer);
+            new AssetLayer(this._map, this.roadLayer);
             new LinearAssetLayer(this._map);
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
                 return null;
             }
-            return _.values(this._layers);
+            return [this.roadLayer];
         }
     }, {
         'protocol': ["Oskari.mapframework.module.Module", "Oskari.mapframework.ui.module.common.mapmodule.Plugin"]
