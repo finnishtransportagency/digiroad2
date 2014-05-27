@@ -1,4 +1,6 @@
 (function(backend) {
+    var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
+
     backend.getEnumeratedPropertyValues = function (assetTypeId) {
         jQuery.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function(enumeratedPropertyValues) {
             eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
@@ -48,6 +50,11 @@
         });
     };
 
+    var assetUpdateFailed = function () {
+        alert(assetUpdateFailedMessage);
+        eventbus.trigger('asset:cancelled');
+    };
+
     backend.createAsset = function(data) {
         eventbus.trigger('asset:creating');
         jQuery.ajax({
@@ -59,11 +66,7 @@
             success: function(asset) {
                 eventbus.trigger('asset:created', asset);
             },
-            error: function(xhr, status, error) {
-                console.log("error", error);
-                alert('Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.');
-                eventbus.trigger('asset:cancelled');
-            }
+            error: assetUpdateFailed
         });
     };
 
@@ -78,11 +81,7 @@
             success: function(asset) {
                 eventbus.trigger('asset:saved asset:fetched', asset, true);
             },
-            error: function(xhr, status, error) {
-                console.log("error", error);
-                alert('Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.');
-                eventbus.trigger('asset:cancelled');
-            }
+            error: assetUpdateFailed
         });
     };
 

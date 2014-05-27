@@ -1,6 +1,6 @@
 window.CoordinateSelector = function(parentElement) {
-    var tooltip = "Koordinaattien syöttö: pohjoinen (7 merkkiä), itä (6 merkkiä). Esim. 6901839, 435323";
-    var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/>Näytä kohdistin</div>');
+    var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
+    var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/>N&auml;yt&auml; kohdistin</div>');
     var coordinatesDiv = $('<div class="coordinatesContainer"/>');
     var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lon, lat" title="' + tooltip +'"/>');
     var submitButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
@@ -22,7 +22,7 @@ window.CoordinateSelector = function(parentElement) {
                 eventbus.trigger('coordinates:selected', position);
             } else {
                 var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                dialog.show('Käytä koordinaateissa lon, lat numeroarvoja');
+                dialog.show('K&auml;yt&auml; koordinaateissa lon, lat numeroarvoja');
                 dialog.fadeout(2000);
             }
         };

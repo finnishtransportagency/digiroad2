@@ -99,7 +99,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             return function() {
                 if (self._oldZoomLevel != self._map.getZoom()) {
                     var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-                    dialog.show('Zoomaa lähemmäksi, jos haluat nähdä pysäkkejä');
+                    dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; pys&auml;kkej&auml;');
                     dialog.fadeout(2000);
                 }
             };

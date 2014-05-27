@@ -6,7 +6,7 @@
     var FINNISH_PIKADAY_I18N = {
             previousMonth : 'edellinen kuukausi',
             nextMonth     : 'seuraava kuukausi',
-            months: ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'],
+            months: ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kes&auml;kuu','Hein&auml;kuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'],
             weekdays: ['sunnuntai','maanantai','tiistai','keskiviikko','torstai','perjantai','lauantai'],
             weekdaysShort : ['Su','Ma','Ti','Ke','To','Pe','La']
     };
