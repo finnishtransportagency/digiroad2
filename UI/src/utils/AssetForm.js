@@ -15,7 +15,7 @@
         }
         var container = $("#featureAttributes").empty();
 
-        var element = $('<div />').addClass('featureAttributesHeader').text(busStopHeader(asset));
+        var element = $('<div />').addClass('featureAttributesHeader').html(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
         streetViewHandler = getStreetView(asset);
         wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
@@ -42,7 +42,7 @@
             if (_.isNumber(asset.externalId)) {
                 return 'Valtakunnallinen ID: ' + asset.externalId;
             }
-            else return 'Ei valtakunnallista ID:tä';
+            else return 'Ei valtakunnallista ID:t&auml;';
         }
     };
 
