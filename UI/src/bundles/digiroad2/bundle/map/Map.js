@@ -70,6 +70,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 $('.olMap').css('cursor', cursor[action]);
             });
 
+            eventbus.on('roadLinks:fetched', function(roadLinks) {
+                this.drawRoadLinks(roadLinks);
+            }, this);
+
             eventbus.on('coordinates:selected', function(position) {
                 this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, 11]);
             }, this);
@@ -82,6 +86,24 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             sandbox.postRequestByName('RearrangeSelectedMapLayerRequest', ['base_35', 0]);
 
             this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
+        },
+
+        drawRoadLinks: function(roadLinks) {
+            var data = _.map(roadLinks.features, function(feature) {
+                var id = feature.properties.roadLinkId;
+                var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
+                    return {x: coordinate[0], y: coordinate[1]};
+                });
+                return {roadLinkId: id, points: coordinates};
+            });
+            this.roadLayer.removeAllFeatures();
+            var features = _.map(data, function(roadLink) {
+                var points = _.map(roadLink.points, function(point) {
+                    return new OpenLayers.Geometry.Point(point.x, point.y);
+                });
+                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
+            });
+            this.roadLayer.addFeatures(features);
         },
 
         startPlugin: function (sandbox) {
