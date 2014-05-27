@@ -42,7 +42,7 @@
             if (_.isNumber(asset.externalId)) {
                 return 'Valtakunnallinen ID: ' + asset.externalId;
             }
-            else return 'Ei valtakunnallista ID:t&auml;';
+            else return 'Ei valtakunnallista ID:tä';
         }
     };
 
