@@ -107,6 +107,10 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         start: function (sandbox) {},
         eventHandlers: {
             'AfterMapMoveEvent': function(event) {
+                if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
+                    Backend.getRoadLinks(this._map.getExtent());
+                }
+
                 this._handleRoadsVisibility();
                 eventbus.trigger('map:moved', {zoom: this._map.getZoom(), bbox: this._map.getExtent()});
                 if (!zoomlevels.isInAssetZoomLevel(this._map.getZoom())) {
@@ -136,19 +140,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
 
         addLayersToMap: function(templates) {
-            var me = this;
             var roadLayer = new OpenLayers.Layer.Vector("road", {
-                strategies: [new OpenLayers.Strategy.BBOX(), new OpenLayers.Strategy.Refresh()],
-                protocol: new OpenLayers.Protocol.HTTP({
-                    url: "api/roadlinks",
-                    format: new OpenLayers.Format.GeoJSON()
-                }),
                 styleMap: templates.roadStyles
             });
             roadLayer.setVisibility(false);
             this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
 
-            me._map.addLayer(roadLayer);
+            this._map.addLayer(roadLayer);
             this._layers = {road: roadLayer};
             new AssetLayer(this._map, roadLayer);
             new LinearAssetLayer(this._map);
