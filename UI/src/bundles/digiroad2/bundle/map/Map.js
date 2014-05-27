@@ -93,16 +93,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
 
         drawRoadLinks: function(roadLinks) {
-            var data = _.map(roadLinks.features, function(feature) {
-                var id = feature.properties.roadLinkId;
-                var type = feature.properties.type;
-                var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
-                    return {x: coordinate[0], y: coordinate[1]};
-                });
-                return {roadLinkId: id, type: type, points: coordinates};
-            });
             this.roadLayer.removeAllFeatures();
-            var features = _.map(data, function(roadLink) {
+            var features = _.map(roadLinks, function(roadLink) {
                 var points = _.map(roadLink.points, function(point) {
                     return new OpenLayers.Geometry.Point(point.x, point.y);
                 });
