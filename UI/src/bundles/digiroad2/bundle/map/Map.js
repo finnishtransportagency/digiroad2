@@ -18,6 +18,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         _unknownAssetType: '99',
         _selectedValidityPeriods: ['current'],
         _visibilityZoomLevelForRoads : 10,
+        _centerMarkerLayer : null,
         getName: function () {
             return this.pluginName;
         },
@@ -69,9 +70,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
                 $('.olMap').css('cursor', cursor[action]);
             });
-
-            eventbus.on('coordinates:selected', function(position) {
-                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, 11]);
+            eventbus.on('coordinates:selected coordinates:marked', function(position) {
+                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, this._map.getZoom() < 10 ? 10 : this._map.getZoom()]);
+            }, this);
+            eventbus.on('coordinates:marked', function(position) {
+                this._drawCenterMarker(position);
             }, this);
 
             // register domain builder
@@ -83,7 +86,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
             this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
         },
+        _drawCenterMarker: function(position) {
+            var size = new OpenLayers.Size(16,16);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h/2);
+            var icon = new OpenLayers.Icon('./images/center-marker.png',size,offset);
 
+            this._centerMarkerLayer.clearMarkers();
+            var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lat, position.lon), icon);
+            this._centerMarkerLayer.addMarker(marker);
+        },
         startPlugin: function (sandbox) {
             this._sandbox = sandbox;
             this._map = this.getMapModule().getMap();
@@ -149,9 +160,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
 
             me._map.addLayer(roadLayer);
+            this._centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
             this._layers = {road: roadLayer};
             new AssetLayer(this._map, roadLayer);
             new LinearAssetLayer(this._map);
+            me._map.addLayer(this._centerMarkerLayer);
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
