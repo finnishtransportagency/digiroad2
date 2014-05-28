@@ -18,6 +18,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         _unknownAssetType: '99',
         _selectedValidityPeriods: ['current'],
         _visibilityZoomLevelForRoads : 10,
+        _centerMarkerLayer : null,
         getName: function () {
             return this.pluginName;
         },
@@ -45,7 +46,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._zoomNotInMessage = this._getNotInZoomRange();
                 this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
                 this._zoomNotInMessage();
-                new CoordinateSelector($('.mapplugin.coordinates'));
+                new CoordinateSelector($('.mapplugin.coordinates'), this._map.getMaxExtent());
             }, this);
             eventbus.on('application:readOnly', function(readOnly) {
                 this._readOnly = readOnly;
@@ -64,18 +65,18 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             eventbus.on('asset:unselected validityPeriod:changed layer:selected', function(){
                 this._selectControl.unselectAll();
             }, this);
-
             eventbus.on('tool:changed', function(action) {
                 var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
                 $('.olMap').css('cursor', cursor[action]);
             });
-
+            eventbus.on('coordinates:selected coordinates:marked', function(position) {
+                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, zoomlevels.getAssetZoomLevelIfNotCloser(this._map.getZoom())]);
+            }, this);
+            eventbus.on('coordinates:marked', function(position) {
+                this._drawCenterMarker(position);
+            }, this);
             eventbus.on('roadLinks:fetched', function(roadLinks) {
                 this.drawRoadLinks(roadLinks);
-            }, this);
-
-            eventbus.on('coordinates:selected', function(position) {
-                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, 11]);
             }, this);
 
             // register domain builder
@@ -86,6 +87,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             sandbox.postRequestByName('RearrangeSelectedMapLayerRequest', ['base_35', 0]);
 
             this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
+        },
+        _drawCenterMarker: function(position) {
+            var size = new OpenLayers.Size(16,16);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h/2);
+            var icon = new OpenLayers.Icon('./images/center-marker.png',size,offset);
+
+            this._centerMarkerLayer.clearMarkers();
+            var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lat, position.lon), icon);
+            this._centerMarkerLayer.addMarker(marker);
         },
 
         roadLinkStyle: function(type) {
@@ -169,9 +179,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this.roadLayer.setVisibility(false);
             this._selectControl = new OpenLayers.Control.SelectFeature(this.roadLayer);
 
+            this._centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
+            this._layers = {road: this.roadLayer};
             this._map.addLayer(this.roadLayer);
+
             new AssetLayer(this._map, this.roadLayer);
             new LinearAssetLayer(this._map);
+            this._map.addLayer(this._centerMarkerLayer);
+
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
