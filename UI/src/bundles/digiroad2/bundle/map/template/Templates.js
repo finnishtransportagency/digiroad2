@@ -22,7 +22,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.template.Templates',
                     new OpenLayers.Rule({
                         symbolizer: {
                             "Line": {
-                                strokeWidth: 3,
+                                strokeWidth: 5,
                                 strokeOpacity: 1,
                                 strokeColor: "#a4a4a2"
                             }

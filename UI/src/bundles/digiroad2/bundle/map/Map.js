@@ -90,19 +90,19 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
         roadLinkStyle: {
             privateRoad: {
-                strokeWidth: 3,
+                strokeWidth: 5,
                 strokeOpacity: 1,
-                strokeColor: "#ff00ff"
+                strokeColor: "#00ccdd"
             },
             street: {
-                strokeWidth: 3,
+                strokeWidth: 5,
                 strokeOpacity: 1,
-                strokeColor: "#00ff00"
+                strokeColor: "#ff55dd"
             },
             road: {
-                strokeWidth: 3,
+                strokeWidth: 5,
                 strokeOpacity: 1,
-                strokeColor: "#fff000"
+                strokeColor: "#11bb00"
             }
         },
 
