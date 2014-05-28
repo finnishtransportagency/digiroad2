@@ -19,7 +19,7 @@ window.CoordinateSelector = function(parentElement, extent) {
             var showDialog = function(message) {
                 var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
                 dialog.show(message);
-                dialog.fadeout(2000);
+                dialog.fadeout(3000);
             };
 
             if (!result) {
