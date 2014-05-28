@@ -48,18 +48,6 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
       .apply(asset, List())._2.reverse.mkString(";")
   }
 
-  private def isUnknownStop(asset: AssetWithProperties): Boolean = {
-    val unknownType = 99L
-    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
-    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
-  }
-
-  private def isTramStop(asset: AssetWithProperties): Boolean = {
-    val tramStopType = 1L
-    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
-    massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1)
-  }
-
   private def fetchNameFromValluImport(complementaryBusStopNames: Map[Long, String], asset: AssetWithProperties): AssetWithProperties = {
     asset.copy(propertyData = asset.propertyData.map { property =>
       if (property.publicId != "nimi_suomeksi") {

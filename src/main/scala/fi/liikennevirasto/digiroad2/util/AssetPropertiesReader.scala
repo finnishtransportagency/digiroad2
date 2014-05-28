@@ -33,6 +33,18 @@ trait AssetPropertiesReader {
     }
   }
 
+  protected def isUnknownStop(asset: AssetWithProperties): Boolean = {
+    val unknownType = 99L
+    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
+  }
+
+  protected def isTramStop(asset: AssetWithProperties): Boolean = {
+    val tramStopType = 1L
+    val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
+    massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1)
+  }
+
   private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
     displayValue.map { value => value.replace("\n", " ") }
   }
