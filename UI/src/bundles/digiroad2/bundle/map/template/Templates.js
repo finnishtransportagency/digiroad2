@@ -3,7 +3,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.template.Templates',
         _.templateSettings = {
             interpolate: /\{\{(.+?)\}\}/g
         };
-        this.roadStyles = new OpenLayers.StyleMap({
+        var styleMap = new OpenLayers.StyleMap({
             "select": new OpenLayers.Style(null, {
                 rules: [
                     new OpenLayers.Rule({
@@ -31,6 +31,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.template.Templates',
                 ]
             })
         });
-
+        var roadLinkTypeStyleLookup = {
+            privateRoad: { strokeColor: "#00ccdd" },
+            street: { strokeColor: "#ff55dd" },
+            road: { strokeColor: "#11bb00" }
+        };
+        styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+        this.roadStyles = styleMap;
     }
 );

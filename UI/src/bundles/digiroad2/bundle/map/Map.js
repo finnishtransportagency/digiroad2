@@ -88,24 +88,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
         },
 
-        roadLinkStyle: {
-            privateRoad: {
-                strokeWidth: 5,
-                strokeOpacity: 1,
-                strokeColor: "#00ccdd"
-            },
-            street: {
-                strokeWidth: 5,
-                strokeOpacity: 1,
-                strokeColor: "#ff55dd"
-            },
-            road: {
-                strokeWidth: 5,
-                strokeOpacity: 1,
-                strokeColor: "#11bb00"
-            }
-        },
-
         drawRoadLinks: function(roadLinks) {
             this.roadLayer.removeAllFeatures();
             var self = this;
@@ -113,9 +95,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 var points = _.map(roadLink.points, function(point) {
                     return new OpenLayers.Geometry.Point(point.x, point.y);
                 });
-                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink,
-                  roadLink.type && self.roadLinkStyle[roadLink.type]
-                );
+                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
             });
             this.roadLayer.addFeatures(features);
         },
