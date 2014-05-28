@@ -37,5 +37,9 @@
     eventbus.trigger('tool:changed', 'Select');
   });
 
+  $('.panelControl').on('click', function() {
+    $('.panelLayerGroup').toggle();
+  });
+
   eventbus.on('application:readOnly', handleEditMessage);
 }(window.ActionPanelBoxes));
