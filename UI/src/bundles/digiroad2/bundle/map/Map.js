@@ -71,7 +71,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 $('.olMap').css('cursor', cursor[action]);
             });
             eventbus.on('coordinates:selected coordinates:marked', function(position) {
-                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, this._map.getZoom() < 10 ? 10 : this._map.getZoom()]);
+                this._sandbox.postRequestByName('MapMoveRequest', [position.lat, position.lon, zoomlevels.getAssetZoomLevelIfNotCloser(this._map.getZoom())]);
             }, this);
             eventbus.on('coordinates:marked', function(position) {
                 this._drawCenterMarker(position);
