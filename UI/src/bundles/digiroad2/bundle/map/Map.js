@@ -1,5 +1,5 @@
 Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
-    function (config) {
+    function () {
         this.mapModule = null;
         this.pluginName = null;
         this._sandbox = null;
@@ -7,11 +7,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._supportedFormats = {};
         this._localization = null;
         this._state = undefined;
-
-        function defineDependency(dependencyName, defaultImplementation) {
-            var dependency = _.isObject(config) ? config[dependencyName] : null;
-            return dependency || defaultImplementation;
-        }
     }, {
         __name: 'Map',
         _layerType: 'map',
@@ -131,7 +126,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
         start: function (sandbox) {},
         eventHandlers: {
-            'AfterMapMoveEvent': function(event) {
+            'AfterMapMoveEvent': function() {
                 if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
                     Backend.getRoadLinks(this._map.getExtent());
                 } else {
