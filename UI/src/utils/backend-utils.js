@@ -26,6 +26,20 @@
         });
     }, 1000);
 
+    backend.getRoadLinks = _.throttle(function(boundingBox) {
+        jQuery.getJSON('api/roadlinks?bbox=' + boundingBox, function(roadLinks) {
+            var data = _.map(roadLinks.features, function(feature) {
+                var id = feature.properties.roadLinkId;
+                var type = feature.properties.type;
+                var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
+                    return {x: coordinate[0], y: coordinate[1]};
+                });
+                return {roadLinkId: id, type: type, points: coordinates};
+            });
+            eventbus.trigger('roadLinks:fetched', data);
+        });
+    }, 1000);
+
     backend.getAsset = function(assetId, keepPosition) {
         $.get('api/assets/' + assetId, function(asset) {
             eventbus.trigger('asset:fetched', asset, keepPosition);

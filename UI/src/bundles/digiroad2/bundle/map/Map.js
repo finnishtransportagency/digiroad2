@@ -53,7 +53,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._selectControl.unselectAll();
             }, this);
             eventbus.on('asset:moving', function(nearestLine) {
-                var nearestFeature = _.find(this._layers.road.features, function(feature) {
+                var nearestFeature = _.find(this.roadLayer.features, function(feature) {
                     return feature.id == nearestLine.id;
                 });
                 this._selectControl.unselectAll();
@@ -65,7 +65,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             eventbus.on('asset:unselected validityPeriod:changed layer:selected', function(){
                 this._selectControl.unselectAll();
             }, this);
-
             eventbus.on('tool:changed', function(action) {
                 var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
                 $('.olMap').css('cursor', cursor[action]);
@@ -75,6 +74,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             }, this);
             eventbus.on('coordinates:marked', function(position) {
                 this._drawCenterMarker(position);
+            }, this);
+            eventbus.on('roadLinks:fetched', function(roadLinks) {
+                this.drawRoadLinks(roadLinks);
             }, this);
 
             // register domain builder
@@ -95,6 +97,24 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lat, position.lon), icon);
             this._centerMarkerLayer.addMarker(marker);
         },
+
+        roadLinkStyle: function(type) {
+            return null;
+        },
+
+        drawRoadLinks: function(roadLinks) {
+            this.roadLayer.removeAllFeatures();
+            var features = _.map(roadLinks, function(roadLink) {
+                var points = _.map(roadLink.points, function(point) {
+                    return new OpenLayers.Geometry.Point(point.x, point.y);
+                });
+                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink,
+                  roadLink.type && this.roadLinkStyle(roadLink.type)
+                );
+            });
+            this.roadLayer.addFeatures(features);
+        },
+
         startPlugin: function (sandbox) {
             this._sandbox = sandbox;
             this._map = this.getMapModule().getMap();
@@ -118,6 +138,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         start: function (sandbox) {},
         eventHandlers: {
             'AfterMapMoveEvent': function(event) {
+                if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
+                    Backend.getRoadLinks(this._map.getExtent());
+                } else {
+                    this.roadLayer.removeAllFeatures();
+                }
+
                 this._handleRoadsVisibility();
                 eventbus.trigger('map:moved', {zoom: this._map.getZoom(), bbox: this._map.getExtent()});
                 if (!zoomlevels.isInAssetZoomLevel(this._map.getZoom())) {
@@ -138,8 +164,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             }
         },
         _handleRoadsVisibility: function() {
-            if (this._layers && _.isObject(this._layers.road)) {
-                this._layers.road.setVisibility(zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom()));
+            if (_.isObject(this.roadLayer)) {
+                this.roadLayer.setVisibility(zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom()));
             }
         },
         _afterMapLayerAddEvent: function (event) {
@@ -147,30 +173,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
 
         addLayersToMap: function(templates) {
-            var me = this;
-            var roadLayer = new OpenLayers.Layer.Vector("road", {
-                strategies: [new OpenLayers.Strategy.BBOX(), new OpenLayers.Strategy.Refresh()],
-                protocol: new OpenLayers.Protocol.HTTP({
-                    url: "api/roadlinks",
-                    format: new OpenLayers.Format.GeoJSON()
-                }),
+            this.roadLayer = new OpenLayers.Layer.Vector("road", {
                 styleMap: templates.roadStyles
             });
-            roadLayer.setVisibility(false);
-            this._selectControl = new OpenLayers.Control.SelectFeature(roadLayer);
+            this.roadLayer.setVisibility(false);
+            this._selectControl = new OpenLayers.Control.SelectFeature(this.roadLayer);
 
-            me._map.addLayer(roadLayer);
             this._centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
-            this._layers = {road: roadLayer};
-            new AssetLayer(this._map, roadLayer);
+            this._layers = {road: this.roadLayer};
+            this._map.addLayer(this.roadLayer);
+
+            new AssetLayer(this._map, this.roadLayer);
             new LinearAssetLayer(this._map);
-            me._map.addLayer(this._centerMarkerLayer);
+            this._map.addLayer(this._centerMarkerLayer);
+
         },
         getOLMapLayers: function (layer) {
             if (!layer.isLayerOfType(this._layerType)) {
                 return null;
             }
-            return _.values(this._layers);
+            return [this.roadLayer];
         }
     }, {
         'protocol': ["Oskari.mapframework.module.Module", "Oskari.mapframework.ui.module.common.mapmodule.Plugin"]
