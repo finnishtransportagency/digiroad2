@@ -66,4 +66,9 @@
     geometrycalculator.deg2rad = function(angleDeg) {
         return angleDeg * (Math.PI / 180);
     };
+
+    geometrycalculator.isInBounds = function(bounds, x, y) {
+        return (x > bounds.left && x < bounds.right && y > bounds.bottom && y < bounds.top);
+    };
+
 }(window.geometrycalculator = window.geometrycalculator || {}));
