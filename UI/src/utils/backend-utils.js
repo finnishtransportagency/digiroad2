@@ -28,16 +28,20 @@
         }, 1000);
 
         var roadTypes = ['privateRoad', 'street', 'road'];
+        var parseRoadLinkData = function(roadLinks) {
+            return _.map(roadLinks.features, function(feature) {
+                var id = feature.properties.roadLinkId;
+                var type = feature.properties.type || (window.DR2_LOGGING && roadTypes[_.random(0, 2)]);
+                var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
+                    return {x: coordinate[0], y: coordinate[1]};
+                });
+                return {roadLinkId: id, type: type, points: coordinates};
+            });
+        };
+
         backend.getRoadLinks = _.throttle(function(boundingBox) {
             jQuery.getJSON('api/roadlinks?bbox=' + boundingBox, function(roadLinks) {
-                var data = _.map(roadLinks.features, function(feature) {
-                    var id = feature.properties.roadLinkId;
-                    var type = feature.properties.type || (window.DR2_LOGGING && roadTypes[_.random(0, 2)]);
-                    var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
-                        return {x: coordinate[0], y: coordinate[1]};
-                    });
-                    return {roadLinkId: id, type: type, points: coordinates};
-                });
+                var data = parseRoadLinkData(roadLinks);
                 eventbus.trigger('roadLinks:fetched', data);
             });
         }, 1000);
@@ -110,7 +114,7 @@
         backend.withRoadLinkData = function(roadLinkData) {
             var ret = {};
             initialize(ret);
-            ret.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', roadLinkData); };
+            ret.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', parseRoadLinkData(roadLinkData)); };
             return ret;
         };
     }
