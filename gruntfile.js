@@ -26,7 +26,7 @@ module.exports = function(grunt) {
         match: ['digiroad2.css'],
           replacement: 'md5',
           src: {
-            path: 'dist/css/digiroad2.js'
+            path: 'dist/css/digiroad2.css'
           }
       },
       files: {
