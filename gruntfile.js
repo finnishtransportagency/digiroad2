@@ -21,6 +21,18 @@ module.exports = function(grunt) {
         }
       }
     },
+    cachebreaker: {
+      options: {
+        match: ['digiroad2.css'],
+          replacement: 'md5',
+          src: {
+            path: 'dist/css/digiroad2.js'
+          }
+      },
+      files: {
+        src: ['UI/index.html']
+      }
+    },
     clean: ['dist'],
       connect: {
           server: {
@@ -134,12 +146,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-connect-proxy');
   grunt.loadNpmTasks('grunt-execute');
+  grunt.loadNpmTasks('grunt-cache-breaker');
 
   grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
   grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
 
-  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 };
