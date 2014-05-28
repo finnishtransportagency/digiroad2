@@ -107,7 +107,8 @@
     }
   };
 
-    bootstrap.startApplication = function() {
+    bootstrap.startApplication = function(backend) {
+        if(backend) window.Backend = backend;
         window.selectedAssetController = SelectedAssetController.initialize(Backend);
         downloadAppSetup(startApplication);
         downloadConfig(startApplication);

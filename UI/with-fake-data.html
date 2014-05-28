@@ -54,9 +54,10 @@
 <script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="src/movebycoordinates/CoordinateSelector.js"></script>
 <script type="text/javascript" src="src/utils/AssetForm.js"></script>
+<script type="text/javascript" src="test/TestData.js"></script>
 <script>
     $(document).ready(function() {
-        Bootstrap.startApplication();
+        Bootstrap.startApplication(Backend.withRoadLinkData(TestData.roadLinkData()));
     });
 </script>
 </body>
