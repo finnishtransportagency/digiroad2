@@ -1,11 +1,5 @@
 (function(ActionPanelBoxes) {
-  var panelControl = [
-    '<div class="panelControl">',
-    '  <div class="panelControlLine"></div>',
-    '  <div class="panelControlLine"></div>',
-    '  <div class="panelControlLine"></div>',
-    '</div>',
-    '<div class="panelLayerGroup"></div>'].join('');
+  var panelControl = ['<div class="panelLayerGroup"></div>'].join('');
 
   $('#maptools').append(panelControl);
 
