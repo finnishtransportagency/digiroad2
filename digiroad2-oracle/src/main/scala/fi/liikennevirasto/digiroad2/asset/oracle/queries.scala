@@ -88,9 +88,12 @@ object Queries {
     }
   }
 
+  // FIXME correct mapping
+  val RoadLinkTypeMapping = Map((1 -> "street"), (2 -> "road"), (3 -> "privateRoad"))
+
   implicit val getRoadLink = new GetResult[RoadLink] {
     def apply(r: PositionedResult) = {
-      val (id, geomBytes, endDate, municipalityNumber) = (r.nextLong, r.nextBytes, r.nextDateOption, r.nextInt)
+      val (id, geomBytes, endDate, municipalityNumber, linkType) = (r.nextLong, r.nextBytes, r.nextDateOption, r.nextInt, r.nextInt)
       val geom = JGeometry.load(geomBytes)
       val decimalPattern = "#.###"
       val newFormat = NumberFormat.getNumberInstance(Locale.US).asInstanceOf[DecimalFormat]
@@ -100,10 +103,12 @@ object Queries {
         (newFormat.format(points(geom.getDimensions * i)).toDouble,
          newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
       }
+      val roadLinkType = RoadLinkTypeMapping.getOrElse(linkType, null)
       RoadLink(id = id,
                lonLat = coords,
                endDate = endDate.map(new LocalDate(_)),
-               municipalityNumber = municipalityNumber)
+               municipalityNumber = municipalityNumber,
+               roadLinkType = roadLinkType)
     }
   }
 
@@ -266,7 +271,7 @@ object Queries {
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
-  def roadLinks = "SELECT id, geom, end_date, municipality_number FROM road_link WHERE functional_class IN (1, 2, 3, 4, 5, 6)"
+  def roadLinks = "SELECT id, geom, end_date, municipality_number, link_type FROM road_link WHERE functional_class IN (1, 2, 3, 4, 5, 6)"
 
   def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
     if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
