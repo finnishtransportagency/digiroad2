@@ -155,6 +155,16 @@ object DataFixture {
           adminWriter.close()
           adminCodeWriter.close()
        }
+      case Some("FunctionalClasses") =>
+        Database.forDataSource(ds).withDynSession {
+          val functionalClassWriter = new PrintWriter(new File("functional_classes.sql"))
+          new AssetAdminImporter()
+            .getFunctionalClasses(AssetAdminImporter.toFunctionalClassUpdate, AssetAdminImporter.getFunctionalClassesFromDr1)
+            .foreach(x => {
+              functionalClassWriter.write(x + "\n")
+            })
+          functionalClassWriter.close()
+        }
       case Some("NameUpdate") =>
         Database.forDataSource(ds).withDynSession {
           val nameWriter = new PrintWriter(new File("names.sql"))

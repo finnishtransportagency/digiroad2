@@ -56,7 +56,10 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.mapmodule.MarkersPlugin"
           }, {
-            "id": "Oskari.mapframework.mapmodule.ControlsPlugin"
+            "id": "Oskari.mapframework.mapmodule.ControlsPlugin",
+              "config" : {
+                "keyboardControls" : false
+              }
           }, {
             "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
           }, {

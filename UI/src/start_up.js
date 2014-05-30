@@ -1,4 +1,4 @@
-jQuery(document).ready(function() {
+(function(bootstrap) {
   Oskari.setLang('fi');
   Oskari.setLoaderMode('dev');
   var appSetup;
@@ -75,8 +75,6 @@ jQuery(document).ready(function() {
       }
   });
 
-  window.selectedAssetController = SelectedAssetController.initialize(Backend);
-
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
   };
@@ -108,7 +106,13 @@ jQuery(document).ready(function() {
       });
     }
   };
-  downloadAppSetup(startApplication);
-  downloadConfig(startApplication);
-  downloadLocalizedStrings(startApplication);
-});
+
+    bootstrap.startApplication = function(backend) {
+        if(backend) window.Backend = backend;
+        window.selectedAssetController = SelectedAssetController.initialize(Backend);
+        downloadAppSetup(startApplication);
+        downloadConfig(startApplication);
+        downloadLocalizedStrings(startApplication);
+    };
+
+}(window.Bootstrap = window.Bootstrap || {}));
