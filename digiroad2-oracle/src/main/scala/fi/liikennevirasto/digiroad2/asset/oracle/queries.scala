@@ -103,7 +103,7 @@ object Queries {
         (newFormat.format(points(geom.getDimensions * i)).toDouble,
          newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
       }
-      val roadLinkType = RoadLinkTypeMapping.getOrElse(linkType, null)
+      val roadLinkType = RoadLinkTypeMapping.getOrElse((linkType / 10), null)
       RoadLink(id = id,
                lonLat = coords,
                endDate = endDate.map(new LocalDate(_)),
@@ -271,7 +271,7 @@ object Queries {
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
-  def roadLinks = "SELECT id, geom, end_date, municipality_number, link_type FROM road_link WHERE functional_class IN (1, 2, 3, 4, 5, 6)"
+  def roadLinks = "SELECT id, geom, end_date, municipality_number, functional_class FROM road_link WHERE functional_class is not null AND functional_class != 40"
 
   def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
     if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
