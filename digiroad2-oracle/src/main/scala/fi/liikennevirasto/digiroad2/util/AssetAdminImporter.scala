@@ -53,7 +53,7 @@ object AssetAdminImporter {
   }
 
   private def getSqlForFunctionalClass(roadlinkId: Long, value: Int) = {
-    s"""update asset set functional_class = $value where id = $roadlinkId;"""
+    s"""update road_link set functional_class = $value where id = $roadlinkId;"""
   }
 
   def getAdminCodesFromDr1(dataSet: AssetDataImporter.ImportDataSet, externalId: Long) = {
