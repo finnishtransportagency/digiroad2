@@ -98,19 +98,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this._centerMarkerLayer.addMarker(marker);
         },
 
-        roadLinkStyle: function(type) {
-            return null;
-        },
-
         drawRoadLinks: function(roadLinks) {
             this.roadLayer.removeAllFeatures();
             var features = _.map(roadLinks, function(roadLink) {
                 var points = _.map(roadLink.points, function(point) {
                     return new OpenLayers.Geometry.Point(point.x, point.y);
                 });
-                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink,
-                  roadLink.type && this.roadLinkStyle(roadLink.type)
-                );
+                return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
             });
             this.roadLayer.addFeatures(features);
         },
