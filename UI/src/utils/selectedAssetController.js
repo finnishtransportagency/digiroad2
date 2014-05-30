@@ -11,6 +11,10 @@
             changedProps = [];
         };
 
+        eventbus.on('asset:unselected', function() {
+            reset();
+        });
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
 
