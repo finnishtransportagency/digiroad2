@@ -24,6 +24,12 @@ object AssetAdminImporter {
     (getSqlForTextProperty(assetId, getName(nameFi), "Nimi suomeksi"), getSqlForTextProperty(assetId, getName(nameSv), "Nimi ruotsiksi"))
   }
 
+  def toFunctionalClassUpdate(roadlinkId: Long, functionalClass: Int) = {
+    counter = counter + 1
+    if(counter % 10000 == 0) println(s"$counter items processed")
+    getSqlForFunctionalClass(roadlinkId, functionalClass)
+  }
+
   private def getSqlForTextProperty(assetId: Long, value: String, propertyName: String) = {
     s"""
       |update text_property_value set value_fi = $value, modified_by = 'dr1conversion', modified_date = CURRENT_TIMESTAMP
@@ -46,6 +52,10 @@ object AssetAdminImporter {
     """.stripMargin
   }
 
+  private def getSqlForFunctionalClass(roadlinkId: Long, value: Int) = {
+    s"""update asset set functional_class = $value where id = $roadlinkId;"""
+  }
+
   def getAdminCodesFromDr1(dataSet: AssetDataImporter.ImportDataSet, externalId: Long) = {
     dataSet.database().withDynSession {
       try {
@@ -56,6 +66,21 @@ object AssetAdminImporter {
       } catch {
         case e: Exception =>
           println(s"failed with id $externalId")
+          throw e
+      }
+    }
+  }
+
+  def getFunctionalClassesFromDr1(dataSet: AssetDataImporter.ImportDataSet, roadlinkId: Long) = {
+    dataSet.database().withDynSession {
+      try {
+        val external = roadlinkId.toString
+        sql"""
+          select objectid, functionalroadclass from tielinkki where objectid = $external
+        """.as[(Long, Int)].first
+      } catch {
+        case e: Exception =>
+          println(s"failed with id $roadlinkId")
           throw e
       }
     }
@@ -86,10 +111,22 @@ class AssetAdminImporter extends AssetDataImporter {
   }
 
   def getAssetIds(toSqlFunc: ((Long, Option[(String, String)])) => (String, String),
-  dataFromDr1: (AssetDataImporter.ImportDataSet, Long) => Option[(String, String)]) = {
+                  dataFromDr1: (AssetDataImporter.ImportDataSet, Long) => Option[(String, String)]) = {
     getAssetIdsQuery
       .mapResult((x: (Long, Long)) => (x._1, dataFromDr1(AssetDataImporter.Conversion, x._2)))
       .mapResult(toSqlFunc)
   }
 
+  def getRoadLinkQuery: StaticQuery0[(Long)] = {
+    sql"""
+        select id from road_link
+    """.as[(Long)]
+  }
+
+  def getFunctionalClasses(toSqlFunc: ((Long, Int) => String),
+                           dataFromDr1: (AssetDataImporter.ImportDataSet, Long) => (Long, Int)) = {
+    getRoadLinkQuery
+      .mapResult((x: (Long)) => dataFromDr1(AssetDataImporter.Conversion, x))
+      .mapResult(x => toSqlFunc(x._1, x._2))
+  }
 }

@@ -1,1 +1,0 @@
-alter table road_link add (link_type number(1));
