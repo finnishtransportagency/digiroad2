@@ -74,6 +74,9 @@
             changedProps = [];
             assetHasBeenModified = false;
         });
+        eventbus.on('asset:created', function(asset) {
+           currentAsset.id = asset.id;
+        });
 
         eventbus.on('asset:fetched', function(asset) {
             // TODO: copy paste
