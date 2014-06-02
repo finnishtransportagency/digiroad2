@@ -74,6 +74,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this.drawRoadLinks(roadLinks);
             }, this);
 
+            this._map.events.register('moveend', this, this.mapMovedHandler);
+
             // register domain builder
             var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
             if (mapLayerService) {
@@ -131,24 +133,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
             this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
         },
-        eventHandlers: {
-            'AfterMapMoveEvent': function() {
-                if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
-                    this.changeRoadsWidthByZoomLevel();
-                    Backend.getRoadLinks(this._map.getExtent());
-                } else {
-                    this.roadLayer.removeAllFeatures();
-                }
-
-                this._handleRoadsVisibility();
-                eventbus.trigger('map:moved', {zoom: this._map.getZoom(), bbox: this._map.getExtent()});
-                if (!zoomlevels.isInAssetZoomLevel(this._map.getZoom())) {
-                    if(this._zoomNotInMessage) {
-                        this._zoomNotInMessage();
-                    }
-                }
-                this._oldZoomLevel = this._map.getZoom();
+        mapMovedHandler: function() {
+            if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
+                this.changeRoadsWidthByZoomLevel();
+                Backend.getRoadLinks(this._map.getExtent());
+            } else {
+                this.roadLayer.removeAllFeatures();
             }
+
+            this._handleRoadsVisibility();
+            eventbus.trigger('map:moved', {zoom: this._map.getZoom(), bbox: this._map.getExtent()});
+            if (!zoomlevels.isInAssetZoomLevel(this._map.getZoom())) {
+                if(this._zoomNotInMessage) {
+                    this._zoomNotInMessage();
+                }
+            }
+            this._oldZoomLevel = this._map.getZoom();
         },
         preselectLayers: function (layers) {
             for (var i = 0; i < layers.length; i++) {
