@@ -88,7 +88,7 @@ object Queries {
     }
   }
 
-  val RoadLinkTypeMapping = Map((1 -> "road"), (2 -> "street"), (3 -> "privateRoad"))
+  val RoadLinkTypeMapping = Map((1 -> Road), (2 -> Street), (3 -> PrivateRoad))
 
   implicit val getRoadLink = new GetResult[RoadLink] {
     def apply(r: PositionedResult) = {
@@ -102,7 +102,7 @@ object Queries {
         (newFormat.format(points(geom.getDimensions * i)).toDouble,
          newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
       }
-      val roadLinkType = RoadLinkTypeMapping.getOrElse((linkType / 10), null)
+      val roadLinkType = RoadLinkTypeMapping.getOrElse((linkType / 10), UnknownRoad)
       RoadLink(id = id,
                lonLat = coords,
                endDate = endDate.map(new LocalDate(_)),

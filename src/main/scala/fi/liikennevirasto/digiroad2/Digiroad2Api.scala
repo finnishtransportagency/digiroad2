@@ -144,7 +144,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val rls = assetProvider.getRoadLinks(user, bboxOption)
     ("type" -> "FeatureCollection") ~
       ("features" ->  rls.map { rl =>
-        ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id) ~ ("roadLinkType" -> rl.roadLinkType)) ~ ("geometry" ->
+        ("type" -> "Feature") ~ ("properties" -> ("roadLinkId" -> rl.id) ~ ("roadLinkType" -> rl.roadLinkType.toString)) ~ ("geometry" ->
           ("type" -> "LineString") ~ ("coordinates" -> rl.lonLat.map { ll =>
             List(ll._1, ll._2)
           }) ~ ("crs" -> ("type" -> "OGC") ~ ("properties" -> ("urn" -> "urn:ogc:def:crs:OGC:1.3:ETRS89")))
