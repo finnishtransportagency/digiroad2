@@ -2,7 +2,7 @@ window.CoordinateSelector = function(parentElement, extent) {
     var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
     var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/>N&auml;yt&auml; kohdistin</div>');
     var coordinatesDiv = $('<div class="coordinatesContainer"/>');
-    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lon, lat" title="' + tooltip +'"/>');
+    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lat, lon" title="' + tooltip +'"/>');
     var moveButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
     var markButton = $('<input type="button" class="markToButton" value="Merkitse"/>');
 
@@ -28,8 +28,8 @@ window.CoordinateSelector = function(parentElement, extent) {
                 showDialog('Koordinaatit eiv&auml;t osu kartalle.');
             } else {
                 var position = {
-                    lon: result[1],
-                    lat: result[2]
+                    lat: result[1],
+                    lon: result[2]
                 };
                 eventbus.trigger(eventName, position);
             }

@@ -251,7 +251,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
         addNewAsset(assetData);
         if (!keepPosition) {
-            Oskari.getSandbox().postRequestByName('MapMoveRequest', [selectedAsset.data.lon, selectedAsset.data.lat, 12]);
+            eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
         }
     };
 
@@ -422,7 +422,7 @@ window.AssetLayer = function(map, roadLayer) {
         selectedAsset = assets[data.id];
         highlightAsset(selectedAsset);
         if (!keepPosition) {
-            Oskari.getSandbox().postRequestByName('MapMoveRequest', [selectedAsset.data.lon, selectedAsset.data.lat, 12]);
+            eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
         }
     }, this);
     eventbus.on('asset:unselected', closeAsset, this);
