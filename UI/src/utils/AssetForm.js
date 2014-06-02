@@ -98,12 +98,10 @@
 
     var triggerEventBusChange = function(publicId, values) {
         eventbus.trigger('assetPropertyValue:changed', {
-            propertyData: [
-                {
-                    publicId: publicId,
-                    values: values
-                }
-            ]
+            propertyData: {
+                publicId: publicId,
+                values: values
+            }
         });
     };
 

@@ -1,5 +1,5 @@
 Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
-    function (config) {
+    function () {
         this.mapModule = null;
         this.pluginName = null;
         this._sandbox = null;
@@ -7,11 +7,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._supportedFormats = {};
         this._localization = null;
         this._state = undefined;
-
-        function defineDependency(dependencyName, defaultImplementation) {
-            var dependency = _.isObject(config) ? config[dependencyName] : null;
-            return dependency || defaultImplementation;
-        }
     }, {
         __name: 'Map',
         _layerType: 'map',
@@ -130,9 +125,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             };
         },
         start: function (sandbox) {},
+        changeRoadsWidthByZoomLevel : function() {
+            var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
+            var roadWidth = widthBase * widthBase;
+            this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
+            this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
+        },
         eventHandlers: {
-            'AfterMapMoveEvent': function(event) {
+            'AfterMapMoveEvent': function() {
                 if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
+                    this.changeRoadsWidthByZoomLevel();
                     Backend.getRoadLinks(this._map.getExtent());
                 } else {
                     this.roadLayer.removeAllFeatures();

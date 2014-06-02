@@ -11,6 +11,10 @@
             changedProps = [];
         };
 
+        eventbus.on('asset:unselected', function() {
+            reset();
+        });
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
 
@@ -41,6 +45,7 @@
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
+                changedProps = currentAsset.payload.properties;
                 eventbus.trigger('asset:initialized', currentAsset);
             });
             backend.getAssetTypeProperties(10);
@@ -55,8 +60,8 @@
         });
 
         eventbus.on('assetPropertyValue:changed', function(changedProperty) {
-            changedProps = _.reject(changedProps, function(x){
-                return x[0].publicId === changedProperty.propertyData[0].publicId;
+           changedProps = _.reject(changedProps, function(x){
+                return x.publicId === changedProperty.propertyData.publicId;
             });
             changedProps.push(changedProperty.propertyData);
             currentAsset.payload.properties = changedProps;
@@ -72,6 +77,9 @@
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             changedProps = [];
             assetHasBeenModified = false;
+        });
+        eventbus.on('asset:created', function(asset) {
+           currentAsset.id = asset.id;
         });
 
         eventbus.on('asset:fetched', function(asset) {

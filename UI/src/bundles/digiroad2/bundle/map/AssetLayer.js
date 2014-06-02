@@ -81,26 +81,29 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
+    var mouseUpHandler = function(asset, x, y) {
+        clickTimestamp = null;
+        // Opacity back
+        asset.marker.setOpacity(1);
+        asset.marker.actionMouseDown = false;
+        // Not need listeners anymore
+        map.events.unregister("mouseup", map, mouseUpFunction);
+        // Moved update
+        if (!readOnly && assetIsMoving && (asset.marker.actionDownX != x ||  asset.marker.actionDownY != y)) {
+            eventbus.trigger('asset:moved', {
+                lon: asset.marker.lonlat.lon,
+                lat: asset.marker.lonlat.lat,
+                bearing: asset.data.bearing,
+                roadLinkId: asset.roadLinkId
+            });
+        }
+        assetIsMoving = false;
+    };
+
     var mouseUp = function(asset) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
-            clickTimestamp = null;
-
-            // Opacity back
-            asset.marker.setOpacity(1);
-            asset.marker.actionMouseDown = false;
-            // Not need listeners anymore
-            map.events.unregister("mouseup", map, mouseUpFunction);
-            // Moved update
-            if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
-                eventbus.trigger('asset:moved', {
-                    lon: asset.marker.lonlat.lon,
-                    lat: asset.marker.lonlat.lat,
-                    bearing: asset.data.bearing,
-                    roadLinkId: asset.roadLinkId
-                });
-            }
-            assetIsMoving = false;
+            mouseUpHandler(asset, evt.clientX, evt.clientY);
         };
     };
 
@@ -258,45 +261,37 @@ window.AssetLayer = function(map, roadLayer) {
         return directionArrow;
     };
 
-    var handleAssetPropertyValueChanged = function(asset) {
+    var handleAssetPropertyValueChanged = function(propertyData) {
         var turnArrow = function(asset, direction) {
             assetDirectionLayer.destroyFeatures(asset.directionArrow);
             asset.directionArrow.style.rotation = direction;
             assetDirectionLayer.addFeatures(asset.directionArrow);
         };
 
-        if(_.isArray(asset.propertyData)) {
-            var validityDirectionProperty = _.find(asset.propertyData, function(property) { return property.publicId === 'vaikutussuunta'; });
-            if(_.isObject(validityDirectionProperty) &&
-                _.isArray(validityDirectionProperty.values) &&
-                _.isObject(validityDirectionProperty.values[0])) {
-                var value = validityDirectionProperty.values[0].propertyValue;
-                selectedAsset.data.validityDirection = value;
-                var validityDirection = (value == 3) ? 1 : -1;
-                turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
+        if (propertyData.propertyData.publicId === 'vaikutussuunta') {
+            var value = propertyData.propertyData.values[0].propertyValue;
+            selectedAsset.data.validityDirection = value;
+            var validityDirection = (value == 3) ? 1 : -1;
+            turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
+        } else if (propertyData.propertyData.publicId === 'pysakin_tyyppi'  ) {
+
+            var values = _.pluck(propertyData.propertyData.values, 'propertyValue');
+            if (values.length === 0) {
+                values.push([unknownAssetType]);
             }
-            var assetType = _.find(asset.propertyData, function(property) {
-                return property.publicId === 'pysakin_tyyppi';
+            var imageIds = _.map(values, function(v) {
+                return v + '_';
             });
-            if (assetType) {
-                var values = _.pluck(assetType.values, 'propertyValue');
-                if (values.length === 0) {
-                    values.push([unknownAssetType]);
-                }
-                var imageIds = _.map(values, function(v) {
-                    return v + '_';
-                });
-                var effectDirection = selectedAsset.marker.effectDirection;
-                assetLayer.removeMarker(selectedAsset.marker);
-                selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), getIcon(imageIds));
-                selectedAsset.marker.effectDirection = effectDirection;
-                assetLayer.addMarker(selectedAsset.marker);
-                var mouseClickFn = mouseClick(selectedAsset);
-                var mouseUpFn = mouseUp(selectedAsset);
-                var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
-                selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
-                assetLayer.redraw();
-            }
+            var effectDirection = selectedAsset.marker.effectDirection;
+            assetLayer.removeMarker(selectedAsset.marker);
+            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), getIcon(imageIds));
+            selectedAsset.marker.effectDirection = effectDirection;
+            assetLayer.addMarker(selectedAsset.marker);
+            var mouseClickFn = mouseClick(selectedAsset);
+            var mouseUpFn = mouseUp(selectedAsset);
+            var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
+            selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
+            assetLayer.redraw();
         }
     };
 
@@ -497,4 +492,10 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
     eventbus.on('layer:selected', closeAsset, this);
+
+    $('#mapdiv').on('mouseleave', function(e) {
+        if (assetIsMoving === true) {
+            mouseUpHandler(selectedAsset, e.clientX, e.clientY);
+        }
+    });
 };

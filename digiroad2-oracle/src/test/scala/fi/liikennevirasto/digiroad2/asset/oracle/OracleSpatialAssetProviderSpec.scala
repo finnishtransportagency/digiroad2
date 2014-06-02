@@ -268,7 +268,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("asset on non-expired link is not marked as floating", Tag("db")) {
     val assets = provider.getAssets(assetTypeId = 10,
-      user = espooUser,
+      user = espooKauniainenUser,
       validFrom = Some(new LocalDate(2013, 6, 1)),
       validTo = Some(new LocalDate(2013, 6, 1)))
     assets should have length 1
