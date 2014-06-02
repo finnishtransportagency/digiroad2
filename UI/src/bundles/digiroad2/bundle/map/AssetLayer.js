@@ -81,26 +81,29 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
+    var mouseUpHandler = function(asset, x, y) {
+        clickTimestamp = null;
+        // Opacity back
+        asset.marker.setOpacity(1);
+        asset.marker.actionMouseDown = false;
+        // Not need listeners anymore
+        map.events.unregister("mouseup", map, mouseUpFunction);
+        // Moved update
+        if (!readOnly && assetIsMoving && (asset.marker.actionDownX != x ||  asset.marker.actionDownY != y)) {
+            eventbus.trigger('asset:moved', {
+                lon: asset.marker.lonlat.lon,
+                lat: asset.marker.lonlat.lat,
+                bearing: asset.data.bearing,
+                roadLinkId: asset.roadLinkId
+            });
+        }
+        assetIsMoving = false;
+    };
+
     var mouseUp = function(asset) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
-            clickTimestamp = null;
-
-            // Opacity back
-            asset.marker.setOpacity(1);
-            asset.marker.actionMouseDown = false;
-            // Not need listeners anymore
-            map.events.unregister("mouseup", map, mouseUpFunction);
-            // Moved update
-            if (!readOnly && assetIsMoving && (asset.marker.actionDownX != evt.clientX ||  asset.marker.actionDownY != evt.clientY)) {
-                eventbus.trigger('asset:moved', {
-                    lon: asset.marker.lonlat.lon,
-                    lat: asset.marker.lonlat.lat,
-                    bearing: asset.data.bearing,
-                    roadLinkId: asset.roadLinkId
-                });
-            }
-            assetIsMoving = false;
+            mouseUpHandler(asset, evt.clientX, evt.clientY);
         };
     };
 
@@ -489,4 +492,10 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
     eventbus.on('layer:selected', closeAsset, this);
+
+    $('#mapdiv').on('mouseleave', function(e) {
+        if (assetIsMoving === true) {
+            mouseUpHandler(selectedAsset, e.clientX, e.clientY);
+        }
+    });
 };
