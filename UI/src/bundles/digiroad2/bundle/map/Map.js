@@ -130,9 +130,16 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             };
         },
         start: function (sandbox) {},
+        changeRoadsWidthByZoomLevel : function() {
+            var minZoomforRoads = 8;
+            var roadWidth = Math.pow(this._map.getZoom() - minZoomforRoads, 2);
+            this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
+            this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
+        },
         eventHandlers: {
             'AfterMapMoveEvent': function(event) {
                 if (zoomlevels.isInRoadLinkZoomLevel(this._map.getZoom())) {
+                    this.changeRoadsWidthByZoomLevel();
                     Backend.getRoadLinks(this._map.getExtent());
                 } else {
                     this.roadLayer.removeAllFeatures();
