@@ -3,6 +3,12 @@ package fi.liikennevirasto.digiroad2.asset
 import org.joda.time.LocalDate
 import org.joda.time.DateTime
 
+abstract class RoadLinkType
+case object PrivateRoad extends RoadLinkType
+case object Road extends RoadLinkType
+case object Street extends RoadLinkType
+case object UnknownRoad extends RoadLinkType
+
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
@@ -21,7 +27,7 @@ case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
-case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None, municipalityNumber: Int)
+case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None, municipalityNumber: Int, roadLinkType: RoadLinkType = UnknownRoad)
 case class Position(lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int])
 
 object PropertyTypes {
