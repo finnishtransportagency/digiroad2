@@ -131,8 +131,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         },
         start: function (sandbox) {},
         changeRoadsWidthByZoomLevel : function() {
-            var minZoomforRoads = 8;
-            var roadWidth = Math.pow(this._map.getZoom() - minZoomforRoads, 2);
+            var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
+            var roadWidth = widthBase * widthBase;
             this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
             this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
         },
