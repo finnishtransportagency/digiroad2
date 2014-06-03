@@ -27,17 +27,6 @@
             });
         }, 1000);
 
-        var parseRoadLinkData = function(roadLinks) {
-            return _.map(roadLinks.features, function(feature) {
-                var id = feature.properties.roadLinkId;
-                var type = feature.properties.roadLinkType;
-                var coordinates = _.map(feature.geometry.coordinates, function(coordinate) {
-                    return {x: coordinate[0], y: coordinate[1]};
-                });
-                return {roadLinkId: id, type: type, points: coordinates};
-            });
-        };
-
         backend.getRoadLinks = _.throttle(function(boundingBox) {
             jQuery.getJSON('api/roadlinks?bbox=' + boundingBox, function(roadLinks) {
                 eventbus.trigger('roadLinks:fetched', roadLinks);
@@ -112,7 +101,7 @@
         backend.withRoadLinkData = function(roadLinkData) {
             var ret = {};
             initialize(ret);
-            ret.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', parseRoadLinkData(roadLinkData)); };
+            ret.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', roadLinkData); };
             return ret;
         };
     }
