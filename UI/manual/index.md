@@ -106,7 +106,7 @@ _Muokkaustila._
 
 ####Kartan liikutus####
 
-Karttaa liikutetaan raahaamalla tai nuolin&auml;pp&auml;imill&auml;.
+Karttaa liikutetaan raahaamalla.
 
 ####Mittakaavataso####
 
@@ -114,7 +114,7 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+
 
 ####Koordinaattihaku####
 
-K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku (7), joka keskitt&auml;&auml; kartan keskipisteen haettuun pisteeseen. Keskipiste on merkitty kartalle ristin&auml;. Siirry-painike keskitt&auml;&auml; kartan haettuun pisteeseen ja Merkitse-painike luo markerin haettuun pisteeseen. Markeri j&auml;&auml; kartalle, kunnes sille hakee uuden sijainnin. Ristin saa pois n&auml;kyvist&auml; klikkaamalla "N&auml;yt&auml; kohdistin"-valinnan tyhj&auml;ksi. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla. Pilkun j&auml;lkeen ei j&auml;tet&auml; v&auml;li&auml;, jotta sovellus pystyy lukemaan koordinaatit. Esimerkiksi:
+K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku (7), joka keskitt&auml;&auml; kartan keskipisteen haettuun pisteeseen. Keskipiste on merkitty kartalle ristin&auml;. Siirry-painike keskitt&auml;&auml; kartan haettuun pisteeseen ja Merkitse-painike luo markerin haettuun pisteeseen. Markeri j&auml;&auml; kartalle, kunnes sille hakee uuden sijainnin. Ristin saa pois n&auml;kyvist&auml; klikkaamalla "N&auml;yt&auml; kohdistin"-valinnan tyhj&auml;ksi. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla. Esimerkiksi:
 
 ```
 6901839,435323
