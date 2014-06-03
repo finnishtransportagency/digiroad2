@@ -61,22 +61,22 @@
   ActionPanelBoxes.AssetBox = function() {
 
     var roadTypeLegend = [
-        '  <div class="legends">',
+        '  <div class="road-link-legend">',
         '    <div class="road-link-type">',
         '      <div class="label">Maantie</div>',
-        '      <div class="legend legend-road"/>',
+        '      <div class="entry road"/>',
         '   </div>',
         '   <div class="road-link-type">',
         '     <div class="label">Katu</div>',
-        '     <div class="legend legend-street"/>',
+        '     <div class="entry street"/>',
         '   </div>',
         '   <div class="road-link-type">',
         '     <div class="label">Yksityistie</div>',
-        '     <div class="legend legend-private-road"/>',
+        '     <div class="entry private-road"/>',
         '   </div>',
         '   <div class="road-link-type">',
         '     <div class="label">Ei tiedossa</div>',
-        '     <div class="legend legend-unknown"/>',
+        '     <div class="entry unknown"/>',
         '   </div>',
         '   <div class="separator"/>',
         '  </div>'
