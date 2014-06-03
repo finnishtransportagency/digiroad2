@@ -135,7 +135,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
-    // TODO: check bounds are within range to avoid oversized queries
     val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*")
 
