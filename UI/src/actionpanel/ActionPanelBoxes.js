@@ -58,6 +58,29 @@
   };
 
   ActionPanelBoxes.AssetBox = function() {
+
+    var roadTypeLegend = [
+        '  <div class="legends">',
+        '    <div class="road-link-type">',
+        '      <div class="label">Maantie</div>',
+        '      <div class="legend legend-road"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Katu</div>',
+        '     <div class="legend legend-street"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Yksityistie</div>',
+        '     <div class="legend legend-private-road"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Ei tiedossa</div>',
+        '     <div class="legend legend-unknown"/>',
+        '   </div>',
+        '   <div class="separator"/>',
+        '  </div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="actionPanel">',
       '  <div class="layerGroup layerGroupSelectedMode">',
@@ -78,24 +101,7 @@
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
       '  </div>',
-      '  <div class="legends">',
-      '    <div class="road-link-type">',
-      '      <div class="label">Maantie</div>',
-      '      <div class="legend legend-road"/>',
-      '   </div>',
-      '   <div class="road-link-type">',
-      '     <div class="label">Katu</div>',
-      '     <div class="legend legend-street"/>',
-      '   </div>',
-      '   <div class="road-link-type">',
-      '     <div class="label">Yksityistie</div>',
-      '     <div class="legend legend-private-road"/>',
-      '   </div>',
-      '   <div class="road-link-type">',
-      '     <div class="label">Ei tiedossa</div>',
-      '     <div class="legend legend-unknown"/>',
-      '   </div>',
-      '  </div>',
+      roadTypeLegend,
       '  <button class="actionModeButton editMode" style="display: none;">Siirry muokkaustilaan</button>',
       '</div>'].join('');
 
@@ -119,6 +125,7 @@
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
       '  </div>',
+      roadTypeLegend,
       '  <div class="actionButtons" style="">',
       '    <div data-action="Select" class="actionButton actionPanelButtonSelect actionButtonActive">',
       '      <div class="actionPanelButtonSelectImage"></div>',
