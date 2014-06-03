@@ -108,13 +108,9 @@
     var textHandler = function(property){
         var inputElement = property.propertyType === 'long_text' ?
                 $('<textarea />').addClass('featureAttributeLongText') : $('<input type="text"/>').addClass('featureAttributeText');
-        var input = inputElement.keyup(_.debounce(function(target){
-            // tab press
-            if(target.keyCode === 9){
-                return;
-            }
+        var input = inputElement.bind('input', function(target){
             triggerEventBusChange(property.publicId, [{ propertyValue: target.currentTarget.value }]);
-        }, 500));
+        });
 
         // TODO: use cleaner html
         var outer = $('<div />').addClass('formAttributeContentRow').attr('data-required', property.required);

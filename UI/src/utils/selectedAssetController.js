@@ -60,7 +60,7 @@
         });
 
         eventbus.on('assetPropertyValue:changed', function(changedProperty) {
-           changedProps = _.reject(changedProps, function(x){
+            changedProps = _.reject(changedProps, function(x){
                 return x.publicId === changedProperty.propertyData.publicId;
             });
             changedProps.push(changedProperty.propertyData);
