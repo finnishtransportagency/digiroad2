@@ -5,7 +5,6 @@ require.config({
         'lodash':                   '../bower_components/lodash/dist/lodash.min',
         'backbone':                 '../../bower_components/backbone/backbone',
         'chai':                     '../../bower_components/chai/chai',
-        'mocha':                    '../../bower_components/mocha/mocha',
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetController':  '../src/utils/selectedAssetController'
     },
@@ -16,7 +15,6 @@ require.config({
             deps: ['jquery', 'underscore'],
             exports: 'Backbone'
         },
-        'mocha': { exports: 'mocha' },
         'EventBus': {
             deps: ['backbone']
         },
@@ -26,13 +24,9 @@ require.config({
     },
     waitSeconds: 10
 });
-require(['mocha'], function(mocha) {
-    mocha.setup({ui: 'bdd', reporter: 'html'});
-    require(['lodash', 'selected-asset-controller-spec'], function(lodash) {
-        window._ = lodash;
-        mocha.checkLeaks();
-        if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-            mocha.run();
-        }
-    });
+require(['lodash', 'selected-asset-controller-spec'], function(lodash) {
+    window._ = lodash;
+    mocha.checkLeaks();
+    if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
+    else { mocha.run(); }
 });
