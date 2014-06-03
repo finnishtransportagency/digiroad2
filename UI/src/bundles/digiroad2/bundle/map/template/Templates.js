@@ -11,14 +11,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.template.Templates',
             }),
             "default": new OpenLayers.Style({
                 strokeWidth: 5,
-                strokeColor: "#a4a4a2",
+                strokeColor: "#ff55dd",
                 strokeOpacity: 0.8
             })
         });
         var roadLinkTypeStyleLookup = {
             PrivateRoad: { strokeColor: "#00ccdd" },
-            Street: { strokeColor: "#ff55dd" },
-            Road: { strokeColor: "#11bb00" }
+            Street: { strokeColor: "#11bb00" },
+            Road: { strokeColor: "#ff0000" }
         };
         styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
         this.roadStyles = styleMap;
