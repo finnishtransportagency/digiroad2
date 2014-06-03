@@ -95,7 +95,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             var icon = new OpenLayers.Icon('./images/center-marker.png',size,offset);
 
             this._centerMarkerLayer.clearMarkers();
-            var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lat, position.lon), icon);
+            var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lon, position.lat), icon);
             this._centerMarkerLayer.addMarker(marker);
         },
 
