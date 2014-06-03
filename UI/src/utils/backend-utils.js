@@ -40,8 +40,7 @@
 
         backend.getRoadLinks = _.throttle(function(boundingBox) {
             jQuery.getJSON('api/roadlinks?bbox=' + boundingBox, function(roadLinks) {
-                var data = parseRoadLinkData(roadLinks);
-                eventbus.trigger('roadLinks:fetched', data);
+                eventbus.trigger('roadLinks:fetched', roadLinks);
             });
         }, 1000);
 
