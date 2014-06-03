@@ -55,9 +55,33 @@
       new Confirm();
       return true;
     }
+    return false;
   };
 
   ActionPanelBoxes.AssetBox = function() {
+
+    var roadTypeLegend = [
+        '  <div class="road-link-legend">',
+        '    <div class="road-link-type">',
+        '      <div class="label">Maantie</div>',
+        '      <div class="entry road"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Katu</div>',
+        '     <div class="entry street"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Yksityistie</div>',
+        '     <div class="entry private-road"/>',
+        '   </div>',
+        '   <div class="road-link-type">',
+        '     <div class="label">Ei tiedossa</div>',
+        '     <div class="entry unknown"/>',
+        '   </div>',
+        '   <div class="separator"/>',
+        '  </div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="actionPanel">',
       '  <div class="layerGroup layerGroupSelectedMode">',
@@ -78,6 +102,7 @@
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
       '  </div>',
+      roadTypeLegend,
       '  <button class="actionModeButton editMode" style="display: none;">Siirry muokkaustilaan</button>',
       '</div>'].join('');
 
@@ -101,6 +126,7 @@
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
       '  </div>',
+      roadTypeLegend,
       '  <div class="actionButtons" style="">',
       '    <div data-action="Select" class="actionButton actionPanelButtonSelect actionButtonActive">',
       '      <div class="actionPanelButtonSelectImage"></div>',
@@ -179,8 +205,7 @@
         }
         var el = $(this);
         var validityPeriod = el.prop('name');
-        var checked = el.prop('checked');
-        validityPeriods[validityPeriod] = checked;
+        validityPeriods[validityPeriod] = el.prop('checked');
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       };
 
