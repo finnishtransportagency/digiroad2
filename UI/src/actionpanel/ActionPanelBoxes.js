@@ -55,6 +55,7 @@
       new Confirm();
       return true;
     }
+    return false;
   };
 
   ActionPanelBoxes.AssetBox = function() {
@@ -204,8 +205,7 @@
         }
         var el = $(this);
         var validityPeriod = el.prop('name');
-        var checked = el.prop('checked');
-        validityPeriods[validityPeriod] = checked;
+        validityPeriods[validityPeriod] = el.prop('checked');
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       };
 
