@@ -92,7 +92,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     getWithUserAuth("/roadlinks?bbox=374662,6677430,374890,6677800") {
       status should equal(200)
       val roadLinksJson = parse(body)
-      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (28)
+      (roadLinksJson \ "features" \ "geometry" \ "coordinates").children.size should be (21)
     }
   }
 

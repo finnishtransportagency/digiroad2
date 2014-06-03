@@ -174,15 +174,15 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val asset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     val lon1 = asset.lon
     val lat1 = asset.lat
-    val lon2 = lon1 + 4.0
-    val lat2 = lat1 + 4.0
+    val lon2 = lon1 + 137.0
+    val lat2 = lat1 + 7.0
     val b2 = Random.nextInt(360)
-    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))))
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))))
     val updated = providerWithMockedEventBus.getAssetById(asset.id).get
-    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(new Position(roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
     verify(eventBus).publish("asset:saved", ("Kauniainen", updated))
-    Math.abs(updated.lat - lat1) should (be > 0.5)
-    Math.abs(updated.lon - lon1) should (be > 0.5)
+    Math.abs(updated.lat - lat1) should (be > 3.0)
+    Math.abs(updated.lon - lon1) should (be > 20.0)
     updated.bearing.get should be (b2)
   }
 
@@ -193,9 +193,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val refAsset = assets(1)
     origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
     val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
-    provider.updateAsset(assetId = bsMoved.id, position = Some(new Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
+    provider.updateAsset(assetId = bsMoved.id, position = Some(Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
     val bsUpdated = provider.getAssetById(bsMoved.id).get
-    provider.updateAsset(assetId = origAsset.id, position = Some(new Position(roadLinkId = origAsset.roadLinkId, lon = origAsset.lon, lat = origAsset.lat, bearing = origAsset.bearing)))
+    provider.updateAsset(assetId = origAsset.id, position = Some(Position(roadLinkId = origAsset.roadLinkId, lon = origAsset.lon, lat = origAsset.lat, bearing = origAsset.bearing)))
     Math.abs(bsUpdated.lat - refAsset.lat) should (be < 0.05)
     Math.abs(bsUpdated.lon - refAsset.lon) should (be < 0.05)
     bsUpdated.roadLinkId should be (refAsset.roadLinkId)
@@ -210,7 +210,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
     val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
     intercept[IllegalArgumentException] {
-      provider.updateAsset(assetId = bsMoved.id, position = Some(new Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
+      provider.updateAsset(assetId = bsMoved.id, position = Some(Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
     }
   }
 
@@ -287,7 +287,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("provide road link geometry by municipality", Tag("db")) {
     provider.getRoadLinks(unauthorizedUser).size should be (0)
     val rls = provider.getRoadLinks(user, Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
-    rls.size should be (479)
+    rls.size should be (456)
     rls.foreach { rl =>
       rl.id should (be > 1l)
       rl.lonLat.foreach { pt =>
@@ -295,7 +295,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         pt._2 should (be > 6600000.0 and be < 77800000.0)
       }
     }
-    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (303)
+    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (280)
   }
 
   test("Load image by id", Tag("db")) {
