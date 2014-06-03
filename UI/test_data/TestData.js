@@ -1,7 +1,7 @@
 (function(testData) {
     testData.roadLinkData = function() {
         return {"type": "FeatureCollection", "features": [
-            {"type": "Feature", "properties": {"roadLinkId": 5543, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5543, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374573.844, 6677570.506],
                 [374578.79, 6677581.342],
                 [374608.956, 6677643.611],
@@ -16,7 +16,7 @@
                 [374720.847, 6677778.34],
                 [374732.09, 6677787.428]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5612, "roadLinkType": "street"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5612, "roadLinkType": "Street"}, "geometry": {"type": "LineString", "coordinates": [
                 [374695.469, 6677610.487],
                 [374714.745, 6677636.116],
                 [374734.084, 6677657.875],
@@ -25,7 +25,7 @@
                 [374770.575, 6677703.523],
                 [374783.504, 6677723.802]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5672, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5672, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374862.933, 6677654.303],
                 [374878.74, 6677670.952],
                 [374892.142, 6677684.712],
@@ -41,7 +41,7 @@
                 [374792.773, 6677713.226],
                 [374783.504, 6677723.802]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 2148026, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 2148026, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374809.404, 6677673.867],
                 [374819.697, 6677677.98],
                 [374828.367, 6677684.391],
@@ -50,14 +50,14 @@
                 [374847.556, 6677712.957],
                 [374851.69, 6677719.112]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5679, "roadLinkType": "street"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5679, "roadLinkType": "Street"}, "geometry": {"type": "LineString", "coordinates": [
                 [374783.504, 6677723.802],
                 [374807.64, 6677754.571],
                 [374825.22, 6677777.922],
                 [374835.292, 6677790.806],
                 [374838.456, 6677794.435]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5654, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5654, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374783.504, 6677723.802],
                 [374779.194, 6677728.527],
                 [374770.788, 6677737.97],
@@ -66,7 +66,7 @@
                 [374736.16, 6677781.664],
                 [374732.09, 6677787.428]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5578, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5578, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374512.858, 6677381.474],
                 [374521.044, 6677385.378],
                 [374528.886, 6677388.21],
@@ -82,7 +82,7 @@
                 [374658.426, 6677488.046],
                 [374662.801, 6677496.622]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 2148015, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 2148015, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374728.64, 6677446.365],
                 [374728.015, 6677446.834],
                 [374722.846, 6677450.917],
@@ -90,7 +90,7 @@
                 [374676.714, 6677485.626],
                 [374662.801, 6677496.622]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5579, "roadLinkType": "street"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5579, "roadLinkType": "Street"}, "geometry": {"type": "LineString", "coordinates": [
                 [374662.801, 6677496.622],
                 [374664.76, 6677501.151],
                 [374666.549, 6677505.593],
@@ -100,7 +100,7 @@
                 [374708.055, 6677506.805],
                 [374714.962, 6677504.905]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5576, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5576, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374662.801, 6677496.622],
                 [374661.971, 6677497.36],
                 [374658.615, 6677501.418],
@@ -108,7 +108,7 @@
                 [374645.823, 6677519.887],
                 [374640.964, 6677527.584]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5535, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5535, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374640.964, 6677527.584],
                 [374640.586, 6677534.174],
                 [374642.736, 6677541.555],
@@ -118,7 +118,7 @@
                 [374686.325, 6677598.674],
                 [374695.469, 6677610.487]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5921, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5921, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374704.813, 6677278.197],
                 [374709.501, 6677275.271],
                 [374716.755, 6677274.78],
@@ -132,7 +132,7 @@
                 [374839.486, 6677368.577],
                 [374841.639, 6677380.704]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5809, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5809, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374699.369, 6677284.288],
                 [374703.103, 6677286.907],
                 [374708.58, 6677293.165],
@@ -143,7 +143,7 @@
                 [374750.126, 6677381.223],
                 [374748.721, 6677440.912]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 5544, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 5544, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374748.721, 6677440.912],
                 [374748.526, 6677448.243],
                 [374750.92, 6677483.101],
@@ -161,19 +161,19 @@
                 [374895.585, 6677506.848],
                 [374945.976, 6677538.7]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 2499866, "roadLinkType": "privateRoad"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 2499866, "roadLinkType": "PrivateRoad"}, "geometry": {"type": "LineString", "coordinates": [
                 [374945.976, 6677538.7],
                 [374911.412, 6677593.918],
                 [374908.862, 6677597.088],
                 [374867.016, 6677649.193]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 6002, "roadLinkType": "street"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 6002, "roadLinkType": "Street"}, "geometry": {"type": "LineString", "coordinates": [
                 [374695.469, 6677610.487],
                 [374715.239, 6677600.617],
                 [374731.286, 6677592.761],
                 [374742.99, 6677588.138]
             ], "crs": {"type": "OGC", "properties": {"urn": "urn:ogc:def:crs:OGC:1.3:ETRS89"}}}},
-            {"type": "Feature", "properties": {"roadLinkId": 2148024, "roadLinkType": "road"}, "geometry": {"type": "LineString", "coordinates": [
+            {"type": "Feature", "properties": {"roadLinkId": 2148024, "roadLinkType": "Road"}, "geometry": {"type": "LineString", "coordinates": [
                 [374817.814, 6677621.636],
                 [374813.784, 6677642.421],
                 [374812.832, 6677650.45],
