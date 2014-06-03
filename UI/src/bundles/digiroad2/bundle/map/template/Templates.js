@@ -12,7 +12,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.template.Templates',
             "default": new OpenLayers.Style({
                 strokeWidth: 5,
                 strokeColor: "#ff55dd",
-                strokeOpacity: 0.8
+                strokeOpacity: 0.7
             })
         });
         var roadLinkTypeStyleLookup = {
