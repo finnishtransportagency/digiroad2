@@ -170,9 +170,6 @@ window.AssetLayer = function(map, roadLayer) {
         var icon = massTransitStop.getIcon();
         // new bus stop marker
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
-        marker.featureContent = assetData.featureData;
-        marker.roadDirection = assetData.bearing;
-        marker.effectDirection = validityDirection;
         var asset = {};
         asset.marker = marker;
         asset.data = assetData;
@@ -182,7 +179,6 @@ window.AssetLayer = function(map, roadLayer) {
         var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
-        marker.validityPeriod = assetData.validityPeriod;
         if (!_.contains(selectedValidityPeriods, assetData.validityPeriod)) {
             hideAsset(asset);
         }
@@ -292,10 +288,8 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.data.imageIds = _.map(values, function(v) {
                 return v + '_';
             });
-            var effectDirection = selectedAsset.marker.effectDirection;
             assetLayer.removeMarker(selectedAsset.marker);
             selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), selectedAsset.massTransitStop.getIcon());
-            selectedAsset.marker.effectDirection = effectDirection;
             assetLayer.addMarker(selectedAsset.marker);
             var mouseClickFn = mouseClick(selectedAsset);
             var mouseUpFn = mouseUp(selectedAsset);
