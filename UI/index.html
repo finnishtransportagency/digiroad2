@@ -20,7 +20,7 @@
     $(function() {
       if (window.location.href.indexOf('testiextranet') > -1) {
         var message = 'Tietokanta on palautettu keskiviikon 14.5.2014 klo 19:20 tilanteeseen ja pys&auml;kkien muokkausta voi nyt tehd&auml;. Palautuksen vuoksi ajanjaksolta ke 14.5. klo 19:20 - ma 19.5. klo 16:30 tehdyt pys&auml;kkimuutokset tulee tehd&auml; uudestaan sovellukseen.';
-        $('#headerBar span.notification').text(message);
+        $('#header span.notification').text(message);
       }
     });
   </script>
@@ -28,11 +28,11 @@
   <title>Digiroad 2</title>
 </head>
 <body>
-<div id="headerBar">
+<header id="header">
   <span class="notification">
   </span>
   <a href="manual/index.html" target="_blank" class="linkToManual">K&auml;ytt&ouml;ohje</a>
-</div>
+</header>
 <div class="container">
     <div id="contentMap" class="column">
         <div id="mapdiv"></div>
