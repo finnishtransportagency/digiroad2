@@ -42,7 +42,7 @@ var MassTransitStop = function(data) {
         return new OpenLayers.Marker(new OpenLayers.LonLat(data.lon, data.lat), createIcon());
     };
 
-    var createDirectionArrow = function(bearing, validityDirection, lon, lat) {
+    var createDirectionArrow = function() {
         var getAngleFromBearing = function(bearing, validityDirection) {
             if (bearing === null || bearing === undefined) {
               console.log('Bearing was null, find out why');
@@ -50,9 +50,10 @@ var MassTransitStop = function(data) {
             }
             return bearing + (90 * validityDirection);
         };
-        var angle = getAngleFromBearing(bearing, validityDirection);
+        var validityDirection = (data.validityDirection === 3) ? 1 : -1;
+        var angle = getAngleFromBearing(data.bearing, validityDirection);
         return new OpenLayers.Feature.Vector(
-            new OpenLayers.Geometry.Point(lon, lat),
+            new OpenLayers.Geometry.Point(data.lon, data.lat),
             null,
             {
                 externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
@@ -171,8 +172,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var insertAsset = function(assetData) {
         var massTransitStop = new MassTransitStop(assetData);
-        var validityDirection = (assetData.validityDirection === 3) ? 1 : -1;
-        var directionArrow = massTransitStop.createDirectionArrow(assetData.bearing, validityDirection, assetData.lon, assetData.lat);
+        var directionArrow = massTransitStop.createDirectionArrow();
         assetDirectionLayer.addFeatures(directionArrow);
         // new bus stop marker
         var marker = massTransitStop.createMarker();
@@ -320,7 +320,7 @@ window.AssetLayer = function(map, roadLayer) {
             lat: projectionOnNearestLine.y,
             roadLinkId: nearestLine.roadLinkId};
         var massTransitStop = new MassTransitStop(data);
-        selectedAsset = {directionArrow: massTransitStop.createDirectionArrow(bearing, -1, projectionOnNearestLine.x, projectionOnNearestLine.y),
+        selectedAsset = {directionArrow: massTransitStop.createDirectionArrow(),
             data: data,
             massTransitStop: massTransitStop};
         assetDirectionLayer.addFeatures(selectedAsset.directionArrow);
