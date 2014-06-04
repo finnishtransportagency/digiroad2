@@ -1,8 +1,8 @@
 var MassTransitStop = function(data) {
     var unknownAssetType = '99';
 
-    var getIcon = function() {
-        var getIconImages = function(imageIds) {
+    var createIcon = function() {
+        var createIconImages = function(imageIds) {
             var callout = document.createElement("div");
             callout.className = "callout";
             var arrowContainer = document.createElement("div");
@@ -34,12 +34,12 @@ var MassTransitStop = function(data) {
         icon.imageDiv.className = "callout-wrapper";
         icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
         icon.imageDiv.setAttribute("style", "");
-        icon.imageDiv.appendChild(getIconImages(imageIds));
+        icon.imageDiv.appendChild(createIconImages(imageIds));
         return icon;
     };
 
     var createMarker = function() {
-        return new OpenLayers.Marker(new OpenLayers.LonLat(data.lon, data.lat), getIcon());
+        return new OpenLayers.Marker(new OpenLayers.LonLat(data.lon, data.lat), createIcon());
     };
 
     return { createMarker: createMarker };
