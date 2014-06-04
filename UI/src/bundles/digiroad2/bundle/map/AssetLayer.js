@@ -33,8 +33,10 @@ window.AssetLayer = function(map, roadLayer) {
         return new OpenLayers.Feature.Vector(
             new OpenLayers.Geometry.Point(lon, lat),
             null,
-            {externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/suuntain.png',
-                graphicHeight: 16, graphicWidth: 23, graphicXOffset:-8, graphicYOffset:-8, rotation: angle}
+            {
+                externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
+                graphicHeight: 16, graphicWidth: 30, graphicXOffset:-15, graphicYOffset:-8, rotation: angle
+            }
         );
     };
 
