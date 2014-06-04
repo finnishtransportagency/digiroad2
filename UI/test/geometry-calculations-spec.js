@@ -210,3 +210,28 @@ describe('Geometry calculations: line direction angle', function(){
         assert.equal(315, fut2(line8));
     });
 });
+
+describe('Geometry calculations: centroid from points', function(){
+    var gcp = geometrycalculator.getCentroid;
+    var assetLat1Lon1 = { id: 1, lat: 1, lon: 1 };
+    var assetLat2Lon2 = { id: 2, lat: 2, lon: 2 };
+    var assetLat6Lon6 = { id: 3, lat: 6, lon: 6 };
+    var assetLat7Lon7 = { id: 4, lat: 7, lon: 7 };
+    var assetLat9Lon9 = { id: 5, lat: 9, lon: 9 };
+
+    it ('should get item coordinates as centroid if only one item', function() {
+        assert.deepEqual({ lon : 7, lat : 7 }, gcp([assetLat7Lon7]));
+    });
+
+    it ('should return centroid for three points', function() {
+        assert.deepEqual({ lon : 3, lat : 3 }, gcp([assetLat1Lon1, assetLat2Lon2, assetLat6Lon6]));
+    });
+
+    it ('should return centroid for two points', function() {
+        assert.deepEqual({ lon : 1.5, lat : 1.5 }, gcp([assetLat1Lon1, assetLat2Lon2]));
+    });
+
+    it ('should return centroid for larger list of points', function() {
+        assert.deepEqual({ lon : 5, lat : 5 }, gcp([assetLat1Lon1, assetLat2Lon2, assetLat6Lon6, assetLat7Lon7, assetLat9Lon9]));
+    });
+});
