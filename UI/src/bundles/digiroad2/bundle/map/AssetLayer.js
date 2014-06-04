@@ -1,5 +1,7 @@
-var MassTransitStop = function() {
-    var getIcon = function(imageIds) {
+var MassTransitStop = function(data) {
+    var unknownAssetType = '99';
+
+    var getIcon = function(externalImageIds) {
         var getIconImages = function(imageIds) {
             var callout = document.createElement("div");
             callout.className = "callout";
@@ -21,6 +23,7 @@ var MassTransitStop = function() {
         };
 
         var size;
+        var imageIds = externalImageIds || (data.imageIds.length > 0 ? data.imageIds : [unknownAssetType + '_']);
         if (imageIds.length > 1) {
             size = new OpenLayers.Size(28, ((15 * imageIds.length) + (imageIds.length - 1)));
         } else {
@@ -39,6 +42,7 @@ var MassTransitStop = function() {
 };
 
 window.AssetLayer = function(map, roadLayer) {
+    // FIXME: Does not belong here
     var unknownAssetType = '99';
 
     var selectedValidityPeriods = ['current'];
@@ -162,12 +166,11 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var insertAsset = function(assetData) {
-        var massTransitStop = new MassTransitStop();
+        var massTransitStop = new MassTransitStop(assetData);
         var validityDirection = (assetData.validityDirection === 3) ? 1 : -1;
         var directionArrow = getDirectionArrow(assetData.bearing, validityDirection, assetData.lon, assetData.lat);
         assetDirectionLayer.addFeatures(directionArrow);
-        var imageIds = assetData.imageIds.length > 0 ? assetData.imageIds : [unknownAssetType + '_'];
-        var icon = massTransitStop.getIcon(imageIds);
+        var icon = massTransitStop.getIcon();
         // new bus stop marker
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
         marker.featureContent = assetData.featureData;
@@ -332,7 +335,7 @@ window.AssetLayer = function(map, roadLayer) {
                 lon: projectionOnNearestLine.x,
                 lat: projectionOnNearestLine.y,
                 roadLinkId: nearestLine.roadLinkId},
-            massTransitStop: new MassTransitStop()};
+            massTransitStop: new MassTransitStop(this.data)};
         highlightAsset(selectedAsset);
         var icon = selectedAsset.massTransitStop.getIcon([unknownAssetType + '_']);
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
