@@ -1,3 +1,43 @@
+var MassTransitStop = function() {
+    var getIcon = function(imageIds) {
+        var getIconImages = function(imageIds) {
+            var callout = document.createElement("div");
+            callout.className = "callout";
+            var arrowContainer = document.createElement("div");
+            arrowContainer.className = "arrow-container";
+            var arrow = document.createElement("div");
+            arrow.className = "arrow";
+            _.each(imageIds, function (imageId) {
+                var img = document.createElement("img");
+                img.setAttribute("src", "api/images/" + imageId + ".png");
+                callout.appendChild(img);
+            });
+            arrowContainer.appendChild(arrow);
+            callout.appendChild(arrowContainer);
+            var dropHandle = document.createElement("div");
+            dropHandle.className="dropHandle";
+            callout.appendChild(dropHandle);
+            return callout;
+        };
+
+        var size;
+        if (imageIds.length > 1) {
+            size = new OpenLayers.Size(28, ((15 * imageIds.length) + (imageIds.length - 1)));
+        } else {
+            size = new OpenLayers.Size(28, 16);
+        }
+        var offset = new OpenLayers.Pixel(0, -size.h-9);
+        var icon = new OpenLayers.Icon("", size, offset);
+        icon.imageDiv.className = "callout-wrapper";
+        icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
+        icon.imageDiv.setAttribute("style", "");
+        icon.imageDiv.appendChild(getIconImages(imageIds));
+        return icon;
+    };
+
+    return { getIcon: getIcon };
+};
+
 window.AssetLayer = function(map, roadLayer) {
     var unknownAssetType = '99';
 
@@ -38,42 +78,6 @@ window.AssetLayer = function(map, roadLayer) {
                 graphicHeight: 16, graphicWidth: 30, graphicXOffset:-15, graphicYOffset:-8, rotation: angle
             }
         );
-    };
-
-    var getIcon = function(imageIds) {
-        var getIconImages = function(imageIds) {
-            var callout = document.createElement("div");
-            callout.className = "callout";
-            var arrowContainer = document.createElement("div");
-            arrowContainer.className = "arrow-container";
-            var arrow = document.createElement("div");
-            arrow.className = "arrow";
-            _.each(imageIds, function (imageId) {
-                var img = document.createElement("img");
-                img.setAttribute("src", "api/images/" + imageId + ".png");
-                callout.appendChild(img);
-            });
-            arrowContainer.appendChild(arrow);
-            callout.appendChild(arrowContainer);
-            var dropHandle = document.createElement("div");
-            dropHandle.className="dropHandle";
-            callout.appendChild(dropHandle);
-            return callout;
-        };
-
-        var size;
-        if (imageIds.length > 1) {
-            size = new OpenLayers.Size(28, ((15 * imageIds.length) + (imageIds.length - 1)));
-        } else {
-            size = new OpenLayers.Size(28, 16);
-        }
-        var offset = new OpenLayers.Pixel(0, -size.h-9);
-        var icon = new OpenLayers.Icon("", size, offset);
-        icon.imageDiv.className = "callout-wrapper";
-        icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
-        icon.imageDiv.setAttribute("style", "");
-        icon.imageDiv.appendChild(getIconImages(imageIds));
-        return icon;
     };
 
     var hideAsset = function(asset) {
@@ -158,11 +162,12 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var insertAsset = function(assetData) {
+        var massTransitStop = new MassTransitStop();
         var validityDirection = (assetData.validityDirection === 3) ? 1 : -1;
         var directionArrow = getDirectionArrow(assetData.bearing, validityDirection, assetData.lon, assetData.lat);
         assetDirectionLayer.addFeatures(directionArrow);
         var imageIds = assetData.imageIds.length > 0 ? assetData.imageIds : [unknownAssetType + '_'];
-        var icon = getIcon(imageIds);
+        var icon = massTransitStop.getIcon(imageIds);
         // new bus stop marker
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
         marker.featureContent = assetData.featureData;
@@ -172,6 +177,7 @@ window.AssetLayer = function(map, roadLayer) {
         asset.marker = marker;
         asset.data = assetData;
         asset.directionArrow = directionArrow;
+        asset.massTransitStop = massTransitStop;
         var mouseClickFn = mouseClick(asset);
         var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
@@ -291,7 +297,7 @@ window.AssetLayer = function(map, roadLayer) {
             });
             var effectDirection = selectedAsset.marker.effectDirection;
             assetLayer.removeMarker(selectedAsset.marker);
-            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), getIcon(imageIds));
+            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), selectedAsset.massTransitStop.getIcon(imageIds));
             selectedAsset.marker.effectDirection = effectDirection;
             assetLayer.addMarker(selectedAsset.marker);
             var mouseClickFn = mouseClick(selectedAsset);
@@ -325,9 +331,10 @@ window.AssetLayer = function(map, roadLayer) {
                 validityDirection: 2,
                 lon: projectionOnNearestLine.x,
                 lat: projectionOnNearestLine.y,
-                roadLinkId: nearestLine.roadLinkId}};
+                roadLinkId: nearestLine.roadLinkId},
+            massTransitStop: new MassTransitStop()};
         highlightAsset(selectedAsset);
-        var icon = getIcon([unknownAssetType + '_']);
+        var icon = selectedAsset.massTransitStop.getIcon([unknownAssetType + '_']);
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
         assetLayer.addMarker(marker);
         selectedAsset.marker = marker;
