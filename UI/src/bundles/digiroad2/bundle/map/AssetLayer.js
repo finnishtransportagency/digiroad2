@@ -106,13 +106,13 @@ window.AssetLayer = function(map, roadLayer) {
     var assetIsMoving = false;
 
     var hideAsset = function(asset) {
-        assetDirectionLayer.destroyFeatures(asset.directionArrow);
+        assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
         asset.massTransitStop.getMarker().display(false);
     };
 
     var showAsset = function(asset) {
         asset.massTransitStop.getMarker().display(true);
-        assetDirectionLayer.addFeatures(asset.directionArrow);
+        assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
     };
 
     var mouseUpFunction;
@@ -188,13 +188,11 @@ window.AssetLayer = function(map, roadLayer) {
 
     var insertAsset = function(assetData) {
         var massTransitStop = new MassTransitStop(assetData);
-        var directionArrow = massTransitStop.getDirectionArrow(true);
-        assetDirectionLayer.addFeatures(directionArrow);
+        assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
         // new bus stop marker
         var marker = massTransitStop.getMarker(true);
         var asset = {};
         asset.data = assetData;
-        asset.directionArrow = directionArrow;
         asset.massTransitStop = massTransitStop;
         var mouseClickFn = mouseClick(asset);
         var mouseUpFn = mouseUp(asset);
@@ -208,7 +206,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var removeAssetFromMap = function(asset) {
-        assetDirectionLayer.removeFeatures(asset.directionArrow);
+        assetDirectionLayer.removeFeatures(asset.massTransitStop.getDirectionArrow());
         assetLayer.removeMarker(asset.massTransitStop.getMarker());
     };
 
@@ -287,9 +285,9 @@ window.AssetLayer = function(map, roadLayer) {
 
     var handleAssetPropertyValueChanged = function(propertyData) {
         var turnArrow = function(asset, direction) {
-            assetDirectionLayer.destroyFeatures(asset.directionArrow);
-            asset.directionArrow.style.rotation = direction;
-            assetDirectionLayer.addFeatures(asset.directionArrow);
+            assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
+            asset.massTransitStop.getDirectionArrow().style.rotation = direction;
+            assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
         };
 
         if (propertyData.propertyData.publicId === 'vaikutussuunta') {
@@ -337,7 +335,7 @@ window.AssetLayer = function(map, roadLayer) {
         selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
             data: data,
             massTransitStop: massTransitStop};
-        assetDirectionLayer.addFeatures(selectedAsset.directionArrow);
+        assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
         var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
         highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
@@ -379,7 +377,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var unhighlightAsset = function(asset) {
-        var arrow = asset.directionArrow;
+        var arrow = asset.massTransitStop.getDirectionArrow();
         arrow.style.backgroundGraphic = null;
         arrow.style.backgroundHeight = null;
         arrow.style.backgroundWidth = null;
@@ -395,7 +393,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var highlightAsset = function(asset) {
-        var arrow = asset.directionArrow;
+        var arrow = asset.massTransitStop.getDirectionArrow();
         arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/assetlayer/images/hover.png';
         arrow.style.backgroundHeight = 68;
         arrow.style.backgroundWidth = 68;
@@ -412,7 +410,7 @@ window.AssetLayer = function(map, roadLayer) {
             var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
             selectedAsset.data.bearing = angle;
             selectedAsset.data.roadDirection = angle;
-            selectedAsset.directionArrow.style.rotation = angle + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
+            selectedAsset.massTransitStop.getDirectionArrow().style.rotation = angle + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
             var position = geometrycalculator.nearestPointOnLine(
                 nearestLine,
                 { x: lonlat.lon, y: lonlat.lat});
@@ -420,7 +418,7 @@ window.AssetLayer = function(map, roadLayer) {
             lonlat.lat = position.y;
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
             selectedAsset.massTransitStop.getMarker().lonlat = lonlat;
-            selectedAsset.directionArrow.move(lonlat);
+            selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
             assetLayer.redraw();
         }
     };
