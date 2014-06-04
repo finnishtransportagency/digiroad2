@@ -61,7 +61,12 @@ window.AssetLayer = function(map, roadLayer) {
             return callout;
         };
 
-        var size = new OpenLayers.Size(28, 16 * imageIds.length);
+        var size;
+        if (imageIds.length > 1) {
+            size = new OpenLayers.Size(28, ((15 * imageIds.length) + (imageIds.length - 1)));
+        } else {
+            size = new OpenLayers.Size(28, 16);
+        }
         var offset = new OpenLayers.Pixel(0, -size.h-9);
         var icon = new OpenLayers.Icon("", size, offset);
         icon.imageDiv.className = "callout-wrapper";
