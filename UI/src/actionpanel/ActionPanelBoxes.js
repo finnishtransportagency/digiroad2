@@ -103,7 +103,9 @@
       '    </div>',
       '  </div>',
       roadTypeLegend,
-      '  <button class="actionModeButton editMode" style="display: none;">Siirry muokkaustilaan</button>',
+      '  <div class="panel-section">',      
+      '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
+      '  </div>',      
       '</div>'].join('');
 
     var editModeTemplate = [
@@ -135,7 +137,9 @@
       '      <div class="actionPanelButtonAddImage"></div>',
       '    </div>',
       '  </div>',
-      '  <button class="actionModeButton readOnlyMode" style="display: none;">Siirry katselutilaan</button>',
+      '  <div class="panel-section">',
+      '    <button class="action-mode-btn read-only-btn btn btn-secondary btn-block" style="display: none;">Siirry katselutilaan</button>',
+      '  </div>',
       '</div>'].join('');
 
     var collapsedTemplate = [
@@ -166,13 +170,13 @@
     };
 
     var bindDOMEventHandlers = function() {
-      elements.expanded.find('button.editMode').click(function() {
+      elements.expanded.find('button.edit-mode-btn').click(function() {
         elements.expanded.hide();
         elements.editMode.show();
         eventbus.trigger('application:readOnly', false);
       });
 
-      elements.editMode.find('button.readOnlyMode').click(function() {
+      elements.editMode.find('button.read-only-btn').click(function() {
         if (isDirty()) {
           return;
         }
@@ -248,8 +252,8 @@
 
       eventbus.on('roles:fetched', function(roles) {
         if (!_.contains(roles, 'viewer')) {
-          elements.expanded.find('.actionModeButton').show();
-          elements.editMode.find('.actionModeButton').show();
+          elements.expanded.find('.action-mode-btn').show();
+          elements.editMode.find('.action-mode-btn').show();
         }
       });
     };
