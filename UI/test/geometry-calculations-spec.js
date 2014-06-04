@@ -94,18 +94,6 @@ describe('Geometry calculations: nearest line', function(){
     });
 });
 
-describe('Geometry detection is point in the circle', function(){
-    var fut = geometrycalculator.isInCircle;
-
-    it('should return true', function(){
-        assert.equal(true, fut(0,0,2,1,1));
-    });
-
-    it('should return false', function(){
-        assert.equal(false, fut(0,0,1,1,1));
-    });
-});
-
 describe('Geometry calculations: radian to degree', function(){
     var fut = geometrycalculator.rad2deg;
 
@@ -122,6 +110,27 @@ describe('Geometry calculations: degree to radian', function(){
         assert.equal(Math.PI, fut(180));
     });
 });
+
+describe('Geometry calculations: distance between points', function(){
+    var fut = geometrycalculator.getSquaredDistanceBetweenPoints;
+
+    it ('returns 0 on same point', function() {
+        assert.equal(0, fut({ lat: 0, lon: 0 }, { lat: 0, lon: 0}));
+        assert.equal(0, fut({ lat: 10, lon: 10 }, { lat: 10, lon: 10}));
+        assert.equal(0, fut({ lat: 10.05, lon: 10.00 }, { lat: 10.05, lon: 10.00 }));
+    });
+
+    it ('calculates correct distances in points', function() {
+        assert.equal(2, fut({ lat: 0, lon: 0 }, { lat: 1, lon: 1}));
+        assert.equal(5, fut({ lat: 0, lon: 0 }, { lat: 1, lon: 2}));
+    });
+
+    it ('calculations are assosiative', function() {
+        assert.equal(2, fut({ lat: 1, lon: 1 }, { lat: 0, lon: 0}));
+        assert.equal(5, fut({ lat: 1, lon: 2 }, { lat: 0, lon: 0}));
+    });
+});
+
 
 describe('Geometry calculations: line direction angle', function(){
     var fut = geometrycalculator.getLineDirectionRadAngle;

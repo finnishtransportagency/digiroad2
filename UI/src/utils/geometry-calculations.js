@@ -45,9 +45,8 @@
                 .value();
     };
 
-    geometrycalculator.isInCircle = function(centerX, centerY, radius, x, y) {
-        var squareDist = (centerX-x) * (centerX-x) + (centerY-y)*(centerY-y);
-        return squareDist <= radius*radius;
+    geometrycalculator.getSquaredDistanceBetweenPoints = function(pointA, pointB) {
+        return Math.pow(pointA.lat - pointB.lat, 2) + Math.pow(pointA.lon - pointB.lon, 2);
     };
 
     geometrycalculator.getLineDirectionRadAngle = function(line) {
