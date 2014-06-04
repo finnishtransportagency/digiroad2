@@ -45,9 +45,8 @@
                 .value();
     };
 
-    geometrycalculator.getDistanceBetweenPoints = function(pointA, pointB) {
-        var sqr = Math.pow(pointA.lat - pointB.lat, 2) + Math.pow(pointA.lon - pointB.lon, 2);
-        return Math.sqrt(sqr);
+    geometrycalculator.getSquaredDistanceBetweenPoints = function(pointA, pointB) {
+        return Math.pow(pointA.lat - pointB.lat, 2) + Math.pow(pointA.lon - pointB.lon, 2);
     };
 
     geometrycalculator.getLineDirectionRadAngle = function(line) {

@@ -6,7 +6,7 @@ describe('Asset grouping', function () {
         var assetLat300Lon300 = { id: 4, lat: 300, lon: 300 };
         var assets = [ assetLat1Lon1, assetLat100Lon100, assetLat200Lon300, assetLat300Lon300 ];
 
-        it('not find any groups, if not within distance', function () {
+        it('should not find any groups, if not within distance', function () {
             var actual = assetGrouping.groupByDistance(assets);
             assert.deepEqual(actual, assets);
         });

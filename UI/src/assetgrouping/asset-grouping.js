@@ -3,11 +3,12 @@
     var groupByDistance = function(items, result){
         // TODO: should be zoom level dependent
         var delta = 6;
+        var item;
         var findProximityStops = function (x) {
-            return geometrycalculator.getDistanceBetweenPoints(x, item) < delta;
+            return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < delta * delta;
         };
         while(_.isEmpty(items) === false) {
-            var item = _.first(items);
+            item = _.first(items);
             var proximityStops = _.remove(items, findProximityStops);
             if (proximityStops.length === 1) {
                 result.push(proximityStops[0]);
