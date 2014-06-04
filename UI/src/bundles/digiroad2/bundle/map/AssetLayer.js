@@ -1,6 +1,8 @@
 var MassTransitStop = function(data) {
     var unknownAssetType = '99';
-
+    var cachedMarker = null;
+    var cachedDirectionArrow = null;
+    
     var createIcon = function() {
         var createIconImages = function(imageIds) {
             var callout = document.createElement("div");
@@ -61,10 +63,24 @@ var MassTransitStop = function(data) {
             }
         );
     };
+    
+    var getMarker = function(shouldCreate) {
+        if (shouldCreate || !cachedMarker) {
+            cachedMarker = createMarker();
+        }
+        return cachedMarker;
+    }
+    
+    var getDirectionArrow = function(shouldCreate) {
+        if (shouldCreate || !cachedDirectionArrow) {
+          cachedDirectionArrow = createDirectionArrow();
+        }
+        return cachedDirectionArrow;
+    }
 
     return {
-        createMarker: createMarker,
-        createDirectionArrow: createDirectionArrow
+        getMarker: getMarker,
+        getDirectionArrow: getDirectionArrow
     };
 };
 
@@ -172,10 +188,10 @@ window.AssetLayer = function(map, roadLayer) {
 
     var insertAsset = function(assetData) {
         var massTransitStop = new MassTransitStop(assetData);
-        var directionArrow = massTransitStop.createDirectionArrow();
+        var directionArrow = massTransitStop.getDirectionArrow(true);
         assetDirectionLayer.addFeatures(directionArrow);
         // new bus stop marker
-        var marker = massTransitStop.createMarker();
+        var marker = massTransitStop.getMarker(true);
         var asset = {};
         asset.marker = marker;
         asset.data = assetData;
@@ -289,7 +305,7 @@ window.AssetLayer = function(map, roadLayer) {
                 return v + '_';
             });
             assetLayer.removeMarker(selectedAsset.marker);
-            selectedAsset.marker = selectedAsset.massTransitStop.createMarker();
+            selectedAsset.marker = selectedAsset.massTransitStop.getMarker(true);
             assetLayer.addMarker(selectedAsset.marker);
             var mouseClickFn = mouseClick(selectedAsset);
             var mouseUpFn = mouseUp(selectedAsset);
@@ -320,14 +336,14 @@ window.AssetLayer = function(map, roadLayer) {
             lat: projectionOnNearestLine.y,
             roadLinkId: nearestLine.roadLinkId};
         var massTransitStop = new MassTransitStop(data);
-        selectedAsset = {directionArrow: massTransitStop.createDirectionArrow(),
+        selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
             data: data,
             massTransitStop: massTransitStop};
         assetDirectionLayer.addFeatures(selectedAsset.directionArrow);
         var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
         highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
-        var marker = selectedAsset.massTransitStop.createMarker();
+        var marker = selectedAsset.massTransitStop.getMarker(true);
         assetLayer.addMarker(marker);
         selectedAsset.marker = marker;
         eventbus.trigger('asset:placed', selectedAsset.data);
