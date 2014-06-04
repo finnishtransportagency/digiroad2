@@ -295,12 +295,12 @@ window.AssetLayer = function(map, roadLayer) {
             if (values.length === 0) {
                 values.push([unknownAssetType]);
             }
-            var imageIds = _.map(values, function(v) {
+            selectedAsset.data.imageIds = _.map(values, function(v) {
                 return v + '_';
             });
             var effectDirection = selectedAsset.marker.effectDirection;
             assetLayer.removeMarker(selectedAsset.marker);
-            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), selectedAsset.massTransitStop.getIcon(imageIds));
+            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), selectedAsset.massTransitStop.getIcon());
             selectedAsset.marker.effectDirection = effectDirection;
             assetLayer.addMarker(selectedAsset.marker);
             var mouseClickFn = mouseClick(selectedAsset);
@@ -328,14 +328,15 @@ window.AssetLayer = function(map, roadLayer) {
         var directionArrow = addDirectionArrow(bearing, -1, projectionOnNearestLine.x, projectionOnNearestLine.y);
         var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
 
-        selectedAsset = {directionArrow: directionArrow,
-            data: {bearing: bearing,
+        var data = {bearing: bearing,
                 position: assetPosition,
                 validityDirection: 2,
                 lon: projectionOnNearestLine.x,
                 lat: projectionOnNearestLine.y,
-                roadLinkId: nearestLine.roadLinkId},
-            massTransitStop: new MassTransitStop(this.data)};
+                roadLinkId: nearestLine.roadLinkId};
+        selectedAsset = {directionArrow: directionArrow,
+            data: data,
+            massTransitStop: new MassTransitStop(data)};
         highlightAsset(selectedAsset);
         var icon = selectedAsset.massTransitStop.getIcon([unknownAssetType + '_']);
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
