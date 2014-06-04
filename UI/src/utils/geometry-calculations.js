@@ -70,4 +70,12 @@
         return (x > bounds.left && x < bounds.right && y > bounds.bottom && y < bounds.top);
     };
 
+    geometrycalculator.getCentroid = function(points) {
+        var sums = _.foldl(points, function(sum, point) {
+            return { lat: point.lat + sum.lat, lon: point.lon + sum.lon };
+        }, { lat: 0, lon: 0 });
+
+        return { lon : (sums.lon / points.length), lat : (sums.lat / points.length)};
+    };
+
 }(window.geometrycalculator = window.geometrycalculator || {}));
