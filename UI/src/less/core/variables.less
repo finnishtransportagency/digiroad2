@@ -17,6 +17,14 @@
 @gray-lighter-2:	#efefed;
 @gray-lightest: 	#f7f7f6;
 
+@blue-darkest:		#092846;
+@blue-darker:		#0f4374;
+@blue-dark:			#1c70be;
+@blue:				#1c7fdd;
+@blue-light:		#4498e8;
+@blue-lighter:		#81baef;
+@blue-lightest:		#cce3f9;
+
 //== Typography
 
 @font-family-base:	Arial;
@@ -24,9 +32,23 @@
 @font-size-base:	12px;
 @font-size-large: 	13px;
 @font-size-small:	11px;
+@font-size-xs:		10px;
 
 @text-color:		@gray-darkest;
 
 //** All elements are divisible by 5, so we use it as a base value for line-heights
 @line-height-modifier: 	5px;
 @line-height-base: 		@line-height-modifier * 4; // 20px
+
+//== Components
+//## Common values used throughout components
+
+@border-radius-base:	3px;
+
+//== Buttons
+
+@btn-default-color:		#fff;
+@btn-drop-shadow:		0px 1px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+@btn-drop-shadow-hover:	0px 1px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .125);
+
+
