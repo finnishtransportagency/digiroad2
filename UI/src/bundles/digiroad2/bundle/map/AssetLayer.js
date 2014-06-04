@@ -1,7 +1,7 @@
 var MassTransitStop = function(data) {
     var unknownAssetType = '99';
 
-    var getIcon = function(externalImageIds) {
+    var getIcon = function() {
         var getIconImages = function(imageIds) {
             var callout = document.createElement("div");
             callout.className = "callout";
@@ -23,7 +23,7 @@ var MassTransitStop = function(data) {
         };
 
         var size;
-        var imageIds = externalImageIds || (data.imageIds.length > 0 ? data.imageIds : [unknownAssetType + '_']);
+        var imageIds = data.imageIds.length > 0 ? data.imageIds : [unknownAssetType + '_'];
         if (imageIds.length > 1) {
             size = new OpenLayers.Size(28, ((15 * imageIds.length) + (imageIds.length - 1)));
         } else {
@@ -42,9 +42,6 @@ var MassTransitStop = function(data) {
 };
 
 window.AssetLayer = function(map, roadLayer) {
-    // FIXME: Does not belong here
-    var unknownAssetType = '99';
-
     var selectedValidityPeriods = ['current'];
 
     var selectedAsset;
@@ -292,9 +289,6 @@ window.AssetLayer = function(map, roadLayer) {
         } else if (propertyData.propertyData.publicId === 'pysakin_tyyppi'  ) {
 
             var values = _.pluck(propertyData.propertyData.values, 'propertyValue');
-            if (values.length === 0) {
-                values.push([unknownAssetType]);
-            }
             selectedAsset.data.imageIds = _.map(values, function(v) {
                 return v + '_';
             });
@@ -338,7 +332,8 @@ window.AssetLayer = function(map, roadLayer) {
             data: data,
             massTransitStop: new MassTransitStop(data)};
         highlightAsset(selectedAsset);
-        var icon = selectedAsset.massTransitStop.getIcon([unknownAssetType + '_']);
+        selectedAsset.data.imageIds = [];
+        var icon = selectedAsset.massTransitStop.getIcon();
         var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
         assetLayer.addMarker(marker);
         selectedAsset.marker = marker;
