@@ -8,7 +8,7 @@ var parseQueryParameters = function(queryString) {
                 return acc;
             }, {})
             .value();
-}
+};
 
 $(function() {
     var queryString = window.location.search.substring(1);
