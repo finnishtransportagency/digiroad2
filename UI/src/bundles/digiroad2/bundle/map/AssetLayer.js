@@ -38,7 +38,11 @@ var MassTransitStop = function(data) {
         return icon;
     };
 
-    return { getIcon: getIcon };
+    var createMarker = function() {
+        return new OpenLayers.Marker(new OpenLayers.LonLat(data.lon, data.lat), getIcon());
+    };
+
+    return { createMarker: createMarker };
 };
 
 window.AssetLayer = function(map, roadLayer) {
@@ -167,9 +171,8 @@ window.AssetLayer = function(map, roadLayer) {
         var validityDirection = (assetData.validityDirection === 3) ? 1 : -1;
         var directionArrow = getDirectionArrow(assetData.bearing, validityDirection, assetData.lon, assetData.lat);
         assetDirectionLayer.addFeatures(directionArrow);
-        var icon = massTransitStop.getIcon();
         // new bus stop marker
-        var marker = new OpenLayers.Marker(new OpenLayers.LonLat(assetData.lon, assetData.lat), icon);
+        var marker = massTransitStop.createMarker();
         var asset = {};
         asset.marker = marker;
         asset.data = assetData;
@@ -289,7 +292,7 @@ window.AssetLayer = function(map, roadLayer) {
                 return v + '_';
             });
             assetLayer.removeMarker(selectedAsset.marker);
-            selectedAsset.marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.marker.lonlat.lon, selectedAsset.marker.lonlat.lat), selectedAsset.massTransitStop.getIcon());
+            selectedAsset.marker = selectedAsset.massTransitStop.createMarker();
             assetLayer.addMarker(selectedAsset.marker);
             var mouseClickFn = mouseClick(selectedAsset);
             var mouseUpFn = mouseUp(selectedAsset);
@@ -327,8 +330,7 @@ window.AssetLayer = function(map, roadLayer) {
             massTransitStop: new MassTransitStop(data)};
         highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
-        var icon = selectedAsset.massTransitStop.getIcon();
-        var marker = new OpenLayers.Marker(new OpenLayers.LonLat(selectedAsset.data.lon, selectedAsset.data.lat), icon);
+        var marker = selectedAsset.massTransitStop.createMarker();
         assetLayer.addMarker(marker);
         selectedAsset.marker = marker;
         eventbus.trigger('asset:placed', selectedAsset.data);
