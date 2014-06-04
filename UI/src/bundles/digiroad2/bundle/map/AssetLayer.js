@@ -62,7 +62,7 @@ window.AssetLayer = function(map, roadLayer) {
         };
 
         var size = new OpenLayers.Size(28, 16 * imageIds.length);
-        var offset = new OpenLayers.Pixel(-(size.w/2+1), -size.h-5);
+        var offset = new OpenLayers.Pixel(0, -size.h-9);
         var icon = new OpenLayers.Icon("", size, offset);
         icon.imageDiv.className = "callout-wrapper";
         icon.imageDiv.removeChild(icon.imageDiv.getElementsByTagName("img")[0]);
