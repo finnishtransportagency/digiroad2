@@ -1,4 +1,4 @@
-(function(bootstrap) {
+(function(application) {
   Oskari.setLang('fi');
   Oskari.setLoaderMode('dev');
   var appSetup;
@@ -107,7 +107,7 @@
     }
   };
 
-    bootstrap.startApplication = function(backend) {
+    application.start = function(backend) {
         if(backend) window.Backend = backend;
         window.selectedAssetController = SelectedAssetController.initialize(Backend);
         downloadAppSetup(startApplication);
@@ -115,4 +115,4 @@
         downloadLocalizedStrings(startApplication);
     };
 
-}(window.Bootstrap = window.Bootstrap || {}));
+}(window.Application = window.Application || {}));

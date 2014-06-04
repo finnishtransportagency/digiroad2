@@ -46,7 +46,7 @@
 </div>
 <script type="text/javascript" src="bower_components/oskari.org/bundles/bundle.js"></script>
 <script type="text/javascript" src="bower_components/oskari.org/packages/openlayers/startup.js"></script>
-<script type="text/javascript" src="src/start_up.js"></script>
+<script type="text/javascript" src="src/application.js"></script>
 <script type="text/javascript" src="src/actionpanel/ActionPanelBoxes.js"></script>
 <script type="text/javascript" src="src/actionpanel/ActionPanel.js"></script>
 <script type="text/javascript" src="src/utils/selectedAssetController.js"></script>
@@ -73,10 +73,10 @@
 
         if (fakeMode) {
             $.getScript('test_data/TestData.js', function() {
-                Bootstrap.startApplication(Backend.withRoadLinkData(TestData.roadLinkData()));
+                Application.start(Backend.withRoadLinkData(TestData.roadLinkData()));
             });
         } else {
-            Bootstrap.startApplication();
+            Application.start();
         }
     });
 </script>
