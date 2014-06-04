@@ -6,7 +6,10 @@ require.config({
         'backbone':                 '../../bower_components/backbone/backbone',
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
-        'SelectedAssetController':  '../src/utils/selectedAssetController'
+        'SelectedAssetController':  '../src/utils/selectedAssetController',
+        'LinearAssetLayer':         '../src/bundles/digiroad2/bundle/map/LinearAssetLayer',
+        'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
+        'zoomlevels':               '../src/utils/zoomLevels'
     },
     shim: {
         'jquery': { exports: '$' },
@@ -20,11 +23,17 @@ require.config({
         },
         'SelectedAssetController': {
             deps: ['EventBus', 'lodash']
+        },
+        'LinearAssetLayer': {
+            exports: 'LinearAssetLayer',
+            deps: ['OpenLayers']
         }
     },
     waitSeconds: 10
 });
-require(['lodash', 'selected-asset-controller-spec'], function(lodash) {
+require(['lodash',
+         'selected-asset-controller-spec',
+         'linear-asset-layer-spec'], function(lodash) {
     window._ = lodash;
     mocha.checkLeaks();
     if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
