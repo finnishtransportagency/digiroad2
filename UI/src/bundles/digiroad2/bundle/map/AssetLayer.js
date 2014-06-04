@@ -69,14 +69,14 @@ var MassTransitStop = function(data) {
             cachedMarker = createMarker();
         }
         return cachedMarker;
-    }
+    };
     
     var getDirectionArrow = function(shouldCreate) {
         if (shouldCreate || !cachedDirectionArrow) {
           cachedDirectionArrow = createDirectionArrow();
         }
         return cachedDirectionArrow;
-    }
+    };
 
     return {
         getMarker: getMarker,
@@ -107,11 +107,11 @@ window.AssetLayer = function(map, roadLayer) {
 
     var hideAsset = function(asset) {
         assetDirectionLayer.destroyFeatures(asset.directionArrow);
-        asset.marker.display(false);
+        asset.massTransitStop.getMarker().display(false);
     };
 
     var showAsset = function(asset) {
-        asset.marker.display(true);
+        asset.massTransitStop.getMarker().display(true);
         assetDirectionLayer.addFeatures(asset.directionArrow);
     };
 
@@ -120,15 +120,15 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseUpHandler = function(asset, x, y) {
         clickTimestamp = null;
         // Opacity back
-        asset.marker.setOpacity(1);
-        asset.marker.actionMouseDown = false;
+        asset.massTransitStop.getMarker().setOpacity(1);
+        asset.massTransitStop.getMarker().actionMouseDown = false;
         // Not need listeners anymore
         map.events.unregister("mouseup", map, mouseUpFunction);
         // Moved update
-        if (!readOnly && assetIsMoving && (asset.marker.actionDownX != x ||  asset.marker.actionDownY != y)) {
+        if (!readOnly && assetIsMoving && (asset.massTransitStop.getMarker().actionDownX != x || asset.massTransitStop.getMarker().actionDownY != y)) {
             eventbus.trigger('asset:moved', {
-                lon: asset.marker.lonlat.lon,
-                lat: asset.marker.lonlat.lat,
+                lon: asset.massTransitStop.getMarker().lonlat.lon,
+                lat: asset.massTransitStop.getMarker().lonlat.lat,
                 bearing: asset.data.bearing,
                 roadLinkId: asset.roadLinkId
             });
@@ -161,15 +161,15 @@ window.AssetLayer = function(map, roadLayer) {
                     }
                     selectedAsset = asset;
                     // push marker up
-                    assetLayer.removeMarker(asset.marker);
-                    assetLayer.addMarker(asset.marker);
+                    assetLayer.removeMarker(selectedAsset.massTransitStop.getMarker());
+                    assetLayer.addMarker(selectedAsset.massTransitStop.getMarker());
                     // Opacity because we want know what is moving
-                    asset.marker.setOpacity(0.6);
+                    selectedAsset.massTransitStop.getMarker().setOpacity(0.6);
                     // Mouse need to be down until can be moved
-                    asset.marker.actionMouseDown = true;
+                    selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
                     //Save original position
-                    asset.marker.actionDownX = evt.clientX;
-                    asset.marker.actionDownY = evt.clientY;
+                    selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
+                    selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
                     //register up
                     map.events.register("mouseup", map, mouseUpFn, true);
                     mouseUpFunction = mouseUpFn;
@@ -193,7 +193,6 @@ window.AssetLayer = function(map, roadLayer) {
         // new bus stop marker
         var marker = massTransitStop.getMarker(true);
         var asset = {};
-        asset.marker = marker;
         asset.data = assetData;
         asset.directionArrow = directionArrow;
         asset.massTransitStop = massTransitStop;
@@ -210,7 +209,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var removeAssetFromMap = function(asset) {
         assetDirectionLayer.removeFeatures(asset.directionArrow);
-        assetLayer.removeMarker(asset.marker);
+        assetLayer.removeMarker(asset.massTransitStop.getMarker());
     };
 
     var renderAssets = function(assetDatas) {
@@ -304,13 +303,12 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.data.imageIds = _.map(values, function(v) {
                 return v + '_';
             });
-            assetLayer.removeMarker(selectedAsset.marker);
-            selectedAsset.marker = selectedAsset.massTransitStop.getMarker(true);
-            assetLayer.addMarker(selectedAsset.marker);
+            assetLayer.removeMarker(selectedAsset.massTransitStop.getMarker());
+            assetLayer.addMarker(selectedAsset.massTransitStop.getMarker(true));
             var mouseClickFn = mouseClick(selectedAsset);
             var mouseUpFn = mouseUp(selectedAsset);
             var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
-            selectedAsset.marker.events.register('mousedown', assetLayer, mouseDownFn);
+            selectedAsset.massTransitStop.getMarker().events.register('mousedown', assetLayer, mouseDownFn);
             assetLayer.redraw();
         }
     };
@@ -343,9 +341,7 @@ window.AssetLayer = function(map, roadLayer) {
         var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
         highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
-        var marker = selectedAsset.massTransitStop.getMarker(true);
-        assetLayer.addMarker(marker);
-        selectedAsset.marker = marker;
+        assetLayer.addMarker(selectedAsset.massTransitStop.getMarker(true));
         eventbus.trigger('asset:placed', selectedAsset.data);
 
         var applyBlockingOverlays = function() {
@@ -407,7 +403,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var moveSelectedAsset = function(pxPosition) {
-        if (selectedAsset.marker && selectedAsset.marker.actionMouseDown) {
+        if (selectedAsset.massTransitStop.getMarker()) {
             //var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(lon, lat));
             var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
             var lonlat = map.getLonLatFromPixel(busStopCenter);
@@ -423,7 +419,7 @@ window.AssetLayer = function(map, roadLayer) {
             lonlat.lon = position.x;
             lonlat.lat = position.y;
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
-            selectedAsset.marker.lonlat = lonlat;
+            selectedAsset.massTransitStop.getMarker().lonlat = lonlat;
             selectedAsset.directionArrow.move(lonlat);
             assetLayer.redraw();
         }
