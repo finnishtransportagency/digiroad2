@@ -103,16 +103,16 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3), bearing = Some(195)), List())._2 must equal (List("15"))
   }
 
-  it must "filter out newlines from text fields" in {
+  it must "filter out newlines and replace semicolons with commas in text fields" in {
     val testProperties = testAsset.propertyData.map { property =>
       property.publicId match {
         case "yllapitajan_tunnus" => property.copy(values = List(textPropertyValue("id\n")))
-        case "matkustajatunnus" => property.copy(values = List(textPropertyValue("matkustaja\ntunnus")))
+        case "matkustajatunnus" => property.copy(values = List(textPropertyValue("matkustaja\n;tunnus")))
         case "nimi_suomeksi" => property.copy(values = List(textPropertyValue("n\nimi\nsuomeksi")))
         case "nimi_ruotsiksi" => property.copy(values = List(textPropertyValue("\nnimi ruotsiksi\n")))
         case "liikennointisuunta" => property.copy(values = List(textPropertyValue("\nliikennointisuunta\n")))
         case "lisatiedot" => property.copy(values = List(textPropertyValue("\nlisatiedot")))
-        case "palauteosoite" => property.copy(values = List(textPropertyValue("palauteosoite\n")))
+        case "palauteosoite" => property.copy(values = List(textPropertyValue("palauteosoite\n; teksti")))
         case _ => property
       }
     }
@@ -121,9 +121,9 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val (validFrom: String, validTo: String) = assetValidityPeriod(asset)
 
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
-    csv must equal("5;id ;matkustaja tunnus;n imi suomeksi; nimi ruotsiksi ;374780.259160265;6677546.84962279;;;210;Etelä; liikennointisuunta ;1;1;1;0;;;Ei tiedossa;"
+    csv must equal("5;id ;matkustaja ,tunnus;n imi suomeksi; nimi ruotsiksi ;374780.259160265;6677546.84962279;;;210;Etelä; liikennointisuunta ;1;1;1;0;;;Ei tiedossa;"
       + created
-      + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite ")
+      + ";dr1conversion;" + validFrom + ";" + validTo + ";Liikennevirasto;235;Kauniainen; lisatiedot;palauteosoite , teksti")
   }
 
   private def createStop(stopType: Seq[Long]): AssetWithProperties = {

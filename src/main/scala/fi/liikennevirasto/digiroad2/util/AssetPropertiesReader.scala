@@ -46,7 +46,7 @@ trait AssetPropertiesReader {
   }
 
   private def sanitizePropertyDisplayValue(displayValue: Option[String]): Option[String] = {
-    displayValue.map { value => value.replace("\n", " ") }
+    displayValue.map { value => value.replace("\n", " ").replace(";", ",") }
   }
 
   private def sanitizedPropertyValues(propertyType: String, values: Seq[PropertyValue]): Seq[PropertyValue] = {
