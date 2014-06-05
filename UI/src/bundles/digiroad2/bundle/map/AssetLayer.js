@@ -33,20 +33,9 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpHandler = function(asset, x, y) {
         clickTimestamp = null;
-        // Opacity back
         asset.massTransitStop.getMarker().setOpacity(1);
         asset.massTransitStop.getMarker().actionMouseDown = false;
-        // Not need listeners anymore
         map.events.unregister("mouseup", map, mouseUpFunction);
-        // Moved update
-        if (!readOnly && assetIsMoving && (asset.massTransitStop.getMarker().actionDownX != x || asset.massTransitStop.getMarker().actionDownY != y)) {
-            eventbus.trigger('asset:moved', {
-                lon: asset.massTransitStop.getMarker().lonlat.lon,
-                lat: asset.massTransitStop.getMarker().lonlat.lat,
-                bearing: asset.data.bearing,
-                roadLinkId: asset.roadLinkId
-            });
-        }
         assetIsMoving = false;
     };
 
@@ -316,7 +305,6 @@ window.AssetLayer = function(map, roadLayer) {
 
     var moveSelectedAsset = function(pxPosition) {
         if (selectedAsset.massTransitStop.getMarker()) {
-            //var pxPosition = this._map.getPixelFromLonLat(new OpenLayers.LonLat(lon, lat));
             var busStopCenter = new OpenLayers.Pixel(pxPosition.x,pxPosition.y);
             var lonlat = map.getLonLatFromPixel(busStopCenter);
             var nearestLine = geometrycalculator.findNearestLine(roadLayer.features, lonlat.lon, lonlat.lat);
@@ -333,6 +321,12 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
             selectedAsset.massTransitStop.getMarker().lonlat = lonlat;
             selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
+            eventbus.trigger('asset:moved', {
+                lon: lonlat.lon,
+                lat: lonlat.lat,
+                bearing: angle,
+                roadLinkId: nearestLine.roadLinkId
+            });
             assetLayer.redraw();
         }
     };
