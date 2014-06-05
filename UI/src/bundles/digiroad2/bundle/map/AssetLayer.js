@@ -228,18 +228,18 @@ window.AssetLayer = function(map, roadLayer) {
             lat: projectionOnNearestLine.y
         };
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-        var data = {bearing: bearing,
-            position: assetPosition,
+        var data = {
+            bearing: bearing,
             validityDirection: 2,
             lon: projectionOnNearestLine.x,
             lat: projectionOnNearestLine.y,
-            roadLinkId: nearestLine.roadLinkId};
+            roadLinkId: nearestLine.roadLinkId
+        };
         var massTransitStop = new MassTransitStop(data);
         selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
             data: data,
             massTransitStop: massTransitStop};
         assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
-        var assetPosition = { lonLat: projectionLonLat, bearing: bearing, validityDirection: 2 };
         highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
         assetLayer.addMarker(selectedAsset.massTransitStop.getMarker(true));
@@ -265,10 +265,6 @@ window.AssetLayer = function(map, roadLayer) {
         var lonLat = { lon : asset.lon, lat : asset.lat};
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
-        asset.position = {
-            lonLat: lonLat,
-            heading: asset.bearing + 90
-        };
         highlightAsset(selectedAsset);
     };
 
