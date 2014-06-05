@@ -79,7 +79,7 @@ div.layerGroup:active {
   border: 0px solid #cbcbc0;
   border-bottom-width: 1px;
 
-  .busStopLayer {
+  .map-entity-selection {
     padding-left: 20px;
     padding-top: 13px;
     padding-bottom: 3px;
@@ -88,6 +88,13 @@ div.layerGroup:active {
     .busStopLayerCheckbox {
       float : left;
       padding-right: 7px;
+      margin-top: 5px;
+    }
+
+    .road-type-checkbox {
+      float : left;
+      padding-right: 7px;
+      margin-top: 4px;
     }
   }
 }
@@ -208,7 +215,7 @@ div.editMessage {
 }
 
 div.road-link-legend {
-
+  display:none;
   font-size: 11px;
 
   .road-link-type {
@@ -216,15 +223,16 @@ div.road-link-legend {
     margin-left: 20px;
 
     .entry {
-      width: 180px;
-      height: 10px;
-      margin-top: 6px;
+      width: 150px;
+      height: 5px;
+      margin-top: 13px;
       margin-left: 10px;
       margin-right: 10px;
       float: right;
       border: solid;
       border-width: 2px;
       border-radius: 10px;
+
     }
 
     .label {
@@ -248,15 +256,12 @@ div.road-link-legend {
     }
 
     .unknown {
-      background-color: #ff55dd;
-      border-color: #ff33d6;
+      background-color: #a4a4a2;
+      border-color: #646464;
     }
   }
 
   .separator {
     clear: both;
-    border: 0px solid #cbcbc9;
-    border-bottom-width: 1px;
-    height: 7px;
   }
 }
