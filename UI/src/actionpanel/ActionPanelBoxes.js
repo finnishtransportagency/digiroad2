@@ -233,13 +233,13 @@
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
       var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
 
-      var roadTypeSelected = function() {
-        var checked = $(this).is(':checked');
-        eventbus.trigger('road-type:selected', checked);
-        elements.expanded.find('.road-link-legend').toggle();
-        elements.editMode.find('.road-link-legend').toggle();
+      var roadTypeSelected = function(e) {
+        var checked = e.currentTarget.checked;
+        elements.expanded.find('.road-link-legend').toggle(checked);
+        elements.editMode.find('.road-link-legend').toggle(checked);
         expandedRoadTypeCheckboxSelector.prop("checked", checked);
         editModeRoadTypeCheckboxSelector.prop("checked", checked);
+        eventbus.trigger('road-type:selected', checked);
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
