@@ -101,9 +101,13 @@
       '      <div class="busStopLayerCheckbox"><input name="past" type="checkbox"></div>',
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
-      '  </div>',
+      '    <div class="busStopLayer">',
+      '      <div class="road-type-checkbox"><input name="road-types" type="checkbox"></div>',
+      '      V&auml;yl&auml;tyypit',
       roadTypeLegend,
-      '  <div class="panel-section">',      
+      '    </div>',
+      '  </div>',
+      '  <div class="panel-section">',
       '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
       '  </div>',      
       '</div>'].join('');
@@ -127,8 +131,12 @@
       '      <div class="busStopLayerCheckbox"><input name="past" type="checkbox"></div>',
       '      K&auml;yt&ouml;st&auml; poistuneet',
       '    </div>',
-      '  </div>',
+      '    <div class="busStopLayer">',
+      '      <div class="road-type-checkbox"><input name="road-types" type="checkbox"></div>',
+      '      V&auml;yl&auml;tyypit',
       roadTypeLegend,
+      '    </div>',
+      '  </div>',
       '  <div class="actionButtons" style="">',
       '    <div data-action="Select" class="actionButton actionPanelButtonSelect actionButtonActive">',
       '      <div class="actionPanelButtonSelectImage"></div>',
@@ -213,15 +221,29 @@
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       };
 
-      elements.expanded.find('input[type=checkbox]').change(validityPeriodChangeHandler);
-
-      elements.editMode.find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      elements.expanded.find('.busStopLayerCheckbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      elements.editMode.find('.busStopLayerCheckbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
 
       elements.collapsed.click(function() {
         elements.collapsed.hide();
         elements.expanded.show();
         eventbus.trigger('layer:selected', 'asset');
       });
+
+      var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
+      var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
+
+      var roadTypeSelected = function() {
+        var checked = $(this).is(':checked');
+        eventbus.trigger('road-type:selected', checked);
+        elements.expanded.find('.road-link-legend').toggle();
+        elements.editMode.find('.road-link-legend').toggle();
+        expandedRoadTypeCheckboxSelector.prop("checked", checked);
+        editModeRoadTypeCheckboxSelector.prop("checked", checked);
+      };
+
+      expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
+      editModeRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
     var bindExternalEventHandlers = function() {
