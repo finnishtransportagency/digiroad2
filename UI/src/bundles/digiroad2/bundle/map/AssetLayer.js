@@ -319,6 +319,8 @@ window.AssetLayer = function(map, roadLayer) {
             lonlat.lon = position.x;
             lonlat.lat = position.y;
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
+            selectedAsset.data.lon = lonlat.lon;
+            selectedAsset.data.lat = lonlat.lat;
             selectedAsset.massTransitStop.getMarker().lonlat = lonlat;
             selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
             eventbus.trigger('asset:moved', {
