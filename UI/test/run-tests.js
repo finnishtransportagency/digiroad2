@@ -10,7 +10,8 @@ require.config({
         'LinearAssetLayer':         '../src/bundles/digiroad2/bundle/map/LinearAssetLayer',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoomLevels',
-        'geometrycalculator':       '../src/utils/geometry-calculations'
+        'geometrycalculator':       '../src/utils/geometry-calculations',
+        'assetGrouping':            '../src/assetgrouping/asset-grouping'
     },
     shim: {
         'jquery': { exports: '$' },
@@ -31,6 +32,9 @@ require.config({
         },
         'geometrycalculator': {
             exports: 'geometrycalculator'
+        },
+        'assetGrouping': {
+            exports: 'assetGrouping'
         }
     },
     waitSeconds: 10
@@ -38,7 +42,8 @@ require.config({
 require(['lodash',
          'selected-asset-controller-spec',
          'linear-asset-layer-spec',
-         'geometry-calculations-spec'], function(lodash) {
+         'geometry-calculations-spec',
+         'asset-grouping-spec'], function(lodash) {
     window._ = lodash;
     mocha.checkLeaks();
     if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
