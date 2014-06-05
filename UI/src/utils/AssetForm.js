@@ -263,7 +263,7 @@
         dateutil.removeDatePickersFromDom();
     };
 
-    eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', function(asset){
+    eventbus.on('asset:fetched asset:created asset:initialized', function(asset){
         renderAssetForm(asset);
     });
 

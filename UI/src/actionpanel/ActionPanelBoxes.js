@@ -269,6 +269,8 @@
           elements.expanded.hide();
           elements.editMode.hide();
           elements.collapsed.show();
+        } else {
+            eventbus.trigger('application:readOnly', true);
         }
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');

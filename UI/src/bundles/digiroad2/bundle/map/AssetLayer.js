@@ -5,7 +5,7 @@ window.AssetLayer = function(map, roadLayer) {
     var backend = Backend;
     var readOnly = true;
     var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
-    var assetLayer = new OpenLayers.Layer.Markers('asset');
+    var assetLayer = new OpenLayers.Layer.Boxes('asset');
 
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
@@ -33,8 +33,6 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpHandler = function(asset) {
         clickTimestamp = null;
-        asset.massTransitStop.getMarker().setOpacity(1);
-        asset.massTransitStop.getMarker().actionMouseDown = false;
         map.events.unregister("mouseup", map, mouseUpFunction);
         assetIsMoving = false;
     };
@@ -42,7 +40,7 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseUp = function(asset) {
         return function(evt) {
             OpenLayers.Event.stop(evt);
-            mouseUpHandler(asset, evt.clientX, evt.clientY);
+            mouseUpHandler(asset);
         };
     };
 
@@ -60,11 +58,6 @@ window.AssetLayer = function(map, roadLayer) {
                     clickCoords = [evt.clientX, evt.clientY];
                     OpenLayers.Event.stop(evt);
                     selectedAsset = asset;
-                    // push marker up
-                    assetLayer.removeMarker(selectedAsset.massTransitStop.getMarker());
-                    assetLayer.addMarker(selectedAsset.massTransitStop.getMarker());
-                    // Opacity because we want know what is moving
-                    selectedAsset.massTransitStop.getMarker().setOpacity(0.6);
                     // Mouse need to be down until can be moved
                     selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
                     //Save original position
@@ -87,8 +80,9 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var insertAsset = function(assetData) {
-        var massTransitStop = new MassTransitStop(assetData);
-        massTransitStop.getDirectionArrow(true);
+        var massTransitStop = new MassTransitStop(assetData, map);
+        assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
+        // new bus stop marker
         var marker = massTransitStop.getMarker(true);
         var asset = {};
         asset.data = assetData;
@@ -109,7 +103,8 @@ window.AssetLayer = function(map, roadLayer) {
 
     var removeAssetFromMap = function(asset) {
         assetDirectionLayer.removeFeatures(asset.massTransitStop.getDirectionArrow());
-        assetLayer.removeMarker(asset.massTransitStop.getMarker());
+        var marker = asset.massTransitStop.getMarker();
+        assetLayer.removeMarker(marker);
     };
 
     var renderAssets = function(assetDatas) {
@@ -128,15 +123,15 @@ window.AssetLayer = function(map, roadLayer) {
             addAssetToLayers(assets[asset.id]);
             if (selectedAsset && selectedAsset.data.id == asset.id) {
               selectedAsset = assets[asset.id];
-              highlightAsset(selectedAsset);
             }
         });
-
     };
 
     var cancelCreate = function() {
-        removeOverlay();
-        removeAssetFromMap(selectedAsset);
+        if (selectedControl == 'Add' && selectedAsset.data.id === undefined) {
+            removeOverlay();
+            removeAssetFromMap(selectedAsset);
+        }
     };
 
     var updateAsset = function(asset) {
@@ -162,27 +157,9 @@ window.AssetLayer = function(map, roadLayer) {
         }
     };
 
-    var handleAssetCreated = function(asset) {
-        removeAssetFromMap(selectedAsset);
-        addNewAsset(asset);
-    };
-
     var handleAssetSaved = function(asset) {
         selectedAsset.data = asset;
         assets[asset.id] = selectedAsset;
-    };
-
-    var handleAssetFetched = function(assetData, keepPosition) {
-        if (assets[assetData.id]) {
-            removeAssetFromMap(assets[assetData.id]);
-            assets[assetData.id].data = assetData;
-            selectedAsset = assets[assetData.id];
-            highlightAsset(selectedAsset);
-        }
-        addNewAsset(assetData);
-        if (!keepPosition) {
-            eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
-        }
     };
 
     var handleAssetPropertyValueChanged = function(propertyData) {
@@ -197,19 +174,6 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.data.validityDirection = value;
             var validityDirection = (value == 3) ? 1 : -1;
             turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
-        } else if (propertyData.propertyData.publicId === 'pysakin_tyyppi'  ) {
-
-            var values = _.pluck(propertyData.propertyData.values, 'propertyValue');
-            selectedAsset.data.imageIds = _.map(values, function(v) {
-                return v + '_';
-            });
-            assetLayer.removeMarker(selectedAsset.massTransitStop.getMarker());
-            assetLayer.addMarker(selectedAsset.massTransitStop.getMarker(true));
-            var mouseClickFn = mouseClick(selectedAsset);
-            var mouseUpFn = mouseUp(selectedAsset);
-            var mouseDownFn = mouseDown(selectedAsset, mouseUpFn, mouseClickFn);
-            selectedAsset.massTransitStop.getMarker().events.register('mousedown', assetLayer, mouseDownFn);
-            assetLayer.redraw();
         }
     };
 
@@ -232,9 +196,8 @@ window.AssetLayer = function(map, roadLayer) {
             data: data,
             massTransitStop: massTransitStop};
         assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
-        highlightAsset(selectedAsset);
         selectedAsset.data.imageIds = [];
-        assetLayer.addMarker(selectedAsset.massTransitStop.getMarker(true));
+        assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
         eventbus.trigger('asset:placed', selectedAsset.data);
 
         var applyBlockingOverlays = function() {
@@ -243,7 +206,6 @@ window.AssetLayer = function(map, roadLayer) {
             overlay.followResizing(true);
             return overlay;
         };
-
         overlay = applyBlockingOverlays();
     };
 
@@ -257,35 +219,27 @@ window.AssetLayer = function(map, roadLayer) {
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
         addAssetToLayers(assets[asset.id]);
-        highlightAsset(selectedAsset);
     };
 
     var closeAsset = function() {
-        if (selectedAsset) {
-            unhighlightAsset(selectedAsset);
-        }
-        selectedAsset = null;
-    };
-
-    var unhighlightAsset = function(asset) {
-        var arrow = asset.massTransitStop.getDirectionArrow();
-        arrow.style.backgroundGraphic = null;
-        arrow.style.backgroundHeight = null;
-        arrow.style.backgroundWidth = null;
-        assetDirectionLayer.redraw();
+       selectedAsset = null;
     };
 
     var removeAssetsFromLayer = function() {
         assetDirectionLayer.removeAllFeatures();
-        assetLayer.clearMarkers();
+        assetLayer.setVisibility(false);
     };
 
-    var highlightAsset = function(asset) {
-        var arrow = asset.massTransitStop.getDirectionArrow();
-        arrow.style.backgroundGraphic = 'src/resources/digiroad2/bundle/assetlayer/images/hover.png';
-        arrow.style.backgroundHeight = 68;
-        arrow.style.backgroundWidth = 68;
-        assetDirectionLayer.redraw();
+    var handleAssetFetched = function(assetData, keepPosition) {
+        if (assets[assetData.id]) {
+            assets[assetData.id].data = assetData;
+            selectedAsset = assets[assetData.id];
+            selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
+            moveMarker(new OpenLayers.LonLat(assetData.lon, assetData.lat));
+        }
+        if (!keepPosition) {
+            eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
+        }
     };
 
     var moveSelectedAsset = function(pxPosition) {
@@ -306,16 +260,27 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
             selectedAsset.data.lon = lonlat.lon;
             selectedAsset.data.lat = lonlat.lat;
-            selectedAsset.massTransitStop.getMarker().lonlat = lonlat;
-            selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
+            //console.log(selectedAsset.massTransitStop.getMarker());
+            moveMarker(lonlat);
+
             eventbus.trigger('asset:moved', {
                 lon: lonlat.lon,
                 lat: lonlat.lat,
                 bearing: angle,
                 roadLinkId: nearestLine.roadLinkId
             });
-            assetLayer.redraw();
         }
+    };
+
+    var moveMarker = function(lonlat) {
+        selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
+        selectedAsset.massTransitStop.getMarker().bounds =  {
+            bottom: lonlat.lat,
+            left: lonlat.lon,
+            right: lonlat.lon,
+            top: lonlat.lat
+        };
+        assetLayer.redraw();
     };
 
     var toolSelectionChange = function(action) {
@@ -328,7 +293,6 @@ window.AssetLayer = function(map, roadLayer) {
     }, this);
     eventbus.on('asset:selected', function(data, keepPosition) {
         selectedAsset = assets[data.id];
-        highlightAsset(selectedAsset);
         if (!keepPosition) {
             eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
         }
@@ -337,9 +301,11 @@ window.AssetLayer = function(map, roadLayer) {
     eventbus.on('assetPropertyValue:saved', updateAsset, this);
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
     eventbus.on('asset:saved', handleAssetSaved, this);
-    eventbus.on('asset:created', handleAssetCreated, this);
     eventbus.on('asset:fetched', handleAssetFetched, this);
     eventbus.on('asset:created', removeOverlay, this);
+    eventbus.on('asset:rendered', function() {
+        assetLayer.redraw();
+    }, this);
     eventbus.on('asset:cancelled', cancelCreate, this);
     eventbus.on('asset:closed', closeAsset, this);
     eventbus.on('application:readOnly', function(value) {
@@ -403,7 +369,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     $('#mapdiv').on('mouseleave', function(e) {
         if (assetIsMoving === true) {
-            mouseUpHandler(selectedAsset, e.clientX, e.clientY);
+            mouseUpHandler(selectedAsset);
         }
     });
 };
