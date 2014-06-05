@@ -62,7 +62,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
                 this._selectControl.unselectAll();
             }, this);
             eventbus.on('road-type:selected', function(selected){
-                if (selected === true) {
+                if (selected) {
                     var roadLinkTypeStyleLookup = {
                         PrivateRoad: { strokeColor: "#00ccdd" },
                         Street: { strokeColor: "#11bb00" },
@@ -151,7 +151,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         changeRoadsWidthByZoomLevel : function() {
             var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
             var roadWidth = widthBase * widthBase;
-            if (this._roadTypeSelected === true) {
+            if (this._roadTypeSelected) {
                 this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
                 this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
             } else {
