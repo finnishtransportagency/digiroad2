@@ -31,7 +31,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
-    var mouseUpHandler = function(asset, x, y) {
+    var mouseUpHandler = function(asset) {
         clickTimestamp = null;
         asset.massTransitStop.getMarker().setOpacity(1);
         asset.massTransitStop.getMarker().actionMouseDown = false;
@@ -223,10 +223,6 @@ window.AssetLayer = function(map, roadLayer) {
         var features = roadLayer.features;
         var nearestLine = geometrycalculator.findNearestLine(features, selectedLon, selectedLat);
         var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
-        var projectionLonLat = {
-            lon: projectionOnNearestLine.x,
-            lat: projectionOnNearestLine.y
-        };
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         var data = {
             bearing: bearing,
@@ -262,7 +258,6 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var addNewAsset = function(asset) {
-        var lonLat = { lon : asset.lon, lat : asset.lat};
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
         highlightAsset(selectedAsset);
