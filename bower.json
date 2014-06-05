@@ -10,6 +10,7 @@
     "tests"
   ],
   "dependencies": {
+    "requirejs": "2.1.13",
     "lodash": "2.3.0",
     "jquery": "1.11.0",
     "jquery-migrate": "1.2.1",
