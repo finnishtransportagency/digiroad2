@@ -54,12 +54,24 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  private def validatePresenceOf(requiredProperties: Set[String], properties: Seq[SimpleProperty]): Unit = {
+    val providedProperties = properties.map { property =>
+      property.publicId
+    }.toSet
+    val missingProperties = requiredProperties -- providedProperties
+    if (!missingProperties.isEmpty) {
+      throw new IllegalArgumentException("Missing required properties: " + missingProperties.mkString(", "))
+    }
+  }
+
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
+    validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId), definedProperties)
     Database.forDataSource(ds).withDynTransaction {
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
-      val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, properties)
+      val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, definedProperties)
       eventbus.publish("asset:saved", (getMunicipalityName(roadLinkId), asset))
       asset
     }
