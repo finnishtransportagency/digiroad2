@@ -12,6 +12,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         _layerType: 'map',
         _unknownAssetType: '99',
         _selectedValidityPeriods: ['current'],
+        _roadTypeSelected : false,
         _visibilityZoomLevelForRoads : 10,
         _centerMarkerLayer : null,
         getName: function () {
@@ -60,6 +61,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             eventbus.on('asset:unselected validityPeriod:changed layer:selected', function(){
                 this._selectControl.unselectAll();
             }, this);
+            eventbus.on('road-type:selected', function(selected){
+                if (selected === true) {
+                    var roadLinkTypeStyleLookup = {
+                        PrivateRoad: { strokeColor: "#00ccdd" },
+                        Street: { strokeColor: "#11bb00" },
+                        Road: { strokeColor: "#ff0000" }
+                    };
+                    this.roadLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+                } else {
+                    this.roadLayer.styleMap.styles.default.rules = [];
+                }
+                this._roadTypeSelected = selected;
+                this.changeRoadsWidthByZoomLevel();
+                this.roadLayer.redraw();
+            }, this);
+
             eventbus.on('tool:changed', function(action) {
                 var cursor = {'Select' : 'default', 'Add' : 'crosshair', 'Remove' : 'no-drop'};
                 $('.olMap').css('cursor', cursor[action]);
@@ -134,8 +151,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         changeRoadsWidthByZoomLevel : function() {
             var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
             var roadWidth = widthBase * widthBase;
-            this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
-            this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
+            if (this._roadTypeSelected === true) {
+                this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
+                this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
+            } else {
+                this.roadLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+                this.roadLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+            }
         },
         mapMovedHandler: function(mapState) {
             if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
