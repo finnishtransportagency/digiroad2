@@ -1,49 +1,178 @@
 @actionpanel-image-path: "../src/resources/digiroad2/bundle/actionpanel/images";
 
-.panel-section {
-  padding: 10px;
-  border-bottom: 1px solid @gray-light-2;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.panelControl {
-  padding: 14 12 11;
-  border: 0px solid;
-  border-bottom-width: 1px;
-  border-right-width: 1px;
-  cursor: pointer;
-}
-
-div.panelControlLine {
-  background-color: #ffffff;
-  height: 2px;
-  margin-bottom: 3px;
-}
-
-.actionPanel {
-  width: 280px;
+.panel {
   position: relative;
-  background-color: #efefed;
-  border: 0px solid #cbcbc9;
-  border-bottom-width: 1px;
-  button.readOnlyMode {
-    background-color: #196eb8;
-    border-color: #236085;
+  width: 200px;
+  background-color: @gray-lighter;
+
+  .panel-header {
+    padding: 10px;
+    font-size: @font-size-large;
+    line-height: @line-height-modifier * 3;
+    color: #fff;
+    background-color: @gray-darker;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @gray-darker-2;
+    }
+
+    &.expanded {
+      background-color: @gray-dark-2;
+      cursor: inherit;
+    }
+
+    &.edit {
+      background-color: @blue;
+      cursor: inherit;
+    }
   }
 
-  button.editMode {
-    background-color: #979793;
+  .panel-section {
+    padding: 10px;
+    border-bottom: 1px solid @gray-light-2;
+    color: @gray-darker;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }  
+}
+
+.panel-legend {
+  .legend-entry {
+    .label {
+      display: block;
+      font-size: @font-size-xs;
+      line-height: @line-height-base;
+    }
+
+    .symbol {
+      margin-bottom: 5px;
+    }
+
+    .linear {
+      width: 100%;
+      height: 8px;
+      border: 1px solid @gray;
+      border-radius: 4px;
+      background-color: @gray-light;
+      .box-sizing(border-box);
+    }
   }
 }
 
-.actionPanelClosed {
-  width: 0px;
-  height: 0px;
+.road-link-legend {
   display: none;
+
+  .legend-entry {
+    .road {
+      .linear-asset-color(@linear-asset-4);
+    }
+
+    .street {
+      .linear-asset-color(@linear-asset-3);
+    }
+
+    .private-road {
+      .linear-asset-color(@linear-asset-1);
+    }
+  }
 }
+
+.panel-actions {
+  .clearfix();
+
+  .action {
+    float: left;
+    position: relative;
+    width: 26px;
+    height: 26px;
+    margin-right: 5px;
+    border: 1px solid transparent;
+    border-radius: @border-radius-small;
+    cursor: pointer;
+    .box-sizing(border-box);
+  
+    .icon-add,
+    .icon-select {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin: -13px 0 0 -13px;
+      width: 26px;
+      height: 26px;
+
+      .shape {
+        fill: @gray-dark;
+      }
+    }
+  }
+
+  .active {
+    border-color: @blue;
+    background-color: @blue-lightest;
+
+    .icon-add,
+    .icon-select {
+      .shape {
+        fill: @blue-darker;
+      }
+    }    
+  }
+}
+
+/*div.road-link-legend {
+  display:none;
+  font-size: 11px;
+
+  .road-link-type {
+    clear: both;
+    margin-left: 20px;
+
+    .entry {
+      width: 150px;
+      height: 5px;
+      margin-top: 13px;
+      margin-left: 10px;
+      margin-right: 10px;
+      float: right;
+      border: solid;
+      border-width: 2px;
+      border-radius: 10px;
+
+    }
+
+    .label {
+      float : left;
+      margin-top: 7px;
+    }
+
+    .road {
+      background-color: #ff0000;
+      border-color: #ee0000;
+    }
+
+    .street {
+      background-color: #11bb00;
+      border-color: #0e9900;
+    }
+
+    .private-road {
+      background-color: #00ccdd;
+      border-color: #00adbb;
+    }
+
+    .unknown {
+      background-color: #a4a4a2;
+      border-color: #646464;
+    }
+  }
+
+  .separator {
+    clear: both;
+  }
+}*/
 
 div.layerGroup {
   height: 41px;
@@ -212,56 +341,4 @@ div.editMessage {
   left: 40%;
   font-size: 11px;
   border: 2px #00539c;
-}
-
-div.road-link-legend {
-  display:none;
-  font-size: 11px;
-
-  .road-link-type {
-    clear: both;
-    margin-left: 20px;
-
-    .entry {
-      width: 150px;
-      height: 5px;
-      margin-top: 13px;
-      margin-left: 10px;
-      margin-right: 10px;
-      float: right;
-      border: solid;
-      border-width: 2px;
-      border-radius: 10px;
-
-    }
-
-    .label {
-      float : left;
-      margin-top: 7px;
-    }
-
-    .road {
-      background-color: #ff0000;
-      border-color: #ee0000;
-    }
-
-    .street {
-      background-color: #11bb00;
-      border-color: #0e9900;
-    }
-
-    .private-road {
-      background-color: #00ccdd;
-      border-color: #00adbb;
-    }
-
-    .unknown {
-      background-color: #a4a4a2;
-      border-color: #646464;
-    }
-  }
-
-  .separator {
-    clear: both;
-  }
 }

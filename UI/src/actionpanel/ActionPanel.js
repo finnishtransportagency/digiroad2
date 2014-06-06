@@ -1,19 +1,19 @@
 (function(ActionPanelBoxes) {
-  var panelControl = ['<div class="panelLayerGroup"></div>'].join('');
+  var panelControl = ['<div class="action-panels"></div>'].join('');
 
-  $('#maptools').append(panelControl);
+  $('#map-tools').append(panelControl);
 
   var assetBox = new ActionPanelBoxes.AssetBox();
-  $('.panelLayerGroup').append(assetBox.element);
+  $('.action-panels').append(assetBox.element);
 
   var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
-  $('.panelLayerGroup').append(linearAssetBox.element);
+  $('.action-panels').append(linearAssetBox.element);
 
   Backend.getUserRoles();
 
-  // FIXME: This definitely doesn't belong here (top bar or somewhere else)
-  var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');
-  $('.container').append(editMessage.hide());
+  // FIXME: Message now appended to top bar, but should this code live somewhere else?
+  var editMessage = $('<div class="action-state">Olet muokkaustilassa</div>');
+  $('#header').append(editMessage.hide());
 
   var handleEditMessage = function(readOnly) {
     if (readOnly) {
@@ -29,10 +29,6 @@
 
   eventbus.on('application:readOnly', function() {
     eventbus.trigger('tool:changed', 'Select');
-  });
-
-  $('.panelControl').on('click', function() {
-    $('.panelLayerGroup').toggle();
   });
 
   eventbus.on('application:readOnly', handleEditMessage);

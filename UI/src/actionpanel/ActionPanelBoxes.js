@@ -1,19 +1,17 @@
 (function(ActionPanelBoxes) {
   ActionPanelBoxes.LinearAssetBox = function() {
     var collapsedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup">',
-      '    <div class="layerGroupImg_linearAsset layerGroupImg_unselected_linearAsset"></div>',
-      '    <div class="layerGroupLabel">Nopeusrajoitukset</div>',
-      '  </div>',
-      '</div>'].join('');
+      '<div class="panel">',
+      '  <header class="panel-header">',
+      '    Nopeusrajoitukset',
+      '  </header>',
+      '</div>'].join('');  
 
     var expandedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode">',
-      '    <div class="layerGroupImg_linearAsset layerGroupImg_selected_linearAsset"></div>',
-      '    <div class="layerGroupLabel">Nopeusrajoitukset</div>',
-      '  </div>',
+      '<div class="panel">',
+      '  <header class="panel-header expanded">',
+      '    Nopeusrajoitukset',
+      '  </header>',
       '</div>'].join('');
 
     var elements = {
@@ -45,7 +43,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div/>')
+    this.element = $('<div class="panel-group"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
@@ -61,89 +59,94 @@
   ActionPanelBoxes.AssetBox = function() {
 
     var roadTypeLegend = [
-        '  <div class="road-link-legend">',
-        '    <div class="road-link-type">',
+        '  <div class="panel-section panel-legend road-link-legend">',
+        '    <div class="legend-entry">',
         '      <div class="label">Maantie</div>',
-        '      <div class="entry road"/>',
+        '      <div class="symbol linear road"/>',
         '   </div>',
-        '   <div class="road-link-type">',
+        '   <div class="legend-entry">',
         '     <div class="label">Katu</div>',
-        '     <div class="entry street"/>',
+        '     <div class="symbol linear street"/>',
         '   </div>',
-        '   <div class="road-link-type">',
+        '   <div class="legend-entry">',
         '     <div class="label">Yksityistie</div>',
-        '     <div class="entry private-road"/>',
+        '     <div class="symbol linear private-road"/>',
         '   </div>',
-        '   <div class="road-link-type">',
+        '   <div class="legend-entry">',
         '     <div class="label">Ei tiedossa</div>',
-        '     <div class="entry unknown"/>',
+        '     <div class="symbol linear unknown"/>',
         '   </div>',
-        '   <div class="separator"/>',
         '  </div>'
     ].join('');
 
     var expandedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode">',
-      '    <div class="layerGroupImg_asset layerGroupImg_selected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
+      '<div class="panel">',
+      '  <header class="panel-header expanded">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
+      '  <div class="panel-section">',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="current" type="checkbox" checked> Voimassaolevat',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="future" type="checkbox"> Tulevat',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="past" type="checkbox"> K&auml;yt&ouml;st&auml; poistuneet',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox road-type-checkbox">',
+      '      <label>',
+      '        <input name="road-types" type="checkbox"> Omistaja',
+      '      </label>',
+      '    </div>',
       '  </div>',
-      '  <div class="layerGroupLayers" style="display: block;">',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="current" type="checkbox" checked=""></div>',
-      '      Voimassaolevat',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="future" type="checkbox"></div>',
-      '      Tulevat',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="past" type="checkbox"></div>',
-      '      K&auml;yt&ouml;st&auml; poistuneet',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="road-type-checkbox"><input name="road-types" type="checkbox"></div>',
-      '      V&auml;yl&auml;tyypit',
-      roadTypeLegend,
-      '    </div>',
-      '  </div>',
+      roadTypeLegend,        
       '  <div class="panel-section">',
       '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
       '  </div>',      
       '</div>'].join('');
 
     var editModeTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode layerGroupEditMode">',
-      '    <div class="layerGroupImg_asset layerGroupImg_selected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
+      '<div class="panel">',
+      '  <header class="panel-header edit">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
+      '  <div class="panel-section">',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="current" type="checkbox" checked> Voimassaolevat',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="future" type="checkbox"> Tulevat',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox">',
+      '      <label>',
+      '        <input name="past" type="checkbox"> K&auml;yt&ouml;st&auml; poistuneet',
+      '      </label>',
+      '    </div>',
+      '    <div class="checkbox road-type-checkbox">',
+      '      <label>',
+      '        <input name="road-types" type="checkbox"> Omistaja',
+      '      </label>',
+      '    </div>',
       '  </div>',
-      '  <div class="layerGroupLayers" style="display: block;">',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="current" type="checkbox" checked=""></div>',
-      '      Voimassaolevat',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="future" type="checkbox"></div>',
-      '      Tulevat',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="busStopLayerCheckbox"><input name="past" type="checkbox"></div>',
-      '      K&auml;yt&ouml;st&auml; poistuneet',
-      '    </div>',
-      '    <div class="map-entity-selection">',
-      '      <div class="road-type-checkbox"><input name="road-types" type="checkbox"></div>',
-      '      V&auml;yl&auml;tyypit',
       roadTypeLegend,
+      '  <div class="panel-section panel-actions">',
+      '    <div data-action="Select" class="action select active">',
+      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>',
       '    </div>',
-      '  </div>',
-      '  <div class="actionButtons" style="">',
-      '    <div data-action="Select" class="actionButton actionPanelButtonSelect actionButtonActive">',
-      '      <div class="actionPanelButtonSelectImage"></div>',
-      '    </div>',
-      '    <div data-action="Add" class="actionButton actionPanelButtonAdd">',
-      '      <div class="actionPanelButtonAddImage"></div>',
-      '    </div>',
+      '    <div data-action="Add" class="action add">',
+      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-add" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><polygon class="shape" points="19,12 14,12 14,7 12,7 12,12 7,12 7,14 12,14 12,19 14,19 14,14 19,14 "/></svg>',
+      '    </div>',          
       '  </div>',
       '  <div class="panel-section">',
       '    <button class="action-mode-btn read-only-btn btn btn-secondary btn-block" style="display: none;">Siirry katselutilaan</button>',
@@ -151,19 +154,18 @@
       '</div>'].join('');
 
     var collapsedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup">',
-      '    <div class="layerGroupImg_asset layerGroupImg_unselected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
-      '  </div>',
-      '</div>'].join('');
+      '<div class="panel">',
+      '  <header class="panel-header">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
+      '</div>'].join('');        
 
     var elements = {
       collapsed: $(collapsedTemplate).hide(),
       expanded: $(expandedTemplate),
       editMode: $(editModeTemplate).hide()
     };
-    var actionButtons = elements.editMode.find('.actionButtons .actionButton');
+    var actionButtons = elements.editMode.find('.panel-actions .action');
 
     var validityPeriods = {
       current: true,
@@ -190,8 +192,8 @@
         }
         elements.editMode.hide();
         elements.expanded.show();
-        actionButtons.removeClass('actionButtonActive');
-        actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        actionButtons.filter('.select').addClass('active');
         eventbus.trigger('application:readOnly', true);
       });
 
@@ -202,8 +204,8 @@
         var el = $(this);
         var action = el.attr('data-action');
 
-        actionButtons.removeClass('actionButtonActive');
-        el.addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        el.addClass('active');
 
         eventbus.trigger('tool:changed', action);
       });
@@ -221,8 +223,8 @@
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       };
 
-      elements.expanded.find('.busStopLayerCheckbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
-      elements.editMode.find('.busStopLayerCheckbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      elements.editMode.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
 
       elements.collapsed.click(function() {
         elements.collapsed.hide();
@@ -268,8 +270,8 @@
           elements.editMode.hide();
           elements.collapsed.show();
         }
-        actionButtons.removeClass('actionButtonActive');
-        actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        actionButtons.filter('.select').addClass('active');
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {
@@ -284,7 +286,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div/>')
+    this.element = $('<div class="panel-group"/>')
       .append(elements.collapsed)
       .append(elements.expanded)
       .append(elements.editMode);
