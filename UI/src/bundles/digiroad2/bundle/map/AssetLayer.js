@@ -50,7 +50,7 @@ window.AssetLayer = function(map, roadLayer) {
         return function(evt) {
             if (selectedControl === 'Select') {
                 var anotherAssetHasBeenModified = function() {
-                    return (selectedAsset && selectedAsset.data.id !== asset.data.id && selectedAssetModel.isDirty());
+                    return (selectedAssetModel.exists() && selectedAsset.data.id !== asset.data.id && selectedAssetModel.isDirty());
                 };
 
                 if (anotherAssetHasBeenModified()) {

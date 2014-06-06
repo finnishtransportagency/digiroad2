@@ -138,12 +138,17 @@
             eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData});
         };
 
+        var exists = function() {
+            return !_.isEmpty(currentAsset);
+        };
+
         return {
             reset: reset,
             save: save,
             isDirty: function() { return assetHasBeenModified; },
             setProperty: setProperty,
-            cancel: cancel
+            cancel: cancel,
+            exists: exists
         };
     };
 
