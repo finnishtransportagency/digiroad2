@@ -77,7 +77,7 @@
 
         eventbus.on('validityPeriod:changed', function(validityPeriods) {
             if (currentAsset && !_.contains(validityPeriods, currentAsset.validityPeriod)) {
-                reset();
+                close();
             }
         });
 
