@@ -133,7 +133,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
                     localizedName: 'Pysäkin tyyppi',
                     propertyType: 'multiple_choice',
                     propertyUiIndex: 90,
-                    propertyValue: '<div data-publicId="pysakin_tyyppi" name="pysakin_tyyppi" class="featureattributeChoice"><input  type="checkbox" value="5"></input><label for="pysakin_tyyppi_5">Virtuaalipysäkki</label><br/><input  type="checkbox" value="1"></input><label for="pysakin_tyyppi_1">Raitiovaunu</label><br/><input checked  type="checkbox" value="2"></input><label for="pysakin_tyyppi_2">Linja-autojen paikallisliikenne</label><br/><input  type="checkbox" value="3"></input><label for="pysakin_tyyppi_3">Linja-autojen kaukoliikenne</label><br/><input  type="checkbox" value="4"></input><label for="pysakin_tyyppi_4">Linja-autojen pikavuoro</label><br/></div>',
+                    propertyValue: '<div data-publicId="pysakin_tyyppi" name="pysakin_tyyppi" class="featureattributeChoice"><input  type="checkbox" value="5"></input><label for="pysakin_tyyppi_5">Virtuaalipysäkki</label><br/><input  type="checkbox" value="1"/><label for="pysakin_tyyppi_1">Raitiovaunu</label><br/><input checked  type="checkbox" value="2"/><label for="pysakin_tyyppi_2">Linja-autojen paikallisliikenne</label><br/><input  type="checkbox" value="3"/><label for="pysakin_tyyppi_3">Linja-autojen kaukoliikenne</label><br/><input  type="checkbox" value="4"/><label for="pysakin_tyyppi_4">Linja-autojen pikavuoro</label><br/></div>',
                     publicId: 'pysakin_tyyppi',
                     required: true,
                     values: [{
