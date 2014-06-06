@@ -120,10 +120,9 @@ window.AssetLayer = function(map, roadLayer) {
               return;
             }
             assets = assets || {};
-            if (assets[asset.id]) {
-              removeAssetFromMap(assets[asset.id]);
+            if (!assets[asset.id]) {
+              assets[asset.id] = insertAsset(asset);
             }
-            assets[asset.id] = insertAsset(asset);
             if (selectedAsset && selectedAsset.data.id == asset.id) {
               selectedAsset = assets[asset.id];
               highlightAsset(selectedAsset);
