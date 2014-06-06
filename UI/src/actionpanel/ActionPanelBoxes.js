@@ -139,14 +139,14 @@
       '      </label>',
       '    </div>',
       '  </div>',
-      roadTypeLegend,        
-      '  <div class="actionButtons" style="">',
-      '    <div data-action="Select" class="actionButton actionPanelButtonSelect actionButtonActive">',
-      '      <div class="actionPanelButtonSelectImage"></div>',
+      roadTypeLegend,
+      '  <div class="panel-section panel-actions">',
+      '    <div data-action="Select" class="action select active">',
+      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>',
       '    </div>',
-      '    <div data-action="Add" class="actionButton actionPanelButtonAdd">',
-      '      <div class="actionPanelButtonAddImage"></div>',
-      '    </div>',
+      '    <div data-action="Add" class="action add">',
+      '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-add" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><polygon class="shape" points="19,12 14,12 14,7 12,7 12,12 7,12 7,14 12,14 12,19 14,19 14,14 19,14 "/></svg>',
+      '    </div>',          
       '  </div>',
       '  <div class="panel-section">',
       '    <button class="action-mode-btn read-only-btn btn btn-secondary btn-block" style="display: none;">Siirry katselutilaan</button>',
@@ -165,7 +165,7 @@
       expanded: $(expandedTemplate),
       editMode: $(editModeTemplate).hide()
     };
-    var actionButtons = elements.editMode.find('.actionButtons .actionButton');
+    var actionButtons = elements.editMode.find('.panel-actions .action');
 
     var validityPeriods = {
       current: true,
@@ -192,8 +192,8 @@
         }
         elements.editMode.hide();
         elements.expanded.show();
-        actionButtons.removeClass('actionButtonActive');
-        actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        actionButtons.filter('.select').addClass('active');
         eventbus.trigger('application:readOnly', true);
       });
 
@@ -204,8 +204,8 @@
         var el = $(this);
         var action = el.attr('data-action');
 
-        actionButtons.removeClass('actionButtonActive');
-        el.addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        el.addClass('active');
 
         eventbus.trigger('tool:changed', action);
       });
@@ -270,8 +270,8 @@
           elements.editMode.hide();
           elements.collapsed.show();
         }
-        actionButtons.removeClass('actionButtonActive');
-        actionButtons.filter('.actionPanelButtonSelect').addClass('actionButtonActive');
+        actionButtons.removeClass('active');
+        actionButtons.filter('.select').addClass('active');
       }, this);
 
       eventbus.on('roles:fetched', function(roles) {

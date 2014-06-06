@@ -80,6 +80,48 @@
   }
 }
 
+.panel-actions {
+  .clearfix();
+
+  .action {
+    float: left;
+    position: relative;
+    width: 26px;
+    height: 26px;
+    margin-right: 5px;
+    border: 1px solid transparent;
+    border-radius: @border-radius-small;
+    cursor: pointer;
+    .box-sizing(border-box);
+  
+    .icon-add,
+    .icon-select {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin: -13px 0 0 -13px;
+      width: 26px;
+      height: 26px;
+
+      .shape {
+        fill: @gray-dark;
+      }
+    }
+  }
+
+  .active {
+    border-color: @blue;
+    background-color: @blue-lightest;
+
+    .icon-add,
+    .icon-select {
+      .shape {
+        fill: @blue-darker;
+      }
+    }    
+  }
+}
+
 /*div.road-link-legend {
   display:none;
   font-size: 11px;
