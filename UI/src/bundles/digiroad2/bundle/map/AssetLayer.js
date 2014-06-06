@@ -49,11 +49,8 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             if (selectedControl === 'Select') {
-                var anotherAssetHasBeenModified = function() {
-                    return (selectedAssetModel.exists() && selectedAsset.data.id !== asset.data.id && selectedAssetModel.isDirty());
-                };
-
-                if (anotherAssetHasBeenModified()) {
+                var changeSuccess = selectedAssetModel.change(asset.data);
+                if (!changeSuccess) {
                     new Confirm();
                 } else {
                     clickTimestamp = new Date().getTime();

@@ -67,7 +67,7 @@
           changedProps = [];
           assetHasBeenModified = false;
           eventbus.trigger('asset:cancelled');
-        }
+        };
 
         eventbus.on('application:readOnly', function(){
            if (currentAsset.id) {
@@ -89,34 +89,35 @@
            currentAsset.id = asset.id;
         });
 
-        eventbus.on('asset:fetched', function(asset) {
-            // TODO: copy paste
+        var open = function(asset) {
             var transformPropertyData = function(propertyData) {
-                var transformValues = function(publicId, values) {
-                    var transformValue = function(value) {
-                        return {
-                            propertyValue: value.propertyValue,
-                            propertyDisplayValue: publicId.publicId
-                        };
-                    };
-                    return _.map(values.values, transformValue);
+              var transformValues = function(publicId, values) {
+                var transformValue = function(value) {
+                  return {
+                    propertyValue: value.propertyValue,
+                      propertyDisplayValue: publicId.publicId
+                  };
                 };
-                var transformProperty = function(property) {
-                    return _.merge(
-                        {},
-                        _.pick(property, 'publicId'),
-                        {
-                            values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
-                        });
-                };
-                return {
-                    properties: _.map(propertyData.propertyData, transformProperty)
-                };
+                return _.map(values.values, transformValue);
+              };
+              var transformProperty = function(property) {
+                return _.merge(
+                    {},
+                    _.pick(property, 'publicId'),
+                    {
+                      values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
+                    });
+              };
+              return {
+                properties: _.map(propertyData.propertyData, transformProperty)
+              };
             };
             currentAsset.id = asset.id;
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
             currentAsset.validityPeriod = asset.validityPeriod;
-        });
+        };
+
+        eventbus.on('asset:fetched', open, this);
 
         var save = function() {
             if(currentAsset.id === undefined){
@@ -142,13 +143,22 @@
             return !_.isEmpty(currentAsset);
         };
 
+        var change = function(asset) {
+          if (exists() && currentAsset.id !== asset.id && assetHasBeenModified) {
+            return false;
+          }
+          open(asset);
+          return true;
+        };
+
         return {
             reset: reset,
             save: save,
             isDirty: function() { return assetHasBeenModified; },
             setProperty: setProperty,
             cancel: cancel,
-            exists: exists
+            exists: exists,
+            change: change
         };
     };
 
