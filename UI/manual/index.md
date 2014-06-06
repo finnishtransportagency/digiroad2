@@ -130,10 +130,21 @@ Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-3.2 Joukkoliikenteen pys&auml;kkien valinta
+3.2 Tielinkit
+-------------
+
+Tielinkeille saa v&auml;rill&auml; korostetun v&auml;yl&auml;tyypin n&auml;kyviin valitsemalla "Joukkoliikenteen pysäkit"-valikosta (1) V&auml;yl&auml;tyypit. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
+
+V&auml;yl&auml;tyyppi kertoo tielinkin omistajasta. Maantiet omistaa valtio. Kadut omistaa kunta, jonka alueella katu on. Yksityistiet omistaa yksityiset tahot: tiekunta, yksityishenkil&ouml;, yritys tms.
+
+![V&auml;yl&auml;tyyppi](k22.JPG)
+
+_V&auml;yl&auml;tyypit._
+
+3.3 Joukkoliikenteen pys&auml;kkien valinta
 --------------------------------------
 
-Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; klikkaamalla "Joukkoliikenteen pys&auml;kit"-painiketta (1). Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa. Joukkoliikenteen pys&auml;kit -paletti sulkeutuu painamalla vasemmassa yl&auml;kulmassa olevaa kuvaketta.
+Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; klikkaamalla "Joukkoliikenteen pys&auml;kit"-painiketta (1). Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
 Joukkoliikenteen pys&auml;kit n&auml;kyv&auml;t vain tarpeeksi tarkalla mittakaavatasolla, joka on 1:20 000 tai tarkempi (9). Sovellus ilmoittaa, kun mittakaavataso on liian ep&auml;tarkka pys&auml;kkien n&auml;kymiselle. Mittakaavataso pys&auml;kkien n&auml;kymiselle on sama sek&auml; katselu- ett&auml; muokkaustilassa.
 
@@ -141,7 +152,7 @@ Joukkoliikenteen pys&auml;kit n&auml;kyv&auml;t vain tarpeeksi tarkalla mittakaa
 
 _Joukkoliikenteen pys&auml;kkien valinta._
 
-3.2.1 Joukkoliikenteen pys&auml;kkien haku
+3.3.1 Joukkoliikenteen pys&auml;kkien haku
 -------------------------------------
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin kansallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
@@ -154,7 +165,7 @@ miss&auml; numerosarja 95374 on pys&auml;kin kansallinen ID. Toiminto tarkentaa 
 
 _Joukkoliikenteen pys&auml;kkien haku._
 
-3.3 Nopeusrajoitusten valinta
+3.4 Nopeusrajoitusten valinta
 -----------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset klikkaamalla "Nopeusrajoitukset"-painiketta (2). Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Nopeusrajoitukset on visualisoitu purpuran punaisella v&auml;rill&auml; tielinkeille.
@@ -264,7 +275,7 @@ __Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;.
 __Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
 __Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
-__Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille.
+__Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille. Erikoistapauksia varten (esim. uudenmaan ELY).
 __Matkustajatunnus:__ Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.
 __Maastokoordinaatti X:__ Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.
 __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.
@@ -285,7 +296,7 @@ __Esteett&ouml;myys liikuntarajoitteiselle:__ Liikuntarajoitteisen henkil&ouml;n
 __Saattomahdollisuus henkil&ouml;autolla:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
 __Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;.
 __Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.
-__Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
+__Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto. Erikoistapauksia varten (esim. uudenmaan ELY).
 __Palauteosoite:__ Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.
 __Lis&auml;tiedot:__ Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".
 

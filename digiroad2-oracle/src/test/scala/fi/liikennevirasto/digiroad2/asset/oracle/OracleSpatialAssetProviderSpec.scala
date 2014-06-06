@@ -72,7 +72,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     try {
-      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
       newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
@@ -90,7 +90,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
     try {
-      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
       newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe "99"
     } finally {
       deleteCreatedTestAsset()
@@ -108,7 +108,9 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
           existingAsset.roadLinkId,
           180,
           AssetCreator,
-          List(SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10")))))
+          List(
+            SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10"))),
+            SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
@@ -137,8 +139,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
           existingAsset.roadLinkId,
           180,
           AssetCreator,
-          List(SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
-               SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10")))))
+          List(
+            SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
+            SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10"))),
+            SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
       fail("Should have thrown an exception")
     } catch {
       case e: SQLIntegrityConstraintViolationException =>

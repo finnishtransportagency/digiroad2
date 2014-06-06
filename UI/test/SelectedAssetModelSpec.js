@@ -1,6 +1,6 @@
-define(['chai', 'SelectedAssetController'], function(chai) {
+define(['chai', 'SelectedAssetModel'], function(chai) {
     var assert = chai.assert;
-    describe('SelectedAssetController', function() {
+    describe('SelectedAssetModel', function() {
         var confirmDialogShown = false;
         var assetSentToBackend = {};
         var mockBackend = {
@@ -11,14 +11,14 @@ define(['chai', 'SelectedAssetController'], function(chai) {
                 };
             }
         };
-        var controller = SelectedAssetController.initialize(mockBackend);
+        var model = SelectedAssetModel.initialize(mockBackend);
 
         before(function() {
             eventbus.on('confirm:show', function() { confirmDialogShown = true; });
         });
 
         var resetTest = function() {
-            controller.reset();
+            model.reset();
             confirmDialogShown = false;
             assetSentToBackend = {};
             eventbus.trigger('asset:fetched', createAsset());
@@ -27,7 +27,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
         var assetStateIsDirty = function() {
             return function() {
                 it('asset state should be dirty', function() {
-                    assert.equal(controller.isDirty(), true);
+                    assert.equal(model.isDirty(), true);
                 });
             };
         };
@@ -35,7 +35,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
         var assetStateIsClean = function() {
             return function() {
                 it('asset state should be clean', function() {
-                    assert.equal(controller.isDirty(), false);
+                    assert.equal(model.isDirty(), false);
                 });
             };
         };
@@ -91,6 +91,21 @@ define(['chai', 'SelectedAssetController'], function(chai) {
             describe('and another asset is selected', assetStateIsClean());
         });
 
+        describe('when asset no longer falls on selected validity period', function() {
+            var triggeredEvents = [];
+            before(function() {
+                eventbus.on('all', function(eventName) {
+                    triggeredEvents.push(eventName);
+                });
+                eventbus.trigger('validityPeriod:changed', ['future', 'past']);
+            });
+
+            it('closes asset', function() {
+                assert.include(triggeredEvents, 'asset:closed');
+                assert.lengthOf(triggeredEvents, 2);
+            });
+        });
+
         function createAsset() {
             return {
                 assetTypeId: 10,
@@ -118,7 +133,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
                     localizedName: 'Pysäkin tyyppi',
                     propertyType: 'multiple_choice',
                     propertyUiIndex: 90,
-                    propertyValue: '<div data-publicId="pysakin_tyyppi" name="pysakin_tyyppi" class="featureattributeChoice"><input  type="checkbox" value="5"></input><label for="pysakin_tyyppi_5">Virtuaalipysäkki</label><br/><input  type="checkbox" value="1"></input><label for="pysakin_tyyppi_1">Raitiovaunu</label><br/><input checked  type="checkbox" value="2"></input><label for="pysakin_tyyppi_2">Linja-autojen paikallisliikenne</label><br/><input  type="checkbox" value="3"></input><label for="pysakin_tyyppi_3">Linja-autojen kaukoliikenne</label><br/><input  type="checkbox" value="4"></input><label for="pysakin_tyyppi_4">Linja-autojen pikavuoro</label><br/></div>',
+                    propertyValue: '<div data-publicId="pysakin_tyyppi" name="pysakin_tyyppi" class="featureattributeChoice"><input  type="checkbox" value="5"></input><label for="pysakin_tyyppi_5">Virtuaalipysäkki</label><br/><input  type="checkbox" value="1"/><label for="pysakin_tyyppi_1">Raitiovaunu</label><br/><input checked  type="checkbox" value="2"/><label for="pysakin_tyyppi_2">Linja-autojen paikallisliikenne</label><br/><input  type="checkbox" value="3"/><label for="pysakin_tyyppi_3">Linja-autojen kaukoliikenne</label><br/><input  type="checkbox" value="4"/><label for="pysakin_tyyppi_4">Linja-autojen pikavuoro</label><br/></div>',
                     publicId: 'pysakin_tyyppi',
                     required: true,
                     values: [{

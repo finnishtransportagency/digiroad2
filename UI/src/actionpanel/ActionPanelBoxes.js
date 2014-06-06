@@ -51,7 +51,7 @@
   };
 
   var isDirty = function() {
-    if (window.selectedAssetController && selectedAssetController.isDirty()) {
+    if (window.selectedAssetModel && selectedAssetModel.isDirty()) {
       new Confirm();
       return true;
     }

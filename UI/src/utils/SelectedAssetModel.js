@@ -1,5 +1,5 @@
-(function (selectedAssetController){
-    selectedAssetController.initialize = function(backend) {
+(function (selectedAssetModel){
+    selectedAssetModel.initialize = function(backend) {
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
         var assetHasBeenModified = false;
         var currentAsset = {};
@@ -9,6 +9,7 @@
             assetHasBeenModified = false;
             currentAsset = {};
             changedProps = [];
+            eventbus.trigger('asset:closed');
         };
 
         eventbus.on('asset:unselected', function() {
@@ -74,6 +75,12 @@
            }
         });
 
+        eventbus.on('validityPeriod:changed', function(validityPeriods) {
+            if (currentAsset && !_.contains(validityPeriods, currentAsset.validityPeriod)) {
+                reset();
+            }
+        });
+
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             changedProps = [];
             assetHasBeenModified = false;
@@ -108,6 +115,7 @@
             };
             currentAsset.id = asset.id;
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+            currentAsset.validityPeriod = asset.validityPeriod;
         });
 
         var save = function() {
@@ -124,4 +132,4 @@
                  isDirty: function() { return assetHasBeenModified; }};
     };
 
-})(window.SelectedAssetController = window.SelectedAssetController || {});
+})(window.SelectedAssetModel = window.SelectedAssetModel || {});

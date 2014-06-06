@@ -118,6 +118,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("validate asset when creating", Tag("db")) {
+    val requestPayload = """{"assetTypeId": 10, "lon": 0, "lat": 0, "roadLinkId": 5990, "bearing": 0}"""
+    postJsonWithUserAuth("/assets", requestPayload.getBytes) {
+      status should equal(500)
+    }
+  }
+
   test("get past assets", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=past") {
       status should equal(200)

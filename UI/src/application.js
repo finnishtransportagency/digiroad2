@@ -109,7 +109,7 @@
 
     application.start = function(backend) {
         if(backend) window.Backend = backend;
-        window.selectedAssetController = SelectedAssetController.initialize(Backend);
+        window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
         downloadAppSetup(startApplication);
         downloadConfig(startApplication);
         downloadLocalizedStrings(startApplication);

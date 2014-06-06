@@ -1,7 +1,6 @@
 (function() {
     var enumeratedPropertyValues = null;
     var readonly = true;
-    var selectedAsset = {};
     var streetViewHandler;
     var activeLayer = 'asset';
 
@@ -28,7 +27,7 @@
         });
 
         var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
-            selectedAssetController.save();
+            selectedAssetModel.save();
         });
 
         // TODO: cleaner html
@@ -271,11 +270,9 @@
     var closeAsset = function() {
         $("#featureAttributes").html('');
         dateutil.removeDatePickersFromDom();
-        selectedAsset = null;
     };
 
     eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', function(asset){
-        selectedAsset = asset;
         renderAssetForm(asset);
     });
 
@@ -289,11 +286,7 @@
         readonly = readOnly;
     });
 
-    eventbus.on('validityPeriod:changed', function(validityPeriods) {
-        if (selectedAsset && !_.contains(validityPeriods, selectedAsset.validityPeriod)) {
-            closeAsset();
-        }
-    });
+    eventbus.on('asset:closed', closeAsset);
 
     eventbus.on('enumeratedPropertyValues:fetched', function(values) {
         enumeratedPropertyValues = values;
