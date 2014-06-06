@@ -11,9 +11,9 @@
 
   Backend.getUserRoles();
 
-  // FIXME: This definitely doesn't belong here (top bar or somewhere else)
-  var editMessage = $('<div class="editMessage">Olet muokkaustilassa</div>');
-  $('.container').append(editMessage.hide());
+  // FIXME: Message now appended to top bar, but should this code live somewhere else?
+  var editMessage = $('<div class="action-state">Olet muokkaustilassa</div>');
+  $('#header').append(editMessage.hide());
 
   var handleEditMessage = function(readOnly) {
     if (readOnly) {
