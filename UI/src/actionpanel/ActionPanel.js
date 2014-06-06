@@ -1,13 +1,13 @@
 (function(ActionPanelBoxes) {
-  var panelControl = ['<div class="panelLayerGroup"></div>'].join('');
+  var panelControl = ['<div class="action-panels"></div>'].join('');
 
   $('#maptools').append(panelControl);
 
   var assetBox = new ActionPanelBoxes.AssetBox();
-  $('.panelLayerGroup').append(assetBox.element);
+  $('.action-panels').append(assetBox.element);
 
   var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
-  $('.panelLayerGroup').append(linearAssetBox.element);
+  $('.action-panels').append(linearAssetBox.element);
 
   Backend.getUserRoles();
 

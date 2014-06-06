@@ -1,28 +1,41 @@
 @actionpanel-image-path: "../src/resources/digiroad2/bundle/actionpanel/images";
 
-.panel-section {
-  padding: 10px;
-  border-bottom: 1px solid @gray-light-2;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.actionPanel {
-  width: 280px;
+.panel {
   position: relative;
-  background-color: #efefed;
-  border: 0px solid #cbcbc9;
-  border-bottom-width: 1px;
-  button.readOnlyMode {
-    background-color: #196eb8;
-    border-color: #236085;
+  width: 200px;
+  background-color: @gray-lighter;
+
+  .panel-header {
+    padding: 10px;
+    font-size: @font-size-large;
+    line-height: @line-height-modifier * 3;
+    color: #fff;
+    background-color: @gray-darker;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @gray-darker-2;
+    }
+
+    &.expanded {
+      background-color: @gray-dark-2;
+      cursor: inherit;
+    }
+
+    &.edit {
+      background-color: @blue;
+      cursor: inherit;
+    }
   }
 
-  button.editMode {
-    background-color: #979793;
-  }
+  .panel-section {
+    padding: 10px;
+    border-bottom: 1px solid @gray-light-2;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }  
 }
 
 .actionPanelClosed {

@@ -1,19 +1,17 @@
 (function(ActionPanelBoxes) {
   ActionPanelBoxes.LinearAssetBox = function() {
     var collapsedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup">',
-      '    <div class="layerGroupImg_linearAsset layerGroupImg_unselected_linearAsset"></div>',
-      '    <div class="layerGroupLabel">Nopeusrajoitukset</div>',
-      '  </div>',
-      '</div>'].join('');
+      '<div class="panel">',
+      '  <header class="panel-header">',
+      '    Nopeusrajoitukset',
+      '  </header>',
+      '</div>'].join('');  
 
     var expandedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode">',
-      '    <div class="layerGroupImg_linearAsset layerGroupImg_selected_linearAsset"></div>',
-      '    <div class="layerGroupLabel">Nopeusrajoitukset</div>',
-      '  </div>',
+      '<div class="panel">',
+      '  <header class="panel-header expanded">',
+      '    Nopeusrajoitukset',
+      '  </header>',
       '</div>'].join('');
 
     var elements = {
@@ -45,7 +43,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div/>')
+    this.element = $('<div class="panel-group"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
@@ -83,11 +81,10 @@
     ].join('');
 
     var expandedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode">',
-      '    <div class="layerGroupImg_asset layerGroupImg_selected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
-      '  </div>',
+      '<div class="panel">',
+      '  <header class="panel-header expanded">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
       '  <div class="layerGroupLayers" style="display: block;">',
       '    <div class="map-entity-selection">',
       '      <div class="busStopLayerCheckbox"><input name="current" type="checkbox" checked=""></div>',
@@ -113,11 +110,10 @@
       '</div>'].join('');
 
     var editModeTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup layerGroupSelectedMode layerGroupEditMode">',
-      '    <div class="layerGroupImg_asset layerGroupImg_selected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
-      '  </div>',
+      '<div class="panel">',
+      '  <header class="panel-header edit">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
       '  <div class="layerGroupLayers" style="display: block;">',
       '    <div class="map-entity-selection">',
       '      <div class="busStopLayerCheckbox"><input name="current" type="checkbox" checked=""></div>',
@@ -151,12 +147,11 @@
       '</div>'].join('');
 
     var collapsedTemplate = [
-      '<div class="actionPanel">',
-      '  <div class="layerGroup">',
-      '    <div class="layerGroupImg_asset layerGroupImg_unselected_asset"></div>',
-      '    <div class="layerGroupLabel">Joukkoliikenteen pys&auml;kit</div>',
-      '  </div>',
-      '</div>'].join('');
+      '<div class="panel">',
+      '  <header class="panel-header">',
+      '    Joukkoliikenteen pys&auml;kit',
+      '  </header>',
+      '</div>'].join('');        
 
     var elements = {
       collapsed: $(collapsedTemplate).hide(),
@@ -284,7 +279,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div/>')
+    this.element = $('<div class="panel-group"/>')
       .append(elements.collapsed)
       .append(elements.expanded)
       .append(elements.editMode);
