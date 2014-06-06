@@ -1,6 +1,6 @@
-define(['chai', 'SelectedAssetController'], function(chai) {
+define(['chai', 'SelectedAssetModel'], function(chai) {
     var assert = chai.assert;
-    describe('SelectedAssetController', function() {
+    describe('SelectedAssetModel', function() {
         var confirmDialogShown = false;
         var assetSentToBackend = {};
         var mockBackend = {
@@ -11,14 +11,14 @@ define(['chai', 'SelectedAssetController'], function(chai) {
                 };
             }
         };
-        var controller = SelectedAssetController.initialize(mockBackend);
+        var model = SelectedAssetModel.initialize(mockBackend);
 
         before(function() {
             eventbus.on('confirm:show', function() { confirmDialogShown = true; });
         });
 
         var resetTest = function() {
-            controller.reset();
+            model.reset();
             confirmDialogShown = false;
             assetSentToBackend = {};
             eventbus.trigger('asset:fetched', createAsset());
@@ -27,7 +27,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
         var assetStateIsDirty = function() {
             return function() {
                 it('asset state should be dirty', function() {
-                    assert.equal(controller.isDirty(), true);
+                    assert.equal(model.isDirty(), true);
                 });
             };
         };
@@ -35,7 +35,7 @@ define(['chai', 'SelectedAssetController'], function(chai) {
         var assetStateIsClean = function() {
             return function() {
                 it('asset state should be clean', function() {
-                    assert.equal(controller.isDirty(), false);
+                    assert.equal(model.isDirty(), false);
                 });
             };
         };

@@ -6,7 +6,7 @@ require.config({
         'backbone':                 '../../bower_components/backbone/backbone',
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
-        'SelectedAssetController':  '../src/utils/selectedAssetController',
+        'SelectedAssetModel':       '../src/utils/SelectedAssetModel',
         'LinearAssetLayer':         '../src/bundles/digiroad2/bundle/map/LinearAssetLayer',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoomLevels',
@@ -23,7 +23,7 @@ require.config({
         'EventBus': {
             deps: ['backbone']
         },
-        'SelectedAssetController': {
+        'SelectedAssetModel': {
             deps: ['EventBus', 'lodash']
         },
         'LinearAssetLayer': {
@@ -40,7 +40,7 @@ require.config({
     waitSeconds: 10
 });
 require(['lodash',
-         'selected-asset-controller-spec',
+         'SelectedAssetModelSpec',
          'linear-asset-layer-spec',
          'geometry-calculations-spec',
          'asset-grouping-spec'], function(lodash) {

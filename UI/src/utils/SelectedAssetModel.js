@@ -1,5 +1,5 @@
-(function (selectedAssetController){
-    selectedAssetController.initialize = function(backend) {
+(function (selectedAssetModel){
+    selectedAssetModel.initialize = function(backend) {
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
         var assetHasBeenModified = false;
         var currentAsset = {};
@@ -132,4 +132,4 @@
                  isDirty: function() { return assetHasBeenModified; }};
     };
 
-})(window.SelectedAssetController = window.SelectedAssetController || {});
+})(window.SelectedAssetModel = window.SelectedAssetModel || {});

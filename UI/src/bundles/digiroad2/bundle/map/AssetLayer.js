@@ -50,7 +50,7 @@ window.AssetLayer = function(map, roadLayer) {
         return function(evt) {
             if (selectedControl === 'Select') {
                 var anotherAssetHasBeenModified = function() {
-                    return (selectedAsset && selectedAsset.data.id !== asset.data.id && selectedAssetController.isDirty());
+                    return (selectedAsset && selectedAsset.data.id !== asset.data.id && selectedAssetModel.isDirty());
                 };
 
                 if (anotherAssetHasBeenModified()) {
@@ -117,7 +117,7 @@ window.AssetLayer = function(map, roadLayer) {
         assetLayer.setVisibility(true);
         _.each(assetDatas, function(asset) {
             var isAssetSelectedAndDirty = function(asset) {
-              return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetController.isDirty();
+              return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
             };
             if (isAssetSelectedAndDirty(asset)) {
               return;
@@ -360,7 +360,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
     eventbus.on('map:moved', function(state) {
-      if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetController.isDirty()) {
+      if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetModel.isDirty()) {
         new Confirm();
       } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
           backend.getAssets(10, state.bbox);

@@ -27,7 +27,7 @@
         });
 
         var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
-            selectedAssetController.save();
+            selectedAssetModel.save();
         });
 
         // TODO: cleaner html
