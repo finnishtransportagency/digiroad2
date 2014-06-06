@@ -9,6 +9,7 @@
             assetHasBeenModified = false;
             currentAsset = {};
             changedProps = [];
+            eventbus.trigger('asset:closed');
         };
 
         eventbus.on('asset:unselected', function() {
@@ -74,6 +75,12 @@
            }
         });
 
+        eventbus.on('validityPeriod:changed', function(validityPeriods) {
+            if (currentAsset && !_.contains(validityPeriods, currentAsset.validityPeriod)) {
+                reset();
+            }
+        });
+
         eventbus.on('asset:saved asset:created asset:cancelled', function() {
             changedProps = [];
             assetHasBeenModified = false;
@@ -108,6 +115,7 @@
             };
             currentAsset.id = asset.id;
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+            currentAsset.validityPeriod = asset.validityPeriod;
         });
 
         var save = function() {

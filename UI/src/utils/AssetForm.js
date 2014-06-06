@@ -289,11 +289,7 @@
         readonly = readOnly;
     });
 
-    eventbus.on('validityPeriod:changed', function(validityPeriods) {
-        if (selectedAsset && !_.contains(validityPeriods, selectedAsset.validityPeriod)) {
-            closeAsset();
-        }
-    });
+    eventbus.on('asset:closed', closeAsset);
 
     eventbus.on('enumeratedPropertyValues:fetched', function(values) {
         enumeratedPropertyValues = values;

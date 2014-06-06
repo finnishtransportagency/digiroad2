@@ -91,6 +91,21 @@ define(['chai', 'SelectedAssetController'], function(chai) {
             describe('and another asset is selected', assetStateIsClean());
         });
 
+        describe('when asset no longer falls on selected validity period', function() {
+            var triggeredEvents = [];
+            before(function() {
+                eventbus.on('all', function(eventName) {
+                    triggeredEvents.push(eventName);
+                });
+                eventbus.trigger('validityPeriod:changed', ['future', 'past']);
+            });
+
+            it('closes asset', function() {
+                assert.include(triggeredEvents, 'asset:closed');
+                assert.lengthOf(triggeredEvents, 2);
+            });
+        });
+
         function createAsset() {
             return {
                 assetTypeId: 10,
