@@ -60,7 +60,16 @@
             assetHasBeenModified = true;
         });
 
-        eventbus.on('asset:cancelled application:readOnly', function(){
+        var cancel = function() {
+          if (currentAsset.id) {
+              backend.getAsset(currentAsset.id, true);
+          }
+          changedProps = [];
+          assetHasBeenModified = false;
+          eventbus.trigger('asset:cancelled');
+        }
+
+        eventbus.on('application:readOnly', function(){
            if (currentAsset.id) {
                backend.getAsset(currentAsset.id, true);
            }
@@ -72,7 +81,7 @@
             }
         });
 
-        eventbus.on('asset:saved asset:created asset:cancelled', function() {
+        eventbus.on('asset:saved asset:created', function() {
             changedProps = [];
             assetHasBeenModified = false;
         });
@@ -133,7 +142,8 @@
             reset: reset,
             save: save,
             isDirty: function() { return assetHasBeenModified; },
-            setProperty: setProperty
+            setProperty: setProperty,
+            cancel: cancel
         };
     };
 

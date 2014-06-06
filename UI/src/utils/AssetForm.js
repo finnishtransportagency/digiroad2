@@ -23,7 +23,7 @@
 
         var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
             $("#feature-attributes").empty();
-            eventbus.trigger('asset:cancelled');
+            selectedAssetModel.cancel();
         });
 
         var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
