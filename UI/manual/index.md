@@ -275,7 +275,7 @@ __Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;.
 __Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
 __Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
-__Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille.
+__Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille. Erikoistapauksia varten (esim. uudenmaan ELY).
 __Matkustajatunnus:__ Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.
 __Maastokoordinaatti X:__ Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.
 __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.
@@ -296,7 +296,7 @@ __Esteett&ouml;myys liikuntarajoitteiselle:__ Liikuntarajoitteisen henkil&ouml;n
 __Saattomahdollisuus henkil&ouml;autolla:__ Kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".
 __Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;.
 __Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot:__ Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.
-__Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
+__Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto. Erikoistapauksia varten (esim. uudenmaan ELY).
 __Palauteosoite:__ Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.
 __Lis&auml;tiedot:__ Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".
 
