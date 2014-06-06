@@ -31,6 +31,7 @@
   .panel-section {
     padding: 10px;
     border-bottom: 1px solid @gray-light-2;
+    color: @gray-darker;
 
     &:last-child {
       border-bottom: none;
@@ -38,11 +39,98 @@
   }  
 }
 
-.actionPanelClosed {
-  width: 0px;
-  height: 0px;
-  display: none;
+.panel-legend {
+  .legend-entry {
+    .label {
+      display: block;
+      font-size: @font-size-xs;
+      line-height: @line-height-base;
+    }
+
+    .symbol {
+      margin-bottom: 5px;
+    }
+
+    .linear {
+      width: 100%;
+      height: 8px;
+      border: 1px solid @gray;
+      border-radius: 4px;
+      background-color: @gray-light;
+      .box-sizing(border-box);
+    }
+  }
 }
+
+.road-link-legend {
+  display: none;
+
+  .legend-entry {
+    .road {
+      .linear-asset-color(@linear-asset-4);
+    }
+
+    .street {
+      .linear-asset-color(@linear-asset-3);
+    }
+
+    .private-road {
+      .linear-asset-color(@linear-asset-1);
+    }
+  }
+}
+
+/*div.road-link-legend {
+  display:none;
+  font-size: 11px;
+
+  .road-link-type {
+    clear: both;
+    margin-left: 20px;
+
+    .entry {
+      width: 150px;
+      height: 5px;
+      margin-top: 13px;
+      margin-left: 10px;
+      margin-right: 10px;
+      float: right;
+      border: solid;
+      border-width: 2px;
+      border-radius: 10px;
+
+    }
+
+    .label {
+      float : left;
+      margin-top: 7px;
+    }
+
+    .road {
+      background-color: #ff0000;
+      border-color: #ee0000;
+    }
+
+    .street {
+      background-color: #11bb00;
+      border-color: #0e9900;
+    }
+
+    .private-road {
+      background-color: #00ccdd;
+      border-color: #00adbb;
+    }
+
+    .unknown {
+      background-color: #a4a4a2;
+      border-color: #646464;
+    }
+  }
+
+  .separator {
+    clear: both;
+  }
+}*/
 
 div.layerGroup {
   height: 41px;
@@ -211,56 +299,4 @@ div.editMessage {
   left: 40%;
   font-size: 11px;
   border: 2px #00539c;
-}
-
-div.road-link-legend {
-  display:none;
-  font-size: 11px;
-
-  .road-link-type {
-    clear: both;
-    margin-left: 20px;
-
-    .entry {
-      width: 150px;
-      height: 5px;
-      margin-top: 13px;
-      margin-left: 10px;
-      margin-right: 10px;
-      float: right;
-      border: solid;
-      border-width: 2px;
-      border-radius: 10px;
-
-    }
-
-    .label {
-      float : left;
-      margin-top: 7px;
-    }
-
-    .road {
-      background-color: #ff0000;
-      border-color: #ee0000;
-    }
-
-    .street {
-      background-color: #11bb00;
-      border-color: #0e9900;
-    }
-
-    .private-road {
-      background-color: #00ccdd;
-      border-color: #00adbb;
-    }
-
-    .unknown {
-      background-color: #a4a4a2;
-      border-color: #646464;
-    }
-  }
-
-  .separator {
-    clear: both;
-  }
 }
