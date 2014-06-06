@@ -49,16 +49,16 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
         return function(evt) {
             if (selectedControl === 'Select') {
-                var changeSuccess = selectedAssetModel.change(asset.data);
+                var changeSuccess = true;
+                if (selectedAssetModel.getId() !== asset.data.id) {
+                    changeSuccess = selectedAssetModel.change(asset.data);
+                }
                 if (!changeSuccess) {
                     new Confirm();
                 } else {
                     clickTimestamp = new Date().getTime();
                     clickCoords = [evt.clientX, evt.clientY];
                     OpenLayers.Event.stop(evt);
-                    if (selectedAsset && selectedAsset.data.id !== asset.data.id) {
-                        eventbus.trigger('asset:unselected', selectedAsset.data.id);
-                    }
                     selectedAsset = asset;
                     // push marker up
                     assetLayer.removeMarker(selectedAsset.massTransitStop.getMarker());
@@ -212,9 +212,6 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var createNewAsset = function(lonlat) {
-        if (selectedAsset) {
-            eventbus.trigger('asset:unselected', selectedAsset.data.id);
-        }
         var selectedLon = lonlat.lon;
         var selectedLat = lonlat.lat;
         var features = roadLayer.features;
@@ -276,9 +273,6 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var removeAssetsFromLayer = function() {
-        if (selectedAsset) {
-            eventbus.trigger('asset:unselected');
-        }
         assetDirectionLayer.removeAllFeatures();
         assetLayer.clearMarkers();
     };
@@ -323,9 +317,6 @@ window.AssetLayer = function(map, roadLayer) {
 
     var toolSelectionChange = function(action) {
         selectedControl = action;
-        if (selectedAsset) {
-            eventbus.trigger('asset:unselected');
-        }
     };
 
     eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
@@ -339,7 +330,6 @@ window.AssetLayer = function(map, roadLayer) {
             eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
         }
     }, this);
-    eventbus.on('asset:unselected', closeAsset, this);
     eventbus.on('tool:changed', toolSelectionChange, this);
     eventbus.on('assetPropertyValue:saved', updateAsset, this);
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
@@ -348,6 +338,7 @@ window.AssetLayer = function(map, roadLayer) {
     eventbus.on('asset:fetched', handleAssetFetched, this);
     eventbus.on('asset:created', removeOverlay, this);
     eventbus.on('asset:cancelled', cancelCreate, this);
+    eventbus.on('asset:closed', closeAsset, this);
     eventbus.on('application:readOnly', function(value) {
         readOnly = value;
     }, this);

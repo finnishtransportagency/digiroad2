@@ -5,15 +5,15 @@
         var currentAsset = {};
         var changedProps = [];
 
-        var reset = function() {
+        var close = function() {
             assetHasBeenModified = false;
             currentAsset = {};
             changedProps = [];
             eventbus.trigger('asset:closed');
         };
 
-        eventbus.on('asset:unselected', function() {
-            reset();
+        eventbus.on('tool:changed', function() {
+            close();
         });
 
         eventbus.on('asset:placed', function(asset) {
@@ -147,18 +147,26 @@
           if (exists() && currentAsset.id !== asset.id && assetHasBeenModified) {
             return false;
           }
+          if (exists()) {
+            close();
+          }
           open(asset);
           return true;
         };
 
+        var getId = function() {
+            return currentAsset.id;
+        };
+
         return {
-            reset: reset,
+            close: close,
             save: save,
             isDirty: function() { return assetHasBeenModified; },
             setProperty: setProperty,
             cancel: cancel,
             exists: exists,
-            change: change
+            change: change,
+            getId: getId
         };
     };
 
