@@ -1,7 +1,6 @@
 (function() {
     var enumeratedPropertyValues = null;
     var readonly = true;
-    var selectedAsset = {};
     var streetViewHandler;
     var activeLayer = 'asset';
 
@@ -271,11 +270,9 @@
     var closeAsset = function() {
         $("#featureAttributes").html('');
         dateutil.removeDatePickersFromDom();
-        selectedAsset = null;
     };
 
     eventbus.on('asset:fetched assetPropertyValue:fetched asset:created asset:initialized', function(asset){
-        selectedAsset = asset;
         renderAssetForm(asset);
     });
 
