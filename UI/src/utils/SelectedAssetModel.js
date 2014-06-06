@@ -60,15 +60,6 @@
             assetHasBeenModified = true;
         });
 
-        eventbus.on('assetPropertyValue:changed', function(changedProperty) {
-            changedProps = _.reject(changedProps, function(x){
-                return x.publicId === changedProperty.propertyData.publicId;
-            });
-            changedProps.push(changedProperty.propertyData);
-            currentAsset.payload.properties = changedProps;
-            assetHasBeenModified = true;
-        });
-
         eventbus.on('asset:cancelled application:readOnly', function(){
            if (currentAsset.id) {
                backend.getAsset(currentAsset.id, true);
@@ -127,9 +118,23 @@
             }
         };
 
-        return { reset: reset,
-                 save: save,
-                 isDirty: function() { return assetHasBeenModified; }};
+        var setProperty = function(publicId, values) {
+            changedProps = _.reject(changedProps, function(x) {
+                return x.publicId === publicId;
+            });
+            var propertyData = {publicId: publicId, values: values};
+            changedProps.push(propertyData);
+            currentAsset.payload.properties = changedProps;
+            assetHasBeenModified = true;
+            eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData});
+        };
+
+        return {
+            reset: reset,
+            save: save,
+            isDirty: function() { return assetHasBeenModified; },
+            setProperty: setProperty
+        };
     };
 
 })(window.SelectedAssetModel = window.SelectedAssetModel || {});

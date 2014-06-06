@@ -95,20 +95,11 @@
         return outer;
     };
 
-    var triggerEventBusChange = function(publicId, values) {
-        eventbus.trigger('assetPropertyValue:changed', {
-            propertyData: {
-                publicId: publicId,
-                values: values
-            }
-        });
-    };
-
     var textHandler = function(property){
         var inputElement = property.propertyType === 'long_text' ?
                 $('<textarea />').addClass('featureAttributeLongText') : $('<input type="text"/>').addClass('featureAttributeText');
         var input = inputElement.bind('input', function(target){
-            triggerEventBusChange(property.publicId, [{ propertyValue: target.currentTarget.value }]);
+            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
         });
 
         // TODO: use cleaner html
@@ -129,7 +120,7 @@
         }).values;
 
         var input = $('<select />').addClass('featureattributeChoice').change(function(x){
-            triggerEventBusChange(property.publicId, [{ propertyValue: x.currentTarget.value }]);
+            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
         });
 
         //TODO: cleaner html
@@ -155,7 +146,7 @@
         var validityDirection = 2;
         var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
             validityDirection = validityDirection == 2 ? 3 : 2;
-            triggerEventBusChange(property.publicId, [{ propertyValue: validityDirection }]);
+            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: validityDirection }]);
             streetViewHandler.changeDirection(validityDirection);
         });
 
@@ -177,7 +168,7 @@
                 return;
             }
             var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-            triggerEventBusChange(property.publicId, [{ propertyValue: propertyValue }]);
+            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
         }, 500));
 
         //TODO: cleaner html
@@ -217,7 +208,7 @@
                     })
                     .value();
                 if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
-                triggerEventBusChange(property.publicId, values);
+                selectedAssetModel.setProperty(property.publicId, values);
             });
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
