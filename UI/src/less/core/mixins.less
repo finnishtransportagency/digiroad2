@@ -1,3 +1,31 @@
+// Asset colors
+// Shortcuts to declare asset related colors
+
+.linear-asset-1-color {
+  border-color: @linear-asset-1;
+  background-color: rgba(red(@linear-asset-1), blue(@linear-asset-1), green(@linear-asset-1), .7);
+}
+
+.linear-asset-2-color {
+  border-color: @linear-asset-2;
+  background-color: rgba(red(@linear-asset-2), blue(@linear-asset-2), green(@linear-asset-2), .7);
+}
+
+.linear-asset-3-color {
+  border-color: @linear-asset-3;
+  background-color: rgba(red(@linear-asset-3), blue(@linear-asset-3), green(@linear-asset-3), .7);
+}
+
+.linear-asset-4-color {
+  border-color: @linear-asset-4;
+  background-color: rgba(red(@linear-asset-4), blue(@linear-asset-4), green(@linear-asset-4), .7);
+}
+
+.linear-asset-5-color {
+  border-color: @linear-asset-5;
+  background-color: rgba(red(@linear-asset-5), blue(@linear-asset-5), green(@linear-asset-5), .7);
+}
+
 // Box sizing
 .box-sizing(@boxmodel) {
   -webkit-box-sizing: @boxmodel;
@@ -22,4 +50,14 @@
   // IE8 filter
   @opacity-ie: (@opacity * 100);
   filter: ~"alpha(opacity=@{opacity-ie})";
+}
+
+// WebKit-style focus
+
+.tab-focus() {
+  // Default
+  outline: thin dotted;
+  // WebKit
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
 }
