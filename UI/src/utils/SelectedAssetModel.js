@@ -121,7 +121,7 @@
         eventbus.on('asset:fetched', open, this);
 
         var save = function() {
-            if(currentAsset.id === undefined){
+            if (currentAsset.id === undefined){
                 backend.createAsset(currentAsset.payload);
             } else {
                 currentAsset.payload.id = currentAsset.id;
