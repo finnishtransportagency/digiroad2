@@ -101,6 +101,12 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    // TODO: Share commonalities between updateAssetByExternalId and updateAsset so that database calls are minimized
+    val asset = getAssetByExternalId(externalId)
+    updateAsset(asset.get.id, None, properties)
+  }
+
   def removeAsset(assetId: Long): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.removeAsset(assetId)
