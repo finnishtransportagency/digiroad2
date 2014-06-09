@@ -70,7 +70,6 @@
   $(window).on('hashchange', function(evt) {
       var data = assetIdFromURL();
       if (data && data.externalId) {
-          eventbus.trigger('asset:unselected');
           Backend.getIdFromExternalId(data.externalId, data.keepPosition);
       }
   });

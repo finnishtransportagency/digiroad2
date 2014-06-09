@@ -58,7 +58,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             eventbus.on('asset:cancelled', function() {
                 this._selectControl.unselectAll();
             }, this);
-            eventbus.on('asset:unselected validityPeriod:changed layer:selected', function(){
+            eventbus.on('validityPeriod:changed layer:selected', function(){
                 this._selectControl.unselectAll();
             }, this);
             eventbus.on('road-type:selected', function(selected){

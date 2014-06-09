@@ -18,7 +18,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
         });
 
         var resetTest = function() {
-            model.reset();
+            model.close();
             confirmDialogShown = false;
             assetSentToBackend = {};
             eventbus.trigger('asset:fetched', createAsset());
