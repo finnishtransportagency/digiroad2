@@ -267,7 +267,6 @@
         renderAssetForm(asset);
     });
 
-    eventbus.on('asset:unselected', closeAsset);
     eventbus.on('layer:selected', function(layer) {
       activeLayer = layer;
       closeAsset();

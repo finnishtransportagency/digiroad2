@@ -1,4 +1,4 @@
-(function (selectedAssetModel){
+(function(selectedAssetModel){
     selectedAssetModel.initialize = function(backend) {
         var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
         var assetHasBeenModified = false;
@@ -69,14 +69,15 @@
           eventbus.trigger('asset:cancelled');
         };
 
-        eventbus.on('application:readOnly', function(){
+        eventbus.on('application:readOnly', function() {
            if (currentAsset.id) {
                backend.getAsset(currentAsset.id, true);
            }
         });
 
         eventbus.on('validityPeriod:changed', function(validityPeriods) {
-            if (currentAsset && !_.contains(validityPeriods, currentAsset.validityPeriod)) {
+            if (currentAsset && (!_.contains(validityPeriods, currentAsset.validityPeriod) &&
+                                 currentAsset.validityPeriod !== undefined)) {
                 close();
             }
         });
