@@ -97,15 +97,13 @@ window.AssetLayer = function(map, roadLayer) {
         var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
-        if (!_.contains(selectedValidityPeriods, assetData.validityPeriod)) {
-            hideAsset(asset);
-        }
         return asset;
     };
 
     var addAssetToLayers = function(asset) {
-        assetLayer.addMarker(asset.massTransitStop.getMarker(false));
-        assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow(false));
+        assetLayer.addMarker(asset.massTransitStop.getMarker());
+        assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
+        if (!_.contains(selectedValidityPeriods, asset.data.validityPeriod)) { hideAsset(asset); }
     };
 
     var removeAssetFromMap = function(asset) {
