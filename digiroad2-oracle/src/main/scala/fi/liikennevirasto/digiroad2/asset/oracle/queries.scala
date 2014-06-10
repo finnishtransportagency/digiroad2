@@ -139,11 +139,7 @@ object Queries {
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to,
     SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
-    p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required,
-    case
-      when e.value is not null then e.value
-      else null
-    end as value,
+    p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
     case
       when e.name_fi is not null then e.name_fi
       when tp.value_fi is not null then tp.value_fi
@@ -189,11 +185,7 @@ object Queries {
 
   def assetByExternalId = allAssets + " WHERE a.external_id = ?"
 
-  def assetWhereId(id: Long) = sql"WHERE a.id = $id"
-
-  def assetsWithPositionByMunicipalityNumber = assetsByTypeWithPosition + " AND rl.municipality_number = ?"
-
-  def assetTypes = sql"select id, name, geometry_type from asset_type"
+  def assetsByIds(ids: Seq[Long]) = " WHERE a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
 
   def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
 
