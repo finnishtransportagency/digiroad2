@@ -239,7 +239,7 @@ window.AssetLayer = function(map, roadLayer) {
 
         var applyBlockingOverlays = function() {
             var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
-            overlay.overlay('#contentMap,#map-tools');
+            overlay.overlay('#contentMap,#maptools');
             overlay.followResizing(true);
             return overlay;
         };
