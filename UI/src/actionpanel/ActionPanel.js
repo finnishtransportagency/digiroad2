@@ -1,7 +1,7 @@
 (function(ActionPanelBoxes) {
   var panelControl = ['<div class="action-panels"></div>'].join('');
 
-  $('#map-tools').append(panelControl);
+  $('#maptools').append(panelControl);
 
   var assetBox = new ActionPanelBoxes.AssetBox();
   $('.action-panels').append(assetBox.element);
