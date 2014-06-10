@@ -15,7 +15,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def valluCsvRowsFromAssets(municipalityId: Long, municipalityName: String, assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
-    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(x => isTramStop(x) || isUnknownStop(x)).map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
+    assets.map(fetchNameFromValluImport(complementaryBusStopNames, _)).filterNot(x => isTramStop(x)).map(formatFromAssetWithPropertiesValluCsv(municipalityId, municipalityName, _))
   }
 
   def formatAssetsWithProperties(municipalityId: Long, municipalityName: String, assets: Iterable[AssetWithProperties]): Iterable[String] = {
