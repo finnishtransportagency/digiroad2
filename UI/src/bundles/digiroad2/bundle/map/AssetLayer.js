@@ -146,7 +146,7 @@ window.AssetLayer = function(map, roadLayer) {
     var handleValidityPeriodChanged = function(selection) {
         selectedValidityPeriods = selection;
         _.each(assets, function(asset) {
-            if (_.contains(selection, asset.data.validityPeriod)) {
+            if (_.contains(selection, asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
                 showAsset(asset);
             } else {
                 hideAsset(asset);
