@@ -88,8 +88,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var insertAsset = function(assetData) {
         var massTransitStop = new MassTransitStop(assetData);
-        assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
-        // new bus stop marker
+        massTransitStop.getDirectionArrow(true);
         var marker = massTransitStop.getMarker(true);
         var asset = {};
         asset.data = assetData;
@@ -101,8 +100,12 @@ window.AssetLayer = function(map, roadLayer) {
         if (!_.contains(selectedValidityPeriods, assetData.validityPeriod)) {
             hideAsset(asset);
         }
-        assetLayer.addMarker(marker);
         return asset;
+    };
+
+    var addAssetToLayers = function(asset) {
+        assetLayer.addMarker(asset.massTransitStop.getMarker(false));
+        assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow(false));
     };
 
     var removeAssetFromMap = function(asset) {
@@ -123,6 +126,7 @@ window.AssetLayer = function(map, roadLayer) {
             if (!assets[asset.id]) {
               assets[asset.id] = insertAsset(asset);
             }
+            addAssetToLayers(assets[asset.id]);
             if (selectedAsset && selectedAsset.data.id == asset.id) {
               selectedAsset = assets[asset.id];
               highlightAsset(selectedAsset);
@@ -253,6 +257,7 @@ window.AssetLayer = function(map, roadLayer) {
     var addNewAsset = function(asset) {
         selectedAsset = insertAsset(asset);
         assets[asset.id] = selectedAsset;
+        addAssetToLayers(assets[asset.id]);
         highlightAsset(selectedAsset);
     };
 
