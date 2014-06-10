@@ -47,14 +47,7 @@ object OracleSpatialAssetDao {
     val q = QueryCollector(allAssets).add(withMunicipality)
     collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
-      AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
-        propertyData = AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(v).sortBy(_.id.toLong),
-        bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = v.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat,
-        created = row.created, modified = row.modified)
+      assetRowToAssetWithProperties(row.id, v)
     }
   }
 
@@ -115,6 +108,11 @@ object OracleSpatialAssetDao {
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
     Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+  }
+
+  def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties] = {
+    val q = QueryCollector(allAssets).add(Some(assetsByIds(ids), ids))
+    collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).toList
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {

@@ -71,6 +71,17 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("get assets by ids", Tag("db")) {
+    getWithUserAuth("/assets/300000,300001,300004?assetIds=300000,300001,300004") {
+      status should equal(200)
+      parse(body).extract[List[AssetWithProperties]].size should be (3)
+    }
+    getWithUserAuth("/assets/?assetIds=") {
+      status should equal(200)
+      parse(body).extract[List[AssetWithProperties]].size should be (0)
+    }
+  }
+
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)

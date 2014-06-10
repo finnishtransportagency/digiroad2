@@ -185,11 +185,7 @@ object Queries {
 
   def assetByExternalId = allAssets + " WHERE a.external_id = ?"
 
-  def assetWhereId(id: Long) = sql"WHERE a.id = $id"
-
-  def assetsWithPositionByMunicipalityNumber = assetsByTypeWithPosition + " AND rl.municipality_number = ?"
-
-  def assetTypes = sql"select id, name, geometry_type from asset_type"
+  def assetsByIds(ids: Seq[Long]) = " WHERE a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
 
   def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
 

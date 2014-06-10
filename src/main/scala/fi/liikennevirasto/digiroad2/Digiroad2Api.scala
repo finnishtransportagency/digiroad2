@@ -105,6 +105,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/assets/:assetId", params.get("assetIds").isDefined) {
+    val assets = assetProvider.getAssetsByIds(params.get("assetIds").get.split(",").map(_.trim.toLong).toList)
+    assets.foreach { asset =>
+      if (asset.municipalityNumber.map(isReadOnly(userProvider.getCurrentUser())).getOrElse(true)) {
+        Unauthorized("Asset " + params("assetId") + " not authorized")
+      }
+    }
+    assets
+  }
+
   get("/enumeratedPropertyValues/:assetTypeId") {
     assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
