@@ -347,7 +347,7 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, this);
     eventbus.on('map:moved', function(state) {
-      if (!zoomlevels.isInAssetZoomLevel(map.getZoom()) && selectedAssetModel.isDirty()) {
+      if (!zoomlevels.isInAssetZoomLevel(state.zoom) && selectedAssetModel.isDirty()) {
         new Confirm();
       } else if (8 < state.zoom && assetLayer.map && assetDirectionLayer.map) {
           backend.getAssets(10, state.bbox);
