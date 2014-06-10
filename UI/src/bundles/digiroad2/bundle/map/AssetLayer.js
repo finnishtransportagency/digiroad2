@@ -104,6 +104,7 @@ window.AssetLayer = function(map, roadLayer) {
         assetLayer.addMarker(asset.massTransitStop.getMarker());
         assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
         if (!_.contains(selectedValidityPeriods, asset.data.validityPeriod)) { hideAsset(asset); }
+        else { showAsset(asset); }
     };
 
     var removeAssetFromMap = function(asset) {
