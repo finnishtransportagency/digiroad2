@@ -13,6 +13,7 @@ trait AssetProvider {
   def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties
   def updateAsset(assetId: Long, position: Option[Position] = None, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
+  def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def getRoadLinks(user: User, bounds: Option[BoundingRectangle] = None): Seq[RoadLink]
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
