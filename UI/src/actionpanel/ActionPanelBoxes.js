@@ -102,7 +102,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox"> Omistaja',
+      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
       '      </label>',
       '    </div>',
       '  </div>',
