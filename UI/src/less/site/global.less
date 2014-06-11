@@ -39,19 +39,16 @@ body {
   }
 }
 
+//== Main site structure
+
 .container {
   position: relative;
   height: 100%;
   padding-right: @feature-attribute-panel-width;
+  .clearfix();
 }
 
-.container .column {
-  float: left;
-  position: relative;
-  height: 100%;
-}
-
-#maptools {
+#map-tools {
   position: absolute;
   top: 0;
   left: 0;
@@ -59,50 +56,49 @@ body {
   background-color: #383836;
 }
 
-#mapdiv {
-  float:left;
+#feature-attributes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: @feature-attribute-panel-width;
+  height: 100%;
+  background-color: @gray-darker;
+}
+
+#contentMap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #282826 url('../images/spinner.gif') no-repeat center;
+  div.mapplugins.bottom { bottom: 40px; }
 }
 
 .crossHair {
-  position: relative;
+  position: absolute;
   top: 50%;
-  left:50%;
+  left: 50%;
+  z-index: 2;
   background-color: pink;
   border: black solid 1px;
 
 }
 .crossHairVertical {
-  width: 1px;
+  width: 2px;
   height: 30px;
-  margin-top: -17px;
-  margin-left: -9px;
+  margin-top: -16px;
+  margin-left: -2px;
 }
 
 .crossHairHorizontal {
-  margin-left: -24px;
-  margin-top: -17px;
   width: 30px;
-  height: 1px;
+  height: 2px;
+  margin-top: -2px;
+  margin-left: -16px;  
 }
 
 #featureData {
   position: relative;
   left: 10px;
-}
-
-#contentMap {
-  width: 100%;
-  background: #282826 url('../images/spinner.gif') no-repeat center;
-  div.mapplugins.bottom { bottom: 40px; }
-}
-
-#featureAttributes {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: @feature-attribute-panel-width;
-  background-color: rgb( 45, 45, 45 );
-  box-shadow: 0 0 3px 0 rgb( 0, 0, 0 );
 }
 
 /* FIXME: The following two rules are hacky,

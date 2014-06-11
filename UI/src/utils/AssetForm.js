@@ -12,7 +12,7 @@
         if (activeLayer !== 'asset') {
             return;
         }
-        var container = $("#featureAttributes").empty();
+        var container = $("#feature-attributes").empty();
 
         var element = $('<div />').addClass('featureAttributesHeader').html(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
@@ -22,7 +22,7 @@
         addDatePickers();
 
         var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
-            $("#featureAttributes").empty();
+            $("#feature-attributes").empty();
             selectedAssetModel.cancel();
         });
 
@@ -34,7 +34,7 @@
         featureAttributesElement.append($('<div />').addClass('formControls').append(cancelBtn).append(saveBtn));
 
         if (readonly) {
-            $('#featureAttributes .formControls').hide();
+            $('#feature-attributes .formControls').hide();
         }
 
         function busStopHeader(asset) {
@@ -259,7 +259,7 @@
         '</div>');
 
     var closeAsset = function() {
-        $("#featureAttributes").html('');
+        $("#feature-attributes").html('');
         dateutil.removeDatePickersFromDom();
     };
 
