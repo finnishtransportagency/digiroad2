@@ -6,6 +6,23 @@
   background-color: rgba(red(@color), green(@color), blue(@color), .6);
 }
 
+// Icon font shortcut
+.icon-font {
+  &:before {
+    display: inline-block;
+    width: 1em;
+    line-height: inherit;
+
+    font-family: @font-family-icons;
+    font-size: @font-icon-size-base;
+    font-style: normal;
+    font-weight: normal;
+    speak: none;
+    text-decoration: inherit;
+    text-align: center;    
+  }
+}
+
 // Clearfix
 //
 // For modern browsers
