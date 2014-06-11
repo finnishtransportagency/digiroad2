@@ -37,5 +37,11 @@ object SqlScriptRunner {
     }
   }
 
+  def executeIntQuery(query: String): Int = {
+    Database.forDataSource(ds).withDynSession {
+      Q.queryNA[Int](query).first()
+    }
+  }
+
   def executeStatement(statement: String) = executeStatements(List(statement))
 }

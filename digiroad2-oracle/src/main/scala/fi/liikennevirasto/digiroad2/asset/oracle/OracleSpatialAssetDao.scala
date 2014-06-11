@@ -195,6 +195,14 @@ object OracleSpatialAssetDao {
     getAssetById(assetId).get
   }
 
+  def removeAsset(assetId: Long): Unit = {
+    Q.query[Long, Long](assetLrmPositionId).firstOption(assetId).map { lrmPositionId =>
+      deleteAssetProperties(assetId)
+      deleteAsset(assetId).execute()
+      deleteLRMeasure(lrmPositionId).execute()
+    }
+  }
+
   def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute()
   }
@@ -332,6 +340,12 @@ object OracleSpatialAssetDao {
       case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute()
       case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
     }
+  }
+
+  def deleteAssetProperties(assetId: Long) {
+    deleteAssetTextProperties(assetId).execute()
+    deleteAssetSingleChoiceProperties(assetId).execute()
+    deleteAssetMultipleChoiceProperties(assetId).execute()
   }
 
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {

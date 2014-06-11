@@ -2,20 +2,28 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest._
 import scala.util.Random
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import org.joda.time.LocalDate
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import scala.Some
 import scala.language.implicitConversions
-import fi.liikennevirasto.digiroad2.user.{Role, Configuration, User}
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
+import fi.liikennevirasto.digiroad2.user.Role
 import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
 import org.mockito.Mockito.verify
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import fi.liikennevirasto.digiroad2.asset.Point
+import scala.Some
+import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.asset.SimpleProperty
+import fi.liikennevirasto.digiroad2.asset.Property
+import fi.liikennevirasto.digiroad2.asset.Position
+import fi.liikennevirasto.digiroad2.asset.Asset
+import fi.liikennevirasto.digiroad2.user.Configuration
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -128,7 +136,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("add asset is transactional", Tag("db")) {
     import scala.slick.driver.JdbcDriver.backend.Database
-    import scala.slick.jdbc.{GetResult, StaticQuery => Q}
+    import scala.slick.jdbc.{StaticQuery => Q}
     import Database.dynamicSession
     import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
     val AssetCreator = "integration_test_add_asset"
@@ -169,6 +177,43 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     } finally {
       deleteCreatedTestAsset()
     }
+  }
+
+  test("remove asset from database", Tag("db")) {
+    val singleChoiceValueCountBeforeCreation = amountOfSingleChoiceValues()
+    val lrmPositionCountBeforeCreation = amountOfLrmPositions()
+    val assetCountBeforeCreation = amountOfAssets()
+
+    val asset = provider.createAsset(TestAssetTypeId, 0, 0, 5771, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    try {
+      val singleChoiceValueCountAfterCreation = amountOfSingleChoiceValues()
+      val lrmPositionCountAfterCreation = amountOfLrmPositions()
+      val assetCountAfterCreation = amountOfAssets()
+
+      singleChoiceValueCountBeforeCreation should be < singleChoiceValueCountAfterCreation
+      lrmPositionCountBeforeCreation should be < lrmPositionCountAfterCreation
+      assetCountBeforeCreation should be < assetCountAfterCreation
+
+      provider.removeAsset(asset.id)
+
+      amountOfSingleChoiceValues() should be(singleChoiceValueCountBeforeCreation)
+      amountOfLrmPositions() should be(lrmPositionCountBeforeCreation)
+      amountOfAssets() should be(assetCountBeforeCreation)
+    } catch {
+      case e: Exception => provider.removeAsset(asset.id)
+    }
+  }
+
+  private def amountOfSingleChoiceValues(): Int = {
+    executeIntQuery("select count(*) from single_choice_value")
+  }
+
+  private def amountOfLrmPositions(): Int = {
+    executeIntQuery("select count(*) from lrm_position")
+  }
+
+  private def amountOfAssets(): Int = {
+    executeIntQuery("select count(*) from asset")
   }
 
   private def deleteCreatedTestAsset() {
