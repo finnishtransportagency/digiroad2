@@ -201,6 +201,8 @@ object Queries {
       values ($assetId, $externalId, $assetTypeId, $roadLinkId, $bearing, ${new LocalDate()}, $creator)
     """
 
+  def deleteAsset(assetId: Long) = sqlu"""delete from asset where id = $assetId"""
+
   def propertyIdByPublicId = "select id from property where public_id = ?"
 
   def propertyTypeByPropertyId = "SELECT property_type FROM property WHERE id = ?"
@@ -220,6 +222,9 @@ object Queries {
   def deleteMultipleChoiceProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from multiple_choice_value where asset_id = $assetId and property_id = $propertyId"
 
+  def deleteAssetMultipleChoiceProperties(assetId: Long) =
+    sqlu"delete from multiple_choice_value where asset_id = $assetId"
+
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
@@ -232,6 +237,9 @@ object Queries {
 
   def deleteTextProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from text_property_value where asset_id = $assetId and property_id = $propertyId"
+
+  def deleteAssetTextProperties(assetId: Long) =
+    sqlu"delete from text_property_value where asset_id = $assetId"
 
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
@@ -249,6 +257,9 @@ object Queries {
 
   def deleteSingleChoiceProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from single_choice_value where asset_id = $assetId and property_id = $propertyId"
+
+  def deleteAssetSingleChoiceProperties(assetId: Long) =
+    sqlu"delete from single_choice_value where asset_id = $assetId"
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
@@ -304,6 +315,8 @@ object Queries {
     updateMeasure.setLong(4, lrmPositionId)
     updateMeasure.executeUpdate()
   }
+
+  def deleteLRMeasure(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
 
   def insertLRMPosition(lrmPositionId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection): Long = {
     val insertPosition = conn.prepareStatement("INSERT INTO lrm_position (id, start_measure, end_measure, road_link_id) values (?, ?, ?, ?)")

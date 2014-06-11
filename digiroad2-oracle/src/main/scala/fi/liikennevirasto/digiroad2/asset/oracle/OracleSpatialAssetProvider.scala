@@ -101,6 +101,12 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  def removeAsset(assetId: Long): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleSpatialAssetDao.removeAsset(assetId)
+    }
+  }
+
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       Database.forDataSource(ds).withDynTransaction {
