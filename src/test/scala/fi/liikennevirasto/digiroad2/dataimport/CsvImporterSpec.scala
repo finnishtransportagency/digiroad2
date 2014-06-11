@@ -20,21 +20,34 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update defined values in CSV import", Tag("db")) {
     val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
-    val csv = s"Valtakunnallinen ID;Pysäkin nimi\n${asset.externalId};Härkikuja 4"
+    val asset2 = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    val csv =
+      s"Valtakunnallinen ID;Pysäkin nimi\n" +
+      s"${asset.externalId};AssetName\n" +
+      s"${asset2.externalId};Asset2Name"
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       CsvImporter.importAssets(inputStream, assetProvider)
-      val updatedAsset = assetProvider.getAssetByExternalId(asset.externalId)
-      val finnishName = updatedAsset.flatMap(
-        asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
-          .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
-      finnishName should equal(Some("Härkikuja 4"))
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
+      assetName should equal(Some("AssetName"))
+
+      val assetName2 = getAssetName(assetProvider.getAssetByExternalId(asset2.externalId))
+      assetName2 should equal(Some("Asset2Name"))
     } finally {
       assetProvider.removeAsset(asset.id)
+      assetProvider.removeAsset(asset2.id)
     }
   }
 
-  // TODO: Test updating asset that does not exist
+  private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
+    optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
+      .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
+  }
+
+  // TODO: Test that asset is not updated if value is empty
+  // TODO: Error updating asset that does not exist
+  // TODO: Error when entry has less / more fields than in headers
+  // TODO: Warn about nonused fields
   // TODO: Test updating position
-  // TODO: Test updating multiple rows
 }
