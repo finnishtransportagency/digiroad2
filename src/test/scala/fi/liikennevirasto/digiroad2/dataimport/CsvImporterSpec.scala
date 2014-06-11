@@ -40,12 +40,29 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("do not update values if field is empty in CSV", Tag("db")) {
+    val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("AssetName")))))
+    val csv =
+      s"Valtakunnallinen ID;Pysäkin nimi\n" +
+        s"${asset.externalId};\n"
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      CsvImporter.importAssets(inputStream, assetProvider)
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
+      assetName should equal(Some("AssetName"))
+    } finally {
+      assetProvider.removeAsset(asset.id)
+    }
+  }
+
   private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
     optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
       .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
   }
 
-  // TODO: Test that asset is not updated if value is empty
   // TODO: Error updating asset that does not exist
   // TODO: Error when entry has less / more fields than in headers
   // TODO: Warn about nonused fields

@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{InputStreamReader, InputStream}
 import com.github.tototoshi.csv._
+import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset.{AssetProvider, PropertyValue, SimpleProperty}
 
 object CsvImporter {
@@ -9,7 +10,8 @@ object CsvImporter {
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   def assetRowToProperties(stopName: String): Seq[SimpleProperty] = {
-    Seq(SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(stopName))))
+    if(isBlank(stopName)) Seq()
+    else Seq(SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(stopName))))
   }
 
   def importAssets(inputStream: InputStream, assetProvider: AssetProvider): ImportResult = {
