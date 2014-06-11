@@ -73,16 +73,6 @@ object MapConfigJson {
             "config" : {
               "location" : {
                 "classes" : "right top"
-              },
-              "toolStyle" : {
-                "val" : "sharp-light",
-                "heightCenter" : "0",
-                "widthPlus" : "23px",
-                "heightPlus" : "18px",
-                "widthMinus" : "23px",
-                "heightMinus" : "18px",
-                "widthCursor" : "0px",
-                "heightCursor" : "0px"
               }
             }
           }, {

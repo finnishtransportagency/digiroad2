@@ -1,0 +1,60 @@
+//== Map plugin control component styles
+
+//** Zoom buttons
+
+#mapdiv {
+	.mapplugins {
+		.zoombar {
+			width: 100%;
+			margin: 0 0 @line-height-modifier * 2;
+
+			.slider {
+				display: none;
+			}
+
+			.pzbDiv-plus,
+			.pzbDiv-minus {
+				width: 30px;
+				height: 30px;
+				margin-left: auto;
+				border: 1px solid @gray-light-2;
+				.box-sizing(border-box);
+				background-color: @gray-lighter-2;
+				background-image: none;
+				cursor: pointer;
+				.icon-font;
+
+				&:before {
+					line-height: 30px;
+					color: @gray-dark;
+				}
+
+				&:hover {
+					background-color: @gray-lighter;
+				}
+
+				&:active {
+					background-color: @gray-light-2;
+
+					&:before {
+						color: @gray-darker;
+					}
+				}
+			}
+
+			.pzbDiv-plus {
+				&:before {
+					content: '\e800';
+				}
+			}
+
+			.pzbDiv-minus {
+				margin-top: -1px;
+
+				&:before {
+					content: '\e801';
+				}
+			}
+		}
+	}	
+}
