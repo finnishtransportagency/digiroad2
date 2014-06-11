@@ -30,7 +30,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
           .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
       finnishName should equal(Some("Härkikuja 4"))
     } finally {
-      // TODO: Remove test asset
+      assetProvider.removeAsset(asset.id)
     }
   }
 
