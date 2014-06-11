@@ -1,6 +1,7 @@
 (function(selectedAssetModel){
     selectedAssetModel.initialize = function(backend) {
-        var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId'];
+        var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId', 'externalId',
+                                        'validityDirection'];
         var assetHasBeenModified = false;
         var currentAsset = {};
         var changedProps = [];
@@ -18,38 +19,38 @@
             }
         });
 
+        var transformPropertyData = function(propertyData) {
+            var transformValues = function(publicId, values) {
+                var transformValue = function(value) {
+                    return {
+                        propertyValue: value.propertyValue,
+                        propertyDisplayValue: value.propertyDisplayValue
+                    };
+                };
+
+                return _.map(values.values, transformValue);
+            };
+            var transformProperty = function(property) {
+                return _.merge(
+                    {},
+                    _.pick(property, 'publicId', 'propertyType'),
+                    {
+                        values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
+                    });
+            };
+            return {
+                properties: _.map(propertyData.propertyData, transformProperty)
+            };
+        };
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
 
-            // TODO: copy paste
-            var transformPropertyData = function(propertyData) {
-                var transformValues = function(publicId, values) {
-                    var transformValue = function(value) {
-                        return {
-                            propertyValue: value.propertyValue,
-                            propertyDisplayValue: publicId.publicId
-                        };
-                    };
-
-                    return _.map(values.values, transformValue);
-                };
-                var transformProperty = function(property) {
-                    return _.merge(
-                        {},
-                        _.pick(property, 'publicId'),
-                        {
-                            values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
-                        });
-                };
-                return {
-                    properties: _.map(propertyData.propertyData, transformProperty)
-                };
-            };
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
                 changedProps = currentAsset.payload.properties;
-                eventbus.trigger('asset:initialized', currentAsset);
+                eventbus.trigger('asset:modified', currentAsset);
             });
             backend.getAssetTypeProperties(10);
         }, this);
@@ -93,34 +94,17 @@
         });
 
         var open = function(asset) {
-            var transformPropertyData = function(propertyData) {
-              var transformValues = function(publicId, values) {
-                var transformValue = function(value) {
-                  return {
-                    propertyValue: value.propertyValue,
-                      propertyDisplayValue: publicId.publicId
-                  };
-                };
-                return _.map(values.values, transformValue);
-              };
-              var transformProperty = function(property) {
-                return _.merge(
-                    {},
-                    _.pick(property, 'publicId'),
-                    {
-                      values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
-                    });
-              };
-              return {
-                properties: _.map(propertyData.propertyData, transformProperty)
-              };
-            };
             currentAsset.id = asset.id;
             currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
             currentAsset.validityPeriod = asset.validityPeriod;
+            eventbus.trigger('asset:modified');
         };
 
         eventbus.on('asset:fetched', open, this);
+
+        var getProperties = function() {
+          return currentAsset.payload.properties;
+        };
 
         var save = function() {
             if (currentAsset.id === undefined){
@@ -129,6 +113,12 @@
                 currentAsset.payload.id = currentAsset.id;
                 backend.updateAsset(currentAsset.id, currentAsset.payload);
             }
+        };
+
+        var switchDirection = function() {
+            var validityDirection = get('validityDirection') == 2 ? 3 : 2;
+            setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
+            currentAsset.payload.validityDirection = validityDirection;
         };
 
         var setProperty = function(publicId, values) {
@@ -161,6 +151,12 @@
             return currentAsset.id;
         };
 
+        var get = function(key) {
+          if (exists()) {
+            return currentAsset.payload[key];
+          }
+        };
+
         return {
             close: close,
             save: save,
@@ -169,7 +165,10 @@
             cancel: cancel,
             exists: exists,
             change: change,
-            getId: getId
+            getId: getId,
+            get: get,
+            getProperties: getProperties,
+            switchDirection: switchDirection
         };
     };
 

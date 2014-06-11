@@ -1,6 +1,6 @@
 (function() {
     var enumeratedPropertyValues = null;
-    var readonly = true;
+    var readOnly = true;
     var streetViewHandler;
     var activeLayer = 'asset';
 
@@ -8,16 +8,16 @@
         interpolate: /\{\{(.+?)\}\}/g
     };
 
-    var renderAssetForm = function(asset) {
+    var renderAssetForm = function() {
         if (activeLayer !== 'asset') {
             return;
         }
         var container = $("#feature-attributes").empty();
 
-        var element = $('<header />').html(busStopHeader(asset));
+        var element = $('<header />').html(busStopHeader());
         var wrapper = $('<div />').addClass('wrapper');
-        streetViewHandler = getStreetView(asset);
-        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
+        streetViewHandler = getStreetView();
+        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm()));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
@@ -33,49 +33,40 @@
         // TODO: cleaner html
         featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn).append(cancelBtn));
 
-        if (readonly) {
+        if (readOnly) {
             $('#feature-attributes .form-controls').hide();
             wrapper.addClass('read-only');
         }
 
         function busStopHeader(asset) {
-            if (_.isNumber(asset.externalId)) {
-                return 'Valtakunnallinen ID: ' + asset.externalId;
+            if (_.isNumber(selectedAssetModel.get('externalId'))) {
+                return 'Valtakunnallinen ID: ' + selectedAssetModel.get('externalId');
             }
             else return 'Uusi pys&auml;kki';
         }
     };
 
-    var getStreetView = function(assetForInit) {
-        var asset = _.cloneDeep(assetForInit);
+    var getStreetView = function() {
+        var model = selectedAssetModel;
         var render = function() {
             var wgs84 = OpenLayers.Projection.transform(
-                new OpenLayers.Geometry.Point(asset.lon, asset.lat),
+                new OpenLayers.Geometry.Point(model.get('lon'), model.get('lat')),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
             return $(streetViewTemplate({
-                wgs84X: wgs84.x,
-                wgs84Y: wgs84.y,
-                heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90),
-                protocol: location.protocol
+              wgs84X: wgs84.x,
+              wgs84Y: wgs84.y,
+              heading: (model.get('validityDirection') === 3 ? model.get('bearing') - 90 : model.get('bearing') + 90),
+              protocol: location.protocol
             })).addClass('street-view');
         };
 
-        var changeDirection = function(newDirection){
-            asset.validityDirection = newDirection;
-            $('.street-view').empty().append(render());
-        };
-
-        var changePosition = function(position){
-            asset.lon = position.lon;
-            asset.lat = position.lat;
-            asset.bearing = position.bearing;
+        var update = function(){
             $('.street-view').empty().append(render());
         };
 
         return {
             render: render,
-            changeDirection: changeDirection,
-            changePosition: changePosition
+            update: update
         };
     };
 
@@ -95,7 +86,7 @@
             outer.addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
         } else {
             outer.append($('<div />').addClass('formLabels').text(property.localizedName));
-            outer.append($('<div />').addClass('formAttributeContent readOnlyText').attr('disabled', readonly).text(propertyVal));
+            outer.append($('<div />').addClass('formAttributeContent readOnlyText').attr('disabled', readOnly).text(propertyVal));
         }
         return outer;
     };
@@ -115,7 +106,7 @@
         if(property.values[0]) {
             input.val(property.values[0].propertyDisplayValue);
         }
-        input.attr('disabled', readonly);
+        input.attr('disabled', readOnly);
         return outer;
     };
 
@@ -142,17 +133,14 @@
         }
 
         var wrapper = $('<div />').addClass('formAttributeContent');
-        input.attr('disabled', readonly);
+        input.attr('disabled', readOnly);
         return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
     var directionChoiceHandler = function(property){
-        // TODO: ugliness, remove
-        var validityDirection = 2;
         var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
-            validityDirection = validityDirection == 2 ? 3 : 2;
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: validityDirection }]);
-            streetViewHandler.changeDirection(validityDirection);
+            selectedAssetModel.switchDirection();
+            streetViewHandler.update();
         });
 
         //TODO: cleaner html
@@ -162,7 +150,7 @@
             validityDirection = property.values[0].propertyValue;
         }
         var wrapper = $('<div />').addClass('formAttributeContent');
-        input.attr('disabled', readonly);
+        input.attr('disabled', readOnly);
         return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
     };
 
@@ -184,7 +172,7 @@
             input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
         }
         input.addClass('featureAttributeDate');
-        input.attr('disabled', readonly);
+        input.attr('disabled', readOnly);
         return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
     };
 
@@ -219,7 +207,7 @@
                 return prop.propertyValue === x.propertyValue;
             });
 
-            input.prop('checked', x.checked).attr('disabled', readonly);
+            input.prop('checked', x.checked).attr('disabled', readOnly);
             var label = $('<label />').text(x.propertyDisplayValue);
             inputContainer.append(input).append(label).append($('<br>'));
         });
@@ -227,7 +215,8 @@
         return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
     };
 
-    var getAssetForm = function(contents) {
+    var getAssetForm = function() {
+        var contents = selectedAssetModel.getProperties();
         var components =_.map(contents, function(feature){
             feature.localizedName = window.localizedStrings[feature.publicId];
             var propertyType = feature.propertyType;
@@ -268,8 +257,8 @@
         dateutil.removeDatePickersFromDom();
     };
 
-    eventbus.on('asset:fetched asset:created asset:initialized', function(asset){
-        renderAssetForm(asset);
+    eventbus.on('asset:modified', function(asset){
+        renderAssetForm();
     });
 
     eventbus.on('layer:selected', function(layer) {
@@ -277,8 +266,8 @@
       closeAsset();
     });
 
-    eventbus.on('application:readOnly', function(readOnly) {
-        readonly = readOnly;
+    eventbus.on('application:readOnly', function(data) {
+        readOnly = data;
     });
 
     eventbus.on('asset:closed', closeAsset);
@@ -287,8 +276,8 @@
         enumeratedPropertyValues = values;
     });
 
-    eventbus.on('asset:moved', function(position) {
-        streetViewHandler.changePosition(position);
+    eventbus.on('asset:moved', function() {
+        streetViewHandler.update();
     });
 
     window.Backend.getEnumeratedPropertyValues(10);
