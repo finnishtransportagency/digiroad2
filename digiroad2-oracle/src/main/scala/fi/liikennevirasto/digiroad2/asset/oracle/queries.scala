@@ -316,7 +316,7 @@ object Queries {
     updateMeasure.executeUpdate()
   }
 
-  def deleteLRMeasure(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
+  def deleteLRMPosition(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
 
   def insertLRMPosition(lrmPositionId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection): Long = {
     val insertPosition = conn.prepareStatement("INSERT INTO lrm_position (id, start_measure, end_measure, road_link_id) values (?, ?, ?, ?)")

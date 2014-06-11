@@ -199,7 +199,7 @@ object OracleSpatialAssetDao {
     Q.query[Long, Long](assetLrmPositionId).firstOption(assetId).map { lrmPositionId =>
       deleteAssetProperties(assetId)
       deleteAsset(assetId).execute()
-      deleteLRMeasure(lrmPositionId).execute()
+      deleteLRMPosition(lrmPositionId).execute()
     }
   }
 
