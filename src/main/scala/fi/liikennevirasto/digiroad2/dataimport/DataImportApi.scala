@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import org.scalatra.{Forbidden, Unauthorized, CorsSupport, ScalatraServlet}
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
+import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.scalatra.servlet.{MultipartConfig, FileUploadSupport}
@@ -37,5 +38,15 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     }
     val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
     new BusStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
+  }
+
+  post("/validationCsv") {
+    if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+    val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider)
+    if (!result.incompleteAssets.isEmpty || !result.nonExistingAssets.isEmpty) {
+      halt(BadRequest(result))
+    }
   }
 }

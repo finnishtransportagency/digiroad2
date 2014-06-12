@@ -11,16 +11,16 @@ object CsvImporter {
   case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
-  def assetRowToProperties(stopName: String): Seq[SimpleProperty] = {
+  private def assetRowToProperties(stopName: String): Seq[SimpleProperty] = {
     if(isBlank(stopName)) Seq()
     else Seq(SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(stopName))))
   }
 
-  def rowToString(csvRowWithHeaders: Map[String, String]): String = {
+  private def rowToString(csvRowWithHeaders: Map[String, String]): String = {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
 
-  def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
     val mandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi")
     csvRowWithHeaders.keys.foldLeft(mandatoryParameters) { (mandatoryParameters, key) => mandatoryParameters - key }.toList
   }

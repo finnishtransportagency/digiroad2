@@ -14,4 +14,11 @@
         </div>
         <input type="submit" value="Lataa tiedot">
     </form>
+    <form method="post" action="api/import/validationCsv" enctype="multipart/form-data">
+        <div class="formAttributeContentRow">
+            <div class="formLabels">Valitse CSV-tiedosto (validaatiolla):</div>
+            <input type="file" name="csv-file"/>
+        </div>
+        <input type="submit" value="Lataa tiedot (validaatiolla)">
+    </form>
 </div>
