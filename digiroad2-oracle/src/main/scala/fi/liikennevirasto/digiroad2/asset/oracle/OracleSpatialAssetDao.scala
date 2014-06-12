@@ -212,6 +212,18 @@ object OracleSpatialAssetDao {
     }
   }
 
+  def updateAsset(assetId: Long, position: Option[Position], modifier: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    updateAssetLastModified(assetId, modifier)
+    if (!properties.isEmpty) {
+      updateAssetProperties(assetId, properties)
+    }
+    position match {
+      case None => logger.debug("not updating position")
+      case Some(pos) => updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+    }
+    getAssetById(assetId).get
+  }
+
   def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute()
   }
