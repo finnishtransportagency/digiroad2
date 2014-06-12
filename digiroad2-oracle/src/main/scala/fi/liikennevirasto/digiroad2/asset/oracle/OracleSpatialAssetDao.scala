@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
+import java.sql.SQLException
+
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
@@ -196,10 +198,17 @@ object OracleSpatialAssetDao {
   }
 
   def removeAsset(assetId: Long): Unit = {
-    Q.query[Long, Long](assetLrmPositionId).firstOption(assetId).map { lrmPositionId =>
+    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).firstOption(assetId)
+    optionalLrmPositionId match {
+      case Some(lrmPositionId) =>
       deleteAssetProperties(assetId)
       deleteAsset(assetId).execute()
-      deleteLRMPosition(lrmPositionId).execute()
+      try {
+        deleteLRMPosition(lrmPositionId).execute()
+      } catch {
+        case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
+      }
+      case None => ()
     }
   }
 
