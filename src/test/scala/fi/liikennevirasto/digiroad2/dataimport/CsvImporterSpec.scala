@@ -37,8 +37,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val assetName2 = getAssetName(assetProvider.getAssetByExternalId(asset2.externalId))
       assetName2 should equal(Some("Asset2Name"))
     } finally {
-      assetProvider.removeAsset(asset.id)
-      assetProvider.removeAsset(asset2.id)
+      removeAsset(asset.id, assetProvider)
+      removeAsset(asset2.id, assetProvider)
     }
   }
 
@@ -57,7 +57,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
     } finally {
-      assetProvider.removeAsset(asset.id)
+      removeAsset(asset.id, assetProvider)
     }
   }
 
@@ -89,13 +89,22 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
     } finally {
-      assetProvider.removeAsset(asset.id)
+      removeAsset(asset.id, assetProvider)
     }
   }
 
   private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
     optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
       .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
+  }
+
+  private def removeAsset(assetId: Long, provider: OracleSpatialAssetProvider) = {
+    try {
+      assetProvider.removeAsset(assetId)
+    } catch {
+      // TODO: Remove handling of this exception once LRM position removal does not fail in test runs
+      case e: LRMPositionDeletionFailed => println("Removing LRM Position of asset " + assetId + " failed: " + e.reason)
+    }
   }
 
   // TODO: Warn about nonused fields
