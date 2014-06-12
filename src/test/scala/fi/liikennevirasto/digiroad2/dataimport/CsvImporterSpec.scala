@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, AuthenticatedApiSpec}
 import java.io.ByteArrayInputStream
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.{NonExistingAsset, ImportResult}
 
 class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -27,7 +28,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       s"${asset2.externalId};Asset2Name"
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
-      CsvImporter.importAssets(inputStream, assetProvider)
+      val result = CsvImporter.importAssets(inputStream, assetProvider)
+      result should equal(ImportResult(List()))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
@@ -46,10 +48,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("AssetName")))))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
-        s"${asset.externalId};\n"
+      s"${asset.externalId};\n"
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
-      CsvImporter.importAssets(inputStream, assetProvider)
+      val result = CsvImporter.importAssets(inputStream, assetProvider)
+      result should equal(ImportResult(List()))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
@@ -58,12 +61,22 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("raise an error when updating non-existent asset", Tag("db")) {
+    val csv =
+      s"Valtakunnallinen ID;Pysäkin nimi\n" +
+      s"600000;AssetName\n"
+
+    val inputStream = new ByteArrayInputStream(csv.getBytes)
+    val result = CsvImporter.importAssets(inputStream, assetProvider)
+
+    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = "Valtakunnallinen ID: '600000', Pysäkin nimi: 'AssetName'"))))
+  }
+
   private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
     optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
       .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
   }
 
-  // TODO: Error updating asset that does not exist
   // TODO: Error when entry has less / more fields than in headers
   // TODO: Warn about nonused fields
   // TODO: Test updating position

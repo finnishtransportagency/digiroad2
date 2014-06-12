@@ -103,8 +103,11 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
     // TODO: Share commonalities between updateAssetByExternalId and updateAsset so that database calls are minimized
-    val asset = getAssetByExternalId(externalId)
-    updateAsset(asset.get.id, None, properties)
+    val optionalAsset = getAssetByExternalId(externalId)
+    optionalAsset match {
+      case Some(asset) => updateAsset(asset.id, None, properties)
+      case None => throw new AssetNotFoundException(externalId)
+    }
   }
 
   def removeAsset(assetId: Long): Unit = {

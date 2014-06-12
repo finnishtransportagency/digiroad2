@@ -23,5 +23,7 @@ trait AssetProvider {
   def availableProperties(assetTypeId: Long): Seq[Property]
   def assetPropertyNames(language: String): Map[String, String]
 }
+class AssetNotFoundException(externalId: Long) extends RuntimeException
+
 case class Point(x: Double, y: Double)
 case class BoundingRectangle(leftBottom: Point, rightTop: Point)
