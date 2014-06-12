@@ -24,26 +24,25 @@
         };
 
         var getSelectedContent = function(asset, imageIds){
-            var expandedBusStop = $('<div class="expanded-bus-stop" />');
-            var busImages = $('<div class="images" />');
-            busImages.append(createBusStopsImages(imageIds));
-            expandedBusStop.append(busImages);
-            expandedBusStop.append($('<div class="bus-stop-id"/>').append(asset.id));
+            var busStopImages = mapBusStopImageIdsToImages(imageIds);
             var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
-            expandedBusStop.append($('<div class="bus-stop-name"/>').append(name));
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
-            expandedBusStop.append($('<div class="bus-stop-direction"/>').append(direction));
-            return expandedBusStop;
+
+            return $('<div class="expanded-bus-stop" />')
+                       .append($('<div class="images" />').html(busStopImages))
+                       .append($('<div class="bus-stop-id"/>').html(asset.id))
+                       .append($('<div class="bus-stop-name"/>').html(name))
+                       .append($('<div class="bus-stop-direction"/>').html(direction));
         };
 
         var createDefaultState = function() {
             var busImages = $('<div class="bus-basic-marker" />');
-            busImages.append($('<div class="images" />').append(createBusStopsImages(data.imageIds)));
+            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
             $(box.div).html(busImages);
 
         };
 
-        var createBusStopsImages =  function (imageIds) {
+        var mapBusStopImageIdsToImages =  function (imageIds) {
             return _.map(_.isEmpty(imageIds) ? [EMPTY_IMAGE_TYPE] : imageIds, function (imageId) {
                 return '<img src="api/images/' + imageId + '.png">';
             });
