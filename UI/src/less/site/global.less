@@ -69,7 +69,10 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #282826 url('../images/spinner.gif') no-repeat center;
+  background-color: @gray-darker-2;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  .img-retina('../images/spinner.gif', '../images/spinner@2x.gif', 64px, 64px);
   div.mapplugins.bottom { bottom: 40px; }
 }
 

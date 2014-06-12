@@ -9,14 +9,17 @@
   z-index: 3;
   
   .spinner {
-    background: #282826 url('../images/spinner.gif') no-repeat center;
-    min-width: 80px;
-    min-height: 80px;
-    border-radius: 50px;
     position: fixed;
     top: 50%;
     left: 50%;
-    margin-top: -40px;
-    margin-left: -40px;
+    width: 74px;
+    height: 74px;    
+    margin-top: -37px;
+    margin-left: -37px;
+    border-radius: 50px;
+    background-color: @gray-darker-2;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    .img-retina('../images/spinner.gif', '../images/spinner@2x.gif', 64px, 64px);
   }
 }
