@@ -8,6 +8,9 @@
 <missing-glyph horiz-adv-x="1000" />
 <glyph glyph-name="plus" unicode="&#xe800;" d="m731 312h-192v-193h-77v193h-193v77h193v192h77v-192h192v-77z" horiz-adv-x="1000" />
 <glyph glyph-name="minus" unicode="&#xe801;" d="m731 312h-462v77h462v-77z" horiz-adv-x="1000" />
+<glyph glyph-name="close" unicode="&#xe802;" d="m635 162l-135 134-135-134-53 53 134 135-134 135 53 54 135-135 135 135 54-54-135-135 135-135-54-53z" horiz-adv-x="1000" />
+<glyph glyph-name="navigate" unicode="&#xe803;" d="m231 581l269-500v231h231l-500 269z" horiz-adv-x="1000" />
+<glyph glyph-name="check" unicode="&#xe804;" d="m500 173l-188 189 53 53 135-134 246 246 54-54-300-300z" horiz-adv-x="1000" />
 </font>
 </defs>
 </svg>
