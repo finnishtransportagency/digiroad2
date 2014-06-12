@@ -23,10 +23,6 @@
     }
   };
 
-  eventbus.on('layer:selected', function() {
-    eventbus.trigger('application:readOnly', true);
-  });
-
   eventbus.on('application:readOnly', function() {
     eventbus.trigger('tool:changed', 'Select');
   });

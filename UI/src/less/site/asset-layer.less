@@ -1,45 +1,75 @@
-.callout-wrapper {
-  display: inline-block;
-  margin-top: -10px;
-  margin-left: -2px;
-  padding: 2px;
-  border: 1px solid @gray-dark-2;
-  border-radius: 3px;
-  background-color: #fff;
-
-  .callout {
+.bus-basic-marker, .expanded-bus-stop {
+  .images {
+    @image-container-width: 28px;
+    @image-border-width: 1px;
+    width: @image-container-width + 2 * @image-border-width;
+    border-radius: 3px;
+    padding: 3px;
+    background: white;
     img {
-      display: block;
-      margin-top: -1px;
-
-      &:first-child {
-        margin-top: 0;
+      border-right: @image-border-width solid black;
+      border-left: @image-border-width solid black;
+      border-bottom: @image-border-width solid black;
+      &:first-of-type {
+        border-top: @image-border-width solid black;
       }
     }
   }
+
+  &:before {
+    content: "";
+    position: absolute;
+    height: 17px;
+    border-right: 3px solid @gray-dark-2;
+    z-index: -1;
+  }
 }
 
-.arrow-container {
+.bus-basic-marker {
   position: absolute;
-  bottom: -16px;
-  left: -3px;
-  width: 4px;
-  height: 15px;
+  bottom: 0;
+  left : -1px;
+  padding-bottom: 15px;
+  .images {
+    border: 1px solid @gray-dark-2;
+  }
+  &:before {
+    bottom: 0;
+  }
 }
 
-.arrow {
-  position: relative;
-  z-index: -1;  
-  width: 4px;
-  height: 15px;
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
-  background-color: @gray-dark-2;
+.expanded-bus-stop {
+  background-color: @gray-darker;
+  padding : 5px;
+  border : 1px solid @gray-darker-2;
+  position: absolute;
+  bottom: 1px;
+  left : -1px;
+  margin-bottom: 15px;
+  font-size : 10px;
+  line-height : 23px;
+  z-index: 1;
+  color : white;
+  display: flex; /* TODO: check browser compatibilities and vendor prefixes */
+
+  .images {
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  &:before {
+    bottom: -16px;
+    left: -1;
+  }
+
+  .bus-stop-id {
+    width: 39px;
+    margin-right: 5px;
+  }
+
+  .bus-stop-name {
+    margin-right: 5px;
+    color: #a4a4a2;
+  }
 }
 
-.dropHandle {
-  width : 22px;
-  height: 16px;
-  margin-top : 9px;
-  margin-left: -10px;
-}

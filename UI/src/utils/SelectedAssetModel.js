@@ -13,7 +13,9 @@
         };
 
         eventbus.on('tool:changed', function() {
-            close();
+            if (currentAsset.id) {
+                backend.getAsset(currentAsset.id, true);
+            }
         });
 
         eventbus.on('asset:placed', function(asset) {
@@ -137,7 +139,7 @@
             changedProps.push(propertyData);
             currentAsset.payload.properties = changedProps;
             assetHasBeenModified = true;
-            eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData});
+            eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData, id : currentAsset.id});
         };
 
         var exists = function() {
