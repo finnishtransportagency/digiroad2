@@ -24,8 +24,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber)
   }
 
-  private def userCanModifyAsset(assetId: Long): Boolean =
-    getAssetById(assetId).flatMap(a => a.municipalityNumber.map(userCanModifyMunicipality)).getOrElse(false)
+  private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)
+
+  private def userCanModifyAsset(asset: AssetWithProperties): Boolean = asset.municipalityNumber.exists(userCanModifyMunicipality)
 
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
     getRoadLinkById(roadLinkId).map(rl => userCanModifyMunicipality(rl.municipalityNumber)).getOrElse(false)
