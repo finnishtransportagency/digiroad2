@@ -71,6 +71,7 @@ input[type="checkbox"]:focus {
     font-weight: normal;
     text-transform: none;
     cursor: pointer;
+    .user-select(none);
   }
 }
 .radio input[type="radio"],
@@ -79,4 +80,40 @@ input[type="checkbox"]:focus {
 .checkbox-inline input[type="checkbox"] {
   float: left;
   margin-left: -20px;
+  .user-select(none);
+}
+
+.checkbox input[type="checkbox"] {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 1px solid @gray-darker;
+  border-radius: @border-radius-small;
+  outline: none;
+  -webkit-appearance: none;
+  .scale(0.9999);
+  .transition(transform 0.05s ease-in-out);
+  .transition(-webkit-transform 0.05s ease-in-out);
+  .transition(-moz-transform 0.05s ease-in-out);
+  .transition(-o-transform 0.05s ease-in-out);
+  .transition(-ms-transform 0.05s ease-in-out);
+
+  &:active {
+    .scale(0.85);
+  }
+
+  &:checked {
+    .icon-font;
+    &:before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 12px;
+      height: 12px;
+      margin-left: -5px;
+      margin-top: -5px;
+      font-size: 18px;
+      content: '\e804';
+    }
+  }
 }
