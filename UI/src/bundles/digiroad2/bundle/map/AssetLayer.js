@@ -157,6 +157,12 @@ window.AssetLayer = function(map, roadLayer) {
         }
     };
 
+    var handleAssetCreated = function(asset) {
+        removeAssetFromMap(selectedAsset);
+        addNewAsset(asset);
+        eventbus.trigger('asset:selected', asset);
+    };
+
     var handleAssetSaved = function(asset) {
         selectedAsset.data = asset;
         assets[asset.id] = selectedAsset;
@@ -260,7 +266,6 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset.roadLinkId = nearestLine.roadLinkId;
             selectedAsset.data.lon = lonlat.lon;
             selectedAsset.data.lat = lonlat.lat;
-            //console.log(selectedAsset.massTransitStop.getMarker());
             moveMarker(lonlat);
 
             eventbus.trigger('asset:moved', {
@@ -288,19 +293,11 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
-    eventbus.on('asset:selected', function(data) {
-        backend.getAsset(data.id);
-    }, this);
-    eventbus.on('asset:selected', function(data, keepPosition) {
-        selectedAsset = assets[data.id];
-        if (!keepPosition) {
-            eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
-        }
-    }, this);
     eventbus.on('tool:changed', toolSelectionChange, this);
     eventbus.on('assetPropertyValue:saved', updateAsset, this);
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
     eventbus.on('asset:saved', handleAssetSaved, this);
+    eventbus.on('asset:created', handleAssetCreated, this);
     eventbus.on('asset:fetched', handleAssetFetched, this);
     eventbus.on('asset:created', removeOverlay, this);
     eventbus.on('asset:rendered', function() {

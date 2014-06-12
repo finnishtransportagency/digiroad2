@@ -33,7 +33,6 @@
             expandedBusStop.append($('<div class="bus-stop-name"/>').append(name));
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
             expandedBusStop.append($('<div class="bus-stop-direction"/>').append(direction));
-            selected = true;
             return expandedBusStop;
         };
 
@@ -41,7 +40,7 @@
             var busImages = $('<div class="bus-basic-marker" />');
             busImages.append($('<div class="images" />').append(createBusStopsImages(data.imageIds)));
             $(box.div).html(busImages);
-            selected  = false;
+
         };
 
         var createBusStopsImages =  function (imageIds) {
@@ -67,15 +66,17 @@
         var unSelectState = function() {
             if (selected) {
                 createDefaultState();
+                selected  = false;
             }
         };
 
-        eventbus.on('asset:closed', unSelectState);
+        eventbus.on('asset:closed tool:changed', unSelectState);
 
-        eventbus.on('asset:fetched asset:created', function (asset) {
+        eventbus.on('asset:fetched asset:selected', function (asset) {
             if (asset.id === data.id) {
                 data = asset; // TODO: use data model when it's ready
                 renderNewState(asset);
+                selected = true;
             } else {
                 unSelectState();
             }
