@@ -70,7 +70,7 @@
             }
         };
 
-        eventbus.on('asset:closed tool:changed', unSelectState);
+        eventbus.on('asset:closed tool:changed asset:placed', unSelectState);
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
             if (asset.id === data.id) {
