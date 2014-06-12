@@ -99,5 +99,4 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   // TODO: Warn about nonused fields
-  // TODO: Test updating position
 }
