@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.{AssetNotFoundException, AssetProvider
 
 object CsvImporter {
   case class NonExistingAsset(externalId: Long, csvRow: String)
-  case class ImportResult(nonExistingAssets: List[NonExistingAsset])
+  case class IncompleteAsset(missingParameters: List[String], csvRow: String)
+  case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   def assetRowToProperties(stopName: String): Seq[SimpleProperty] = {
@@ -19,20 +20,30 @@ object CsvImporter {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
 
+  def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+    val mandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi")
+    csvRowWithHeaders.keys.foldLeft(mandatoryParameters) { (mandatoryParameters, key) => mandatoryParameters - key }.toList
+  }
+
   def importAssets(inputStream: InputStream, assetProvider: AssetProvider): ImportResult = {
     val streamReader = new InputStreamReader(inputStream)
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    val nonExistingAssets = csvReader.allWithHeaders().foldLeft(List(): List[NonExistingAsset]) { (nonExistingAssets, row) =>
-      val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = assetRowToProperties(row("Pysäkin nimi")))
-      try {
-        assetProvider.updateAssetByExternalId(parsedRow.externalId, parsedRow.properties)
-        nonExistingAssets
-      } catch {
-        case e: AssetNotFoundException => NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: nonExistingAssets
+    val result = csvReader.allWithHeaders().foldLeft(ImportResult(List(), List())) { (result, row) =>
+      val missingParameters = findMissingParameters(row)
+      if(missingParameters.isEmpty) {
+        val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = assetRowToProperties(row("Pysäkin nimi")))
+        try {
+          assetProvider.updateAssetByExternalId(parsedRow.externalId, parsedRow.properties)
+          result
+        } catch {
+          case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
+        }
+      } else {
+        result.copy(incompleteAssets = IncompleteAsset(missingParameters = missingParameters, csvRow = rowToString(row)) :: result.incompleteAssets)
       }
     }
-    ImportResult(nonExistingAssets = nonExistingAssets)
+    result
   }
 }
