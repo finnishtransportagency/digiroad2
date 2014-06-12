@@ -106,7 +106,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     Database.forDataSource(ds).withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
-        case Some(asset) => OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties)
+        case Some(asset) =>
+          if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
+          OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties)
         case None => throw new AssetNotFoundException(externalId)
       }
     }
