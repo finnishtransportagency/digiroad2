@@ -84,10 +84,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
-    if (!userCanModifyAsset(assetId)) {
-      throw new IllegalArgumentException("User does not have write access to municipality")
-    }
     Database.forDataSource(ds).withDynTransaction {
+      val asset = OracleSpatialAssetDao.getAssetById(assetId).get
+      if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
       OracleSpatialAssetDao.updateAssetLastModified(assetId, userProvider.getCurrentUser().username)
       if (!properties.isEmpty) {
         OracleSpatialAssetDao.updateAssetProperties(assetId, properties)
@@ -96,9 +95,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
         case None => logger.debug("not updating position")
         case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
       }
-      val asset = OracleSpatialAssetDao.getAssetById(assetId).get
-      eventbus.publish("asset:saved", (getMunicipalityName(asset.roadLinkId), asset))
-      asset
+      val updatedAsset = OracleSpatialAssetDao.getAssetById(assetId).get
+      eventbus.publish("asset:saved", (getMunicipalityName(updatedAsset.roadLinkId), updatedAsset))
+      updatedAsset
     }
   }
 
