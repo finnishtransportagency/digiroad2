@@ -243,6 +243,9 @@ window.AssetLayer = function(map, roadLayer) {
             selectedAsset = assets[assetData.id];
             selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
             moveMarker(new OpenLayers.LonLat(assetData.lon, assetData.lat));
+        } else {
+          addNewAsset(assetData);
+          eventbus.trigger('asset:selected', assetData);
         }
         if (!keepPosition) {
             eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
