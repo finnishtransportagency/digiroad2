@@ -8,12 +8,60 @@ import fi.liikennevirasto.digiroad2.asset.{AssetNotFoundException, AssetProvider
 object CsvImporter {
   case class NonExistingAsset(externalId: Long, csvRow: String)
   case class IncompleteAsset(missingParameters: List[String], csvRow: String)
-  case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset])
+  case class MalformedAsset(malformedParameters: List[String], csvRow: String)
+  case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset], malformedAssets: List[MalformedAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
-  private def assetRowToProperties(stopName: String): Seq[SimpleProperty] = {
-    if(isBlank(stopName)) Seq()
-    else Seq(SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(stopName))))
+  type MalformedParameters = List[String]
+  type ParsedProperties = List[SimpleProperty]
+  type ParsedAssetRow = (MalformedParameters, ParsedProperties)
+
+  private def maybeInt(string: String): Option[Int] = {
+    try {
+      Some(string.toInt)
+    } catch {
+      case e: NumberFormatException => None
+    }
+  }
+
+  private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
+
+  private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): ParsedAssetRow = {
+    result.copy(_2 = result._2 match {
+      case List(SimpleProperty("pysakin_tyyppi", xs)) => List(SimpleProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.toList))
+      case _ => List(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
+    })
+  }
+
+  private def assetTypeToProperty(assetTypes: String): ParsedAssetRow = {
+    val invalidAssetType = (List("Pysäkin tyyppi"), Nil)
+    val types = assetTypes.split(',')
+    if(types.isEmpty) invalidAssetType
+    else {
+      types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
+        maybeInt(assetType.trim)
+          .filter(isValidTypeEnumeration)
+          .map(typeEnumeration => resultWithType(result, typeEnumeration))
+          .getOrElse(invalidAssetType)
+      }
+    }
+  }
+
+  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
+    csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
+      val (key, value) = parameter
+      if(isBlank(value)) {
+        result
+      } else {
+        key match {
+          case "Pysäkin nimi" => result.copy(_2 = SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(value))) :: result._2)
+          case "Pysäkin tyyppi" =>
+            val (malformedParameters, properties) = assetTypeToProperty(value)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          case _ => result
+        }
+      }
+    }
   }
 
   private def rowToString(csvRowWithHeaders: Map[String, String]): String = {
@@ -30,10 +78,11 @@ object CsvImporter {
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult(List(), List())) { (result, row) =>
+    csvReader.allWithHeaders().foldLeft(ImportResult(Nil, Nil, Nil)) { (result, row) =>
       val missingParameters = findMissingParameters(row)
-      if(missingParameters.isEmpty) {
-        val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = assetRowToProperties(row("Pysäkin nimi")))
+      val (malformedParameters, properties) = assetRowToProperties(row)
+      if(missingParameters.isEmpty && malformedParameters.isEmpty) {
+        val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
           assetProvider.updateAssetByExternalId(parsedRow.externalId, parsedRow.properties)
           result
@@ -41,7 +90,16 @@ object CsvImporter {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
         }
       } else {
-        result.copy(incompleteAssets = IncompleteAsset(missingParameters = missingParameters, csvRow = rowToString(row)) :: result.incompleteAssets)
+        result.copy(
+          incompleteAssets = missingParameters match {
+            case Nil => result.incompleteAssets
+            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteAssets
+          },
+          malformedAssets = malformedParameters match {
+            case Nil => result.malformedAssets
+            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedAssets
+          }
+        )
       }
     }
   }
