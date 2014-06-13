@@ -34,15 +34,15 @@ object CsvImporter {
   }
 
   private def assetTypeToProperty(assetTypes: String): ParsedAssetRow = {
-    val invalidAssetTypes = (List("Pysäkin tyyppi"), Nil)
+    val invalidAssetType = (List("Pysäkin tyyppi"), Nil)
     val types = assetTypes.split(',')
-    if(types.isEmpty) invalidAssetTypes
+    if(types.isEmpty) invalidAssetType
     else {
       types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
-        maybeInt(assetType.trim) match {
-          case Some(i) => if(isValidTypeEnumeration(i)) resultWithType(result, i) else invalidAssetTypes
-          case None => invalidAssetTypes
-        }
+        maybeInt(assetType.trim)
+          .filter(isValidTypeEnumeration)
+          .map(typeEnumeration => resultWithType(result, typeEnumeration))
+          .getOrElse(invalidAssetType)
       }
     }
   }
