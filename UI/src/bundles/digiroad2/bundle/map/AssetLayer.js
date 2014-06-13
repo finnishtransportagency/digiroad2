@@ -345,35 +345,67 @@ window.AssetLayer = function(map, roadLayer) {
         }
     }, true);
 
-    events.register('click', map, function(e) {
-        if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-            var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
-            createNewAsset(map.getLonLatFromPixel(pixel));
-        } else {
-            selectedAssetModel.close();
-            window.location.hash = '';
-        }
-    });
 
-    eventbus.on('layer:selected', function(layer) {
-        if (layer !== 'asset') {
-            if (assetLayer.map && assetDirectionLayer.map) {
-                map.removeLayer(assetLayer);
-                map.removeLayer(assetDirectionLayer);
-            }
-        } else {
-            map.addLayer(assetDirectionLayer);
-            map.addLayer(assetLayer);
-            if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-                backend.getAssets(10, map.getExtent());
-            }
-        }
-    }, this);
-    eventbus.on('layer:selected', closeAsset, this);
+  var Click = OpenLayers.Class(OpenLayers.Control, {
+    defaultHandlerOptions: {
+      'single': true,
+      'double': false,
+      'pixelTolerance': 0,
+      'stopSingle': false,
+      'stopDouble': false
+    },
 
+    initialize: function(options) {
+      this.handlerOptions = OpenLayers.Util.extend(
+        {}, this.defaultHandlerOptions
+      );
+      OpenLayers.Control.prototype.initialize.apply(
+        this, arguments
+      );
+      this.handler = new OpenLayers.Handler.Click(
+        this, {
+          'click': this.onClick
+        }, this.handlerOptions
+      );
+    },
+
+    onClick: function(e) {
+      if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
+        var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
+        createNewAsset(map.getLonLatFromPixel(pixel));
+      } else {
+        if (selectedAssetModel.isDirty()) {
+          new Confirm();
+        } else {
+          selectedAssetModel.close();
+          window.location.hash = '';
+        }
+      }
+    }
+  });
+  var click = new Click();
+  map.addControl(click);
+  click.activate();
+
+  eventbus.on('layer:selected', function(layer) {
+    if (layer !== 'asset') {
+      if (assetLayer.map && assetDirectionLayer.map) {
+          map.removeLayer(assetLayer);
+          map.removeLayer(assetDirectionLayer);
+      }
+    } else {
+      map.addLayer(assetDirectionLayer);
+      map.addLayer(assetLayer);
+      if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+        backend.getAssets(10, map.getExtent());
+      }
+    }
+  }, this);
+
+  eventbus.on('layer:selected', closeAsset, this);
     $('#mapdiv').on('mouseleave', function(e) {
-        if (assetIsMoving === true) {
-            mouseUpHandler(selectedAsset);
-        }
+      if (assetIsMoving === true) {
+        mouseUpHandler(selectedAsset);
+      }
     });
 };
