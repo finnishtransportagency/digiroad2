@@ -93,11 +93,11 @@ object CsvImporter {
         result.copy(
           incompleteAssets = missingParameters match {
             case Nil => result.incompleteAssets
-            case xs => IncompleteAsset(missingParameters = xs, csvRow = rowToString(row)) :: result.incompleteAssets
+            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteAssets
           },
           malformedAssets = malformedParameters match {
             case Nil => result.malformedAssets
-            case xs => MalformedAsset(malformedParameters = xs, csvRow = rowToString(row)) :: result.malformedAssets
+            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedAssets
           }
         )
       }
