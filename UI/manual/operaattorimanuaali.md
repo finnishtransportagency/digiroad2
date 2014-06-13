@@ -19,7 +19,47 @@ Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus i
 
 _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 
-2. Pys&auml;kkitietojen vienti Vallu-j&auml;rjestelm&auml;&auml;n
+2. Importit
+-----------
+
+Importeilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;&auml;n.
+
+2.1 CSV-vienti
+--------------
+
+Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston k&auml;ytt&ouml;liittym&auml;n kautta j&auml;rjestelm&auml;&auml;n. Vienti tehd&auml;&auml;n osoitteessa:
+
+```
+https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html
+```
+
+![CSV-vienti](k23.JPG)
+
+_K&auml;ytt&ouml;liittym&auml; .csv-tiedostojen viennille._
+
+1. Klikkaa "selaa"
+1. Etsi .csv-tiedosto hakemistostasi.
+1. Klikkaa "Lataa tiedot"
+
+Viennin onnistuessa j&auml;rjestelm&auml; ilmoittaa:"CSV tiedosto k&auml;sitelty". Mik&auml;li vienti ep&auml;onnistuu, j&auml;rjestelm&auml; tulostaa virhelokin virheellisist&auml; tiedoista.
+
+Huomioita csv-tiedostosta:
+
+- .csv-tiedoston encoding-valinnan tulee olla "Encode in UTF-8 without BOM"
+- Tiedosto on muotoa:
+
+```
+Valtakunnallinen ID;Pysäkin nimi
+300790;nimi
+165833;toinen nimi
+```
+
+3. Exportit
+-----------
+
+Exporteilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;st&auml; ulos.
+
+3.1 Pys&auml;kkitietojen vienti Vallu-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------
 
 J&auml;rjestelm&auml; tukee pys&auml;kkitietojen vienti&auml; Vallu-j&auml;rjestelm&auml;&auml;n. Pys&auml;kkitiedot toimitetaan .csv-tiedostona FTP-palvelimelle. Vienti k&auml;ynnistet&auml;&auml;n automaattisesti Jenkins-palvelimella joka päivä klo 19:00 ajamalla 'vallu_import.sh' skripti. Skripti hakee pys&auml;kkitiedot tietokannasta k&auml;ytt&auml;en projektille m&auml;&auml;ritelty&auml; kohdetieto-tietol&auml;hdett&auml;.
@@ -49,7 +89,7 @@ digiroad2.vallu.server.address=http://localhost:9002
 ```
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta.
 
-3. Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
+3.2 Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------------------------
 
 Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle.
