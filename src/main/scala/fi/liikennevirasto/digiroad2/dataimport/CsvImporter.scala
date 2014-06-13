@@ -13,12 +13,16 @@ object CsvImporter {
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   private def assetTypeToProperty(assetTypes: String): (List[String], List[SimpleProperty]) = {
+    val invalidAssetTypes = (List("Pysäkin tyyppi"), List())
     val types = assetTypes.split(',')
-    if(types.isEmpty) {
-      (List("Pysäkin tyyppi"), List())
-    } else {
-      types.foldLeft((List(), List())) { (result, assetType) =>
-        result
+    if(types.isEmpty) invalidAssetTypes
+    else {
+      val typeRegex = """^\s*(\d+)\s*$""".r
+      types.foldLeft((List(): List[String], List())) { (result, assetType) =>
+        typeRegex.findFirstMatchIn(assetType) match {
+          case Some(t) => result
+          case None => invalidAssetTypes
+        }
       }
     }
   }
