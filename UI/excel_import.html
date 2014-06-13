@@ -7,18 +7,11 @@
 <body id="main">
 <div id="registerForm">
     <div class="formHeader">P&auml;ivit&auml; pys&auml;kkitietoja CSV-tiedostosta</div>
-    <form method="post" action="api/import/csv" enctype="multipart/form-data">
+    <form method="post" action="api/import/validationCsv" enctype="multipart/form-data">
         <div class="formAttributeContentRow">
             <div class="formLabels">Valitse CSV-tiedosto:</div>
             <input type="file" name="csv-file"/>
         </div>
         <input type="submit" value="Lataa tiedot">
-    </form>
-    <form method="post" action="api/import/validationCsv" enctype="multipart/form-data">
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Valitse CSV-tiedosto (validaatiolla):</div>
-            <input type="file" name="csv-file"/>
-        </div>
-        <input type="submit" value="Lataa tiedot (validaatiolla)">
     </form>
 </div>
