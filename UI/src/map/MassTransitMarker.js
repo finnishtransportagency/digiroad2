@@ -43,6 +43,7 @@
         };
 
         var mapBusStopImageIdsToImages =  function (imageIds) {
+            imageIds.sort();
             return _.map(_.isEmpty(imageIds) ? [EMPTY_IMAGE_TYPE] : imageIds, function (imageId) {
                 return '<img src="api/images/' + imageId + '.png">';
             });
