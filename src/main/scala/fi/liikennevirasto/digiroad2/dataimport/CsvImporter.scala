@@ -38,14 +38,9 @@ object CsvImporter {
     val types = assetTypes.split(',')
     if(types.isEmpty) invalidAssetTypes
     else {
-      val typeRegex = """^\s*(\d+)\s*$""".r
       types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
-        typeRegex.findFirstMatchIn(assetType) match {
-          case Some(t) =>
-            maybeInt(t.group(1)) match {
-              case Some(i) => if(isValidTypeEnumeration(i)) resultWithType(result, i) else invalidAssetTypes
-              case None => invalidAssetTypes
-            }
+        maybeInt(assetType.trim) match {
+          case Some(i) => if(isValidTypeEnumeration(i)) resultWithType(result, i) else invalidAssetTypes
           case None => invalidAssetTypes
         }
       }
