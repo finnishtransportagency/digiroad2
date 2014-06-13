@@ -19,7 +19,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     userProvider.setCurrentUser(User(id = 1, username = "CsvImportApiSpec", configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen))))
   }
 
-  test("update defined values in CSV import", Tag("db")) {
+  test("update name by CSV import", Tag("db")) {
     val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
     val asset2 = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
     val csv =
@@ -42,7 +42,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("do not update values if field is empty in CSV", Tag("db")) {
+  test("do not update name if field is empty in CSV", Tag("db")) {
     val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
       SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
       SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("AssetName")))))
