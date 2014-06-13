@@ -20,10 +20,7 @@ object CsvImporter {
     }
   }
 
-  private def isValidTypeEnumeration(typeEnumeration: Int): Boolean = {
-    val validTypes = List(1, 2, 3, 4, 5, 99)
-    validTypes.contains(typeEnumeration)
-  }
+  private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
 
   private def resultWithType(result: (List[String], List[SimpleProperty]), assetType: Int): (List[String], List[SimpleProperty]) = {
     result.copy(_2 = result._2 match {
