@@ -25,17 +25,24 @@ object CsvImporter {
     validTypes.contains(typeEnumeration)
   }
 
+  private def resultWithType(result: (List[String], List[SimpleProperty]), assetType: Int): (List[String], List[SimpleProperty]) = {
+    result.copy(_2 = result._2 match {
+      case List(SimpleProperty("pysakin_tyyppi", xs)) => List(SimpleProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.toList))
+      case _ => List(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
+    })
+  }
+
   private def assetTypeToProperty(assetTypes: String): (List[String], List[SimpleProperty]) = {
     val invalidAssetTypes = (List("Pysäkin tyyppi"), List())
     val types = assetTypes.split(',')
     if(types.isEmpty) invalidAssetTypes
     else {
       val typeRegex = """^\s*(\d+)\s*$""".r
-      types.foldLeft((List(): List[String], List())) { (result, assetType) =>
+      types.foldLeft((List(): List[String], List(): List[SimpleProperty])) { (result, assetType) =>
         typeRegex.findFirstMatchIn(assetType) match {
           case Some(t) =>
             toInt(t.group(1)) match {
-              case Some(i) => if(isValidTypeEnumeration(i)) result else invalidAssetTypes
+              case Some(i) => if(isValidTypeEnumeration(i)) resultWithType(result, i) else invalidAssetTypes
               case None => invalidAssetTypes
             }
           case None => invalidAssetTypes

@@ -100,6 +100,22 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("update asset type by CSV import", Tag("db")) {
+    val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "pysakin_tyyppi", values = Seq(PropertyValue("99")))))
+    try {
+      val csv = csvToInputStream(
+        s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
+        s"${asset.externalId};; 1,2 , 3 ,4\n")
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(List(), List(), List()))
+      val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.externalId))
+      assetType should contain only ("1", "2", "3", "4")
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
   test("raise an error when updating non-existent asset", Tag("db")) {
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
@@ -138,6 +154,16 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
     optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
       .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
+  }
+
+  private def getAssetType(optionalAsset: Option[AssetWithProperties]): List[String] = {
+    optionalAsset.toList.flatMap { asset =>
+      asset.propertyData.find(property => property.publicId.equals("pysakin_tyyppi")).toList.flatMap { property =>
+        property.values.toList.map { value =>
+          value.propertyValue
+        }
+      }
+    }
   }
 
   private def removeAsset(assetId: Long, provider: OracleSpatialAssetProvider) = {
