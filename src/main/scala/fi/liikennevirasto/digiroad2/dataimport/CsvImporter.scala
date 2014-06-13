@@ -12,7 +12,7 @@ object CsvImporter {
   case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset], malformedAssets: List[MalformedAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
-  private def toInt(string: String): Option[Int] = {
+  private def maybeInt(string: String): Option[Int] = {
     try {
       Some(string.toInt)
     } catch {
@@ -38,7 +38,7 @@ object CsvImporter {
       types.foldLeft((List(): List[String], List(): List[SimpleProperty])) { (result, assetType) =>
         typeRegex.findFirstMatchIn(assetType) match {
           case Some(t) =>
-            toInt(t.group(1)) match {
+            maybeInt(t.group(1)) match {
               case Some(i) => if(isValidTypeEnumeration(i)) resultWithType(result, i) else invalidAssetTypes
               case None => invalidAssetTypes
             }
