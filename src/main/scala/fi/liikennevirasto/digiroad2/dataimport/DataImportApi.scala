@@ -13,10 +13,11 @@ import org.json4s.{DefaultFormats, Formats}
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
+  private final val threeMegabytes: Long = 3*1024*1024
 
   before() {
     contentType = formats("json")
-    configureMultipartHandling(MultipartConfig(maxFileSize = Some(3*1024*1024))) // set max file size to 3 MB
+    configureMultipartHandling(MultipartConfig(maxFileSize = Some(threeMegabytes)))
     try {
       authenticateForApi(request)(userProvider)
     } catch {
