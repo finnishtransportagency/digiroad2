@@ -46,9 +46,9 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider)
-    if (!result.incompleteAssets.isEmpty || !result.nonExistingAssets.isEmpty) {
-      halt(BadRequest(result))
+    result match {
+      case ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+      case _ => halt(BadRequest(result))
     }
-    "CSV tiedosto käsitelty."
   }
 }
