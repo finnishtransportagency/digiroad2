@@ -30,7 +30,7 @@ object CsvImporter {
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    val result = csvReader.allWithHeaders().foldLeft(ImportResult(List(), List())) { (result, row) =>
+    csvReader.allWithHeaders().foldLeft(ImportResult(List(), List())) { (result, row) =>
       val missingParameters = findMissingParameters(row)
       if(missingParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = assetRowToProperties(row("Pysäkin nimi")))
@@ -44,6 +44,5 @@ object CsvImporter {
         result.copy(incompleteAssets = IncompleteAsset(missingParameters = missingParameters, csvRow = rowToString(row)) :: result.incompleteAssets)
       }
     }
-    result
   }
 }
