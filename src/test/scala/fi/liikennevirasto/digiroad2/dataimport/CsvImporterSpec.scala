@@ -61,7 +61,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("validation fails when asset type is malformed in CSV", Tag("db")) {
+  test("validation fails if type is undefined", Tag("db")) {
     val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
       SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
       SimpleProperty(publicId = "pysakin_tyyppi", values = Seq(PropertyValue("1")))))
@@ -75,21 +75,39 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: ','"))))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
 
-      val invalidCsv2 = csvToInputStream(
+  test("validation fails if type contains illegal characters", Tag("db")) {
+    val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "pysakin_tyyppi", values = Seq(PropertyValue("1")))))
+    try {
+      val invalidCsv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};;2,a\n")
-      CsvImporter.importAssets(invalidCsv2, assetProvider) should equal(ImportResult(
+      CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         nonExistingAssets = Nil,
         incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,a'"))))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
 
-      val invalidCsv3 = csvToInputStream(
+  test("validation fails when asset type is unknown", Tag("db")) {
+    val asset = assetProvider.createAsset(10, 0, 0, 5771, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "pysakin_tyyppi", values = Seq(PropertyValue("1")))))
+    try {
+      val invalidCsv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
-          s"${asset.externalId};;2,10\n")
-      CsvImporter.importAssets(invalidCsv3, assetProvider) should equal(ImportResult(
+        s"${asset.externalId};;2,10\n")
+      CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         nonExistingAssets = Nil,
         incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
