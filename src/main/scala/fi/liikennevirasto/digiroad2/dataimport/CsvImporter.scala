@@ -34,12 +34,12 @@ object CsvImporter {
   }
 
   private def assetTypeToProperty(assetTypes: String): ParsedAssetRow = {
-    val invalidAssetTypes = (List("Pysäkin tyyppi"), List())
+    val invalidAssetTypes = (List("Pysäkin tyyppi"), Nil)
     val types = assetTypes.split(',')
     if(types.isEmpty) invalidAssetTypes
     else {
       val typeRegex = """^\s*(\d+)\s*$""".r
-      types.foldLeft((List(): MalformedParameters, List(): ParsedProperties)) { (result, assetType) =>
+      types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
         typeRegex.findFirstMatchIn(assetType) match {
           case Some(t) =>
             maybeInt(t.group(1)) match {
@@ -53,7 +53,7 @@ object CsvImporter {
   }
 
   private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
-    csvRowWithHeaders.foldLeft((List(): MalformedParameters, List(): ParsedProperties)) { (result, parameter) =>
+    csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if(isBlank(value)) {
         result
@@ -83,7 +83,7 @@ object CsvImporter {
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult(List(), List(), List())) { (result, row) =>
+    csvReader.allWithHeaders().foldLeft(ImportResult(Nil, Nil, Nil)) { (result, row) =>
       val missingParameters = findMissingParameters(row)
       val (malformedParameters, properties) = assetRowToProperties(row)
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
@@ -97,11 +97,11 @@ object CsvImporter {
       } else {
         result.copy(
           incompleteAssets = missingParameters match {
-            case List() => result.incompleteAssets
+            case Nil => result.incompleteAssets
             case xs => IncompleteAsset(missingParameters = xs, csvRow = rowToString(row)) :: result.incompleteAssets
           },
           malformedAssets = malformedParameters match {
-            case List() => result.malformedAssets
+            case Nil => result.malformedAssets
             case xs => MalformedAsset(malformedParameters = xs, csvRow = rowToString(row)) :: result.malformedAssets
           }
         )

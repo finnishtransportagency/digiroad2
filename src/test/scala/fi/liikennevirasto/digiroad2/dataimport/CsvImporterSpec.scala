@@ -29,7 +29,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
-      result should equal(ImportResult(List(), List(), List()))
+      result should equal(ImportResult(Nil, Nil, Nil))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
@@ -52,7 +52,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
-      result should equal(ImportResult(List(), List(), List()))
+      result should equal(ImportResult(Nil, Nil, Nil))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
@@ -70,8 +70,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};;,\n")
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
-        nonExistingAssets = List(),
-        incompleteAssets = List(),
+        nonExistingAssets = Nil,
+        incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: ','"))))
@@ -80,8 +80,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};;2,a\n")
       CsvImporter.importAssets(invalidCsv2, assetProvider) should equal(ImportResult(
-        nonExistingAssets = List(),
-        incompleteAssets = List(),
+        nonExistingAssets = Nil,
+        incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,a'"))))
@@ -90,8 +90,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
           s"${asset.externalId};;2,10\n")
       CsvImporter.importAssets(invalidCsv3, assetProvider) should equal(ImportResult(
-        nonExistingAssets = List(),
-        incompleteAssets = List(),
+        nonExistingAssets = Nil,
+        incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,10'"))))
@@ -108,7 +108,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val csv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};; 1,2 , 3 ,4\n")
-      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(List(), List(), List()))
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(Nil, Nil, Nil))
       val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.externalId))
       assetType should contain only ("1", "2", "3", "4")
     } finally {
@@ -124,7 +124,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val inputStream = new ByteArrayInputStream(csv.getBytes)
     val result = CsvImporter.importAssets(inputStream, assetProvider)
 
-    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = "Valtakunnallinen ID: '600000', Pysäkin nimi: 'AssetName'")), List(), List()))
+    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = "Valtakunnallinen ID: '600000', Pysäkin nimi: 'AssetName'")), Nil, Nil))
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
@@ -138,9 +138,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult(
-        nonExistingAssets = List(),
+        nonExistingAssets = Nil,
         incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = s"Valtakunnallinen ID: '${asset.externalId}'")),
-        malformedAssets = List()))
+        malformedAssets = Nil))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
       assetName should equal(Some("AssetName"))
