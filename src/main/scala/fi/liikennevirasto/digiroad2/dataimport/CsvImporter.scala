@@ -12,6 +12,9 @@ object CsvImporter {
   case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset], malformedAssets: List[MalformedAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
+  type MalformedParameters = List[String]
+  type ParsedProperties = List[SimpleProperty]
+
   private def maybeInt(string: String): Option[Int] = {
     try {
       Some(string.toInt)
@@ -22,20 +25,20 @@ object CsvImporter {
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
 
-  private def resultWithType(result: (List[String], List[SimpleProperty]), assetType: Int): (List[String], List[SimpleProperty]) = {
+  private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): (MalformedParameters, ParsedProperties) = {
     result.copy(_2 = result._2 match {
       case List(SimpleProperty("pysakin_tyyppi", xs)) => List(SimpleProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.toList))
       case _ => List(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
     })
   }
 
-  private def assetTypeToProperty(assetTypes: String): (List[String], List[SimpleProperty]) = {
+  private def assetTypeToProperty(assetTypes: String): (MalformedParameters, ParsedProperties) = {
     val invalidAssetTypes = (List("Pysäkin tyyppi"), List())
     val types = assetTypes.split(',')
     if(types.isEmpty) invalidAssetTypes
     else {
       val typeRegex = """^\s*(\d+)\s*$""".r
-      types.foldLeft((List(): List[String], List(): List[SimpleProperty])) { (result, assetType) =>
+      types.foldLeft((List(): MalformedParameters, List(): ParsedProperties)) { (result, assetType) =>
         typeRegex.findFirstMatchIn(assetType) match {
           case Some(t) =>
             maybeInt(t.group(1)) match {
@@ -48,8 +51,8 @@ object CsvImporter {
     }
   }
 
-  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): (List[String], Seq[SimpleProperty]) = {
-    csvRowWithHeaders.foldLeft((List(): List[String], List(): List[SimpleProperty])) { (result, parameter) =>
+  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): (MalformedParameters, ParsedProperties) = {
+    csvRowWithHeaders.foldLeft((List(): MalformedParameters, List(): ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if(isBlank(value)) {
         result
