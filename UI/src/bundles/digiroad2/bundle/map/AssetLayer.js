@@ -91,6 +91,7 @@ window.AssetLayer = function(map, roadLayer) {
         var mouseUpFn = mouseUp(asset);
         var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
         marker.events.register("mousedown", assetLayer, mouseDownFn);
+        marker.events.register("click", assetLayer, OpenLayers.Event.stop);
         return asset;
     };
 
@@ -345,6 +346,9 @@ window.AssetLayer = function(map, roadLayer) {
         if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
+        } else {
+            selectedAssetModel.close();
+            window.location.hash = '';
         }
     });
 
