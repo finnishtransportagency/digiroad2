@@ -87,8 +87,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     Database.forDataSource(ds).withDynTransaction {
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-      OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      val updatedAsset = OracleSpatialAssetDao.getAssetById(assetId).get
+      val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
       eventbus.publish("asset:saved", (getMunicipalityName(updatedAsset.roadLinkId), updatedAsset))
       updatedAsset
     }
