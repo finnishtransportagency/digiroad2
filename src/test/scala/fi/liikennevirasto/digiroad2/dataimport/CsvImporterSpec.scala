@@ -31,10 +31,10 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult(Nil, Nil, Nil))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
 
-      val assetName2 = getAssetName(assetProvider.getAssetByExternalId(asset2.externalId))
+      val assetName2 = getAssetName(assetProvider.getAssetByExternalId(asset2.externalId).get)
       assetName2 should equal(Some("Asset2Name"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -54,7 +54,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult(Nil, Nil, Nil))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -127,7 +127,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};; 1,2 , 3 ,4\n")
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(Nil, Nil, Nil))
-      val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.externalId))
+      val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetType should contain only ("1", "2", "3", "4")
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -160,7 +160,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = s"Valtakunnallinen ID: '${asset.externalId}'")),
         malformedAssets = Nil))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -169,17 +169,15 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 
-  private def getAssetName(optionalAsset: Option[AssetWithProperties]): Option[String] = {
-    optionalAsset.flatMap(asset => asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
-      .flatMap(property => property.values.headOption.map(value => value.propertyValue)))
+  private def getAssetName(asset: AssetWithProperties): Option[String] = {
+    asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
+      .flatMap(property => property.values.headOption.map(value => value.propertyValue))
   }
 
-  private def getAssetType(optionalAsset: Option[AssetWithProperties]): List[String] = {
-    optionalAsset.toList.flatMap { asset =>
-      asset.propertyData.find(property => property.publicId.equals("pysakin_tyyppi")).toList.flatMap { property =>
-        property.values.toList.map { value =>
-          value.propertyValue
-        }
+  private def getAssetType(asset: AssetWithProperties): List[String] = {
+    asset.propertyData.find(property => property.publicId.equals("pysakin_tyyppi")).toList.flatMap { property =>
+      property.values.toList.map { value =>
+        value.propertyValue
       }
     }
   }
