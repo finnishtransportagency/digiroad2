@@ -85,11 +85,16 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
           csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,a'"))))
-/*
-      val invalidCsv4 =
+
+      val invalidCsv3 = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
-        s"${asset.externalId};;2,10\n"
-*/
+          s"${asset.externalId};;2,10\n")
+      CsvImporter.importAssets(invalidCsv3, assetProvider) should equal(ImportResult(
+        nonExistingAssets = List(),
+        incompleteAssets = List(),
+        malformedAssets = List(MalformedAsset(
+          malformedParameters = List("Pysäkin tyyppi"),
+          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,10'"))))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
