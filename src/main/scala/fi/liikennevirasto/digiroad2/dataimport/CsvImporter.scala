@@ -14,6 +14,7 @@ object CsvImporter {
 
   type MalformedParameters = List[String]
   type ParsedProperties = List[SimpleProperty]
+  type ParsedAssetRow = (MalformedParameters, ParsedProperties)
 
   private def maybeInt(string: String): Option[Int] = {
     try {
@@ -25,14 +26,14 @@ object CsvImporter {
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
 
-  private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): (MalformedParameters, ParsedProperties) = {
+  private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): ParsedAssetRow = {
     result.copy(_2 = result._2 match {
       case List(SimpleProperty("pysakin_tyyppi", xs)) => List(SimpleProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.toList))
       case _ => List(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
     })
   }
 
-  private def assetTypeToProperty(assetTypes: String): (MalformedParameters, ParsedProperties) = {
+  private def assetTypeToProperty(assetTypes: String): ParsedAssetRow = {
     val invalidAssetTypes = (List("Pysäkin tyyppi"), List())
     val types = assetTypes.split(',')
     if(types.isEmpty) invalidAssetTypes
@@ -51,7 +52,7 @@ object CsvImporter {
     }
   }
 
-  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): (MalformedParameters, ParsedProperties) = {
+  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
     csvRowWithHeaders.foldLeft((List(): MalformedParameters, List(): ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if(isBlank(value)) {
