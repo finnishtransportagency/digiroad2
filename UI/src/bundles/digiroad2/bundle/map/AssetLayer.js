@@ -347,7 +347,7 @@ window.AssetLayer = function(map, roadLayer) {
             var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
             createNewAsset(map.getLonLatFromPixel(pixel));
         } else {
-            eventbus.trigger('asset:closed');
+            selectedAssetModel.close();
             window.location.hash = '';
         }
     });
