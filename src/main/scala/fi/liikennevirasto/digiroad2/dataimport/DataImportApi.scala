@@ -49,5 +49,6 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     if (!result.incompleteAssets.isEmpty || !result.nonExistingAssets.isEmpty) {
       halt(BadRequest(result))
     }
+    "CSV tiedosto käsitelty."
   }
 }
