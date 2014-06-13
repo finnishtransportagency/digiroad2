@@ -12,17 +12,10 @@ import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
 import org.mockito.Mockito.verify
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import fi.liikennevirasto.digiroad2.asset.Point
+import fi.liikennevirasto.digiroad2.asset._
 import scala.Some
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.asset.SimpleProperty
-import fi.liikennevirasto.digiroad2.asset.Property
-import fi.liikennevirasto.digiroad2.asset.Position
-import fi.liikennevirasto.digiroad2.asset.Asset
 import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -84,8 +77,8 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
+    val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
     try {
-      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
       newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
@@ -93,7 +86,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       newAsset.roadLinkId shouldBe existingAsset.roadLinkId
       newAsset.externalId should (be >= 300000L)
     } finally {
-      deleteCreatedTestAsset()
+      deleteCreatedTestAsset(newAsset.id)
     }
   }
 
@@ -102,35 +95,35 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
+    val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
     try {
-      val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
       newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe "99"
     } finally {
-      deleteCreatedTestAsset()
+      deleteCreatedTestAsset(newAsset.id)
     }
   }
 
   test("add asset with properties to database", Tag("db")) {
     val AssetCreator = "integration_test_add_asset"
     val existingAsset = provider.getAssetById(TestAssetId).get
+    val newAsset = provider.createAsset(
+      TestAssetTypeId,
+      existingAsset.lon,
+      existingAsset.lat,
+      existingAsset.roadLinkId,
+      180,
+      AssetCreator,
+      List(
+        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10"))),
+        SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
     try {
-      val newAsset = provider.createAsset(
-          TestAssetTypeId,
-          existingAsset.lon,
-          existingAsset.lat,
-          existingAsset.roadLinkId,
-          180,
-          AssetCreator,
-          List(
-            SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10"))),
-            SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       newAsset.roadLinkId shouldBe existingAsset.roadLinkId
       newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, required = false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
     } finally {
-      deleteCreatedTestAsset()
+      deleteCreatedTestAsset(newAsset.id)
     }
   }
 
@@ -146,24 +139,22 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     }
     try {
       val newAsset = provider.createAsset(
-          TestAssetTypeId,
-          existingAsset.lon,
-          existingAsset.lat,
-          existingAsset.roadLinkId,
-          180,
-          AssetCreator,
-          List(
-            SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
-            SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10"))),
-            SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
+        TestAssetTypeId,
+        existingAsset.lon,
+        existingAsset.lat,
+        existingAsset.roadLinkId,
+        180,
+        AssetCreator,
+        List(
+          SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
+          SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10"))),
+          SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
       fail("Should have thrown an exception")
     } catch {
       case e: SQLIntegrityConstraintViolationException =>
         Database.forDataSource(ds).withDynSession {
           oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
         }
-    } finally {
-      deleteCreatedTestAsset()
     }
   }
 
@@ -172,54 +163,45 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
       intercept[IllegalArgumentException] {
-        provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+        val asset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
       }
-    } finally {
-      deleteCreatedTestAsset()
     }
   }
 
   test("remove asset from database", Tag("db")) {
-    val singleChoiceValueCountBeforeCreation = amountOfSingleChoiceValues()
-    val lrmPositionCountBeforeCreation = amountOfLrmPositions()
-    val assetCountBeforeCreation = amountOfAssets()
-
     val asset = provider.createAsset(TestAssetTypeId, 0, 0, 5771, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    val assetId = asset.id
+    val lrmPositionId = executeIntQuery(s"select lrm_position_id from asset where id = $assetId")
+    amountOfSingleChoiceValues(assetId) should be > 0
+    amountOfLrmPositions(lrmPositionId) should equal(1)
+    amountOfAssets(assetId) should be(1)
+
+    deleteCreatedTestAsset(assetId)
+
+    amountOfSingleChoiceValues(assetId) should be(0)
+    amountOfLrmPositions(lrmPositionId) should equal(0)
+    amountOfAssets(assetId) should be(0)
+  }
+
+  private def amountOfSingleChoiceValues(assetId: Long): Int = {
+    executeIntQuery(s"select count(*) from single_choice_value where asset_id = $assetId")
+  }
+
+  private def amountOfLrmPositions(lrmPositionId: Long): Int = {
+    executeIntQuery(s"select count(*) from lrm_position where id = $lrmPositionId")
+  }
+
+  private def amountOfAssets(assetId: Long): Int = {
+    executeIntQuery(s"select count(*) from asset where id = $assetId")
+  }
+
+  private def deleteCreatedTestAsset(assetId: Long) {
     try {
-      val singleChoiceValueCountAfterCreation = amountOfSingleChoiceValues()
-      val lrmPositionCountAfterCreation = amountOfLrmPositions()
-      val assetCountAfterCreation = amountOfAssets()
-
-      singleChoiceValueCountBeforeCreation should be < singleChoiceValueCountAfterCreation
-      lrmPositionCountBeforeCreation should be < lrmPositionCountAfterCreation
-      assetCountBeforeCreation should be < assetCountAfterCreation
-
-      provider.removeAsset(asset.id)
-
-      amountOfSingleChoiceValues() should be(singleChoiceValueCountBeforeCreation)
-      amountOfLrmPositions() should be(lrmPositionCountBeforeCreation)
-      amountOfAssets() should be(assetCountBeforeCreation)
+      provider.removeAsset(assetId)
     } catch {
-      case e: Exception => provider.removeAsset(asset.id)
+      // TODO: Remove handling of this exception once LRM position removal does not fail in test runs
+      case e: LRMPositionDeletionFailed => println("Removing LRM Position of asset " + assetId + " failed: " + e.reason)
     }
-  }
-
-  private def amountOfSingleChoiceValues(): Int = {
-    executeIntQuery("select count(*) from single_choice_value")
-  }
-
-  private def amountOfLrmPositions(): Int = {
-    executeIntQuery("select count(*) from lrm_position")
-  }
-
-  private def amountOfAssets(): Int = {
-    executeIntQuery("select count(*) from asset")
-  }
-
-  private def deleteCreatedTestAsset() {
-    executeStatement("DELETE FROM multiple_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')")
-    executeStatement("DELETE FROM single_choice_value where asset_id = (select id from asset WHERE asset.created_by = '" + AssetCreator + "')")
-    executeStatement("DELETE FROM asset WHERE created_by = '" + AssetCreator + "'")
   }
 
   test("update the position of an asset within a road link", Tag("db")) {

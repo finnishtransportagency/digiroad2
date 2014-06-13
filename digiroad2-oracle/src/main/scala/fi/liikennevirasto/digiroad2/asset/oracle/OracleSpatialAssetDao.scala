@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
+import java.sql.SQLException
+
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
@@ -196,11 +198,30 @@ object OracleSpatialAssetDao {
   }
 
   def removeAsset(assetId: Long): Unit = {
-    Q.query[Long, Long](assetLrmPositionId).firstOption(assetId).map { lrmPositionId =>
+    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).firstOption(assetId)
+    optionalLrmPositionId match {
+      case Some(lrmPositionId) =>
       deleteAssetProperties(assetId)
       deleteAsset(assetId).execute()
-      deleteLRMPosition(lrmPositionId).execute()
+      try {
+        deleteLRMPosition(lrmPositionId).execute()
+      } catch {
+        case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
+      }
+      case None => ()
     }
+  }
+
+  def updateAsset(assetId: Long, position: Option[Position], modifier: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    updateAssetLastModified(assetId, modifier)
+    if (!properties.isEmpty) {
+      updateAssetProperties(assetId, properties)
+    }
+    position match {
+      case None => logger.debug("not updating position")
+      case Some(pos) => updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+    }
+    getAssetById(assetId).get
   }
 
   def updateAssetLastModified(assetId: Long, modifier: String) {

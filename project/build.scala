@@ -76,6 +76,7 @@ object Digiroad2Build extends Build {
       scalaVersion := ScalaVersion,
       resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
+      parallelExecution in Test := false,
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(

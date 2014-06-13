@@ -24,8 +24,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber)
   }
 
-  private def userCanModifyAsset(assetId: Long): Boolean =
-    getAssetById(assetId).flatMap(a => a.municipalityNumber.map(userCanModifyMunicipality)).getOrElse(false)
+  private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)
+
+  private def userCanModifyAsset(asset: AssetWithProperties): Boolean = asset.municipalityNumber.exists(userCanModifyMunicipality)
 
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
     getRoadLinkById(roadLinkId).map(rl => userCanModifyMunicipality(rl.municipalityNumber)).getOrElse(false)
@@ -83,21 +84,24 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
-    if (!userCanModifyAsset(assetId)) {
-      throw new IllegalArgumentException("User does not have write access to municipality")
-    }
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.updateAssetLastModified(assetId, userProvider.getCurrentUser().username)
-      if (!properties.isEmpty) {
-        OracleSpatialAssetDao.updateAssetProperties(assetId, properties)
-      }
-      position match {
-        case None => logger.debug("not updating position")
-        case Some(pos) => OracleSpatialAssetDao.updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
-      }
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
-      eventbus.publish("asset:saved", (getMunicipalityName(asset.roadLinkId), asset))
-      asset
+      if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
+      val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
+      eventbus.publish("asset:saved", (getMunicipalityName(updatedAsset.roadLinkId), updatedAsset))
+      updatedAsset
+    }
+  }
+
+  def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
+    Database.forDataSource(ds).withDynTransaction {
+      val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
+      optionalAsset match {
+        case Some(asset) =>
+          if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
+          OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties)
+        case None => throw new AssetNotFoundException(externalId)
+      }
     }
   }
 
