@@ -27,7 +27,7 @@ Importeilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;&auml;n.
 2.1 CSV-vienti
 --------------
 
-Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston k&auml;ytt&ouml;liittym&auml;n kautta j&auml;rjestelm&auml;&auml;n. Vienti tehd&auml;&auml;n osoitteessa:
+Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston k&auml;ytt&ouml;liittym&auml;n kautta j&auml;rjestelm&auml;&auml;n. Vienti tehd&auml;&auml;n osoitteessa:
 
 ```
 https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html
@@ -49,10 +49,17 @@ Huomioita csv-tiedostosta:
 - Tiedosto on muotoa:
 
 ```
-Valtakunnallinen ID;Pysäkin nimi
-300790;nimi
-165833;toinen nimi
+Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi
+300790;nimi;1,2,2
+165833;toinen nimi;5
 ```
+- Tiedot on eroteltu puolipisteell&auml; (;).
+- Nimi luetaan merkkijonona.
+- Pys&auml;kin tyypit ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
+- Pys&auml;kin tyypit on eroteltu pilkulla.
+- Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
+
+
 
 3. Exportit
 -----------
