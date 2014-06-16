@@ -58,6 +58,7 @@ Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi
 - Pys&auml;kin tyypit ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
 - Pys&auml;kin tyypit on eroteltu pilkulla.
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
+- Toistaiseksi CSV-vienti&auml; ei kannata tehd&auml; IE-selaimella, koska selain ei tulosta virhelokia.
 
 
 
