@@ -14,7 +14,7 @@
         }
         var container = $("#feature-attributes").empty();
 
-        var element = $('<div />').addClass('featureAttributesHeader').html(busStopHeader(asset));
+        var element = $('<header />').html(busStopHeader(asset));
         var wrapper = $('<div />').addClass('featureAttributesWrapper');
         streetViewHandler = getStreetView(asset);
         wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
