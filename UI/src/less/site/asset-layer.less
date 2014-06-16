@@ -50,11 +50,10 @@
   line-height : 23px;
   z-index: 1;
   color : white;
-  display: flex; /* TODO: check browser compatibilities and vendor prefixes */
 
-  .images {
-    display: inline-block;
-    margin-right: 5px;
+  .field {
+    display: table-cell;
+    vertical-align: middle;
   }
 
   &:before {
@@ -63,12 +62,15 @@
   }
 
   .bus-stop-id {
-    width: 39px;
-    margin-right: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+
+    .padder {
+      width: 39px;
+    }
   }
 
   .bus-stop-name {
-    margin-right: 5px;
     color: #a4a4a2;
     white-space: nowrap;
   }

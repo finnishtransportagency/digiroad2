@@ -28,10 +28,10 @@
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
             return $('<div class="expanded-bus-stop" />')
-                       .append($('<div class="images" />').html(busStopImages))
-                       .append($('<div class="bus-stop-id"/>').text(asset.externalId))
-                       .append($('<div class="bus-stop-name"/>').text(name))
-                       .append($('<div class="bus-stop-direction"/>').text(direction));
+                       .append($('<div class="images field" />').html(busStopImages))
+                       .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
+                       .append($('<div class="bus-stop-name field"/>').text(name))
+                       .append($('<div class="bus-stop-direction field"/>').text(direction));
         };
 
         var createDefaultState = function() {
