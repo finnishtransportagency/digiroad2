@@ -29,9 +29,9 @@
 
             return $('<div class="expanded-bus-stop" />')
                        .append($('<div class="images" />').html(busStopImages))
-                       .append($('<div class="bus-stop-id"/>').html(asset.externalId))
-                       .append($('<div class="bus-stop-name"/>').html(name))
-                       .append($('<div class="bus-stop-direction"/>').html(direction));
+                       .append($('<div class="bus-stop-id"/>').text(asset.externalId))
+                       .append($('<div class="bus-stop-name"/>').text(name))
+                       .append($('<div class="bus-stop-direction"/>').text(direction));
         };
 
         var createDefaultState = function() {
