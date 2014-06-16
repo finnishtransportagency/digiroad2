@@ -2,7 +2,6 @@
     root.MassTransitMarker = function(data) {
 
         var EMPTY_IMAGE_TYPE = '99_';
-
         var getBounds = function(lon, lat) {
             return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
         };
@@ -30,7 +29,7 @@
 
             return $('<div class="expanded-bus-stop" />')
                        .append($('<div class="images" />').html(busStopImages))
-                       .append($('<div class="bus-stop-id"/>').html(asset.id))
+                       .append($('<div class="bus-stop-id"/>').html(asset.externalId))
                        .append($('<div class="bus-stop-name"/>').html(name))
                        .append($('<div class="bus-stop-direction"/>').html(direction));
         };
