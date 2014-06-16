@@ -2,64 +2,64 @@
 
 #feature-attributes {
   header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     padding: @line-height-modifier * 2;
     border-bottom: 1px solid @gray-darker-2;
     font-size: @font-size-xl;
     color: #fff;
   }
-}
 
-.featureAttributesHeader {
-  font-size: 14px;
-  color: rgb( 255, 255, 255 );
-  line-height: 1.286;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  height: 18px;
-  border: 0 solid #000000;
-  border-bottom-width: 1px;
-  padding-left: 10px;
-  background-image: -moz-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
-  background-image: -webkit-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
-  background-image: -ms-linear-gradient( 90deg, rgb(60,60,60) 0%, rgb(69,69,69) 100%);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-}
+  .wrapper {
+    position: absolute;
+    top: 41px;
+    left: 0;
+    right: 0;
+    bottom: 88px;
+    overflow-y: auto;
+    padding: 10px;
 
-.featureAttributesWrapper {
-  position: absolute;
-  padding: 10px;
-  top: 49px;
-  bottom: 100px;
-  left: 0;
-  right: 0;
-  overflow-y: auto;
+    &.read-only {
+      bottom: 40px;
+    }
 
-  .formAttributeContentRow *:disabled {
-    border: 0px;
+    .formAttributeContentRow *:disabled {
+      border: 0px;
+    }
+
+    .featureattributeChoice > input:disabled {
+      border: 0px;
+    }
+
+    .readOnlyText[disabled="disabled"] {
+      color: rgb( 230, 230, 230 );
+    }    
   }
 
-  .featureattributeChoice > input:disabled {
-    border: 0px;
+  .form-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    border-top: 1px solid @gray-darker-2;
+    text-align: right;
+
+    .save {
+      margin-right: 5px;
+    }
   }
 
-  .readOnlyText[disabled="disabled"] {
-    color: rgb( 230, 230, 230 );
-  }
-}
+  .street-view {
+    display: block;
 
-.streetView {
-  padding-top: 4px;
-  padding-bottom: 4px;
-
-  img {
-    width: 360px;
-    height: 180px;
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: bold;
+    img {
+      display: block;
+      width: 360px;
+      height: 180px;
+    }
   }
 }
 

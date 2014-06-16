@@ -15,26 +15,27 @@
         var container = $("#feature-attributes").empty();
 
         var element = $('<header />').html(busStopHeader(asset));
-        var wrapper = $('<div />').addClass('featureAttributesWrapper');
+        var wrapper = $('<div />').addClass('wrapper');
         streetViewHandler = getStreetView(asset);
         wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
-        var cancelBtn = $('<button />').addClass('cancel').text('Peruuta').click(function() {
+        var cancelBtn = $('<button />').addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
             $("#feature-attributes").empty();
             selectedAssetModel.cancel();
         });
 
-        var saveBtn = $('<button />').addClass('save').text('Tallenna').click(function() {
+        var saveBtn = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
             selectedAssetModel.save();
         });
 
         // TODO: cleaner html
-        featureAttributesElement.append($('<div />').addClass('formControls').append(cancelBtn).append(saveBtn));
+        featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn).append(cancelBtn));
 
         if (readonly) {
-            $('#feature-attributes .formControls').hide();
+            $('#feature-attributes .form-controls').hide();
+            wrapper.addClass('read-only');
         }
 
         function busStopHeader(asset) {
@@ -52,7 +53,7 @@
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
             return $(streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) }))
-                    .addClass('streetView');
+                    .addClass('street-view');
         };
 
         var changeDirection = function(newDirection){
