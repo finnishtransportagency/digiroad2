@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.eclipse.jetty.servlets.ProxyServlet
 import javax.servlet.http.HttpServletRequest
-import org.eclipse.jetty.http.HttpURI
+import org.eclipse.jetty.http.{MimeTypes, HttpURI}
 import org.eclipse.jetty.client.HttpExchange
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
@@ -20,6 +20,9 @@ trait DigiroadServer {
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     context.addServlet(classOf[NLSProxyServlet], "/maasto/*")
+    context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
+    context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
+    context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     server.setHandler(context)
 
     commenceMtkFileImport()
