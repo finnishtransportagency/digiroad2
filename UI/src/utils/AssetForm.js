@@ -195,24 +195,40 @@
     };
 
     var dateHandler = function(property){
-        var input = $('<input />').addClass('form-control').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
-            // tab press
-            if(target.keyCode === 9){
-                return;
+        var 
+            element,
+            elementType,
+            wrapper;
+
+        if (readOnly) {
+            elementType = $('<p />').addClass('form-control-static');
+            element = elementType;
+
+            if (property.values[0]) {
+                element.text(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
+            } else {
+                element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
             }
-            var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
-        }, 500));
+        } else {
+            elementType = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
+            element = elementType.on('keyup datechange', _.debounce(function(target){
+                // tab press
+                if(target.keyCode === 9){
+                    return;
+                }
+                var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
+                selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
+            }, 500));
 
-        //TODO: cleaner html
-        var outer = $('<div />').addClass('form-group');
-
-        var label = $('<label />').addClass('control-label').text(property.localizedName);
-        if(property.values[0]) {
-            input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
+            if(property.values[0]) {
+                element.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
+            }            
         }
-        input.attr('disabled', readOnly);
-        return outer.append(label).append(input);
+
+        wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+
+        return wrapper;
     };
 
     var multiChoiceHandler = function(property, choices){
