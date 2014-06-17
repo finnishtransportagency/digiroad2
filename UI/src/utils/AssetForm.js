@@ -17,7 +17,7 @@
         var element = $('<header />').html(busStopHeader(asset));
         var wrapper = $('<div />').addClass('wrapper');
         streetViewHandler = getStreetView(asset);
-        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('formContent').append(getAssetForm(asset.propertyData)));
+        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-dark').attr('role', 'form').append(getAssetForm(asset.propertyData)));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
@@ -84,30 +84,30 @@
     };
 
     var readOnlyHandler = function(property){
-        var outer = $('<div />').addClass('formAttributeContentRow');
+        var outer = $('<div />').addClass('form-group');
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
         // TODO: use cleaner html
         if (property.propertyType === 'read_only_text') {
-            outer.addClass('readOnlyRow').text(property.localizedName + ': ' + propertyVal);
+            outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
-            outer.append($('<div />').addClass('formLabels').text(property.localizedName));
-            outer.append($('<div />').addClass('formAttributeContent readOnlyText').attr('disabled', readonly).text(propertyVal));
+            outer.append($('<label />').addClass('control-label').text(property.localizedName));
+            outer.append($('<p />').addClass('form-control-static').text(propertyVal));
         }
         return outer;
     };
 
     var textHandler = function(property){
         var inputElement = property.propertyType === 'long_text' ?
-                $('<textarea />').addClass('featureAttributeLongText') : $('<input type="text"/>').addClass('featureAttributeText');
+                $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
         var input = inputElement.bind('input', function(target){
             selectedAssetModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
         });
 
         // TODO: use cleaner html
-        var outer = $('<div />').addClass('formAttributeContentRow').attr('data-required', property.required);
-        outer.append($('<div />').addClass('formLabels').text(property.localizedName));
+        var outer = $('<div />').addClass('form-group').attr('data-required', property.required);
+        outer.append($('<label />').addClass('control-label').text(property.localizedName));
 
-        outer.append($('<div />').addClass('formAttributeContent').append(input));
+        outer.append(input);
         if(property.values[0]) {
             input.val(property.values[0].propertyDisplayValue);
         }
@@ -120,12 +120,12 @@
             return choice.publicId === property.publicId;
         }).values;
 
-        var input = $('<select />').addClass('featureattributeChoice').change(function(x){
+        var input = $('<select />').addClass('form-control').change(function(x){
             selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
         });
 
         //TODO: cleaner html
-        var label = $('<div />').addClass('formLabels');
+        var label = $('<label />').addClass('control-label');
         label.text(property.localizedName);
         _.forEach(enumValues, function(x) {
             var attr = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
@@ -137,33 +137,31 @@
             input.val('99');
         }
 
-        var wrapper = $('<div />').addClass('formAttributeContent');
         input.attr('disabled', readonly);
-        return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
+        return $('<div />').addClass('form-group').append(label).append(input);
     };
 
     var directionChoiceHandler = function(property){
         // TODO: ugliness, remove
         var validityDirection = 2;
-        var input = $('<button />').addClass('featureAttributeButton').text('Vaihda suuntaa').click(function(){
+        var input = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
             validityDirection = validityDirection == 2 ? 3 : 2;
             selectedAssetModel.setProperty(property.publicId, [{ propertyValue: validityDirection }]);
             streetViewHandler.changeDirection(validityDirection);
         });
 
         //TODO: cleaner html
-        var label = $('<div />').addClass('formLabels');
+        var label = $('<label />').addClass('control-label');
         label.text(property.localizedName);
         if(property.values && property.values[0]) {
             validityDirection = property.values[0].propertyValue;
         }
-        var wrapper = $('<div />').addClass('formAttributeContent');
         input.attr('disabled', readonly);
-        return $('<div />').addClass('formAttributeContentRow').append(label).append(wrapper.append(input));
+        return $('<div />').addClass('form-group').append(label).append(input);
     };
 
     var dateHandler = function(property){
-        var input = $('<input />').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
+        var input = $('<input />').addClass('form-control').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
             // tab press
             if(target.keyCode === 9){
                 return;
@@ -173,15 +171,14 @@
         }, 500));
 
         //TODO: cleaner html
-        var outer = $('<div />').addClass('formAttributeContentRow');
+        var outer = $('<div />').addClass('form-group');
 
-        var label = $('<div />').addClass('formLabels').text(property.localizedName);
+        var label = $('<label />').addClass('control-label').text(property.localizedName);
         if(property.values[0]) {
             input.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
         }
-        input.addClass('featureAttributeDate');
         input.attr('disabled', readonly);
-        return outer.append(label).append(outer.append($('<div />').addClass('formAttributeContent').append(input)));
+        return outer.append(label).append(input);
     };
 
     var multiChoiceHandler = function(property, choices){
@@ -194,10 +191,11 @@
             .filter(function(x){
                 return x.propertyValue !== '99';
             }).value();
-        var container = $('<div />').addClass('formAttributeContentRow');
-        container.append($('<div />').addClass('formLabels').text(property.localizedName));
-        var inputContainer = $('<div />').addClass('featureattributeChoice');
+        var container = $('<div />').addClass('form-group');
+        container.append($('<label />').addClass('control-label').text(property.localizedName));
+        var inputContainer = $('<div />').addClass('choice-group');
         _.forEach(enumValues, function (x) {
+            var outer = $('<div class="checkbox" />');
             var input = $('<input type="checkbox" />').change(function (evt) {
                 x.checked = evt.currentTarget.checked;
                 var values = _.chain(enumValues)
@@ -216,11 +214,14 @@
             });
 
             input.prop('checked', x.checked).attr('disabled', readonly);
+            if (readonly) {
+                outer.addClass('disabled');
+            }
             var label = $('<label />').text(x.propertyDisplayValue);
-            inputContainer.append(input).append(label).append($('<br>'));
+            inputContainer.append(outer.append(label.append(input)));
         });
 
-        return container.append($('<div />').addClass('formAttributeContent').append(inputContainer));
+        return container.append(inputContainer);
     };
 
     var getAssetForm = function(contents) {
