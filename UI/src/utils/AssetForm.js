@@ -17,7 +17,7 @@
         var element = $('<header />').html(busStopHeader());
         var wrapper = $('<div />').addClass('wrapper');
         streetViewHandler = getStreetView();
-        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-dark').attr('role', 'form').append(getAssetForm()));
+        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 

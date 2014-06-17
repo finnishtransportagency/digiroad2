@@ -142,6 +142,7 @@ input[type="checkbox"]:focus {
     padding-left: 20px;
     font-size: @font-size-base;
     font-weight: normal;
+    color: @text-color;
     text-transform: none;
     cursor: pointer;
     .user-select(none);
@@ -233,13 +234,45 @@ input[type="checkbox"] {
 
 // Horizontal forms
 //
-// Horizontal forms are built on grid classes and allow you to create forms with
-// labels on the left and inputs on the right.
+// Horizontal forms allow you to create forms with labels on the left and inputs on the right.
+// NOTE: you still have to manually set widths of labels and inputs to make them float correctly!
 
 .form-horizontal {
   .form-group {
-
+    .clearfix();
   }
+
+  .control-label {
+    display: block;
+    float: left;
+    margin-bottom: 0;
+    padding-top: (@line-height-modifier + 1); // Default padding plus a border
+    line-height: @line-height-modifier * 3;
+    text-align: right;
+    .hyphens();
+  }
+
+  .form-control,
+  .checkbox,
+  .select,
+  .form-control-static,
+  .choice-group {
+    float: left;
+  }
+
+  .choice-group {
+    .form-control,
+    .checkbox,
+    .select {
+      float: none;
+    }
+  }
+
+  .form-control-static {
+    padding-top: (@line-height-modifier  + 1);
+    padding-bottom: (@line-height-modifier + 1);
+    line-height: @line-height-modifier * 3;
+  }  
 }
 
 // Inverted colors
@@ -267,6 +300,13 @@ input[type="checkbox"] {
       color: @input-color-placeholder-dark;
       background-color: @input-bg-disabled-dark;
     }    
+  }
+
+  .radio,
+  .checkbox {
+    label {
+      color: #fff;
+    }
   }
 
   .checkbox input[type="checkbox"] {
