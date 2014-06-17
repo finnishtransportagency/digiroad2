@@ -48,12 +48,12 @@
             });
         };
 
-        var handleAssetPropertyValueChanged = function(assetData) {
-            if (assetData.id === data.id && assetData.propertyData.publicId === "pysakin_tyyppi") {
-                var imageIds = _.map(assetData.propertyData.values, function(propertyValue) {
+        var handleAssetPropertyValueChanged = function(simpleAsset) {
+            if (simpleAsset.id === data.id && simpleAsset.propertyData.publicId === "pysakin_tyyppi") {
+                var imageIds = _.map(simpleAsset.propertyData.values, function(propertyValue) {
                    return propertyValue.propertyValue + '_'+ new Date();
                 });
-                $(box.div).html(getSelectedContent(assetData, imageIds));
+                $(box.div).html(getSelectedContent(data, imageIds));
             }
         };
 
