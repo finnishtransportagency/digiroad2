@@ -51,7 +51,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     importLogger.info("Limit import to streets: " + limitImportToStreets)
     val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider)
     result match {
-      case ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+      case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
       case _ => halt(BadRequest(result))
     }
   }

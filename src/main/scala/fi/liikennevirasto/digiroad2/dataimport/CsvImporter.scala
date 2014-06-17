@@ -3,18 +3,23 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{InputStreamReader, InputStream}
 import com.github.tototoshi.csv._
 import org.apache.commons.lang3.StringUtils.isBlank
-import fi.liikennevirasto.digiroad2.asset.{AssetNotFoundException, AssetProvider, PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset._
 
 object CsvImporter {
   case class NonExistingAsset(externalId: Long, csvRow: String)
   case class IncompleteAsset(missingParameters: List[String], csvRow: String)
   case class MalformedAsset(malformedParameters: List[String], csvRow: String)
-  case class ImportResult(nonExistingAssets: List[NonExistingAsset], incompleteAssets: List[IncompleteAsset], malformedAssets: List[MalformedAsset])
+  case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
+  case class ImportResult(nonExistingAssets: List[NonExistingAsset],
+                          incompleteAssets: List[IncompleteAsset],
+                          malformedAssets: List[MalformedAsset],
+                          excludedAssets: List[ExcludedAsset])
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   type MalformedParameters = List[String]
   type ParsedProperties = List[SimpleProperty]
   type ParsedAssetRow = (MalformedParameters, ParsedProperties)
+  type ExcludedRoadLinkTypes = List[RoadLinkType]
 
   private def maybeInt(string: String): Option[Int] = {
     try {
@@ -73,19 +78,35 @@ object CsvImporter {
     csvRowWithHeaders.keys.foldLeft(mandatoryParameters) { (mandatoryParameters, key) => mandatoryParameters - key }.toList
   }
 
-  def importAssets(inputStream: InputStream, assetProvider: AssetProvider): ImportResult = {
+  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], limitImportToStreets: Boolean, assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
+    val excludedRoadLinkTypes: Set[RoadLinkType] = Set(PrivateRoad, Road, UnknownRoad)
+
+    val exclusion = if(limitImportToStreets) {
+      val roadLinkType: RoadLinkType = assetProvider.getAssetByExternalId(externalId)
+        .flatMap(asset => assetProvider.getRoadLinkById(asset.roadLinkId))
+        .map(_.roadLinkType)
+        .getOrElse(UnknownRoad)
+      (Set(roadLinkType) & excludedRoadLinkTypes).toList
+    } else Nil
+
+    if(exclusion.isEmpty) assetProvider.updateAssetByExternalId(externalId, properties)
+
+    exclusion
+  }
+
+  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, limitImportToStreets: Boolean = false): ImportResult = {
     val streamReader = new InputStreamReader(inputStream)
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult(Nil, Nil, Nil)) { (result, row) =>
+    csvReader.allWithHeaders().foldLeft(ImportResult(Nil, Nil, Nil, Nil)) { (result, row) =>
       val missingParameters = findMissingParameters(row)
       val (malformedParameters, properties) = assetRowToProperties(row)
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          assetProvider.updateAssetByExternalId(parsedRow.externalId, parsedRow.properties)
-          result
+          result.copy(excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, limitImportToStreets, assetProvider)
+            .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row))) ::: result.excludedAssets)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
         }

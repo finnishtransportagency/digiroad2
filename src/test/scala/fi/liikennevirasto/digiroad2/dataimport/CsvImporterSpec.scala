@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, AuthenticatedApiSpec}
 import java.io.{InputStream, ByteArrayInputStream}
-import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.{MalformedAsset, IncompleteAsset, NonExistingAsset, ImportResult}
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 
 class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -29,7 +29,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
-      result should equal(ImportResult(Nil, Nil, Nil))
+      result should equal(ImportResult(Nil, Nil, Nil, Nil))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -52,7 +52,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
-      result should equal(ImportResult(Nil, Nil, Nil))
+      result should equal(ImportResult(Nil, Nil, Nil, Nil))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -74,7 +74,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: ','"))))
+          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: ','")),
+        excludedAssets = Nil))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -93,7 +94,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,a'"))))
+          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,a'")),
+        excludedAssets = Nil))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -112,7 +114,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         incompleteAssets = Nil,
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,10'"))))
+          csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: '', Pysäkin tyyppi: '2,10'")),
+        excludedAssets = Nil))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -126,7 +129,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val csv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
         s"${asset.externalId};; 1,2 , 3 ,4\n")
-      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(Nil, Nil, Nil))
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult(Nil, Nil, Nil, Nil))
       val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetType should contain only ("1", "2", "3", "4")
     } finally {
@@ -142,7 +145,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val inputStream = new ByteArrayInputStream(csv.getBytes)
     val result = CsvImporter.importAssets(inputStream, assetProvider)
 
-    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = "Valtakunnallinen ID: '600000', Pysäkin nimi: 'AssetName'")), Nil, Nil))
+    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = "Valtakunnallinen ID: '600000', Pysäkin nimi: 'AssetName'")), Nil, Nil, Nil))
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
@@ -158,7 +161,31 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result should equal(ImportResult(
         nonExistingAssets = Nil,
         incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = s"Valtakunnallinen ID: '${asset.externalId}'")),
-        malformedAssets = Nil))
+        malformedAssets = Nil,
+        excludedAssets = Nil))
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("AssetName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  test("ignore updates on other road types than streets when import is limited to streets") {
+    val asset = assetProvider.createAsset(10, 0, 0, 5806, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("AssetName")))))
+    val csv =
+      s"Valtakunnallinen ID;Pysäkin nimi\n" +
+      s"${asset.externalId};NewName\n"
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, limitImportToStreets = true)
+      result should equal(ImportResult(
+        nonExistingAssets = Nil,
+        incompleteAssets = Nil,
+        malformedAssets = Nil,
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = s"Valtakunnallinen ID: '${asset.externalId}', Pysäkin nimi: 'NewName'"))))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
