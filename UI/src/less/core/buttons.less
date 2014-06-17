@@ -30,7 +30,12 @@
   	&[disabled] {
   		cursor: not-allowed;
   		box-shadow: none;
-  		.opacity(65);
+  		.opacity(0.65);
+
+  		&:hover,
+  		&:focus {
+  			box-shadow: none;
+  		}
   	}
 }
 

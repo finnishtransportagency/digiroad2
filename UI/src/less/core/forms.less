@@ -2,6 +2,7 @@
 
 label {
 	display: inline-block;
+  margin-bottom: @line-height-modifier / 2;
 	font-size: @font-size-small;
 	font-weight: bold;
 	text-transform: uppercase;
@@ -50,6 +51,78 @@ input[type="checkbox"]:focus {
   .tab-focus();
 }
 
+// Common form controls
+//
+// Shared size and type resets for form controls. Apply `.form-control` to any
+// of the following form controls:
+//
+// select
+// textarea
+// input[type="text"]
+// input[type="password"]
+// input[type="datetime"]
+// input[type="datetime-local"]
+// input[type="date"]
+// input[type="month"]
+// input[type="time"]
+// input[type="week"]
+// input[type="number"]
+// input[type="email"]
+// input[type="url"]
+// input[type="search"]
+// input[type="tel"]
+// input[type="color"]
+
+.form-control {
+  display: block;
+  width: 100%;
+  height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
+  padding: @line-height-modifier (@line-height-modifier * 1.5);
+  border: 1px solid @input-border;
+  border-radius: @input-border-radius;
+  font-size: @font-size-base;
+  line-height: @line-height-modifier * 3;
+  color: @input-color;
+  background-color: @input-bg;
+  box-shadow: inset 1px 2px 2px rgba(40,40,38,.25);
+  .box-sizing(border-box);
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+
+  // Customize the `:focus` state to imitate native WebKit styles.
+  .form-control-focus();
+
+  .placeholder();
+
+  // Disabled and read-only inputs
+  //
+  // HTML5 says that controls under a fieldset > legend:first-child won't be
+  // disabled if the fieldset is disabled. Due to implementation difficulty, we
+  // don't honor that edge case; we style them as disabled anyway.
+  &[disabled],
+  &[readonly],
+  fieldset[disabled] & {
+    cursor: not-allowed;
+    border-color: @input-border-disabled;
+    color: @input-color-placeholder;
+    background-color: @input-bg-disabled;
+    opacity: 1; // iOS fix for unreadable disabled content
+  }
+
+  // Reset height for `textarea`s
+  textarea& {
+    height: auto;
+  }  
+}
+
+// Form groups
+//
+// Designed to help with the organization and spacing of vertical forms. For
+// horizontal forms, use the predefined grid classes.
+
+.form-group {
+  margin-bottom: @input-margin;
+}
+
 // Checkboxes and radios
 //
 // Indent the labels to position radios/checkboxes as hanging controls.
@@ -58,7 +131,7 @@ input[type="checkbox"]:focus {
 .checkbox {
   display: block;
   min-height: @line-height-modifier * 3; // clear the floating input if there is no label text
-  margin-bottom: @form-input-margin;
+  margin-bottom: @input-margin;
 
   &:last-child {
   	margin-bottom: 0;
@@ -115,5 +188,93 @@ input[type="checkbox"]:focus {
       font-size: 18px;
       content: '\e804';
     }
+  }
+}
+
+// Apply same disabled cursor tweak as for inputs
+// Some special care is needed because <label>s don't inherit their parent's `cursor`.
+//
+// Note: Neither radios nor checkboxes can be readonly.
+input[type="radio"],
+input[type="checkbox"] {
+  &[disabled],
+  &.disabled,
+  fieldset[disabled] & {
+    cursor: not-allowed;
+  }
+}
+// These classes are used directly on <label>s
+.radio-inline,
+.checkbox-inline {
+  &.disabled,
+  fieldset[disabled] & {
+    cursor: not-allowed;
+  }
+}
+// These classes are used on elements with <label> descendants
+.radio,
+.checkbox {
+  &.disabled,
+  fieldset[disabled] & {
+    label {
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Static form control text
+//
+// Apply class to a `p` element to make any string of text align with labels in
+// a horizontal form layout.
+
+.form-control-static {
+  margin: 0; // Remove default margin from `p`
+}
+
+// Horizontal forms
+//
+// Horizontal forms are built on grid classes and allow you to create forms with
+// labels on the left and inputs on the right.
+
+.form-horizontal {
+  .form-group {
+
+  }
+}
+
+// Inverted colors
+//
+// Inverts the form component colors to work on darker backgrounds
+
+.form-dark {
+  label {
+    color: @gray-lighter;
+  }
+
+  .form-control {
+    border-color: @input-border-dark;
+    color: @input-color-dark;
+    background-color: @input-bg-dark;
+
+    .form-control-focus(@input-border-focus-dark);
+
+    .placeholder(@input-color-placeholder-dark);
+
+    &[disabled],
+    &[readonly],
+    fieldset[disabled] & {
+      border-color: @input-border-disabled-dark;
+      color: @input-color-placeholder-dark;
+      background-color: @input-bg-disabled-dark;
+    }    
+  }
+
+  .checkbox input[type="checkbox"] {
+    border-color: @input-border-dark;
+    color: @input-border-dark;
+  }
+
+  .form-control-static {
+    color: @input-color-dark;
   }
 }
