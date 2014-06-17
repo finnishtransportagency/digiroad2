@@ -86,7 +86,7 @@ object CsvImporter {
         .flatMap(asset => assetProvider.getRoadLinkById(asset.roadLinkId))
         .map(_.roadLinkType)
         .getOrElse(UnknownRoad)
-      (Set(roadLinkType) & excludedRoadLinkTypes).toList
+      (Set(roadLinkType) intersect excludedRoadLinkTypes).toList
     } else Nil
 
     if(exclusion.isEmpty) assetProvider.updateAssetByExternalId(externalId, properties)
