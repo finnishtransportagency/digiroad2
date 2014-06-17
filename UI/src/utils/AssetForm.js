@@ -62,14 +62,14 @@
 
         var changeDirection = function(newDirection){
             asset.validityDirection = newDirection;
-            $('.streetView').empty().append(render());
+            $('.street-view').empty().append(render());
         };
 
         var changePosition = function(position){
             asset.lon = position.lon;
             asset.lat = position.lat;
             asset.bearing = position.bearing;
-            $('.streetView').empty().append(render());
+            $('.street-view').empty().append(render());
         };
 
         return {
