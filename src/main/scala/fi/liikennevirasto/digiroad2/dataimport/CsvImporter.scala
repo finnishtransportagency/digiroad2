@@ -10,10 +10,10 @@ object CsvImporter {
   case class IncompleteAsset(missingParameters: List[String], csvRow: String)
   case class MalformedAsset(malformedParameters: List[String], csvRow: String)
   case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
-  case class ImportResult(nonExistingAssets: List[NonExistingAsset],
-                          incompleteAssets: List[IncompleteAsset],
-                          malformedAssets: List[MalformedAsset],
-                          excludedAssets: List[ExcludedAsset])
+  case class ImportResult(nonExistingAssets: List[NonExistingAsset] = Nil,
+                          incompleteAssets: List[IncompleteAsset] = Nil,
+                          malformedAssets: List[MalformedAsset] = Nil,
+                          excludedAssets: List[ExcludedAsset] = Nil)
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   type MalformedParameters = List[String]
@@ -99,7 +99,7 @@ object CsvImporter {
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResult(Nil, Nil, Nil, Nil)) { (result, row) =>
+    csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
       val missingParameters = findMissingParameters(row)
       val (malformedParameters, properties) = assetRowToProperties(row)
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
