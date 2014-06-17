@@ -194,6 +194,26 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("update asset on street when import is limited to streets") {
+    val streetId = 5821
+    val asset = assetProvider.createAsset(10, 0, 0, streetId, 180, "CsvImportApiSpec", Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("AssetName")))))
+    val csv =
+      s"Valtakunnallinen ID;Pysäkin nimi\n" +
+      s"${asset.externalId};NewName\n"
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, limitImportToStreets = true)
+      result should equal(ImportResult(Nil, Nil, Nil, Nil))
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("NewName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 
   private def getAssetName(asset: AssetWithProperties): Option[String] = {
