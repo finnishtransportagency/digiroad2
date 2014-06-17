@@ -97,22 +97,36 @@
     };
 
     var textHandler = function(property){
-        var inputElement = property.propertyType === 'long_text' ?
+        var 
+            element,
+            elementType,
+            wrapper;
+
+        if (readOnly) {
+            elementType = $('<p />').addClass('form-control-static');
+            element = elementType;
+
+            if (property.values[0]) {
+                element.text(property.values[0].propertyDisplayValue);
+            } else {
+                element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
+            }
+        } else {
+            elementType = property.propertyType === 'long_text' ?
                 $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
-        var input = inputElement.bind('input', function(target){
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
-        });
+            element = elementType.bind('input', function(target){
+                selectedAssetModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value }]);
+            });
 
-        // TODO: use cleaner html
-        var outer = $('<div />').addClass('form-group').attr('data-required', property.required);
-        outer.append($('<label />').addClass('control-label').text(property.localizedName));
-
-        outer.append(input);
-        if(property.values[0]) {
-            input.val(property.values[0].propertyDisplayValue);
+            if(property.values[0]) {
+                element.val(property.values[0].propertyDisplayValue);
+            }            
         }
-        input.attr('disabled', readOnly);
-        return outer;
+
+        wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+
+        return wrapper;
     };
 
     var singleChoiceHandler = function(property, choices){
