@@ -52,8 +52,12 @@
             var wgs84 = OpenLayers.Projection.transform(
                 new OpenLayers.Geometry.Point(asset.lon, asset.lat),
                 new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
-            return $(streetViewTemplate({ wgs84X: wgs84.x, wgs84Y: wgs84.y, heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90) }))
-                    .addClass('street-view');
+            return $(streetViewTemplate({
+                wgs84X: wgs84.x,
+                wgs84Y: wgs84.y,
+                heading: (asset.validityDirection === 3 ? asset.bearing - 90 : asset.bearing + 90),
+                protocol: location.protocol
+            })).addClass('street-view');
         };
 
         var changeDirection = function(newDirection){
@@ -249,7 +253,7 @@
     };
 
     var streetViewTemplate  = _.template(
-            '<a target="_blank" href="http://maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +
+            '<a target="_blank" href="{{protocol}}//maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +
             '<img alt="Google StreetView-n&auml;kym&auml;" src="http://maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location={{wgs84Y}}' +
             ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
             '</a>');
