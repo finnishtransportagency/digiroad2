@@ -207,7 +207,7 @@
             });
 
             input.prop('checked', x.checked).attr('disabled', readOnly);
-            if (readonly) {
+            if (readOnly) {
                 outer.addClass('disabled');
             }
 
