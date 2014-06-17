@@ -130,29 +130,46 @@
     };
 
     var singleChoiceHandler = function(property, choices){
+        var 
+            element,
+            elementType,
+            wrapper;
+
         var enumValues = _.find(choices, function(choice){
             return choice.publicId === property.publicId;
-        }).values;
+        }).values;            
 
-        var input = $('<select />').addClass('form-control').change(function(x){
-            selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
-        });
+        if (readOnly) {
+            elementType = $('<p />').addClass('form-control-static');
+            element = elementType;
 
-        //TODO: cleaner html
-        var label = $('<label />').addClass('control-label');
-        label.text(property.localizedName);
-        _.forEach(enumValues, function(x) {
-            var attr = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
-            input.append(attr);
-        });
-        if(property.values && property.values[0]) {
-            input.val(property.values[0].propertyValue);
+            if (property.values && property.values[0]) {
+                element.text(property.values[0].propertyDisplayValue);
+            } else {
+                element.html('Ei tiedossa');
+            }
         } else {
-            input.val('99');
+            elementType = $('<select />').addClass('form-control');
+            element = elementType.addClass('form-control').change(function(x){
+                selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
+            });
+
+            _.forEach(enumValues, function(x) {
+                var option = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
+                element.append(option);
+            });
+
+            if(property.values && property.values[0]) {
+                element.val(property.values[0].propertyValue);
+            } else {
+                element.val('99');
+            }              
         }
 
-        input.attr('disabled', readOnly);
-        return $('<div />').addClass('form-group').append(label).append(input);
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+
+        return wrapper;
     };
 
     var directionChoiceHandler = function(property){
