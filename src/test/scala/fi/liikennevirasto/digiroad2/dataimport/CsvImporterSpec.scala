@@ -20,8 +20,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update name by CSV import", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2"))
-    val asset2 = createAsset(5771, Map("vaikutussuunta" -> "2"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2"))
+    val asset2 = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2"))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
       s"${asset.externalId};AssetName\n" +
@@ -43,7 +43,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("do not update name if field is empty in CSV", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
       s"${asset.externalId};\n"
@@ -60,7 +60,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation fails if type is undefined", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
     try {
       val invalidCsv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
@@ -75,7 +75,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation fails if type contains illegal characters", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
     try {
       val invalidCsv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
@@ -90,7 +90,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation fails when asset type is unknown", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "1"))
     try {
       val invalidCsv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
@@ -105,7 +105,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update asset type by CSV import", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "99"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "pysakin_tyyppi" -> "99"))
     try {
       val csv = csvToInputStream(
         s"Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi\n" +
@@ -130,7 +130,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
-    val asset = createAsset(5771, Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
       s"${asset.externalId}\n"
@@ -149,7 +149,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("ignore updates on other road types than streets when import is limited to streets") {
     val roadId = 5806
-    val asset = createAsset(roadId, Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = roadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
       s"${asset.externalId};NewName\n"
@@ -168,7 +168,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update asset on street when import is limited to streets") {
     val streetId = 5821
-    val asset = createAsset(streetId, Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = streetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
       s"${asset.externalId};NewName\n"
