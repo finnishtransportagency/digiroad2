@@ -48,10 +48,10 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val limitImportToStreets = params.get("limit-import-to-streets").flatMap(stringToBoolean(_)).getOrElse(false)
-    importLogger.info("Limit import to streets: " + limitImportToStreets)
-    val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider)
+    val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider, limitImportToStreets)
     result match {
       case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+      case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets
       case _ => halt(BadRequest(result))
     }
   }
