@@ -173,20 +173,25 @@
     };
 
     var directionChoiceHandler = function(property){
-        var input = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
-            selectedAssetModel.switchDirection();
-            streetViewHandler.update();
-        });
+        if (!readOnly) {
+            var
+                element,
+                wrapper;
 
-        //TODO: cleaner html
-        var label = $('<label />').addClass('control-label');
-        label.text(property.localizedName);
-        if(property.values && property.values[0]) {
-            validityDirection = property.values[0].propertyValue;
+            element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+                selectedAssetModel.switchDirection();
+                streetViewHandler.update();
+            });
+
+            if(property.values && property.values[0]) {
+                validityDirection = property.values[0].propertyValue;
+            }
+
+            wrapper = $('<div />').addClass('form-group');
+            wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+
+            return wrapper;
         }
-
-        input.attr('disabled', readOnly);
-        return $('<div />').addClass('form-group').append(label).append(input);
     };
 
     var dateHandler = function(property){
