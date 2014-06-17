@@ -27,11 +27,7 @@ Importeilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;&auml;n.
 2.1 CSV-vienti
 --------------
 
-Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston k&auml;ytt&ouml;liittym&auml;n kautta j&auml;rjestelm&auml;&auml;n. Vienti tehd&auml;&auml;n osoitteessa:
-
-```
-https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html
-```
+Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. 
 
 ![CSV-vienti](k23.JPG)
 
