@@ -15,7 +15,8 @@
 
         backend.getAssets =  _.throttle(function(assetTypeId, boundingBox) {
             jQuery.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function(assets) {
-                eventbus.trigger('assets:fetched', assets);
+                var groupedAssets = assetGrouping.groupByDistance(assets);
+                eventbus.trigger('assets:fetched', groupedAssets);
             }).fail(function() {
                 console.log("error");
             });

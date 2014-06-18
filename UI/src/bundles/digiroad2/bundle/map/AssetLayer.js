@@ -107,24 +107,41 @@ window.AssetLayer = function(map, roadLayer) {
         var marker = asset.massTransitStop.getMarker();
         assetLayer.removeMarker(marker);
     };
-
+    var groupId = 0;
     var renderAssets = function(assetDatas) {
         assetLayer.setVisibility(true);
-        _.each(assetDatas, function(asset) {
-            var isAssetSelectedAndDirty = function(asset) {
-              return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
-            };
-            if (isAssetSelectedAndDirty(asset)) {
-              return;
+        _.each(assetDatas, function(assetGroup) {
+            groupId++;
+            var i = 0;
+            if (!_.isArray(assetGroup)) {
+              assetGroup = [assetGroup];
             }
-            assets = assets || {};
-            if (!assets[asset.id]) {
-              assets[asset.id] = insertAsset(asset);
-            }
-            addAssetToLayers(assets[asset.id]);
-            if (selectedAsset && selectedAsset.data.id == asset.id) {
-              selectedAsset = assets[asset.id];
-            }
+            var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
+            _.each(assetGroup, function(asset) {
+              asset.group = {
+                id : groupId,
+                lon : centroidLonLat.lon,
+                lat : centroidLonLat.lat,
+                root : (0 === i),
+                positionIndex :i++,
+                size : assetGroup.length
+              };
+
+              var isAssetSelectedAndDirty = function(asset) {
+                return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
+              };
+              if (isAssetSelectedAndDirty(asset)) {
+                return;
+              }
+              assets = assets || {};
+              if (!assets[asset.id]) {
+                assets[asset.id] = insertAsset(asset);
+              }
+              addAssetToLayers(assets[asset.id]);
+              if (selectedAsset && selectedAsset.data.id == asset.id) {
+                selectedAsset = assets[asset.id];
+              }
+            });
         });
     };
 

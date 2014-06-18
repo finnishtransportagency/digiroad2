@@ -6,7 +6,7 @@
             return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
         };
 
-        var bounds = getBounds(data.lon, data.lat);
+        var bounds = getBounds(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat);
         var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
         var selected = false; // keeping track of the selected state while assetlayer refactoring is ongoing TODO: move to selected model
 
@@ -27,7 +27,7 @@
             var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
-            return $('<div class="expanded-bus-stop" />')
+            return $('<div class="expanded-bus-stop" />').addClass(data.group && data.group.root && 'root')
                        .append($('<div class="images field" />').html(busStopImages))
                        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
                        .append($('<div class="bus-stop-name field"/>').text(name))
@@ -36,9 +36,17 @@
 
         var createDefaultState = function() {
             var busImages = $('<div class="bus-basic-marker" />');
+            if (data.group) {
+              busImages.addClass(data.group.root && 'root');
+            }
             busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
             $(box.div).html(busImages);
-
+            setPositionByIndex();
+        };
+        var padding = -25;
+        var setPositionByIndex = function() {
+          var positionIndex = (data.group && data.group.positionIndex) ? padding*data.group.positionIndex : 0;
+          $(box.div).css("-webkit-transform", "translate(0px,"+positionIndex+"px)");
         };
 
         var mapBusStopImageIdsToImages =  function (imageIds) {
@@ -60,25 +68,48 @@
         var renderNewState = function(asset) {
             box.bounds = getBounds(asset.lon, asset.lat);
             $(box.div).html(getSelectedContent(asset, asset.imageIds));
+            setPositionByIndex();
         };
 
-        var unSelectState = function() {
+        var deselectState = function() {
             if (selected) {
                 createDefaultState();
                 selected  = false;
             }
         };
 
-        eventbus.on('asset:closed tool:changed asset:placed', unSelectState);
+        var pullFetchedAssetFromStack = function() {
+          var fetchedPositionIndex = data.group.positionIndex;
+          var fetchedGroupId = data.group.id;
+          data.group = {
+            positionIndex : 0,
+            root : true
+          };
+          eventbus.trigger('asset:fetched-from-group', {id : fetchedGroupId, positionIndex : fetchedPositionIndex});
+        };
+
+        eventbus.on('asset:closed tool:changed asset:placed', deselectState);
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
-            if (asset.id === data.id) {
-                data = asset; // TODO: use data model when it's ready
-                renderNewState(asset);
-                selected = true;
-            } else {
-                unSelectState();
+          if (asset.id === data.id) {
+            if (data.group && data.group.size > 0) {
+              pullFetchedAssetFromStack();
             }
+            asset.group = {root : true};
+            renderNewState(asset);
+            selected = true;
+          } else {
+            deselectState();
+          }
+        });
+
+        eventbus.on('asset:fetched-from-group', function (groupInfo) {
+          if (data.group && data.group.id === groupInfo.id) {
+            if (data.group.positionIndex > groupInfo.positionIndex) {
+              data.group.positionIndex--;
+              createDefaultState();
+            }
+          }
         });
 
         eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
