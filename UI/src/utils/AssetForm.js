@@ -232,6 +232,10 @@
     };
 
     var multiChoiceHandler = function(property, choices){
+        var 
+            element,
+            wrapper;
+
         var currentValue = _.cloneDeep(property);
         var enumValues = _.chain(choices)
             .filter(function(choice){
@@ -241,38 +245,56 @@
             .filter(function(x){
                 return x.propertyValue !== '99';
             }).value();
-        var container = $('<div />').addClass('form-group');
-        container.append($('<label />').addClass('control-label').text(property.localizedName));
-        var inputContainer = $('<div />').addClass('choice-group');
+
+        if (readOnly) {
+            element = $('<ul />');
+        } else {
+            element = $('<div />');
+        }
+
+        element.addClass('choice-group');
+
         _.forEach(enumValues, function (x) {
-            var outer = $('<div class="checkbox" />');
-            var input = $('<input type="checkbox" />').change(function (evt) {
-                x.checked = evt.currentTarget.checked;
-                var values = _.chain(enumValues)
-                    .filter(function (value) {
-                        return value.checked;
-                    })
-                    .map(function (value) {
-                        return { propertyValue: parseInt(value.propertyValue, 10) };
-                    })
-                    .value();
-                if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
-                selectedAssetModel.setProperty(property.publicId, values);
-            });
+            var outer;
+
             x.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === x.propertyValue;
             });
 
-            input.prop('checked', x.checked).attr('disabled', readOnly);
             if (readOnly) {
-                outer.addClass('disabled');
-            }
+                if (x.checked) {
+                    outer = $('<li />');
+                    outer.text(x.propertyDisplayValue);
 
-            var label = $('<label />').text(x.propertyDisplayValue);
-            inputContainer.append(outer.append(label.append(input)));
-        });
+                    element.append(outer);
+                }
+            } else {
+                outer = $('<div class="checkbox" />');
+                var input = $('<input type="checkbox" />').change(function (evt) {
+                    x.checked = evt.currentTarget.checked;
+                    var values = _.chain(enumValues)
+                        .filter(function (value) {
+                            return value.checked;
+                        })
+                        .map(function (value) {
+                            return { propertyValue: parseInt(value.propertyValue, 10) };
+                        })
+                        .value();
+                    if (_.isEmpty(values)) { values.push({ propertyValue: 99 }); }
+                    selectedAssetModel.setProperty(property.publicId, values);
+                });
 
-        return container.append(inputContainer);
+                input.prop('checked', x.checked);
+
+                var label = $('<label />').text(x.propertyDisplayValue);
+                element.append(outer.append(label.append(input)));
+            }         
+        });            
+
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+
+        return wrapper;
     };
 
     var getAssetForm = function() {
