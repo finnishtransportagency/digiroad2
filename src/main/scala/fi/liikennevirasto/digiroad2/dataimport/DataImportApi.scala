@@ -10,10 +10,12 @@ import fi.liikennevirasto.digiroad2.util.BusStopExcelDataImporter
 import java.io.InputStreamReader
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s.{DefaultFormats, Formats}
+import org.slf4j.LoggerFactory
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private final val threeMegabytes: Long = 3*1024*1024
+  private val importLogger = LoggerFactory.getLogger(getClass)
 
   before() {
     contentType = formats("json")
@@ -45,10 +47,17 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    val result = CsvImporter.importAssets(fileParams("csv-file").getInputStream, assetProvider)
-    result match {
-      case ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty."
-      case _ => halt(BadRequest(result))
+    val limitImportToStreets = params.get("limit-import-to-streets").flatMap(stringToBoolean(_)).getOrElse(false)
+    val csvFileInputStream = fileParams("csv-file").getInputStream
+    try {
+      val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, limitImportToStreets)
+      result match {
+        case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+        case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets
+        case _ => halt(BadRequest(result))
+      }
+    } finally {
+      csvFileInputStream.close()
     }
   }
 }
