@@ -4,18 +4,25 @@
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 - Excel-tietojen tuominen</title>
 </head>
-<body id="main">
-<div id="registerForm">
-    <div class="formHeader">P&auml;ivit&auml; pys&auml;kkitietoja CSV-tiedostosta</div>
-    <form method="post" action="api/import/validationCsv" enctype="multipart/form-data">
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Rajoita CSV-tuonti katuverkolle</div>
-            <input type="checkbox" name="limit-import-to-streets" />
+<body>
+    <div class="page">
+        <div class="content-box form-box">
+            <header>P&auml;ivit&auml; pys&auml;kkitietoja CSV-tiedostosta</header>
+            <form class="form form-dark" role="form" method="post" action="api/import/validationCsv" enctype="multipart/form-data">
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label><input type="checkbox" name="limit-import-to-streets"> Rajoita CSV-tuonti katuverkolle</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Valitse CSV-tiedosto</label>
+                    <input type="file" name="csv-file" class="form-control">
+                </div>
+                <div class="form-group form-controls">
+                    <button type="submit" class="btn btn-primary btn-lg">Lataa tiedot</button>
+                </div>
+            </form>
         </div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Valitse CSV-tiedosto:</div>
-            <input type="file" name="csv-file"/>
-        </div>
-        <input type="submit" value="Lataa tiedot">
-    </form>
-</div>
+    </div>
+</body>
+</html>
