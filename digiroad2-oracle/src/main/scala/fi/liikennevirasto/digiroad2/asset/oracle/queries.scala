@@ -241,6 +241,9 @@ object Queries {
   def deleteAssetTextProperties(assetId: Long) =
     sqlu"delete from text_property_value where asset_id = $assetId"
 
+  def existsTextProperty =
+    "select id from text_property_value where asset_id = ? and property_id = ?"
+
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
@@ -260,6 +263,9 @@ object Queries {
 
   def deleteAssetSingleChoiceProperties(assetId: Long) =
     sqlu"delete from single_choice_value where asset_id = $assetId"
+
+  def existsSingleChoiceProperty =
+    "select asset_id from single_choice_value where asset_id = ? and property_id = ?"
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)

@@ -334,22 +334,23 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (280)
   }
 
-  test("Load image by id", Tag("db")) {
+  test("load image by id", Tag("db")) {
     val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val image = provider.getImage(2)
     image.size should (be > 1)
   }
 
-  test("Loads all asset with properties in municipality find", Tag("db")) {
+  test("loads all asset with properties in municipality find", Tag("db")) {
     val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
-    val municipalities = provider.getAssetsByMunicipality(235)
-    municipalities.size should be(5)
+    val assets = provider.getAssetsByMunicipality(235)
+    assets.size should (be > 0)
+    assets.map(_.municipalityNumber.get) should contain only (235)
   }
 
-  test("returns correct amount of assets from test data", Tag("db")) {
+  test("returns correct assets from test data", Tag("db")) {
     val assetsByMunicipality = provider.getAssetsByMunicipality(235)
-    assetsByMunicipality.size should be (5)
-    assetsByMunicipality.head.id should be (300000)
+    assetsByMunicipality.map(_.id) should contain allOf(300000, 300004, 300008, 300003, 300001)
+    assetsByMunicipality.map(_.id) should contain noneOf(300005, 307577) // stop with invalid road link and a stop at Rovaniemi
   }
 
   private[this] def asSimplePropertySeq(propertyId: String, value: String): Seq[SimpleProperty] = {
