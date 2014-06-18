@@ -224,18 +224,18 @@ object OracleSpatialAssetDao {
     getAssetById(assetId).get
   }
 
-  def updateAssetLastModified(assetId: Long, modifier: String) {
+  private def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute()
   }
 
-  def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
+  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
     propertyWithType match {
       case (SingleChoice, _, property) => property.values.size > 0
       case _ => true
     }
   }
 
-  def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
@@ -245,7 +245,7 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  private def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
@@ -262,7 +262,7 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
+  private def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
     val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
@@ -288,17 +288,13 @@ object OracleSpatialAssetDao {
     Q.query[Long, RoadLink](roadLinks + " AND id = ?").firstOption(roadLinkId)
   }
 
-  def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
-    val asset = getAssetById(assetId)
-    if (asset.isEmpty) throw new IllegalArgumentException("Asset " + assetId + " not found")
-    val createNew = (asset.head.propertyData.exists(_.publicId == propertyPublicId) && asset.head.propertyData.find(_.publicId == propertyPublicId).get.values.isEmpty)
-
+  private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
     propertyType match {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.size == 0) {
           deleteTextProperty(assetId, propertyId).execute()
-        } else if (createNew) {
+        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
         } else {
           updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
@@ -306,7 +302,7 @@ object OracleSpatialAssetDao {
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (createNew) {
+        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
         } else {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
@@ -322,7 +318,15 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[PropertyValue]) {
+  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsTextProperty).firstOption((assetId, propertyId)).isEmpty
+  }
+
+  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsSingleChoiceProperty).firstOption((assetId, propertyId)).isEmpty
+  }
+
+  private def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[PropertyValue]) {
     val property = AssetPropertyConfiguration.commonAssetProperties(propertyPublicId)
     propertyType match {
       case SingleChoice => {
