@@ -14,6 +14,7 @@ trait AssetProvider {
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties
   def updateAsset(assetId: Long, position: Option[Position] = None, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
   def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
+  def updateAssetByExternalIdIfOnStreet(externalId: Long, properties: Seq[SimpleProperty] = Seq()): Either[RoadLinkType, AssetWithProperties]
   def removeAsset(assetId: Long): Unit
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   def getRoadLinks(user: User, bounds: Option[BoundingRectangle] = None): Seq[RoadLink]

@@ -79,19 +79,16 @@ object CsvImporter {
   }
 
   def updateAsset(externalId: Long, properties: Seq[SimpleProperty], limitImportToStreets: Boolean, assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
-    val excludedRoadLinkTypes: Set[RoadLinkType] = Set(PrivateRoad, Road, UnknownRoad)
-
-    val exclusion = if(limitImportToStreets) {
-      val roadLinkType: RoadLinkType = assetProvider.getAssetByExternalId(externalId)
-        .flatMap(asset => assetProvider.getRoadLinkById(asset.roadLinkId))
-        .map(_.roadLinkType)
-        .getOrElse(UnknownRoad)
-      (Set(roadLinkType) intersect excludedRoadLinkTypes).toList
-    } else Nil
-
-    if(exclusion.isEmpty) assetProvider.updateAssetByExternalId(externalId, properties)
-
-    exclusion
+    if(limitImportToStreets) {
+      val result: Either[RoadLinkType, AssetWithProperties] = assetProvider.updateAssetByExternalIdIfOnStreet(externalId, properties)
+      result match {
+        case Left(roadLinkType) => List(roadLinkType)
+        case _ => Nil
+      }
+    } else {
+      assetProvider.updateAssetByExternalId(externalId, properties)
+      Nil
+    }
   }
 
   def importAssets(inputStream: InputStream, assetProvider: AssetProvider, limitImportToStreets: Boolean = false): ImportResult = {
@@ -105,8 +102,9 @@ object CsvImporter {
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          result.copy(excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, limitImportToStreets, assetProvider)
-            .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row))) ::: result.excludedAssets)
+          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, limitImportToStreets, assetProvider)
+            .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+          result.copy(excludedAssets = excludedAssets ::: result.excludedAssets)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
         }
