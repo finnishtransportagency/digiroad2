@@ -23,30 +23,37 @@
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 uuden k&auml;ytt&auml;j&auml;n luominen</title>
 </head>
-<body id="main" onload="showCreatedUser()">
-<div id="registerForm">
-    <div class="formHeader">Luo uusi k&auml;ytt&auml;j&auml;</div>
-    <form method="post" action="api/userconfig/newuser">
-        <div class="formAttributeContentRow">
-            <div class="formLabels">K&auml;ytt&auml;j&auml;tunnus:</div>
-            <input type="text" name="username"/></div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Ely nro:</div>
-            <input type="text" id="elyNumber" name="elyNumber"/>
-            <label for="elyNumber">(esim, 3 tai 3, 4)</label>
+<body onload="showCreatedUser()">
+    <div class="page">
+        <div class="content-box form-box">
+            <header>Luo uusi k&auml;ytt&auml;j&auml;</header>
+            <form class="form form-horizontal" role="form" method="post" action="api/userconfig/newuser">
+                <div class="form-group">
+                    <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
+                    <input type="text" name="username" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Ely nro</label>
+                    <input type="text" id="elyNumber" name="elyNumber" class="form-control">
+                    <span class="help-block">Esim. 3 tai 3, 4</span>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Kunta nro</label>
+                    <input type="text" id="municipalityNumbers" name="municipalityNumbers" class="form-control">
+                    <span class="help-block">Esim. 091 tai 091, 092</span>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Oikeuden tyyppi</label>
+                    <select name="hasWriteAccess" class="form-control">
+                        <option value="true">Muokkausoikeus</option>
+                        <option value="false">Katseluoikeus</option>
+                    </select>
+                </div>
+                <div class="form-group form-controls">
+                    <button type="submit" class="btn btn-primary btn-lg">Luo k&auml;ytt&auml;j&auml;</button>
+                </div>
+            </form>
         </div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Kunta nro:</div>
-            <input type="text" id="municipalityNumbers" name="municipalityNumbers"/>
-             <label for="municipalityNumbers">(esim, 091 tai 091, 092)</label>
-        </div>
-        <div class="formAttributeContentRow">
-            <div class="formLabels">Oikeuden tyyppi:</div>
-            <select name="hasWriteAccess">
-                <option value="true">Muokkausoikeus</option>
-                <option value="false">Katseluoikeus</option>
-            </select>
-        </div>
-        <input type="submit" value="Luo k&auml;ytt&auml;j&auml;">
-    </form>
-</div>
+    </div>
+</body>
+</html>

@@ -5,6 +5,7 @@ label {
   margin-bottom: @line-height-modifier / 2;
 	font-size: @font-size-small;
 	font-weight: bold;
+  color: @gray-darker;
 	text-transform: uppercase;
 }
 
@@ -84,7 +85,7 @@ input[type="checkbox"]:focus {
   line-height: @line-height-modifier * 3;
   color: @input-color;
   background-color: @input-bg;
-  box-shadow: inset 1px 2px 2px rgba(40,40,38,.25);
+  box-shadow: inset 1px 2px 2px rgba(40,40,38,.15);
   .box-sizing(border-box);
   .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
 
@@ -232,6 +233,17 @@ input[type="checkbox"] {
   margin: 0; // Remove default margin from `p`
 }
 
+// Help text
+//
+// Apply to any element you wish to create light text for placement immediately
+// below a form control. Use for general help, formatting, or instructional text.
+
+.help-block {
+  display: block; // account for any element using help-block
+  margin-top: @input-margin / 2;
+  color: @input-color-placeholder; // lighten the text some for contrast
+}
+
 // Horizontal forms
 //
 // Horizontal forms allow you to create forms with labels on the left and inputs on the right.
@@ -316,5 +328,9 @@ input[type="checkbox"] {
 
   .form-control-static {
     color: @input-color-dark;
+  }
+
+  .help-block {
+    color: @input-color-placeholder-dark;
   }
 }
