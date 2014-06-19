@@ -269,7 +269,7 @@ __K&auml;ytt&auml;j&auml; lis&auml;&auml; j&auml;rjestelm&auml;&auml;n:__
 
 Ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjoitetaan merkkijonona, monivalintoja, josta voi valita oikeat vaihtoehdot tai pudotusvalikkovalintoja, joista voi valita yhden vaihtoehdon.
 
-__Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;. 
+__Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;. Nimen tulee olla valtakunnallisesti yksil&ouml;iv&auml;. Esim. Ei "Linja-autoasema" vaan "Porvoon linja-autoasema".
 __Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
 __Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
