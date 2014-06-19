@@ -31,7 +31,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
-    var mouseUpHandler = function(asset) {
+    var mouseUpHandler = function() {
         clickTimestamp = null;
         map.events.unregister("mouseup", map, mouseUpFunction);
         assetIsMoving = false;
@@ -419,7 +419,7 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
 
   eventbus.on('layer:selected', closeAsset, this);
-    $('#mapdiv').on('mouseleave', function(e) {
+    $('#mapdiv').on('mouseleave', function() {
       if (assetIsMoving === true) {
         mouseUpHandler(selectedAsset);
       }
