@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import scala.slick.driver.JdbcDriver.backend.Database
 
-object ValluImport {
+object ValluExport {
   val userProvider = new OracleUserProvider
   val header = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;VIRTUAL_STOP;EQUIPMENT;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
 
@@ -61,6 +61,6 @@ object ValluImport {
   }
 
   def main(args:Array[String]) : Unit = {
-    ValluImport.writeCsvToFile()
+    ValluExport.writeCsvToFile()
   }
 }
