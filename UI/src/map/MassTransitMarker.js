@@ -27,7 +27,7 @@
             var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
-            return $('<div class="expanded-bus-stop" />').addClass(data.group && data.group.root && 'root')
+            return $('<div class="expanded-bus-stop" />').addClass(data.group && data.group.positionIndex === 0 && 'root')
                        .append($('<div class="images field" />').html(busStopImages))
                        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
                        .append($('<div class="bus-stop-name field"/>').text(name))
@@ -35,10 +35,7 @@
         };
 
         var createDefaultState = function() {
-            var busImages = $('<div class="bus-basic-marker" />');
-            if (data.group) {
-              busImages.addClass(data.group.root && 'root');
-            }
+            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.positionIndex === 0 && 'root');
             busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
             $(box.div).html(busImages);
             setPositionByIndex();
@@ -82,8 +79,7 @@
           var fetchedPositionIndex = data.group.positionIndex;
           var fetchedGroupId = data.group.id;
           data.group = {
-            positionIndex : 0,
-            root : true
+            positionIndex : 0
           };
           eventbus.trigger('asset:fetched-from-group', {id : fetchedGroupId, positionIndex : fetchedPositionIndex});
         };
@@ -95,7 +91,6 @@
             if (data.group && data.group.size > 0) {
               pullFetchedAssetFromStack();
             }
-            asset.group = {root : true};
             renderNewState(asset);
             selected = true;
           } else {

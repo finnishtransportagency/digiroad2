@@ -122,7 +122,6 @@ window.AssetLayer = function(map, roadLayer) {
                 id : groupId,
                 lon : centroidLonLat.lon,
                 lat : centroidLonLat.lat,
-                root : (0 === i),
                 positionIndex :i++,
                 size : assetGroup.length
               };
