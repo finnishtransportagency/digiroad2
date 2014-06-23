@@ -81,10 +81,10 @@
           setPositionByIndex();
         };
 
-        var deselectState = function() {
+        var deselect = function() {
             if (selected) {
                 renderDefaultState();
-                selected  = false;
+                selected = false;
             }
         };
 
@@ -97,7 +97,7 @@
           eventbus.trigger('asset:fetched-from-group', {id : fetchedGroupId, positionIndex : fetchedPositionIndex});
         };
 
-        eventbus.on('asset:closed tool:changed asset:placed', deselectState);
+        eventbus.on('asset:closed tool:changed asset:placed', deselect);
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
           if (asset.id === data.id) {
@@ -105,7 +105,7 @@
             renderNewState(asset);
             selected = true;
           } else {
-            deselectState();
+            deselect();
           }
         });
 
