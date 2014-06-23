@@ -28,6 +28,10 @@
                 right: lonlat.lon,
                 top: lonlat.lat
             };
+            if (data.group.positionIndex > 0) {
+                pullFetchedAssetFromStack();
+                renderNewState(data);
+            }
         };
 
         var getSelectedContent = function(asset, imageIds){
@@ -114,13 +118,6 @@
         });
 
         eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
-
-        eventbus.on('asset:moved', function(e) {
-          if (selected && data.group.positionIndex > 0) {
-              pullFetchedAssetFromStack();
-              renderNewState(data);
-          }
-        });
 
         return {
             createMarker: createMarker,
