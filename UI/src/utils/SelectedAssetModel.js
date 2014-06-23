@@ -91,6 +91,7 @@
         });
         eventbus.on('asset:created', function(asset) {
            currentAsset.id = asset.id;
+           open(asset);
         });
 
         var open = function(asset) {
