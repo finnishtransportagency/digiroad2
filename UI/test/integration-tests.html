@@ -1,0 +1,63 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="../../bower_components/pikaday/css/pikaday.css">
+    <link rel="stylesheet" type="text/css" href="../css/digiroad2.css?rel=bc259fef7e">
+    <link rel="stylesheet" type="text/css" href="../../bower_components/oskari.org/applications/paikkatietoikkuna.fi/full-map/css/icons.css">
+    <script type="text/javascript" src="../../bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="../../bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+    <script type="text/javascript" src="../../bower_components/momentjs/min/moment.min.js"></script>
+    <script type="text/javascript" src="../../bower_components/lodash/dist/lodash.min.js"></script>
+    <script type="text/javascript" src="../../bower_components/backbone/backbone.js"></script>
+    <script type="text/javascript" src="../../bower_components/pikaday/pikaday.js"></script>
+    <script type="text/javascript" src="../src/utils/eventbus.js"></script>
+    <script type="text/javascript" src="../src/utils/geometry-calculations.js"></script>
+    <script type="text/javascript" src="../src/utils/session.js"></script>
+    <script type="text/javascript" src="../src/utils/date-utils.js"></script>
+    <script type="text/javascript" src="../src/utils/backend-utils.js"></script>
+    <script type="text/javascript" src="../src/utils/zoomLevels.js"></script>
+    <script type="text/javascript" src="../src/utils/asset-utils.js"></script>
+
+    <title>Digiroad 2 Integration Tests</title>
+</head>
+<body>
+<header id="header">
+  <span class="notification">
+  </span>
+    <a href="../manual/index.html" target="_blank" class="linkToManual">K&auml;ytt&ouml;ohje</a>
+</header>
+<div class="container">
+    <div id="contentMap">
+        <div id="mapdiv"></div>
+        <div class="crossHair crossHairVertical"></div>
+        <div class="crossHair crossHairHorizontal"></div>
+    </div>
+    <nav id="map-tools"></nav>
+    <div id="feature-attributes"></div>
+</div>
+<div id="mocha"></div>
+<script type="text/javascript" src="../src/map/MassTransitMarker.js"></script>
+<script type="text/javascript" src="../src/map/MassTransitStop.js"></script>
+<script type="text/javascript" src="../../bower_components/oskari.org/bundles/bundle.js"></script>
+<script type="text/javascript" src="../../bower_components/oskari.org/packages/openlayers/startup.js"></script>
+<script type="text/javascript" src="../src/application.js"></script>
+<script type="text/javascript" src="../src/actionpanel/ActionPanelBoxes.js"></script>
+<script type="text/javascript" src="../src/actionpanel/ActionPanel.js"></script>
+<script type="text/javascript" src="../src/utils/SelectedAssetModel.js"></script>
+<script type="text/javascript" src="../src/modalconfirm/Confirm.js"></script>
+<script type="text/javascript" src="../src/movebycoordinates/CoordinateSelector.js"></script>
+<script type="text/javascript" src="../src/utils/AssetForm.js"></script>
+<script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
+<script type="text/javascript">
+    $.getScript('../test_data/RoadLinkTestData.js', function() {
+        Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()));
+    });
+</script>
+<script src="../../bower_components/mocha/mocha.js"></script>
+<script type="text/javascript">
+    mocha.setup({ui: 'bdd', reporter: 'html'});
+    mocha.checkLeaks();
+    mocha.run();
+</script>
+</body>
+</html>
