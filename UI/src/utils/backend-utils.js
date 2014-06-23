@@ -100,11 +100,11 @@
         };
 
         backend.withRoadLinkData = function(roadLinkData) {
-            var ret = {};
-            initialize(ret);
-            ret.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', roadLinkData); };
-            return ret;
+            this.getRoadLinks = function() { eventbus.trigger('roadLinks:fetched', roadLinkData); };
+            return this;
         };
+
+        return backend;
     }
 
     initialize(backend);
