@@ -11,7 +11,7 @@
 
         var createMarker = function() {
             $(box.div).css("overflow", "visible !important");
-            createDefaultState();
+            renderDefaultState();
             return box;
         };
 
@@ -46,12 +46,6 @@
                        .append($('<div class="bus-stop-direction field"/>').text(direction));
         };
 
-        var createDefaultState = function() {
-            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.positionIndex === 0 && 'root');
-            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
-            $(box.div).html(busImages);
-            setPositionByIndex();
-        };
         var padding = -25;
         var setPositionByIndex = function() {
           var positionIndex = (data.group && data.group.positionIndex) ? padding*data.group.positionIndex : 0;
@@ -74,6 +68,13 @@
             }
         };
 
+        var renderDefaultState = function() {
+            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.positionIndex === 0 && 'root');
+            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
+            $(box.div).html(busImages);
+            setPositionByIndex();
+        };
+
         var renderNewState = function(asset) {
           box.bounds = getBounds(asset.lon, asset.lat);
           $(box.div).html(getSelectedContent(asset, asset.imageIds));
@@ -82,7 +83,7 @@
 
         var deselectState = function() {
             if (selected) {
-                createDefaultState();
+                renderDefaultState();
                 selected  = false;
             }
         };
@@ -112,7 +113,7 @@
           if (data.group && data.group.id === groupInfo.id) {
             if (data.group.positionIndex > groupInfo.positionIndex) {
               data.group.positionIndex--;
-              createDefaultState();
+              renderDefaultState();
             }
           }
         });
