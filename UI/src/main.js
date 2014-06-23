@@ -14,6 +14,7 @@ $(function() {
     var queryString = window.location.search.substring(1);
     var parameters = parseQueryParameters(queryString);
     var fakeMode = parameters.withFakeData === 'true';
+    window.groupBusStops = parameters.groupBusStops === 'true';
 
     if (fakeMode) {
         $.getScript('test_data/TestData.js', function() {
