@@ -1,13 +1,12 @@
 (function(root) {
     root.MassTransitMarker = function(data) {
 
-        var GROUP_ASSET_PADDING = -25;
         var EMPTY_IMAGE_TYPE = '99_';
         var getBounds = function(lon, lat) {
             return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
         };
 
-        var bounds = getBounds(data.group.lon, data.group.lat);
+        var bounds = getBounds(data.lon, data.lat);
         var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
         var selected = false; // keeping track of the selected state while assetlayer refactoring is ongoing TODO: move to selected model
 
@@ -28,7 +27,7 @@
             var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
             var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
-            return $('<div class="expanded-bus-stop" />').addClass(data.group.groupIndex === 0 && 'root')
+            return $('<div class="expanded-bus-stop" />')
                        .append($('<div class="images field" />').html(busStopImages))
                        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
                        .append($('<div class="bus-stop-name field"/>').text(name))
@@ -36,15 +35,10 @@
         };
 
         var createDefaultState = function() {
-            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group.groupIndex === 0 && 'root');
+            var busImages = $('<div class="bus-basic-marker" />');
             busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
             $(box.div).html(busImages);
-            setYPositionForAssetOnGroup();
-        };
 
-        var setYPositionForAssetOnGroup = function() {
-          var yPositionInGroup = (data.group.groupIndex) ? GROUP_ASSET_PADDING * data.group.groupIndex : 0;
-          $(box.div).css("-webkit-transform", "translate(0px," + yPositionInGroup + "px)");
         };
 
         var mapBusStopImageIdsToImages =  function (imageIds) {
@@ -66,44 +60,25 @@
         var renderNewState = function(asset) {
             box.bounds = getBounds(asset.lon, asset.lat);
             $(box.div).html(getSelectedContent(asset, asset.imageIds));
-            setYPositionForAssetOnGroup();
         };
 
-        var deselectState = function() {
+        var unSelectState = function() {
             if (selected) {
                 createDefaultState();
                 selected  = false;
             }
         };
 
-        var removeAssetFromStack = function() {
-          eventbus.trigger('asset:removed-from-group', data);
-          data.group = {
-            groupIndex : 0
-          };
-        };
-
-        eventbus.on('asset:closed tool:changed asset:placed', deselectState);
+        eventbus.on('asset:closed tool:changed asset:placed', unSelectState);
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
-          if (asset.id === data.id) {
-            if (data.group.size > 0) {
-              removeAssetFromStack();
+            if (asset.id === data.id) {
+                data = asset; // TODO: use data model when it's ready
+                renderNewState(asset);
+                selected = true;
+            } else {
+                unSelectState();
             }
-            renderNewState(asset);
-            selected = true;
-          } else {
-            deselectState();
-          }
-        });
-
-        eventbus.on('asset:removed-from-group', function (asset) {
-          if (data.group.id === asset.group.id) {
-            if (data.group.groupIndex > asset.group.groupIndex) {
-              data.group.groupIndex--;
-              createDefaultState();
-            }
-          }
         });
 
         eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);

@@ -31,7 +31,7 @@ window.AssetLayer = function(map, roadLayer) {
 
     var mouseUpFunction;
 
-    var mouseUpHandler = function() {
+    var mouseUpHandler = function(asset) {
         clickTimestamp = null;
         map.events.unregister("mouseup", map, mouseUpFunction);
         assetIsMoving = false;
@@ -107,40 +107,24 @@ window.AssetLayer = function(map, roadLayer) {
         var marker = asset.massTransitStop.getMarker();
         assetLayer.removeMarker(marker);
     };
-    var groupId = 0;
+
     var renderAssets = function(assetDatas) {
         assetLayer.setVisibility(true);
-        _.each(assetDatas, function(assetGroup) {
-            groupId++;
-            var i = 0;
-            if (!_.isArray(assetGroup)) {
-              assetGroup = [assetGroup];
+        _.each(assetDatas, function(asset) {
+            var isAssetSelectedAndDirty = function(asset) {
+              return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
+            };
+            if (isAssetSelectedAndDirty(asset)) {
+              return;
             }
-            var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
-            _.each(assetGroup, function(asset) {
-              asset.group = {
-                id : groupId,
-                lon : centroidLonLat.lon,
-                lat : centroidLonLat.lat,
-                groupIndex :i++,
-                size : assetGroup.length
-              };
-
-              var isAssetSelectedAndDirty = function(asset) {
-                return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
-              };
-              if (isAssetSelectedAndDirty(asset)) {
-                return;
-              }
-              assets = assets || {};
-              if (!assets[asset.id]) {
-                assets[asset.id] = insertAsset(asset);
-              }
-              addAssetToLayers(assets[asset.id]);
-              if (selectedAsset && selectedAsset.data.id == asset.id) {
-                selectedAsset = assets[asset.id];
-              }
-            });
+            assets = assets || {};
+            if (!assets[asset.id]) {
+              assets[asset.id] = insertAsset(asset);
+            }
+            addAssetToLayers(assets[asset.id]);
+            if (selectedAsset && selectedAsset.data.id == asset.id) {
+              selectedAsset = assets[asset.id];
+            }
         });
     };
 
@@ -419,7 +403,7 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
 
   eventbus.on('layer:selected', closeAsset, this);
-    $('#mapdiv').on('mouseleave', function() {
+    $('#mapdiv').on('mouseleave', function(e) {
       if (assetIsMoving === true) {
         mouseUpHandler(selectedAsset);
       }

@@ -14,7 +14,7 @@
             var validityDirection = (data.validityDirection === 3) ? 1 : -1;
             var angle = getAngleFromBearing(data.bearing, validityDirection);
             return new OpenLayers.Feature.Vector(
-                new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),
+                new OpenLayers.Geometry.Point(data.lon, data.lat),
                 null,
                 {
                     externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
