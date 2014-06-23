@@ -63,9 +63,9 @@
         };
 
         var renderNewState = function(asset) {
-            box.bounds = getBounds(asset.lon, asset.lat);
-            $(box.div).html(getSelectedContent(asset, asset.imageIds));
-            setPositionByIndex();
+          box.bounds = getBounds(asset.lon, asset.lat);
+          $(box.div).html(getSelectedContent(asset, asset.imageIds));
+          setPositionByIndex();
         };
 
         var deselectState = function() {
@@ -88,9 +88,7 @@
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
           if (asset.id === data.id) {
-            if (data.group && data.group.size > 0) {
-              pullFetchedAssetFromStack();
-            }
+            asset.group = data.group;
             renderNewState(asset);
             selected = true;
           } else {
@@ -108,6 +106,13 @@
         });
 
         eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
+
+        eventbus.on('asset:moved', function(e) {
+          if (selected && data.group.positionIndex > 0) {
+              pullFetchedAssetFromStack();
+              renderNewState(data);
+          }
+        });
 
         return {
             createMarker: createMarker,
