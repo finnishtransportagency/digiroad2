@@ -1,6 +1,5 @@
 (function(root) {
     root.MassTransitMarker = function(data) {
-
         var EMPTY_IMAGE_TYPE = '99_';
         var getBounds = function(lon, lat) {
             return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
@@ -20,6 +19,15 @@
             $(box.div).css("overflow", "visible !important");
             renderNewState(data);
             return box;
+        };
+
+        var moveTo = function(lonlat) {
+            box.bounds =  {
+                bottom: lonlat.lat,
+                left: lonlat.lon,
+                right: lonlat.lon,
+                top: lonlat.lat
+            };
         };
 
         var getSelectedContent = function(asset, imageIds){
@@ -116,7 +124,8 @@
 
         return {
             createMarker: createMarker,
-            createNewMarker : createNewMarker
+            createNewMarker : createNewMarker,
+            moveTo: moveTo
         };
     };
 }(this));
