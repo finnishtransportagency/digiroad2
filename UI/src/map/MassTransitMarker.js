@@ -22,7 +22,7 @@
         };
 
         var moveTo = function(lonlat) {
-            box.bounds =  {
+            box.bounds = {
                 bottom: lonlat.lat,
                 left: lonlat.lon,
                 right: lonlat.lon,
