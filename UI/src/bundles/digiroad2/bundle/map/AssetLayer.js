@@ -298,13 +298,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     var moveMarker = function(lonlat) {
-        selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
-        selectedAsset.massTransitStop.getMarker().bounds =  {
-            bottom: lonlat.lat,
-            left: lonlat.lon,
-            right: lonlat.lon,
-            top: lonlat.lat
-        };
+        selectedAsset.massTransitStop.moveTo(lonlat);
         assetLayer.redraw();
     };
 

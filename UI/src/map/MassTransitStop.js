@@ -42,10 +42,21 @@
             return cachedDirectionArrow;
         };
 
+        var moveTo = function(lonlat) {
+            getDirectionArrow().move(lonlat);
+            getMarker().bounds =  {
+                bottom: lonlat.lat,
+                left: lonlat.lon,
+                right: lonlat.lon,
+                top: lonlat.lat
+            };
+        };
+
         return {
             getMarker: getMarker,
             createNewMarker : createNewMarker,
-            getDirectionArrow: getDirectionArrow
+            getDirectionArrow: getDirectionArrow,
+            moveTo: moveTo
         };
   };
 }(this));
