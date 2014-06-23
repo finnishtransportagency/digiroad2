@@ -29,7 +29,7 @@
                 top: lonlat.lat
             };
             if (data.group.positionIndex > 0) {
-                pullFetchedAssetFromStack();
+                detachAssetFromGroup();
                 renderNewState(data);
             }
         };
@@ -87,7 +87,7 @@
             }
         };
 
-        var pullFetchedAssetFromStack = function() {
+        var detachAssetFromGroup = function() {
           var fetchedPositionIndex = data.group.positionIndex;
           var fetchedGroupId = data.group.id;
           data.group = {
