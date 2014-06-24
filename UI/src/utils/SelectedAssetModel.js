@@ -45,7 +45,7 @@
 
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
-
+            assetHasBeenModified = true;
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
@@ -91,6 +91,7 @@
         });
         eventbus.on('asset:created', function(asset) {
            currentAsset.id = asset.id;
+           open(asset);
         });
 
         var open = function(asset) {

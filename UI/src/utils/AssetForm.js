@@ -21,14 +21,19 @@
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
-        var cancelBtn = $('<button />').addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+        var cancelBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
             $("#feature-attributes").empty();
             selectedAssetModel.cancel();
         });
 
-        var saveBtn = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
+        var saveBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('save btn btn-primary').text('Tallenna').click(function() {
             selectedAssetModel.save();
         });
+
+        eventbus.on('asset:moved assetPropertyValue:changed', function() {
+            saveBtn.prop('disabled', false);
+            cancelBtn.prop('disabled', false);
+        }, this);
 
         // TODO: cleaner html
         featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn).append(cancelBtn));
