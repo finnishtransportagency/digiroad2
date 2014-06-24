@@ -150,7 +150,7 @@
         var wrapper;
         var enumValues = _.find(choices, function(choice){
             return choice.publicId === property.publicId;
-        }).values;            
+        }).values;
 
         if (readOnly) {
             elementType = $('<p />').addClass('form-control-static');
