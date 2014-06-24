@@ -182,24 +182,30 @@
 
     var directionChoiceHandler = function(property){
         if (!readOnly) {
-            var
-                element,
-                wrapper;
-
-            element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
-                selectedAssetModel.switchDirection();
-                streetViewHandler.update();
-            });
-
-            if(property.values && property.values[0]) {
-                validityDirection = property.values[0].propertyValue;
-            }
-
-            wrapper = $('<div />').addClass('form-group');
-            wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
-
-            return wrapper;
+            return createDirectionChoiceWrapper(property).append(createDirectionChoiceElement(readOnly, property));
         }
+    };
+
+    var createDirectionChoiceWrapper = function(property) {
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
+        return wrapper;
+    };
+
+    var createDirectionChoiceElement = function(property) {
+        var element;
+        var wrapper;
+
+        element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+            selectedAssetModel.switchDirection();
+            streetViewHandler.update();
+        });
+
+        if(property.values && property.values[0]) {
+            validityDirection = property.values[0].propertyValue;
+        }
+
+        return element;
     };
 
     var dateHandler = function(property){
