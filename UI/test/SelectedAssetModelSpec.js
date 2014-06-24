@@ -106,6 +106,33 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
             });
         });
 
+        describe('when property value is updated', function() {
+            before(function() {
+                resetTest();
+                model.setProperty('vaikutussuunta', [{propertyValue: '3'}]);
+            });
+
+            it('returns all properties', function() {
+                var properties = model.getProperties();
+                assert.lengthOf(properties, 2);
+                assert.deepEqual(properties[0], {
+                    publicId: 'pysakin_tyyppi',
+                    propertyType: 'multiple_choice',
+                    values: [{
+                        propertyDisplayValue: 'Linja-autojen paikallisliikenne',
+                        propertyValue: '2'
+                    }, {
+                        propertyDisplayValue: 'Linja-autojen kaukoliikenne',
+                        propertyValue: '3' }
+                    ]
+                });
+                assert.deepEqual(properties[1], {
+                    publicId: 'vaikutussuunta',
+                    values: [{propertyValue: '3'}]
+                });
+            });
+        });
+
         function createAsset() {
             return {
                 assetTypeId: 10,

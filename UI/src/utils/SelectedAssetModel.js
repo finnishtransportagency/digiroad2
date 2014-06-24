@@ -43,13 +43,21 @@
             };
         };
 
+        var extractPublicIds = function(properties) {
+            return _.map(properties, function(property) { return property.publicId; });
+        };
+
+        var updatePropertyData = function(properties, propertyData) {
+            return _.reject(properties, function(property) { return property.publicId === propertyData.publicId; }).concat([propertyData]);
+        };
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
             assetHasBeenModified = true;
             eventbus.once('assetTypeProperties:fetched', function(properties) {
                 currentAsset.propertyData = properties;
                 currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
-                changedProps = currentAsset.payload.properties;
+                changedProps = extractPublicIds(currentAsset.payload.properties);
                 eventbus.trigger('asset:modified', currentAsset);
             });
             backend.getAssetTypeProperties(10);
@@ -123,12 +131,9 @@
         };
 
         var setProperty = function(publicId, values) {
-            changedProps = _.reject(changedProps, function(x) {
-                return x.publicId === publicId;
-            });
             var propertyData = {publicId: publicId, values: values};
-            changedProps.push(propertyData);
-            currentAsset.payload.properties = changedProps;
+            changedProps = _.union(changedProps, [publicId]);
+            currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
             assetHasBeenModified = true;
             eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData, id : currentAsset.id});
         };
