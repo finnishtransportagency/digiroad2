@@ -106,7 +106,7 @@
         return wrapper;
     };
 
-    var createTextElement =function(readOnly, property) {
+    var createTextElement = function(readOnly, property) {
         var element;
         var elementType;
 
@@ -135,11 +135,19 @@
     };
 
     var singleChoiceHandler = function(property, choices){
-        var 
-            element,
-            elementType,
-            wrapper;
+        return createSingleChoiceWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
+    };
 
+    var createSingleChoiceWrapper = function(property) {
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
+        return wrapper;
+    };
+
+    var createSingleChoiceElement = function(readOnly, property, choices) {
+        var element;
+        var elementType;
+        var wrapper;
         var enumValues = _.find(choices, function(choice){
             return choice.publicId === property.publicId;
         }).values;            
@@ -172,10 +180,7 @@
             }              
         }
 
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
-
-        return wrapper;
+        return element;
     };
 
     var directionChoiceHandler = function(property){
@@ -201,10 +206,19 @@
     };
 
     var dateHandler = function(property){
-        var 
-            element,
-            elementType,
-            wrapper;
+        return createDateWrapper(property).append(createDateElement(readOnly, property));
+    };
+
+    var createDateWrapper = function(property) {
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
+        return wrapper;
+    };
+
+    var createDateElement = function(readOnly, property) {
+        var element;
+        var elementType;
+        var wrapper;
 
         if (readOnly) {
             elementType = $('<p />').addClass('form-control-static');
@@ -231,17 +245,23 @@
             }            
         }
 
-        wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
+        return element;
+    };
 
+
+    var multiChoiceHandler = function(property, choices){
+        return createMultiChoiceWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
+    };
+
+    var createMultiChoiceWrapper = function(property) {
+        wrapper = $('<div />').addClass('form-group');
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
         return wrapper;
     };
 
-    var multiChoiceHandler = function(property, choices){
-        var 
-            element,
-            wrapper;
-
+    var createMultiChoiceElement = function(readOnly, property, choices) {
+        var element;
+        var wrapper;
         var currentValue = _.cloneDeep(property);
         var enumValues = _.chain(choices)
             .filter(function(choice){
@@ -297,12 +317,9 @@
             }
 
             return element;
-        }, element);
+        }, element);        
 
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
-
-        return wrapper;
+        return element;
     };
 
     var getAssetForm = function() {
