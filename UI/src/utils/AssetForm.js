@@ -163,7 +163,7 @@
             }
         } else {
             elementType = $('<select />').addClass('form-control');
-            element = elementType.addClass('form-control').change(function(x){
+            element = elementType.change(function(x){
                 selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
             });
 
