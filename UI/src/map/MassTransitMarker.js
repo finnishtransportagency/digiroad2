@@ -50,7 +50,8 @@
 
         var setYPositionForAssetOnGroup = function() {
           var yPositionInGroup = (data.group.groupIndex) ? GROUP_ASSET_PADDING * data.group.groupIndex : 0;
-          $(box.div).css("-webkit-transform", "translate(0px," + yPositionInGroup + "px)");
+          $(box.div).css("-webkit-transform", "translate(0px," + yPositionInGroup + "px)")
+                    .css("transform", "translate(0px," + yPositionInGroup + "px)");
         };
 
         var mapBusStopImageIdsToImages =  function (imageIds) {
