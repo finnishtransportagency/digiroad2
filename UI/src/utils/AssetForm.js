@@ -275,21 +275,19 @@
         element.addClass('choice-group');
 
         element = _.reduce(enumValues, function(element, value) {
-            var outer;
-
             value.checked = _.any(currentValue.values, function (prop) {
                 return prop.propertyValue === value.propertyValue;
             });
 
             if (readOnly) {
                 if (value.checked) {
-                    outer = $('<li />');
-                    outer.text(value.propertyDisplayValue);
+                    var item = $('<li />');
+                    item.text(value.propertyDisplayValue);
 
-                    element.append(outer);
+                    element.append(item);
                 }
             } else {
-                outer = $('<div class="checkbox" />');
+                var container = $('<div class="checkbox" />');
                 var input = $('<input type="checkbox" />').change(function (evt) {
                     value.checked = evt.currentTarget.checked;
                     var values = _.chain(enumValues)
@@ -307,7 +305,7 @@
                 input.prop('checked', value.checked);
 
                 var label = $('<label />').text(value.propertyDisplayValue);
-                element.append(outer.append(label.append(input)));
+                element.append(container.append(label.append(input)));
             }
 
             return element;
