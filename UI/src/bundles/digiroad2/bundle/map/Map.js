@@ -64,7 +64,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
             eventbus.on('road-type:selected', function(selected){
                 if (selected) {
                     var roadLinkTypeStyleLookup = {
-                        PrivateRoad: { strokeColor: "#00ccdd" },
+                        PrivateRoad: { strokeColor: "#0011bb" },
                         Street: { strokeColor: "#11bb00" },
                         Road: { strokeColor: "#ff0000" }
                     };
