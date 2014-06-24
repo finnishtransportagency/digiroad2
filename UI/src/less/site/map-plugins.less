@@ -59,6 +59,71 @@
 	}	
 }
 
+//** Background layer select
+//** Overrides Oskari styles
+
+#mapdiv {
+	.mapplugins {
+		.backgroundLayerSelectionPlugin {
+			.bg {
+				height: @line-height-base * 2;
+				border-top: 1px solid @gray-light-2;
+				background-color: @gray-lighter;
+				.opacity(1);
+			}
+
+			.content {
+				margin: 0;
+				padding: @line-height-modifier * 2;
+				text-align: left;
+
+				ul {
+					height: auto;
+
+					li {
+						.btn;
+						.btn-sm;
+						.btn-tertiary;
+						position: relative;
+						width: auto;
+						margin: 0 0 0 -1px;
+						border-radius: 0;
+
+						&.selected {
+							.btn-secondary;
+							z-index: 2;
+							color: #fff;
+						}
+
+						&:first-child {
+							border-top-left-radius: @border-radius-base;
+							border-bottom-left-radius: @border-radius-base;
+						}
+
+						&:last-child {
+							border-top-right-radius: @border-radius-base;
+							border-bottom-right-radius: @border-radius-base;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+//** Scale
+
+#mapdiv {
+	.mapplugins {
+		.scalebar {
+			display: block;
+			float: none;
+			position: absolute;
+			bottom: @line-height-base * 2.5;
+		}
+	}
+}
+
 //** Coordinates
 
 .mapplugin.coordinates {
