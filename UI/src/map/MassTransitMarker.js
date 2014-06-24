@@ -13,7 +13,7 @@
 
         var createMarker = function() {
             $(box.div).css("overflow", "visible !important");
-            createDefaultState();
+            renderDefaultState();
             return box;
         };
 
@@ -21,6 +21,19 @@
             $(box.div).css("overflow", "visible !important");
             renderNewState(data);
             return box;
+        };
+
+        var moveTo = function(lonlat) {
+            box.bounds = {
+                bottom: lonlat.lat,
+                left: lonlat.lon,
+                right: lonlat.lon,
+                top: lonlat.lat
+            };
+            if (data.group.groupIndex > 0) {
+                detachAssetFromGroup();
+                renderNewState(data);
+            }
         };
 
         var getSelectedContent = function(asset, imageIds){
@@ -33,13 +46,6 @@
                        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
                        .append($('<div class="bus-stop-name field"/>').text(name))
                        .append($('<div class="bus-stop-direction field"/>').text(direction));
-        };
-
-        var createDefaultState = function() {
-            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group.groupIndex === 0 && 'root');
-            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
-            $(box.div).html(busImages);
-            setYPositionForAssetOnGroup();
         };
 
         var setYPositionForAssetOnGroup = function() {
@@ -63,37 +69,44 @@
             }
         };
 
+        var renderDefaultState = function() {
+            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.groupIndex === 0 && 'root');
+            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
+            $(box.div).html(busImages);
+            setYPositionForAssetOnGroup();
+        };        
+        
         var renderNewState = function(asset) {
             box.bounds = getBounds(asset.lon, asset.lat);
             $(box.div).html(getSelectedContent(asset, asset.imageIds));
             setYPositionForAssetOnGroup();
         };
 
-        var deselectState = function() {
+        var deselect = function() {
             if (selected) {
-                createDefaultState();
-                selected  = false;
+                renderDefaultState();
+                selected = false;
             }
         };
 
-        var removeAssetFromStack = function() {
+        var detachAssetFromGroup = function() {
           eventbus.trigger('asset:removed-from-group', data);
           data.group = {
             groupIndex : 0
           };
         };
 
-        eventbus.on('asset:closed tool:changed asset:placed', deselectState);
+        eventbus.on('asset:closed tool:changed asset:placed', deselect);
 
         eventbus.on('asset:fetched asset:selected', function (asset) {
           if (asset.id === data.id) {
             if (data.group.size > 0) {
-              removeAssetFromStack();
+                detachAssetFromGroup();
             }
             renderNewState(asset);
             selected = true;
           } else {
-            deselectState();
+            deselect();
           }
         });
 
@@ -101,7 +114,7 @@
           if (data.group.id === asset.group.id) {
             if (data.group.groupIndex > asset.group.groupIndex) {
               data.group.groupIndex--;
-              createDefaultState();
+              renderDefaultState();
             }
           }
         });
@@ -110,7 +123,8 @@
 
         return {
             createMarker: createMarker,
-            createNewMarker : createNewMarker
+            createNewMarker : createNewMarker,
+            moveTo: moveTo
         };
     };
 }(this));

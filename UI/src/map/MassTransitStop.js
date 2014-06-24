@@ -2,6 +2,7 @@
     root.MassTransitStop = function(data) {
         var cachedMarker = null;
         var cachedDirectionArrow = null;
+        var cachedMassTransitMarker = null;
 
         var createDirectionArrow = function() {
             var getAngleFromBearing = function(bearing, validityDirection) {
@@ -25,14 +26,20 @@
 
         var getMarker = function(shouldCreate) {
             if (shouldCreate || !cachedMarker) {
-                cachedMarker = new MassTransitMarker(data).createMarker();
+                cachedMassTransitMarker = new MassTransitMarker(data);
+                cachedMarker = cachedMassTransitMarker.createMarker();
             }
             return cachedMarker;
         };
 
         var createNewMarker = function() {
-            cachedMarker = new MassTransitMarker(data).createNewMarker();
+            cachedMassTransitMarker = new MassTransitMarker(data);
+            cachedMarker = cachedMassTransitMarker.createNewMarker();
             return cachedMarker;
+        };
+
+        var getMassTransitMarker = function() {
+            return cachedMassTransitMarker;
         };
 
         var getDirectionArrow = function(shouldCreate) {
@@ -42,10 +49,16 @@
             return cachedDirectionArrow;
         };
 
+        var moveTo = function(lonlat) {
+            getDirectionArrow().move(lonlat);
+            getMassTransitMarker().moveTo(lonlat);
+        };
+
         return {
             getMarker: getMarker,
             createNewMarker : createNewMarker,
-            getDirectionArrow: getDirectionArrow
+            getDirectionArrow: getDirectionArrow,
+            moveTo: moveTo
         };
   };
 }(this));
