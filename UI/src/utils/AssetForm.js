@@ -101,7 +101,7 @@
     };
 
     var createTextWrapper = function(property) {
-        var wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
+        var wrapper = $('<div />').addClass('form-group');
         wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
         return wrapper;
     };
