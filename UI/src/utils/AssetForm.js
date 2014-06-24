@@ -154,10 +154,11 @@
                 selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
             });
 
-            _.forEach(enumValues, function(x) {
-                var option = $('<option>').text(x.propertyDisplayValue).attr('value', x.propertyValue);
+            element = _.reduce(enumValues, function(element, value) {
+                var option = $('<option>').text(value.propertyDisplayValue).attr('value', value.propertyValue);
                 element.append(option);
-            });
+                return element;
+            }, element);
 
             if(property.values && property.values[0]) {
                 element.val(property.values[0].propertyValue);
@@ -254,24 +255,24 @@
 
         element.addClass('choice-group');
 
-        _.forEach(enumValues, function (x) {
+        element = _.reduce(enumValues, function(element, value) {
             var outer;
 
-            x.checked = _.any(currentValue.values, function (prop) {
-                return prop.propertyValue === x.propertyValue;
+            value.checked = _.any(currentValue.values, function (prop) {
+                return prop.propertyValue === value.propertyValue;
             });
 
             if (readOnly) {
-                if (x.checked) {
+                if (value.checked) {
                     outer = $('<li />');
-                    outer.text(x.propertyDisplayValue);
+                    outer.text(value.propertyDisplayValue);
 
                     element.append(outer);
                 }
             } else {
                 outer = $('<div class="checkbox" />');
                 var input = $('<input type="checkbox" />').change(function (evt) {
-                    x.checked = evt.currentTarget.checked;
+                    value.checked = evt.currentTarget.checked;
                     var values = _.chain(enumValues)
                         .filter(function (value) {
                             return value.checked;
@@ -284,12 +285,14 @@
                     selectedAssetModel.setProperty(property.publicId, values);
                 });
 
-                input.prop('checked', x.checked);
+                input.prop('checked', value.checked);
 
-                var label = $('<label />').text(x.propertyDisplayValue);
+                var label = $('<label />').text(value.propertyDisplayValue);
                 element.append(outer.append(label.append(input)));
-            }         
-        });            
+            }
+
+            return element;
+        }, element);
 
         wrapper = $('<div />').addClass('form-group');
         wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
