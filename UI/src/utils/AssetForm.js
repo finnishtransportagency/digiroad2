@@ -146,15 +146,13 @@
 
     var createSingleChoiceElement = function(readOnly, property, choices) {
         var element;
-        var elementType;
         var wrapper;
         var enumValues = _.find(choices, function(choice){
             return choice.publicId === property.publicId;
         }).values;
 
         if (readOnly) {
-            elementType = $('<p />').addClass('form-control-static');
-            element = elementType;
+            element = $('<p />').addClass('form-control-static');
 
             if (property.values && property.values[0]) {
                 element.text(property.values[0].propertyDisplayValue);
@@ -162,8 +160,7 @@
                 element.html('Ei tiedossa');
             }
         } else {
-            elementType = $('<select />').addClass('form-control');
-            element = elementType.change(function(x){
+            element = $('<select />').addClass('form-control').change(function(x){
                 selectedAssetModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value }]);
             });
 
@@ -217,12 +214,10 @@
 
     var createDateElement = function(readOnly, property) {
         var element;
-        var elementType;
         var wrapper;
 
         if (readOnly) {
-            elementType = $('<p />').addClass('form-control-static');
-            element = elementType;
+            element = $('<p />').addClass('form-control-static');
 
             if (property.values[0]) {
                 element.text(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
@@ -230,8 +225,7 @@
                 element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
             }
         } else {
-            elementType = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
-            element = elementType.on('keyup datechange', _.debounce(function(target){
+            element = $('<input type="text"/>').addClass('form-control').attr('id', property.publicId).on('keyup datechange', _.debounce(function(target){
                 // tab press
                 if(target.keyCode === 9){
                     return;
