@@ -113,9 +113,6 @@ window.AssetLayer = function(map, roadLayer) {
         _.each(assetDatas, function(assetGroup) {
             groupId++;
             var i = 0;
-            if (!_.isArray(assetGroup)) {
-              assetGroup = [assetGroup];
-            }
             var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
             _.each(assetGroup, function(asset) {
               asset.group = {
@@ -123,7 +120,7 @@ window.AssetLayer = function(map, roadLayer) {
                 lon : centroidLonLat.lon,
                 lat : centroidLonLat.lat,
                 groupIndex :i++,
-                size : assetGroup.length
+                assetGroup : assetGroup
               };
 
               var isAssetSelectedAndDirty = function(asset) {
