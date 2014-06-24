@@ -97,10 +97,18 @@
     };
 
     var textHandler = function(property){
-        var 
-            element,
-            elementType,
-            wrapper;
+        return createTextWrapper(property).append(createTextElement(readOnly, property));
+    };
+
+    var createTextWrapper = function(property) {
+        var wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
+        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
+        return wrapper;
+    };
+
+    var createTextElement =function(readOnly, property) {
+        var element;
+        var elementType;
 
         if (readOnly) {
             elementType = $('<p />').addClass('form-control-static');
@@ -120,13 +128,10 @@
 
             if(property.values[0]) {
                 element.val(property.values[0].propertyDisplayValue);
-            }            
+            }
         }
 
-        wrapper = $('<div />').addClass('form-group').attr('data-required', property.required);
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName)).append(element);
-
-        return wrapper;
+        return element;
     };
 
     var singleChoiceHandler = function(property, choices){
