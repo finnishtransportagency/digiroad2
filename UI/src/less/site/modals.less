@@ -1,0 +1,89 @@
+//== Modals
+
+//** Asset change confirmation modal
+
+.confirm-modal {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border-top-left-radius: 2px;
+  z-index: 3;
+
+  .confirm-modal-dialog {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    background-color: #4B4A4A;
+    width: 230px;
+    font: arial;
+    font-size: 12px;
+    color: white;
+    margin-left: -115px;
+    margin-top: -60px;
+
+
+    .confirm-modal-dialog-info {
+      border: solid #000000 1px;
+      text-align: center;
+      padding: 15px;
+      line-height:170%;
+      border-top-left-radius: 2px;
+    }
+
+    .confirm-modal-buttons {
+      background-color: white;
+      padding-top: 17px;
+      padding-bottom: 17px;
+      border-bottom-left-radius: 2px;
+      border-bottom-right-radius: 2px;
+      text-align: center;
+      margin: 0 1px;
+
+      .confirm-modal-button {
+        background-color: #000;
+        background-image: -moz-linear-gradient( 90deg, #838383 0%, #B3B1B1 100%);
+        background-image: -webkit-linear-gradient( 90deg, #838383 0%, #B3B1B1 100%);
+        background-image: -ms-linear-gradient( 90deg, #838383 0%, #B3B1B1 100%);
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 7px;
+        padding-bottom: 7px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+//** Asset visibility info modal on zoom changes
+
+.digiroad2 {
+    .divmanazerpopup {
+        border: none;
+        border-radius: @border-radius-base;
+        background-color: @gray-lighter;
+        box-shadow: 0px 1px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+
+        .popupHeader {
+            margin: 0;
+            padding: @line-height-modifier * 2;
+            border-radius: @border-radius-base;
+            font-size: @font-size-base;
+            font-weight: normal;
+            line-height: @line-height-base;
+            color: #fff;
+            background-color: @gray-darker;
+        }
+
+        .content {
+            margin: 0;
+        }
+
+        .actions {
+            margin: 0;
+        }
+    }
+}
