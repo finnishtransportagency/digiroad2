@@ -108,6 +108,13 @@
       return this;
     };
 
+    backend.withUserRolesData = function(userRolesData) {
+      this.getUserRoles = function () {
+        eventbus.trigger('roles:fetched', userRolesData);
+      };
+      return this;
+    };
+
     return backend;
   }
 

@@ -49,8 +49,18 @@
 <script type="text/javascript" src="../src/utils/AssetForm.js"></script>
 <script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript">
-    $.getScript('../test_data/RoadLinkTestData.js', function() {
-        Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()));
+    var getScripts = function(urls, callback) {
+        if (_.isEmpty(urls)) {
+            callback();
+        } else {
+            $.getScript(_.first(urls), function () {
+                getScripts(_.rest(urls), callback);
+            })
+        }
+    };
+
+    getScripts(['../test_data/RoadLinkTestData.js', '../test_data/UserRolesTestData.js'], function() {
+        Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()).withUserRolesData(UserRolesTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>
