@@ -72,7 +72,7 @@ object MapConfigJson {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar",
             "config" : {
               "location" : {
-                "classes" : "right top"
+                "classes" : "left bottom"
               }
             }
           }, {
@@ -83,7 +83,10 @@ object MapConfigJson {
                 "24",
                 "base_35"
               ],
-              "showAsDropdown": false
+              "showAsDropdown": false,
+              "location" : {
+                "classes" : "right bottom"
+              }
             }
           }],
           "layers": [{

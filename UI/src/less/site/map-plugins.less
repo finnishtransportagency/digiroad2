@@ -26,7 +26,7 @@
 
 				&:before {
 					line-height: 30px;
-					color: @gray-dark;
+					color: @gray-darker-2;
 				}
 
 				&:hover {
@@ -37,7 +37,7 @@
 					background-color: @gray-light-2;
 
 					&:before {
-						color: @gray-darker;
+						color: @gray-darkest;
 					}
 				}
 			}
@@ -65,17 +65,22 @@
 #mapdiv {
 	.mapplugins {
 		.backgroundLayerSelectionPlugin {
+			width: auto;
+			height: auto;
+			margin: 0;
+
 			.bg {
-				height: @line-height-base * 2;
-				border-top: 1px solid @gray-light-2;
-				background-color: @gray-lighter;
-				.opacity(1);
+				display: none;
 			}
 
 			.content {
+				position: static;
+				left: auto;
+				bottom: auto;
+				width: auto;
 				margin: 0;
-				padding: @line-height-modifier * 2;
-				text-align: left;
+				padding: 0;
+				text-align: right;
 
 				ul {
 					height: auto;
@@ -120,7 +125,16 @@
 			display: block;
 			float: none;
 			position: absolute;
-			bottom: @line-height-base * 2.5;
+			left: @line-height-base * 2.5;
+			bottom: @line-height-modifier * 2;
+			font-size: 9px;
+			line-height: @line-height-modifier * 3;
+			color: @gray-darker-2;
+
+			.olControlScaleLineTop,
+			.olControlScaleLineBottom {
+				border-color: @gray-darker-2;
+			}
 		}
 	}
 }
