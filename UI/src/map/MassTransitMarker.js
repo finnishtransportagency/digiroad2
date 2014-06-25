@@ -60,12 +60,17 @@
             });
         };
 
+        var createImageIds = function(properties) {
+            var assetType = _.find(properties, function(property) { return property.publicId === "pysakin_tyyppi" });
+            return _.map(assetType.values, function(value) {
+                return value.propertyValue + '_'+ new Date();
+            });
+        };
+
         var handleAssetPropertyValueChanged = function(simpleAsset) {
             if (simpleAsset.id === data.id && simpleAsset.propertyData.publicId === "pysakin_tyyppi") {
-                var imageIds = _.map(simpleAsset.propertyData.values, function(propertyValue) {
-                   return propertyValue.propertyValue + '_'+ new Date();
-                });
                 var properties = selectedAssetModel.getProperties();
+                var imageIds = createImageIds(properties);
                 var assetWithProperties = _.merge({}, data, {propertyData: properties});
                 $(box.div).html(getSelectedContent(assetWithProperties, imageIds));
             }
