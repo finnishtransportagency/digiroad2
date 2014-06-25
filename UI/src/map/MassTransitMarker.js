@@ -68,7 +68,7 @@
         };
 
         var handleAssetPropertyValueChanged = function(simpleAsset) {
-            if (simpleAsset.id === data.id && simpleAsset.propertyData.publicId === "pysakin_tyyppi") {
+            if (simpleAsset.id === data.id && _.contains(['pysakin_tyyppi', 'nimi_suomeksi'], simpleAsset.propertyData.publicId)) {
                 var properties = selectedAssetModel.getProperties();
                 var imageIds = createImageIds(properties);
                 var assetWithProperties = _.merge({}, data, {propertyData: properties});
