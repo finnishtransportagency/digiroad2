@@ -51,6 +51,10 @@
             return _.reject(properties, function(property) { return property.publicId === propertyData.publicId; }).concat([propertyData]);
         };
 
+        var pickProperties = function(properties, publicIds) {
+            return _.filter(properties, function(property) { return _.contains(publicIds, property.publicId); });
+        };
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
             assetHasBeenModified = true;
@@ -120,7 +124,13 @@
                 backend.createAsset(currentAsset.payload);
             } else {
                 currentAsset.payload.id = currentAsset.id;
-                backend.updateAsset(currentAsset.id, currentAsset.payload);
+                var payload = _.merge(
+                    {},
+                    _.pick(currentAsset.payload, function(value, key) { return key != 'properties'; }),
+                    {
+                        properties: pickProperties(currentAsset.payload.properties, changedProps)
+                    });
+                backend.updateAsset(currentAsset.id, payload);
             }
         };
 

@@ -131,6 +131,18 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
                     values: [{propertyValue: '3'}]
                 });
             });
+
+            describe('and asset is saved', function() {
+                before(function() { model.save(); });
+
+                it('sends only changed properties to backend', function() {
+                    assert.lengthOf(assetSentToBackend.data.properties, 1);
+                    assert.deepEqual(assetSentToBackend.data.properties[0], {
+                        publicId: 'vaikutussuunta',
+                        values: [{propertyValue: '3'}]
+                    });
+                });
+            });
         });
 
         function createAsset() {
