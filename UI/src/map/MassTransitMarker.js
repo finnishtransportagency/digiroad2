@@ -78,12 +78,14 @@
             var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.groupIndex === 0 && 'root');
             busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
             $(box.div).html(busImages);
+            $(box.div).removeClass('selected-asset');
             setYPositionForAssetOnGroup();
         };        
         
         var renderNewState = function(assetWithProperties) {
             box.bounds = getBounds(assetWithProperties.lon, assetWithProperties.lat);
             $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds));
+            $(box.div).addClass('selected-asset');
             setYPositionForAssetOnGroup();
         };
 
