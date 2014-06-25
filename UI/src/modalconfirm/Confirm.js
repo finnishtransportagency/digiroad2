@@ -1,24 +1,26 @@
 window.Confirm = function() {
 
     var confirmDiv =
-        '<div class="confirm-modal">' +
-            '<div class="confirm-modal-dialog">' +
-                '<div class="confirm-modal-dialog-info">' +
+        '<div class="modal-overlay confirm-modal">' +
+            '<div class="modal-dialog">' +
+                '<div class="content">' +
                     'Olet muokannut tietolajia.' +
                     'Tallenna tai peru muutoksesi.' +
                 '</div>' +
-                '<div class="confirm-modal-buttons">' +
-                    '<span class="confirm-modal-button confirm-modal-button-close">Sulje</span>' +
+                '<div class="actions">' +
+                    '<button class="btn btn-secondary close">Sulje</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
 
     var renderConfirmDialog = function() {
         jQuery('.container').append(confirmDiv);
+        var modal = $('.modal-dialog');
+        modal.css('margin-top', (modal.outerHeight() / 2) * -1);
     };
 
     var bindEvents = function() {
-        jQuery('.confirm-modal-button-close').on('click', function() {
+        jQuery('.confirm-modal .close').on('click', function() {
             purge();
         });
     };
