@@ -65,7 +65,9 @@
                 var imageIds = _.map(simpleAsset.propertyData.values, function(propertyValue) {
                    return propertyValue.propertyValue + '_'+ new Date();
                 });
-                $(box.div).html(getSelectedContent(data, imageIds));
+                var properties = selectedAssetModel.getProperties();
+                var assetWithProperties = _.merge({}, data, {propertyData: properties});
+                $(box.div).html(getSelectedContent(assetWithProperties, imageIds));
             }
         };
 
@@ -76,9 +78,9 @@
             setYPositionForAssetOnGroup();
         };        
         
-        var renderNewState = function(asset) {
-            box.bounds = getBounds(asset.lon, asset.lat);
-            $(box.div).html(getSelectedContent(asset, asset.imageIds));
+        var renderNewState = function(assetWithProperties) {
+            box.bounds = getBounds(assetWithProperties.lon, assetWithProperties.lat);
+            $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds));
             setYPositionForAssetOnGroup();
         };
 
