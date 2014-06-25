@@ -61,7 +61,7 @@
         };
 
         var createImageIds = function(properties) {
-            var assetType = _.find(properties, function(property) { return property.publicId === "pysakin_tyyppi" });
+            var assetType = _.find(properties, function(property) { return property.publicId === "pysakin_tyyppi"; });
             return _.map(assetType.values, function(value) { return value.propertyValue + '_'; });
         };
 
