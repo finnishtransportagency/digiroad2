@@ -106,12 +106,12 @@
     }
   };
 
-    application.start = function(backend) {
-        if(backend) window.Backend = backend;
-        window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
-        downloadAppSetup(startApplication);
-        downloadConfig(startApplication);
-        downloadLocalizedStrings(startApplication);
-    };
+  application.start = function (backend) {
+    if (backend) window.Backend = backend;
+    window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
+    downloadAppSetup(startApplication);
+    downloadConfig(startApplication);
+    downloadLocalizedStrings(startApplication);
+  };
 
 }(window.Application = window.Application || {}));
