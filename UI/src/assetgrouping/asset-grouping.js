@@ -10,7 +10,11 @@
         while(_.isEmpty(items) === false) {
             item = _.first(items);
             var proximityStops = _.remove(items, findProximityStops);
-            result.push(proximityStops);
+            if (proximityStops.length === 1) {
+                result.push(proximityStops[0]);
+            } else {
+                result.push(proximityStops);
+            }
         }
         return result;
     };
