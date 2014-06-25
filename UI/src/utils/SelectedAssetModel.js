@@ -55,6 +55,15 @@
             return _.filter(properties, function(property) { return _.contains(publicIds, property.publicId); });
         };
 
+        var payloadWithProperties = function(payload, publicIds) {
+            return _.merge(
+                {},
+                _.pick(payload, function(value, key) { return key != 'properties'; }),
+                {
+                    properties: pickProperties(payload.properties, publicIds)
+                });
+        };
+
         eventbus.on('asset:placed', function(asset) {
             currentAsset = asset;
             assetHasBeenModified = true;
@@ -124,12 +133,7 @@
                 backend.createAsset(currentAsset.payload);
             } else {
                 currentAsset.payload.id = currentAsset.id;
-                var payload = _.merge(
-                    {},
-                    _.pick(currentAsset.payload, function(value, key) { return key != 'properties'; }),
-                    {
-                        properties: pickProperties(currentAsset.payload.properties, changedProps)
-                    });
+                var payload = payloadWithProperties(currentAsset.payload, changedProps);
                 backend.updateAsset(currentAsset.id, payload);
             }
         };
