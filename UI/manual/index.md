@@ -182,7 +182,7 @@ Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei vo
 
 Pys&auml;kit tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto-n&auml;kym&auml; (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
 
-Ominaisuustieto-n&auml;kym&auml;ss&auml; kaikki kent&auml;t ovat disabloituja eli niit&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu Google Street View uudelle v&auml;lilehdelle.
+Ominaisuustieto-n&auml;kym&auml;ss&auml; kaikki kent&auml;t ovat disabloituja eli niit&auml; ei voi muokata. Google Street View -kuvaa klikkaamalla avautuu Google Street View uudelle v&auml;lilehdelle. Pys&auml;kin valinnan saa pois klikkaamalla karttaa.
 
 ![Pys&auml;kin tietojen katselu](k9.jpg)
 
@@ -217,7 +217,7 @@ Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkau
 
 Muokkaustilassa ruudun oikeassa alareunassa olevat Tallenna ja Peruuta napit ovat disabloituja, kunnes pys&auml;kin tietoja on muokannut. Tehdyt muutokset (sek&auml; pys&auml;kin ominaisuustietojen ett&auml; sijainnin) tallentuvat painamalla "Tallenna"-painiketta (15). Muutosten tallentamisen j&auml;lkeen pys&auml;kille tallentuu tieto viimeisest&auml; muokkaajasta ja muokkaushetkest&auml;, ja tietojen muutoksesta lähtee muutossanoma Valluun. Pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy kohdassa "Muokattu viimeksi" sovellukseen kirjautuneen k&auml;ytt&auml;j&auml;n k&auml;ytt&auml;j&auml;tunnus ja muokkausajankohdan p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika. Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pys&auml;kki palautetaan muutoksia edelt&auml;neeseen tilaan. Sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). 
 
-Jos pys&auml;kin muutoksia ei peru tai tallenna ennen kuin siirtyy muokkaamaan muita pys&auml;kkej&auml; tai pois pys&auml;kkien muokkaustilasta, sovellus tulostaa muutos-dialogin. Muutos-dialogi kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa. 
+Jos pys&auml;kin muutoksia ei peru tai tallenna ennen kuin siirtyy muokkaamaan muita pys&auml;kkej&auml; tai pois pys&auml;kkien muokkaustilasta, sovellus tulostaa muutos-dialogin. Muutos-dialogi kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa. Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
 
 ![Pys&auml;kin ominaisuustietojen muokkaus.](k12.jpg)
 
