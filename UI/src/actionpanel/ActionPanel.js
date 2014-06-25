@@ -1,31 +1,35 @@
-(function(ActionPanelBoxes) {
-  var panelControl = ['<div class="action-panels"></div>'].join('');
+(function(root) {
+  root.ActionPanel = {
+    initialize: function(backend) {
+      var panelControl = ['<div class="action-panels"></div>'].join('');
 
-  $('#map-tools').append(panelControl);
+      $('#map-tools').append(panelControl);
 
-  var assetBox = new ActionPanelBoxes.AssetBox();
-  $('.action-panels').append(assetBox.element);
+      var assetBox = new ActionPanelBoxes.AssetBox();
+      $('.action-panels').append(assetBox.element);
 
-  var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
-  $('.action-panels').append(linearAssetBox.element);
+      var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
+      $('.action-panels').append(linearAssetBox.element);
 
-  Backend.getUserRoles();
+      backend.getUserRoles();
 
-  // FIXME: Message now appended to top bar, but should this code live somewhere else?
-  var editMessage = $('<div class="action-state">Olet muokkaustilassa</div>');
-  $('#header').append(editMessage.hide());
+      // FIXME: Message now appended to top bar, but should this code live somewhere else?
+      var editMessage = $('<div class="action-state">Olet muokkaustilassa</div>');
+      $('#header').append(editMessage.hide());
 
-  var handleEditMessage = function(readOnly) {
-    if (readOnly) {
-      editMessage.hide();
-    } else {
-      editMessage.show();
+      var handleEditMessage = function(readOnly) {
+        if (readOnly) {
+          editMessage.hide();
+        } else {
+          editMessage.show();
+        }
+      };
+
+      eventbus.on('application:readOnly', function() {
+        eventbus.trigger('tool:changed', 'Select');
+      });
+
+      eventbus.on('application:readOnly', handleEditMessage);
     }
   };
-
-  eventbus.on('application:readOnly', function() {
-    eventbus.trigger('tool:changed', 'Select');
-  });
-
-  eventbus.on('application:readOnly', handleEditMessage);
-}(window.ActionPanelBoxes));
+}(this));
