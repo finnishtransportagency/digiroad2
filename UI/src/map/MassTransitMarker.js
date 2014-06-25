@@ -62,9 +62,7 @@
 
         var createImageIds = function(properties) {
             var assetType = _.find(properties, function(property) { return property.publicId === "pysakin_tyyppi" });
-            return _.map(assetType.values, function(value) {
-                return value.propertyValue + '_'+ new Date();
-            });
+            return _.map(assetType.values, function(value) { return value.propertyValue + '_'; });
         };
 
         var handleAssetPropertyValueChanged = function(simpleAsset) {
