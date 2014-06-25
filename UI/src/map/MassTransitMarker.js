@@ -1,7 +1,8 @@
 (function(root) {
     root.MassTransitMarker = function(data) {
 
-        var GROUP_ASSET_PADDING = -25;
+        var GROUP_ASSET_PADDING = 8;
+        var IMAGE_HEIGHT = 17;
         var EMPTY_IMAGE_TYPE = '99_';
         var getBounds = function(lon, lat) {
             return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
@@ -48,8 +49,24 @@
                        .append($('<div class="bus-stop-direction field"/>').text(direction));
         };
 
+        var createDefaultState = function() {
+            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group.groupIndex === 0 && 'root');
+            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
+            $(box.div).html(busImages);
+            setYPositionForAssetOnGroup();
+        };
+
+        var calculateOffsetForMarker = function(dataForCalculation){
+          return _.chain(dataForCalculation.group.assetGroup)
+            .take(dataForCalculation.group.groupIndex)
+            .map(function(x) { return x.imageIds.length * IMAGE_HEIGHT; })
+            .map(function(x) { return GROUP_ASSET_PADDING + x; })
+            .reduce(function(acc, x) { return acc + x; }, 0)
+            .value();
+        };
+
         var setYPositionForAssetOnGroup = function() {
-          var yPositionInGroup = (data.group.groupIndex) ? GROUP_ASSET_PADDING * data.group.groupIndex : 0;
+          var yPositionInGroup = -1 * calculateOffsetForMarker(data);
           $(box.div).css("-webkit-transform", "translate(0px," + yPositionInGroup + "px)")
                     .css("transform", "translate(0px," + yPositionInGroup + "px)");
         };
