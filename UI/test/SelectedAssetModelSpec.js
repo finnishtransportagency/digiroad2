@@ -112,7 +112,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
                 model.setProperty('vaikutussuunta', [{propertyValue: '3'}]);
             });
 
-            it('returns all properties', function() {
+            it('getProperties returns updated and unmodified properties', function() {
                 var properties = model.getProperties();
                 assert.lengthOf(properties, 2);
                 assert.deepEqual(properties[0], {
