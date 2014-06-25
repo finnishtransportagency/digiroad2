@@ -49,13 +49,6 @@
                        .append($('<div class="bus-stop-direction field"/>').text(direction));
         };
 
-        var createDefaultState = function() {
-            var busImages = $('<div class="bus-basic-marker" />').addClass(data.group.groupIndex === 0 && 'root');
-            busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
-            $(box.div).html(busImages);
-            setYPositionForAssetOnGroup();
-        };
-
         var calculateOffsetForMarker = function(dataForCalculation){
           return _.chain(dataForCalculation.group.assetGroup)
             .take(dataForCalculation.group.groupIndex)
