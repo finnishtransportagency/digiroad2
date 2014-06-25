@@ -103,6 +103,7 @@
             if (data.group.size > 0) {
                 detachAssetFromGroup();
             }
+            _.merge(data, asset);
             renderNewState(asset);
             selected = true;
           } else {
