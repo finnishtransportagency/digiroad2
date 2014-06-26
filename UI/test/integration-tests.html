@@ -63,12 +63,14 @@
         '../test_data/RoadLinkTestData.js',
         '../test_data/UserRolesTestData.js',
         '../test_data/EnumeratedPropertyValuesTestData.js',
-        '../test_data/ApplicationSetupTestData.js'], function() {
+        '../test_data/ApplicationSetupTestData.js',
+        '../test_data/ConfigurationTestData.js'], function() {
         Application.start(
                 Backend.withRoadLinkData(RoadLinkTestData.generate())
                         .withUserRolesData(UserRolesTestData.generate())
                         .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-                        .withApplicationSetupData(ApplicationSetupTestData.generate()));
+                        .withApplicationSetupData(ApplicationSetupTestData.generate())
+                        .withConfigurationData(ConfigurationTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>

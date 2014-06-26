@@ -142,6 +142,13 @@
       return this;
     };
 
+    backend.withConfigurationData = function(configurationData) {
+      this.getConfiguration = function () {
+        eventbus.trigger('configuration:fetched', configurationData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
