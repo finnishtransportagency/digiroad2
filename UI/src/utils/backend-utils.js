@@ -74,18 +74,8 @@
     };
 
     backend.getAssetPropertyNames = function() {
-      $.ajax({
-        type : 'GET',
-        dataType : 'json',
-        url : 'api/assetPropertyNames/fi',
-        beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-            x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-        },
-        success : function(propertyNames) {
-          eventbus.trigger('assetPropertyNames:fetched', propertyNames);
-        }
+      $.getJSON('api/assetPropertyNames/fi', function(propertyNames) {
+        eventbus.trigger('assetPropertyNames:fetched', propertyNames);
       });
     };
 
