@@ -61,18 +61,8 @@
     };
 
     backend.getApplicationSetup = function() {
-      $.ajax({
-        type : 'GET',
-        dataType : 'json',
-        url : 'full_appsetup.json',
-        beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-            x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-        },
-        success : function(setup) {
-          eventbus.trigger('applicationSetup:fetched', setup);
-        }
+      $.getJSON('full_appsetup.json', function(setup) {
+        eventbus.trigger('applicationSetup:fetched', setup);
       });
     };
 
