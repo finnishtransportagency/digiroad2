@@ -60,7 +60,9 @@
     };
 
     getScripts(['../test_data/RoadLinkTestData.js', '../test_data/UserRolesTestData.js'], function() {
-        Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()).withUserRolesData(UserRolesTestData.generate()));
+        Application.start(
+                Backend.withRoadLinkData(RoadLinkTestData.generate())
+                        .withUserRolesData(UserRolesTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>

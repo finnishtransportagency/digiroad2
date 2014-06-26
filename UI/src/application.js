@@ -110,6 +110,7 @@
     if (backend) window.Backend = backend;
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
     ActionPanel.initialize(Backend);
+    AssetForm.initialize(Backend);
     downloadAppSetup(startApplication);
     downloadConfig(startApplication);
     downloadLocalizedStrings(startApplication);
