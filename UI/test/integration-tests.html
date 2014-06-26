@@ -59,11 +59,16 @@
         }
     };
 
-    getScripts(['../test_data/RoadLinkTestData.js', '../test_data/UserRolesTestData.js', '../test_data/EnumeratedPropertyValuesTestData.js'], function() {
+    getScripts([
+        '../test_data/RoadLinkTestData.js',
+        '../test_data/UserRolesTestData.js',
+        '../test_data/EnumeratedPropertyValuesTestData.js',
+        '../test_data/ApplicationSetupTestData.js'], function() {
         Application.start(
                 Backend.withRoadLinkData(RoadLinkTestData.generate())
                         .withUserRolesData(UserRolesTestData.generate())
-                        .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate()));
+                        .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
+                        .withApplicationSetupData(ApplicationSetupTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>

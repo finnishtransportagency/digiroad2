@@ -138,6 +138,13 @@
       return this;
     };
 
+    backend.withApplicationSetupData = function(applicationSetupData) {
+      this.getApplicationSetup = function () {
+        eventbus.trigger('applicationSetup:fetched', applicationSetupData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
