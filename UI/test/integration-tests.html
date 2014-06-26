@@ -64,13 +64,15 @@
         '../test_data/UserRolesTestData.js',
         '../test_data/EnumeratedPropertyValuesTestData.js',
         '../test_data/ApplicationSetupTestData.js',
-        '../test_data/ConfigurationTestData.js'], function() {
+        '../test_data/ConfigurationTestData.js',
+        '../test_data/AssetPropertyNamesTestData.js'], function() {
         Application.start(
                 Backend.withRoadLinkData(RoadLinkTestData.generate())
                         .withUserRolesData(UserRolesTestData.generate())
                         .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
                         .withApplicationSetupData(ApplicationSetupTestData.generate())
-                        .withConfigurationData(ConfigurationTestData.generate()));
+                        .withConfigurationData(ConfigurationTestData.generate())
+                        .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>

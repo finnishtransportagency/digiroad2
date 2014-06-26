@@ -155,6 +155,13 @@
       return this;
     };
 
+    backend.withAssetPropertyNamesData = function(assetPropertyNamesData) {
+      this.getAssetPropertyNames = function () {
+        eventbus.trigger('assetPropertyNames:fetched', assetPropertyNamesData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
