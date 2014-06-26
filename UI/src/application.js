@@ -29,22 +29,7 @@
       }
     });
   };
-  var downloadAppSetup = function(notifyCallback) {
-    jQuery.ajax({
-      type : 'GET',
-      dataType : 'json',
-      url : 'full_appsetup.json',
-      beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-              x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-      },
-      success : function(setup) {
-         appSetup = setup;
-         notifyCallback();
-      }
-    });
-  };
+
     var downloadLocalizedStrings = function(notifyCallback) {
         jQuery.ajax({
             type : 'GET',
@@ -86,6 +71,11 @@
     jQuery('.spinner-overlay').remove();
   });
 
+  eventbus.on('applicationSetup:fetched', function(setup) {
+    appSetup = setup;
+    startApplication();
+  });
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -111,7 +101,7 @@
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
     ActionPanel.initialize(Backend);
     AssetForm.initialize(Backend);
-    downloadAppSetup(startApplication);
+    Backend.getApplicationSetup();
     downloadConfig(startApplication);
     downloadLocalizedStrings(startApplication);
   };
