@@ -162,6 +162,13 @@
       return this;
     };
 
+    backend.withAssetsData = function(assetsData) {
+      this.getAssets = function () {
+        eventbus.trigger('assets:fetched', assetsData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
