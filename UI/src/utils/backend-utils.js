@@ -115,6 +115,13 @@
       return this;
     };
 
+    backend.withEnumeratedPropertyValues = function(enumeratedPropertyValuesData) {
+      this.getEnumeratedPropertyValues = function () {
+        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
