@@ -12,25 +12,6 @@
       }
   };
 
-
-    var downloadLocalizedStrings = function(notifyCallback) {
-        jQuery.ajax({
-            type : 'GET',
-            dataType : 'json',
-            url : 'api/assetPropertyNames/fi',
-            beforeSend: function(x) {
-                if (x && x.overrideMimeType) {
-                    x.overrideMimeType("application/j-son;charset=UTF-8");
-                }
-            },
-            success : function(ls) {
-                localizedStrings = ls;
-                window.localizedStrings = localizedStrings;
-                    notifyCallback();
-            }
-        });
-    };
-
   eventbus.on('application:readOnly tool:changed validityPeriod:changed', function(readOnly) {
       window.location.hash = '';
   });
@@ -64,6 +45,12 @@
     startApplication();
   });
 
+  eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
+    localizedStrings = assetPropertyNames;
+    window.localizedStrings = assetPropertyNames;
+    startApplication();
+  });
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -91,7 +78,7 @@
     AssetForm.initialize(Backend);
     Backend.getApplicationSetup();
     Backend.getConfiguration(assetIdFromURL());
-    downloadLocalizedStrings(startApplication);
+    Backend.getAssetPropertyNames();
   };
 
 }(window.Application = window.Application || {}));

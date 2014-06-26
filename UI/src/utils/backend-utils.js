@@ -73,6 +73,22 @@
       });
     };
 
+    backend.getAssetPropertyNames = function() {
+      $.ajax({
+        type : 'GET',
+        dataType : 'json',
+        url : 'api/assetPropertyNames/fi',
+        beforeSend: function(x) {
+          if (x && x.overrideMimeType) {
+            x.overrideMimeType("application/j-son;charset=UTF-8");
+          }
+        },
+        success : function(propertyNames) {
+          eventbus.trigger('assetPropertyNames:fetched', propertyNames);
+        }
+      });
+    };
+
     var assetUpdateFailed = function () {
       alert(assetUpdateFailedMessage);
       eventbus.trigger('asset:cancelled');
