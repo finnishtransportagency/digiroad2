@@ -66,6 +66,22 @@
       });
     };
 
+    backend.getConfiguration = function(selectedAsset) {
+      $.ajax({
+        type : 'GET',
+        dataType : 'json',
+        url : 'api/config' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : ''),
+        beforeSend: function(x) {
+          if (x && x.overrideMimeType) {
+            x.overrideMimeType("application/j-son;charset=UTF-8");
+          }
+        },
+        success : function(config) {
+          eventbus.trigger('configuration:fetched', config);
+        }
+      });
+    };
+
     var assetUpdateFailed = function () {
       alert(assetUpdateFailedMessage);
       eventbus.trigger('asset:cancelled');

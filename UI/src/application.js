@@ -11,24 +11,7 @@
         return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
       }
   };
-  
-  var downloadConfig = function(notifyCallback) {
-    var data = assetIdFromURL();
-    jQuery.ajax({
-      type : 'GET',
-      dataType : 'json',
-      url : 'api/config' + (data && data.externalId ? '?externalAssetId=' + data.externalId : ''),
-      beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-              x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-      },
-      success : function(config) {
-          appConfig = config;
-          notifyCallback();
-      }
-    });
-  };
+
 
     var downloadLocalizedStrings = function(notifyCallback) {
         jQuery.ajax({
@@ -76,6 +59,11 @@
     startApplication();
   });
 
+  eventbus.on('configuration:fetched', function(config) {
+    appConfig = config;
+    startApplication();
+  });
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -102,7 +90,7 @@
     ActionPanel.initialize(Backend);
     AssetForm.initialize(Backend);
     Backend.getApplicationSetup();
-    downloadConfig(startApplication);
+    Backend.getConfiguration(assetIdFromURL());
     downloadLocalizedStrings(startApplication);
   };
 
