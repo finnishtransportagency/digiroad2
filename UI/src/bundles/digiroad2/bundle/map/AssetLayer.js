@@ -331,7 +331,8 @@ window.AssetLayer = function(map, roadLayer) {
     }, this);
     eventbus.on('assets:fetched', function(assets) {
         if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-            renderAssets(assets);
+          var groupedAssets = window.groupBusStops ? assetGrouping.groupByDistance(assets) : assets;
+          renderAssets(groupedAssets);
         }
     }, this);
     eventbus.on('map:moved', function(state) {
