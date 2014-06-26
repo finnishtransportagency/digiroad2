@@ -123,7 +123,8 @@ window.AssetLayer = function(map, roadLayer) {
                 lon : centroidLonLat.lon,
                 lat : centroidLonLat.lat,
                 groupIndex :i++,
-                size : assetGroup.length
+                size : assetGroup.length,
+                assetGroup : assetGroup
               };
 
               var isAssetSelectedAndDirty = function(asset) {
