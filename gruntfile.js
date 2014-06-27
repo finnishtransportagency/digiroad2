@@ -102,7 +102,7 @@ module.exports = function(grunt) {
       }
     },
     mocha: {
-      ci: {
+      unit: {
         options: {
           // mocha options
           mocha: {
@@ -129,7 +129,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'mocha', 'less:development', 'configureProxies'],
+      tasks: ['jshint', 'mocha:unit', 'less:development', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -158,9 +158,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:ci']);
+  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit']);
 
-  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:ci', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('integration-test', ['jshint', 'configureProxies:server', 'connect', 'mocha:integration']);
 
