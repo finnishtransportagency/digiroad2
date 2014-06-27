@@ -102,7 +102,7 @@
             "baseLayerId": -1,
             "id": "base_35",
             "style": "default",
-            "wmsUrl": "/maasto",
+            "wmsUrl": "../maasto",
             "name": "Taustakarttasarja",
             "permissions": {
               "publish": "no_publication_permission"
@@ -307,7 +307,7 @@
                 },
                 "layers": [{
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -327,7 +327,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -338,7 +338,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                    "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                     "format": "image/jpeg",
                     "resourceType": "tile"
                   }],
@@ -358,7 +358,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                      "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                       "format": "image/jpeg",
                       "resourceType": "tile"
                     }
@@ -369,7 +369,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -389,7 +389,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -412,7 +412,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -428,7 +428,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -444,7 +444,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -468,7 +468,7 @@
             "id": 24,
             "minScale": 50000,
             "style": "default",
-            "wmsUrl": "maasto/wmts",
+            "wmsUrl": "../maasto/wmts",
             "name": "Ortokuvat",
             "permissions": {
               "publish": "no_publication_permission"
@@ -673,7 +673,7 @@
                 },
                 "layers": [{
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -693,7 +693,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -704,7 +704,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                    "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                     "format": "image/jpeg",
                     "resourceType": "tile"
                   }],
@@ -724,7 +724,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                      "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                       "format": "image/jpeg",
                       "resourceType": "tile"
                     }
@@ -735,7 +735,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -755,7 +755,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -778,7 +778,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -794,7 +794,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -810,7 +810,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -833,7 +833,7 @@
             "baseLayerId": -1,
             "id": "base_2",
             "style": "default",
-            "wmsUrl": "maasto/wmts",
+            "wmsUrl": "../maasto/wmts",
             "name": "Maastokartta",
             "permissions": {
               "publish": "no_publication_permission"
@@ -1038,7 +1038,7 @@
                 },
                 "layers": [{
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -1058,7 +1058,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -1069,7 +1069,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                    "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                     "format": "image/jpeg",
                     "resourceType": "tile"
                   }],
@@ -1089,7 +1089,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+                      "template": "../maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
                       "format": "image/jpeg",
                       "resourceType": "tile"
                     }
@@ -1100,7 +1100,7 @@
                   ]
                 }, {
                   "resourceUrls": [{
-                    "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                    "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                     "format": "image/png",
                     "resourceType": "tile"
                   }],
@@ -1120,7 +1120,7 @@
                   }],
                   "resourceUrl": {
                     "tile": {
-                      "template": "maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+                      "template": "../maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
                       "format": "image/png",
                       "resourceType": "tile"
                     }
@@ -1143,7 +1143,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -1159,7 +1159,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
@@ -1175,7 +1175,7 @@
                             }
                           }
                         },
-                        "url": "maasto/wmts?"
+                        "url": "../maasto/wmts?"
                       }]
                     }
                   }
