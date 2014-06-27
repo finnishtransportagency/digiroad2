@@ -5,6 +5,8 @@ require.config({
   waitSeconds: 10
 });
 require(['GroupingByValidityPeriodSpec'], function() {
-  if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
-  else { mocha.run(); }
+  eventbus.on('application:initialized', function() {
+    if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
+    else { mocha.run(); }
+  });
 });
