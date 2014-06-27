@@ -127,7 +127,7 @@
           eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
         };
 
-        var handleFetchedAsset = function(asset) {
+      var handleFetchedAsset = function(asset) {
           data.imageIds = asset.imageIds;
           data.group.lon = asset.lon;
           data.group.lat = asset.lat;
@@ -156,7 +156,7 @@
             eventbus.trigger('asset:removed-from-group', { assetGroupId : data.group.id , groupIndex : (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0});
             data.group.groupIndex = 0;
             data.group.oldGroupIndex = null;
-            data.group.id = new Date();
+            data.group.id = new Date().getTime();
             renderNewState(asset);
           }
         });
