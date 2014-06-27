@@ -265,7 +265,6 @@ window.AssetLayer = function(map, roadLayer) {
             assets[assetData.id].data = assetData;
             selectedAsset = assets[assetData.id];
             selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
-            moveMarker(new OpenLayers.LonLat(assetData.lon, assetData.lat));
         } else {
           addNewAsset(assetData);
           eventbus.trigger('asset:selected', assetData);
@@ -426,4 +425,8 @@ window.AssetLayer = function(map, roadLayer) {
         mouseUpHandler(selectedAsset);
       }
     });
+  eventbus.on('asset:new-state-rendered', function(lonlat) {
+    assetLayer.redraw();
+    selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
+  });
 };

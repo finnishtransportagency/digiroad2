@@ -31,7 +31,7 @@
                 right: lonlat.lon,
                 top: lonlat.lat
             };
-            if (data.group.groupIndex > 0) {
+            if (!data.group.moved) {
                 detachAssetFromGroup();
                 renderNewState(data);
             }
@@ -80,6 +80,7 @@
             if (simpleAsset.id === data.id && _.contains(['pysakin_tyyppi', 'nimi_suomeksi'], simpleAsset.propertyData.publicId)) {
                 var properties = selectedAssetModel.getProperties();
                 var imageIds = createImageIds(properties);
+                data.imageIds = imageIds;
                 var assetWithProperties = _.merge({}, data, {propertyData: properties});
                 $(box.div).html(getSelectedContent(assetWithProperties, imageIds));
             }
@@ -108,30 +109,61 @@
         };
 
         var detachAssetFromGroup = function() {
-          eventbus.trigger('asset:removed-from-group', data);
-          data.group = {
-            groupIndex : 0
-          };
+          _.remove(data.group.assetGroup, function (asset) {
+            return asset.id == data.id;
+          });
+          data.group.oldGroupIndex = data.group.groupIndex;
+          data.group.groupIndex = 0;
+          data.group.moved = true;
+        };
+
+        var rollbackToGroup = function(asset) {
+          data.group.groupIndex = (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0;
+          data.group.moved = false;
+          data.imageIds = asset.imageIds;
+          asset.group = data.group;
+          data.group.assetGroup.push(asset);
+          renderNewState(asset);
+          eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
+        };
+
+      var handleFetchedAsset = function(asset) {
+          data.imageIds = asset.imageIds;
+          data.group.lon = asset.lon;
+          data.group.lat = asset.lat;
+          asset.group = data.group;
+          renderNewState(asset);
         };
 
         eventbus.on('asset:closed tool:changed asset:placed', deselect);
 
-        eventbus.on('asset:fetched asset:selected', function (asset) {
+        eventbus.on('asset:fetched ', function (asset) {
           if (asset.id === data.id) {
-            if (data.group.size > 0) {
-                detachAssetFromGroup();
+            if (data.group.moved) {
+              rollbackToGroup(asset);
+            } else {
+              handleFetchedAsset(asset);
             }
-            _.merge(data, asset);
-            renderNewState(asset);
             selected = true;
           } else {
             deselect();
           }
         });
 
-        eventbus.on('asset:removed-from-group', function (asset) {
-          if (data.group.id === asset.group.id) {
-            if (data.group.groupIndex > asset.group.groupIndex) {
+        eventbus.on('asset:saved', function (asset) {
+          if (data.id === asset.id) {
+            data.group.moved = false;
+            eventbus.trigger('asset:removed-from-group', { assetGroupId : data.group.id , groupIndex : (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0});
+            data.group.groupIndex = 0;
+            data.group.oldGroupIndex = null;
+            data.group.id = new Date().getTime();
+            renderNewState(asset);
+          }
+        });
+
+        eventbus.on('asset:removed-from-group', function (group) {
+          if (data.group.id === group.assetGroupId) {
+            if (data.group.groupIndex > group.groupIndex) {
               data.group.groupIndex--;
               renderDefaultState();
             }
