@@ -1,3 +1,4 @@
+/*jshint expr: true*/
 define(['chai'], function(chai) {
   var expect = chai.expect;
 
