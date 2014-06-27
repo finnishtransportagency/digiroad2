@@ -13,7 +13,7 @@ window.AssetLayer = function(map, roadLayer) {
   var assets = {};
   var overlay;
   var selectedControl = 'Select';
-  var assetMoveWaitTime = 300;
+  var assetMoveWaitTime = 10;
 
   var clickTimestamp;
   var clickCoords;
