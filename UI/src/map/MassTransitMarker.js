@@ -161,7 +161,7 @@
     });
 
     eventbus.on('asset:saved', function(asset) {
-      if (data.id === asset.id) {
+      if (data.id === asset.id && data.group.moved) {
         data.group.moved = false;
         eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id, groupIndex: (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0});
         data.group.groupIndex = 0;
