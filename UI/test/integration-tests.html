@@ -69,6 +69,7 @@
         '../test_data/ConfigurationTestData.js',
         '../test_data/AssetPropertyNamesTestData.js',
         '../test_data/AssetsTestData.js'], function() {
+        jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
         Application.start(
                 Backend.withRoadLinkData(RoadLinkTestData.generate())
                         .withUserRolesData(UserRolesTestData.generate())
