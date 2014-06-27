@@ -12,14 +12,19 @@
     var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
     var selected = false; // keeping track of the selected state while assetlayer refactoring is ongoing TODO: move to selected model
 
+    var configureMarkerDiv = function(id) {
+      $(box.div).css('overflow', 'visible !important')
+                .attr('data-asset-id', id);
+    };
+
     var createMarker = function() {
-      $(box.div).css("overflow", "visible !important");
+      configureMarkerDiv(data.id);
       renderDefaultState();
       return box;
     };
 
     var createNewMarker = function() {
-      $(box.div).css("overflow", "visible !important");
+      configureMarkerDiv(data.id);
       renderNewState(data);
       return box;
     };
