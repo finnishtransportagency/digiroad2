@@ -117,6 +117,14 @@ module.exports = function(grunt) {
           run: false,
           log: true
         }
+      },
+      integration: {
+        options: {
+          mocha: { ignoreLeaks: false },
+          urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
+          run: false,
+          log: true
+        }
       }
     },
     watch: {
@@ -150,9 +158,11 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha']);
+  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:ci']);
 
-  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:ci', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+
+  grunt.registerTask('integration-test', ['jshint', 'configureProxies:server', 'connect', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 };
