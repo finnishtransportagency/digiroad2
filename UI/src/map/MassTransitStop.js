@@ -26,6 +26,7 @@
 
         var getMarker = function(shouldCreate) {
             if (shouldCreate || !cachedMarker) {
+                data.group.assetGroup.sort(function(a, b) { return a.id - b.id; });
                 cachedMassTransitMarker = new MassTransitMarker(data);
                 cachedMarker = cachedMassTransitMarker.createMarker();
             }

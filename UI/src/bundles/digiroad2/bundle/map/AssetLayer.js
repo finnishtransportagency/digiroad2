@@ -123,7 +123,6 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
       groupId++;
-      var i = 0;
       if (!_.isArray(assetGroup)) {
         assetGroup = [assetGroup];
       }
@@ -133,7 +132,6 @@ window.AssetLayer = function(map, roadLayer) {
           id: groupId,
           lon: centroidLonLat.lon,
           lat: centroidLonLat.lat,
-          groupIndex: i++,
           size: assetGroup.length,
           assetGroup: assetGroup
         };
@@ -259,7 +257,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createDummyGroup = function(lon, lat) {
-    return {id: groupId++, lon: lon, lat: lat, groupIndex: 0, size: 1};
+    return {id: groupId++, lon: lon, lat: lat, size: 1};
   };
 
   var closeAsset = function() {

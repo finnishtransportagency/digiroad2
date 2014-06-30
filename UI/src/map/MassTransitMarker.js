@@ -17,6 +17,8 @@
                 .attr('data-asset-id', id);
     };
 
+    var validityPeriods = ['current'];
+
     var createMarker = function() {
       configureMarkerDiv(data.id);
       renderDefaultState();
@@ -48,26 +50,32 @@
       var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
       var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
-      return $('<div class="expanded-bus-stop" />').addClass(data.group.groupIndex === 0 && 'root')
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+
+      return $('<div class="expanded-bus-stop" />').addClass(groupIndex === 0 && 'root')
         .append($('<div class="images field" />').html(busStopImages))
         .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
         .append($('<div class="bus-stop-name field"/>').text(name))
         .append($('<div class="bus-stop-direction field"/>').text(direction));
     };
 
+    var filterByValidityPeriod = function(group, validityPeriods) {
+      return _.filter(group, function(asset) {
+        return _.contains(validityPeriods, asset.validityPeriod);
+      });
+    };
+
     var calculateOffsetForMarker = function(dataForCalculation) {
-      return _.chain(dataForCalculation.group.assetGroup)
-        .take(dataForCalculation.group.groupIndex)
-        .map(function(x) {
-          return x.imageIds.length * IMAGE_HEIGHT;
-        })
-        .map(function(x) {
-          return GROUP_ASSET_PADDING + x;
-        })
-        .reduce(function(acc, x) {
-          return acc + x;
-        }, 0)
-        .value();
+      var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup, validityPeriods);
+      var groupIndex = _.findIndex(filteredGroup, { id: dataForCalculation.id });
+
+      return _.chain(filteredGroup)
+              .take(groupIndex)
+              .map(function(x) { return x.imageIds.length * IMAGE_HEIGHT; })
+              .map(function(x) { return GROUP_ASSET_PADDING + x; })
+              .reduce(function(acc, x) { return acc + x; }, 0)
+              .value();
     };
 
     var setYPositionForAssetOnGroup = function() {
@@ -103,17 +111,20 @@
     };
 
     var renderDefaultState = function() {
-      var busImages = $('<div class="bus-basic-marker" />').addClass(data.group && data.group.groupIndex === 0 && 'root');
-      busImages.append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)));
-      $(box.div).html(busImages);
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+      var defaultMarker = $('<div class="bus-basic-marker" />')
+        .append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)))
+        .addClass(groupIndex === 0 && 'root');
+      $(box.div).html(defaultMarker);
       $(box.div).removeClass('selected-asset');
       setYPositionForAssetOnGroup();
     };
 
     var renderNewState = function(assetWithProperties) {
       box.bounds = getBounds(data.group.lon, data.group.lat);
-      $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds));
-      $(box.div).addClass('selected-asset');
+      $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds))
+                .addClass('selected-asset');
       setYPositionForAssetOnGroup();
     };
 
@@ -128,18 +139,15 @@
       _.remove(data.group.assetGroup, function(asset) {
         return asset.id == data.id;
       });
-      data.group.oldGroupIndex = data.group.groupIndex;
-      data.group.groupIndex = 0;
       data.group.moved = true;
     };
 
     var rollbackToGroup = function(asset) {
-      var groupIndex = data.group.oldGroupIndex || 0;
-      data.group.groupIndex = groupIndex;
       data.group.moved = false;
       data.imageIds = asset.imageIds;
       asset.group = data.group;
-      data.group.assetGroup.splice(groupIndex, 0, asset);
+      data.group.assetGroup.push(asset);
+      data.group.assetGroup.sort(function(a, b) { return a.id - b.id; });
       renderNewState(asset);
       eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
     };
@@ -172,10 +180,9 @@
     eventbus.on('asset:saved', function(asset) {
       if (data.id === asset.id && data.group.moved) {
         data.group.moved = false;
-        eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id, groupIndex: (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0});
-        data.group.groupIndex = 0;
+        eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
+        data.group.assetGroup = [asset];
         data.group.size = 1;
-        data.group.oldGroupIndex = null;
         data.group.id = new Date().getTime();
         renderNewState(asset);
       }
@@ -183,14 +190,20 @@
 
     eventbus.on('asset:removed-from-group', function(group) {
       if (data.group.id === group.assetGroupId) {
-        if (data.group.groupIndex > group.groupIndex) {
-          data.group.groupIndex--;
-          renderDefaultState();
-        }
+        renderDefaultState();
       }
     });
 
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
+
+    eventbus.on('validityPeriod:changed', function(newValidityPeriods) {
+      validityPeriods = newValidityPeriods;
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+      var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
+      $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
+      setYPositionForAssetOnGroup();
+    });
 
     return {
       createMarker: createMarker,
