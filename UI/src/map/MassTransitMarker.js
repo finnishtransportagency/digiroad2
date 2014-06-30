@@ -38,7 +38,8 @@
       };
       if (!data.group.moved) {
         detachAssetFromGroup();
-        renderNewState(data);
+        setYPositionForAssetOnGroup();
+        $(box.div).find('.expanded-bus-stop').addClass('root');
       }
     };
 
