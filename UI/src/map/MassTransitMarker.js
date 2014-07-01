@@ -111,7 +111,7 @@
     };
 
     var renderNewState = function(assetWithProperties) {
-      box.bounds = getBounds(assetWithProperties.lon, assetWithProperties.lat);
+      box.bounds = getBounds(data.group.lon, data.group.lat);
       $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds));
       $(box.div).addClass('selected-asset');
       setYPositionForAssetOnGroup();
@@ -145,8 +145,10 @@
 
     var handleFetchedAsset = function(asset) {
       data.imageIds = asset.imageIds;
-      data.group.lon = asset.lon;
-      data.group.lat = asset.lat;
+      if (data.group.size === 1) {
+        data.group.lon = asset.lon;
+        data.group.lat = asset.lat;
+      }
       asset.group = data.group;
       renderNewState(asset);
     };
@@ -171,6 +173,7 @@
         data.group.moved = false;
         eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id, groupIndex: (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0});
         data.group.groupIndex = 0;
+        data.group.size = 1;
         data.group.oldGroupIndex = null;
         data.group.id = new Date().getTime();
         renderNewState(asset);
