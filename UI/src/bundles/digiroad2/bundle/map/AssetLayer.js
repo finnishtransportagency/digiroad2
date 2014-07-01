@@ -67,9 +67,16 @@ window.AssetLayer = function(map, roadLayer) {
           map.events.register("mouseup", map, mouseUpFn, true);
           mouseUpFunction = mouseUpFn;
           mouseClickFn(asset);
+          setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
         }
       }
     };
+  };
+
+  var setInitialClickOffsetFromMarkerBottomLeft = function(mouseX, mouseY) {
+    var markerPosition = $(selectedAsset.massTransitStop.getMarker().div).offset();
+    initialClickOffsetFromMarkerBottomleft.x = mouseX - markerPosition.left;
+    initialClickOffsetFromMarkerBottomleft.y = mouseY - markerPosition.top;
   };
 
   var mouseClick = function(asset) {
@@ -363,11 +370,6 @@ window.AssetLayer = function(map, roadLayer) {
       var yAdjustedForClickOffset = e.xy.y - initialClickOffsetFromMarkerBottomleft.y;
       var pixel = new OpenLayers.Pixel(xAdjustedForClickOffset, yAdjustedForClickOffset);
       moveSelectedAsset(pixel);
-    } else {
-      var markerDiv = $(selectedAsset.massTransitStop.getMarker().div);
-      var markerPosition = markerDiv.offset();
-      initialClickOffsetFromMarkerBottomleft.x = e.clientX - markerPosition.left;
-      initialClickOffsetFromMarkerBottomleft.y = e.clientY - markerPosition.top;
     }
   }, true);
 
