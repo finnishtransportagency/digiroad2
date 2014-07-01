@@ -134,11 +134,12 @@
     };
 
     var rollbackToGroup = function(asset) {
-      data.group.groupIndex = (data.group.oldGroupIndex) ? data.group.oldGroupIndex : 0;
+      var groupIndex = data.group.oldGroupIndex || 0;
+      data.group.groupIndex = groupIndex;
       data.group.moved = false;
       data.imageIds = asset.imageIds;
       asset.group = data.group;
-      data.group.assetGroup.push(asset);
+      data.group.assetGroup.splice(groupIndex, 0, asset);
       renderNewState(asset);
       eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
     };
