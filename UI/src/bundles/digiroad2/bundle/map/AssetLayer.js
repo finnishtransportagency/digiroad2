@@ -351,6 +351,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var events = map.events;
+  var initialClickOffsetFromBubbleBottomLeft = { x: 0, y: 0 };
   events.register('mousemove', map, function(e) {
     if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       return;
@@ -358,8 +359,15 @@ window.AssetLayer = function(map, roadLayer) {
     if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
       (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
       assetIsMoving = true;
-      var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
+      var xAdjustedForClickOffset = e.xy.x - initialClickOffsetFromBubbleBottomLeft.x;
+      var yAdjustedForClickOffset = e.xy.y - initialClickOffsetFromBubbleBottomLeft.y;
+      var pixel = new OpenLayers.Pixel(xAdjustedForClickOffset, yAdjustedForClickOffset);
       moveSelectedAsset(pixel);
+    } else {
+      var bubbleDiv = $(selectedAsset.massTransitStop.getMarker().div).children();
+      var bubblePosition = bubbleDiv.offset();
+      initialClickOffsetFromBubbleBottomLeft.x = e.clientX - bubblePosition.left;
+      initialClickOffsetFromBubbleBottomLeft.y = e.clientY - (bubblePosition.top + bubbleDiv.height());
     }
   }, true);
 
