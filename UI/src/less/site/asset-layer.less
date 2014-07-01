@@ -33,9 +33,12 @@
 
 .bus-basic-marker {
   position: absolute;
-  bottom: 0;
   left : -1px;
-  padding-bottom: 15px;
+  bottom: 15px;
+  &.root {
+    padding-bottom: 15px;
+    bottom: 0;
+  }
   .images {
     border: 1px solid @gray-dark-2;
   }
