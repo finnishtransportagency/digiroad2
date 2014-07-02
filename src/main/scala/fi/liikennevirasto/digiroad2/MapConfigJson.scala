@@ -85,7 +85,7 @@ object MapConfigJson {
               ],
               "showAsDropdown": false,
               "location" : {
-                "classes" : "right bottom"
+                "classes" : "left bottom"
               }
             }
           }],

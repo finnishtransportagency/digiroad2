@@ -5,8 +5,11 @@
 #mapdiv {
 	.mapplugins {
 		.zoombar {
-			width: 100%;
-			margin: 0 0 @line-height-modifier * 2;
+			position: absolute;
+			left: @line-height-modifier * 2;
+			bottom: @line-height-base * 2.5;
+			width: auto;
+			margin: 0;
 
 			.slider {
 				display: none;
@@ -64,13 +67,25 @@
 
 #mapdiv {
 	.mapplugins {
+		&.bottom {
+			width: 100%;
+
+			.mapPluginsContent {
+				margin: 0;
+			}
+		}
+
 		.backgroundLayerSelectionPlugin {
-			width: auto;
+			width: 100%;
 			height: auto;
 			margin: 0;
 
 			.bg {
-				display: none;
+				width: 100%;
+				height: 40px;
+				border-top: 1px solid @gray-light-2;
+				background-color: @gray-lighter;
+				.opacity(1);
 			}
 
 			.content {
@@ -79,8 +94,8 @@
 				bottom: auto;
 				width: auto;
 				margin: 0;
-				padding: 0;
-				text-align: right;
+				padding: 0 0 9px @line-height-modifier*2;
+				text-align: left;
 
 				ul {
 					height: auto;
@@ -126,7 +141,7 @@
 			float: none;
 			position: absolute;
 			left: @line-height-base * 2.5;
-			bottom: @line-height-modifier * 2;
+			bottom: @line-height-base * 2.5;
 			font-size: 9px;
 			line-height: @line-height-modifier * 3;
 			color: @gray-darker-2;
