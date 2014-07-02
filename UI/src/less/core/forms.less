@@ -233,6 +233,18 @@ input[type="checkbox"] {
   margin: 0; // Remove default margin from `p`
 }
 
+// Form control sizing
+//
+// Build on `.form-control` with modifier classes to decrease or increase the
+// height and font-size of form controls.
+
+.input-sm {
+  height: (@line-height-modifier * 4) + 2; // Height at least of their button counterparts: line-height + padding + border
+  padding: @line-height-modifier (@line-height-modifier * 1.5);
+  font-size: @font-size-small;
+  line-height: @line-height-modifier * 2;
+}
+
 // Help text
 //
 // Apply to any element you wish to create light text for placement immediately

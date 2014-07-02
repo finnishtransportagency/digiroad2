@@ -1,13 +1,13 @@
 window.CoordinateSelector = function(parentElement, extent) {
     var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
-    var crosshairToggle = $('<div class="coordinatesContainer"><input type="checkbox" name="crosshair" value="crosshair" checked="true"/>N&auml;yt&auml; kohdistin</div>');
-    var coordinatesDiv = $('<div class="coordinatesContainer"/>');
-    var coordinatesText = $('<input type="text" class="lonlat" name="lonlat" placeholder="lat, lon" title="' + tooltip +'"/>');
-    var moveButton = $('<input type="button" class="moveToButton" value="Siirry"/>');
-    var markButton = $('<input type="button" class="markToButton" value="Merkitse"/>');
+    var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
+    var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
+    var coordinatesText = $('<input type="text" class="lonlat form-control input-sm" name="lonlat" placeholder="lat, lon" title="' + tooltip +'"/>');
+    var moveButton = $('<button class="btn btn-sm btn-tertiary">Siirry</button>');
+    var markButton = $('<button class="btn btn-sm btn-tertiary">Merkitse</button>');
 
     var render = function() {
-        parentElement.append(crosshairToggle).append(coordinatesDiv.append(coordinatesText).append(moveButton).append(markButton));
+        parentElement.append(coordinatesDiv.append(coordinatesText).append(moveButton).append(markButton)).append(crosshairToggle);
     };
 
     var bindEvents = function() {

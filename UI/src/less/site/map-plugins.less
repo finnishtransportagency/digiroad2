@@ -1,5 +1,18 @@
 //== Map plugin control component styles
 
+//** FIX THIS: top right plugin container is forced to bottom right, because CoordinatesPlugin.js location is hardcoded
+
+#mapdiv {
+	.right.top {
+		top: auto;
+		bottom: 40px;
+
+		.mapPluginsContent {
+			margin-top: 0;
+		}
+	}
+}
+
 //** Zoom buttons
 
 #mapdiv {
@@ -159,8 +172,117 @@
 }
 
 //** Coordinates
+//** Overrides Oskari styles
 
-.mapplugin.coordinates {
+#mapdiv {
+	.mapplugins {
+		.coordinates {
+			width: auto;
+			height: auto;
+			border: none;
+			font-size: 0px;
+			color: @gray-darkest;
+			text-align: right;
+			background-color: transparent;
+
+			.cbSpansWrapper {
+				display: inline-block;
+				vertical-align: middle;
+				width: auto;
+				padding: 0;
+
+				.cbRow {
+					display: inline-block;
+					height: @line-height-base * 2;
+					padding: (@line-height-modifier * 2) 0;
+					margin-right: @line-height-modifier;
+					.box-sizing(border-box);
+					.clearfix();
+
+					.cbCrsLabel {
+						font-size: @font-size-xs;
+						color: @gray;
+					}
+
+					.cbLabel {
+						display: inline-block;
+						float: none;
+						width: auto;
+						margin-right: 3px;
+						font-size: @font-size-xs;
+					}
+
+					.cbValue {
+						display: inline-block;
+						float: none;
+						width: auto;
+						padding: 0;
+						font-size: @font-size-xs;
+					}
+				}
+
+				br {
+					display: none;
+				}
+			}
+
+			.coordinates-wrapper {
+				display: inline-block;
+				vertical-align: middle;
+				height: @line-height-base * 2;
+				margin-right: @line-height-modifier;
+				padding: 9px 0 0 @line-height-modifier;
+				border-left: 1px solid @gray-light-2;
+				.box-sizing(border-box);
+
+				.lonlat {
+					display: inline-block;
+					vertical-align: middle;
+					width: 80px;
+					margin-right: @line-height-modifier;
+					padding-left: @line-height-modifier;
+					padding-right: @line-height-modifier;
+					font-size: @font-size-xs;
+				}
+
+				.btn {
+					border-radius: 0;
+
+					&:first-of-type {
+						border-top-left-radius: @border-radius-base;
+						border-bottom-left-radius: @border-radius-base;
+					}
+
+					&:last-child {
+						margin-left: -1px;
+						border-top-right-radius: @border-radius-base;
+						border-bottom-right-radius: @border-radius-base;
+					}
+				}
+			}
+
+			.crosshair-wrapper {
+				display: inline-block;
+				vertical-align: middle;
+				height: @line-height-base * 2;
+				padding: (@line-height-modifier * 2) 0 0 @line-height-modifier;
+				border-left: 1px solid @gray-light-2;
+				.box-sizing(border-box);
+
+				label {
+					padding-left: @line-height-modifier * 3;
+					font-size: @font-size-xs;
+				}			
+
+				input {
+					margin-left: -15px;
+				}
+			}
+		}
+	}
+}
+
+/*.mapplugin.coordinates {
   overflow: hidden;
   height: auto !important;
 
@@ -191,4 +313,4 @@
     float: right;
     margin: 3px 2px 2px 0;
   }
-}
+}*/
