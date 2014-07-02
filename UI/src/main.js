@@ -17,8 +17,8 @@ $(function() {
     window.groupBusStops = parameters.groupBusStops === 'true';
 
     if (fakeMode) {
-        $.getScript('test_data/TestData.js', function() {
-            Application.start(Backend.withRoadLinkData(TestData.roadLinkData()));
+        $.getScript('test_data/RoadLinkTestData.js', function() {
+            Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()));
         });
     } else {
         Application.start();

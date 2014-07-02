@@ -1,5 +1,5 @@
 (function(testData) {
-    testData.roadLinkData = function() {
+    testData.generate = function() {
         return [
                 {
                   "roadLinkId": 5543,
@@ -696,4 +696,4 @@
               }
           ];
     };
-}(window.TestData = window.TestData || {}));
+}(window.RoadLinkTestData = window.RoadLinkTestData || {}));

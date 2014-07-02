@@ -11,57 +11,6 @@
         return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
       }
   };
-  
-  var downloadConfig = function(notifyCallback) {
-    var data = assetIdFromURL();
-    jQuery.ajax({
-      type : 'GET',
-      dataType : 'json',
-      url : 'api/config' + (data && data.externalId ? '?externalAssetId=' + data.externalId : ''),
-      beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-              x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-      },
-      success : function(config) {
-          appConfig = config;
-          notifyCallback();
-      }
-    });
-  };
-  var downloadAppSetup = function(notifyCallback) {
-    jQuery.ajax({
-      type : 'GET',
-      dataType : 'json',
-      url : 'full_appsetup.json',
-      beforeSend: function(x) {
-          if (x && x.overrideMimeType) {
-              x.overrideMimeType("application/j-son;charset=UTF-8");
-          }
-      },
-      success : function(setup) {
-         appSetup = setup;
-         notifyCallback();
-      }
-    });
-  };
-    var downloadLocalizedStrings = function(notifyCallback) {
-        jQuery.ajax({
-            type : 'GET',
-            dataType : 'json',
-            url : 'api/assetPropertyNames/fi',
-            beforeSend: function(x) {
-                if (x && x.overrideMimeType) {
-                    x.overrideMimeType("application/j-son;charset=UTF-8");
-                }
-            },
-            success : function(ls) {
-                localizedStrings = ls;
-                window.localizedStrings = localizedStrings;
-                    notifyCallback();
-            }
-        });
-    };
 
   eventbus.on('application:readOnly tool:changed validityPeriod:changed', function(readOnly) {
       window.location.hash = '';
@@ -86,6 +35,22 @@
     jQuery('.spinner-overlay').remove();
   });
 
+  eventbus.on('applicationSetup:fetched', function(setup) {
+    appSetup = setup;
+    startApplication();
+  });
+
+  eventbus.on('configuration:fetched', function(config) {
+    appConfig = config;
+    startApplication();
+  });
+
+  eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
+    localizedStrings = assetPropertyNames;
+    window.localizedStrings = assetPropertyNames;
+    startApplication();
+  });
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -106,12 +71,14 @@
     }
   };
 
-    application.start = function(backend) {
-        if(backend) window.Backend = backend;
-        window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
-        downloadAppSetup(startApplication);
-        downloadConfig(startApplication);
-        downloadLocalizedStrings(startApplication);
-    };
+  application.start = function (backend) {
+    if (backend) window.Backend = backend;
+    window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
+    ActionPanel.initialize(Backend);
+    AssetForm.initialize(Backend);
+    Backend.getApplicationSetup();
+    Backend.getConfiguration(assetIdFromURL());
+    Backend.getAssetPropertyNames();
+  };
 
 }(window.Application = window.Application || {}));
