@@ -1,12 +1,8 @@
 var http = require('http');
 var util = require('util');
-var httpProxy = require('http-proxy');
+var request = require('request');
 
 var VALLU_API_URL = process.env.VALLU_API_URL;
-
-var proxy = httpProxy.createProxyServer({
-  secure: false
-});
 
 var server = http.createServer(function (req, res) {
   if (req.method == 'POST') {
@@ -22,7 +18,7 @@ var server = http.createServer(function (req, res) {
       }
     });
     if (VALLU_API_URL) {
-      proxy.web(req, res, { target: VALLU_API_URL });
+      req.pipe(request({ url: VALLU_API_URL, strictSSL: false })).pipe(res);
     }
   } else {
     console.log('Vallu local test only handles POST request!');
