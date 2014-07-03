@@ -1,6 +1,6 @@
 var http = require('http');
 var util = require('util');
-var httpProxy = require('http-proxy')
+var httpProxy = require('http-proxy');
 
 var VALLU_API_URL = process.env.VALLU_API_URL;
 
