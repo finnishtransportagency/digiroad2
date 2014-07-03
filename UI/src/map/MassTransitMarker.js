@@ -154,7 +154,7 @@
 
     var handleFetchedAsset = function(asset) {
       data.imageIds = asset.imageIds;
-      if (data.group.size === 1) {
+      if (data.group.assetGroup.length === 1) {
         data.group.lon = asset.lon;
         data.group.lat = asset.lat;
       }
@@ -182,7 +182,6 @@
         data.group.moved = false;
         eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
         data.group.assetGroup = [asset];
-        data.group.size = 1;
         data.group.id = new Date().getTime();
         renderNewState(asset);
       }

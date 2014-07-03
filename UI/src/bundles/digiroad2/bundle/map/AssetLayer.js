@@ -132,7 +132,6 @@ window.AssetLayer = function(map, roadLayer) {
           id: groupId,
           lon: centroidLonLat.lon,
           lat: centroidLonLat.lat,
-          size: assetGroup.length,
           assetGroup: assetGroup
         };
 
@@ -257,7 +256,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createDummyGroup = function(lon, lat, asset) {
-    return {id: groupId++, lon: lon, lat: lat, size: 1, assetGroup: [asset]};
+    return {id: groupId++, lon: lon, lat: lat, assetGroup: [asset]};
   };
 
   var closeAsset = function() {
