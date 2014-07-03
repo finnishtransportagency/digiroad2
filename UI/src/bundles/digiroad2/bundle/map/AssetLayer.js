@@ -224,7 +224,7 @@ window.AssetLayer = function(map, roadLayer) {
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId
     };
-    data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y);
+    data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
@@ -250,14 +250,14 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var addNewAsset = function(asset) {
-    asset.group = createDummyGroup(asset.lon, asset.lat);
+    asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     selectedAsset = insertAsset(asset);
     assets[asset.id] = selectedAsset;
     addAssetToLayers(assets[asset.id]);
   };
 
-  var createDummyGroup = function(lon, lat) {
-    return {id: groupId++, lon: lon, lat: lat, size: 1};
+  var createDummyGroup = function(lon, lat, asset) {
+    return {id: groupId++, lon: lon, lat: lat, size: 1, assetGroup: [asset]};
   };
 
   var closeAsset = function() {
