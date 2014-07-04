@@ -256,6 +256,18 @@ input[type="checkbox"] {
   color: @input-color-placeholder; // lighten the text some for contrast
 }
 
+// Form control feedback states
+//
+// Apply contextual and semantic states to individual form controls.
+
+.form-group {
+  &.error {
+    label {
+      color: @error;
+    }
+  }
+}
+
 // Horizontal forms
 //
 // Horizontal forms allow you to create forms with labels on the left and inputs on the right.
