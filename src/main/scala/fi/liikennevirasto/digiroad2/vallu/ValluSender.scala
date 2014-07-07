@@ -39,7 +39,7 @@ object ValluSender extends AssetPropertiesReader {
     httpPost.setEntity(entity)
     val response = httpClient.execute(httpPost)
     try {
-      messageLogger.info(s"Got response ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
+      messageLogger.info(s"Got response (${response.getStatusLine.getStatusCode}) ${EntityUtils.toString(response.getEntity , Charset.forName("UTF-8"))}")
       EntityUtils.consume(entity)
     } finally {
       response.close()
