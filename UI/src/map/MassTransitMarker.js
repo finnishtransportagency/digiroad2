@@ -177,6 +177,15 @@
       }
     });
 
+    eventbus.on('asset:selected', function(asset) {
+      if (asset.id === data.id) {
+        renderNewState(asset);
+        selected = true;
+      } else {
+        deselect();
+      }
+    });
+
     eventbus.on('asset:saved', function(asset) {
       if (data.id === asset.id && data.group.moved) {
         data.group.moved = false;
