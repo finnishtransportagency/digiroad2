@@ -51,7 +51,7 @@
       var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
-      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
 
       return $('<div class="expanded-bus-stop" />').addClass(groupIndex === 0 && 'root')
         .append($('<div class="images field" />').html(busStopImages))
@@ -66,9 +66,13 @@
       });
     };
 
+    var findGroupIndexForAsset = function(group, asset) {
+      return Math.max(_.findIndex(group, { id: asset.id }), 0);
+    };
+
     var calculateOffsetForMarker = function(dataForCalculation) {
       var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup, validityPeriods);
-      var groupIndex = _.findIndex(filteredGroup, { id: dataForCalculation.id });
+      var groupIndex = findGroupIndexForAsset(filteredGroup, dataForCalculation);
 
       return _.chain(filteredGroup)
               .take(groupIndex)
@@ -112,7 +116,7 @@
 
     var renderDefaultState = function() {
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
-      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var defaultMarker = $('<div class="bus-basic-marker" />')
         .append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)))
         .addClass(groupIndex === 0 && 'root');
@@ -207,7 +211,7 @@
     eventbus.on('validityPeriod:changed', function(newValidityPeriods) {
       validityPeriods = newValidityPeriods;
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
-      var groupIndex = _.findIndex(filteredGroup, { id: data.id });
+      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
       $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
       setYPositionForAssetOnGroup();
