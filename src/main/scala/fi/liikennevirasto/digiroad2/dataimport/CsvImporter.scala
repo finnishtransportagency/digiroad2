@@ -61,6 +61,7 @@ object CsvImporter {
         key match {
           case "Pysäkin nimi" => result.copy(_2 = SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(value))) :: result._2)
           case "Ylläpitäjän tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_tunnus", values = Seq(PropertyValue(value))) :: result._2)
+          case "LiVi-tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_koodi", values = Seq(PropertyValue(value))) :: result._2)
           case "Pysäkin tyyppi" =>
             val (malformedParameters, properties) = assetTypeToProperty(value)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
