@@ -126,6 +126,7 @@ window.AssetLayer = function(map, roadLayer) {
       if (!_.isArray(assetGroup)) {
         assetGroup = [assetGroup];
       }
+      assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
         asset.group = {
