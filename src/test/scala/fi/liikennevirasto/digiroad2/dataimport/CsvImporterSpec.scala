@@ -118,6 +118,20 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("update asset admin id by CSV import", Tag("db")) {
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "yllapitajan_tunnus" -> "1111111"))
+    try {
+      val csv = csvToInputStream(
+        s"Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus\n" +
+        s"${asset.externalId};;2222222\n")
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
+      val assetAdminId = getAssetAdminId(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetAdminId should equal(Some("2222222"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
   test("raise an error when updating non-existent asset", Tag("db")) {
     val csv =
       s"Valtakunnallinen ID;Pysäkin nimi\n" +
@@ -191,9 +205,13 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 
-  private def getAssetName(asset: AssetWithProperties): Option[String] = {
-    asset.propertyData.find(property => property.publicId.equals("nimi_suomeksi"))
-      .flatMap(property => property.values.headOption.map(value => value.propertyValue))
+  private def getAssetName(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("nimi_suomeksi", asset)
+
+  private def getAssetAdminId(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("yllapitajan_tunnus", asset)
+
+  private def getAssetPropertyValue(propertyName: String, asset: AssetWithProperties): Option[String] = {
+     asset.propertyData.find(_.publicId.equals(propertyName))
+       .flatMap(_.values.headOption.map(_.propertyValue))
   }
 
   private def getAssetType(asset: AssetWithProperties): List[String] = {
