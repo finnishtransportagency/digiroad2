@@ -188,8 +188,31 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetSaved = function(asset) {
+    var regroupSavedAsset = function() {
+      var parseAssetDataFromAssetsWithMetadata = function(assets) {
+        return _.chain(assets)
+                .values()
+                .pluck('data')
+                .map(function(x) { return _.omit(x, 'group'); })
+                .value();
+      };
+
+      var groupedAssetsWithoutMetadata = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assets));
+      var groupContainingSavedAsset = _.find(groupedAssetsWithoutMetadata, function(assetGroup) {
+        var assetGroupIds = _.pluck(assetGroup, 'id');
+        return _.contains(assetGroupIds, asset.id);
+      });
+      var assetGroupIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
+      var changedAssetsWithMetadata = _.values(_.pick(assets, assetGroupIdsAsKeys));
+
+      _.each(changedAssetsWithMetadata, removeAssetFromMap);
+      assets = _.omit(assets, assetGroupIdsAsKeys);
+      renderAssets(groupedAssetsWithoutMetadata);
+    };
+
     selectedAsset.data = asset;
     assets[asset.id] = selectedAsset;
+    regroupSavedAsset();
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {

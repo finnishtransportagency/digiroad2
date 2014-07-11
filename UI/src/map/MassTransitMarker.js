@@ -196,7 +196,7 @@
         if (data.group.moved) {
           data.group.moved = false;
           eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
-          data.group.assetGroup = [asset];
+          data.group.assetGroup = [data];
           data.group.id = new Date().getTime();
           renderNewState(asset);
         }
