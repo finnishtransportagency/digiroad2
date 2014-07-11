@@ -123,9 +123,6 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
       groupId++;
-      if (!_.isArray(assetGroup)) {
-        assetGroup = [assetGroup];
-      }
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
