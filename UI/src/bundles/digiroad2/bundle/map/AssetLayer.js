@@ -139,7 +139,6 @@ window.AssetLayer = function(map, roadLayer) {
         if (isAssetSelectedAndDirty(asset)) {
           return;
         }
-        assets = assets || {};
         if (!assets[asset.id]) {
           assets[asset.id] = insertAsset(asset);
         }
