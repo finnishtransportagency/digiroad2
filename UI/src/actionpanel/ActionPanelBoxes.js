@@ -5,7 +5,7 @@
       '  <header class="panel-header">',
       '    Nopeusrajoitukset',
       '  </header>',
-      '</div>'].join('');  
+      '</div>'].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
@@ -106,10 +106,10 @@
       '      </label>',
       '    </div>',
       '  </div>',
-      roadTypeLegend,        
+      roadTypeLegend,
       '  <div class="panel-section">',
       '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
-      '  </div>',      
+      '  </div>',
       '</div>'].join('');
 
     var editModeTemplate = [
@@ -146,7 +146,7 @@
       '    </div>',
       '    <div data-action="Add" class="action add">',
       '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-add" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><polygon class="shape" points="19,12 14,12 14,7 12,7 12,12 7,12 7,14 12,14 12,19 14,19 14,14 19,14 "/></svg>',
-      '    </div>',          
+      '    </div>',
       '  </div>',
       '  <div class="panel-section">',
       '    <button class="action-mode-btn read-only-btn btn btn-secondary btn-block" style="display: none;">Siirry katselutilaan</button>',
@@ -158,7 +158,7 @@
       '  <header class="panel-header">',
       '    Joukkoliikenteen pys&auml;kit',
       '  </header>',
-      '</div>'].join('');        
+      '</div>'].join('');
 
     var elements = {
       collapsed: $(collapsedTemplate).hide(),
@@ -219,8 +219,8 @@
         }
         var el = $(this);
         var validityPeriod = el.prop('name');
-        validityPeriods[validityPeriod] = el.prop('checked');
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
+        selectValidityPeriod(validityPeriod, el.prop('checked'));
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(getValidityPeriods()));
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
@@ -248,6 +248,14 @@
       editModeRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
+    var selectValidityPeriod = function(validityPeriod, isSelected) {
+      validityPeriods[validityPeriod] = isSelected;
+    };
+
+    var getValidityPeriods = function() {
+      return validityPeriods;
+    };
+
     var bindExternalEventHandlers = function() {
       eventbus.on('validityPeriod:changed', function() {
         var toggleValidityPeriodCheckbox = function(validityPeriods, el) {
@@ -256,12 +264,12 @@
 
         var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'))
                            .concat($.makeArray(elements.editMode.find('input[type=checkbox]')));
-        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, validityPeriods));
+        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, getValidityPeriods()));
       });
 
       eventbus.on('asset:saved asset:created', function(asset) {
-        validityPeriods[asset.validityPeriod] = true;
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
+        selectValidityPeriod(asset.validityPeriod, true);
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(getValidityPeriods()));
       }, this);
 
       eventbus.on('layer:selected', function(selectedLayer) {
