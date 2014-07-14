@@ -10,7 +10,6 @@ window.AssetLayer = function(map, roadLayer) {
   map.addLayer(assetDirectionLayer);
   map.addLayer(assetLayer);
 
-  var assets = {};
   var overlay;
   var selectedControl = 'Select';
   var assetMoveWaitTime = 100;
@@ -139,12 +138,12 @@ window.AssetLayer = function(map, roadLayer) {
         if (isAssetSelectedAndDirty(asset)) {
           return;
         }
-        if (!getAsset(asset.id)) {
-          insertAsset(createAsset(asset), asset.id);
+        if (!AssetsModel.getAsset(asset.id)) {
+          AssetsModel.insertAsset(createAsset(asset), asset.id);
         }
-        addAssetToLayers(getAsset(asset.id));
+        addAssetToLayers(AssetsModel.getAsset(asset.id));
         if (selectedAsset && selectedAsset.data.id == asset.id) {
-          selectedAsset = getAsset(asset.id);
+          selectedAsset = AssetsModel.getAsset(asset.id);
         }
       });
     });
@@ -164,7 +163,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleValidityPeriodChanged = function(selection) {
     selectedValidityPeriods = selection;
-    _.each(assets, function(asset) {
+    _.each(AssetsModel.getAssets(), function(asset) {
       if (_.contains(selection, asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         showAsset(asset);
       } else {
@@ -189,7 +188,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetSaved = function(asset) {
     selectedAsset.data = asset;
-    insertAsset(selectedAsset, asset.id);
+    AssetsModel.insertAsset(selectedAsset, asset.id);
     regroupAssetIfNearOtherAssets(asset);
   };
 
@@ -202,7 +201,7 @@ window.AssetLayer = function(map, roadLayer) {
               .value();
     };
 
-    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assets));
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()));
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
@@ -216,9 +215,9 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var destroyGroup = function(assetIds) {
-    var changedAssetsWithMetadata = _.values(_.pick(assets, assetIds));
+    var changedAssetsWithMetadata = _.values(_.pick(AssetsModel.getAssets(), assetIds));
     _.each(changedAssetsWithMetadata, removeAssetFromMap);
-    assets = _.omit(assets, assetIds);
+    AssetsModel.destroyGroup(assetIds);
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
@@ -278,16 +277,8 @@ window.AssetLayer = function(map, roadLayer) {
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     selectedAsset = createAsset(asset);
-    insertAsset(selectedAsset, asset.id);
-    addAssetToLayers(getAsset(asset.id));
-  };
-
-  var insertAsset = function(asset, assetId) {
-    assets[assetId] = asset;
-  };
-
-  var getAsset = function(assetId) {
-    return assets[assetId];
+    AssetsModel.insertAsset(selectedAsset, asset.id);
+    addAssetToLayers(AssetsModel.getAsset(asset.id));
   };
 
   var createDummyGroup = function(lon, lat, asset) {
@@ -304,7 +295,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetFetched = function(assetData, keepPosition) {
-    var existingAsset = getAsset(assetData.id);
+    var existingAsset = AssetsModel.getAsset(assetData.id);
     if (existingAsset) {
       existingAsset.data = assetData;
       selectedAsset = existingAsset;
