@@ -167,12 +167,6 @@
     };
     var actionButtons = elements.editMode.find('.panel-actions .action');
 
-    var validityPeriods = {
-      current: true,
-      future: false,
-      past: false
-    };
-
     var selectedValidityPeriods = function(validityPeriods) {
       return _.keys(_.pick(validityPeriods, function(selected) {
         return selected;
@@ -219,8 +213,8 @@
         }
         var el = $(this);
         var validityPeriod = el.prop('name');
-        selectValidityPeriod(validityPeriod, el.prop('checked'));
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(getValidityPeriods()));
+        AssetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(AssetsModel.getValidityPeriods()));
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
@@ -248,14 +242,6 @@
       editModeRoadTypeCheckboxSelector.change(roadTypeSelected);
     };
 
-    var selectValidityPeriod = function(validityPeriod, isSelected) {
-      validityPeriods[validityPeriod] = isSelected;
-    };
-
-    var getValidityPeriods = function() {
-      return validityPeriods;
-    };
-
     var bindExternalEventHandlers = function() {
       eventbus.on('validityPeriod:changed', function() {
         var toggleValidityPeriodCheckbox = function(validityPeriods, el) {
@@ -264,12 +250,12 @@
 
         var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'))
                            .concat($.makeArray(elements.editMode.find('input[type=checkbox]')));
-        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, getValidityPeriods()));
+        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, AssetsModel.getValidityPeriods()));
       });
 
       eventbus.on('asset:saved asset:created', function(asset) {
-        selectValidityPeriod(asset.validityPeriod, true);
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(getValidityPeriods()));
+        AssetsModel.selectValidityPeriod(asset.validityPeriod, true);
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(AssetsModel.getValidityPeriods()));
       }, this);
 
       eventbus.on('layer:selected', function(selectedLayer) {
