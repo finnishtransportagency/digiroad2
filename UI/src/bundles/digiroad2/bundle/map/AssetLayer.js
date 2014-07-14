@@ -184,35 +184,38 @@ window.AssetLayer = function(map, roadLayer) {
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
     addNewAsset(asset);
+    regroupAssetIfNearOtherAssets(asset);
     eventbus.trigger('asset:selected', asset);
   };
 
   var handleAssetSaved = function(asset) {
-    var regroupSavedAsset = function() {
-      var parseAssetDataFromAssetsWithMetadata = function(assets) {
-        return _.chain(assets)
-                .values()
-                .pluck('data')
-                .map(function(x) { return _.omit(x, 'group'); })
-                .value();
-      };
-
-      var groupedAssetsWithoutMetadata = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assets));
-      var groupContainingSavedAsset = _.find(groupedAssetsWithoutMetadata, function(assetGroup) {
-        var assetGroupIds = _.pluck(assetGroup, 'id');
-        return _.contains(assetGroupIds, asset.id);
-      });
-      var assetGroupIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
-      var changedAssetsWithMetadata = _.values(_.pick(assets, assetGroupIdsAsKeys));
-
-      _.each(changedAssetsWithMetadata, removeAssetFromMap);
-      assets = _.omit(assets, assetGroupIdsAsKeys);
-      renderAssets(groupedAssetsWithoutMetadata);
-    };
-
     selectedAsset.data = asset;
     assets[asset.id] = selectedAsset;
-    regroupSavedAsset();
+    regroupAssetIfNearOtherAssets(asset);
+  };
+
+  var regroupAssetIfNearOtherAssets = function(asset) {
+    var parseAssetDataFromAssetsWithMetadata = function(assets) {
+      return _.chain(assets)
+              .values()
+              .pluck('data')
+              .map(function(x) { return _.omit(x, 'group'); })
+              .value();
+    };
+
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assets));
+    var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
+      var assetGroupIds = _.pluck(assetGroup, 'id');
+      return _.contains(assetGroupIds, asset.id);
+    });
+    var groupAssetIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
+    var changedAssetsWithMetadata = _.values(_.pick(assets, groupAssetIdsAsKeys));
+
+    if (groupContainingSavedAsset.length > 1) {
+      _.each(changedAssetsWithMetadata, removeAssetFromMap);
+      assets = _.omit(assets, groupAssetIdsAsKeys);
+      renderAssets([groupContainingSavedAsset]);
+    }
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
