@@ -86,7 +86,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
   };
 
-  var insertAsset = function(assetData) {
+  var createAsset = function(assetData) {
     var massTransitStop = new MassTransitStop(assetData, map);
     assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
     // new bus stop marker
@@ -140,7 +140,7 @@ window.AssetLayer = function(map, roadLayer) {
           return;
         }
         if (!assets[asset.id]) {
-          assets[asset.id] = insertAsset(asset);
+          assets[asset.id] = createAsset(asset);
         }
         addAssetToLayers(assets[asset.id]);
         if (selectedAsset && selectedAsset.data.id == asset.id) {
@@ -277,7 +277,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
-    selectedAsset = insertAsset(asset);
+    selectedAsset = createAsset(asset);
     assets[asset.id] = selectedAsset;
     addAssetToLayers(assets[asset.id]);
   };
