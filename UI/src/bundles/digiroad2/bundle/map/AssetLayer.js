@@ -209,13 +209,17 @@ window.AssetLayer = function(map, roadLayer) {
       return _.contains(assetGroupIds, asset.id);
     });
     var groupAssetIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
-    var changedAssetsWithMetadata = _.values(_.pick(assets, groupAssetIdsAsKeys));
 
     if (groupContainingSavedAsset.length > 1) {
-      _.each(changedAssetsWithMetadata, removeAssetFromMap);
-      assets = _.omit(assets, groupAssetIdsAsKeys);
+      destroyGroup(groupAssetIdsAsKeys);
       renderAssets([groupContainingSavedAsset]);
     }
+  };
+
+  var destroyGroup = function(assetIds) {
+    var changedAssetsWithMetadata = _.values(_.pick(assets, assetIds));
+    _.each(changedAssetsWithMetadata, removeAssetFromMap);
+    assets = _.omit(assets, assetIds);
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
