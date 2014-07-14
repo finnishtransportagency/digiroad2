@@ -5,6 +5,11 @@
     future: false,
     past: false
   };
+  var selectedValidityPeriods = function(validityPeriods) {
+    return _.keys(_.pick(validityPeriods, function(selected) {
+      return selected;
+    }));
+  };
   root.AssetsModel = {
     insertAsset: function(asset, assetId) {
       assets[assetId] = asset;
@@ -22,6 +27,7 @@
     },
     selectValidityPeriod: function(validityPeriod, isSelected) {
       validityPeriods[validityPeriod] = isSelected;
+      eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
     },
     getValidityPeriods: function() {
       return validityPeriods;

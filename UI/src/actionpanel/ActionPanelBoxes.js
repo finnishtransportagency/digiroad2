@@ -167,12 +167,6 @@
     };
     var actionButtons = elements.editMode.find('.panel-actions .action');
 
-    var selectedValidityPeriods = function(validityPeriods) {
-      return _.keys(_.pick(validityPeriods, function(selected) {
-        return selected;
-      }));
-    };
-
     var bindDOMEventHandlers = function() {
       elements.expanded.find('button.edit-mode-btn').click(function() {
         elements.expanded.hide();
@@ -214,7 +208,6 @@
         var el = $(this);
         var validityPeriod = el.prop('name');
         AssetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(AssetsModel.getValidityPeriods()));
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
@@ -255,7 +248,6 @@
 
       eventbus.on('asset:saved asset:created', function(asset) {
         AssetsModel.selectValidityPeriod(asset.validityPeriod, true);
-        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(AssetsModel.getValidityPeriods()));
       }, this);
 
       eventbus.on('layer:selected', function(selectedLayer) {
