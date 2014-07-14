@@ -11,8 +11,9 @@
       return assets;
     },
     destroyGroup: function(assetIds) {
+      var destroyedAssets = _.pick(assets, assetIds);
       assets = _.omit(assets, assetIds);
-      eventbus.trigger('assetGroup:destroyed', assetIds);
+      eventbus.trigger('assetGroup:destroyed', destroyedAssets);
     }
   }
 })(this);

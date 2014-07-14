@@ -206,18 +206,16 @@ window.AssetLayer = function(map, roadLayer) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
     });
-    var groupAssetIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
+    var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
     if (groupContainingSavedAsset.length > 1) {
-      reRenderGroup(groupAssetIdsAsKeys);
+      AssetsModel.destroyGroup(assetIds);
     }
   };
 
-  var reRenderGroup = function(assetIds) {
-    var changedAssetsWithMetadata = _.values(_.pick(AssetsModel.getAssets(), assetIds));
-    _.each(changedAssetsWithMetadata, removeAssetFromMap);
-    AssetsModel.destroyGroup(assetIds);
-    renderAssets([parseAssetDataFromAssetsWithMetadata(changedAssetsWithMetadata)]);
+  var reRenderGroup = function(destroyedAssets) {
+    _.each(destroyedAssets, removeAssetFromMap);
+    renderAssets([parseAssetDataFromAssetsWithMetadata(destroyedAssets)]);
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
@@ -375,6 +373,7 @@ window.AssetLayer = function(map, roadLayer) {
       removeAssetsFromLayer();
     }
   }, this);
+  eventbus.on('assetGroup:destroyed', reRenderGroup, this);
 
   var approximately = function(n, m) {
     var threshold = 10;
