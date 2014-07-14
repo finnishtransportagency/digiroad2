@@ -12,6 +12,7 @@
     },
     destroyGroup: function(assetIds) {
       assets = _.omit(assets, assetIds);
+      eventbus.trigger('assetGroup:destroyed', assetIds);
     }
   }
 })(this);
