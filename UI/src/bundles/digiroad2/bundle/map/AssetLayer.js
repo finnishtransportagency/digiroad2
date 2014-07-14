@@ -192,15 +192,15 @@ window.AssetLayer = function(map, roadLayer) {
     regroupAssetIfNearOtherAssets(asset);
   };
 
-  var regroupAssetIfNearOtherAssets = function(asset) {
-    var parseAssetDataFromAssetsWithMetadata = function(assets) {
-      return _.chain(assets)
-              .values()
-              .pluck('data')
-              .map(function(x) { return _.omit(x, 'group'); })
-              .value();
-    };
+  var parseAssetDataFromAssetsWithMetadata = function(assets) {
+    return _.chain(assets)
+      .values()
+      .pluck('data')
+      .map(function(x) { return _.omit(x, 'group'); })
+      .value();
+  };
 
+  var regroupAssetIfNearOtherAssets = function(asset) {
     var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()));
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
@@ -209,15 +209,15 @@ window.AssetLayer = function(map, roadLayer) {
     var groupAssetIdsAsKeys = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
     if (groupContainingSavedAsset.length > 1) {
-      destroyGroup(groupAssetIdsAsKeys);
-      renderAssets([groupContainingSavedAsset]);
+      reRenderGroup(groupAssetIdsAsKeys);
     }
   };
 
-  var destroyGroup = function(assetIds) {
+  var reRenderGroup = function(assetIds) {
     var changedAssetsWithMetadata = _.values(_.pick(AssetsModel.getAssets(), assetIds));
     _.each(changedAssetsWithMetadata, removeAssetFromMap);
     AssetsModel.destroyGroup(assetIds);
+    renderAssets([parseAssetDataFromAssetsWithMetadata(changedAssetsWithMetadata)]);
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
