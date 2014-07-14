@@ -139,12 +139,12 @@ window.AssetLayer = function(map, roadLayer) {
         if (isAssetSelectedAndDirty(asset)) {
           return;
         }
-        if (!assets[asset.id]) {
+        if (!getAsset(asset.id)) {
           insertAsset(createAsset(asset), asset.id);
         }
-        addAssetToLayers(assets[asset.id]);
+        addAssetToLayers(getAsset(asset.id));
         if (selectedAsset && selectedAsset.data.id == asset.id) {
-          selectedAsset = assets[asset.id];
+          selectedAsset = getAsset(asset.id);
         }
       });
     });
@@ -279,11 +279,15 @@ window.AssetLayer = function(map, roadLayer) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     selectedAsset = createAsset(asset);
     insertAsset(selectedAsset, asset.id);
-    addAssetToLayers(assets[asset.id]);
+    addAssetToLayers(getAsset(asset.id));
   };
 
   var insertAsset = function(asset, assetId) {
     assets[assetId] = asset;
+  };
+
+  var getAsset = function(assetId) {
+    return assets[assetId];
   };
 
   var createDummyGroup = function(lon, lat, asset) {
@@ -300,9 +304,10 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetFetched = function(assetData, keepPosition) {
-    if (assets[assetData.id]) {
-      assets[assetData.id].data = assetData;
-      selectedAsset = assets[assetData.id];
+    var existingAsset = getAsset(assetData.id);
+    if (existingAsset) {
+      existingAsset.data = assetData;
+      selectedAsset = existingAsset;
       selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
     } else {
       addNewAsset(assetData);
