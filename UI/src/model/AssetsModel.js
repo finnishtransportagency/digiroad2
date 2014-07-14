@@ -15,5 +15,5 @@
       assets = _.omit(assets, assetIds);
       eventbus.trigger('assetGroup:destroyed', destroyedAssets);
     }
-  }
+  };
 })(this);
