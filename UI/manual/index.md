@@ -277,7 +277,7 @@ __Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;. Nimen tulee olla valt
 __Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
 __Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
-__Omistajan tunnus:__ Pys&auml;kin omistajan sis&auml;inen tunnus pys&auml;kille. Erikoistapauksia varten (esim. uudenmaan ELY).
+__LIVI-tunnus:__ Pys&auml;kin Livi-tunniste, vastaava tunnus kuin Tierekisteriss&auml;. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.
 __Matkustajatunnus:__ Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.
 __Maastokoordinaatti X:__ Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.
 __Maastokoordinaatti Y:__ Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.
