@@ -140,7 +140,7 @@ window.AssetLayer = function(map, roadLayer) {
           return;
         }
         if (!assets[asset.id]) {
-          assets[asset.id] = createAsset(asset);
+          insertAsset(createAsset(asset), asset.id);
         }
         addAssetToLayers(assets[asset.id]);
         if (selectedAsset && selectedAsset.data.id == asset.id) {
@@ -189,7 +189,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetSaved = function(asset) {
     selectedAsset.data = asset;
-    assets[asset.id] = selectedAsset;
+    insertAsset(selectedAsset, asset.id);
     regroupAssetIfNearOtherAssets(asset);
   };
 
@@ -278,8 +278,12 @@ window.AssetLayer = function(map, roadLayer) {
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     selectedAsset = createAsset(asset);
-    assets[asset.id] = selectedAsset;
+    insertAsset(selectedAsset, asset.id);
     addAssetToLayers(assets[asset.id]);
+  };
+
+  var insertAsset = function(asset, assetId) {
+    assets[assetId] = asset;
   };
 
   var createDummyGroup = function(lon, lat, asset) {
