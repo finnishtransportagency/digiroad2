@@ -140,12 +140,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _getNotInZoomRange: function() {
       var self = this;
       return function() {
-        if (self._oldZoomLevel != self._map.getZoom()) {
+        if (self._hasZoomLevelChanged()) {
           var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
           dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
           dialog.fadeout(2000);
         }
       };
+    },
+    _hasZoomLevelChanged: function() {
+      return this._oldZoomLevel != this._map.getZoom();
     },
     start: function(sandbox) {},
     changeRoadsWidthByZoomLevel: function() {
