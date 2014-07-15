@@ -17,8 +17,6 @@
                 .attr('data-asset-id', id);
     };
 
-    var validityPeriods = ['current'];
-
     var createMarker = function() {
       configureMarkerDiv(data.id);
       renderDefaultState();
@@ -50,7 +48,7 @@
       var name = assetutils.getPropertyValue(asset, 'nimi_suomeksi');
       var direction = assetutils.getPropertyValue(asset, 'liikennointisuuntima');
 
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
 
       return $('<div class="expanded-bus-stop" />').addClass(groupIndex === 0 && 'root')
@@ -60,9 +58,9 @@
         .append($('<div class="bus-stop-direction field"/>').text(direction));
     };
 
-    var filterByValidityPeriod = function(group, validityPeriods) {
+    var filterByValidityPeriod = function(group) {
       return _.filter(group, function(asset) {
-        return _.contains(validityPeriods, asset.validityPeriod);
+        return AssetsModel.selectedValidityPeriodsContain(asset.validityPeriod);
       });
     };
 
@@ -71,7 +69,7 @@
     };
 
     var calculateOffsetForMarker = function(dataForCalculation) {
-      var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup, validityPeriods);
+      var filteredGroup = filterByValidityPeriod(dataForCalculation.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, dataForCalculation);
 
       return _.chain(filteredGroup)
@@ -115,7 +113,7 @@
     };
 
     var renderDefaultState = function() {
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var defaultMarker = $('<div class="bus-basic-marker" />')
         .append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)))
@@ -211,9 +209,8 @@
 
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
 
-    eventbus.on('validityPeriod:changed', function(newValidityPeriods) {
-      validityPeriods = newValidityPeriods;
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup, validityPeriods);
+    eventbus.on('validityPeriod:changed', function() {
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
       $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
