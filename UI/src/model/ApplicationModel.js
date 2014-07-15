@@ -13,6 +13,9 @@
     selectLayer: function(layer) {
       selectedLayer = layer;
       eventbus.trigger('layer:selected', layer);
+    },
+    getSelectedLayer: function() {
+      return selectedLayer;
     }
   };
 })(this);
