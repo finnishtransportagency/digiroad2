@@ -120,6 +120,7 @@ K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku (2), joka keskitt&auml
 6901839,435323
 ```
 
+Koordinaattihakuun voi sy&ouml;tt&auml;&auml; vain koordinaatteja, jotka osuvat sovelluksen kartalle. Jos koordinaatit eiv&auml;t osu kartalle, sovellus ilmoittaa "Koordinaatit eiv&auml;t osu kartalle". My&ouml;sk&auml;&auml;n kirjaimia tai merkkej&auml; ei voi sy&ouml;tt&auml;&auml;. Jos sy&ouml;te on virheellinen merkkijono, sovellus ilmoittaa "K&auml;yt&auml; koordinaateissa P ja I numeroarvoja".
 ####Taustakartat####
 
 Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
@@ -309,7 +310,7 @@ Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkaus
 
 Siirt&auml;minen tapahtuu tarttumalla pys&auml;kkiin kiinni ja raahaamalla se oikeaan paikkaan. Pys&auml;kki l&auml;htee liikkeelle, kun siit&auml; on pidetty kiinni 0,1 sekuntia. Pys&auml;kki liikkuu vain olemassa olevia tielinkkej&auml; pitkin ja k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimien maantieteellisten rajojen sis&auml;puolella. Jos pys&auml;kin irrottaa tielinkist&auml;, kiinnittyy se automaattisesti l&auml;himp&auml;&auml;n tielinkkiin, joka on k&auml;ytt&auml;j&auml;n p&auml;ivitysoikeuksien sallimalla maantietellisell&auml; alueella. Jos riitt&auml;v&auml;n l&auml;hell&auml;  ei ole toista tielinkki&auml;, ei pys&auml;kki irtoa linkilt&auml;, jolla se on. Tielinkki, jonka p&auml;&auml;ll&auml; pys&auml;kki on, n&auml;kyy sinisell&auml; korostusv&auml;rill&auml;. Kun pys&auml;kist&auml; p&auml;&auml;stet&auml;&auml;n irti (lasketaan se uuteen sijaintiin), oikealle avautuu Google Street View (5) ja ominaisuustieto -n&auml;kym&auml; (6), jonka kautta voi halutessaan muokata muita ominaisuustietoja. Pys&auml;kin siirt&auml;minen ei muuta pys&auml;kin mitattuja maastokoordinaatteja vaan ne s&auml;ilyv&auml;t ennallaan. Pys&auml;kin uusi sijainti tallettuu painamalla Tallenna-painiketta (15). Painamalla Peruuta-painiketta (16) pys&auml;kki palautuu alkuper&auml;iselle paikalleen.
 
-Siirrett&auml;ess&auml; pys&auml;kki&auml;, joka on pinossa, j&auml;&auml; pinoon siirrett&auml;v&auml;n pys&auml;kin kohdalle rako, kunnes siirron tallentaa tai peruuttaa. Jos pys&auml;kin siirt&auml;&auml; alle kuuden metrin p&auml;&auml;h&auml;n toisesta/toisista pys&auml;keist&auml;, tapahtuu pinoski ryhmittyminen, kun sivu p&auml;ivitet&auml;&auml;n.
+Siirrett&auml;ess&auml; pys&auml;kki&auml;, joka on pinossa, j&auml;&auml; pinoon siirrett&auml;v&auml;n pys&auml;kin kohdalle rako, kunnes siirron tallentaa tai peruuttaa. Jos pys&auml;kin siirt&auml;&auml; alle kuuden metrin p&auml;&auml;h&auml;n toisesta/toisista pys&auml;keist&auml;, siirtyy pysäkki osaksi pinoa.
 
 Pys&auml;kin siirto t&auml;ytyy tallentaa tai peruuttaa ennen kuin voi siirty&auml; muokkaamaan muita pys&auml;kkej&auml; tai pois muokkaustilasta. Sovellus ilmoittaa tehdyst&auml; muutoksesta muutos-dialogilla.
 
@@ -326,7 +327,7 @@ Sovellus muodostaa osan ominaisuustiedoista itse, jos niit&auml; ei m&auml;&auml
 
 Kun ominaisuustiedot on kirjattu, painetaan Luo-painiketta (21) tietojen tallentamiseksi tietokantaan. Jos pys&auml;kki&auml; ei halutakaan luoda, painetaan Peruutapainiketta (22). Sovellus antaa muokata vain luotavan pys&auml;kin ominaisuustietoja niin kauan, kunnes on klikattu joko "Luo" tai "Peruuta".
 
-Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. T&auml;ll&ouml;in pys&auml;kit ryhmittyv&auml;t pinoksi, kun sivu p&auml;ivitet&auml;&auml;n.
+Uuden pys&auml;kin voi lis&auml;t&auml; alle kuuden metrin p&auml;&auml;h&auml;n olemassa olevasta pys&auml;kist&auml;. 
 
 Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:
 
