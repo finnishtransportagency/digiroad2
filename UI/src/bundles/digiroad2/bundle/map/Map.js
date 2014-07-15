@@ -15,6 +15,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _roadTypeSelected: false,
     _visibilityZoomLevelForRoads: 10,
     _centerMarkerLayer: null,
+    _isInitialized: false,
     getName: function() {
       return this.pluginName;
     },
@@ -39,10 +40,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     },
     init: function(sandbox) {
       eventbus.on('application:initialized', function() {
-        this._zoomNotInMessage = this._getNotInZoomRange();
         this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
-        this._zoomNotInMessage();
+        if (this._hasZoomLevelChanged()) {
+          this.showAssetZoomDialog();
+        }
         new CoordinateSelector($('.mapplugin.coordinates'), this._map.getMaxExtent());
+        this._isInitialized = true;
       }, this);
       eventbus.on('application:readOnly', function(readOnly) {
         this._readOnly = readOnly;
@@ -142,12 +145,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
       dialog.fadeout(2000);
     },
-    _getNotInZoomRange: function() {
-      var self = this;
-      return function() {
-        if (self._hasZoomLevelChanged()) { this.showAssetZoomDialog(); }
-      };
-    },
     _hasZoomLevelChanged: function() {
       return this._oldZoomLevel != this._map.getZoom();
     },
@@ -173,8 +170,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       this._handleRoadsVisibility();
       if (!zoomlevels.isInAssetZoomLevel(mapState.zoom)) {
-        if (this._zoomNotInMessage) {
-          this._zoomNotInMessage();
+        if (this._isInitialized && this._hasZoomLevelChanged()) {
+          this.showAssetZoomDialog();
         }
       }
       this._oldZoomLevel = mapState.zoom;
