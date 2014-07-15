@@ -40,9 +40,9 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     },
     init: function(sandbox) {
       eventbus.on('application:initialized', function() {
-        this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
-        ApplicationModel.setZoomLevel(this._oldZoomLevel);
-        if (this._hasZoomLevelChanged()) {
+        var zoom = this._map.getZoom();
+        ApplicationModel.setZoomLevel(zoom);
+        if (!zoomlevels.isInAssetZoomLevel(zoom)) {
           this.showAssetZoomDialog();
         }
         new CoordinateSelector($('.mapplugin.coordinates'), this._map.getMaxExtent());
@@ -146,9 +146,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
       dialog.fadeout(2000);
     },
-    _hasZoomLevelChanged: function() {
-      return this._oldZoomLevel != this._map.getZoom();
-    },
     start: function(sandbox) {},
     changeRoadsWidthByZoomLevel: function() {
       var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
@@ -175,7 +172,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
           this.showAssetZoomDialog();
         }
       }
-      this._oldZoomLevel = mapState.zoom;
     },
     preselectLayers: function(layers) {
       for (var i = 0; i < layers.length; i++) {
