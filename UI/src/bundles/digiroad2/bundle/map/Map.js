@@ -137,14 +137,15 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         }
       }
     },
+    showAssetZoomDialog: function() {
+      var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
+      dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
+      dialog.fadeout(2000);
+    },
     _getNotInZoomRange: function() {
       var self = this;
       return function() {
-        if (self._hasZoomLevelChanged()) {
-          var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-          dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
-          dialog.fadeout(2000);
-        }
+        if (self._hasZoomLevelChanged()) { this.showAssetZoomDialog(); }
       };
     },
     _hasZoomLevelChanged: function() {
