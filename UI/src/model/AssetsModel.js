@@ -31,7 +31,9 @@
     },
     getValidityPeriods: function() {
       return validityPeriods;
+    },
+    selectedValidityPeriodsContain: function(validityPeriod) {
+      return validityPeriods[validityPeriod];
     }
   };
-
 })(this);

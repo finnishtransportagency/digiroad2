@@ -1,6 +1,4 @@
 window.AssetLayer = function(map, roadLayer) {
-  var selectedValidityPeriods = ['current'];
-
   var selectedAsset;
   var backend = Backend;
   var readOnly = true;
@@ -104,11 +102,10 @@ window.AssetLayer = function(map, roadLayer) {
   var addAssetToLayers = function(asset) {
     assetLayer.addMarker(asset.massTransitStop.getMarker());
     assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
-    if (!_.contains(selectedValidityPeriods, asset.data.validityPeriod)) {
-      hideAsset(asset);
-    }
-    else {
+    if (AssetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
       showAsset(asset);
+    } else {
+      hideAsset(asset);
     }
   };
 
@@ -161,10 +158,9 @@ window.AssetLayer = function(map, roadLayer) {
     addNewAsset(asset);
   };
 
-  var handleValidityPeriodChanged = function(selection) {
-    selectedValidityPeriods = selection;
+  var handleValidityPeriodChanged = function() {
     _.each(AssetsModel.getAssets(), function(asset) {
-      if (_.contains(selection, asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      if (AssetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         showAsset(asset);
       } else {
         hideAsset(asset);
@@ -174,7 +170,7 @@ window.AssetLayer = function(map, roadLayer) {
       return;
     }
 
-    if (selectedAsset && !_.contains(selectedValidityPeriods, selectedAsset.data.validityPeriod)) {
+    if (selectedAsset && !AssetsModel.selectedValidityPeriodsContain(selectedAsset.data.validityPeriod)) {
       closeAsset();
     }
   };
