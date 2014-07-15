@@ -94,7 +94,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       var map = this._map;
       this._map.events.register('moveend', this, function() {
-        eventbus.trigger('map:moved', {zoom: map.getZoom(), bbox: map.getExtent()});
+        ApplicationModel.moveMap(map.getZoom(), map.getExtent());
       });
 
       // register domain builder
