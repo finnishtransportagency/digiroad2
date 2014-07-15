@@ -36,4 +36,9 @@
       return validityPeriods[validityPeriod];
     }
   };
+  eventbus.on('map:moved', function(map) {
+    if (!zoomlevels.isInAssetZoomLevel(map.zoom) && selectedAssetModel.isDirty()) {
+      eventbus.trigger('assetModifications:confirm');
+    }
+  }, this);
 })(this);
