@@ -37,8 +37,14 @@
     }
   };
   eventbus.on('map:moved', function(map) {
-    if (!zoomlevels.isInAssetZoomLevel(map.zoom) && selectedAssetModel.isDirty()) {
-      eventbus.trigger('assetModifications:confirm');
+    if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
+      if (ApplicationModel.getSelectedLayer() === 'asset') {
+        Backend.getAssets(10, map.bbox);
+      }
+    } else {
+      if (selectedAssetModel.isDirty()) {
+        eventbus.trigger('assetModifications:confirm');
+      }
     }
   }, this);
 })(this);

@@ -364,9 +364,7 @@ window.AssetLayer = function(map, roadLayer) {
     new Confirm();
   });
   eventbus.on('map:moved', function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && ApplicationModel.getSelectedLayer() === 'asset') {
-      backend.getAssets(10, state.bbox);
-    } else {
+    if (!(zoomlevels.isInAssetZoomLevel(state.zoom) && ApplicationModel.getSelectedLayer() === 'asset')) {
       removeAssetsFromLayer();
     }
   }, this);
