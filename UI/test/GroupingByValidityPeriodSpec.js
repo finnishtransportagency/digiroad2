@@ -4,8 +4,6 @@ define(['chai'], function(chai) {
   var assert = chai.assert;
 
   describe('when loading application with overlapping bus stops in different validity periods', function() {
-    this.timeout(5000);
-
     it('only includes bus stops in the selected validity period to the group', function() {
       var currentStop = $('[data-asset-id=300347]');
       var futureStop = $('[data-asset-id=300348]');

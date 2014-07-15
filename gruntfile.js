@@ -123,7 +123,8 @@ module.exports = function(grunt) {
           mocha: { ignoreLeaks: false },
           urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
           run: false,
-          log: true
+          log: true,
+          timeout: 10000
         }
       }
     },
