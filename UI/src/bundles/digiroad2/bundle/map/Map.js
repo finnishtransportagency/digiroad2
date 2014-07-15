@@ -41,6 +41,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     init: function(sandbox) {
       eventbus.on('application:initialized', function() {
         this._oldZoomLevel = zoomlevels.isInAssetZoomLevel(this._map.getZoom()) ? this._map.getZoom() : -1;
+        ApplicationModel.setZoomLevel(this._oldZoomLevel);
         if (this._hasZoomLevelChanged()) {
           this.showAssetZoomDialog();
         }
@@ -170,7 +171,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       this._handleRoadsVisibility();
       if (!zoomlevels.isInAssetZoomLevel(mapState.zoom)) {
-        if (this._isInitialized && this._hasZoomLevelChanged()) {
+        if (this._isInitialized && mapState.hasZoomLevelChanged) {
           this.showAssetZoomDialog();
         }
       }
