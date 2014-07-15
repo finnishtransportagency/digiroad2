@@ -283,7 +283,7 @@ window.AssetLayer = function(map, roadLayer) {
     selectedAsset = null;
   };
 
-  var removeAssetsFromLayer = function() {
+  var hideAssets = function() {
     assetDirectionLayer.removeAllFeatures();
     assetLayer.setVisibility(false);
   };
@@ -362,12 +362,8 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
   eventbus.on('assetModifications:confirm', function() {
     new Confirm();
-  });
-  eventbus.on('map:moved', function(state) {
-    if (!(zoomlevels.isInAssetZoomLevel(state.zoom) && ApplicationModel.getSelectedLayer() === 'asset')) {
-      removeAssetsFromLayer();
-    }
   }, this);
+  eventbus.on('assets:outOfZoom', hideAssets, this);
   eventbus.on('assetGroup:destroyed', reRenderGroup, this);
 
   var approximately = function(n, m) {

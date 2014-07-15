@@ -44,6 +44,10 @@
     } else {
       if (selectedAssetModel.isDirty()) {
         eventbus.trigger('assetModifications:confirm');
+      } else  {
+        if (ApplicationModel.getSelectedLayer() === 'asset') {
+          eventbus.trigger('assets:outOfZoom');
+        }
       }
     }
   }, this);
