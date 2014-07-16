@@ -141,6 +141,7 @@ window.AssetLayer = function(map, roadLayer) {
         addAssetToLayers(AssetsModel.getAsset(asset.id));
         if (selectedAsset && selectedAsset.data.id == asset.id) {
           selectedAsset = AssetsModel.getAsset(asset.id);
+          eventbus.trigger('asset:selected', asset);
         }
       });
     });
