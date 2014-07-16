@@ -146,7 +146,7 @@ window.AssetLayer = function(map, roadLayer) {
       _.each(assetGroup, function(asset) {
         var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
         var isAssetSelectedAndDirty = function(asset) {
-          return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
+          return assetIsSelected(asset) && selectedAssetModel.isDirty();
         };
         if (isAssetSelectedAndDirty(uiAsset)) {
           return;
@@ -155,7 +155,7 @@ window.AssetLayer = function(map, roadLayer) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
         addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
-        if (selectedAsset && selectedAsset.data.id === uiAsset.id) {
+        if (assetIsSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           eventbus.trigger('asset:selected', uiAsset);
         }
