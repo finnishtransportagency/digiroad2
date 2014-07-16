@@ -360,6 +360,12 @@ window.AssetLayer = function(map, roadLayer) {
       renderAssets(groupedAssets);
     }
   }, this);
+  eventbus.on('assets:updated', function(data) {
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      var groupedAssets = assetGrouping.groupByDistance(data.assets);
+      renderAssets(groupedAssets);
+    }
+  }, this);
   eventbus.on('assetModifications:confirm', function() {
     new Confirm();
   }, this);

@@ -39,7 +39,9 @@
   eventbus.on('map:moved', function(map) {
     if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
       if (ApplicationModel.getSelectedLayer() === 'asset') {
-        Backend.getAssets(10, map.bbox);
+        Backend.getAssetsWithCallback(10, map.bbox, function(assets) {
+          eventbus.trigger('assets:updated', { assets: assets, assetsRegrouped: map.hasZoomLevelChanged });
+        });
       }
     } else {
       if (selectedAssetModel.isDirty()) {

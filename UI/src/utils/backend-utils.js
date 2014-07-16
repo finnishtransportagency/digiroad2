@@ -165,8 +165,8 @@
     };
 
     backend.withAssetsData = function(assetsData) {
-      this.getAssets = function () {
-        eventbus.trigger('assets:fetched', assetsData);
+      this.getAssetsWithCallback = function (assetTypeId, boundingBox, callback) {
+        callback(assetsData);
       };
       return this;
     };
