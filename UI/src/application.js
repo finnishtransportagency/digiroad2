@@ -19,7 +19,7 @@
   $(window).on('hashchange', function(evt) {
       var data = assetIdFromURL();
       if (data && data.externalId) {
-          Backend.getIdFromExternalId(data.externalId, data.keepPosition);
+          Backend.getAssetByExternalId(data.externalId, data.keepPosition);
       }
   });
 
@@ -65,7 +65,7 @@
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();
           if (data && data.externalId) {
-              Backend.getIdFromExternalId(data.externalId);
+              Backend.getAssetByExternalId(data.externalId);
           }
       });
     }
