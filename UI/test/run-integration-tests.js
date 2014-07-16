@@ -2,10 +2,12 @@ require.config({
   paths: {
     'jquery': '../../bower_components/jquery/dist/jquery.min',
     'chai': '../../bower_components/chai/chai',
-    'chai-jquery': '../../bower_components/chai-jquery/chai-jquery'
+    'chai-jquery': '../../bower_components/chai-jquery/chai-jquery',
+    'eventbus': '../src/utils/eventbus'
   },
   shim: {
-    'chai-jquery': ['jquery', 'chai']
+    'chai-jquery': ['jquery', 'chai'],
+    'eventbus': { exports: 'eventbus' }
   },
   waitSeconds: 10
 });
