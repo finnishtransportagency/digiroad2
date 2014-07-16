@@ -25,7 +25,7 @@
 
     var createNewMarker = function() {
       configureMarkerDiv(data.id);
-      renderNewState(data);
+      renderSelectedState(data);
       return box;
     };
 
@@ -123,7 +123,7 @@
       setYPositionForAssetOnGroup();
     };
 
-    var renderNewState = function(assetWithProperties) {
+    var renderSelectedState = function(assetWithProperties) {
       box.bounds = getBounds(data.group.lon, data.group.lat);
       $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds))
                 .addClass('selected-asset');
@@ -150,7 +150,7 @@
       asset.group = data.group;
       data.group.assetGroup.push(asset);
       data.group.assetGroup.sort(function(a, b) { return a.id - b.id; });
-      renderNewState(asset);
+      renderSelectedState(asset);
       eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
     };
 
@@ -161,7 +161,7 @@
         data.group.lat = asset.lat;
       }
       asset.group = data.group;
-      renderNewState(asset);
+      renderSelectedState(asset);
     };
 
     eventbus.on('asset:closed tool:changed asset:placed', deselect);
@@ -181,7 +181,7 @@
 
     eventbus.on('asset:selected', function(asset) {
       if (asset.id === data.id) {
-        renderNewState(asset);
+        renderSelectedState(asset);
         selected = true;
       } else {
         deselect();
@@ -196,7 +196,7 @@
           eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
           data.group.assetGroup = [data];
           data.group.id = new Date().getTime();
-          renderNewState(asset);
+          renderSelectedState(asset);
         }
       }
     });
