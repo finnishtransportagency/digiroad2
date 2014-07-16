@@ -115,12 +115,22 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.removeMarker(marker);
   };
 
+  var assetIsSelected = function(asset) {
+    return selectedAsset && selectedAsset.data.id === asset.id;
+  };
+
   var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
     var uiAsset = backendAsset;
+    var lon = centroidLonLat.lon;
+    var lat = centroidLonLat.lat;
+    if (assetIsSelected(uiAsset)) {
+      lon = selectedAsset.data.lon;
+      lat = selectedAsset.data.lat;
+    }
     uiAsset.group = {
       id: groupId,
-      lon: centroidLonLat.lon,
-      lat: centroidLonLat.lat,
+      lon: lon,
+      lat: lat,
       assetGroup: assetGroup
     };
     return uiAsset;
