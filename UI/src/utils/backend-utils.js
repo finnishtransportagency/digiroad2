@@ -15,12 +15,15 @@
       putAssetPropertyValue(assetId, propertyPublicId, data);
     };
 
-    backend.getAssets = _.throttle(function (assetTypeId, boundingBox) {
-      $.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, function (assets) {
+    backend.getAssets = function (assetTypeId, boundingBox) {
+      this.getAssetsWithCallback(assetTypeId, boundingBox, function (assets) {
         eventbus.trigger('assets:fetched', assets);
-      }).fail(function () {
-        console.log("error");
       });
+    };
+
+    backend.getAssetsWithCallback = _.throttle(function(assetTypeId, boundingBox, callback) {
+      $.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, callback)
+        .fail(function() { console.log("error"); });
     }, 1000);
 
     backend.getLinearAssets = _.throttle(function (boundingBox) {
