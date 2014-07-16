@@ -114,6 +114,18 @@ window.AssetLayer = function(map, roadLayer) {
     var marker = asset.massTransitStop.getMarker();
     assetLayer.removeMarker(marker);
   };
+
+  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
+    var uiAsset = backendAsset;
+    uiAsset.group = {
+      id: groupId,
+      lon: centroidLonLat.lon,
+      lat: centroidLonLat.lat,
+      assetGroup: assetGroup
+    };
+    return uiAsset;
+  };
+
   var groupId = 0;
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
@@ -122,26 +134,20 @@ window.AssetLayer = function(map, roadLayer) {
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
-        asset.group = {
-          id: groupId,
-          lon: centroidLonLat.lon,
-          lat: centroidLonLat.lat,
-          assetGroup: assetGroup
-        };
-
+        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
         var isAssetSelectedAndDirty = function(asset) {
           return (selectedAsset && selectedAsset.data.id === asset.id) && selectedAssetModel.isDirty();
         };
-        if (isAssetSelectedAndDirty(asset)) {
+        if (isAssetSelectedAndDirty(uiAsset)) {
           return;
         }
-        if (!AssetsModel.getAsset(asset.id)) {
-          AssetsModel.insertAsset(createAsset(asset), asset.id);
+        if (!AssetsModel.getAsset(uiAsset.id)) {
+          AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
-        addAssetToLayers(AssetsModel.getAsset(asset.id));
-        if (selectedAsset && selectedAsset.data.id == asset.id) {
-          selectedAsset = AssetsModel.getAsset(asset.id);
-          eventbus.trigger('asset:selected', asset);
+        addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
+        if (selectedAsset && selectedAsset.data.id === uiAsset.id) {
+          selectedAsset = AssetsModel.getAsset(uiAsset.id);
+          eventbus.trigger('asset:selected', uiAsset);
         }
       });
     });
