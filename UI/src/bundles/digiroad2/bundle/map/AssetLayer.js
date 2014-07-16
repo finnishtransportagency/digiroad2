@@ -431,24 +431,29 @@ window.AssetLayer = function(map, roadLayer) {
       );
     },
 
-    onClick: function(e) {
-      if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        var pixel = new OpenLayers.Pixel(e.xy.x, e.xy.y);
-        createNewAsset(map.getLonLatFromPixel(pixel));
-      } else {
-        if (selectedAssetModel.isDirty()) {
-          new Confirm();
-        } else {
-          selectedAssetModel.close();
-          window.location.hash = '';
-        }
-      }
+    onClick: function(event) {
+      eventbus.trigger('map:clicked', {x: event.xy.x, y: event.xy.y});
     }
   });
   var click = new Click();
   map.addControl(click);
   click.activate();
 
+  var handleMapClick = function(coordinates) {
+    if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
+      var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
+      createNewAsset(map.getLonLatFromPixel(pixel));
+    } else {
+      if (selectedAssetModel.isDirty()) {
+        new Confirm();
+      } else {
+        selectedAssetModel.close();
+        window.location.hash = '';
+      }
+    }
+  };
+
+  eventbus.on('map:clicked', handleMapClick, this);
   eventbus.on('layer:selected', function(layer) {
     if (layer !== 'asset') {
       if (assetLayer.map && assetDirectionLayer.map) {
