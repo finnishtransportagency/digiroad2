@@ -171,6 +171,14 @@
       return currentAsset.id;
     };
 
+    var getName = function() {
+      return assetutils.getPropertyValue({ propertyData: getProperties() }, 'nimi_suomeksi');
+    };
+
+    var getDirection = function() {
+      return assetutils.getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
+    };
+
     var get = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
@@ -186,6 +194,8 @@
       exists: exists,
       change: change,
       getId: getId,
+      getName: getName,
+      getDirection: getDirection,
       get: get,
       getProperties: getProperties,
       switchDirection: switchDirection

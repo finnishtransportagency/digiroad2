@@ -45,9 +45,8 @@
 
     var getSelectedContent = function(asset, imageIds) {
       var busStopImages = mapBusStopImageIdsToImages(imageIds);
-      var properties = { propertyData: selectedAssetModel.getProperties() };
-      var name = assetutils.getPropertyValue(properties, 'nimi_suomeksi');
-      var direction = assetutils.getPropertyValue(properties, 'liikennointisuuntima');
+      var name = selectedAssetModel.getName();
+      var direction = selectedAssetModel.getDirection();
 
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
