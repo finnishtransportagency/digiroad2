@@ -120,7 +120,7 @@ module.exports = function(grunt) {
       },
       integration: {
         options: {
-          mocha: { ignoreLeaks: false },
+          mocha: { ignoreLeaks: true },
           urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
           run: false,
           log: true,
