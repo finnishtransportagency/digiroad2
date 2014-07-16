@@ -15,7 +15,7 @@
 
     eventbus.on('tool:changed', function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id, true);
+        backend.getAsset(currentAsset.id);
       }
     });
 
@@ -86,7 +86,7 @@
 
     var cancel = function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id, true);
+        backend.getAsset(currentAsset.id);
       }
       changedProps = [];
       assetHasBeenModified = false;
@@ -95,7 +95,7 @@
 
     eventbus.on('application:readOnly', function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id, true);
+        backend.getAsset(currentAsset.id);
       }
     });
 

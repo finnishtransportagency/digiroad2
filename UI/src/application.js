@@ -19,7 +19,12 @@
   $(window).on('hashchange', function(evt) {
       var data = assetIdFromURL();
       if (data && data.externalId) {
-          Backend.getAssetByExternalId(data.externalId, data.keepPosition);
+          Backend.getAssetByExternalId(data.externalId, function(asset) {
+            eventbus.trigger('asset:fetched', asset);
+            if (!data.keepPosition) {
+              eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
+            }
+          });
       }
   });
 
@@ -65,7 +70,9 @@
           eventbus.trigger('application:initialized');
           var data = assetIdFromURL();
           if (data && data.externalId) {
-              Backend.getAssetByExternalId(data.externalId);
+              Backend.getAssetByExternalId(data.externalId, function(asset) {
+                eventbus.trigger('asset:fetched', asset);
+              });
           }
       });
     }

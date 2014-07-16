@@ -38,16 +38,14 @@
       });
     }, 1000);
 
-    backend.getAsset = function (assetId, keepPosition) {
+    backend.getAsset = function (assetId) {
       $.get('api/assets/' + assetId, function (asset) {
-        eventbus.trigger('asset:fetched', asset, keepPosition);
+        eventbus.trigger('asset:fetched', asset);
       });
     };
 
-    backend.getAssetByExternalId = function (externalId, keepPosition) {
-      $.get('api/assets/' + externalId + '?externalId=true', function (asset) {
-        eventbus.trigger('asset:fetched', asset, keepPosition);
-      });
+    backend.getAssetByExternalId = function (externalId, callback) {
+      $.get('api/assets/' + externalId + '?externalId=true', callback);
     };
 
     backend.getAssetTypeProperties = function (assetTypeId) {
@@ -110,7 +108,7 @@
         data: JSON.stringify(data),
         dataType: "json",
         success: function (asset) {
-          eventbus.trigger('asset:saved asset:fetched', asset, true);
+          eventbus.trigger('asset:saved asset:fetched', asset);
         },
         error: assetUpdateFailed
       });

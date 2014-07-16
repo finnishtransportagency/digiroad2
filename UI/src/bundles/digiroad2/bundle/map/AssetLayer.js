@@ -288,7 +288,7 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.setVisibility(false);
   };
 
-  var handleAssetFetched = function(assetData, keepPosition) {
+  var handleAssetFetched = function(assetData) {
     var existingAsset = AssetsModel.getAsset(assetData.id);
     if (existingAsset) {
       existingAsset.data = assetData;
@@ -297,9 +297,6 @@ window.AssetLayer = function(map, roadLayer) {
     } else {
       addNewAsset(assetData);
       eventbus.trigger('asset:selected', assetData);
-    }
-    if (!keepPosition) {
-      eventbus.trigger('coordinates:selected', { lat: selectedAsset.data.lat, lon: selectedAsset.data.lon });
     }
   };
 
