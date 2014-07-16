@@ -66,6 +66,7 @@
 
     eventbus.on('asset:placed', function(asset) {
       currentAsset = asset;
+      currentAsset.payload = {};
       assetHasBeenModified = true;
       eventbus.once('assetTypeProperties:fetched', function(properties) {
         currentAsset.propertyData = properties;

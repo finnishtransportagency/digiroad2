@@ -9,7 +9,7 @@ require.config({
   },
   waitSeconds: 10
 });
-require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec'], function(chai, chaiJquery) {
+require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec'], function(chai, chaiJquery) {
   chai.use(chaiJquery);
 
   eventbus.on('application:initialized', function() {

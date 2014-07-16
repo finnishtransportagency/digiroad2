@@ -265,10 +265,10 @@ window.AssetLayer = function(map, roadLayer) {
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
       massTransitStop: massTransitStop};
-    assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     selectedAsset.data.imageIds = [];
-    assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
     eventbus.trigger('asset:placed', selectedAsset.data);
+    assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
+    assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
 
     var applyBlockingOverlays = function() {
       var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
