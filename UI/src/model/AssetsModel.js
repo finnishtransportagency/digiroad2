@@ -17,6 +17,9 @@
     getAsset: function(assetId) {
       return assets[assetId];
     },
+    destroyAsset: function(assetId) {
+      assets = _.omit(assets, assetId.toString());
+    },
     getAssets: function() {
       return assets;
     },

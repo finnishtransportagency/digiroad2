@@ -301,17 +301,19 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.setVisibility(false);
   };
 
-  var handleAssetFetched = function(assetData) {
-    var existingAsset = AssetsModel.getAsset(assetData.id);
-    if (existingAsset) {
-      existingAsset.data = assetData;
-      selectedAsset = existingAsset;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
-      regroupAssetIfNearOtherAssets(assetData);
-    } else {
-      addNewAsset(assetData);
-      eventbus.trigger('asset:selected', assetData);
+  var destroyAsset = function(backendAsset) {
+    var uiAsset = AssetsModel.getAsset(backendAsset.id);
+    if(uiAsset) {
+      removeAssetFromMap(uiAsset);
+      AssetsModel.destroyAsset(backendAsset.id);
     }
+  };
+
+  var handleAssetFetched = function(backendAsset) {
+    destroyAsset(backendAsset);
+    addNewAsset(backendAsset);
+    regroupAssetIfNearOtherAssets(backendAsset);
+    eventbus.trigger('asset:selected', backendAsset);
   };
 
   var moveSelectedAsset = function(pxPosition) {

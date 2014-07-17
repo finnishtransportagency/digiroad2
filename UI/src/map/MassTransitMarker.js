@@ -167,16 +167,7 @@
     eventbus.on('asset:closed tool:changed asset:placed', deselect);
 
     eventbus.on('asset:fetched ', function(asset) {
-      if (asset.id === data.id) {
-        if (data.group.moved) {
-          rollbackToGroup(asset);
-        } else {
-          handleFetchedAsset(asset);
-        }
-        selected = true;
-      } else {
-        deselect();
-      }
+      if (asset.id !== data.id) { deselect(); }
     });
 
     eventbus.on('asset:selected', function(asset) {
