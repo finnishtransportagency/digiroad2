@@ -307,6 +307,7 @@ window.AssetLayer = function(map, roadLayer) {
       existingAsset.data = assetData;
       selectedAsset = existingAsset;
       selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
+      regroupAssetIfNearOtherAssets(assetData);
     } else {
       addNewAsset(assetData);
       eventbus.trigger('asset:selected', assetData);
