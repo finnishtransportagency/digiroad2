@@ -416,19 +416,17 @@ window.AssetLayer = function(map, roadLayer) {
     return _.without(assets, isSelected).concat(transformedSelectedAsset);
   };
 
-  var updateAllAssets = function(assets, assetsRegrouped) {
+  var updateAllAssets = function(assets) {
     var assetsWithSelectedAsset = backendAssetsWithSelectedAsset(assets);
     var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset);
-    if (assetsRegrouped) {
-      _.each(AssetsModel.getAssets(), removeAssetFromMap);
-      AssetsModel.destroyAssets();
-    }
+    _.each(AssetsModel.getAssets(), removeAssetFromMap);
+    AssetsModel.destroyAssets();
     renderAssets(groupedAssets);
   };
 
-  eventbus.on('assets:all-updated', function(data) {
+  eventbus.on('assets:all-updated', function(assets) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      updateAllAssets(data.assets, data.assetsRegrouped);
+      updateAllAssets(assets);
     }
   }, this);
   eventbus.on('assets:new-fetched', handleNewAssetsFetched, this);

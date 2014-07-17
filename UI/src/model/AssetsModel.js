@@ -57,7 +57,7 @@
       if (ApplicationModel.getSelectedLayer() === 'asset') {
         Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
           if (map.hasZoomLevelChanged) {
-            eventbus.trigger('assets:all-updated', { assets: backendAssets, assetsRegrouped: map.hasZoomLevelChanged });
+            eventbus.trigger('assets:all-updated', backendAssets);
           } else {
             eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
           }
