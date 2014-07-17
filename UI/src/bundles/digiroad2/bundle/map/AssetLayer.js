@@ -145,7 +145,7 @@ window.AssetLayer = function(map, roadLayer) {
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
-      groupId++;
+      var groupId = generateNewGroupId();
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
@@ -292,7 +292,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createDummyGroup = function(lon, lat, asset) {
-    return {id: groupId++, lon: lon, lat: lat, assetGroup: [asset]};
+    return {id: generateNewGroupId(), lon: lon, lat: lat, assetGroup: [asset]};
   };
 
   var closeAsset = function() {
