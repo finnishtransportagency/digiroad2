@@ -382,26 +382,6 @@ window.AssetLayer = function(map, roadLayer) {
     renderNewGroups(uiAssetGroups);
   };
 
-  eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
-  eventbus.on('tool:changed', toolSelectionChange, this);
-  eventbus.on('assetPropertyValue:saved', updateAsset, this);
-  eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
-  eventbus.on('asset:saved', handleAssetSaved, this);
-  eventbus.on('asset:created', handleAssetCreated, this);
-  eventbus.on('asset:fetched', handleAssetFetched, this);
-  eventbus.on('asset:created', removeOverlay, this);
-  eventbus.on('asset:cancelled', cancelCreate, this);
-  eventbus.on('asset:closed', closeAsset, this);
-  eventbus.on('application:readOnly', function(value) {
-    readOnly = value;
-  }, this);
-  eventbus.on('assets:fetched', function(assets) {
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(assets);
-      renderAssets(groupedAssets);
-    }
-  }, this);
-
   var backendAssetsWithSelectedAsset = function(assets) {
     var transformSelectedAsset = function(asset) {
       if (asset) {
@@ -424,11 +404,32 @@ window.AssetLayer = function(map, roadLayer) {
     renderAssets(groupedAssets);
   };
 
-  eventbus.on('assets:all-updated', function(assets) {
+  function handleAllAssetsUpdated(assets) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       updateAllAssets(assets);
     }
+  }
+  eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
+  eventbus.on('tool:changed', toolSelectionChange, this);
+  eventbus.on('assetPropertyValue:saved', updateAsset, this);
+  eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
+  eventbus.on('asset:saved', handleAssetSaved, this);
+  eventbus.on('asset:created', handleAssetCreated, this);
+  eventbus.on('asset:fetched', handleAssetFetched, this);
+  eventbus.on('asset:created', removeOverlay, this);
+  eventbus.on('asset:cancelled', cancelCreate, this);
+  eventbus.on('asset:closed', closeAsset, this);
+  eventbus.on('application:readOnly', function(value) {
+    readOnly = value;
   }, this);
+  eventbus.on('assets:fetched', function(assets) {
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      var groupedAssets = assetGrouping.groupByDistance(assets);
+      renderAssets(groupedAssets);
+    }
+  }, this);
+
+  eventbus.on('assets:all-updated', handleAllAssetsUpdated, this);
   eventbus.on('assets:new-fetched', handleNewAssetsFetched, this);
   eventbus.on('assetModifications:confirm', function() {
     new Confirm();
