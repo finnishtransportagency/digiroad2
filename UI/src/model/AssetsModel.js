@@ -25,6 +25,9 @@
       assets = _.omit(assets, assetIds);
       eventbus.trigger('assetGroup:destroyed', destroyedAssets);
     },
+    destroyAssets: function() {
+      assets = {};
+    },
     selectValidityPeriod: function(validityPeriod, isSelected) {
       validityPeriods[validityPeriod] = isSelected;
       eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));

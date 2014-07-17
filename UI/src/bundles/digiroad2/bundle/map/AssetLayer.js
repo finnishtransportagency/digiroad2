@@ -126,6 +126,8 @@ window.AssetLayer = function(map, roadLayer) {
     if (assetIsSelected(uiAsset)) {
       lon = selectedAsset.data.lon;
       lat = selectedAsset.data.lat;
+      uiAsset.lon = lon;
+      uiAsset.lat = lat;
     }
     uiAsset.group = {
       id: groupId,
@@ -145,12 +147,6 @@ window.AssetLayer = function(map, roadLayer) {
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
         var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
-        var isAssetSelectedAndDirty = function(asset) {
-          return assetIsSelected(asset) && selectedAssetModel.isDirty();
-        };
-        if (isAssetSelectedAndDirty(uiAsset)) {
-          return;
-        }
         if (!AssetsModel.getAsset(uiAsset.id)) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
@@ -377,6 +373,10 @@ window.AssetLayer = function(map, roadLayer) {
   eventbus.on('assets:updated', function(data) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       var groupedAssets = assetGrouping.groupByDistance(data.assets);
+      if (data.assetsRegrouped) {
+        _.each(AssetsModel.getAssets(), removeAssetFromMap);
+        AssetsModel.destroyAssets();
+      }
       renderAssets(groupedAssets);
     }
   }, this);
