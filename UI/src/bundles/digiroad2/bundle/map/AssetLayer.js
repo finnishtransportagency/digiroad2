@@ -370,14 +370,34 @@ window.AssetLayer = function(map, roadLayer) {
       renderAssets(groupedAssets);
     }
   }, this);
+
+  var backendAssetsWithSelectedAsset = function(assets) {
+    var transformSelectedAsset = function(asset) {
+      if (asset) {
+        var transformedAsset = asset;
+        transformedAsset.lon = selectedAsset.data.lon;
+        transformedAsset.lat = selectedAsset.data.lat;
+        return [transformedAsset];
+      }
+      return [];
+    };
+    var transformedSelectedAsset = transformSelectedAsset(_.find(assets, isSelected));
+    return _.without(assets, isSelected).concat(transformedSelectedAsset);
+  };
+
+  var updateAllAssets = function(assets, assetsRegrouped) {
+    var assetsWithSelectedAsset = backendAssetsWithSelectedAsset(assets);
+    var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset);
+    if (assetsRegrouped) {
+      _.each(AssetsModel.getAssets(), removeAssetFromMap);
+      AssetsModel.destroyAssets();
+    }
+    renderAssets(groupedAssets);
+  };
+
   eventbus.on('assets:updated', function(data) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(data.assets);
-      if (data.assetsRegrouped) {
-        _.each(AssetsModel.getAssets(), removeAssetFromMap);
-        AssetsModel.destroyAssets();
-      }
-      renderAssets(groupedAssets);
+      updateAllAssets(data.assets, data.assetsRegrouped);
     }
   }, this);
   eventbus.on('assetModifications:confirm', function() {
