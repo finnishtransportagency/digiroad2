@@ -427,7 +427,7 @@ window.AssetLayer = function(map, roadLayer) {
     renderAssets(groupedAssets);
   };
 
-  eventbus.on('assets:updated', function(data) {
+  eventbus.on('assets:all-updated', function(data) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       updateAllAssets(data.assets, data.assetsRegrouped);
     }
