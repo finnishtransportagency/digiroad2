@@ -498,8 +498,4 @@ window.AssetLayer = function(map, roadLayer) {
       mouseUpHandler(selectedAsset);
     }
   });
-  eventbus.on('asset:new-state-rendered', function(lonlat) {
-    assetLayer.redraw();
-    selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
-  });
 };
