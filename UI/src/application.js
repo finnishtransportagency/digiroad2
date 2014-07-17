@@ -88,4 +88,11 @@
     Backend.getAssetPropertyNames();
   };
 
+  application.restart = function() {
+    appSetup = undefined;
+    appConfig = undefined;
+    localizedStrings = undefined;
+    this.start();
+  };
+
 }(window.Application = window.Application || {}));
