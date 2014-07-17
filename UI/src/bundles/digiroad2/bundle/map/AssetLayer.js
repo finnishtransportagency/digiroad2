@@ -115,7 +115,7 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.removeMarker(marker);
   };
 
-  var assetIsSelected = function(asset) {
+  var isSelected = function(asset) {
     return selectedAsset && selectedAsset.data.id === asset.id;
   };
 
@@ -123,7 +123,7 @@ window.AssetLayer = function(map, roadLayer) {
     var uiAsset = backendAsset;
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
-    if (assetIsSelected(uiAsset)) {
+    if (isSelected(uiAsset)) {
       lon = selectedAsset.data.lon;
       lat = selectedAsset.data.lat;
       uiAsset.lon = lon;
@@ -151,7 +151,7 @@ window.AssetLayer = function(map, roadLayer) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
         addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
-        if (assetIsSelected(uiAsset)) {
+        if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           eventbus.trigger('asset:selected', uiAsset);
         }
