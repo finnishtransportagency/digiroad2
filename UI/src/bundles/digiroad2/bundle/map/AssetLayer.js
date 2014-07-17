@@ -119,7 +119,7 @@ window.AssetLayer = function(map, roadLayer) {
     return selectedAsset && selectedAsset.data.id === asset.id;
   };
 
-  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
+  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup, groupId) {
     var uiAsset = backendAsset;
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
@@ -146,7 +146,7 @@ window.AssetLayer = function(map, roadLayer) {
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
-        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
+        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup, groupId);
         if (!AssetsModel.getAsset(uiAsset.id)) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
