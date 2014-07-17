@@ -139,6 +139,9 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var groupId = 0;
+
+  var generateNewGroupId = function() { return groupId++; };
+
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
@@ -354,6 +357,32 @@ window.AssetLayer = function(map, roadLayer) {
     selectedControl = action;
   };
 
+  var createNewUIAssets = function(backendAssetGroups) {
+    return _.map(backendAssetGroups, function(group) {
+      var centroidLonLat = geometrycalculator.getCentroid(group);
+      return _.map(group, function(backendAsset) {
+        return createAsset(convertBackendAssetToUIAsset(backendAsset, centroidLonLat, group, generateNewGroupId()));
+      });
+    });
+  };
+
+  var addNewGroupsToModel = function(uiAssetGroups) {
+    _.each(uiAssetGroups, AssetsModel.insertAssetsFromGroup);
+  };
+
+  var renderNewGroups = function(uiAssetGroups) {
+    _.each(uiAssetGroups, function(uiAssetGroup) {
+      _.each(uiAssetGroup, addAssetToLayers);
+    });
+  };
+
+  var handleNewAssetsFetched = function(newBackendAssets) {
+    var backendAssetGroups = assetGrouping.groupByDistance(newBackendAssets);
+    var uiAssetGroups = createNewUIAssets(backendAssetGroups);
+    addNewGroupsToModel(uiAssetGroups);
+    renderNewGroups(uiAssetGroups);
+  };
+
   eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
   eventbus.on('tool:changed', toolSelectionChange, this);
   eventbus.on('assetPropertyValue:saved', updateAsset, this);
@@ -403,6 +432,7 @@ window.AssetLayer = function(map, roadLayer) {
       updateAllAssets(data.assets, data.assetsRegrouped);
     }
   }, this);
+  eventbus.on('assets:new-fetched', handleNewAssetsFetched, this);
   eventbus.on('assetModifications:confirm', function() {
     new Confirm();
   }, this);

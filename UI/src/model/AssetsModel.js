@@ -5,6 +5,11 @@
     future: false,
     past: false
   };
+  var filterNonExistingAssets = function(assets, existingAssets) {
+    return _.reject(assets, function(asset) {
+      return _.has(existingAssets, asset.id.toString());
+    });
+  };
   var selectedValidityPeriods = function(validityPeriods) {
     return _.keys(_.pick(validityPeriods, function(selected) {
       return selected;
@@ -22,6 +27,11 @@
     },
     getAssets: function() {
       return assets;
+    },
+    insertAssetsFromGroup: function(assetGroup) {
+      _.each(assetGroup, function(asset) {
+        assets[asset.data.id.toString()] = asset;
+      });
     },
     destroyGroup: function(assetIds) {
       var destroyedAssets = _.pick(assets, assetIds);
@@ -45,8 +55,12 @@
   eventbus.on('map:moved', function(map) {
     if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
       if (ApplicationModel.getSelectedLayer() === 'asset') {
-        Backend.getAssetsWithCallback(10, map.bbox, function(assets) {
-          eventbus.trigger('assets:updated', { assets: assets, assetsRegrouped: map.hasZoomLevelChanged });
+        Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
+          if (map.hasZoomLevelChanged) {
+            eventbus.trigger('assets:updated', { assets: backendAssets, assetsRegrouped: map.hasZoomLevelChanged });
+          } else {
+            eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
+          }
         });
       }
     } else {
