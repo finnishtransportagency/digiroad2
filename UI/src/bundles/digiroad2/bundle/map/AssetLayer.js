@@ -16,6 +16,9 @@ window.AssetLayer = function(map, roadLayer) {
   var clickCoords;
   var assetIsMoving = false;
 
+  var groupId = 0;
+  var generateNewGroupId = function() { return groupId++; };
+
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -137,10 +140,6 @@ window.AssetLayer = function(map, roadLayer) {
     };
     return uiAsset;
   };
-
-  var groupId = 0;
-
-  var generateNewGroupId = function() { return groupId++; };
 
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
