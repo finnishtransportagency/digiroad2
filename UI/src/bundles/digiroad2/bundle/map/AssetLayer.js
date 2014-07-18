@@ -97,6 +97,7 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseClickFn = mouseClick(asset);
     var mouseUpFn = mouseUp(asset);
     var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
+    asset.mouseDownHandler = mouseDownFn;
     marker.events.register("mousedown", assetLayer, mouseDownFn);
     marker.events.register("click", assetLayer, OpenLayers.Event.stop);
     return asset;

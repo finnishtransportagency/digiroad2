@@ -14,8 +14,14 @@ define(function() {
       .withAssetsData(assetsData);
   };
 
+  var clickMarker = function(id, event) {
+    var asset = AssetsModel.getAsset(id);
+    if (asset) { asset.mouseDownHandler(event); }
+  };
+
   return {
     restartApplication: restartApplication,
-    fakeBackend: fakeBackend
+    fakeBackend: fakeBackend,
+    clickMarker: clickMarker
   };
 });
