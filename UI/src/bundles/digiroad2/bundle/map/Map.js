@@ -54,7 +54,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       }, this);
       eventbus.on('asset:moving', function(nearestLine) {
         var nearestFeature = _.find(this.roadLayer.features, function(feature) {
-          return feature.id == nearestLine.id;
+          return feature.attributes.roadLinkId == nearestLine.roadLinkId;
         });
         this._selectControl.unselectAll();
         this._selectControl.select(nearestFeature);
