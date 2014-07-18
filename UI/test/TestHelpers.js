@@ -17,12 +17,29 @@ define(function() {
 
   var clickMarker = function(id, event) {
     var asset = AssetsModel.getAsset(id);
-    if (asset) { asset.mouseDownHandler(event); }
+    if (asset) {
+      asset.mouseDownHandler(event);
+      asset.mouseUpHandler(event);
+    }
+  };
+
+  var moveMarker = function(id, originX, originY, deltaX, deltaY) {
+    var asset = AssetsModel.getAsset(id);
+    if (asset) {
+      var targetX = originX + deltaX;
+      var targetY = originY + deltaY;
+      var mouseDownEvent = {clientX: originX, clientY: originY};
+      var mouseUpEvent = {clientX: targetX, clientY: targetY};
+      asset.mouseDownHandler(mouseDownEvent);
+      eventbus.trigger('map:mouseMoved', {clientX: targetX, clientY: targetY, xy: {x: targetX, y: targetY - 40}});
+      asset.mouseUpHandler(mouseUpEvent);
+    }
   };
 
   return {
     restartApplication: restartApplication,
     fakeBackend: fakeBackend,
-    clickMarker: clickMarker
+    clickMarker: clickMarker,
+    moveMarker: moveMarker
   };
 });
