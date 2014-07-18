@@ -16,6 +16,7 @@
     },
     getSelectedLayer: function() {
       return selectedLayer;
-    }
+    },
+    assetDragDelay: 100
   };
 })(this);

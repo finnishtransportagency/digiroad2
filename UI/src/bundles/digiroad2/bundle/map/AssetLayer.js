@@ -10,7 +10,6 @@ window.AssetLayer = function(map, roadLayer) {
 
   var overlay;
   var selectedControl = 'Select';
-  var assetMoveWaitTime = 100;
 
   var clickTimestamp;
   var clickCoords;
@@ -423,7 +422,7 @@ window.AssetLayer = function(map, roadLayer) {
     if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       return;
     }
-    if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
+    if (clickTimestamp && (new Date().getTime() - clickTimestamp) > ApplicationModel.assetDragDelay &&
       (clickCoords && approximately(clickCoords[0], event.clientX) && approximately(clickCoords[1], event.clientY)) || assetIsMoving) {
       assetIsMoving = true;
       var xAdjustedForClickOffset = event.xy.x - initialClickOffsetFromMarkerBottomleft.x;

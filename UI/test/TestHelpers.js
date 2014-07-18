@@ -1,6 +1,7 @@
 define(function() {
   var restartApplication = function(callback, fakeBackend) {
     eventbus.once('application:initialized', callback);
+    ApplicationModel.assetDragDelay = 0;
     Application.restart(fakeBackend);
   };
 
