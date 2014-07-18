@@ -1,7 +1,9 @@
 (function (assetGrouping, undefined) {
   var groupByDistance = function (items, zoomLevel) {
     var result = [];
-    var delta = Math.pow((zoomlevels.maxZoomLevel + 1) - zoomLevel, 2) * 6;
+    // TODO: Take zoom-level dependent grouping distance in use when group visualization has been improved
+//    var delta = Math.pow((zoomlevels.maxZoomLevel + 1) - zoomLevel, 2) * 6;
+    var delta = 6;
     var item;
     var findProximityStops = function (x) {
       return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < delta * delta;
