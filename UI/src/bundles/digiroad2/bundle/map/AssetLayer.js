@@ -31,9 +31,10 @@ window.AssetLayer = function(map, roadLayer) {
 
   var mouseUpFunction;
 
-  var mouseUpHandler = function() {
+  var mouseUpHandler = function(asset) {
     clickTimestamp = null;
     map.events.unregister("mouseup", map, mouseUpFunction);
+    asset.mouseUpHandler = null;
     assetIsMoving = false;
   };
 
@@ -66,6 +67,7 @@ window.AssetLayer = function(map, roadLayer) {
           //register up
           map.events.register("mouseup", map, mouseUpFn, true);
           mouseUpFunction = mouseUpFn;
+          asset.mouseUpHandler = mouseUpFn;
           mouseClickFn(asset);
           setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
         }
