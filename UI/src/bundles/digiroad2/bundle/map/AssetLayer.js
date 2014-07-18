@@ -285,9 +285,10 @@ window.AssetLayer = function(map, roadLayer) {
 
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
-    selectedAsset = createAsset(asset);
-    AssetsModel.insertAsset(selectedAsset, asset.id);
+    var uiAsset = createAsset(asset);
+    AssetsModel.insertAsset(uiAsset, asset.id);
     addAssetToLayers(AssetsModel.getAsset(asset.id));
+    selectedAsset = uiAsset;
   };
 
   var createDummyGroup = function(lon, lat, asset) {
