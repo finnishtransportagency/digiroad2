@@ -10,14 +10,14 @@ define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
             var assets = [ assetLat1Lon1, assetLat100Lon100, assetLat200Lon300, assetLat300Lon300 ];
 
             it('should not find any groups, if not within distance', function () {
-                var actual = assetGrouping.groupByDistance(assets);
+                var actual = assetGrouping.groupByDistance(assets, zoomlevels.maxZoomLevel);
                 assert.deepEqual(actual, [[assetLat1Lon1], [assetLat100Lon100], [assetLat200Lon300], [assetLat300Lon300]]);
             });
 
             it('should find group if overlapping', function(){
                 var testAsset = { id: 5, lat: 1, lon: 1 };
                 var testAssets = assets.concat([testAsset]);
-                var actual = assetGrouping.groupByDistance(testAssets);
+                var actual = assetGrouping.groupByDistance(testAssets, zoomlevels.maxZoomLevel);
                 var expected = [[assetLat1Lon1, testAsset], [assetLat100Lon100], [assetLat200Lon300], [assetLat300Lon300]];
                 assert.deepEqual(actual, expected);
             });
@@ -25,7 +25,7 @@ define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
             it('should not find group if same lat and different lon', function(){
                 var testAsset = { id: 5, lat: 1, lon: 15 };
                 var testAssets = assets.concat([testAsset]);
-                var actual = assetGrouping.groupByDistance(testAssets);
+                var actual = assetGrouping.groupByDistance(testAssets, zoomlevels.maxZoomLevel);
                 var expected = [[assetLat1Lon1], [assetLat100Lon100], [assetLat200Lon300], [assetLat300Lon300], [testAsset]];
                 assert.deepEqual(actual, expected);
             });
@@ -33,7 +33,7 @@ define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
             it('should find group if in proximity', function(){
                 var testAsset = { id: 5, lat: 102, lon: 102 };
                 var testAssets = assets.concat([testAsset]);
-                var actual = assetGrouping.groupByDistance(testAssets);
+                var actual = assetGrouping.groupByDistance(testAssets, zoomlevels.maxZoomLevel);
                 var expected = [[assetLat1Lon1], [assetLat100Lon100, testAsset], [assetLat200Lon300], [assetLat300Lon300]];
                 assert.deepEqual(actual, expected);
             });
@@ -42,7 +42,7 @@ define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
                 var testAsset = { id: 5, lat: 1, lon: 1 };
                 var testAsset2 = { id: 6, lat: 102, lon: 102 };
                 var testAssets = assets.concat([testAsset, testAsset2]);
-                var actual = assetGrouping.groupByDistance(testAssets);
+                var actual = assetGrouping.groupByDistance(testAssets, zoomlevels.maxZoomLevel);
                 var expected = [[assetLat1Lon1, testAsset], [assetLat100Lon100, testAsset2], [assetLat200Lon300], [assetLat300Lon300]];
                 assert.deepEqual(actual, expected);
             });
@@ -51,7 +51,7 @@ define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
                 var testAsset = { id: 5, lat: 297, lon: 301 };
                 var testAsset2 = { id: 6, lat: 299, lon: 301 };
                 var testAssets = assets.concat([testAsset, testAsset2]);
-                var actual = assetGrouping.groupByDistance(testAssets);
+                var actual = assetGrouping.groupByDistance(testAssets, zoomlevels.maxZoomLevel);
                 var expected = [[assetLat1Lon1], [assetLat100Lon100], [assetLat200Lon300], [assetLat300Lon300, testAsset, testAsset2]];
                 assert.deepEqual(actual, expected);
             });

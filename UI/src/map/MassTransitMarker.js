@@ -144,40 +144,7 @@
       data.group.moved = true;
     };
 
-    var rollbackToGroup = function(asset) {
-      data.group.moved = false;
-      data.imageIds = asset.imageIds;
-      asset.group = data.group;
-      data.group.assetGroup.push(asset);
-      data.group.assetGroup.sort(function(a, b) { return a.id - b.id; });
-      renderSelectedState(asset);
-      eventbus.trigger('asset:new-state-rendered', new OpenLayers.LonLat(data.group.lon, data.group.lat));
-    };
-
-    var handleFetchedAsset = function(asset) {
-      data.imageIds = asset.imageIds;
-      if (data.group.assetGroup.length === 1) {
-        data.group.lon = asset.lon;
-        data.group.lat = asset.lat;
-      }
-      asset.group = data.group;
-      renderSelectedState(asset);
-    };
-
     eventbus.on('asset:closed tool:changed asset:placed', deselect);
-
-    eventbus.on('asset:fetched ', function(asset) {
-      if (asset.id === data.id) {
-        if (data.group.moved) {
-          rollbackToGroup(asset);
-        } else {
-          handleFetchedAsset(asset);
-        }
-        selected = true;
-      } else {
-        deselect();
-      }
-    });
 
     eventbus.on('asset:selected', function(asset) {
       if (asset.id === data.id) {
@@ -220,7 +187,8 @@
     return {
       createMarker: createMarker,
       createNewMarker: createNewMarker,
-      moveTo: moveTo
+      moveTo: moveTo,
+      deselect: deselect
     };
   };
 }(this));

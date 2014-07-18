@@ -16,6 +16,9 @@ window.AssetLayer = function(map, roadLayer) {
   var clickCoords;
   var assetIsMoving = false;
 
+  var groupId = 0;
+  var generateNewGroupId = function() { return groupId++; };
+
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -115,17 +118,19 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.removeMarker(marker);
   };
 
-  var assetIsSelected = function(asset) {
+  var isSelected = function(asset) {
     return selectedAsset && selectedAsset.data.id === asset.id;
   };
 
-  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
+  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup, groupId) {
     var uiAsset = backendAsset;
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
-    if (assetIsSelected(uiAsset)) {
+    if (isSelected(uiAsset)) {
       lon = selectedAsset.data.lon;
       lat = selectedAsset.data.lat;
+      uiAsset.lon = lon;
+      uiAsset.lat = lat;
     }
     uiAsset.group = {
       id: groupId,
@@ -136,26 +141,19 @@ window.AssetLayer = function(map, roadLayer) {
     return uiAsset;
   };
 
-  var groupId = 0;
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
-      groupId++;
+      var groupId = generateNewGroupId();
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
-        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
-        var isAssetSelectedAndDirty = function(asset) {
-          return assetIsSelected(asset) && selectedAssetModel.isDirty();
-        };
-        if (isAssetSelectedAndDirty(uiAsset)) {
-          return;
-        }
+        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup, groupId);
         if (!AssetsModel.getAsset(uiAsset.id)) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
         addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
-        if (assetIsSelected(uiAsset)) {
+        if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           eventbus.trigger('asset:selected', uiAsset);
         }
@@ -214,7 +212,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var regroupAssetIfNearOtherAssets = function(asset) {
-    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()));
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()), map.getZoom());
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
@@ -293,7 +291,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createDummyGroup = function(lon, lat, asset) {
-    return {id: groupId++, lon: lon, lat: lat, assetGroup: [asset]};
+    return {id: generateNewGroupId(), lon: lon, lat: lat, assetGroup: [asset]};
   };
 
   var closeAsset = function() {
@@ -305,16 +303,24 @@ window.AssetLayer = function(map, roadLayer) {
     assetLayer.setVisibility(false);
   };
 
-  var handleAssetFetched = function(assetData) {
-    var existingAsset = AssetsModel.getAsset(assetData.id);
-    if (existingAsset) {
-      existingAsset.data = assetData;
-      selectedAsset = existingAsset;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = assetData.bearing + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
-    } else {
-      addNewAsset(assetData);
-      eventbus.trigger('asset:selected', assetData);
+  var destroyAsset = function(backendAsset) {
+    var uiAsset = AssetsModel.getAsset(backendAsset.id);
+    if(uiAsset) {
+      removeAssetFromMap(uiAsset);
+      AssetsModel.destroyAsset(backendAsset.id);
     }
+  };
+
+  var deselectAsset = function(asset) {
+    if (asset) { asset.massTransitStop.deselect(); }
+  };
+
+  var handleAssetFetched = function(backendAsset) {
+    deselectAsset(selectedAsset);
+    destroyAsset(backendAsset);
+    addNewAsset(backendAsset);
+    regroupAssetIfNearOtherAssets(backendAsset);
+    eventbus.trigger('asset:selected', backendAsset);
   };
 
   var moveSelectedAsset = function(pxPosition) {
@@ -355,6 +361,59 @@ window.AssetLayer = function(map, roadLayer) {
     selectedControl = action;
   };
 
+  var createNewUIAssets = function(backendAssetGroups) {
+    return _.map(backendAssetGroups, function(group) {
+      var centroidLonLat = geometrycalculator.getCentroid(group);
+      return _.map(group, function(backendAsset) {
+        return createAsset(convertBackendAssetToUIAsset(backendAsset, centroidLonLat, group, generateNewGroupId()));
+      });
+    });
+  };
+
+  var addNewGroupsToModel = function(uiAssetGroups) {
+    _.each(uiAssetGroups, AssetsModel.insertAssetsFromGroup);
+  };
+
+  var renderNewGroups = function(uiAssetGroups) {
+    _.each(uiAssetGroups, function(uiAssetGroup) {
+      _.each(uiAssetGroup, addAssetToLayers);
+    });
+  };
+
+  var handleNewAssetsFetched = function(newBackendAssets) {
+    var backendAssetGroups = assetGrouping.groupByDistance(newBackendAssets, map.getZoom());
+    var uiAssetGroups = createNewUIAssets(backendAssetGroups);
+    addNewGroupsToModel(uiAssetGroups);
+    renderNewGroups(uiAssetGroups);
+  };
+
+  var backendAssetsWithSelectedAsset = function(assets) {
+    var transformSelectedAsset = function(asset) {
+      if (asset) {
+        var transformedAsset = asset;
+        transformedAsset.lon = selectedAsset.data.lon;
+        transformedAsset.lat = selectedAsset.data.lat;
+        return [transformedAsset];
+      }
+      return [];
+    };
+    var transformedSelectedAsset = transformSelectedAsset(_.find(assets, isSelected));
+    return _.reject(assets, isSelected).concat(transformedSelectedAsset);
+  };
+
+  var updateAllAssets = function(assets) {
+    var assetsWithSelectedAsset = backendAssetsWithSelectedAsset(assets);
+    var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset, map.getZoom());
+    _.each(AssetsModel.getAssets(), removeAssetFromMap);
+    AssetsModel.destroyAssets();
+    renderAssets(groupedAssets);
+  };
+
+  function handleAllAssetsUpdated(assets) {
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      updateAllAssets(assets);
+    }
+  }
   eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
   eventbus.on('tool:changed', toolSelectionChange, this);
   eventbus.on('assetPropertyValue:saved', updateAsset, this);
@@ -370,16 +429,13 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
   eventbus.on('assets:fetched', function(assets) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(assets);
+      var groupedAssets = assetGrouping.groupByDistance(assets, map.getZoom());
       renderAssets(groupedAssets);
     }
   }, this);
-  eventbus.on('assets:updated', function(data) {
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(data.assets);
-      renderAssets(groupedAssets);
-    }
-  }, this);
+
+  eventbus.on('assets:all-updated', handleAllAssetsUpdated, this);
+  eventbus.on('assets:new-fetched', handleNewAssetsFetched, this);
   eventbus.on('assetModifications:confirm', function() {
     new Confirm();
   }, this);
@@ -474,9 +530,5 @@ window.AssetLayer = function(map, roadLayer) {
     if (assetIsMoving === true) {
       mouseUpHandler(selectedAsset);
     }
-  });
-  eventbus.on('asset:new-state-rendered', function(lonlat) {
-    assetLayer.redraw();
-    selectedAsset.massTransitStop.getDirectionArrow().move(lonlat);
   });
 };
