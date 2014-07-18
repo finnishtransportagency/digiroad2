@@ -416,6 +416,21 @@ window.AssetLayer = function(map, roadLayer) {
       updateAllAssets(assets);
     }
   }
+
+  var handleMouseMoved = function(event) {
+    if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
+      return;
+    }
+    if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
+      (clickCoords && approximately(clickCoords[0], event.clientX) && approximately(clickCoords[1], event.clientY)) || assetIsMoving) {
+      assetIsMoving = true;
+      var xAdjustedForClickOffset = event.xy.x - initialClickOffsetFromMarkerBottomleft.x;
+      var yAdjustedForClickOffset = event.xy.y - initialClickOffsetFromMarkerBottomleft.y;
+      var pixel = new OpenLayers.Pixel(xAdjustedForClickOffset, yAdjustedForClickOffset);
+      moveSelectedAsset(pixel);
+    }
+  };
+
   eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
   eventbus.on('tool:changed', toolSelectionChange, this);
   eventbus.on('assetPropertyValue:saved', updateAsset, this);
@@ -443,6 +458,7 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
   eventbus.on('assets:outOfZoom', hideAssets, this);
   eventbus.on('assetGroup:destroyed', reRenderGroup, this);
+  eventbus.on('map:mouseMoved', handleMouseMoved, this);
 
   var approximately = function(n, m) {
     var threshold = 10;
@@ -451,20 +467,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var events = map.events;
   var initialClickOffsetFromMarkerBottomleft = { x: 0, y: 0 };
-  events.register('mousemove', map, function(e) {
-    if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-      return;
-    }
-    if (clickTimestamp && (new Date().getTime() - clickTimestamp) > assetMoveWaitTime &&
-      (clickCoords && approximately(clickCoords[0], e.clientX) && approximately(clickCoords[1], e.clientY)) || assetIsMoving) {
-      assetIsMoving = true;
-      var xAdjustedForClickOffset = e.xy.x - initialClickOffsetFromMarkerBottomleft.x;
-      var yAdjustedForClickOffset = e.xy.y - initialClickOffsetFromMarkerBottomleft.y;
-      var pixel = new OpenLayers.Pixel(xAdjustedForClickOffset, yAdjustedForClickOffset);
-      moveSelectedAsset(pixel);
-    }
-  }, true);
-
+  events.register('mousemove', map, function(event) { eventbus.trigger('map:mouseMoved', event); }, true);
 
   var Click = OpenLayers.Class(OpenLayers.Control, {
     defaultHandlerOptions: {
