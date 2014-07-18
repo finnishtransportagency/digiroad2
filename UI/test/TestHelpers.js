@@ -4,14 +4,15 @@ define(function() {
     Application.restart(fakeBackend);
   };
 
-  var fakeBackend = function(assetsData) {
+  var fakeBackend = function(assetsData, assetData) {
     return Backend.withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withApplicationSetupData(ApplicationSetupTestData.generate())
       .withConfigurationData(ConfigurationTestData.generate())
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-      .withAssetsData(assetsData);
+      .withAssetsData(assetsData)
+      .withAssetData(assetData);
   };
 
   var clickMarker = function(id, event) {

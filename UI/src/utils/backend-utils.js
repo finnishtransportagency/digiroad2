@@ -169,6 +169,13 @@
       return this;
     };
 
+    backend.withAssetData = function(assetData) {
+      this.getAssetByExternalId = function (externalId, callback) {
+        callback(assetData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
