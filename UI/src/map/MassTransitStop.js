@@ -54,11 +54,16 @@
       getMassTransitMarker().moveTo(lonlat);
     };
 
+    var deselect = function() {
+      getMassTransitMarker().deselect();
+    };
+
     return {
       getMarker: getMarker,
       createNewMarker: createNewMarker,
       getDirectionArrow: getDirectionArrow,
-      moveTo: moveTo
+      moveTo: moveTo,
+      deselect: deselect
     };
   };
 }(this));

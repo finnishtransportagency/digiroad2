@@ -146,10 +146,6 @@
 
     eventbus.on('asset:closed tool:changed asset:placed', deselect);
 
-    eventbus.on('asset:fetched ', function(asset) {
-      if (asset.id !== data.id) { deselect(); }
-    });
-
     eventbus.on('asset:selected', function(asset) {
       if (asset.id === data.id) {
         renderSelectedState(asset);
@@ -191,7 +187,8 @@
     return {
       createMarker: createMarker,
       createNewMarker: createNewMarker,
-      moveTo: moveTo
+      moveTo: moveTo,
+      deselect: deselect
     };
   };
 }(this));

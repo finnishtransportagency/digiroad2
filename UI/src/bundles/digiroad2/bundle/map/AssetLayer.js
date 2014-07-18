@@ -311,7 +311,12 @@ window.AssetLayer = function(map, roadLayer) {
     }
   };
 
+  var deselectAsset = function(asset) {
+    if (asset) { asset.massTransitStop.deselect(); }
+  };
+
   var handleAssetFetched = function(backendAsset) {
+    deselectAsset(selectedAsset);
     destroyAsset(backendAsset);
     addNewAsset(backendAsset);
     regroupAssetIfNearOtherAssets(backendAsset);
