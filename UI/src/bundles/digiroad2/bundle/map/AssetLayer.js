@@ -398,7 +398,7 @@ window.AssetLayer = function(map, roadLayer) {
       return [];
     };
     var transformedSelectedAsset = transformSelectedAsset(_.find(assets, isSelected));
-    return _.without(assets, isSelected).concat(transformedSelectedAsset);
+    return _.reject(assets, isSelected).concat(transformedSelectedAsset);
   };
 
   var updateAllAssets = function(assets) {
