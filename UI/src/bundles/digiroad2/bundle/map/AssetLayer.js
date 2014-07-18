@@ -212,7 +212,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var regroupAssetIfNearOtherAssets = function(asset) {
-    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()));
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()), map.getZoom());
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
@@ -381,7 +381,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleNewAssetsFetched = function(newBackendAssets) {
-    var backendAssetGroups = assetGrouping.groupByDistance(newBackendAssets);
+    var backendAssetGroups = assetGrouping.groupByDistance(newBackendAssets, map.getZoom());
     var uiAssetGroups = createNewUIAssets(backendAssetGroups);
     addNewGroupsToModel(uiAssetGroups);
     renderNewGroups(uiAssetGroups);
@@ -403,7 +403,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var updateAllAssets = function(assets) {
     var assetsWithSelectedAsset = backendAssetsWithSelectedAsset(assets);
-    var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset);
+    var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset, map.getZoom());
     _.each(AssetsModel.getAssets(), removeAssetFromMap);
     AssetsModel.destroyAssets();
     renderAssets(groupedAssets);
@@ -429,7 +429,7 @@ window.AssetLayer = function(map, roadLayer) {
   }, this);
   eventbus.on('assets:fetched', function(assets) {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(assets);
+      var groupedAssets = assetGrouping.groupByDistance(assets, map.getZoom());
       renderAssets(groupedAssets);
     }
   }, this);

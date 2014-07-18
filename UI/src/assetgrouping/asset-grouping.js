@@ -1,8 +1,7 @@
 (function (assetGrouping, undefined) {
-
-  var groupByDistance = function (items, result) {
-    // TODO: should be zoom level dependent
-    var delta = 6;
+  var groupByDistance = function (items, zoomLevel) {
+    var result = [];
+    var delta = Math.pow((zoomlevels.maxZoomLevel + 1) - zoomLevel, 2) * 6;
     var item;
     var findProximityStops = function (x) {
       return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < delta * delta;
@@ -15,8 +14,8 @@
     return result;
   };
 
-  assetGrouping.groupByDistance = function (assets) {
-    return groupByDistance(_.cloneDeep(assets), []);
+  assetGrouping.groupByDistance = function (assets, zoomLevel) {
+    return groupByDistance(_.cloneDeep(assets), zoomLevel);
   };
 
 }(window.assetGrouping = window.assetGrouping || {}));
