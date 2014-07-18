@@ -1,6 +1,9 @@
 (function(root) {
   root.AssetsTestData = {
     generate: function() {
+      return this.withValidityPeriods(['future', 'current']);
+    },
+    withValidityPeriods: function(validityPeriods) {
       return [
         {
           id: 300348,
@@ -16,7 +19,7 @@
           validityDirection: 3,
           readOnly: true,
           municipalityNumber: 235,
-          validityPeriod: "future"
+          validityPeriod: validityPeriods[0]
         },
         {
           id: 300347,
@@ -32,7 +35,7 @@
           validityDirection: 3,
           readOnly: true,
           municipalityNumber: 235,
-          validityPeriod: "current"
+          validityPeriod: validityPeriods[1]
         }
       ];
     }
