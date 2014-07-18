@@ -11,7 +11,7 @@ require.config({
   },
   waitSeconds: 10
 });
-require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec'], function(chai, chaiJquery) {
+require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec', 'AssetMoveSpec'], function(chai, chaiJquery) {
   chai.use(chaiJquery);
 
   eventbus.once('application:initialized', function() {
