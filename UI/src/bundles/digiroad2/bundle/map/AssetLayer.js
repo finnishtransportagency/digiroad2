@@ -170,7 +170,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var updateAsset = function(asset) {
     removeAssetFromMap(selectedAsset);
-    addNewAsset(asset);
+    selectedAsset = addNewAsset(asset);
   };
 
   var handleValidityPeriodChanged = function() {
@@ -192,7 +192,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
-    addNewAsset(asset);
+    selectedAsset = addNewAsset(asset);
     regroupAssetIfNearOtherAssets(asset);
     eventbus.trigger('asset:selected', asset);
   };
@@ -288,7 +288,7 @@ window.AssetLayer = function(map, roadLayer) {
     var uiAsset = createAsset(asset);
     AssetsModel.insertAsset(uiAsset, asset.id);
     addAssetToLayers(AssetsModel.getAsset(asset.id));
-    selectedAsset = uiAsset;
+    return uiAsset;
   };
 
   var createDummyGroup = function(lon, lat, asset) {
@@ -319,7 +319,7 @@ window.AssetLayer = function(map, roadLayer) {
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
     destroyAsset(backendAsset);
-    addNewAsset(backendAsset);
+    selectedAsset = addNewAsset(backendAsset);
     regroupAssetIfNearOtherAssets(backendAsset);
     eventbus.trigger('asset:selected', backendAsset);
   };
