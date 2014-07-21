@@ -27,15 +27,18 @@ define(function() {
     }
   };
 
-  var moveMarker = function(id, originX, originY, deltaX, deltaY) {
+  var moveMarker = function(id, map, deltaLon, deltaLat) {
     var asset = AssetsModel.getAsset(id);
     if (asset) {
-      var targetX = originX + deltaX;
-      var targetY = originY + deltaY;
-      var mouseDownEvent = {clientX: originX, clientY: originY};
-      var mouseUpEvent = {clientX: targetX, clientY: targetY};
+      var originBounds = _.find(map.getLayersByName('asset')[0].markers, {id: id}).bounds;
+      var originLonLat = new OpenLayers.LonLat(originBounds.top, originBounds.left);
+      var targetLonLat = new OpenLayers.LonLat(originLonLat.lon + deltaLon, originLonLat.lat + deltaLat);
+      var originPixel = map.getPixelFromLonLat(originLonLat);
+      var targetPixel = map.getPixelFromLonLat(targetLonLat);
+      var mouseDownEvent = {clientX: originPixel.x, clientY: originPixel.y};
+      var mouseUpEvent = {clientX: targetPixel.x, clientY: targetPixel.y};
       asset.mouseDownHandler(mouseDownEvent);
-      eventbus.trigger('map:mouseMoved', {clientX: targetX, clientY: targetY, xy: {x: targetX, y: targetY - 40}});
+      eventbus.trigger('map:mouseMoved', {clientX: targetPixel.x, clientY: targetPixel.y, xy: {x: targetPixel.x, y: targetPixel.y - 40}});
       asset.mouseUpHandler(mouseUpEvent);
     }
   };
