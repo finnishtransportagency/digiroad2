@@ -16,7 +16,10 @@ define(function() {
       .withAssetData(assetData);
   };
 
-  var clickMarker = function(id, event) {
+  var clickMarker = function(id, map) {
+    var markerBounds = _.find(map.getLayersByName('asset')[0].markers, {id: id}).bounds;
+    var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
+    var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
     var asset = AssetsModel.getAsset(id);
     if (asset) {
       asset.mouseDownHandler(event);
