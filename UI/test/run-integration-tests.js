@@ -16,7 +16,7 @@ require.config({
 require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec', 'AssetMoveSpec'], function(chai, chaiJquery) {
   chai.use(chaiJquery);
 
-  eventbus.once('application:initialized', function() {
+  eventbus.once('map:initialized', function() {
     if(window.mochaPhantomJS) { mochaPhantomJS.run(); }
     else { mocha.run(); }
   });

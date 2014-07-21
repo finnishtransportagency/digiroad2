@@ -4,7 +4,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var assert = chai.assert;
 
   describe('when loading application with overlapping bus stops in different validity periods', function() {
-    before(function(done) { testHelpers.restartApplication(done); });
+    before(function(done) { testHelpers.restartApplication(
+      function() { done(); });
+    });
 
     it('only includes bus stops in the selected validity period to the group', function() {
       var currentStop = $('[data-asset-id=300347]');

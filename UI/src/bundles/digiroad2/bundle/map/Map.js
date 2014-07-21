@@ -47,6 +47,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         }
         new CoordinateSelector($('.mapplugin.coordinates'), this._map.getMaxExtent());
         this._isInitialized = true;
+        eventbus.trigger('map:initialized', this._map);
       }, this);
       eventbus.on('application:readOnly', function(readOnly) {
         this._readOnly = readOnly;

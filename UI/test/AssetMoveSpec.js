@@ -6,9 +6,13 @@ define(['chai', 'TestHelpers', 'AssetsTestData'], function(chai, testHelpers, as
   var assetData = _.merge({}, assetsData[0], {propertyData: []});
 
   describe('when loading application with two bus stops', function() {
+    var openLayersMap;
     before(function(done) {
       var backend = testHelpers.fakeBackend(assetsData, assetData);
-      testHelpers.restartApplication(done, backend);
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        done();
+      }, backend);
     });
     describe('and moving bus stop', function() {
       describe('and canceling bus stop move', function() {

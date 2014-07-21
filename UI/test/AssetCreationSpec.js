@@ -3,7 +3,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
   var expect = chai.expect;
 
   describe('when loading application', function() {
-    before(function(done) { testHelpers.restartApplication(done); });
+    before(function(done) { testHelpers.restartApplication(
+      function() { done(); });
+    });
 
     describe('and creating a new asset', function() {
       before(function() {
