@@ -10,6 +10,7 @@
 
     var bounds = getBounds(data.group.lon, data.group.lat);
     var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
+    box.id = data.id;
     var selected = false; // keeping track of the selected state while assetlayer refactoring is ongoing TODO: move to selected model
 
     var configureMarkerDiv = function(id) {
