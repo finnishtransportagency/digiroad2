@@ -315,14 +315,18 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var deselectAsset = function(asset) {
-    if (asset) { asset.massTransitStop.deselect(); }
+    if (asset) {
+      asset.massTransitStop.deselect();
+      selectedAsset = null;
+    }
   };
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
     destroyAsset(backendAsset);
-    selectedAsset = addNewAsset(backendAsset);
+    var uiAsset = addNewAsset(backendAsset);
     regroupAssetIfNearOtherAssets(backendAsset);
+    selectedAsset = uiAsset;
     eventbus.trigger('asset:selected', backendAsset);
   };
 
