@@ -173,6 +173,9 @@
       this.getAssetByExternalId = function (externalId, callback) {
         callback(assetData);
       };
+      this.getAsset = function() {
+        eventbus.trigger('asset:fetched', assetData);
+      };
       return this;
     };
 
