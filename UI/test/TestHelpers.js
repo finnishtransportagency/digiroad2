@@ -43,10 +43,15 @@ define(function() {
     }
   };
 
+  var getAssetMarkers = function(map) {
+    return map.getLayersByName('asset')[0].markers;
+  };
+
   return {
     restartApplication: restartApplication,
     fakeBackend: fakeBackend,
     clickMarker: clickMarker,
-    moveMarker: moveMarker
+    moveMarker: moveMarker,
+    getAssetMarkers: getAssetMarkers
   };
 });
