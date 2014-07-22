@@ -28,11 +28,9 @@ window.AssetLayer = function(map, roadLayer) {
     assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
   };
 
-  var mouseUpFunction;
-
   var mouseUpHandler = function(asset) {
     clickTimestamp = null;
-    map.events.unregister("mouseup", map, mouseUpFunction);
+    map.events.unregister("mouseup", map, asset.mouseUpHandler);
     asset.mouseUpHandler = null;
     assetIsMoving = false;
   };
@@ -55,7 +53,6 @@ window.AssetLayer = function(map, roadLayer) {
         selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
         selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
         map.events.register("mouseup", map, mouseUpFn, true);
-        mouseUpFunction = mouseUpFn;
         asset.mouseUpHandler = mouseUpFn;
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
