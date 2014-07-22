@@ -20,11 +20,9 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
         var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
         originalYPosition = marker.bounds.top;
         $('.edit-mode-btn').click();
-        eventbus.once('asset:fetched', function() {
-          testHelpers.moveMarker(testAssetId, openLayersMap, 1, 0);
-          done();
-        });
         testHelpers.clickMarker(testAssetId, openLayersMap);
+        testHelpers.moveMarker(testAssetId, openLayersMap, 1, 0);
+        done();
       });
       it('moves bus stop', function() {
         var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), function(marker) {

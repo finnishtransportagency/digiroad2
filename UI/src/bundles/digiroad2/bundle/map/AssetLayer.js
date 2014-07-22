@@ -67,7 +67,6 @@ window.AssetLayer = function(map, roadLayer) {
     return function() {
       var selectAsset = function() {
         selectedAssetModel.change(asset.data);
-        window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
       };
 
       if (selectedControl === 'Select') {

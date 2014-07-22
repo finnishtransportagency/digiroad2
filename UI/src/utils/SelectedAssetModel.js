@@ -161,7 +161,9 @@
       var anotherAssetIsSelectedAndHasBeenModified = exists() && currentAsset.id !== asset.id && assetHasBeenModified;
       if (!anotherAssetIsSelectedAndHasBeenModified) {
         if (exists()) { close(); }
-        open(asset);
+        Backend.getAssetByExternalId(asset.externalId, function(asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
       }
     };
 
