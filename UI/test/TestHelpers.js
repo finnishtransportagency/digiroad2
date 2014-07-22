@@ -21,9 +21,7 @@ define(function() {
     var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
     var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
     var asset = AssetsModel.getAsset(id);
-    if (asset) {
-      asset.mouseDownHandler(event);
-    }
+    if (asset) { asset.mouseClickHandler(event); }
   };
 
   var moveMarker = function(id, map, deltaLon, deltaLat) {

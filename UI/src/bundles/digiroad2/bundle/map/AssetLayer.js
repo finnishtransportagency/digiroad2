@@ -60,20 +60,28 @@ window.AssetLayer = function(map, roadLayer) {
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
 
+      if (selectedControl === 'Select') {
+        if (selectedAssetModel.getId() === asset.data.id) {
+          commenceAssetDragging();
+        }
+      }
+    };
+  };
+
+  var createMouseClickHandler = function(asset) {
+    return function(event) {
       var selectAsset = function() {
-        OpenLayers.Event.stop(evt);
+        selectedAssetModel.change(asset.data);
+        OpenLayers.Event.stop(event);
         selectedAsset = asset;
         window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
       };
 
       if (selectedControl === 'Select') {
-        if (selectedAssetModel.getId() === asset.data.id) {
-          commenceAssetDragging();
-        } else {
+        if (selectedAssetModel.getId() !== asset.data.id) {
           if (selectedAssetModel.isDirty()) {
             new Confirm();
           } else {
-            selectedAssetModel.change(asset.data);
             selectAsset();
           }
         }
@@ -90,7 +98,6 @@ window.AssetLayer = function(map, roadLayer) {
   var createAsset = function(assetData) {
     var massTransitStop = new MassTransitStop(assetData, map);
     assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
-    // new bus stop marker
     var marker = massTransitStop.getMarker(true);
     var asset = {};
     asset.data = assetData;
@@ -98,7 +105,10 @@ window.AssetLayer = function(map, roadLayer) {
     var mouseUpFn = mouseUp(asset);
     var mouseDownFn = mouseDown(asset, mouseUpFn);
     asset.mouseDownHandler = mouseDownFn;
-    marker.events.register("mousedown", assetLayer, mouseDownFn);
+    var mouseClickHandler = createMouseClickHandler(asset);
+    asset.mouseClickHandler = mouseClickHandler;
+    marker.events.register('mousedown', assetLayer, mouseDownFn);
+    marker.events.register('click', assetLayer, mouseClickHandler);
     return asset;
   };
 
