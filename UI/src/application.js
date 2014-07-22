@@ -6,26 +6,26 @@
   var localizedStrings;
 
   var assetIdFromURL = function() {
-      var matches = window.location.hash.match(/(\d+)(.*)/);
-      if (matches) {
-        return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
-      }
+    var matches = window.location.hash.match(/(\d+)(.*)/);
+    if (matches) {
+      return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
+    }
   };
 
   eventbus.on('application:readOnly tool:changed validityPeriod:changed', function(readOnly) {
-      window.location.hash = '';
+    window.location.hash = '';
   });
-  
+
   $(window).on('hashchange', function(evt) {
-      var data = assetIdFromURL();
-      if (data && data.externalId) {
-          Backend.getAssetByExternalId(data.externalId, function(asset) {
-            eventbus.trigger('asset:fetched', asset);
-            if (!data.keepPosition) {
-              eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
-            }
-          });
-      }
+    var data = assetIdFromURL();
+    if (data && data.externalId) {
+      Backend.getAssetByExternalId(data.externalId, function(asset) {
+        eventbus.trigger('asset:fetched', asset);
+        if (!data.keepPosition) {
+          eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
+        }
+      });
+    }
   });
 
   var indicatorOverlay = function() {
@@ -59,26 +59,26 @@
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
-    if(appSetup && appConfig && localizedStrings) {
+    if (appSetup && appConfig && localizedStrings) {
       var app = Oskari.app;
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function(startupInfos) {
-          eventbus.on('confirm:show', function() {
-              new Confirm();
+        eventbus.on('confirm:show', function() {
+          new Confirm();
+        });
+        eventbus.trigger('application:initialized');
+        var data = assetIdFromURL();
+        if (data && data.externalId) {
+          Backend.getAssetByExternalId(data.externalId, function(asset) {
+            eventbus.trigger('asset:fetched', asset);
           });
-          eventbus.trigger('application:initialized');
-          var data = assetIdFromURL();
-          if (data && data.externalId) {
-              Backend.getAssetByExternalId(data.externalId, function(asset) {
-                eventbus.trigger('asset:fetched', asset);
-              });
-          }
+        }
       });
     }
   };
 
-  application.start = function (backend) {
+  application.start = function(backend) {
     if (backend) window.Backend = backend;
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
     ActionPanel.initialize(Backend);
