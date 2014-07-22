@@ -12,11 +12,11 @@
     }
   };
 
-  eventbus.on('application:readOnly tool:changed validityPeriod:changed', function(readOnly) {
+  eventbus.on('application:readOnly tool:changed validityPeriod:changed', function() {
     window.location.hash = '';
   });
 
-  $(window).on('hashchange', function(evt) {
+  $(window).on('hashchange', function() {
     var data = assetIdFromURL();
     if (data && data.externalId) {
       Backend.getAssetByExternalId(data.externalId, function(asset) {
@@ -63,7 +63,7 @@
       var app = Oskari.app;
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
-      app.startApplication(function(startupInfos) {
+      app.startApplication(function() {
         eventbus.on('confirm:show', function() {
           new Confirm();
         });
