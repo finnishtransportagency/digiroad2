@@ -15,6 +15,29 @@
       return selected;
     }));
   };
+  var bindEvents = function() {
+    eventbus.on('map:moved', function(map) {
+      if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
+        if (ApplicationModel.getSelectedLayer() === 'asset') {
+          Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
+            if (map.hasZoomLevelChanged) {
+              eventbus.trigger('assets:all-updated', backendAssets);
+            } else {
+              eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
+            }
+          });
+        }
+      } else {
+        if (selectedAssetModel.isDirty()) {
+          eventbus.trigger('assetModifications:confirm');
+        } else  {
+          if (ApplicationModel.getSelectedLayer() === 'asset') {
+            eventbus.trigger('assets:outOfZoom');
+          }
+        }
+      }
+    }, this);
+  };
   root.AssetsModel = {
     insertAsset: function(asset, assetId) {
       assets[assetId] = asset;
@@ -50,27 +73,9 @@
     },
     selectedValidityPeriodsContain: function(validityPeriod) {
       return validityPeriods[validityPeriod];
+    },
+    initialize: function() {
+      bindEvents();
     }
   };
-  eventbus.on('map:moved', function(map) {
-    if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
-      if (ApplicationModel.getSelectedLayer() === 'asset') {
-        Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
-          if (map.hasZoomLevelChanged) {
-            eventbus.trigger('assets:all-updated', backendAssets);
-          } else {
-            eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
-          }
-        });
-      }
-    } else {
-      if (selectedAssetModel.isDirty()) {
-        eventbus.trigger('assetModifications:confirm');
-      } else  {
-        if (ApplicationModel.getSelectedLayer() === 'asset') {
-          eventbus.trigger('assets:outOfZoom');
-        }
-      }
-    }
-  }, this);
 })(this);
