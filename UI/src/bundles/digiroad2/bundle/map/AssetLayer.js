@@ -51,16 +51,12 @@ window.AssetLayer = function(map, roadLayer) {
         clickCoords = [evt.clientX, evt.clientY];
         OpenLayers.Event.stop(evt);
         selectedAsset = asset;
-        // Mouse need to be down until can be moved
         selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
-        //Save original position
         selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
         selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
-        //register up
         map.events.register("mouseup", map, mouseUpFn, true);
         mouseUpFunction = mouseUpFn;
         asset.mouseUpHandler = mouseUpFn;
-        mouseClickFn(asset);
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
 
