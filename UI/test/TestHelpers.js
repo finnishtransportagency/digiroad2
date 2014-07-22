@@ -23,7 +23,6 @@ define(function() {
     var asset = AssetsModel.getAsset(id);
     if (asset) {
       asset.mouseDownHandler(event);
-      asset.mouseUpHandler(event);
     }
   };
 

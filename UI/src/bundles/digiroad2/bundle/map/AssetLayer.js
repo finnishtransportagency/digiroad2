@@ -64,6 +64,12 @@ window.AssetLayer = function(map, roadLayer) {
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
 
+      var selectAsset = function() {
+        OpenLayers.Event.stop(evt);
+        selectedAsset = asset;
+        mouseClickFn(asset);
+      };
+
       if (selectedControl === 'Select') {
         if (selectedAssetModel.getId() === asset.data.id) {
           commenceAssetDragging();
@@ -72,7 +78,7 @@ window.AssetLayer = function(map, roadLayer) {
             new Confirm();
           } else {
             selectedAssetModel.change(asset.data);
-            commenceAssetDragging();
+            selectAsset();
           }
         }
       }
