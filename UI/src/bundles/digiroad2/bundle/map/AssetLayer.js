@@ -69,10 +69,9 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createMouseClickHandler = function(asset) {
-    return function(event) {
+    return function() {
       var selectAsset = function() {
         selectedAssetModel.change(asset.data);
-        OpenLayers.Event.stop(event);
         selectedAsset = asset;
         window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
       };
