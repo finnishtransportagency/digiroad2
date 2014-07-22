@@ -158,14 +158,11 @@
     };
 
     var change = function(asset) {
-      if (exists() && currentAsset.id !== asset.id && assetHasBeenModified) {
-        return false;
+      var anotherAssetIsSelectedAndHasBeenModified = exists() && currentAsset.id !== asset.id && assetHasBeenModified;
+      if (!anotherAssetIsSelectedAndHasBeenModified) {
+        if (exists()) { close(); }
+        open(asset);
       }
-      if (exists()) {
-        close();
-      }
-      open(asset);
-      return true;
     };
 
     var getId = function() {
