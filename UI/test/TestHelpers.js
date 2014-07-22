@@ -1,5 +1,24 @@
 define(function() {
+  var unbindEvents = function() {
+    eventbus.off();
+    $(window).off();
+  };
+
+  var clearDom = function() {
+    $('.container').html(
+        '<div id="contentMap">' +
+          '<div id="mapdiv"></div>' +
+          '<div class="crossHair crossHairVertical"></div>' +
+          '<div class="crossHair crossHairHorizontal"></div>' +
+        '</div>' +
+        '<nav id="map-tools"></nav>' +
+        '<div id="feature-attributes"></div>'
+    );
+  };
+
   var restartApplication = function(callback, fakeBackend) {
+    unbindEvents();
+    clearDom();
     eventbus.once('map:initialized', callback);
     ApplicationModel.assetDragDelay = 0;
     Application.restart(fakeBackend);
