@@ -72,7 +72,6 @@ window.AssetLayer = function(map, roadLayer) {
     return function() {
       var selectAsset = function() {
         selectedAssetModel.change(asset.data);
-        selectedAsset = asset;
         window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
       };
 
