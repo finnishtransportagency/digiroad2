@@ -46,29 +46,34 @@ window.AssetLayer = function(map, roadLayer) {
 
   var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
     return function(evt) {
+      var commenceAssetDragging = function() {
+        clickTimestamp = new Date().getTime();
+        clickCoords = [evt.clientX, evt.clientY];
+        OpenLayers.Event.stop(evt);
+        selectedAsset = asset;
+        // Mouse need to be down until can be moved
+        selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
+        //Save original position
+        selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
+        selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
+        //register up
+        map.events.register("mouseup", map, mouseUpFn, true);
+        mouseUpFunction = mouseUpFn;
+        asset.mouseUpHandler = mouseUpFn;
+        mouseClickFn(asset);
+        setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
+      };
+
       if (selectedControl === 'Select') {
-        var changeSuccess = true;
-        if (selectedAssetModel.getId() !== asset.data.id) {
-          changeSuccess = selectedAssetModel.change(asset.data);
-        }
-        if (!changeSuccess) {
-          new Confirm();
+        if (selectedAssetModel.getId() === asset.data.id) {
+          commenceAssetDragging();
         } else {
-          clickTimestamp = new Date().getTime();
-          clickCoords = [evt.clientX, evt.clientY];
-          OpenLayers.Event.stop(evt);
-          selectedAsset = asset;
-          // Mouse need to be down until can be moved
-          selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
-          //Save original position
-          selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
-          selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
-          //register up
-          map.events.register("mouseup", map, mouseUpFn, true);
-          mouseUpFunction = mouseUpFn;
-          asset.mouseUpHandler = mouseUpFn;
-          mouseClickFn(asset);
-          setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
+          if (selectedAssetModel.isDirty()) {
+            new Confirm();
+          } else {
+            selectedAssetModel.change(asset.data);
+            commenceAssetDragging();
+          }
         }
       }
     };
