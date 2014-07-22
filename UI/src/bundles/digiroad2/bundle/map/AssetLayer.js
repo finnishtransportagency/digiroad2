@@ -30,8 +30,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var mouseUpHandler = function(asset) {
     clickTimestamp = null;
-    map.events.unregister("mouseup", map, asset.mouseUpHandler);
-    asset.mouseUpHandler = null;
+    unregisterMouseUpHandler(asset);
     assetIsMoving = false;
   };
 
@@ -42,7 +41,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
   };
 
-  var mouseDown = function(asset, mouseUpFn) {
+  var mouseDown = function(asset) {
     return function(evt) {
       var commenceAssetDragging = function() {
         clickTimestamp = new Date().getTime();
@@ -52,8 +51,7 @@ window.AssetLayer = function(map, roadLayer) {
         selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
         selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
         selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
-        map.events.register("mouseup", map, mouseUpFn, true);
-        asset.mouseUpHandler = mouseUpFn;
+        registerMouseUpHandler(asset);
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
 
@@ -90,9 +88,19 @@ window.AssetLayer = function(map, roadLayer) {
     initialClickOffsetFromMarkerBottomleft.y = mouseY - markerPosition.top;
   };
 
-  var registerMouseDownHandler = function(asset) {
+  var registerMouseUpHandler = function(asset) {
     var mouseUpFn = mouseUp(asset);
-    var mouseDownFn = mouseDown(asset, mouseUpFn);
+    asset.mouseUpHandler = mouseUpFn;
+    map.events.register('mouseup', map, mouseUpFn, true);
+  };
+
+  var unregisterMouseUpHandler = function(asset) {
+    map.events.unregister('mouseup', map, asset.mouseUpHandler);
+    asset.mouseUpHandler = null;
+  };
+
+  var registerMouseDownHandler = function(asset) {
+    var mouseDownFn = mouseDown(asset);
     asset.mouseDownHandler = mouseDownFn;
     asset.massTransitStop.getMarker().events.register('mousedown', assetLayer, mouseDownFn);
   };
