@@ -44,7 +44,7 @@ window.AssetLayer = function(map, roadLayer) {
     };
   };
 
-  var mouseDown = function(asset, mouseUpFn, mouseClickFn) {
+  var mouseDown = function(asset, mouseUpFn) {
     return function(evt) {
       var commenceAssetDragging = function() {
         clickTimestamp = new Date().getTime();
@@ -63,7 +63,7 @@ window.AssetLayer = function(map, roadLayer) {
       var selectAsset = function() {
         OpenLayers.Event.stop(evt);
         selectedAsset = asset;
-        mouseClickFn(asset);
+        window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
       };
 
       if (selectedControl === 'Select') {
@@ -87,13 +87,6 @@ window.AssetLayer = function(map, roadLayer) {
     initialClickOffsetFromMarkerBottomleft.y = mouseY - markerPosition.top;
   };
 
-  var mouseClick = function(asset) {
-    return function(evt) {
-      OpenLayers.Event.stop(evt);
-      window.location.hash = '#/asset/' + asset.data.externalId + '?keepPosition=true';
-    };
-  };
-
   var createAsset = function(assetData) {
     var massTransitStop = new MassTransitStop(assetData, map);
     assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
@@ -102,9 +95,8 @@ window.AssetLayer = function(map, roadLayer) {
     var asset = {};
     asset.data = assetData;
     asset.massTransitStop = massTransitStop;
-    var mouseClickFn = mouseClick(asset);
     var mouseUpFn = mouseUp(asset);
-    var mouseDownFn = mouseDown(asset, mouseUpFn, mouseClickFn);
+    var mouseDownFn = mouseDown(asset, mouseUpFn);
     asset.mouseDownHandler = mouseDownFn;
     marker.events.register("mousedown", assetLayer, mouseDownFn);
     marker.events.register("click", assetLayer, OpenLayers.Event.stop);
