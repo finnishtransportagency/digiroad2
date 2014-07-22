@@ -93,6 +93,18 @@ window.AssetLayer = function(map, roadLayer) {
     initialClickOffsetFromMarkerBottomleft.y = mouseY - markerPosition.top;
   };
 
+  var registerMouseDownHandler = function(asset) {
+    var mouseUpFn = mouseUp(asset);
+    var mouseDownFn = mouseDown(asset, mouseUpFn);
+    asset.mouseDownHandler = mouseDownFn;
+    asset.massTransitStop.getMarker().events.register('mousedown', assetLayer, mouseDownFn);
+  };
+
+  var unregisterMouseDownHandler = function(asset) {
+    asset.massTransitStop.getMarker().events.unregister('mousedown', assetLayer, asset.mouseDownHandler);
+    asset.mouseDownHandler = null;
+  };
+
   var createAsset = function(assetData) {
     var massTransitStop = new MassTransitStop(assetData, map);
     assetDirectionLayer.addFeatures(massTransitStop.getDirectionArrow(true));
@@ -100,12 +112,8 @@ window.AssetLayer = function(map, roadLayer) {
     var asset = {};
     asset.data = assetData;
     asset.massTransitStop = massTransitStop;
-    var mouseUpFn = mouseUp(asset);
-    var mouseDownFn = mouseDown(asset, mouseUpFn);
-    asset.mouseDownHandler = mouseDownFn;
     var mouseClickHandler = createMouseClickHandler(asset);
     asset.mouseClickHandler = mouseClickHandler;
-    marker.events.register('mousedown', assetLayer, mouseDownFn);
     marker.events.register('click', assetLayer, mouseClickHandler);
     return asset;
   };
@@ -230,6 +238,8 @@ window.AssetLayer = function(map, roadLayer) {
     if (groupContainingSavedAsset.length > 1) {
       AssetsModel.destroyGroup(assetIds);
     }
+
+    return AssetsModel.getAsset(asset.id);
   };
 
   var reRenderGroup = function(destroyedAssets) {
@@ -304,7 +314,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var closeAsset = function() {
-    selectedAsset = null;
+    deselectAsset(selectedAsset);
   };
 
   var hideAssets = function() {
@@ -322,6 +332,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var deselectAsset = function(asset) {
     if (asset) {
+      unregisterMouseDownHandler(asset);
       asset.massTransitStop.deselect();
       selectedAsset = null;
     }
@@ -330,9 +341,9 @@ window.AssetLayer = function(map, roadLayer) {
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
     destroyAsset(backendAsset);
-    var uiAsset = addNewAsset(backendAsset);
-    regroupAssetIfNearOtherAssets(backendAsset);
-    selectedAsset = uiAsset;
+    addNewAsset(backendAsset);
+    selectedAsset = regroupAssetIfNearOtherAssets(backendAsset);
+    registerMouseDownHandler(selectedAsset);
     eventbus.trigger('asset:selected', backendAsset);
   };
 
