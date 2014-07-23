@@ -135,7 +135,9 @@
       } else {
         currentAsset.payload.id = currentAsset.id;
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
-        backend.updateAsset(currentAsset.id, payload);
+        backend.updateAsset(currentAsset.id, payload, function (asset) {
+          eventbus.trigger('asset:saved asset:fetched', asset);
+        });
       }
     };
 

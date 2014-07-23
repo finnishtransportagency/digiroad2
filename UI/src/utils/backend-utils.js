@@ -99,7 +99,7 @@
       });
     };
 
-    backend.updateAsset = function (id, data) {
+    backend.updateAsset = function (id, data, successCallback) {
       eventbus.trigger('asset:saving');
       $.ajax({
         contentType: "application/json",
@@ -107,9 +107,7 @@
         url: "api/assets/" + id,
         data: JSON.stringify(data),
         dataType: "json",
-        success: function (asset) {
-          eventbus.trigger('asset:saved asset:fetched', asset);
-        },
+        success: successCallback,
         error: assetUpdateFailed
       });
     };
