@@ -43,7 +43,7 @@
       window.location.hash = '#/asset/' + asset.externalId + '?keepPosition=' + keepPosition;
     });
 
-    eventbus.on('asset:created', function() {
+    eventbus.on('asset:saved asset:created', function() {
       jQuery('.spinner-overlay').remove();
     });
 
