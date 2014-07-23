@@ -162,8 +162,8 @@
     };
 
     var changeByExternalId = function(assetExternalId) {
-      var anotherAssetIsSelectedAndHasBeenModified = exists() && currentAsset.externalId !== assetExternalId && assetHasBeenModified;
-      if (!anotherAssetIsSelectedAndHasBeenModified) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.externalId !== assetExternalId && !assetHasBeenModified;
+      if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
         Backend.getAssetByExternalId(assetExternalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
