@@ -39,9 +39,13 @@
     }, 1000);
 
     backend.getAsset = function (assetId) {
-      $.get('api/assets/' + assetId, function (asset) {
+      this.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);
       });
+    };
+
+    backend.getAssetWithCallback = function(assetId, callback) {
+      $.get('api/assets/' + assetId, callback);
     };
 
     backend.getAssetByExternalId = function (externalId, callback) {
