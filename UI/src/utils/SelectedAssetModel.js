@@ -86,14 +86,16 @@
     });
 
     var cancel = function() {
+      changedProps = [];
+      assetHasBeenModified = false;
       if (currentAsset.id) {
         backend.getAssetWithCallback(currentAsset.id, function(asset) {
           eventbus.trigger('asset:fetched', asset);
+          eventbus.trigger('asset:cancelled');
         });
+      } else {
+        eventbus.trigger('asset:cancelled');
       }
-      changedProps = [];
-      assetHasBeenModified = false;
-      eventbus.trigger('asset:cancelled');
     };
 
     eventbus.on('application:readOnly', function() {
