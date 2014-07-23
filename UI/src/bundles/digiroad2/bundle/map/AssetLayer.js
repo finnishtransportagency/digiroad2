@@ -220,7 +220,7 @@ window.AssetLayer = function(map, roadLayer) {
   var handleAssetSaved = function(asset) {
     selectedAsset.data = asset;
     AssetsModel.insertAsset(selectedAsset, asset.id);
-    regroupAssetIfNearOtherAssets(asset);
+    selectedAsset = regroupAssetIfNearOtherAssets(asset);
   };
 
   var parseAssetDataFromAssetsWithMetadata = function(assets) {
