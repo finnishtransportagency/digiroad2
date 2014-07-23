@@ -132,10 +132,8 @@
     };
 
     var deselect = function() {
-      if (selected) {
-        renderDefaultState();
-        selected = false;
-      }
+      renderDefaultState();
+      selected = false;
     };
 
     var detachAssetFromGroup = function() {
