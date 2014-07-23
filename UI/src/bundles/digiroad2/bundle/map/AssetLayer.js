@@ -175,7 +175,7 @@ window.AssetLayer = function(map, roadLayer) {
         addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
         if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
-          eventbus.trigger('asset:selected', uiAsset);
+          selectedAsset.massTransitStop.select();
         }
       });
     });
@@ -214,7 +214,7 @@ window.AssetLayer = function(map, roadLayer) {
     removeAssetFromMap(selectedAsset);
     addNewAsset(asset);
     selectedAsset = regroupAssetIfNearOtherAssets(asset);
-    eventbus.trigger('asset:selected', asset);
+    selectedAsset.massTransitStop.select();
   };
 
   var handleAssetSaved = function(asset) {
@@ -348,7 +348,7 @@ window.AssetLayer = function(map, roadLayer) {
     addNewAsset(backendAsset);
     selectedAsset = regroupAssetIfNearOtherAssets(backendAsset);
     registerMouseDownHandler(selectedAsset);
-    eventbus.trigger('asset:selected', backendAsset);
+    selectedAsset.massTransitStop.select();
   };
 
   var moveSelectedAsset = function(pxPosition) {

@@ -25,7 +25,7 @@
 
     var createNewMarker = function() {
       configureMarkerDiv(data.id);
-      renderSelectedState(data);
+      renderSelectedState();
       return box;
     };
 
@@ -123,16 +123,16 @@
       setYPositionForAssetOnGroup();
     };
 
-    var renderSelectedState = function(assetWithProperties) {
+    var renderSelectedState = function() {
       box.bounds = getBounds(data.group.lon, data.group.lat);
-      $(box.div).html(getSelectedContent(assetWithProperties, assetWithProperties.imageIds))
+      $(box.div).html(getSelectedContent(data, data.imageIds))
                 .addClass('selected-asset');
       setYPositionForAssetOnGroup();
     };
 
-    var deselect = function() {
-      renderDefaultState();
-    };
+    var select = function() { renderSelectedState(); };
+
+    var deselect = function() { renderDefaultState(); };
 
     var detachAssetFromGroup = function() {
       _.remove(data.group.assetGroup, function(asset) {
@@ -143,14 +143,6 @@
 
     eventbus.on('tool:changed asset:placed', deselect);
 
-    eventbus.on('asset:selected', function(asset) {
-      if (asset.id === data.id) {
-        renderSelectedState(asset);
-      } else {
-        deselect();
-      }
-    });
-
     eventbus.on('asset:saved', function(asset) {
       if (data.id === asset.id) {
         _.merge(data, asset);
@@ -159,7 +151,7 @@
           eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
           data.group.assetGroup = [data];
           data.group.id = new Date().getTime();
-          renderSelectedState(asset);
+          renderSelectedState();
         }
       }
     });
@@ -184,6 +176,7 @@
       createMarker: createMarker,
       createNewMarker: createNewMarker,
       moveTo: moveTo,
+      select: select,
       deselect: deselect
     };
   };
