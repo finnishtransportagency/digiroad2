@@ -158,10 +158,14 @@
     };
 
     var change = function(asset) {
-      var anotherAssetIsSelectedAndHasBeenModified = exists() && currentAsset.id !== asset.id && assetHasBeenModified;
+      changeByExternalId(asset.externalId);
+    };
+
+    var changeByExternalId = function(assetExternalId) {
+      var anotherAssetIsSelectedAndHasBeenModified = exists() && currentAsset.externalId !== assetExternalId && assetHasBeenModified;
       if (!anotherAssetIsSelectedAndHasBeenModified) {
         if (exists()) { close(); }
-        Backend.getAssetByExternalId(asset.externalId, function(asset) {
+        Backend.getAssetByExternalId(assetExternalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -193,6 +197,7 @@
       cancel: cancel,
       exists: exists,
       change: change,
+      changeByExternalId: changeByExternalId,
       getId: getId,
       getName: getName,
       getDirection: getDirection,

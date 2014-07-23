@@ -8,7 +8,7 @@
   var assetIdFromURL = function() {
     var matches = window.location.hash.match(/(\d+)(.*)/);
     if (matches) {
-      return {externalId: matches[1], keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
+      return {externalId: parseInt(matches[1], 10), keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
     }
   };
 
@@ -77,9 +77,7 @@
         eventbus.trigger('application:initialized');
         var data = assetIdFromURL();
         if (data && data.externalId) {
-          Backend.getAssetByExternalId(data.externalId, function(asset) {
-            eventbus.trigger('asset:fetched', asset);
-          });
+          selectedAssetModel.changeByExternalId(data.externalId);
         }
       });
     }
