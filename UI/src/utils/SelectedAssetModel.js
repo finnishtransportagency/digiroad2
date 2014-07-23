@@ -87,7 +87,9 @@
 
     var cancel = function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id);
+        backend.getAssetWithCallback(currentAsset.id, function(asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
       }
       changedProps = [];
       assetHasBeenModified = false;
