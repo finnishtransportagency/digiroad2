@@ -16,13 +16,12 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
     describe('and moving bus stop', function() {
       var originalYPosition;
       var testAssetId = 300348;
-      before(function(done) {
+      before(function() {
         var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
         originalYPosition = marker.bounds.top;
         $('.edit-mode-btn').click();
         testHelpers.clickMarker(testAssetId, openLayersMap);
         testHelpers.moveMarker(testAssetId, openLayersMap, 1, 0);
-        done();
       });
       it('moves bus stop', function() {
         var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
