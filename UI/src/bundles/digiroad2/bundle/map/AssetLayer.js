@@ -212,8 +212,8 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
-    selectedAsset = addNewAsset(asset);
-    regroupAssetIfNearOtherAssets(asset);
+    addNewAsset(asset);
+    selectedAsset = regroupAssetIfNearOtherAssets(asset);
     eventbus.trigger('asset:selected', asset);
   };
 
