@@ -91,10 +91,10 @@
       if (currentAsset.id) {
         backend.getAssetWithCallback(currentAsset.id, function(asset) {
           open(asset);
-          eventbus.trigger('asset:cancelled', asset);
+          eventbus.trigger('asset:updateCancelled', asset);
         });
       } else {
-        eventbus.trigger('asset:cancelled');
+        eventbus.trigger('asset:creationCancelled');
       }
     };
 

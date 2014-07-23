@@ -181,18 +181,18 @@ window.AssetLayer = function(map, roadLayer) {
     });
   };
 
-  var cancelCreate = function(asset) {
-    if (selectedControl == 'Add' && selectedAsset.data.id === undefined) {
-      removeOverlay();
-      removeAssetFromMap(selectedAsset);
-    } else {
-      deselectAsset(selectedAsset);
-      destroyAsset(asset);
-      addNewAsset(asset);
-      selectedAsset = regroupAssetIfNearOtherAssets(asset);
-      registerMouseDownHandler(selectedAsset);
-      selectedAsset.massTransitStop.select();
-    }
+  var cancelCreate = function() {
+    removeOverlay();
+    removeAssetFromMap(selectedAsset);
+  };
+
+  var cancelUpdate = function(asset) {
+    deselectAsset(selectedAsset);
+    destroyAsset(asset);
+    addNewAsset(asset);
+    selectedAsset = regroupAssetIfNearOtherAssets(asset);
+    registerMouseDownHandler(selectedAsset);
+    selectedAsset.massTransitStop.select();
   };
 
   var updateAsset = function(asset) {
@@ -473,7 +473,8 @@ window.AssetLayer = function(map, roadLayer) {
   eventbus.on('asset:created', handleAssetCreated, this);
   eventbus.on('asset:fetched', handleAssetFetched, this);
   eventbus.on('asset:created', removeOverlay, this);
-  eventbus.on('asset:cancelled', cancelCreate, this);
+  eventbus.on('asset:creationCancelled', cancelCreate, this);
+  eventbus.on('asset:updateCancelled', cancelUpdate, this);
   eventbus.on('asset:closed', closeAsset, this);
   eventbus.on('application:readOnly', function(value) {
     readOnly = value;
