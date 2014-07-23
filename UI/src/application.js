@@ -4,6 +4,7 @@
   var appSetup;
   var appConfig;
   var localizedStrings;
+  var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var assetIdFromURL = function() {
     var matches = window.location.hash.match(/(\d+)(.*)/);
@@ -45,6 +46,11 @@
 
     eventbus.on('asset:saved asset:created', function() {
       jQuery('.spinner-overlay').remove();
+    });
+
+    eventbus.on('asset:updateFailed', function() {
+      jQuery('.spinner-overlay').remove();
+      alert(assetUpdateFailedMessage);
     });
 
     eventbus.on('applicationSetup:fetched', function(setup) {

@@ -139,9 +139,14 @@
       } else {
         currentAsset.payload.id = currentAsset.id;
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
-        backend.updateAsset(currentAsset.id, payload, function (asset) {
+        backend.updateAsset(currentAsset.id, payload, function(asset) {
           open(asset);
           eventbus.trigger('asset:saved', asset);
+        }, function() {
+          backend.getAssetWithCallback(currentAsset.id, function(asset) {
+            open(asset);
+            eventbus.trigger('asset:updateFailed', asset);
+          });
         });
       }
     };

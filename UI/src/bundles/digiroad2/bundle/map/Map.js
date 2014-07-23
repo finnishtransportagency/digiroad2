@@ -60,7 +60,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._selectControl.unselectAll();
         this._selectControl.select(nearestFeature);
       }, this);
-      eventbus.on('asset:updateCancelled', function() {
+      eventbus.on('asset:updateCancelled asset:updateFailed', function() {
         this._selectControl.unselectAll();
       }, this);
       eventbus.on('validityPeriod:changed layer:selected', function() {
