@@ -48,9 +48,6 @@ window.AssetLayer = function(map, roadLayer) {
         clickCoords = [evt.clientX, evt.clientY];
         OpenLayers.Event.stop(evt);
         selectedAsset = asset;
-        selectedAsset.massTransitStop.getMarker().actionMouseDown = true;
-        selectedAsset.massTransitStop.getMarker().actionDownX = evt.clientX;
-        selectedAsset.massTransitStop.getMarker().actionDownY = evt.clientY;
         registerMouseUpHandler(asset);
         setInitialClickOffsetFromMarkerBottomLeft(evt.clientX, evt.clientY);
       };
