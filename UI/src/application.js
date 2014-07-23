@@ -24,12 +24,7 @@
     $(window).on('hashchange', function() {
       var data = assetIdFromURL();
       if (data && data.externalId) {
-        Backend.getAssetByExternalId(data.externalId, function(asset) {
-          eventbus.trigger('asset:fetched', asset);
-          if (!data.keepPosition) {
-            eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
-          }
-        });
+        selectedAssetModel.changeByExternalId(data.externalId);
       }
     });
 
@@ -39,7 +34,13 @@
 
     eventbus.on('asset:fetched', function(asset) {
       jQuery('.spinner-overlay').remove();
-      window.location.hash = '#/asset/' + asset.externalId + '?keepPosition=true';
+      var keepPosition = 'true';
+      var data = assetIdFromURL();
+      if (data && !data.keepPosition) {
+        eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
+        keepPosition = 'false';
+      }
+      window.location.hash = '#/asset/' + asset.externalId + '?keepPosition=' + keepPosition;
     });
 
     eventbus.on('asset:created', function() {
