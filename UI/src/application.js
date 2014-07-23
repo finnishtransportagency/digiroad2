@@ -17,7 +17,7 @@
   };
 
   var bindEvents = function() {
-    eventbus.on('application:readOnly tool:changed validityPeriod:changed', function() {
+    eventbus.on('application:readOnly tool:changed asset:closed', function() {
       window.location.hash = '';
     });
 
