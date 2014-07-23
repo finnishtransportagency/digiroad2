@@ -181,10 +181,17 @@ window.AssetLayer = function(map, roadLayer) {
     });
   };
 
-  var cancelCreate = function() {
+  var cancelCreate = function(asset) {
     if (selectedControl == 'Add' && selectedAsset.data.id === undefined) {
       removeOverlay();
       removeAssetFromMap(selectedAsset);
+    } else {
+      deselectAsset(selectedAsset);
+      destroyAsset(asset);
+      addNewAsset(asset);
+      selectedAsset = regroupAssetIfNearOtherAssets(asset);
+      registerMouseDownHandler(selectedAsset);
+      selectedAsset.massTransitStop.select();
     }
   };
 
