@@ -364,7 +364,7 @@
         dateutil.removeDatePickersFromDom();
       };
 
-      eventbus.on('asset:modified', function(asset){
+      eventbus.on('asset:modified', function(){
         renderAssetForm();
       });
 
