@@ -135,7 +135,10 @@
 
     var save = function() {
       if (currentAsset.id === undefined) {
-        backend.createAsset(currentAsset.payload);
+        backend.createAsset(currentAsset.payload, function() {
+          eventbus.trigger('asset:creationFailed');
+          close();
+        });
       } else {
         currentAsset.payload.id = currentAsset.id;
         var payload = payloadWithProperties(currentAsset.payload, changedProps);

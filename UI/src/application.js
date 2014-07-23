@@ -48,7 +48,7 @@
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:updateFailed', function() {
+    eventbus.on('asset:updateFailed asset:creationFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });

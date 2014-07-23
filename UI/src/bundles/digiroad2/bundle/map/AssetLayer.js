@@ -473,7 +473,7 @@ window.AssetLayer = function(map, roadLayer) {
   eventbus.on('asset:created', handleAssetCreated, this);
   eventbus.on('asset:fetched', handleAssetFetched, this);
   eventbus.on('asset:created', removeOverlay, this);
-  eventbus.on('asset:creationCancelled', cancelCreate, this);
+  eventbus.on('asset:creationCancelled asset:creationFailed', cancelCreate, this);
   eventbus.on('asset:updateCancelled asset:updateFailed', cancelUpdate, this);
   eventbus.on('asset:closed', closeAsset, this);
   eventbus.on('application:readOnly', function(value) {

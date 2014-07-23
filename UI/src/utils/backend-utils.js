@@ -1,6 +1,4 @@
 (function (backend) {
-  var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
-
   function initialize(backend) {
     backend.getEnumeratedPropertyValues = function (assetTypeId) {
       $.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function (enumeratedPropertyValues) {
@@ -83,12 +81,7 @@
       });
     };
 
-    var assetUpdateFailed = function () {
-      alert(assetUpdateFailedMessage);
-      eventbus.trigger('asset:cancelled');
-    };
-
-    backend.createAsset = function (data) {
+    backend.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
         contentType: "application/json",
@@ -99,7 +92,7 @@
         success: function (asset) {
           eventbus.trigger('asset:created', asset);
         },
-        error: assetUpdateFailed
+        error: errorCallback
       });
     };
 
