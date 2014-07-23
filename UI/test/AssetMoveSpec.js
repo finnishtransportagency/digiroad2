@@ -25,19 +25,15 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
         done();
       });
       it('moves bus stop', function() {
-        var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), function(marker) {
-          return marker.id === testAssetId && marker.bounds.top > originalYPosition;
-        });
-        expect(marker).not.to.be.undefined;
+        var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
+        expect(marker.bounds.top).to.be.above(originalYPosition);
       });
       describe('and canceling bus stop move', function() {
         before(function() { $('button.cancel').click(); });
 
         it('returns bus stop to original location', function() {
-          var markerInOriginalYPosition = _.all(_.where(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId}), function(marker) {
-            return marker.bounds.top === originalYPosition;
-          });
-          expect(markerInOriginalYPosition).to.be.true;
+          var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
+          expect(marker.bounds.top).to.equal(originalYPosition);
         });
       });
     });
