@@ -145,7 +145,7 @@
       data.group.moved = true;
     };
 
-    eventbus.on('asset:closed tool:changed asset:placed', deselect);
+    eventbus.on('tool:changed asset:placed', deselect);
 
     eventbus.on('asset:selected', function(asset) {
       if (asset.id === data.id) {
