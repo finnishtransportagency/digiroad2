@@ -11,7 +11,6 @@
     var bounds = getBounds(data.group.lon, data.group.lat);
     var box = new OpenLayers.Marker.Box(bounds, "ffffff00", 0);
     box.id = data.id;
-    var selected = false; // keeping track of the selected state while assetlayer refactoring is ongoing TODO: move to selected model
 
     var configureMarkerDiv = function(id) {
       $(box.div).css('overflow', 'visible !important')
@@ -133,7 +132,6 @@
 
     var deselect = function() {
       renderDefaultState();
-      selected = false;
     };
 
     var detachAssetFromGroup = function() {
@@ -148,7 +146,6 @@
     eventbus.on('asset:selected', function(asset) {
       if (asset.id === data.id) {
         renderSelectedState(asset);
-        selected = true;
       } else {
         deselect();
       }
