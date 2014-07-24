@@ -431,6 +431,8 @@ window.AssetLayer = function(map, roadLayer) {
         var transformedAsset = asset;
         transformedAsset.lon = selectedAsset.data.lon;
         transformedAsset.lat = selectedAsset.data.lat;
+        transformedAsset.bearing = selectedAsset.data.bearing;
+        transformedAsset.validityDirection = selectedAsset.data.validityDirection;
         return [transformedAsset];
       }
       return [];
