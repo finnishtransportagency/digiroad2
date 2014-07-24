@@ -49,10 +49,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._isInitialized = true;
         eventbus.trigger('map:initialized', this._map);
       }, this);
-      eventbus.on('application:readOnly', function(readOnly) {
-        this._readOnly = readOnly;
-        this._selectControl.unselectAll();
-      }, this);
       eventbus.on('asset:moving', function(nearestLine) {
         var nearestFeature = _.find(this.roadLayer.features, function(feature) {
           return feature.attributes.roadLinkId == nearestLine.roadLinkId;
@@ -60,10 +56,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._selectControl.unselectAll();
         this._selectControl.select(nearestFeature);
       }, this);
-      eventbus.on('asset:updateCancelled asset:updateFailed', function() {
-        this._selectControl.unselectAll();
-      }, this);
-      eventbus.on('validityPeriod:changed layer:selected', function() {
+      eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
         this._selectControl.unselectAll();
       }, this);
       eventbus.on('road-type:selected', function(selected) {
