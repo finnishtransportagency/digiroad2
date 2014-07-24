@@ -94,12 +94,12 @@
     };
 
     var createImageIds = function(properties) {
-      var assetType = _.find(properties, function(property) {
-        return property.publicId === "pysakin_tyyppi";
-      });
-      return _.map(assetType.values, function(value) {
-        return value.propertyValue + '_';
-      });
+      return _.chain(properties)
+              .where(function(property) { return property.publicId === 'pysakin_tyyppi'; })
+              .pluck('values')
+              .flatten()
+              .map(function(value) { return value.propertyValue + '_'; })
+              .value();
     };
 
     var handleAssetPropertyValueChanged = function(simpleAsset) {
