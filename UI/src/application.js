@@ -76,6 +76,8 @@
       startApplication();
     });
 
+    eventbus.on('confirm:show', function() { new Confirm(); });
+
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
@@ -87,9 +89,6 @@
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function() {
-        eventbus.on('confirm:show', function() {
-          new Confirm();
-        });
         eventbus.trigger('application:initialized');
       });
     }
