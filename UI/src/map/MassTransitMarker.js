@@ -147,7 +147,6 @@
       _.merge(data, asset);
       if (data.group.moved) {
         data.group.moved = false;
-        eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
         data.group.assetGroup = [data];
         data.group.id = new Date().getTime();
         renderSelectedState();
@@ -162,12 +161,6 @@
       setYPositionForAssetOnGroup();
     };
 
-    eventbus.on('asset:removed-from-group', function(group) {
-      if (data.group.id === group.assetGroupId) {
-        rePlaceInGroup();
-      }
-    });
-
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
 
     eventbus.on('validityPeriod:changed', function() {
@@ -180,7 +173,8 @@
       moveTo: moveTo,
       select: select,
       deselect: deselect,
-      finalizeMove: finalizeMove
+      finalizeMove: finalizeMove,
+      rePlaceInGroup: rePlaceInGroup
     };
   };
 }(this));

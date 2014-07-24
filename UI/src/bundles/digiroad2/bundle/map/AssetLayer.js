@@ -222,11 +222,17 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetSaved = function(asset) {
+    var oldGroupAssets = selectedAsset.data.group.assetGroup;
     selectedAsset.data = asset;
+    selectedAsset.data.group = createDummyGroup(asset.lon, asset.lat, asset);
     AssetsModel.insertAsset(selectedAsset, asset.id);
     selectedAsset = regroupAssetIfNearOtherAssets(asset);
     registerMouseDownHandler(selectedAsset);
     selectedAsset.massTransitStop.finalizeMove(asset);
+    _.each(oldGroupAssets, function(asset) {
+      var uiAsset = AssetsModel.getAsset(asset.id);
+      uiAsset.massTransitStop.rePlaceInGroup();
+    });
   };
 
   var parseAssetDataFromAssetsWithMetadata = function(assets) {

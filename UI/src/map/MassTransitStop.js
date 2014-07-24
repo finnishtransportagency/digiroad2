@@ -62,6 +62,8 @@
       getMassTransitMarker().finalizeMove();
     };
 
+    var rePlaceInGroup = function() { getMassTransitMarker().rePlaceInGroup(); };
+
     return {
       getMarker: getMarker,
       createNewMarker: createNewMarker,
@@ -69,7 +71,8 @@
       moveTo: moveTo,
       select: select,
       deselect: deselect,
-      finalizeMove: finalizeMove
+      finalizeMove: finalizeMove,
+      rePlaceInGroup: rePlaceInGroup
     };
   };
 }(this));
