@@ -355,9 +355,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
-    destroyAsset(backendAsset);
-    addNewAsset(backendAsset);
-    selectedAsset = regroupAssetIfNearOtherAssets(backendAsset);
+    selectedAsset = AssetsModel.getAsset(backendAsset.id);
     registerMouseDownHandler(selectedAsset);
     selectedAsset.massTransitStop.select();
   };

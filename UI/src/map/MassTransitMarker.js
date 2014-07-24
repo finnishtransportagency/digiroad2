@@ -124,7 +124,6 @@
     };
 
     var renderSelectedState = function() {
-      box.bounds = getBounds(data.group.lon, data.group.lat);
       $(box.div).html(getSelectedContent(data, data.imageIds))
                 .addClass('selected-asset');
       setYPositionForAssetOnGroup();
