@@ -68,13 +68,12 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      eventbus.once('assetTypeProperties:fetched', function(properties) {
+      backend.getAssetTypeProperties(10, function(properties) {
         currentAsset.propertyData = properties;
         currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
       });
-      backend.getAssetTypeProperties(10);
     }, this);
 
     eventbus.on('asset:moved', function(position) {

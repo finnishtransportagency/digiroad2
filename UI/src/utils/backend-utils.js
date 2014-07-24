@@ -50,10 +50,8 @@
       $.get('api/assets/' + externalId + '?externalId=true', callback);
     };
 
-    backend.getAssetTypeProperties = function (assetTypeId) {
-      $.get('api/assetTypeProperties/' + assetTypeId, function (assetTypeProperties) {
-        eventbus.trigger('assetTypeProperties:fetched', assetTypeProperties);
-      });
+    backend.getAssetTypeProperties = function (assetTypeId, callback) {
+      $.get('api/assetTypeProperties/' + assetTypeId, callback);
     };
 
     backend.getUserRoles = function () {
