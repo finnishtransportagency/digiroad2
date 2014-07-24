@@ -124,7 +124,8 @@
     };
 
     var renderSelectedState = function() {
-      $(box.div).html(getSelectedContent(data, data.imageIds))
+      var imageIds = createImageIds(selectedAssetModel.getProperties());
+      $(box.div).html(getSelectedContent(data, imageIds))
                 .addClass('selected-asset');
       setYPositionForAssetOnGroup();
     };
