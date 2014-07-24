@@ -65,8 +65,10 @@
       assets = {};
     },
     selectValidityPeriod: function(validityPeriod, isSelected) {
-      validityPeriods[validityPeriod] = isSelected;
-      eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
+      if (validityPeriods[validityPeriod] !== isSelected) {
+        validityPeriods[validityPeriod] = isSelected;
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
+      }
     },
     getValidityPeriods: function() {
       return validityPeriods;
