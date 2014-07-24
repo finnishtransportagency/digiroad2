@@ -82,10 +82,12 @@
           new Confirm();
         });
         eventbus.trigger('application:initialized');
-        var data = assetIdFromURL();
-        if (data && data.externalId) {
-          selectedAssetModel.changeByExternalId(data.externalId);
-        }
+        eventbus.once('assets:all-updated', function() {
+          var data = assetIdFromURL();
+          if (data && data.externalId) {
+            selectedAssetModel.changeByExternalId(data.externalId);
+          }
+        });
       });
     }
   };
