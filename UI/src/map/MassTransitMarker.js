@@ -143,18 +143,16 @@
 
     eventbus.on('tool:changed asset:placed', deselect);
 
-    eventbus.on('asset:saved', function(asset) {
-      if (data.id === asset.id) {
-        _.merge(data, asset);
-        if (data.group.moved) {
-          data.group.moved = false;
-          eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
-          data.group.assetGroup = [data];
-          data.group.id = new Date().getTime();
-          renderSelectedState();
-        }
+    var finalizeMove = function(asset) {
+      _.merge(data, asset);
+      if (data.group.moved) {
+        data.group.moved = false;
+        eventbus.trigger('asset:removed-from-group', { assetGroupId: data.group.id });
+        data.group.assetGroup = [data];
+        data.group.id = new Date().getTime();
+        renderSelectedState();
       }
-    });
+    };
 
     eventbus.on('asset:removed-from-group', function(group) {
       if (data.group.id === group.assetGroupId) {
@@ -177,7 +175,8 @@
       createNewMarker: createNewMarker,
       moveTo: moveTo,
       select: select,
-      deselect: deselect
+      deselect: deselect,
+      finalizeMove: finalizeMove
     };
   };
 }(this));

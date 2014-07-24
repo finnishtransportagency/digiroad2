@@ -226,6 +226,7 @@ window.AssetLayer = function(map, roadLayer) {
     AssetsModel.insertAsset(selectedAsset, asset.id);
     selectedAsset = regroupAssetIfNearOtherAssets(asset);
     registerMouseDownHandler(selectedAsset);
+    selectedAsset.massTransitStop.finalizeMove(asset);
   };
 
   var parseAssetDataFromAssetsWithMetadata = function(assets) {

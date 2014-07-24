@@ -58,13 +58,18 @@
 
     var deselect = function() { getMassTransitMarker().deselect(); };
 
+    var finalizeMove = function() {
+      getMassTransitMarker().finalizeMove();
+    };
+
     return {
       getMarker: getMarker,
       createNewMarker: createNewMarker,
       getDirectionArrow: getDirectionArrow,
       moveTo: moveTo,
       select: select,
-      deselect: deselect
+      deselect: deselect,
+      finalizeMove: finalizeMove
     };
   };
 }(this));
