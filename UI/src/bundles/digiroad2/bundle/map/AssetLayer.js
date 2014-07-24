@@ -168,6 +168,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           selectedAsset.massTransitStop.select();
+          registerMouseDownHandler(selectedAsset);
         }
       });
     });
