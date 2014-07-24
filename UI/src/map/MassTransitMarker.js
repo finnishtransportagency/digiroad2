@@ -154,20 +154,24 @@
       }
     };
 
+    var rePlaceInGroup = function() {
+      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
+      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
+      var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
+      $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
+      setYPositionForAssetOnGroup();
+    };
+
     eventbus.on('asset:removed-from-group', function(group) {
       if (data.group.id === group.assetGroupId) {
-        renderDefaultState();
+        rePlaceInGroup();
       }
     });
 
     eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
 
     eventbus.on('validityPeriod:changed', function() {
-      var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
-      var groupIndex = findGroupIndexForAsset(filteredGroup, data);
-      var addOrRemoveClass = groupIndex === 0 ? 'addClass' : 'removeClass';
-      $(box.div).find('.expanded-bus-stop, .bus-basic-marker')[addOrRemoveClass]('root');
-      setYPositionForAssetOnGroup();
+      rePlaceInGroup();
     });
 
     return {
