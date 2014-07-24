@@ -216,18 +216,22 @@ window.AssetLayer = function(map, roadLayer) {
     selectedAsset.massTransitStop.select();
   };
 
+  function reDrawGroup(group) {
+    var groupAssets = group.assetGroup;
+    _.each(groupAssets, function(asset) {
+      var uiAsset = AssetsModel.getAsset(asset.id);
+      uiAsset.massTransitStop.rePlaceInGroup();
+    });
+  }
+
   var handleAssetSaved = function(asset) {
-    var oldGroupAssets = selectedAsset.data.group.assetGroup;
+    reDrawGroup(selectedAsset.data.group);
     selectedAsset.data = asset;
     selectedAsset.data.group = createDummyGroup(asset.lon, asset.lat, asset);
     AssetsModel.insertAsset(selectedAsset, asset.id);
     selectedAsset = regroupAssetIfNearOtherAssets(asset);
     registerMouseDownHandler(selectedAsset);
     selectedAsset.massTransitStop.finalizeMove(asset);
-    _.each(oldGroupAssets, function(asset) {
-      var uiAsset = AssetsModel.getAsset(asset.id);
-      uiAsset.massTransitStop.rePlaceInGroup();
-    });
   };
 
   var parseAssetDataFromAssetsWithMetadata = function(assets) {
