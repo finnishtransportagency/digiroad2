@@ -16,9 +16,14 @@ define(function() {
     );
   };
 
+  var clearAddressBar = function() {
+    window.location.hash = '';
+  };
+
   var restartApplication = function(callback, fakeBackend) {
     unbindEvents();
     clearDom();
+    clearAddressBar();
     eventbus.once('map:initialized', callback);
     ApplicationModel.assetDragDelay = 0;
     Application.restart(fakeBackend);
