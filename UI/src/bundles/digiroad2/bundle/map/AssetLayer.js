@@ -15,9 +15,6 @@ window.AssetLayer = function(map, roadLayer) {
   var clickCoords;
   var assetIsMoving = false;
 
-  var groupId = 0;
-  var generateNewGroupId = function() { return groupId++; };
-
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -139,7 +136,7 @@ window.AssetLayer = function(map, roadLayer) {
     return selectedAsset && selectedAsset.data.id === asset.id;
   };
 
-  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup, groupId) {
+  var convertBackendAssetToUIAsset = function(backendAsset, centroidLonLat, assetGroup) {
     var uiAsset = backendAsset;
     var lon = centroidLonLat.lon;
     var lat = centroidLonLat.lat;
@@ -150,7 +147,6 @@ window.AssetLayer = function(map, roadLayer) {
       uiAsset.lat = lat;
     }
     uiAsset.group = {
-      id: groupId,
       lon: lon,
       lat: lat,
       assetGroup: assetGroup
@@ -161,11 +157,10 @@ window.AssetLayer = function(map, roadLayer) {
   var renderAssets = function(assetDatas) {
     assetLayer.setVisibility(true);
     _.each(assetDatas, function(assetGroup) {
-      var groupId = generateNewGroupId();
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
-        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup, groupId);
+        var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
         if (!AssetsModel.getAsset(uiAsset.id)) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
@@ -326,7 +321,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var createDummyGroup = function(lon, lat, asset) {
-    return {id: generateNewGroupId(), lon: lon, lat: lat, assetGroup: [asset]};
+    return {lon: lon, lat: lat, assetGroup: [asset]};
   };
 
   var closeAsset = function() {
@@ -405,7 +400,7 @@ window.AssetLayer = function(map, roadLayer) {
     return _.map(backendAssetGroups, function(group) {
       var centroidLonLat = geometrycalculator.getCentroid(group);
       return _.map(group, function(backendAsset) {
-        return createAsset(convertBackendAssetToUIAsset(backendAsset, centroidLonLat, group, generateNewGroupId()));
+        return createAsset(convertBackendAssetToUIAsset(backendAsset, centroidLonLat, group));
       });
     });
   };

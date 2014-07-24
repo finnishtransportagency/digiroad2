@@ -148,7 +148,6 @@
       if (data.group.moved) {
         data.group.moved = false;
         data.group.assetGroup = [data];
-        data.group.id = new Date().getTime();
         renderSelectedState();
       }
     };
