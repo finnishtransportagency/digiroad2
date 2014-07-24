@@ -17,6 +17,13 @@
     jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
   };
 
+  var selectAssetFromAddressBar = function() {
+    var data = assetIdFromURL();
+    if (data && data.externalId) {
+      selectedAssetModel.changeByExternalId(data.externalId);
+    }
+  };
+
   var bindEvents = function() {
     eventbus.on('application:readOnly tool:changed asset:closed', function() {
       window.location.hash = '';
@@ -68,6 +75,8 @@
       window.localizedStrings = assetPropertyNames;
       startApplication();
     });
+
+    eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
   var startApplication = function() {
@@ -82,12 +91,6 @@
           new Confirm();
         });
         eventbus.trigger('application:initialized');
-        eventbus.once('assets:all-updated', function() {
-          var data = assetIdFromURL();
-          if (data && data.externalId) {
-            selectedAssetModel.changeByExternalId(data.externalId);
-          }
-        });
       });
     }
   };
