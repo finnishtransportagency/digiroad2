@@ -225,14 +225,16 @@ window.AssetLayer = function(map, roadLayer) {
     });
   }
 
-  var handleAssetSaved = function(asset) {
-    reDrawGroup(selectedAsset.data.group);
-    selectedAsset.data = asset;
-    selectedAsset.data.group = createDummyGroup(asset.lon, asset.lat, asset);
-    AssetsModel.insertAsset(selectedAsset, asset.id);
-    selectedAsset = regroupAssetIfNearOtherAssets(asset);
-    registerMouseDownHandler(selectedAsset);
-    selectedAsset.massTransitStop.finalizeMove(asset);
+  var handleAssetSaved = function(asset, positionUpdated) {
+    if (positionUpdated) {
+      reDrawGroup(selectedAsset.data.group);
+      selectedAsset.data = asset;
+      selectedAsset.data.group = createDummyGroup(asset.lon, asset.lat, asset);
+      AssetsModel.insertAsset(selectedAsset, asset.id);
+      selectedAsset = regroupAssetIfNearOtherAssets(asset);
+      registerMouseDownHandler(selectedAsset);
+      selectedAsset.massTransitStop.finalizeMove(asset);
+    }
   };
 
   var parseAssetDataFromAssetsWithMetadata = function(assets) {
