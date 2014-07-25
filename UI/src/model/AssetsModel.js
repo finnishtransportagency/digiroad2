@@ -77,6 +77,12 @@
       return validityPeriods[validityPeriod];
     },
     initialize: function() {
+      this.destroyAssets();
+      validityPeriods = {
+        current: true,
+        future: false,
+        past: false
+      };
       bindEvents();
     }
   };
