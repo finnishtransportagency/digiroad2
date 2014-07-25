@@ -142,9 +142,10 @@
       } else {
         currentAsset.payload.id = currentAsset.id;
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
+        var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function(asset) {
           open(asset);
-          eventbus.trigger('asset:saved', asset);
+          eventbus.trigger('asset:saved', asset, positionUpdated);
         }, function() {
           backend.getAssetWithCallback(currentAsset.id, function(asset) {
             open(asset);
