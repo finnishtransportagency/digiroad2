@@ -82,6 +82,7 @@
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       assetHasBeenModified = true;
+      changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
     });
 
     var cancel = function() {
