@@ -225,15 +225,32 @@ window.AssetLayer = function(map, roadLayer) {
     });
   }
 
+  var addAssetToGroup = function(asset, group) {
+    var assetGroup = _.sortBy(group.assetGroup.concat([asset.data]), 'id');
+    _.each(assetGroup, function(asset) {
+      asset.group.assetGroup = assetGroup;
+    });
+  };
+
   var handleAssetSaved = function(asset, positionUpdated) {
     if (positionUpdated) {
       reDrawGroup(selectedAsset.data.group);
-      selectedAsset.data = asset;
-      selectedAsset.data.group = createDummyGroup(asset.lon, asset.lat, asset);
-      AssetsModel.insertAsset(selectedAsset, asset.id);
-      selectedAsset = regroupAssetIfNearOtherAssets(asset);
+      destroyAsset(asset);
+      deselectAsset(selectedAsset);
+
+      var group = createDummyGroup(asset.lon, asset.lat, asset);
+      var uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
+      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(_.omit(AssetsModel.getAssets(), uiAsset.data.id.toString())), asset);
+      if (assetToGroupWith) {
+        addAssetToGroup(uiAsset, assetToGroupWith.data.group);
+        reDrawGroup(assetToGroupWith.data.group);
+      }
+      addAssetToLayers(uiAsset);
+
+      selectedAsset = uiAsset;
+      selectedAsset.massTransitStop.select();
       registerMouseDownHandler(selectedAsset);
-      selectedAsset.massTransitStop.finalizeMove(asset);
     }
   };
 
