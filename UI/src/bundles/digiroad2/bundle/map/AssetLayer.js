@@ -238,13 +238,17 @@ window.AssetLayer = function(map, roadLayer) {
       destroyAsset(asset);
       deselectAsset(selectedAsset);
 
-      var group = createDummyGroup(asset.lon, asset.lat, asset);
-      var uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
-      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
-      var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(_.omit(AssetsModel.getAssets(), uiAsset.data.id.toString())), asset);
+      var uiAsset;
+      var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(AssetsModel.getAssets()), asset);
       if (assetToGroupWith) {
+        uiAsset = createAsset(convertBackendAssetToUIAsset(asset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
+        AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
         addAssetToGroup(uiAsset, assetToGroupWith.data.group);
         reDrawGroup(assetToGroupWith.data.group);
+      } else {
+        var group = createDummyGroup(asset.lon, asset.lat, asset);
+        uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
+        AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
       }
       addAssetToLayers(uiAsset);
 
