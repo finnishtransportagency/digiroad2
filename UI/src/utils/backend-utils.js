@@ -169,6 +169,10 @@
       this.getAssetWithCallback = function(assetId, callback) {
         callback(assetData);
       };
+      this.updateAsset = function (id, data, successCallback) {
+        eventbus.trigger('asset:saving');
+        successCallback(_.defaults(data, assetData));
+      };
       return this;
     };
 
