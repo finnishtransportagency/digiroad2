@@ -1,6 +1,6 @@
 (function(root) {
   root.ConfigurationTestData = {
-    generate: function() {
+    generate: function(zoomLevel) {
       return {
       "mapfull": {
         "state": {
@@ -8,7 +8,7 @@
             "id": "base_35"
           }],
             "srs": "EPSG:3067",
-            "zoom": 10,
+            "zoom": zoomLevel || 10,
           "east": "374750.0",
           "north": "6677409.0"
         },

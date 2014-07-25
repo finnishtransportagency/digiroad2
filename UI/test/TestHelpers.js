@@ -29,12 +29,12 @@ define(function() {
     Application.restart(fakeBackend);
   };
 
-  var fakeBackend = function(assetsData, assetData) {
+  var fakeBackend = function(assetsData, assetData, zoomLevel) {
     return Backend.withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withApplicationSetupData(ApplicationSetupTestData.generate())
-      .withConfigurationData(ConfigurationTestData.generate())
+      .withConfigurationData(ConfigurationTestData.generate(zoomLevel))
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData);
