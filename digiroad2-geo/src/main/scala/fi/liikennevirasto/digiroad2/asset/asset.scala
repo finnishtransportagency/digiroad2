@@ -21,7 +21,12 @@ case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lo
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
-                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification)
+                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification) {
+  def getPropertyValue(propertyName: String): Option[String] = {
+    propertyData.find(_.publicId.equals(propertyName))
+      .flatMap(_.values.headOption.map(_.propertyValue))
+  }
+}
 
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])

@@ -125,7 +125,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus\n" +
         s"${asset.externalId};;2222222\n")
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetAdminId = getAssetAdminId(assetProvider.getAssetByExternalId(asset.externalId).get)
+      val assetAdminId = assetProvider.getAssetByExternalId(asset.externalId).get.getPropertyValue("yllapitajan_tunnus")
       assetAdminId should equal(Some("2222222"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -139,7 +139,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;LiVi-tunnus\n" +
           s"${asset.externalId};;Livi987654\n")
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetLiviId = getAssetLiviId(assetProvider.getAssetByExternalId(asset.externalId).get)
+      val assetLiviId = assetProvider.getAssetByExternalId(asset.externalId).get.getPropertyValue("yllapitajan_koodi")
       assetLiviId should equal(Some("Livi987654"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -153,7 +153,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         s"Valtakunnallinen ID;Pysäkin nimi;Matkustajatunnus\n" +
           s"${asset.externalId};;H156\n")
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetStopCode = getAssetStopCode(assetProvider.getAssetByExternalId(asset.externalId).get)
+      val assetStopCode = assetProvider.getAssetByExternalId(asset.externalId).get.getPropertyValue("matkustajatunnus")
       assetStopCode should equal(Some("H156"))
     } finally {
       removeAsset(asset.id, assetProvider)
@@ -233,18 +233,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 
-  private def getAssetName(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("nimi_suomeksi", asset)
-
-  private def getAssetAdminId(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("yllapitajan_tunnus", asset)
-
-  private def getAssetLiviId(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("yllapitajan_koodi", asset)
-
-  private def getAssetStopCode(asset: AssetWithProperties): Option[String] = getAssetPropertyValue("matkustajatunnus", asset)
-
-  private def getAssetPropertyValue(propertyName: String, asset: AssetWithProperties): Option[String] = {
-     asset.propertyData.find(_.publicId.equals(propertyName))
-       .flatMap(_.values.headOption.map(_.propertyValue))
-  }
+  private def getAssetName(asset: AssetWithProperties): Option[String] = asset.getPropertyValue("nimi_suomeksi")
 
   private def getAssetType(asset: AssetWithProperties): List[String] = {
     asset.propertyData.find(property => property.publicId.equals("pysakin_tyyppi")).toList.flatMap { property =>
