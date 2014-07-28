@@ -104,6 +104,6 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
         csvFileInputStream.close()
       }
     }
-    redirect("/api/import/log/" + timestamp + ".log")
+    redirect(url("/log/" + timestamp + ".log"))
   }
 }
