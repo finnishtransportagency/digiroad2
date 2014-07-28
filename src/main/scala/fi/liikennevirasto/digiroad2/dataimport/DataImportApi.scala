@@ -88,10 +88,10 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     }
     writeToPath(path, "Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
     val user = userProvider.getCurrentUser()
+    val csvFileInputStream = fileParams("csv-file").getInputStream
     fork {
       // Current user is stored in a thread-local variable (feel free to provide better solution)
       userProvider.setCurrentUser(user)
-      val csvFileInputStream = fileParams("csv-file").getInputStream
       try {
         val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, limitImportToStreets)
         val response = result match {
