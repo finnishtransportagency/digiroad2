@@ -100,6 +100,11 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
           case _ => pretty(Extraction.decompose(result))
         }
         writeToPath(path, response)
+      } catch {
+        case e: Exception => {
+          writeToPath(path, "Latauksessa tapahtui odottamaton virhe: " + e.toString())
+          throw e
+        }
       } finally {
         csvFileInputStream.close()
       }
