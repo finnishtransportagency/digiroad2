@@ -82,9 +82,9 @@ object CsvImporter {
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], limitImportToStreets: Boolean, assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
-    if(limitImportToStreets) {
-      val result: Either[RoadLinkType, AssetWithProperties] = assetProvider.updateAssetByExternalIdIfOnStreet(externalId, properties)
+  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[RoadLinkType], assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
+    if(roadTypeLimitations.nonEmpty) {
+      val result: Either[RoadLinkType, AssetWithProperties] = assetProvider.updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
@@ -95,7 +95,7 @@ object CsvImporter {
     }
   }
 
-  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, limitImportToStreets: Boolean = false): ImportResult = {
+  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[RoadLinkType] = Set()): ImportResult = {
     val streamReader = new InputStreamReader(inputStream)
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -106,7 +106,7 @@ object CsvImporter {
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, limitImportToStreets, assetProvider)
+          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, assetProvider)
             .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedAssets = excludedAssets ::: result.excludedAssets)
         } catch {

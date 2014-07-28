@@ -26,6 +26,21 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     )) should equal("Valtakunnallinen ID: 'ID', Pysäkin nimi: 'Nimi'")
   }
 
+  private def createCSV(assets: Map[String, Any]*): String = {
+    val headers = "Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi\n"
+    val rows = assets.map { asset =>
+      List(
+        asset.getOrElse("Valtakunnallinen ID", ""),
+        asset.getOrElse("Pysäkin nimi", ""),
+        asset.getOrElse("Ylläpitäjän tunnus", ""),
+        asset.getOrElse("LiVi-tunnus", ""),
+        asset.getOrElse("Matkustajatunnus", ""),
+        asset.getOrElse("Pysäkin tyyppi", "")
+      ).mkString(";")
+    }.mkString("\n")
+    headers + rows
+  }
+
   test("update name by CSV import", Tag("db")) {
     val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2"))
     val asset2 = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2"))
@@ -180,14 +195,17 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  private val RoadId = 5806
+  private val StreetId = 5821
+  private val PrivateRoadId = 5804
+
   test("ignore updates on other road types than streets when import is limited to streets") {
-    val roadId = 5806
-    val asset = createAsset(roadLinkId = roadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = RoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val assetFields = Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName")
     val csv = createCSV(assetFields)
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
-      val result = CsvImporter.importAssets(inputStream, assetProvider, limitImportToStreets = true)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Street))
       result should equal(ImportResult(
         excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(DefaultFields ++ assetFields)))))
 
@@ -199,12 +217,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update asset on street when import is limited to streets") {
-    val streetId = 5821
-    val asset = createAsset(roadLinkId = streetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val asset = createAsset(roadLinkId = StreetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv = createCSV(Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName"))
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
-      val result = CsvImporter.importAssets(inputStream, assetProvider, limitImportToStreets = true)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Street))
       result should equal(ImportResult())
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
@@ -223,19 +240,109 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     "Pysäkin tyyppi" -> ""
   )
 
-  private def createCSV(assets: Map[String, Any]*): String = {
-    val headers = "Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi\n"
-    val rows = assets.map { asset =>
-      List(
-        asset.getOrElse("Valtakunnallinen ID", ""),
-        asset.getOrElse("Pysäkin nimi", ""),
-        asset.getOrElse("Ylläpitäjän tunnus", ""),
-        asset.getOrElse("LiVi-tunnus", ""),
-        asset.getOrElse("Matkustajatunnus", ""),
-        asset.getOrElse("Pysäkin tyyppi", "")
-      ).mkString(";")
-    }.mkString("\n")
-    headers + rows
+  test("update asset on road when import is limited to roads") {
+    val asset = createAsset(roadLinkId = RoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val csv = createCSV(Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName"))
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Road))
+      result should equal(ImportResult())
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("NewName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  test("ignore updates on other road types than roads when import is limited to roads") {
+    val asset = createAsset(roadLinkId = StreetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val assetFields = Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName")
+    val csv = createCSV(assetFields)
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Road))
+      result should equal(ImportResult(
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetFields)))))
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("AssetName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  test("update asset on private road when import is limited to private roads") {
+    val asset = createAsset(roadLinkId = PrivateRoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val csv = createCSV(Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName"))
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(PrivateRoad))
+      result should equal(ImportResult())
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("NewName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  test("ignore updates on other road types than private roads when import is limited to private roads") {
+    val asset = createAsset(roadLinkId = StreetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
+    val assetFields = Map("Valtakunnallinen ID" -> asset.externalId, "Pysäkin nimi" -> "NewName")
+    val csv = createCSV(assetFields)
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(PrivateRoad))
+      result should equal(ImportResult(
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetFields)))))
+
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
+      assetName should equal(Some("AssetName"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  test("update asset on roads and streets when import is limited to roads and streets") {
+    val assetOnStreet = createAsset(roadLinkId = StreetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName1"))
+    val assetOnRoad = createAsset(roadLinkId = RoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName2"))
+    val csv = createCSV(Map("Valtakunnallinen ID" -> assetOnStreet.externalId, "Pysäkin nimi" -> "NewName1"), Map("Valtakunnallinen ID" -> assetOnRoad.externalId, "Pysäkin nimi" -> "NewName2"))
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Road, Street))
+      result should equal(ImportResult())
+
+      val assetOnStreetName = getAssetName(assetProvider.getAssetByExternalId(assetOnStreet.externalId).get)
+      val assetOnRoadName = getAssetName(assetProvider.getAssetByExternalId(assetOnRoad.externalId).get)
+      assetOnStreetName should equal(Some("NewName1"))
+      assetOnRoadName should equal(Some("NewName2"))
+    } finally {
+      removeAsset(assetOnStreet.id, assetProvider)
+      removeAsset(assetOnRoad.id, assetProvider)
+    }
+  }
+
+  test("ignore updates on all other road types than private roads when import is limited to private roads") {
+    val assetOnStreet = createAsset(roadLinkId = StreetId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName1"))
+    val assetOnRoad = createAsset(roadLinkId = RoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName2"))
+    val assetOnStreetFields = Map("Valtakunnallinen ID" -> assetOnStreet.externalId, "Pysäkin nimi" -> "NewName1")
+    val assetOnRoadFields = Map("Valtakunnallinen ID" -> assetOnRoad.externalId, "Pysäkin nimi" -> "NewName2")
+    val csv = createCSV(assetOnStreetFields, assetOnRoadFields)
+    try {
+      val inputStream = new ByteArrayInputStream(csv.getBytes)
+      val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(PrivateRoad))
+      result should equal(ImportResult(
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(DefaultFields ++ assetOnRoadFields)),
+                              ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetOnStreetFields)))))
+      val assetOnStreetName = getAssetName(assetProvider.getAssetByExternalId(assetOnStreet.externalId).get)
+      val assetOnRoadName = getAssetName(assetProvider.getAssetByExternalId(assetOnRoad.externalId).get)
+      assetOnStreetName should equal(Some("AssetName1"))
+      assetOnRoadName should equal(Some("AssetName2"))
+    } finally {
+      removeAsset(assetOnStreet.id, assetProvider)
+      removeAsset(assetOnRoad.id, assetProvider)
+    }
   }
 
   private def createAsset(roadLinkId: Long, properties: Map[String, String]): AssetWithProperties = {

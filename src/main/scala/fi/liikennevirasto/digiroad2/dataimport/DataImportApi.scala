@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.BufferedWriter
 import java.io.FileWriter
+import fi.liikennevirasto.digiroad2.asset.{RoadLinkType, PrivateRoad, Street, Road}
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -79,7 +80,11 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    val limitImportToStreets = params.get("limit-import-to-streets").flatMap(stringToBoolean(_)).getOrElse(false)
+    val roadTypeLimitations: Set[RoadLinkType] = Set(
+      params.get("limit-import-to-roads").map(_ => Road),
+      params.get("limit-import-to-streets").map(_ => Street),
+      params.get("limit-import-to-private-roads").map(_ => PrivateRoad)
+    ).flatten
     val timestamp = System.currentTimeMillis()
     val path = CSV_LOG_PATH + timestamp + ".log"
     val directory = new File(CSV_LOG_PATH)
@@ -93,7 +98,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       // Current user is stored in a thread-local variable (feel free to provide better solution)
       userProvider.setCurrentUser(user)
       try {
-        val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, limitImportToStreets)
+        val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, roadTypeLimitations)
         val response = result match {
           case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
           case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets

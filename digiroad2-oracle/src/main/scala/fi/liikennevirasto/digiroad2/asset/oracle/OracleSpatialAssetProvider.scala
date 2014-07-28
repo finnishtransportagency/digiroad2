@@ -106,15 +106,15 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
 
-  def updateAssetByExternalIdIfOnStreet(externalId: Long, properties: Seq[SimpleProperty]): Either[RoadLinkType, AssetWithProperties] = {
+  def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[RoadLinkType]): Either[RoadLinkType, AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
         case Some(asset) =>
           if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
           val roadLinkType = OracleSpatialAssetDao.getRoadLinkById(asset.roadLinkId).map(_.roadLinkType).getOrElse(UnknownRoad)
-          if (roadLinkType != Street) Left(roadLinkType)
-          else Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
+          if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
+          else Left(roadLinkType)
         case None => throw new AssetNotFoundException(externalId)
       }
     }
