@@ -78,7 +78,7 @@ object CsvImporter {
 
   private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
     val mandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi")
-    csvRowWithHeaders.keys.foldLeft(mandatoryParameters) { (mandatoryParameters, key) => mandatoryParameters - key }.toList
+    mandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
   def updateAsset(externalId: Long, properties: Seq[SimpleProperty], limitImportToStreets: Boolean, assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
