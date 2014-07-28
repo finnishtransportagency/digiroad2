@@ -11,11 +11,18 @@ import java.io.InputStreamReader
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s.{DefaultFormats, Formats}
 import org.slf4j.LoggerFactory
+import scala.io.Source
+import org.json4s.Extraction
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.BufferedWriter
+import java.io.FileWriter
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private final val threeMegabytes: Long = 3*1024*1024
   private val importLogger = LoggerFactory.getLogger(getClass)
+  private val CSV_LOG_PATH = "/tmp/csv_import_logs/"
 
   before() {
     contentType = formats("json")
@@ -43,21 +50,60 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     new BusStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
   }
 
+  get("/log/:filename") {
+    try {
+      Source.fromFile(CSV_LOG_PATH + params.get("filename").get).mkString
+    } catch {
+      case e: FileNotFoundException => "Logia ei löytynyt."
+    }
+  }
+
+  private def writeToPath(path: String, str: String): Unit = {
+    val w = new BufferedWriter(new FileWriter(path))
+    try {
+      w.write(str)
+    } finally {
+      w.close()
+    }
+  }
+
+  private def fork(f: => Unit): Unit = {
+    new Thread(new Runnable() {
+      override def run(): Unit = {
+        f
+      }
+    }).start()
+  }
+
   post("/validationCsv") {
     if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val limitImportToStreets = params.get("limit-import-to-streets").flatMap(stringToBoolean(_)).getOrElse(false)
-    val csvFileInputStream = fileParams("csv-file").getInputStream
-    try {
-      val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, limitImportToStreets)
-      result match {
-        case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
-        case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets
-        case _ => halt(BadRequest(result))
-      }
-    } finally {
-      csvFileInputStream.close()
+    val timestamp = System.currentTimeMillis()
+    val path = CSV_LOG_PATH + timestamp + ".log"
+    val directory = new File(CSV_LOG_PATH)
+    if (!directory.exists) {
+      directory.mkdir()
     }
+    writeToPath(path, "Ajo ei ole vielä valmis jolloin päivitä sivu hetken kuluttua uudestaan.")
+    val user = userProvider.getCurrentUser()
+    fork {
+      // Current user is stored in a thread-local variable (feel free to provide better solution)
+      userProvider.setCurrentUser(user)
+      val csvFileInputStream = fileParams("csv-file").getInputStream
+      try {
+        val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, limitImportToStreets)
+        val response = result match {
+          case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+          case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets
+          case _ => pretty(Extraction.decompose(result))
+        }
+        writeToPath(path, response)
+      } finally {
+        csvFileInputStream.close()
+      }
+    }
+    redirect("/api/import/log/" + timestamp + ".log")
   }
 }
