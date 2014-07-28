@@ -86,7 +86,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     if (!directory.exists) {
       directory.mkdir()
     }
-    writeToPath(path, "Ajo ei ole vielä valmis jolloin päivitä sivu hetken kuluttua uudestaan.")
+    writeToPath(path, "Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
     val user = userProvider.getCurrentUser()
     fork {
       // Current user is stored in a thread-local variable (feel free to provide better solution)
