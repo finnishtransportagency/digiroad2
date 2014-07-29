@@ -217,7 +217,7 @@ window.AssetLayer = function(map, roadLayer) {
     selectedAsset.massTransitStop.select();
   };
 
-  function reDrawGroup(group) {
+  function redrawGroup(group) {
     var groupAssets = group.assetGroup;
     _.each(groupAssets, function(asset) {
       var uiAsset = AssetsModel.getAsset(asset.id);
@@ -234,7 +234,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetSaved = function(asset, positionUpdated) {
     if (positionUpdated) {
-      reDrawGroup(selectedAsset.data.group);
+      redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
       deselectAsset(selectedAsset);
 
@@ -244,7 +244,7 @@ window.AssetLayer = function(map, roadLayer) {
         uiAsset = createAsset(convertBackendAssetToUIAsset(asset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
         AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
         addAssetToGroup(uiAsset, assetToGroupWith.data.group);
-        reDrawGroup(assetToGroupWith.data.group);
+        redrawGroup(assetToGroupWith.data.group);
       } else {
         var group = createDummyGroup(asset.lon, asset.lat, asset);
         uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
