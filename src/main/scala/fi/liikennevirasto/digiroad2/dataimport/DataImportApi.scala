@@ -101,7 +101,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
         val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, roadTypeLimitations)
         val response = result match {
           case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
-          case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta: " + excludedAssets
+          case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
           case _ => pretty(Extraction.decompose(result))
         }
         writeToPath(path, response)
