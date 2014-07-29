@@ -1,5 +1,5 @@
-Operaattorin manuaali Digiroad 2 -sovellukseen
-===============================================
+Operaattorin manuaali
+=========================
 
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------
@@ -27,7 +27,7 @@ Importeilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;&auml;n.
 2.1 CSV-vienti
 --------------
 
-Joukkoliikenteen pys&auml;kkien suomenkielisi&auml; nimi&auml; ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Pelk&auml;st&auml;&auml;n katuverkon pys&auml;kkej&auml; voi p&auml;ivitt&auml;&auml; klikkaamalla k&auml;ytt&ouml;liittym&auml;st&auml; "Rajoita CSV-tuonti katuverkolle"-kohdan valituksi.
+Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Pelk&auml;st&auml;&auml;n katuverkon pys&auml;kkej&auml; voi p&auml;ivitt&auml;&auml; klikkaamalla k&auml;ytt&ouml;liittym&auml;st&auml; "Rajoita CSV-tuonti katuverkolle"-kohdan valituksi.
 
 ![CSV-vienti](k23.JPG)
 
@@ -37,20 +37,22 @@ _K&auml;ytt&ouml;liittym&auml; .csv-tiedostojen viennille._
 1. Etsi .csv-tiedosto hakemistostasi.
 1. Klikkaa "Lataa tiedot"
 
+Tietoja k&auml;sitelless&auml;&auml;n sovellus ilmoittaa:"Pys&auml;kkien lataus on k&auml;ynniss&auml;. P&auml;ivit&auml; sivu hetken kuluttua uudestaan". Kun sivun p&auml;ivitys onnistuu, sovellus on k&auml;sitellyt koko tiedoston.
+
 Viennin onnistuessa j&auml;rjestelm&auml; ilmoittaa:"CSV tiedosto k&auml;sitelty". Mik&auml;li vienti ep&auml;onnistuu, j&auml;rjestelm&auml; tulostaa virhelokin virheellisist&auml; tiedoista.
 
 Huomioita csv-tiedostosta:
 
 - .csv-tiedoston encoding-valinnan tulee olla "Encode in UTF-8 without BOM"
-- Tiedosto on muotoa:
+- Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
-Valtakunnallinen ID;Pysäkin nimi;Pysäkin tyyppi
-300790;nimi;1,2,2
-165833;toinen nimi;5
+Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi
+300790;;;;;
+165833;Demo;;TM1234;hsl123;1
 ```
 - Tiedot on eroteltu puolipisteell&auml; (;).
-- Nimi luetaan merkkijonona.
+- Nimi, yll&auml;pit&auml;j&auml;n tunnus, LiVi-tunnus ja matkustajatunnus luetaan merkkijonona.
 - Pys&auml;kin tyypit ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
 - Pys&auml;kin tyypit on eroteltu pilkulla.
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
