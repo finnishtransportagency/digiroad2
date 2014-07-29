@@ -233,6 +233,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetSaved = function(asset, positionUpdated) {
+    _.merge(AssetsModel.getAsset(asset.id).data, asset);
     if (positionUpdated) {
       redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
