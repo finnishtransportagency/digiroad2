@@ -21,6 +21,8 @@ object CsvImporter {
   type ParsedAssetRow = (MalformedParameters, ParsedProperties)
   type ExcludedRoadLinkTypes = List[RoadLinkType]
 
+  val MandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi", "Ylläpitäjän tunnus", "LiVi-tunnus", "Matkustajatunnus", "Pysäkin tyyppi")
+
   private def maybeInt(string: String): Option[Int] = {
     try {
       Some(string.toInt)
@@ -72,13 +74,12 @@ object CsvImporter {
     }
   }
 
-  private def rowToString(csvRowWithHeaders: Map[String, String]): String = {
+  def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
 
   private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-    val mandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi")
-    mandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+    MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
   def updateAsset(externalId: Long, properties: Seq[SimpleProperty], limitImportToStreets: Boolean, assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
