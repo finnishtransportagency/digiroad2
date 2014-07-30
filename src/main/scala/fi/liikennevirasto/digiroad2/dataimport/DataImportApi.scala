@@ -18,6 +18,8 @@ import java.io.FileNotFoundException
 import java.io.BufferedWriter
 import java.io.FileWriter
 import fi.liikennevirasto.digiroad2.asset.{RoadLinkType, PrivateRoad, Street, Road}
+import javax.naming.OperationNotSupportedException
+import fi.liikennevirasto.digiroad2.asset.oracle.ImportLogService
 
 class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -51,21 +53,8 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     new BusStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
   }
 
-  get("/log/:filename") {
-    try {
-      Source.fromFile(CSV_LOG_PATH + params.get("filename").get).mkString
-    } catch {
-      case e: FileNotFoundException => "Logia ei löytynyt."
-    }
-  }
-
-  private def writeToPath(path: String, str: String): Unit = {
-    val w = new BufferedWriter(new FileWriter(path))
-    try {
-      w.write(str)
-    } finally {
-      w.close()
-    }
+  get("/log/:id") {
+    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id)).getOrElse("Logia ei löytynyt.")
   }
 
   private def fork(f: => Unit): Unit = {
@@ -85,13 +74,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       params.get("limit-import-to-streets").map(_ => Street),
       params.get("limit-import-to-private-roads").map(_ => PrivateRoad)
     ).flatten
-    val timestamp = System.currentTimeMillis()
-    val path = CSV_LOG_PATH + timestamp + ".log"
-    val directory = new File(CSV_LOG_PATH)
-    if (!directory.exists) {
-      directory.mkdir()
-    }
-    writeToPath(path, "Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
+    val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
     val user = userProvider.getCurrentUser()
     val csvFileInputStream = fileParams("csv-file").getInputStream
     fork {
@@ -104,16 +87,16 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
           case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
           case _ => pretty(Extraction.decompose(result))
         }
-        writeToPath(path, response)
+        ImportLogService.save(id, response)
       } catch {
         case e: Exception => {
-          writeToPath(path, "Latauksessa tapahtui odottamaton virhe: " + e.toString())
+          ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString())
           throw e
         }
       } finally {
         csvFileInputStream.close()
       }
     }
-    redirect(url("/log/" + timestamp + ".log"))
+    redirect(url("/log/" + id))
   }
 }
