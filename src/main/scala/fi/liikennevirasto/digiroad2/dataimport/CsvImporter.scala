@@ -96,7 +96,7 @@ object CsvImporter {
   }
 
   def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[RoadLinkType] = Set()): ImportResult = {
-    val streamReader = new InputStreamReader(inputStream)
+    val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
