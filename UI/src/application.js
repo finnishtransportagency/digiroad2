@@ -28,7 +28,7 @@
     $(window).off('hashchange', hashChangeHandler);
     var oldHash = window.location.hash;
 
-    selectAssetFromAddressBar();
+    selectAssetFromAddressBar(); // Empties the hash, so we need to set it back to original state.
 
     window.location.hash = oldHash;
     $(window).on('hashchange', hashChangeHandler);
