@@ -35,7 +35,7 @@
   };
 
   var bindEvents = function() {
-    eventbus.on('application:readOnly tool:changed asset:closed', function() {
+    eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
 
@@ -45,7 +45,7 @@
       indicatorOverlay();
     });
 
-    eventbus.on('asset:fetched', function(asset) {
+    eventbus.on('asset:fetched asset:created', function(asset) {
       jQuery('.spinner-overlay').remove();
       var keepPosition = 'true';
       var data = assetIdFromURL();
@@ -56,7 +56,7 @@
       window.location.hash = '#/asset/' + asset.externalId + '?keepPosition=' + keepPosition;
     });
 
-    eventbus.on('asset:saved asset:created', function() {
+    eventbus.on('asset:saved', function() {
       jQuery('.spinner-overlay').remove();
     });
 
