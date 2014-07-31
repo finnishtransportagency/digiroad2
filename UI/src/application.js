@@ -24,17 +24,22 @@
     }
   };
 
+  var hashChangeHandler = function() {
+    $(window).off('hashchange', hashChangeHandler);
+    var oldHash = window.location.hash;
+
+    selectAssetFromAddressBar(); // Empties the hash, so we need to set it back to original state.
+
+    window.location.hash = oldHash;
+    $(window).on('hashchange', hashChangeHandler);
+  };
+
   var bindEvents = function() {
     eventbus.on('application:readOnly tool:changed asset:closed', function() {
       window.location.hash = '';
     });
 
-    $(window).on('hashchange', function() {
-      var data = assetIdFromURL();
-      if (data && data.externalId) {
-        selectedAssetModel.changeByExternalId(data.externalId);
-      }
-    });
+    $(window).on('hashchange', hashChangeHandler);
 
     eventbus.on('asset:saving asset:creating', function() {
       indicatorOverlay();
