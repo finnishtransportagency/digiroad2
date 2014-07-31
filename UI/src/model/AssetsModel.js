@@ -17,6 +17,9 @@
   };
   var bindEvents = function() {
     eventbus.on('map:moved', function(map) {
+      if (console) {
+        console.debug('cached asset count: ' + _.size(assets));
+      }
       if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
         if (ApplicationModel.getSelectedLayer() === 'asset') {
           Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
