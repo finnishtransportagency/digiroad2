@@ -468,8 +468,6 @@ window.AssetLayer = function(map, roadLayer) {
   var updateAllAssets = function(assets) {
     var assetsWithSelectedAsset = backendAssetsWithSelectedAsset(assets);
     var groupedAssets = assetGrouping.groupByDistance(assetsWithSelectedAsset, map.getZoom());
-    _.each(AssetsModel.getAssets(), removeAssetFromMap);
-    AssetsModel.destroyAssets();
     renderAssets(groupedAssets);
   };
 
