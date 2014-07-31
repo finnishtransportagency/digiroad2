@@ -21,7 +21,9 @@ object CsvImporter {
   type ParsedAssetRow = (MalformedParameters, ParsedProperties)
   type ExcludedRoadLinkTypes = List[RoadLinkType]
 
-  val MandatoryParameters: Set[String] = Set("Valtakunnallinen ID", "Pysäkin nimi", "Ylläpitäjän tunnus", "LiVi-tunnus", "Matkustajatunnus", "Pysäkin tyyppi")
+  val MandatoryParameters: Set[String] =
+    Set("Valtakunnallinen ID", "Pysäkin nimi", "Ylläpitäjän tunnus", "LiVi-tunnus", "Matkustajatunnus",
+        "Pysäkin tyyppi", "Liikennöintisuunta", "Pysäkin nimi ruotsiksi")
 
   private def maybeInt(string: String): Option[Int] = {
     try {
@@ -62,9 +64,11 @@ object CsvImporter {
       } else {
         key match {
           case "Pysäkin nimi" => result.copy(_2 = SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(value))) :: result._2)
+          case "Pysäkin nimi ruotsiksi" => result.copy(_2 = SimpleProperty(publicId = "nimi_ruotsiksi", values = Seq(PropertyValue(value))) :: result._2)
           case "Ylläpitäjän tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_tunnus", values = Seq(PropertyValue(value))) :: result._2)
           case "LiVi-tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_koodi", values = Seq(PropertyValue(value))) :: result._2)
           case "Matkustajatunnus" => result.copy(_2 = SimpleProperty(publicId = "matkustajatunnus", values = Seq(PropertyValue(value))) :: result._2)
+          case "Liikennöintisuunta" => result.copy(_2 = SimpleProperty(publicId = "liikennointisuunta", values = Seq(PropertyValue(value))) :: result._2)
           case "Pysäkin tyyppi" =>
             val (malformedParameters, properties) = assetTypeToProperty(value)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)

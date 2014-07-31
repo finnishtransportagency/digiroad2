@@ -26,17 +26,23 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     )) should equal("Valtakunnallinen ID: 'ID', Pysäkin nimi: 'Nimi'")
   }
 
+  val DefaultKeys = List(
+    "Valtakunnallinen ID",
+    "Pysäkin nimi",
+    "Ylläpitäjän tunnus",
+    "LiVi-tunnus",
+    "Matkustajatunnus",
+    "Pysäkin tyyppi",
+    "Pysäkin nimi ruotsiksi",
+    "Liikennöintisuunta"
+  )
+
+  val DefaultFields = DefaultKeys.map { key => (key -> "")}.toMap
+
   private def createCSV(assets: Map[String, Any]*): String = {
-    val headers = "Valtakunnallinen ID;Pysäkin nimi;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi\n"
+    val headers = DefaultKeys.mkString(";") + "\n"
     val rows = assets.map { asset =>
-      List(
-        asset.getOrElse("Valtakunnallinen ID", ""),
-        asset.getOrElse("Pysäkin nimi", ""),
-        asset.getOrElse("Ylläpitäjän tunnus", ""),
-        asset.getOrElse("LiVi-tunnus", ""),
-        asset.getOrElse("Matkustajatunnus", ""),
-        asset.getOrElse("Pysäkin tyyppi", "")
-      ).mkString(";")
+      DefaultKeys.map { key => asset.getOrElse(key, "") }.mkString(";")
     }.mkString("\n")
     headers + rows
   }
@@ -156,12 +162,50 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update asset stop code by CSV import", Tag("db")) {
-    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "yllapitajan_koodi" -> "H155"))
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "matkustajatunnus" -> "H155"))
     try {
       val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.externalId, "Matkustajatunnus" -> "H156")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
       val assetStopCode = assetProvider.getAssetByExternalId(asset.externalId).get.getPropertyValue("matkustajatunnus")
       assetStopCode should equal(Some("H156"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
+  val TextFieldMappings = Map(
+    "nimi_suomeksi" -> "Pysäkin nimi",
+    "yllapitajan_tunnus" -> "Ylläpitäjän tunnus",
+    "yllapitajan_koodi" -> "LiVi-tunnus",
+    "matkustajatunnus" -> "Matkustajatunnus",
+    "pysakin_tyyppi" -> "Pysäkin tyyppi",
+    "nimi_ruotsiksi" -> "Pysäkin nimi ruotsiksi",
+    "liikennointisuunta" -> "Liikennöintisuunta"
+  )
+
+  val ExampleValues = Map(
+    "nimi_suomeksi" -> ("Passila", "Pasila"),
+    "yllapitajan_tunnus" -> ("1234", "1281"),
+    "yllapitajan_koodi" -> ("LiVV", "LiVi123"),
+    "matkustajatunnus" -> ("sdjkal", "9877"),
+    "pysakin_tyyppi" -> ("2", "1"),
+    "nimi_ruotsiksi" -> ("Bölle", "Böle"),
+    "liikennointisuunta" -> ("Itään", "Pohjoiseen")
+  )
+
+  test("update asset's properties in a generic manner", Tag("db")) {
+    val asset = createAsset(roadLinkId = 5771, properties = ExampleValues.mapValues(_._1) ++ Map("vaikutussuunta" -> "2"))
+    try {
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.externalId) ++
+          TextFieldMappings.map { case (propertyKey, csvKey) => {
+            (csvKey, ExampleValues(propertyKey)._2)
+          }
+        }))
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
+      val updatedAsset = assetProvider.getAssetByExternalId(asset.externalId).get
+      ExampleValues.foreach { case (k, v) =>
+        updatedAsset.getPropertyValue(k) should equal(Some(v._2))
+      }
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -178,9 +222,10 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
+    val missingRequiredKeys = DefaultKeys.filterNot(Set("Pysäkin nimi"))
     val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
-      s"Valtakunnallinen ID;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi\n" +
+      missingRequiredKeys.mkString(";") + "\n" +
       s"${asset.externalId};;;;;;\n"
     try {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
@@ -230,15 +275,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       removeAsset(asset.id, assetProvider)
     }
   }
-
-  val DefaultFields = Map(
-    "Valtakunnallinen ID" -> "",
-    "Pysäkin nimi" -> "",
-    "Ylläpitäjän tunnus" -> "",
-    "LiVi-tunnus" -> "",
-    "Matkustajatunnus" -> "",
-    "Pysäkin tyyppi" -> ""
-  )
 
   test("update asset on road when import is limited to roads") {
     val asset = createAsset(roadLinkId = RoadId, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
