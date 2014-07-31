@@ -76,14 +76,14 @@
       });
     }, this);
 
-    eventbus.on('asset:moved', function(position) {
+    var move = function(position) {
       currentAsset.payload.bearing = position.bearing;
       currentAsset.payload.lon = position.lon;
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
-    });
+    };
 
     var cancel = function() {
       changedProps = [];
@@ -221,7 +221,8 @@
       getDirection: getDirection,
       get: get,
       getProperties: getProperties,
-      switchDirection: switchDirection
+      switchDirection: switchDirection,
+      move: move
     };
   };
 

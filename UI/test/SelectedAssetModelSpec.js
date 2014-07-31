@@ -43,7 +43,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
         describe('when asset is moved', function() {
             before(function() {
                 resetTest();
-                eventbus.trigger('asset:moved',{
+                model.move({
                     lon: 1,
                     lat: 1,
                     bearing: 180,

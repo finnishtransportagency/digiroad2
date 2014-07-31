@@ -28,7 +28,15 @@ window.AssetLayer = function(map, roadLayer) {
   var mouseUpHandler = function(asset) {
     clickTimestamp = null;
     unregisterMouseUpHandler(asset);
-    assetIsMoving = false;
+    if (assetIsMoving) {
+      eventbus.trigger('asset:moved', {
+        lon: selectedAssetModel.get('lon'),
+        lat: selectedAssetModel.get('lat'),
+        bearing: selectedAssetModel.get('bearing'),
+        roadLinkId: selectedAssetModel.get('roadLinkId')
+      });
+      assetIsMoving = false;
+    }
   };
 
   var mouseUp = function(asset) {
@@ -404,14 +412,13 @@ window.AssetLayer = function(map, roadLayer) {
       selectedAsset.data.lon = lonlat.lon;
       selectedAsset.data.lat = lonlat.lat;
       moveMarker(lonlat);
-
-      eventbus.trigger('asset:moved', {
+      selectedAssetModel.move({
         lon: lonlat.lon,
         lat: lonlat.lat,
         bearing: angle,
         roadLinkId: nearestLine.roadLinkId
       });
-    }
+   }
   };
 
   var moveMarker = function(lonlat) {
