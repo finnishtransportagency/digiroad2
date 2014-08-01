@@ -23,7 +23,7 @@ object CsvImporter {
 
   val MandatoryParameters: Set[String] =
     Set("Valtakunnallinen ID", "Pysäkin nimi", "Ylläpitäjän tunnus", "LiVi-tunnus", "Matkustajatunnus",
-        "Pysäkin tyyppi", "Liikennöintisuunta", "Pysäkin nimi ruotsiksi")
+        "Pysäkin tyyppi", "Liikennöintisuunta", "Pysäkin nimi ruotsiksi", "Aikataulu", "Katos")
 
   private def maybeInt(string: String): Option[Int] = {
     try {
@@ -34,6 +34,13 @@ object CsvImporter {
   }
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
+
+  private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
+
+  val singleChoiceKeyMappings = Map(
+    "Aikataulu" -> "aikataulu",
+    "Katos" -> "katos"
+  )
 
   private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): ParsedAssetRow = {
     result.copy(_2 = result._2 match {
@@ -56,6 +63,14 @@ object CsvImporter {
     }
   }
 
+  private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedAssetRow = {
+    if (singleChoiceValueMappings(assetSingleChoice)) {
+      (Nil, List(SimpleProperty(singleChoiceKeyMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
   private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
     csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
@@ -71,6 +86,12 @@ object CsvImporter {
           case "Liikennöintisuunta" => result.copy(_2 = SimpleProperty(publicId = "liikennointisuunta", values = Seq(PropertyValue(value))) :: result._2)
           case "Pysäkin tyyppi" =>
             val (malformedParameters, properties) = assetTypeToProperty(value)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          case "Aikataulu" =>
+            val (malformedParameters, properties) = assetSingleChoiceToProperty("Aikataulu", value)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          case "Katos" =>
+            val (malformedParameters, properties) = assetSingleChoiceToProperty("Katos", value)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
           case _ => result
         }
