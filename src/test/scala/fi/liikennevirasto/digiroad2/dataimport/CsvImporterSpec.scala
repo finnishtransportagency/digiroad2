@@ -26,25 +26,14 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     )) should equal("Valtakunnallinen ID: 'ID', Pysäkin nimi: 'Nimi'")
   }
 
-  val DefaultKeys = List(
-    "Valtakunnallinen ID",
-    "Pysäkin nimi",
-    "Ylläpitäjän tunnus",
-    "LiVi-tunnus",
-    "Matkustajatunnus",
-    "Pysäkin tyyppi",
-    "Pysäkin nimi ruotsiksi",
-    "Liikennöintisuunta",
-    "Aikataulu",
-    "Katos"
-  )
+  val defaultKeys = "Valtakunnallinen ID" :: mappings.keys.toList
 
-  val DefaultFields = DefaultKeys.map { key => (key -> "")}.toMap
+  val defaultValues = defaultKeys.map { key => key -> "" }.toMap
 
   private def createCSV(assets: Map[String, Any]*): String = {
-    val headers = DefaultKeys.mkString(";") + "\n"
+    val headers = defaultKeys.mkString(";") + "\n"
     val rows = assets.map { asset =>
-      DefaultKeys.map { key => asset.getOrElse(key, "") }.mkString(";")
+      defaultKeys.map { key => asset.getOrElse(key, "") }.mkString(";")
     }.mkString("\n")
     headers + rows
   }
@@ -93,7 +82,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = rowToString(DefaultFields ++ assetFields)))))
+          csvRow = rowToString(defaultValues ++ assetFields)))))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -107,7 +96,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = rowToString(DefaultFields ++ assetFields)))))
+          csvRow = rowToString(defaultValues ++ assetFields)))))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -121,7 +110,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
           malformedParameters = List("Pysäkin tyyppi"),
-          csvRow = rowToString(DefaultFields ++ assetFields)))))
+          csvRow = rowToString(defaultValues ++ assetFields)))))
     } finally {
       removeAsset(asset.id, assetProvider)
     }
@@ -175,16 +164,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  val textFieldMappings = Map(
-    "nimi_suomeksi" -> "Pysäkin nimi",
-    "yllapitajan_tunnus" -> "Ylläpitäjän tunnus",
-    "yllapitajan_koodi" -> "LiVi-tunnus",
-    "matkustajatunnus" -> "Matkustajatunnus",
-    "pysakin_tyyppi" -> "Pysäkin tyyppi",
-    "nimi_ruotsiksi" -> "Pysäkin nimi ruotsiksi",
-    "liikennointisuunta" -> "Liikennöintisuunta"
-  )
-
   val exampleValues = Map(
     "nimi_suomeksi" -> ("Passila", "Pasila"),
     "yllapitajan_tunnus" -> ("1234", "1281"),
@@ -200,10 +179,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("update asset's properties in a generic manner", Tag("db")) {
     val asset = createAsset(roadLinkId = 5771, properties = exampleValues.mapValues(_._1) ++ Map("vaikutussuunta" -> "2"))
     try {
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.externalId) ++
-        (textFieldMappings ++ singleChoiceKeyMappings.map(_.swap)).map { case (propertyKey, csvKey) =>
-          (csvKey, exampleValues(propertyKey)._2)
-        }))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.externalId) ++ mappings.mapValues(exampleValues(_)._2)))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
       val updatedAsset = assetProvider.getAssetByExternalId(asset.externalId).get
       exampleValues.foreach { case (k, v) =>
@@ -221,11 +197,11 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val inputStream = new ByteArrayInputStream(csv.getBytes)
     val result = CsvImporter.importAssets(inputStream, assetProvider)
 
-    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = rowToString(DefaultFields ++ assetFields)))))
+    result should equal(ImportResult(nonExistingAssets = List(NonExistingAsset(externalId = 600000, csvRow = rowToString(defaultValues ++ assetFields)))))
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
-    val missingRequiredKeys = DefaultKeys.filterNot(Set("Pysäkin nimi"))
+    val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
     val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName"))
     val csv =
       missingRequiredKeys.mkString(";") + "\n" +
@@ -234,7 +210,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult(
-        incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = rowToString(DefaultFields - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> asset.externalId))))))
+        incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> asset.externalId))))))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -255,7 +231,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Street))
       result should equal(ImportResult(
-        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(DefaultFields ++ assetFields)))))
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(defaultValues ++ assetFields)))))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -302,7 +278,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Road))
       result should equal(ImportResult(
-        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetFields)))))
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(defaultValues ++ assetFields)))))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -334,7 +310,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(PrivateRoad))
       result should equal(ImportResult(
-        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetFields)))))
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(defaultValues ++ assetFields)))))
 
       val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.externalId).get)
       assetName should equal(Some("AssetName"))
@@ -372,8 +348,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(PrivateRoad))
       result should equal(ImportResult(
-        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(DefaultFields ++ assetOnRoadFields)),
-                              ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(DefaultFields ++ assetOnStreetFields)))))
+        excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Road", csvRow = rowToString(defaultValues ++ assetOnRoadFields)),
+                              ExcludedAsset(affectedRoadLinkType = "Street", csvRow = rowToString(defaultValues ++ assetOnStreetFields)))))
       val assetOnStreetName = getAssetName(assetProvider.getAssetByExternalId(assetOnStreet.externalId).get)
       val assetOnRoadName = getAssetName(assetProvider.getAssetByExternalId(assetOnRoad.externalId).get)
       assetOnStreetName should equal(Some("AssetName1"))

@@ -21,10 +21,6 @@ object CsvImporter {
   type ParsedAssetRow = (MalformedParameters, ParsedProperties)
   type ExcludedRoadLinkTypes = List[RoadLinkType]
 
-  val MandatoryParameters: Set[String] =
-    Set("Valtakunnallinen ID", "Pysäkin nimi", "Ylläpitäjän tunnus", "LiVi-tunnus", "Matkustajatunnus",
-        "Pysäkin tyyppi", "Liikennöintisuunta", "Pysäkin nimi ruotsiksi", "Aikataulu", "Katos")
-
   private def maybeInt(string: String): Option[Int] = {
     try {
       Some(string.toInt)
@@ -37,10 +33,28 @@ object CsvImporter {
 
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
 
-  val singleChoiceKeyMappings = Map(
+  private val textFieldMappings = Map(
+    "Pysäkin nimi" -> "nimi_suomeksi" ,
+    "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
+    "LiVi-tunnus" -> "yllapitajan_koodi",
+    "Matkustajatunnus" -> "matkustajatunnus",
+    "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
+    "Liikennöintisuunta" -> "liikennointisuunta"
+  )
+
+  private val multipleChoiceFieldMappings = Map(
+    "Pysäkin tyyppi" -> "pysakin_tyyppi"
+  )
+
+  private val singleChoiceFieldMappings = Map(
     "Aikataulu" -> "aikataulu",
     "Katos" -> "katos"
   )
+
+  val mappings = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
+
+  val MandatoryParameters: Set[String] = mappings.keySet + "Valtakunnallinen ID"
+
 
   private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): ParsedAssetRow = {
     result.copy(_2 = result._2 match {
@@ -65,7 +79,7 @@ object CsvImporter {
 
   private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedAssetRow = {
     if (singleChoiceValueMappings(assetSingleChoice)) {
-      (Nil, List(SimpleProperty(singleChoiceKeyMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
+      (Nil, List(SimpleProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
     } else {
       (List(parameterName), Nil)
     }
@@ -77,23 +91,16 @@ object CsvImporter {
       if(isBlank(value)) {
         result
       } else {
-        key match {
-          case "Pysäkin nimi" => result.copy(_2 = SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue(value))) :: result._2)
-          case "Pysäkin nimi ruotsiksi" => result.copy(_2 = SimpleProperty(publicId = "nimi_ruotsiksi", values = Seq(PropertyValue(value))) :: result._2)
-          case "Ylläpitäjän tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_tunnus", values = Seq(PropertyValue(value))) :: result._2)
-          case "LiVi-tunnus" => result.copy(_2 = SimpleProperty(publicId = "yllapitajan_koodi", values = Seq(PropertyValue(value))) :: result._2)
-          case "Matkustajatunnus" => result.copy(_2 = SimpleProperty(publicId = "matkustajatunnus", values = Seq(PropertyValue(value))) :: result._2)
-          case "Liikennöintisuunta" => result.copy(_2 = SimpleProperty(publicId = "liikennointisuunta", values = Seq(PropertyValue(value))) :: result._2)
-          case "Pysäkin tyyppi" =>
-            val (malformedParameters, properties) = assetTypeToProperty(value)
-            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-          case "Aikataulu" =>
-            val (malformedParameters, properties) = assetSingleChoiceToProperty("Aikataulu", value)
-            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-          case "Katos" =>
-            val (malformedParameters, properties) = assetSingleChoiceToProperty("Katos", value)
-            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-          case _ => result
+        if (textFieldMappings.contains(key)) {
+          result.copy(_2 = SimpleProperty(publicId = textFieldMappings(key), values = Seq(PropertyValue(value))) :: result._2)
+        } else if (multipleChoiceFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = assetTypeToProperty(value)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (singleChoiceFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = assetSingleChoiceToProperty(key, value)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else {
+          result
         }
       }
     }
