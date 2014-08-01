@@ -48,7 +48,13 @@ object CsvImporter {
 
   private val singleChoiceFieldMappings = Map(
     "Aikataulu" -> "aikataulu",
-    "Katos" -> "katos"
+    "Katos" -> "katos",
+    "Mainoskatos" -> "mainoskatos",
+    "Penkki" -> "penkki",
+    "Pyöräteline" -> "pyorateline",
+    "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
+    "Valaistus" -> "valaistus",
+    "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla"
   )
 
   val mappings = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
