@@ -27,7 +27,7 @@ Importeilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;&auml;n.
 2.1 CSV-vienti
 --------------
 
-Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta ja tyyppi&auml; voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
+Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta, tyyppi&auml;, aikataulu-tietoa ja katos-tietoa voi p&auml;ivitt&auml;&auml; viem&auml;ll&auml; .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
 
 ![CSV-vienti](k23.JPG)
 
@@ -47,12 +47,13 @@ Huomioita csv-tiedostosta:
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
-Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi
-300897;Pysäkin nimi;Stops namn;etelään;123456;LIVI456;12345;1,5
+Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi;Aikataulu;Katos
+300897;Pysäkin nimi;Stops namn;etelään;123456;LIVI456;12345;1,5;1;2
 ```
 - Tiedot on eroteltu puolipisteell&auml; (;).
 - Nimi suomeksi ja ruotsiksi, liikenn&ouml;intisuunta, yll&auml;pit&auml;j&auml;n tunnus, LiVi-tunnus ja matkustajatunnus luetaan merkkijonona.
 - Pys&auml;kin tyypit ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
+- Aikataulu ja katos ilmoitetaan koodiarvoina: (1) Ei, (2) Kyll&auml; tai (99) Ei tietoa.
 - Pys&auml;kin tyypit on eroteltu pilkulla.
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
 - Toistaiseksi CSV-vienti&auml; ei kannata tehd&auml; IE-selaimella, koska selain ei tulosta virhelokia.
