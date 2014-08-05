@@ -100,7 +100,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
           assetLayer.hide();
         } else {
           assetLayer.show();
-          linearAssetLayer.hide();
+          this._map.removeLayer(linearAssetLayer.vectorLayer);
         }
       }, this);
       var map = this._map;

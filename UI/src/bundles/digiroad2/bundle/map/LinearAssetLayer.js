@@ -11,10 +11,6 @@ window.LinearAssetLayer = function(map, backend) {
   });
   vectorLayer.setOpacity(1);
 
-  var hideLayer = function() {
-    map.removeLayer(vectorLayer);
-  };
-
   var update = function() {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       backend.getLinearAssets(map.getExtent());
@@ -47,7 +43,6 @@ window.LinearAssetLayer = function(map, backend) {
   }, this);
 
   return {
-    hide: hideLayer,
     update: update,
     vectorLayer: vectorLayer
   };
