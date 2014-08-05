@@ -225,30 +225,30 @@ class AssetDataImporter {
     val count = dataSet.database().withDynSession {
       sql"""
         select count(sl.segm_id)
-          from SPEED_LIMITS sl
-          """.as[Int].list().head
+          from SPEED_LIMITS sl, TIELINKKI tl
+          """.as[Int].list.head
     }
     val min = dataSet.database().withDynSession {
       sql"""
         select min(segm_id)
-          from SPEED_LIMITS sl
+          from SPEED_LIMITS sl, TIELINKKI tl
           order by sl.segm_id asc
-          """.as[Int].list().head
+          """.as[Int].list.head
     }
     val max = dataSet.database().withDynSession {
       sql"""
         select max(segm_id)
-          from SPEED_LIMITS sl
+          from SPEED_LIMITS sl, TIELINKKI tl
           order by sl.segm_id desc
-          """.as[Int].list().head
+          """.as[Int].list.head
     }
     val startSelect = System.currentTimeMillis()
 
     val queries = getBatchDrivers(min, max, 500).view.map { case (n, m) =>
       sql"""
        select sl.SEGM_ID,
-              stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum) insert_exprs
-         from SPEED_LIMITS sl
+              stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum || ';' || sl.nopeus || ';' || sl.puoli) insert_exprs
+         from SPEED_LIMITS sl, TIELINKKI tl
          where segm_id between $n and $m
          group by sl.SEGM_ID
          order by sl.SEGM_ID
@@ -262,12 +262,14 @@ class AssetDataImporter {
         query.as[(Int, String)].list()
       }
       Database.forDataSource(ds).withDynSession {
-        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id) values (?, 20)")
-        val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE) values (?, ?, ?, ?)")
+        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'dr1_conversion')")
+        val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
         val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+        val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'dr1_conversion')")
 
         segments.foreach { segment =>
           val assetId = generateId
+          var speedLimit = -1
           assetPS.setLong(1, assetId)
           assetPS.addBatch()
 
@@ -277,33 +279,43 @@ class AssetDataImporter {
             val roadLinkId = insertValues.next.toLong
             val startMeasure = insertValues.next.toDouble
             val endMeasure   = insertValues.next.toDouble
+            speedLimit = insertValues.next.toInt
+            val sideCode = insertValues.next.toInt
             val lrmPositionId = generateId
 
             lrmPositionPS.setLong(1, lrmPositionId)
             lrmPositionPS.setLong(2, roadLinkId)
             lrmPositionPS.setDouble(3, startMeasure)
             lrmPositionPS.setDouble(4, endMeasure)
+            lrmPositionPS.setInt(5, sideCode)
             lrmPositionPS.addBatch()
 
-            assetLinkPS.setLong(1, assetId);
-            assetLinkPS.setLong(2, lrmPositionId);
-            assetLinkPS.addBatch();
+            assetLinkPS.setLong(1, assetId)
+            assetLinkPS.setLong(2, lrmPositionId)
+            assetLinkPS.addBatch()
+
             this.synchronized {
-              insertSpeedLimitsCount += 1;
+              insertSpeedLimitsCount += 1
             }
           }
+          speedLimitPS.setLong(1, assetId)
+          speedLimitPS.setInt(2, speedLimit)
+          speedLimitPS.addBatch()
         }
+
         assetPS.executeBatch()
         lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
-        assetPS.close();
+        speedLimitPS.executeBatch()
+        assetPS.close()
         lrmPositionPS.close()
         assetLinkPS.close()
+        speedLimitPS.close()
       }
 
       this.synchronized {
         if (insertSpeedLimitsCount > 0) {
-          val speedLimitsLeft = count-insertSpeedLimitsCount;
+          val speedLimitsLeft = count-insertSpeedLimitsCount
           val timeNow = System.currentTimeMillis()
           val average =  (timeNow-startSelect)/insertSpeedLimitsCount
           val leftHours = speedLimitsLeft*average/(1000*60*60)
@@ -313,7 +325,7 @@ class AssetDataImporter {
             insertSpeedLimitsCount, count, insertSpeedLimitsCount/(count*1.0) * 100,
             average,
             leftHours, leftMins,
-            timeNow - selectStartTime);
+            timeNow - selectStartTime)
         }
       }
     }
