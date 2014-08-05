@@ -299,6 +299,13 @@ class AssetDataImporter {
             }
           }
           speedLimitPS.setLong(1, assetId)
+          if (Set(10, 15, 25).contains(speedLimit)) {
+            speedLimit = 20
+          } else if (speedLimit == 35) {
+            speedLimit = 30
+          } else if (speedLimit == 700) {
+            speedLimit = 70
+          }
           speedLimitPS.setInt(2, speedLimit)
           speedLimitPS.addBatch()
         }
