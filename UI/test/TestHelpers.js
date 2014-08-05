@@ -20,13 +20,17 @@ define(function() {
     window.location.hash = '';
   };
 
-  var restartApplication = function(callback, fakeBackend) {
+  var restartApplication = function(callback, backend) {
     unbindEvents();
     clearDom();
     clearAddressBar();
     eventbus.once('map:initialized', callback);
     ApplicationModel.assetDragDelay = 0;
-    Application.restart(fakeBackend);
+    Application.restart(backend || defaultBackend());
+  };
+
+  var defaultBackend = function() {
+    return fakeBackend(AssetsTestData.generate(), {});
   };
 
   var fakeBackend = function(assetsData, assetData, zoomLevel) {
