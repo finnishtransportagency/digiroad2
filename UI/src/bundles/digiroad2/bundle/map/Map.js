@@ -16,7 +16,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _visibilityZoomLevelForRoads: 10,
     _centerMarkerLayer: null,
     _isInitialized: false,
-    _layers: {},
     getName: function() {
       return this.pluginName;
     },
@@ -91,19 +90,25 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this.drawRoadLinks(roadLinks);
       }, this);
       eventbus.on('layer:selected', function(layer) {
-        var linearAssetLayer = this._layers.linearAsset;
-        var assetLayer = this._layers.asset;
+        var assetLayer = layers.asset;
         if (layer === 'linearAsset') {
-          this._map.addLayer(linearAssetLayer.vectorLayer);
-          linearAssetLayer.vectorLayer.setVisibility(true);
-          linearAssetLayer.update(this._map.getZoom(), this._map.getExtent());
+          showLinearAssetLayer();
           assetLayer.hide();
         } else {
           assetLayer.show();
-          this._map.removeLayer(linearAssetLayer.vectorLayer);
+          hideLinearAssetLayer();
         }
       }, this);
       var map = this._map;
+      var showLinearAssetLayer = function() {
+        var linearAssetLayer = layers.linearAsset;
+        map.addLayer(linearAssetLayer.vectorLayer);
+        linearAssetLayer.vectorLayer.setVisibility(true);
+        linearAssetLayer.update(map.getZoom(), map.getExtent());
+      };
+      var hideLinearAssetLayer = function() {
+        map.removeLayer(layers.linearAsset.vectorLayer);
+      };
       this._map.events.register('moveend', this, function() {
         ApplicationModel.moveMap(map.getZoom(), map.getExtent());
       });
@@ -115,7 +120,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       }
       sandbox.postRequestByName('RearrangeSelectedMapLayerRequest', ['base_35', 0]);
 
-      this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
+      var layers = this.addLayersToMap(Oskari.clazz.create('Oskari.digiroad2.bundle.map.template.Templates'));
     },
     _drawCenterMarker: function(position) {
       var size = new OpenLayers.Size(16, 16);
@@ -209,9 +214,13 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this._layers = {road: this.roadLayer};
       this._map.addLayer(this.roadLayer);
 
-      this._layers.asset = new AssetLayer(this._map, this.roadLayer);
-      this._layers.linearAsset = new LinearAssetLayer(this._map);
+      var layers = {
+        asset: new AssetLayer(this._map, this.roadLayer),
+        linearAsset: new LinearAssetLayer(this._map)
+      };
       this._map.addLayer(this._centerMarkerLayer);
+
+      return layers;
     },
     getOLMapLayers: function(layer) {
       if (!layer.isLayerOfType(this._layerType)) {
