@@ -22,7 +22,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                         ]);
                     }
                 });
-                eventbus.trigger('layer:selected', 'linearAsset');
+                layer.show();
                 eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
             });
 

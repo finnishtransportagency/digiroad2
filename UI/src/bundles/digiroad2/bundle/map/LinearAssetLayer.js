@@ -22,14 +22,6 @@ window.LinearAssetLayer = function(map, backend) {
     map.removeLayer(vectorLayer);
   };
 
-  eventbus.on('layer:selected', function(layer) {
-    if (layer === 'linearAsset') {
-      showLayer();
-    } else {
-      hideLayer();
-    }
-  }, this);
-
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'linearAsset') {
       backend.getLinearAssets(state.bbox);
@@ -54,4 +46,9 @@ window.LinearAssetLayer = function(map, backend) {
       drawLinearAssets(linearAssets);
     }
   }, this);
+
+  return {
+    show: showLayer,
+    hide: hideLayer
+  };
 };
