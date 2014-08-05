@@ -14,12 +14,17 @@ window.LinearAssetLayer = function(map, backend) {
   var showLayer = function() {
     map.addLayer(vectorLayer);
     vectorLayer.setVisibility(true);
+    update();
+  };
+
+  var hideLayer = function() {
+    map.removeLayer(vectorLayer);
+  };
+
+  var update = function() {
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
       backend.getLinearAssets(map.getExtent());
     }
-  };
-  var hideLayer = function() {
-    map.removeLayer(vectorLayer);
   };
 
   eventbus.on('map:moved', function(state) {
