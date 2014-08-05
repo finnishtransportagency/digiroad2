@@ -4,13 +4,8 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
     describe('LinearAssetLayer', function () {
         describe('when moving map', function() {
             var layer;
-            var vectorLayer;
             var map = {
                 getZoom: function() { return 9; },
-                addLayer: function(vecLayer) {
-                    vectorLayer = vecLayer;
-                    vectorLayer.map = this;
-                },
                 getExtent: function() { return null; }
             };
             before(function() {
@@ -22,7 +17,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                         ]);
                     }
                 });
-                layer.show();
+                layer.update();
                 eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
             });
 
@@ -31,11 +26,11 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                     return feature.geometry.getVertices()[0];
                 };
 
-                assert.equal(vectorLayer.features.length, 2);
-                assert.equal(getFirstPointOfFeature(vectorLayer.features[0]).x, 0);
-                assert.equal(getFirstPointOfFeature(vectorLayer.features[0]).y, 0);
-                assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).x, 10);
-                assert.equal(getFirstPointOfFeature(vectorLayer.features[1]).y, 10);
+                assert.equal(layer.vectorLayer.features.length, 2);
+                assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[0]).x, 0);
+                assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[0]).y, 0);
+                assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[1]).x, 10);
+                assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[1]).y, 10);
             });
 
             describe('and zooming out', function() {
@@ -44,7 +39,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                 });
 
                 it('should not contain speed limits', function() {
-                    assert.equal(vectorLayer.features.length, 0);
+                    assert.equal(layer.vectorLayer.features.length, 0);
                 });
 
                 describe('and zooming in', function() {
@@ -53,7 +48,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                     });
 
                     it('should contain speed limits', function() {
-                        assert.equal(vectorLayer.features.length, 2);
+                        assert.equal(layer.vectorLayer.features.length, 2);
                     });
                 });
             });

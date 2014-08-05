@@ -11,12 +11,6 @@ window.LinearAssetLayer = function(map, backend) {
   });
   vectorLayer.setOpacity(1);
 
-  var showLayer = function() {
-    map.addLayer(vectorLayer);
-    vectorLayer.setVisibility(true);
-    update();
-  };
-
   var hideLayer = function() {
     map.removeLayer(vectorLayer);
   };
@@ -53,7 +47,8 @@ window.LinearAssetLayer = function(map, backend) {
   }, this);
 
   return {
-    show: showLayer,
-    hide: hideLayer
+    hide: hideLayer,
+    update: update,
+    vectorLayer: vectorLayer
   };
 };

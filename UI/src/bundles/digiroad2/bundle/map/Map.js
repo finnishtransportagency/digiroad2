@@ -90,14 +90,17 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       eventbus.on('roadLinks:fetched', function(roadLinks) {
         this.drawRoadLinks(roadLinks);
       }, this);
-
       eventbus.on('layer:selected', function(layer) {
+        var linearAssetLayer = this._layers.linearAsset;
+        var assetLayer = this._layers.asset;
         if (layer === 'linearAsset') {
-          this._layers.linearAsset.show();
-          this._layers.asset.hide();
+          this._map.addLayer(linearAssetLayer.vectorLayer);
+          linearAssetLayer.vectorLayer.setVisibility(true);
+          linearAssetLayer.update();
+          assetLayer.hide();
         } else {
-          this._layers.asset.show();
-          this._layers.linearAsset.hide();
+          assetLayer.show();
+          linearAssetLayer.hide();
         }
       }, this);
       var map = this._map;
