@@ -15,6 +15,21 @@ window.AssetLayer = function(map, roadLayer) {
   var clickCoords;
   var assetIsMoving = false;
 
+  var show = function() {
+    map.addLayer(assetDirectionLayer);
+    map.addLayer(assetLayer);
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      backend.getAssets(10, map.getExtent());
+    }
+  };
+
+  var hide = function() {
+    if (assetLayer.map && assetDirectionLayer.map) {
+      map.removeLayer(assetLayer);
+      map.removeLayer(assetDirectionLayer);
+    }
+  };
+
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
     asset.massTransitStop.getMarker().display(false);
@@ -582,26 +597,17 @@ window.AssetLayer = function(map, roadLayer) {
     }
   };
 
-  eventbus.on('map:clicked', handleMapClick, this);
-  eventbus.on('layer:selected', function(layer) {
-    if (layer !== 'asset') {
-      if (assetLayer.map && assetDirectionLayer.map) {
-        map.removeLayer(assetLayer);
-        map.removeLayer(assetDirectionLayer);
-      }
-    } else {
-      map.addLayer(assetDirectionLayer);
-      map.addLayer(assetLayer);
-      if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-        backend.getAssets(10, map.getExtent());
-      }
-    }
-  }, this);
 
+  eventbus.on('map:clicked', handleMapClick, this);
   eventbus.on('layer:selected', closeAsset, this);
   $('#mapdiv').on('mouseleave', function() {
     if (assetIsMoving === true) {
       mouseUpHandler(selectedAsset);
     }
   });
+
+  return {
+    show: show,
+    hide: hide
+  };
 };

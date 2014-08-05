@@ -93,9 +93,11 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       eventbus.on('layer:selected', function(layer) {
         if (layer === 'linearAsset') {
-          this._layers.linearAsset.show()
+          this._layers.linearAsset.show();
+          this._layers.asset.hide();
         } else {
-          this._layers.linearAsset.hide()
+          this._layers.asset.show();
+          this._layers.linearAsset.hide();
         }
       }, this);
       var map = this._map;
