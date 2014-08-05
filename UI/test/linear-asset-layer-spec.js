@@ -23,7 +23,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                     }
                 });
                 eventbus.trigger('layer:selected', 'linearAsset');
-                eventbus.trigger('map:moved', {bbox: null, zoom: 9});
+                eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
             });
 
             it('should contain each speed limit only once', function() {
@@ -40,7 +40,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
 
             describe('and zooming out', function() {
                 before(function() {
-                    eventbus.trigger('map:moved', {bbox: null, zoom: 8});
+                    eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 8});
                 });
 
                 it('should not contain speed limits', function() {
@@ -49,7 +49,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
 
                 describe('and zooming in', function() {
                     before(function() {
-                        eventbus.trigger('map:moved', {bbox: null, zoom: 9});
+                        eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
                     });
 
                     it('should contain speed limits', function() {

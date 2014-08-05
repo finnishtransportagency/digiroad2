@@ -34,7 +34,7 @@ window.LinearAssetLayer = function(map, backend) {
     }, this);
 
     eventbus.on('map:moved', function(state) {
-        if (zoomlevels.isInAssetZoomLevel(state.zoom) && layerIsVisible()) {
+        if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'linearAsset') {
             backend.getLinearAssets(state.bbox);
         } else {
             vectorLayer.removeAllFeatures();
