@@ -5,8 +5,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
         describe('when moving map', function() {
             var layer;
             var map = {
-                getZoom: function() { return 9; },
-                getExtent: function() { return null; }
+                getZoom: function() { return 9; }
             };
             before(function() {
                 layer = new LinearAssetLayer(map, {
@@ -17,7 +16,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
                         ]);
                     }
                 });
-                layer.update();
+                layer.update(9, null);
                 eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
             });
 

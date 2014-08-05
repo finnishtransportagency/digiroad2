@@ -96,7 +96,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         if (layer === 'linearAsset') {
           this._map.addLayer(linearAssetLayer.vectorLayer);
           linearAssetLayer.vectorLayer.setVisibility(true);
-          linearAssetLayer.update();
+          linearAssetLayer.update(this._map.getZoom(), this._map.getExtent());
           assetLayer.hide();
         } else {
           assetLayer.show();

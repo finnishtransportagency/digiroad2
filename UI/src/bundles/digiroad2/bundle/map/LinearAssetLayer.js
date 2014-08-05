@@ -11,9 +11,9 @@ window.LinearAssetLayer = function(map, backend) {
   });
   vectorLayer.setOpacity(1);
 
-  var update = function() {
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      backend.getLinearAssets(map.getExtent());
+  var update = function(zoom, boundingBox) {
+    if (zoomlevels.isInAssetZoomLevel(zoom)) {
+      backend.getLinearAssets(boundingBox);
     }
   };
 
