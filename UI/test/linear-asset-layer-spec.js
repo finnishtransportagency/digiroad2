@@ -4,11 +4,8 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
     describe('LinearAssetLayer', function () {
         describe('when moving map', function() {
             var layer;
-            var map = {
-                getZoom: function() { return 9; }
-            };
             before(function() {
-                layer = new LinearAssetLayer(map, {
+                layer = new LinearAssetLayer({
                     getLinearAssets: function() {
                         eventbus.trigger('linearAssets:fetched', [
                             {id: 1, points: [{x: 0, y: 0}]},

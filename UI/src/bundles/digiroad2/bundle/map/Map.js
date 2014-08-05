@@ -216,7 +216,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       var layers = {
         asset: new AssetLayer(this._map, this.roadLayer),
-        linearAsset: new LinearAssetLayer(this._map)
+        linearAsset: new LinearAssetLayer()
       };
       this._map.addLayer(this._centerMarkerLayer);
 

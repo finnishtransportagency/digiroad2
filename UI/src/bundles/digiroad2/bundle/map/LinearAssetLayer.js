@@ -1,5 +1,6 @@
-window.LinearAssetLayer = function(map, backend) {
+window.LinearAssetLayer = function(backend) {
   backend = backend || Backend;
+  var eventListener = _.extend({started: false}, eventbus);
 
   var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
     styleMap: new OpenLayers.StyleMap({
@@ -13,15 +14,30 @@ window.LinearAssetLayer = function(map, backend) {
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
+      start();
       backend.getLinearAssets(boundingBox);
     }
   };
 
+  var start = function() {
+    if (!eventListener.started) {
+      eventListener.started = true;
+      eventListener.listenTo(eventbus, 'linearAssets:fetched', drawLinearAssets);
+    }
+  };
+
+  var stop = function() {
+    eventListener.stopListening(eventbus);
+    eventListener.started = false;
+  };
+
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'linearAsset') {
+      start();
       backend.getLinearAssets(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
+      stop();
     }
   }, this);
 
@@ -35,12 +51,6 @@ window.LinearAssetLayer = function(map, backend) {
     });
     vectorLayer.addFeatures(features);
   };
-
-  eventbus.on('linearAssets:fetched', function(linearAssets) {
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      drawLinearAssets(linearAssets);
-    }
-  }, this);
 
   return {
     update: update,
