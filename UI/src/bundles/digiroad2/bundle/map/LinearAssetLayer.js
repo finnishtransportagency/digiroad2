@@ -11,18 +11,15 @@ window.LinearAssetLayer = function(map, backend) {
     });
     vectorLayer.setOpacity(1);
 
-    var layerIsVisible = function() { return !!vectorLayer.map; };
     var showLayer = function() {
         map.addLayer(vectorLayer);
         vectorLayer.setVisibility(true);
-        if (zoomlevels.isInAssetZoomLevel(map.getZoom()) && layerIsVisible()) {
+        if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
             backend.getLinearAssets(map.getExtent());
         }
     };
     var hideLayer = function() {
-        if (layerIsVisible()) {
-            map.removeLayer(vectorLayer);
-        }
+        map.removeLayer(vectorLayer);
     };
 
     eventbus.on('layer:selected', function(layer) {
