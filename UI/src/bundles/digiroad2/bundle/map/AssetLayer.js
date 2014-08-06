@@ -503,7 +503,7 @@ window.AssetLayer = function(map, roadLayer) {
     if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       return;
     }
-    if (clickTimestamp && (new Date().getTime() - clickTimestamp) > ApplicationModel.assetDragDelay &&
+    if (clickTimestamp && (new Date().getTime() - clickTimestamp) >= ApplicationModel.assetDragDelay &&
       (clickCoords && approximately(clickCoords[0], event.clientX) && approximately(clickCoords[1], event.clientY)) || assetIsMoving) {
       assetIsMoving = true;
       var xAdjustedForClickOffset = event.xy.x - initialClickOffsetFromMarkerBottomleft.x;
