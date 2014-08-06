@@ -139,14 +139,22 @@ window.AssetLayer = function(map, roadLayer) {
     return asset;
   };
 
-  var addAssetToLayers = function(asset) {
-    assetLayer.addMarker(asset.massTransitStop.getMarker());
-    assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
+  var setAssetVisibilityByValidityPeriod = function(asset) {
     if (AssetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
       showAsset(asset);
     } else {
       hideAsset(asset);
     }
+  };
+
+  var addAssetToLayers = function(asset) {
+    assetLayer.addMarker(asset.massTransitStop.getMarker());
+    assetDirectionLayer.addFeatures(asset.massTransitStop.getDirectionArrow());
+  };
+
+  var addAssetToLayersAndSetVisibility = function(asset) {
+    addAssetToLayers(asset);
+    setAssetVisibilityByValidityPeriod(asset);
   };
 
   var removeAssetFromMap = function(asset) {
@@ -187,7 +195,7 @@ window.AssetLayer = function(map, roadLayer) {
         if (!AssetsModel.getAsset(uiAsset.id)) {
           AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
         }
-        addAssetToLayers(AssetsModel.getAsset(uiAsset.id));
+        addAssetToLayersAndSetVisibility(AssetsModel.getAsset(uiAsset.id));
         if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           selectedAsset.massTransitStop.select();
@@ -274,7 +282,7 @@ window.AssetLayer = function(map, roadLayer) {
         uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
         AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
       }
-      addAssetToLayers(uiAsset);
+      addAssetToLayersAndSetVisibility(uiAsset);
 
       selectedAsset = uiAsset;
       selectedAsset.massTransitStop.select();
@@ -368,7 +376,7 @@ window.AssetLayer = function(map, roadLayer) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     var uiAsset = createAsset(asset);
     AssetsModel.insertAsset(uiAsset, asset.id);
-    addAssetToLayers(AssetsModel.getAsset(asset.id));
+    addAssetToLayersAndSetVisibility(AssetsModel.getAsset(asset.id));
     return uiAsset;
   };
 
@@ -460,7 +468,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var renderNewGroups = function(uiAssetGroups) {
     _.each(uiAssetGroups, function(uiAssetGroup) {
-      _.each(uiAssetGroup, addAssetToLayers);
+      _.each(uiAssetGroup, addAssetToLayersAndSetVisibility);
     });
   };
 
