@@ -224,7 +224,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getAll(boundingRectangle)
+      linearAssetProvider.getSpeedLimits(boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
