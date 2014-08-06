@@ -41,7 +41,8 @@ define(function() {
       .withConfigurationData(ConfigurationTestData.generate(zoomLevel))
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
-      .withAssetData(assetData);
+      .withAssetData(assetData)
+      .withLinearAssetsData(LinearAssetsTestData.generate());
   };
 
   var clickMarker = function(id, map) {

@@ -68,7 +68,8 @@
         '../test_data/ApplicationSetupTestData.js',
         '../test_data/ConfigurationTestData.js',
         '../test_data/AssetPropertyNamesTestData.js',
-        '../test_data/AssetsTestData.js'], function() {
+        '../test_data/AssetsTestData.js',
+        '../test_data/LinearAssetsTestData.js'], function() {
         jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
         Application.start(
                 Backend.withRoadLinkData(RoadLinkTestData.generate())
@@ -77,7 +78,8 @@
                         .withApplicationSetupData(ApplicationSetupTestData.generate())
                         .withConfigurationData(ConfigurationTestData.generate())
                         .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-                        .withAssetsData(AssetsTestData.generate()));
+                        .withAssetsData(AssetsTestData.generate())
+                        .withLinearAssetsData(LinearAssetsTestData.generate()));
     });
 </script>
 <script src="../../bower_components/mocha/mocha.js"></script>

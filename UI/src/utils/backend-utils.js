@@ -176,6 +176,13 @@
       return this;
     };
 
+    backend.withLinearAssetsData = function(linearAssetsData) {
+      this.getLinearAssets = function(boundingBox) {
+        eventbus.trigger('linearAssets:fetched', linearAssetsData);
+      };
+      return this;
+    };
+
     return backend;
   }
 
