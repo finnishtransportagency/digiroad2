@@ -193,9 +193,11 @@ window.AssetLayer = function(map, roadLayer) {
       _.each(assetGroup, function(asset) {
         var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
         if (!AssetsModel.getAsset(uiAsset.id)) {
-          AssetsModel.insertAsset(createAsset(uiAsset), uiAsset.id);
+          var assetInModel = createAsset(uiAsset);
+          AssetsModel.insertAsset(assetInModel, uiAsset.id);
+          addAssetToLayers(assetInModel);
         }
-        addAssetToLayersAndSetVisibility(AssetsModel.getAsset(uiAsset.id));
+        setAssetVisibilityByValidityPeriod(AssetsModel.getAsset(uiAsset.id));
         if (isSelected(uiAsset)) {
           selectedAsset = AssetsModel.getAsset(uiAsset.id);
           selectedAsset.massTransitStop.select();
