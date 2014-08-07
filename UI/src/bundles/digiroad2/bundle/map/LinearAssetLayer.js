@@ -3,7 +3,10 @@ window.LinearAssetLayer = function(backend) {
   var eventListener = _.extend({started: false}, eventbus);
 
   var speedLimitStyleLookup = {
+    20: { strokeColor: '#00ccdd' },
+    30: { strokeColor: '#ff55dd' },
     40: { strokeColor: '#11bb00' },
+    50: { strokeColor: '#ff0000' },
     60: { strokeColor: '#0011bb' }
   };
   var styleMap = new OpenLayers.StyleMap({
