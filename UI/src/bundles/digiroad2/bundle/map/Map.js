@@ -56,7 +56,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
         this._selectControl.unselectAll();
       }, this);
-      eventbus.on('road-type:selected', this._colorRoadLayerByRoadType, this);
+      eventbus.on('road-type:selected', this._toggleRoadType, this);
       eventbus.on('tool:changed', function(action) {
         var cursor = {'Select': 'default', 'Add': 'crosshair', 'Remove': 'no-drop'};
         $('.olMap').css('cursor', cursor[action]);
@@ -185,20 +185,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _afterMapLayerAddEvent: function(event) {
       this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
     },
-    _colorRoadLayerByRoadType: function(selected) {
-      if (selected) {
-        var roadLinkTypeStyleLookup = {
-          PrivateRoad: { strokeColor: "#0011bb" },
-          Street: { strokeColor: "#11bb00" },
-          Road: { strokeColor: "#ff0000" }
-        };
-        this.roadLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+    _toggleRoadType: function(toggle) {
+      if (toggle) {
+        this._enableColorsOnRoadLayer();
       } else {
-        this.roadLayer.styleMap.styles.default.rules = [];
+        this._disableColorsOnRoadLayer();
       }
-      this._roadTypeSelected = selected;
+      this._roadTypeSelected = toggle;
       this.changeRoadsWidthByZoomLevel();
       this.roadLayer.redraw();
+    },
+    _enableColorsOnRoadLayer: function() {
+      var roadLinkTypeStyleLookup = {
+        PrivateRoad: { strokeColor: "#0011bb" },
+        Street: { strokeColor: "#11bb00" },
+        Road: { strokeColor: "#ff0000" }
+      };
+      this.roadLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+    },
+    _disableColorsOnRoadLayer: function() {
+      this.roadLayer.styleMap.styles.default.rules = [];
     },
     addLayersToMap: function(templates) {
       this.roadLayer = new OpenLayers.Layer.Vector("road", {
