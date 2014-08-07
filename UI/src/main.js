@@ -16,8 +16,10 @@ $(function() {
     var fakeMode = parameters.withFakeData === 'true';
 
     if (fakeMode) {
-        $.getScript('test_data/RoadLinkTestData.js', function() {
-            Application.start(Backend.withRoadLinkData(RoadLinkTestData.generate()));
+        getScripts(['test_data/RoadLinkTestData.js', 'test_data/LinearAssetsTestData.js'], function() {
+            Application.start(Backend
+              .withRoadLinkData(RoadLinkTestData.generate())
+              .withLinearAssetsData(LinearAssetsTestData.generate()));
         });
     } else {
         Application.start();
