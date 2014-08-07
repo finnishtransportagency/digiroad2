@@ -4,9 +4,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     this.pluginName = null;
     this._sandbox = null;
     this._map = null;
-    this._supportedFormats = {};
-    this._localization = null;
-    this._state = undefined;
   }, {
     __name: 'Map',
     _layerType: 'map',
@@ -211,7 +208,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this._selectControl = new OpenLayers.Control.SelectFeature(this.roadLayer);
 
       this._centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
-      this._layers = {road: this.roadLayer};
       this._map.addLayer(this.roadLayer);
 
       var layers = {
