@@ -2,14 +2,15 @@ window.LinearAssetLayer = function(backend) {
   backend = backend || Backend;
   var eventListener = _.extend({started: false}, eventbus);
 
-  var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
-    styleMap: new OpenLayers.StyleMap({
-      "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeColor: "#11bb00",
-        strokeWidth: 6
-      }))
-    })
+  var speedLimitStyleLookup = {
+    40: { strokeColor: '#11bb00' },
+    60: { strokeColor: '#0011bb' }
+  };
+  var styleMap = new OpenLayers.StyleMap({
+    default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeWidth: 6 }))
   });
+  styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
+  var vectorLayer = new OpenLayers.Layer.Vector('linearAsset', { styleMap: styleMap });
   vectorLayer.setOpacity(1);
 
   var update = function(zoom, boundingBox) {
@@ -47,7 +48,7 @@ window.LinearAssetLayer = function(backend) {
       var points = _.map(linearAsset.points, function(point) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), null);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAsset);
     });
     vectorLayer.addFeatures(features);
   };

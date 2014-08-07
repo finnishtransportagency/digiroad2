@@ -11,9 +11,10 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         done();
       });
     });
-    it('displays speed limit', function() {
+    it('displays speed limits', function() {
       var speedLimitVectors = testHelpers.getSpeedLimitFeatures(openLayersMap);
-      expect(speedLimitVectors.length).to.equal(1);
+      var limits = _.map(speedLimitVectors, function(vector) { return vector.attributes.limit; });
+      expect(limits).to.have.members([40, 60]);
     });
   });
 
