@@ -111,11 +111,11 @@
     Backend.getAssetPropertyNames();
   };
 
-  application.restart = function() {
+  application.restart = function(backend) {
     appSetup = undefined;
     appConfig = undefined;
     localizedStrings = undefined;
-    this.start();
+    this.start(backend);
   };
 
 }(window.Application = window.Application || {}));
