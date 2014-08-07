@@ -1,22 +1,13 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import org.scalatest._
-import scala.util.Random
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
-import fi.liikennevirasto.digiroad2.asset.AssetStatus._
-import org.joda.time.LocalDate
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import scala.language.implicitConversions
-import fi.liikennevirasto.digiroad2.user.Role
-import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
-import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
-import org.mockito.Mockito.verify
-import fi.liikennevirasto.digiroad2.asset._
-import scala.Some
-import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.user.Configuration
-import scala.slick.jdbc.{StaticQuery => Q}
+
+import org.scalatest.FunSuite
+import org.scalatest.Matchers
+import org.scalatest.Tag
+
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.Point
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val provider = new OracleLinearAssetProvider()
