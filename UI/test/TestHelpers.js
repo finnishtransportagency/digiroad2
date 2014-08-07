@@ -44,7 +44,7 @@ define(function() {
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)
-      .withLinearAssetsData(LinearAssetsTestData.generate());
+      .withLinearAssetsData(LinearAssetsTestData.generate(2));
   };
 
   var clickMarker = function(id, map) {
