@@ -6,12 +6,3 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     }
 });
 
-// TODO: enable header check when
-/*
-$(document).ajaxComplete(function(event, jqXHR, ajaxSettings) {
-    var digiroadResponse = jqXHR.getResponseHeader("Digiroad2-Server-Originated-Response");
-    if (!digiroadResponse) {
-        window.location = "index.html";
-    }
-});
-*/
