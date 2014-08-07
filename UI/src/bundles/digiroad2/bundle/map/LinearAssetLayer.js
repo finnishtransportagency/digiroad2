@@ -5,8 +5,8 @@ window.LinearAssetLayer = function(backend) {
   var vectorLayer = new OpenLayers.Layer.Vector("linearAsset", {
     styleMap: new OpenLayers.StyleMap({
       "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeColor: "#B22222",
-        strokeWidth: 8
+        strokeColor: "#11bb00",
+        strokeWidth: 6
       }))
     })
   });
