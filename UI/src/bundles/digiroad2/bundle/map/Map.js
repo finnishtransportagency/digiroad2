@@ -200,7 +200,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this.changeRoadsWidthByZoomLevel();
       this.roadLayer.redraw();
     },
-     addLayersToMap: function(templates) {
+    addLayersToMap: function(templates) {
       this.roadLayer = new OpenLayers.Layer.Vector("road", {
         styleMap: templates.roadStyles
       });
