@@ -76,9 +76,12 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         if (layer === 'linearAsset') {
           showLinearAssetLayer();
           assetLayer.hide();
+          this._disableColorsOnRoadLayer();
+          this.roadLayer.redraw();
         } else {
           assetLayer.show();
           hideLinearAssetLayer();
+          this._toggleRoadType(this._roadTypeSelected);
         }
       }, this);
       var map = this._map;
