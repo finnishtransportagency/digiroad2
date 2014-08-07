@@ -59,22 +59,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
         this._selectControl.unselectAll();
       }, this);
-      eventbus.on('road-type:selected', function(selected) {
-        if (selected) {
-          var roadLinkTypeStyleLookup = {
-            PrivateRoad: { strokeColor: "#0011bb" },
-            Street: { strokeColor: "#11bb00" },
-            Road: { strokeColor: "#ff0000" }
-          };
-          this.roadLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
-        } else {
-          this.roadLayer.styleMap.styles.default.rules = [];
-        }
-        this._roadTypeSelected = selected;
-        this.changeRoadsWidthByZoomLevel();
-        this.roadLayer.redraw();
-      }, this);
-
+      eventbus.on('road-type:selected', this._colorRoadLayerByRoadType, this);
       eventbus.on('tool:changed', function(action) {
         var cursor = {'Select': 'default', 'Add': 'crosshair', 'Remove': 'no-drop'};
         $('.olMap').css('cursor', cursor[action]);
@@ -158,7 +143,8 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
       dialog.fadeout(2000);
     },
-    start: function(sandbox) {},
+    start: function(sandbox) {
+    },
     changeRoadsWidthByZoomLevel: function() {
       var widthBase = 2 + (this._map.getZoom() - zoomlevels.minZoomForRoadLinks);
       var roadWidth = widthBase * widthBase;
@@ -202,8 +188,22 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _afterMapLayerAddEvent: function(event) {
       this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
     },
-
-    addLayersToMap: function(templates) {
+    _colorRoadLayerByRoadType: function(selected) {
+      if (selected) {
+        var roadLinkTypeStyleLookup = {
+          PrivateRoad: { strokeColor: "#0011bb" },
+          Street: { strokeColor: "#11bb00" },
+          Road: { strokeColor: "#ff0000" }
+        };
+        this.roadLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+      } else {
+        this.roadLayer.styleMap.styles.default.rules = [];
+      }
+      this._roadTypeSelected = selected;
+      this.changeRoadsWidthByZoomLevel();
+      this.roadLayer.redraw();
+    },
+     addLayersToMap: function(templates) {
       this.roadLayer = new OpenLayers.Layer.Vector("road", {
         styleMap: templates.roadStyles
       });
