@@ -1,7 +1,7 @@
 (function(ActionPanelBoxes) {
   ActionPanelBoxes.LinearAssetBox = function() {
     var collapsedTemplate = [
-      '<div class="panel">',
+      '<div class="panel speed-limits">',
       '  <header class="panel-header">',
       '    Nopeusrajoitukset',
       '  </header>',

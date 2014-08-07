@@ -13,7 +13,7 @@ require.config({
   },
   waitSeconds: 10
 });
-require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec', 'AssetMoveSpec'], function(chai, chaiJquery) {
+require(['chai', 'chai-jquery', 'GroupingByValidityPeriodSpec', 'AssetCreationSpec', 'AssetMoveSpec', 'SpeedLimitVisualizationSpec'], function(chai, chaiJquery) {
   chai.use(chaiJquery);
 
   eventbus.once('map:initialized', function() {

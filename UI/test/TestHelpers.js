@@ -75,11 +75,16 @@ define(function() {
     return map.getLayersByName('asset')[0].markers;
   };
 
+  var getSpeedLimitFeatures = function(map) {
+    return map.getLayersByName('linearAsset')[0].features;
+  };
+
   return {
     restartApplication: restartApplication,
     fakeBackend: fakeBackend,
     clickMarker: clickMarker,
     moveMarker: moveMarker,
-    getAssetMarkers: getAssetMarkers
+    getAssetMarkers: getAssetMarkers,
+    getSpeedLimitFeatures: getSpeedLimitFeatures
   };
 });
