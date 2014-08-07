@@ -18,7 +18,7 @@
   var bindEvents = function() {
     eventbus.on('map:moved', function(map) {
       if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
-        if (ApplicationModel.getSelectedLayer() === 'asset') {
+        if (applicationModel.getSelectedLayer() === 'asset') {
           Backend.getAssetsWithCallback(10, map.bbox, function(backendAssets) {
             if (map.hasZoomLevelChanged) {
               eventbus.trigger('assets:all-updated', backendAssets);
@@ -31,7 +31,7 @@
         if (selectedAssetModel.isDirty()) {
           eventbus.trigger('assetModifications:confirm');
         } else  {
-          if (ApplicationModel.getSelectedLayer() === 'asset') {
+          if (applicationModel.getSelectedLayer() === 'asset') {
             eventbus.trigger('assets:outOfZoom');
           }
         }

@@ -26,7 +26,7 @@
         }
         elements.collapsed.hide();
         elements.expanded.show();
-        ApplicationModel.selectLayer('linearAsset');
+        applicationModel.selectLayer('linearAsset');
       });
     };
 
@@ -216,7 +216,7 @@
       elements.collapsed.click(function() {
         elements.collapsed.hide();
         elements.expanded.show();
-        ApplicationModel.selectLayer('asset');
+        applicationModel.selectLayer('asset');
       });
 
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');

@@ -41,7 +41,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     init: function(sandbox) {
       eventbus.on('application:initialized', function() {
         var zoom = this._map.getZoom();
-        ApplicationModel.setZoomLevel(zoom);
+        applicationModel.setZoomLevel(zoom);
         if (!zoomlevels.isInAssetZoomLevel(zoom)) {
           this.showAssetZoomDialog();
         }
@@ -110,7 +110,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         map.removeLayer(layers.linearAsset.vectorLayer);
       };
       this._map.events.register('moveend', this, function() {
-        ApplicationModel.moveMap(map.getZoom(), map.getExtent());
+        applicationModel.moveMap(map.getZoom(), map.getExtent());
       });
 
       // register domain builder

@@ -24,8 +24,10 @@ define(function() {
     unbindEvents();
     clearDom();
     clearAddressBar();
-    eventbus.once('map:initialized', callback);
-    ApplicationModel.assetDragDelay = 0;
+    eventbus.once('map:initialized', function(map) {
+      applicationModel.assetDragDelay = 0;
+      callback(map);
+    });
     Application.restart(backend || defaultBackend());
   };
 

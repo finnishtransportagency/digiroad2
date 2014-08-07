@@ -104,6 +104,7 @@
     if (backend) window.Backend = backend;
     window.AssetsModel.initialize();
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
+    window.applicationModel = new ApplicationModel();
     ActionPanel.initialize(Backend);
     AssetForm.initialize(Backend);
     Backend.getApplicationSetup();
