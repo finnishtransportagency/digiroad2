@@ -29,7 +29,7 @@ window.LinearAssetLayer = function(backend) {
   var start = function() {
     if (!eventListener.started) {
       eventListener.started = true;
-      eventListener.listenTo(eventbus, 'linearAssets:fetched', drawLinearAssets);
+      eventListener.listenTo(eventbus, 'linearAssets:fetched', drawSpeedLimits);
     }
   };
 
@@ -48,13 +48,13 @@ window.LinearAssetLayer = function(backend) {
     }
   }, this);
 
-  var drawLinearAssets = function(linearAssets) {
+  var drawSpeedLimits = function(speedLimits) {
     vectorLayer.removeAllFeatures();
-    var features = _.map(linearAssets, function(linearAsset) {
-      var points = _.map(linearAsset.points, function(point) {
+    var features = _.map(speedLimits, function(speedLimit) {
+      var points = _.map(speedLimit.points, function(point) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAsset);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit);
     });
     vectorLayer.addFeatures(features);
   };
