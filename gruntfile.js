@@ -131,7 +131,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'mocha:unit', 'less:development', 'configureProxies'],
+      tasks: ['jshint', 'mocha:unit', 'mocha:integration', 'less:development', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -160,9 +160,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit']);
+  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('integration-test', ['jshint', 'configureProxies:server', 'connect', 'mocha:integration']);
 
