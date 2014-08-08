@@ -7,11 +7,22 @@
       '  </header>',
       '</div>'].join('');
 
+    var speedLimits = [120, 100, 80, 70, 60, 50, 40, 30, 20];
+    var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
+      return '<div class="legend-entry">' +
+               '<div class="label">' + speedLimit + '</div>' +
+               '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+             '</div>';
+    }).join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
       '    Nopeusrajoitukset',
       '  </header>',
+      '  <div class="panel-section panel-legend speed-limit-legend">',
+            speedLimitLegendTemplate,
+      '  </div>',
       '</div>'].join('');
 
     var elements = {
