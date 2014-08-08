@@ -31,9 +31,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.map.Map", function() {
                 "src" : "../../../../bundles/digiroad2/bundle/map/template/Templates.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/map/domain/LinearAsset.js"
-            },{
-                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/map/LinearAssetLayer.js"
             },{
                 "type" : "text/javascript",
