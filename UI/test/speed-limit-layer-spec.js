@@ -1,5 +1,10 @@
 define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer) {
   var assert = chai.assert;
+  var lineStringFeatures = function(layer) {
+    return _.filter(layer.vectorLayer.features, function(feature) {
+      return feature.geometry instanceof OpenLayers.Geometry.LineString;
+    });
+  };
 
   describe('SpeedLimitLayer', function() {
     describe('when moving map', function() {
@@ -22,11 +27,11 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
           return feature.geometry.getVertices()[0];
         };
 
-        assert.equal(layer.vectorLayer.features.length, 2);
-        assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[0]).x, 0);
-        assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[0]).y, 0);
-        assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[1]).x, 10);
-        assert.equal(getFirstPointOfFeature(layer.vectorLayer.features[1]).y, 10);
+        assert.equal(lineStringFeatures(layer).length, 2);
+        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[0]).x, 0);
+        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[0]).y, 0);
+        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[1]).x, 10);
+        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[1]).y, 10);
       });
 
       describe('and zooming out', function() {
@@ -35,7 +40,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
         });
 
         it('should not contain speed limits', function() {
-          assert.equal(layer.vectorLayer.features.length, 0);
+          assert.equal(lineStringFeatures(layer).length, 0);
         });
 
         describe('and zooming in', function() {
@@ -44,7 +49,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
           });
 
           it('should contain speed limits', function() {
-            assert.equal(layer.vectorLayer.features.length, 2);
+            assert.equal(lineStringFeatures(layer).length, 2);
           });
         });
       });
