@@ -32,8 +32,8 @@ object OracleLinearAssetDao {
         join LRM_POSITION pos on al.position_id = pos.id
         join ROAD_LINK rl on pos.road_link_id = rl.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
-        left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and SDO_FILTER(rl.geom, $geometry) = 'TRUE'
         group by a.id, rl.id, pos.side_code, e.name_fi
         """.as[(Long, Int, Int, Array[Byte])].list
