@@ -51,32 +51,10 @@
 <script type="text/javascript" src="../src/utils/AssetForm.js"></script>
 <script type="text/javascript" src="../src/utils/script-loader.js"></script>
 <script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
-<script type="text/javascript">
-    getScripts([
-        '../test_data/RoadLinkTestData.js',
-        '../test_data/UserRolesTestData.js',
-        '../test_data/EnumeratedPropertyValuesTestData.js',
-        '../test_data/ApplicationSetupTestData.js',
-        '../test_data/ConfigurationTestData.js',
-        '../test_data/AssetPropertyNamesTestData.js',
-        '../test_data/AssetsTestData.js',
-        '../test_data/LinearAssetsTestData.js'], function() {
-        jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
-        Application.start(
-                Backend.withRoadLinkData(RoadLinkTestData.generate())
-                        .withUserRolesData(UserRolesTestData.generate())
-                        .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-                        .withApplicationSetupData(ApplicationSetupTestData.generate())
-                        .withConfigurationData(ConfigurationTestData.generate())
-                        .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-                        .withAssetsData(AssetsTestData.generate())
-                        .withLinearAssetsData(LinearAssetsTestData.generate()));
-    });
-</script>
+<script data-main="run-integration-tests" src="../../bower_components/requirejs/require.js"></script>
 <script src="../../bower_components/mocha/mocha.js"></script>
 <script type="text/javascript">
     mocha.setup({ui: 'bdd', reporter: 'html'});
 </script>
-<script data-main="run-integration-tests" src="../../bower_components/requirejs/require.js"></script>
 </body>
 </html>
