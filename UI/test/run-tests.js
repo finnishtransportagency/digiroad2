@@ -7,7 +7,7 @@ require.config({
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/utils/SelectedAssetModel',
-        'LinearAssetLayer':         '../src/bundles/digiroad2/bundle/map/LinearAssetLayer',
+        'SpeedLimitLayer':         '../src/bundles/digiroad2/bundle/map/SpeedLimitLayer',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoomLevels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
@@ -26,8 +26,8 @@ require.config({
         'SelectedAssetModel': {
             deps: ['EventBus', 'lodash']
         },
-        'LinearAssetLayer': {
-            exports: 'LinearAssetLayer',
+        'SpeedLimitLayer': {
+            exports: 'SpeedLimitLayer',
             deps: ['OpenLayers']
         },
         'geometrycalculator': {
@@ -41,7 +41,7 @@ require.config({
 });
 require(['lodash',
          'SelectedAssetModelSpec',
-         'linear-asset-layer-spec',
+         'speed-limit-layer-spec',
          'geometry-calculations-spec',
          'asset-grouping-spec'], function(lodash) {
     window._ = lodash;

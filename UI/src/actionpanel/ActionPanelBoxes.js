@@ -1,5 +1,5 @@
 (function(ActionPanelBoxes) {
-  ActionPanelBoxes.LinearAssetBox = function() {
+  ActionPanelBoxes.SpeedLimitBox = function() {
     var collapsedTemplate = [
       '<div class="panel speed-limits">',
       '  <header class="panel-header">',
@@ -26,13 +26,13 @@
         }
         elements.collapsed.hide();
         elements.expanded.show();
-        applicationModel.selectLayer('linearAsset');
+        applicationModel.selectLayer('speedLimit');
       });
     };
 
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'linearAsset') {
+        if (selectedLayer !== 'speedLimit') {
           elements.expanded.hide();
           elements.collapsed.show();
         }

@@ -44,7 +44,7 @@ define(function() {
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)
-      .withLinearAssetsData(LinearAssetsTestData.generate(2));
+      .withSpeedLimitsData(SpeedLimitsTestData.generate(2));
   };
 
   var clickMarker = function(id, map) {
@@ -76,7 +76,7 @@ define(function() {
   };
 
   var getSpeedLimitFeatures = function(map) {
-    return map.getLayersByName('linearAsset')[0].features;
+    return map.getLayersByName('speedLimit')[0].features;
   };
 
   return {

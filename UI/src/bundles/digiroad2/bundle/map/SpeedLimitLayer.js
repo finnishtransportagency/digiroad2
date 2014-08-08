@@ -1,4 +1,4 @@
-window.LinearAssetLayer = function(backend) {
+window.SpeedLimitLayer = function(backend) {
   backend = backend || Backend;
   var eventListener = _.extend({started: false}, eventbus);
 
@@ -26,20 +26,20 @@ window.LinearAssetLayer = function(backend) {
     }))
   });
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
-  var vectorLayer = new OpenLayers.Layer.Vector('linearAsset', { styleMap: styleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap });
   vectorLayer.setOpacity(1);
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       start();
-      backend.getLinearAssets(boundingBox);
+      backend.getSpeedLimits(boundingBox);
     }
   };
 
   var start = function() {
     if (!eventListener.started) {
       eventListener.started = true;
-      eventListener.listenTo(eventbus, 'linearAssets:fetched', drawSpeedLimits);
+      eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
     }
   };
 
@@ -49,9 +49,9 @@ window.LinearAssetLayer = function(backend) {
   };
 
   eventbus.on('map:moved', function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'linearAsset') {
+    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       start();
-      backend.getLinearAssets(state.bbox);
+      backend.getSpeedLimits(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
       stop();
