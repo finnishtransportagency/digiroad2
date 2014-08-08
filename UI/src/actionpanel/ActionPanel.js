@@ -8,8 +8,8 @@
       var assetBox = new ActionPanelBoxes.AssetBox();
       $('.action-panels').append(assetBox.element);
 
-      var linearAssetBox = new ActionPanelBoxes.LinearAssetBox();
-      $('.action-panels').append(linearAssetBox.element);
+      var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox();
+      $('.action-panels').append(speedLimitBox.element);
 
       backend.getUserRoles();
 

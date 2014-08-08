@@ -24,9 +24,9 @@
         .fail(function() { console.log("error"); });
     }, 1000);
 
-    backend.getLinearAssets = _.throttle(function (boundingBox) {
-      $.getJSON('api/linearassets?bbox=' + boundingBox, function (linearAssets) {
-        eventbus.trigger('linearAssets:fetched', linearAssets);
+    backend.getSpeedLimits = _.throttle(function (boundingBox) {
+      $.getJSON('api/linearassets?bbox=' + boundingBox, function (speedLimits) {
+        eventbus.trigger('speedLimits:fetched', speedLimits);
       });
     }, 1000);
 
@@ -109,8 +109,8 @@
 
     // FIXME: Dummy implementation
     var id = 0;
-    backend.createLinearAsset = function (startPosition, endPosition) {
-      eventbus.trigger('linearAsset:created', {id: ++id, points: [startPosition, endPosition]});
+    backend.createSpeedLimit = function (startPosition, endPosition) {
+      eventbus.trigger('speedLimit:created', {id: ++id, points: [startPosition, endPosition]});
     };
 
     backend.withRoadLinkData = function (roadLinkData) {
@@ -176,9 +176,9 @@
       return this;
     };
 
-    backend.withLinearAssetsData = function(linearAssetsData) {
-      this.getLinearAssets = function(boundingBox) {
-        eventbus.trigger('linearAssets:fetched', linearAssetsData);
+    backend.withSpeedLimitsData = function(speedLimitsData) {
+      this.getSpeedLimits = function(boundingBox) {
+        eventbus.trigger('speedLimits:fetched', speedLimitsData);
       };
       return this;
     };

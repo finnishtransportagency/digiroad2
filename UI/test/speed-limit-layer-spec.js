@@ -1,20 +1,20 @@
-define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLayer) {
+define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer) {
     var assert = chai.assert;
 
-    describe('LinearAssetLayer', function () {
+    describe('SpeedLimitLayer', function () {
         describe('when moving map', function() {
             var layer;
             before(function() {
-                layer = new LinearAssetLayer({
-                    getLinearAssets: function() {
-                        eventbus.trigger('linearAssets:fetched', [
+                layer = new SpeedLimitLayer({
+                    getSpeedLimits: function() {
+                        eventbus.trigger('speedLimits:fetched', [
                             {id: 1, points: [{x: 0, y: 0}]},
                             {id: 2, points: [{x: 10, y: 10}]}
                         ]);
                     }
                 });
                 layer.update(9, null);
-                eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
+                eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 9});
             });
 
             it('should contain each speed limit only once', function() {
@@ -31,7 +31,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
 
             describe('and zooming out', function() {
                 before(function() {
-                    eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 8});
+                    eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 8});
                 });
 
                 it('should not contain speed limits', function() {
@@ -40,7 +40,7 @@ define(['chai', 'LinearAssetLayer', 'zoomlevels'], function(chai, LinearAssetLay
 
                 describe('and zooming in', function() {
                     before(function() {
-                        eventbus.trigger('map:moved', {selectedLayer: 'linearAsset', bbox: null, zoom: 9});
+                        eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 9});
                     });
 
                     it('should contain speed limits', function() {

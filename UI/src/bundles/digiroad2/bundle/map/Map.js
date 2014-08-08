@@ -73,26 +73,26 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       }, this);
       eventbus.on('layer:selected', function(layer) {
         var assetLayer = layers.asset;
-        if (layer === 'linearAsset') {
-          showLinearAssetLayer();
+        if (layer === 'speedLimit') {
+          showSpeedLimitLayer();
           assetLayer.hide();
           this._disableColorsOnRoadLayer();
           this.roadLayer.redraw();
         } else {
           assetLayer.show();
-          hideLinearAssetLayer();
+          hideSpeedLimitLayer();
           this._toggleRoadType(this._roadTypeSelected);
         }
       }, this);
       var map = this._map;
-      var showLinearAssetLayer = function() {
-        var linearAssetLayer = layers.linearAsset;
-        map.addLayer(linearAssetLayer.vectorLayer);
-        linearAssetLayer.vectorLayer.setVisibility(true);
-        linearAssetLayer.update(map.getZoom(), map.getExtent());
+      var showSpeedLimitLayer = function() {
+        var speedLimitLayer = layers.speedLimit;
+        map.addLayer(speedLimitLayer.vectorLayer);
+        speedLimitLayer.vectorLayer.setVisibility(true);
+        speedLimitLayer.update(map.getZoom(), map.getExtent());
       };
-      var hideLinearAssetLayer = function() {
-        map.removeLayer(layers.linearAsset.vectorLayer);
+      var hideSpeedLimitLayer = function() {
+        map.removeLayer(layers.speedLimit.vectorLayer);
       };
       this._map.events.register('moveend', this, function() {
         applicationModel.moveMap(map.getZoom(), map.getExtent());
@@ -221,7 +221,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       var layers = {
         asset: new AssetLayer(this._map, this.roadLayer),
-        linearAsset: new LinearAssetLayer()
+        speedLimit: new SpeedLimitLayer()
       };
       this._map.addLayer(this._centerMarkerLayer);
 

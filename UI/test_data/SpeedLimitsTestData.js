@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetsTestData = {
+  root.SpeedLimitsTestData = {
     generate: function(amount) {
       var data = [
         {
