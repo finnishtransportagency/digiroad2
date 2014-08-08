@@ -702,5 +702,5 @@
       if (amount) { return _.take(data, amount); }
       return data;
     }
-  }
+  };
 })(this);

@@ -35,5 +35,5 @@
         maastokoordinaatti_y: "Maastokoordinaatti Y"
       };
     }
-  }
+  };
 }(this));

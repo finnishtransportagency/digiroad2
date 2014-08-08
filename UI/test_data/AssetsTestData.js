@@ -25,5 +25,5 @@
       return [this.generateAsset({id: 300348, externalId: 300066, validityPeriod: validityPeriods[0]}),
               this.generateAsset({id: 300347, externalId: 300065, validityPeriod: validityPeriods[1]})];
     }
-  }
+  };
 }(this));
