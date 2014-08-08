@@ -25,9 +25,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.map.Map", function() {
                 "src" : "../../../../bundles/digiroad2/bundle/map/domain/BusStopLayer.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/map/domain/BusStopLayerModelBuilder.js"
-            },{
-                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/map/AssetLayer.js"
             },{
                 "type" : "text/javascript",
