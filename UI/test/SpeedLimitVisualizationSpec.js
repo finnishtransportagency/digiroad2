@@ -14,6 +14,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     it('displays speed limits', function() {
       var speedLimitVectors = testHelpers.getSpeedLimitFeatures(openLayersMap);
       var limits = _.map(speedLimitVectors, function(vector) { return vector.attributes.limit; });
+      expect(limits).to.have.length(2);
       expect(limits).to.have.members([40, 60]);
     });
   });
