@@ -73,6 +73,11 @@ define(function() {
     }
   };
 
+  var clickMap = function(map, longitude, latitude) {
+    var pixel = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude, latitude));
+    eventbus.trigger('map:clicked', {x: pixel.x, y: pixel.y});
+  };
+
   var getAssetMarkers = function(map) {
     return map.getLayersByName('asset')[0].markers;
   };
@@ -87,6 +92,7 @@ define(function() {
     fakeBackend: fakeBackend,
     clickMarker: clickMarker,
     moveMarker: moveMarker,
+    clickMap: clickMap,
     getAssetMarkers: getAssetMarkers,
     getSpeedLimitFeatures: getSpeedLimitFeatures
   };
