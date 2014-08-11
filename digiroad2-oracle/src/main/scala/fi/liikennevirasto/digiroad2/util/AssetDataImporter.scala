@@ -408,7 +408,7 @@ class AssetDataImporter {
       }
 
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
-      insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 4)
+      insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 2)
       insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
     }
   }
