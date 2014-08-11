@@ -9,20 +9,21 @@ window.SpeedLimitLayer = function(backend) {
     strokeLinecap: 'square'
   };
   var speedLimitStyleLookup = {
-    20:  { strokeColor: '#00ccdd' },
-    30:  { strokeColor: '#ff55dd' },
-    40:  { strokeColor: '#11bb00' },
-    50:  { strokeColor: '#ff0000' },
-    60:  { strokeColor: '#0011bb' },
-    70:  { strokeColor: '#00ccdd' },
-    80:  { strokeColor: '#ff55dd' },
-    100: { strokeColor: '#11bb00' },
-    120: { strokeColor: '#ff0000' }
+    20:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/20.svg' },
+    30:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/30.svg' },
+    40:  { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/40.svg' },
+    50:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/50.svg' },
+    60:  { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/60.svg' },
+    70:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/70.svg' },
+    80:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/80.svg' },
+    100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
+    120: { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/120.svg' }
   };
   var styleMap = new OpenLayers.StyleMap({
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeWidth: 6,
-      strokeOpacity: 0.7
+      strokeOpacity: 0.7,
+      pointRadius: 10
     }))
   });
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
@@ -66,12 +67,20 @@ window.SpeedLimitLayer = function(backend) {
     vectorLayer.removeAllFeatures();
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
+    vectorLayer.addFeatures(limitSigns(speedLimits));
   };
 
   var dottedLineFeatures = function(speedLimits) {
     var solidLines = lineFeatures(speedLimits);
     var dottedOverlay = lineFeatures(speedLimits, dottedOverlayStyle);
     return solidLines.concat(dottedOverlay);
+  };
+
+  var limitSigns = function(speedLimits) {
+    return _.map(speedLimits, function(speedLimit) {
+      var point = _.first(speedLimit.points);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(point.x, point.y), speedLimit);
+    });
   };
 
   var lineFeatures = function(speedLimits, customStyle) {
