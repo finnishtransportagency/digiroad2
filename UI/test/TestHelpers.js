@@ -44,7 +44,8 @@ define(function() {
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)
-      .withSpeedLimitsData(SpeedLimitsTestData.generate(2));
+      .withSpeedLimitsData(SpeedLimitsTestData.generate(2))
+      .withPassThroughAssetCreation();
   };
 
   var clickMarker = function(id, map) {

@@ -183,6 +183,13 @@
       return this;
     };
 
+    backend.withPassThroughAssetCreation = function() {
+      this.createAsset = function(data) {
+        eventbus.trigger('asset:created', data);
+      };
+      return this;
+    };
+
     return backend;
   }
 

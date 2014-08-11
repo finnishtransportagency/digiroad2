@@ -68,6 +68,7 @@ require(['chai',
       .withConfigurationData(ConfigurationTestData.generate())
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(AssetsTestData.generate())
-      .withSpeedLimitsData(SpeedLimitsTestData.generate()));
+      .withSpeedLimitsData(SpeedLimitsTestData.generate())
+      .withPassThroughAssetCreation());
 });
 
