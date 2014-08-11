@@ -37,6 +37,7 @@ require(['chai',
          'ConfigurationTestData',
          'AssetPropertyNamesTestData',
          'SpeedLimitsTestData',
+         'TestHelpers',
          'GroupingByValidityPeriodSpec',
          'AssetCreationSpec',
          'AssetMoveSpec',
@@ -51,7 +52,8 @@ require(['chai',
                  ApplicationSetupTestData,
                  ConfigurationTestData,
                  AssetPropertyNamesTestData,
-                 SpeedLimitsTestData) {
+                 SpeedLimitsTestData,
+                 testHelpers) {
   chai.use(chaiJquery);
 
   eventbus.once('map:initialized', function() {
@@ -60,15 +62,6 @@ require(['chai',
   });
 
   jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
-  Application.start(
-    Backend.withRoadLinkData(RoadLinkTestData.generate())
-      .withUserRolesData(UserRolesTestData.generate())
-      .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-      .withApplicationSetupData(ApplicationSetupTestData.generate())
-      .withConfigurationData(ConfigurationTestData.generate())
-      .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-      .withAssetsData(AssetsTestData.generate())
-      .withSpeedLimitsData(SpeedLimitsTestData.generate())
-      .withPassThroughAssetCreation());
+  Application.start(testHelpers.defaultBackend());
 });
 

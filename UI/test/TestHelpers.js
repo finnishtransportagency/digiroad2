@@ -82,6 +82,7 @@ define(function() {
 
   return {
     restartApplication: restartApplication,
+    defaultBackend: defaultBackend,
     fakeBackend: fakeBackend,
     clickMarker: clickMarker,
     moveMarker: moveMarker,
