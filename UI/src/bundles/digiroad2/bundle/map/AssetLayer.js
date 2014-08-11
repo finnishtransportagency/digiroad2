@@ -265,27 +265,30 @@ window.AssetLayer = function(map, roadLayer) {
     });
   };
 
+  function createAndGroupUIAsset(backendAsset) {
+    var uiAsset;
+    var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(AssetsModel.getAssets()), backendAsset);
+    if (assetToGroupWith) {
+      uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
+      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      addAssetToGroup(uiAsset, assetToGroupWith.data.group);
+      redrawGroup(assetToGroupWith.data.group);
+    } else {
+      var group = createDummyGroup(backendAsset.lon, backendAsset.lat, backendAsset);
+      uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, group, group.assetGroup));
+      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
+    }
+    return uiAsset;
+  }
+
   var handleAssetSaved = function(asset, positionUpdated) {
     _.merge(AssetsModel.getAsset(asset.id).data, asset);
     if (positionUpdated) {
       redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
       deselectAsset(selectedAsset);
-
-      var uiAsset;
-      var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(AssetsModel.getAssets()), asset);
-      if (assetToGroupWith) {
-        uiAsset = createAsset(convertBackendAssetToUIAsset(asset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
-        AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
-        addAssetToGroup(uiAsset, assetToGroupWith.data.group);
-        redrawGroup(assetToGroupWith.data.group);
-      } else {
-        var group = createDummyGroup(asset.lon, asset.lat, asset);
-        uiAsset = createAsset(convertBackendAssetToUIAsset(asset, group, group.assetGroup));
-        AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
-      }
+      var uiAsset = createAndGroupUIAsset(asset);
       addAssetToLayersAndSetVisibility(uiAsset);
-
       selectedAsset = uiAsset;
       selectedAsset.massTransitStop.select();
       registerMouseDownHandler(selectedAsset);
