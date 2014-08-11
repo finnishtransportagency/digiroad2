@@ -39,7 +39,8 @@ object CsvImporter {
     "LiVi-tunnus" -> "yllapitajan_koodi",
     "Matkustajatunnus" -> "matkustajatunnus",
     "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
-    "Liikennöintisuunta" -> "liikennointisuunta"
+    "Liikennöintisuunta" -> "liikennointisuunta",
+    "Lisätiedot" -> "lisatiedot"
   )
 
   private val multipleChoiceFieldMappings = Map(

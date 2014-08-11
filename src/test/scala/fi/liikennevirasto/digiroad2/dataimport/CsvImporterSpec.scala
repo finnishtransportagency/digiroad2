@@ -164,6 +164,18 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("update additional information by CSV import", Tag("db")) {
+    val asset = createAsset(roadLinkId = 5771, properties = Map("vaikutussuunta" -> "2", "lisatiedot" -> "Additional info"))
+    try {
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.externalId, "Lisätiedot" -> "Updated additional info")))
+      CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
+      val assetAdditionalInfo = assetProvider.getAssetByExternalId(asset.externalId).get.getPropertyValue("lisatiedot")
+      assetAdditionalInfo should equal(Some("Updated additional info"))
+    } finally {
+      removeAsset(asset.id, assetProvider)
+    }
+  }
+
   val exampleValues = Map(
     "nimi_suomeksi" -> ("Passila", "Pasila"),
     "yllapitajan_tunnus" -> ("1234", "1281"),
