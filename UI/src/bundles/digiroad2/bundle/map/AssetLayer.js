@@ -243,18 +243,6 @@ window.AssetLayer = function(map, roadLayer) {
     }
   };
 
-  var handleAssetCreated = function(asset) {
-    removeAssetFromMap(selectedAsset);
-    deselectAsset(selectedAsset);
-
-    var uiAsset = createAndGroupUIAsset(asset);
-    addAssetToLayersAndSetVisibility(uiAsset);
-
-    selectedAsset = uiAsset;
-    selectedAsset.massTransitStop.select();
-    registerMouseDownHandler(selectedAsset);
-  };
-
   function redrawGroup(group) {
     var groupAssets = group.assetGroup;
     _.each(groupAssets, function(asset) {
@@ -285,6 +273,18 @@ window.AssetLayer = function(map, roadLayer) {
     }
     return uiAsset;
   }
+
+  var handleAssetCreated = function(asset) {
+    removeAssetFromMap(selectedAsset);
+    deselectAsset(selectedAsset);
+
+    var uiAsset = createAndGroupUIAsset(asset);
+    addAssetToLayersAndSetVisibility(uiAsset);
+
+    selectedAsset = uiAsset;
+    selectedAsset.massTransitStop.select();
+    registerMouseDownHandler(selectedAsset);
+  };
 
   var handleAssetSaved = function(asset, positionUpdated) {
     _.merge(AssetsModel.getAsset(asset.id).data, asset);
