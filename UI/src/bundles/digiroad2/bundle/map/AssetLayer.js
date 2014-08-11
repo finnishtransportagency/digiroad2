@@ -292,8 +292,10 @@ window.AssetLayer = function(map, roadLayer) {
       redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
       deselectAsset(selectedAsset);
+
       var uiAsset = createAndGroupUIAsset(asset);
       addAssetToLayersAndSetVisibility(uiAsset);
+
       selectedAsset = uiAsset;
       selectedAsset.massTransitStop.select();
       registerMouseDownHandler(selectedAsset);
