@@ -31,15 +31,6 @@ require.config({
 });
 require(['chai',
          'chai-jquery',
-         'AssetsTestData',
-         'RoadLinkTestData',
-         'UserRolesTestData',
-         'EnumeratedPropertyValuesTestData',
-         'ApplicationSetupTestData',
-         'ConfigurationTestData',
-         'AssetPropertyNamesTestData',
-         'SpeedLimitsTestData',
-         'AssetTypePropertiesTestData',
          'TestHelpers',
          'GroupingByValidityPeriodSpec',
          'AssetCreationSpec',
@@ -47,18 +38,7 @@ require(['chai',
          'SpeedLimitVisualizationSpec',
          'RegroupingAssetsSpec',
          'GroupingInCreationSpec'],
-        function(chai,
-                 chaiJquery,
-                 AssetsTestData,
-                 RoadLinkTestData,
-                 UserRolesTestData,
-                 EnumeratedPropertyValuesTestData,
-                 ApplicationSetupTestData,
-                 ConfigurationTestData,
-                 AssetPropertyNamesTestData,
-                 SpeedLimitsTestData,
-                 AssetTypePropertiesTestData,
-                 testHelpers) {
+        function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
 
   eventbus.once('map:initialized', function() {

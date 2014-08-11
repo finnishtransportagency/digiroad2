@@ -1,4 +1,22 @@
-define(function() {
+define(['AssetsTestData',
+        'RoadLinkTestData',
+        'UserRolesTestData',
+        'EnumeratedPropertyValuesTestData',
+        'ApplicationSetupTestData',
+        'ConfigurationTestData',
+        'AssetPropertyNamesTestData',
+        'SpeedLimitsTestData',
+        'AssetTypePropertiesTestData'],
+       function(AssetsTestData,
+                RoadLinkTestData,
+                UserRolesTestData,
+                EnumeratedPropertyValuesTestData,
+                ApplicationSetupTestData,
+                ConfigurationTestData,
+                AssetPropertyNamesTestData,
+                SpeedLimitsTestData,
+                AssetTypePropertiesTestData) {
+
   var unbindEvents = function() {
     eventbus.off();
     $(window).off();
