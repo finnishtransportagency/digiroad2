@@ -11,7 +11,8 @@ require.config({
     ApplicationSetupTestData:         '../test_data/ApplicationSetupTestData',
     ConfigurationTestData:            '../test_data/ConfigurationTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
-    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData'
+    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
+    AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
@@ -23,7 +24,8 @@ require.config({
     'ApplicationSetupTestData': { exports: 'ApplicationSetupTestData' },
     'ConfigurationTestData': { exports: 'ConfigurationTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
-    'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' }
+    'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
+    'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
   },
   waitSeconds: 10
 });
@@ -37,11 +39,14 @@ require(['chai',
          'ConfigurationTestData',
          'AssetPropertyNamesTestData',
          'SpeedLimitsTestData',
+         'AssetTypePropertiesTestData',
+         'TestHelpers',
          'GroupingByValidityPeriodSpec',
          'AssetCreationSpec',
          'AssetMoveSpec',
          'SpeedLimitVisualizationSpec',
-         'RegroupingAssetsSpec'],
+         'RegroupingAssetsSpec',
+         'GroupingInCreationSpec'],
         function(chai,
                  chaiJquery,
                  AssetsTestData,
@@ -51,7 +56,9 @@ require(['chai',
                  ApplicationSetupTestData,
                  ConfigurationTestData,
                  AssetPropertyNamesTestData,
-                 SpeedLimitsTestData) {
+                 SpeedLimitsTestData,
+                 AssetTypePropertiesTestData,
+                 testHelpers) {
   chai.use(chaiJquery);
 
   eventbus.once('map:initialized', function() {
@@ -60,14 +67,6 @@ require(['chai',
   });
 
   jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
-  Application.start(
-    Backend.withRoadLinkData(RoadLinkTestData.generate())
-      .withUserRolesData(UserRolesTestData.generate())
-      .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-      .withApplicationSetupData(ApplicationSetupTestData.generate())
-      .withConfigurationData(ConfigurationTestData.generate())
-      .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-      .withAssetsData(AssetsTestData.generate())
-      .withSpeedLimitsData(SpeedLimitsTestData.generate()));
+  Application.start(testHelpers.defaultBackend());
 });
 
