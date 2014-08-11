@@ -190,6 +190,13 @@
       return this;
     };
 
+    backend.withAssetTypePropertiesData = function(assetTypePropertiesData) {
+      this.getAssetTypeProperties = function(assetTypeId, callback) {
+        callback(assetTypePropertiesData);
+      };
+      return this;
+    };
+
     return backend;
   }
 

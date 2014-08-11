@@ -11,7 +11,8 @@ require.config({
     ApplicationSetupTestData:         '../test_data/ApplicationSetupTestData',
     ConfigurationTestData:            '../test_data/ConfigurationTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
-    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData'
+    SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
+    AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
@@ -23,7 +24,8 @@ require.config({
     'ApplicationSetupTestData': { exports: 'ApplicationSetupTestData' },
     'ConfigurationTestData': { exports: 'ConfigurationTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
-    'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' }
+    'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
+    'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
   },
   waitSeconds: 10
 });
@@ -37,6 +39,7 @@ require(['chai',
          'ConfigurationTestData',
          'AssetPropertyNamesTestData',
          'SpeedLimitsTestData',
+         'AssetTypePropertiesTestData',
          'TestHelpers',
          'GroupingByValidityPeriodSpec',
          'AssetCreationSpec',
@@ -53,6 +56,7 @@ require(['chai',
                  ConfigurationTestData,
                  AssetPropertyNamesTestData,
                  SpeedLimitsTestData,
+                 AssetTypePropertiesTestData,
                  testHelpers) {
   chai.use(chaiJquery);
 
