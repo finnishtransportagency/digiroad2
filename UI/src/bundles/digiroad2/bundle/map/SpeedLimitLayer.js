@@ -3,7 +3,7 @@ window.SpeedLimitLayer = function(backend) {
   var eventListener = _.extend({started: false}, eventbus);
 
   var dottedOverlayStyle = {
-    strokeWidth: 5,
+    strokeWidth: 4,
     strokeColor: '#ffffff',
     strokeDashstyle: '1 12',
     strokeLinecap: 'square'
@@ -32,12 +32,13 @@ window.SpeedLimitLayer = function(backend) {
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
-      start();
+      start(zoom);
       backend.getSpeedLimits(boundingBox);
     }
   };
 
-  var start = function() {
+  var start = function(zoom) {
+    adjustLineWidths(zoom);
     if (!eventListener.started) {
       eventListener.started = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
@@ -51,13 +52,22 @@ window.SpeedLimitLayer = function(backend) {
 
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
-      start();
+      start(state.zoom);
       backend.getSpeedLimits(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
       stop();
     }
   }, this);
+
+  var adjustLineWidths = function(zoomLevel) {
+    var widthBase = 2 + (zoomLevel - zoomlevels.minZoomForRoadLinks);
+    var strokeWidth = widthBase * widthBase;
+    styleMap.styles.default.defaultStyle.strokeWidth = strokeWidth;
+    dottedOverlayStyle.strokeWidth = strokeWidth - 2;
+    dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
+    vectorLayer.redraw();
+  };
 
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimits, function(speedLimit) { return speedLimit.limit >= 70; });
