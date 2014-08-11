@@ -190,6 +190,13 @@
       return this;
     };
 
+    backend.withAssetCreationTransformation = function(transformation) {
+       this.createAsset = function(data) {
+        eventbus.trigger('asset:created', transformation(data));
+      };
+      return this;
+    };
+
     backend.withAssetTypePropertiesData = function(assetTypePropertiesData) {
       this.getAssetTypeProperties = function(assetTypeId, callback) {
         callback(assetTypePropertiesData);
