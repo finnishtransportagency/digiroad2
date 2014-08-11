@@ -23,7 +23,7 @@ window.SpeedLimitLayer = function(backend) {
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeWidth: 6,
       strokeOpacity: 0.7,
-      pointRadius: 10
+      pointRadius: 20
     }))
   });
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
