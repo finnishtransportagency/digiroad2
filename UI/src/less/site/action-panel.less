@@ -80,6 +80,58 @@
   }
 }
 
+.dotted-speed-limit {
+  background-image: linear-gradient(to right, @gray-lighter 50%, transparent 0%);
+  background-position: -5px top;
+  background-size: 14px 14px;
+  background-repeat: repeat-x;
+}
+
+.speed-limit-legend-entry(@color, @endpoint-color) {
+  border-color: @color;
+  background-color: rgba(red(@color), green(@color), blue(@color), .7);
+  &:before, &:after {
+    content: "";
+    background: @endpoint-color;
+    width: 8px;
+    height: 8px;
+    border-radius: 8px;
+    position: absolute;
+    top: -1px;
+  };
+  &:before { left: -1px; }
+  &:after { right: -1px; }
+}
+
+.speed-limit-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      display: inline-block;
+      width: @labelWidth;
+      line-height: 16px;
+    }
+    .linear {
+      position: relative;
+      display: inline-block;
+      width: calc(~"100% - @{labelWidth}");
+      margin-bottom: 0;
+    }
+    .speed-limit-120, .speed-limit-100, .speed-limit-80, .speed-limit-70 {
+      &:extend(.dotted-speed-limit);
+    }
+    .speed-limit-120 { .speed-limit-legend-entry(@speed-limit-4, @speed-limit-node-4); }
+    .speed-limit-100 { .speed-limit-legend-entry(@speed-limit-3, @speed-limit-node-3); }
+    .speed-limit-80  { .speed-limit-legend-entry(@speed-limit-2, @speed-limit-node-2); }
+    .speed-limit-70  { .speed-limit-legend-entry(@speed-limit-1, @speed-limit-node-1); }
+    .speed-limit-60  { .speed-limit-legend-entry(@speed-limit-5, @speed-limit-node-5); }
+    .speed-limit-50  { .speed-limit-legend-entry(@speed-limit-4, @speed-limit-node-4); }
+    .speed-limit-40  { .speed-limit-legend-entry(@speed-limit-3, @speed-limit-node-3); }
+    .speed-limit-30  { .speed-limit-legend-entry(@speed-limit-2, @speed-limit-node-2); }
+    .speed-limit-20  { .speed-limit-legend-entry(@speed-limit-1, @speed-limit-node-1); }
+  }
+}
+
 .panel-actions {
   .clearfix();
 
