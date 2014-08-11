@@ -19,7 +19,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
           }
         });
         layer.update(9, null);
-        eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 9});
+        eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
       });
 
       it('should contain each speed limit only once', function() {
@@ -36,7 +36,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
 
       describe('and zooming out', function() {
         before(function() {
-          eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 8});
+          eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 9});
         });
 
         it('should not contain speed limits', function() {
@@ -45,7 +45,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
 
         describe('and zooming in', function() {
           before(function() {
-            eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 9});
+            eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
           });
 
           it('should contain speed limits', function() {
