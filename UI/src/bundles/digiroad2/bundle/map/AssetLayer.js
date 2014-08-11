@@ -245,9 +245,14 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
-    addNewAsset(asset);
-    selectedAsset = regroupAssetIfNearOtherAssets(asset);
+    deselectAsset(selectedAsset);
+
+    var uiAsset = createAndGroupUIAsset(asset);
+    addAssetToLayersAndSetVisibility(uiAsset);
+
+    selectedAsset = uiAsset;
     selectedAsset.massTransitStop.select();
+    registerMouseDownHandler(selectedAsset);
   };
 
   function redrawGroup(group) {
