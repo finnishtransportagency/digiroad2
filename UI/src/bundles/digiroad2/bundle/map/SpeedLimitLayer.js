@@ -51,7 +51,7 @@ window.SpeedLimitLayer = function(backend) {
   };
 
   eventbus.on('map:moved', function(state) {
-    if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
+    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       start(state.zoom);
       backend.getSpeedLimits(state.bbox);
     } else {
