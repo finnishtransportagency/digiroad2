@@ -99,9 +99,9 @@
     }
   };
 
-  application.start = function(backend) {
+  application.start = function(customBackend) {
     bindEvents();
-    if (backend) window.Backend = backend;
+    if (customBackend) window.Backend = customBackend;
     window.assetsModel = new AssetsModel(Backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
     window.applicationModel = new ApplicationModel();
