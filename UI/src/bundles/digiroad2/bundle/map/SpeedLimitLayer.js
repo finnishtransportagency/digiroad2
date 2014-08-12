@@ -1,5 +1,4 @@
 window.SpeedLimitLayer = function(backend) {
-  backend = backend || Backend;
   var eventListener = _.extend({started: false}, eventbus);
 
   var dottedOverlayStyle = {
