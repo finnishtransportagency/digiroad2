@@ -18,7 +18,7 @@ window.AssetLayer = function(map, roadLayer) {
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      AssetsModel.fetchAssets(map.getExtent());
+      assetsModel.fetchAssets(map.getExtent());
     }
   };
 
@@ -139,7 +139,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var setAssetVisibilityByValidityPeriod = function(asset) {
-    if (AssetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
+    if (assetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod)) {
       showAsset(asset);
     } else {
       hideAsset(asset);
@@ -191,14 +191,14 @@ window.AssetLayer = function(map, roadLayer) {
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
         var uiAsset = convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
-        if (!AssetsModel.getAsset(uiAsset.id)) {
+        if (!assetsModel.getAsset(uiAsset.id)) {
           var assetInModel = createAsset(uiAsset);
-          AssetsModel.insertAsset(assetInModel, uiAsset.id);
+          assetsModel.insertAsset(assetInModel, uiAsset.id);
           addAssetToLayers(assetInModel);
         }
-        setAssetVisibilityByValidityPeriod(AssetsModel.getAsset(uiAsset.id));
+        setAssetVisibilityByValidityPeriod(assetsModel.getAsset(uiAsset.id));
         if (isSelected(uiAsset)) {
-          selectedAsset = AssetsModel.getAsset(uiAsset.id);
+          selectedAsset = assetsModel.getAsset(uiAsset.id);
           selectedAsset.massTransitStop.select();
           registerMouseDownHandler(selectedAsset);
         }
@@ -226,8 +226,8 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleValidityPeriodChanged = function() {
-    _.each(AssetsModel.getAssets(), function(asset) {
-      if (AssetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+    _.each(assetsModel.getAssets(), function(asset) {
+      if (assetsModel.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         showAsset(asset);
       } else {
         hideAsset(asset);
@@ -237,7 +237,7 @@ window.AssetLayer = function(map, roadLayer) {
       return;
     }
 
-    if (selectedAsset && !AssetsModel.selectedValidityPeriodsContain(selectedAsset.data.validityPeriod)) {
+    if (selectedAsset && !assetsModel.selectedValidityPeriodsContain(selectedAsset.data.validityPeriod)) {
       closeAsset();
     }
   };
@@ -245,7 +245,7 @@ window.AssetLayer = function(map, roadLayer) {
   function redrawGroup(group) {
     var groupAssets = group.assetGroup;
     _.each(groupAssets, function(asset) {
-      var uiAsset = AssetsModel.getAsset(asset.id);
+      var uiAsset = assetsModel.getAsset(asset.id);
       uiAsset.massTransitStop.rePlaceInGroup();
     });
   }
@@ -259,16 +259,16 @@ window.AssetLayer = function(map, roadLayer) {
 
   function createAndGroupUIAsset(backendAsset) {
     var uiAsset;
-    var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(AssetsModel.getAssets()), backendAsset);
+    var assetToGroupWith = assetGrouping.findNearestAssetWithinGroupingDistance(_.values(assetsModel.getAssets()), backendAsset);
     if (assetToGroupWith) {
       uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, assetToGroupWith.data.group, assetToGroupWith.data.group.assetGroup));
-      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      assetsModel.insertAsset(uiAsset, uiAsset.data.id);
       addAssetToGroup(uiAsset, assetToGroupWith.data.group);
       redrawGroup(assetToGroupWith.data.group);
     } else {
       var group = createDummyGroup(backendAsset.lon, backendAsset.lat, backendAsset);
       uiAsset = createAsset(convertBackendAssetToUIAsset(backendAsset, group, group.assetGroup));
-      AssetsModel.insertAsset(uiAsset, uiAsset.data.id);
+      assetsModel.insertAsset(uiAsset, uiAsset.data.id);
     }
     return uiAsset;
   }
@@ -286,7 +286,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var handleAssetSaved = function(asset, positionUpdated) {
-    _.merge(AssetsModel.getAsset(asset.id).data, asset);
+    _.merge(assetsModel.getAsset(asset.id).data, asset);
     if (positionUpdated) {
       redrawGroup(selectedAsset.data.group);
       destroyAsset(asset);
@@ -310,7 +310,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var regroupAssetIfNearOtherAssets = function(asset) {
-    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(AssetsModel.getAssets()), map.getZoom());
+    var regroupedAssets = assetGrouping.groupByDistance(parseAssetDataFromAssetsWithMetadata(assetsModel.getAssets()), map.getZoom());
     var groupContainingSavedAsset = _.find(regroupedAssets, function(assetGroup) {
       var assetGroupIds = _.pluck(assetGroup, 'id');
       return _.contains(assetGroupIds, asset.id);
@@ -318,10 +318,10 @@ window.AssetLayer = function(map, roadLayer) {
     var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
     if (groupContainingSavedAsset.length > 1) {
-      AssetsModel.destroyGroup(assetIds);
+      assetsModel.destroyGroup(assetIds);
     }
 
-    return AssetsModel.getAsset(asset.id);
+    return assetsModel.getAsset(asset.id);
   };
 
   var reRenderGroup = function(destroyedAssets) {
@@ -389,8 +389,8 @@ window.AssetLayer = function(map, roadLayer) {
   var addNewAsset = function(asset) {
     asset.group = createDummyGroup(asset.lon, asset.lat, asset);
     var uiAsset = createAsset(asset);
-    AssetsModel.insertAsset(uiAsset, asset.id);
-    addAssetToLayersAndSetVisibility(AssetsModel.getAsset(asset.id));
+    assetsModel.insertAsset(uiAsset, asset.id);
+    addAssetToLayersAndSetVisibility(assetsModel.getAsset(asset.id));
     return uiAsset;
   };
 
@@ -408,10 +408,10 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var destroyAsset = function(backendAsset) {
-    var uiAsset = AssetsModel.getAsset(backendAsset.id);
+    var uiAsset = assetsModel.getAsset(backendAsset.id);
     if(uiAsset) {
       removeAssetFromMap(uiAsset);
-      AssetsModel.destroyAsset(backendAsset.id);
+      assetsModel.destroyAsset(backendAsset.id);
     }
   };
 
@@ -425,7 +425,7 @@ window.AssetLayer = function(map, roadLayer) {
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
-    selectedAsset = AssetsModel.getAsset(backendAsset.id);
+    selectedAsset = assetsModel.getAsset(backendAsset.id);
     registerMouseDownHandler(selectedAsset);
     selectedAsset.massTransitStop.select();
   };
@@ -477,7 +477,7 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
   var addNewGroupsToModel = function(uiAssetGroups) {
-    _.each(uiAssetGroups, AssetsModel.insertAssetsFromGroup);
+    _.each(uiAssetGroups, assetsModel.insertAssetsFromGroup);
   };
 
   var renderNewGroups = function(uiAssetGroups) {

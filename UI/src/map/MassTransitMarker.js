@@ -60,7 +60,7 @@
 
     var filterByValidityPeriod = function(group) {
       return _.filter(group, function(asset) {
-        return AssetsModel.selectedValidityPeriodsContain(asset.validityPeriod);
+        return assetsModel.selectedValidityPeriodsContain(asset.validityPeriod);
       });
     };
 

@@ -218,7 +218,7 @@
         }
         var el = $(this);
         var validityPeriod = el.prop('name');
-        AssetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+        assetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
@@ -254,11 +254,11 @@
 
         var checkboxes = $.makeArray(elements.expanded.find('input[type=checkbox]'))
                            .concat($.makeArray(elements.editMode.find('input[type=checkbox]')));
-        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, AssetsModel.getValidityPeriods()));
+        _.forEach(checkboxes, _.partial(toggleValidityPeriodCheckbox, assetsModel.getValidityPeriods()));
       });
 
       eventbus.on('asset:saved asset:created', function(asset) {
-        AssetsModel.selectValidityPeriod(asset.validityPeriod, true);
+        assetsModel.selectValidityPeriod(asset.validityPeriod, true);
       }, this);
 
       eventbus.on('layer:selected', function(selectedLayer) {
