@@ -102,7 +102,7 @@
   application.start = function(backend) {
     bindEvents();
     if (backend) window.Backend = backend;
-    window.assetsModel = new AssetsModel();
+    window.assetsModel = new AssetsModel(Backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
     window.applicationModel = new ApplicationModel();
     ActionPanel.initialize(Backend);
