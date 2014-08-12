@@ -167,7 +167,7 @@ _Joukkoliikenteen pys&auml;kkien haku._
 3.4 Nopeusrajoitusten valinta
 -----------------------------
 
-Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Nopeusrajoitukset on visualisoitu purpuran punaisella v&auml;rill&auml; tielinkeille.
+Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
 
 ![Nopeusrajoitusten valinta](k18.jpg)
 
@@ -276,7 +276,7 @@ Ominaisuustietokent&auml;t ovat tekstikentti&auml;, joihin ominaisuustieto kirjo
 
 __Nimi suomeksi:__ Pys&auml;kin nimi suomen kielell&auml;. Nimen tulee olla valtakunnallisesti yksil&ouml;iv&auml;. Esim. Ei "Linja-autoasema" vaan "Porvoon linja-autoasema".
 __Nimi ruotsiksi:__ Pys&auml;kin nimi ruotsin kielell&auml;. 
-__Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto.
+__Tietojen yll&auml;pit&auml;j&auml;:__ Yll&auml;pit&auml;v&auml; viranomainen: kunta, Helsingin seudun liikenne tai ELY-keskus.
 __Yll&auml;pit&auml;j&auml;n tunnus:__ Tietojen yll&auml;pit&auml;j&auml;n sis&auml;inen tunnus pys&auml;kille.
 __LIVI-tunnus:__ Pys&auml;kin Livi-tunniste, vastaava tunnus kuin Tierekisteriss&auml;. K&auml;yt&ouml;ss&auml; vain maanteiden pys&auml;keill&auml;.
 __Matkustajatunnus:__ Pys&auml;kin tunnus, joka n&auml;kyy matkustajalle.
