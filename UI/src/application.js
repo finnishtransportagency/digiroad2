@@ -101,7 +101,7 @@
 
   application.start = function(customBackend) {
     bindEvents();
-    window.backend = customBackend || Backend;
+    window.backend = customBackend || new Backend();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel();

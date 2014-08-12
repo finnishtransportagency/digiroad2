@@ -54,7 +54,7 @@ define(['AssetsTestData',
   };
 
   var fakeBackend = function(assetsData, assetData, zoomLevel) {
-    return Backend.withRoadLinkData(RoadLinkTestData.generate())
+    return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withApplicationSetupData(ApplicationSetupTestData.generate())
