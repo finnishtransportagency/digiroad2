@@ -33,6 +33,10 @@ object CsvImporter {
 
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
 
+  private val stopAdministratorProperty = "tietojen_yllapitaja";
+
+  private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
+
   private val textFieldMappings = Map(
     "Pysäkin nimi" -> "nimi_suomeksi" ,
     "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
@@ -55,7 +59,8 @@ object CsvImporter {
     "Pyöräteline" -> "pyorateline",
     "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
     "Valaistus" -> "valaistus",
-    "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla"
+    "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
+    "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
   val mappings = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
@@ -85,7 +90,10 @@ object CsvImporter {
   }
 
   private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedAssetRow = {
-    if (singleChoiceValueMappings(assetSingleChoice)) {
+    // less than ideal design but the simplest solution. DO NOT REPEAT IF MORE FIELDS REQUIRE CUSTOM VALUE VALIDATION
+    val isValidStopAdminstratorValue = singleChoiceFieldMappings(parameterName) == stopAdministratorProperty && stopAdministratorValueMappings(assetSingleChoice)
+
+    if (singleChoiceValueMappings(assetSingleChoice) || isValidStopAdminstratorValue) {
       (Nil, List(SimpleProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
     } else {
       (List(parameterName), Nil)
