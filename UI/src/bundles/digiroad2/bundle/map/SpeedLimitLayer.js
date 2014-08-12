@@ -92,30 +92,45 @@ window.SpeedLimitLayer = function(backend) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
       var road = new OpenLayers.Geometry.LineString(points);
-      var nodePoint = _.first(speedLimit.points);
-      var radius = 25;
-      var circle = new OpenLayers.Geometry.LinearRing(approximateCircle(radius, nodePoint));
-      var signPosition = nodePoint;
-      if (road.intersects(circle)) {
-        var split = road.splitWith(circle, {tolerance: 10});
-        if (split) {
-          signPosition = split[1].components[0];
-        }
-      }
+      var signPosition = calculateMidpoint(road.getVertices());
       return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
     });
   };
 
-  var approximateCircle = function(radius, point) {
-    var points = [];
-    var steps = 12;
-    var pi2 = Math.PI * 2;
-    for (var i = 0; i < steps; i++) {
-      var x = point.x + radius * Math.cos(i / steps * pi2);
-      var y = point.y + radius * Math.sin(i / steps * pi2);
-      points.push(new OpenLayers.Geometry.Point(x, y));
-    }
-    return points;
+  var calculateMidpoint = function(road) {
+    var roadLength = lineStringLength(road);
+    var firstVertex = _.first(road);
+    var optionalMidpoint = _.reduce(_.tail(road), function(acc, vertex) {
+      if (acc.midpoint) return acc;
+      var accumulatedDistance = acc.distanceTraversed + length(vertex, acc.previousVertex);
+      if (accumulatedDistance < roadLength / 2) {
+        return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
+      } else {
+        return {
+          midpoint: {
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed))
+          }
+        };
+      }
+    }, {previousVertex: firstVertex, distanceTraversed: 0});
+    if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
+    else return firstVertex;
+  };
+
+  var lineStringLength = function(lineString) {
+    var firstVertex = _.first(lineString);
+    var lengthObject = _.reduce(_.tail(lineString), function(acc, vertex) {
+      return {
+        previousVertex: vertex,
+        totalLength: acc.totalLength + length(vertex, acc.previousVertex)
+      };
+    }, { previousVertex: firstVertex, totalLength: 0 });
+    return lengthObject.totalLength;
+  };
+
+  var length = function(end, start) {
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
 
   var lineFeatures = function(speedLimits, customStyle) {
