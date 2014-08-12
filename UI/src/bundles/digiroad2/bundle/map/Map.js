@@ -159,7 +159,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     mapMovedHandler: function(mapState) {
       if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
         this.changeRoadsWidthByZoomLevel();
-        Backend.getRoadLinks(mapState.bbox);
+        backend.getRoadLinks(mapState.bbox);
       } else {
         this.roadLayer.removeAllFeatures();
       }
@@ -221,7 +221,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       var layers = {
         asset: new AssetLayer(this._map, this.roadLayer),
-        speedLimit: new SpeedLimitLayer(Backend)
+        speedLimit: new SpeedLimitLayer(backend)
       };
       this._map.addLayer(this._centerMarkerLayer);
 

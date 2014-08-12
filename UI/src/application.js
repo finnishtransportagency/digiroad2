@@ -101,15 +101,15 @@
 
   application.start = function(customBackend) {
     bindEvents();
-    if (customBackend) window.Backend = customBackend;
-    window.assetsModel = new AssetsModel(Backend);
-    window.selectedAssetModel = SelectedAssetModel.initialize(Backend);
+    window.backend = customBackend || Backend;
+    window.assetsModel = new AssetsModel(backend);
+    window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel();
-    ActionPanel.initialize(Backend);
-    AssetForm.initialize(Backend);
-    Backend.getApplicationSetup();
-    Backend.getConfiguration(assetIdFromURL());
-    Backend.getAssetPropertyNames();
+    ActionPanel.initialize(backend);
+    AssetForm.initialize(backend);
+    backend.getApplicationSetup();
+    backend.getConfiguration(assetIdFromURL());
+    backend.getAssetPropertyNames();
   };
 
   application.restart = function(backend) {
