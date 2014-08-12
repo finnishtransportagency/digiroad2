@@ -88,9 +88,34 @@ window.SpeedLimitLayer = function(backend) {
 
   var limitSigns = function(speedLimits) {
     return _.map(speedLimits, function(speedLimit) {
-      var point = _.first(speedLimit.points);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(point.x, point.y), speedLimit);
+      var points = _.map(speedLimit.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
+      });
+      var road = new OpenLayers.Geometry.LineString(points);
+      var nodePoint = _.first(speedLimit.points);
+      var radius = 25;
+      var circle = new OpenLayers.Geometry.LinearRing(approximateCircle(radius, nodePoint));
+      var signPosition = nodePoint;
+      if (road.intersects(circle)) {
+        var split = road.splitWith(circle, {tolerance: 10});
+        if (split) {
+          signPosition = split[1].components[0];
+        }
+      }
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
     });
+  };
+
+  var approximateCircle = function(radius, point) {
+    var points = [];
+    var steps = 12;
+    var pi2 = Math.PI * 2;
+    for (var i = 0; i < steps; i++) {
+      var x = point.x + radius * Math.cos(i / steps * pi2);
+      var y = point.y + radius * Math.sin(i / steps * pi2);
+      points.push(new OpenLayers.Geometry.Point(x, y));
+    }
+    return points;
   };
 
   var lineFeatures = function(speedLimits, customStyle) {
