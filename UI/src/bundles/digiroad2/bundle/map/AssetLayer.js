@@ -361,11 +361,14 @@ window.AssetLayer = function(map, roadLayer) {
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
+
+    deselectAsset(selectedAsset);
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
       massTransitStop: massTransitStop};
     selectedAsset.data.imageIds = [];
     eventbus.trigger('asset:placed', selectedAsset.data);
+
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
 
