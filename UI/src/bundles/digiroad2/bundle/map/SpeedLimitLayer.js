@@ -37,8 +37,23 @@ window.SpeedLimitLayer = function(backend) {
     }
   };
 
+  var adjustSigns = function(zoom) {
+    var defaultStyle = styleMap.styles.default.defaultStyle;
+    if (zoom === 10) {
+      defaultStyle.pointRadius = 13;
+    } else if (zoom === 11) {
+      defaultStyle.pointRadius = 16;
+    } else if (zoom === 12) {
+      defaultStyle.pointRadius = 20;
+    } else {
+      defaultStyle.pointRadius = 0;
+    }
+  };
+
   var start = function(zoom) {
+    adjustSigns(zoom);
     adjustLineWidths(zoom);
+    vectorLayer.redraw();
     if (!eventListener.started) {
       eventListener.started = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
@@ -66,7 +81,6 @@ window.SpeedLimitLayer = function(backend) {
     styleMap.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
     dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
-    vectorLayer.redraw();
   };
 
   var drawSpeedLimits = function(speedLimits) {
