@@ -1,6 +1,5 @@
 window.AssetLayer = function(map, roadLayer) {
   var selectedAsset;
-  var backend = Backend;
   var readOnly = true;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('asset');
@@ -19,7 +18,7 @@ window.AssetLayer = function(map, roadLayer) {
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      backend.getAssets(10, map.getExtent());
+      AssetsModel.fetchAssets(map.getExtent());
     }
   };
 

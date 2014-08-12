@@ -51,6 +51,9 @@
     getAssets: function() {
       return assets;
     },
+    fetchAssets: function(boundingBox) {
+      Backend.getAssets(10, boundingBox);
+    },
     insertAssetsFromGroup: function(assetGroup) {
       _.each(assetGroup, function(asset) {
         assets[asset.data.id.toString()] = asset;
