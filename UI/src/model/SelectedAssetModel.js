@@ -183,7 +183,7 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.externalId !== assetExternalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        Backend.getAssetByExternalId(assetExternalId, function(asset) {
+        backend.getAssetByExternalId(assetExternalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
