@@ -37,17 +37,13 @@ window.SpeedLimitLayer = function(backend) {
     }
   };
 
+  var zoomToSize = {10: 13,
+                    11: 16,
+                    12: 20};
+
   var adjustSigns = function(zoom) {
     var defaultStyle = styleMap.styles.default.defaultStyle;
-    if (zoom === 10) {
-      defaultStyle.pointRadius = 13;
-    } else if (zoom === 11) {
-      defaultStyle.pointRadius = 16;
-    } else if (zoom === 12) {
-      defaultStyle.pointRadius = 20;
-    } else {
-      defaultStyle.pointRadius = 0;
-    }
+    defaultStyle.pointRadius = zoomToSize[zoom] || 0;
   };
 
   var start = function(zoom) {
