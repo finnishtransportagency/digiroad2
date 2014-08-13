@@ -26,7 +26,14 @@ window.SpeedLimitLayer = function(backend) {
     }))
   });
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap,
+    eventListeners: {
+      featureclick: function(event) {
+        console.log('selected segment id:', event.feature.attributes.id);
+        return false;
+      }
+    }
+  });
   vectorLayer.setOpacity(1);
 
   var update = function(zoom, boundingBox) {
