@@ -47,14 +47,16 @@ Huomioita csv-tiedostosta:
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
-Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Pyöräteline;Sähköinen aikataulunäyttö;Valaistus;Saattomahdollisuus henkilöautolla
-165280;pysäkin nimi;stops namn;etelään;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1
+Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Tietojen ylläpitäjä;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Pyöräteline;Sähköinen aikataulunäyttö;Valaistus;Saattomahdollisuus henkilöautolla;Lisätiedot
+165280;pysäkin nimi;stops namn;1;etelään;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1; Lisätietokenttään saa syöttää vapaata tekstiä, joka saa sisältää merkkejä(;:!(&), numeroita(1234) ja kirjaimia(AMSKD).
 ```
 - Tiedot on eroteltu puolipisteell&auml; (;).
 - Nimi suomeksi ja ruotsiksi, liikenn&ouml;intisuunta, yll&auml;pit&auml;j&auml;n tunnus, LiVi-tunnus ja matkustajatunnus luetaan merkkijonona.
-- Pys&auml;kin tyypit ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
+- Tietojen yll&auml;pit&auml;j&auml; -kent&auml;n arvot ovat: (1) Kunta, (2) ELY-keskus, (3) Helsingin seudun liikenne, (99) Ei tiedossa.
+- Pys&auml;kin tyypin arvot ovat: (1) Raitiovaunu, (2) Linja-autojen paikallisliikenne, (3) Linja-autojen kaukoliikenne, (4) Linja-autojen pikavuoro ja (5) Virtuaalipys&auml;kki.
 - Pys&auml;kin tyypit on eroteltu pilkulla.
 - Varusteet (aikataulu, katos, mainoskatos, penkki, py&ouml;r&auml;teline, s&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;, valaistus ja saattomahdollisuus henkil&ouml;autolla) ilmoitetaan koodiarvoina: (1) Ei, (2) Kyll&auml; tai (99) Ei tietoa.
+- Lis&auml;tiedot-kentt&auml;&auml;n voi tallentaa vapaata teksti&auml;, joka saa sis&auml;lt&auml;&auml; maksimissaan 4000 merkki&auml;. Huomioitavaa on, ett&auml; &auml;&auml;kk&ouml;set viev&auml;t kaksi merkki&auml;.
 - Jos tietokent&auml;n j&auml;tt&auml;&auml; tyhj&auml;ksi, j&auml;&auml; pys&auml;kin vanha tieto voimaan.
 - Toistaiseksi CSV-tuontia ei kannata tehd&auml; IE-selaimella, koska selain ei tulosta virhelokia.
 
