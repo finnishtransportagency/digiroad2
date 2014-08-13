@@ -110,7 +110,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     _drawCenterMarker: function(position) {
       var size = new OpenLayers.Size(16, 16);
       var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h / 2);
-      var icon = new OpenLayers.Icon('./images/center-marker.png', size, offset);
+      var icon = new OpenLayers.Icon('./images/center-marker.svg', size, offset);
 
       this._centerMarkerLayer.clearMarkers();
       var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lon, position.lat), icon);
