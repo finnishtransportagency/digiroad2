@@ -281,3 +281,56 @@
 		}
 	}
 }
+
+//** Crosshair
+
+.crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    border-width: 0;
+    border-style: solid;
+    border-color: @gray-darker-2;
+    background-color: @gray-lighter-2;
+    background-color: rgba(red(@warning), green(@warning), blue(@warning), .85);
+    pointer-events: none;
+}
+
+.crosshair-center {
+    width: 2px;
+    height: 2px;
+    margin: -1px 0 0 -1px;
+}
+
+.crosshair-top {
+    width: 2px;
+    height: 14px;
+    margin: -16px 0 0 -2px;
+    border-width: 1px 1px 0 1px;
+    border-radius: 2px 2px 0 0;
+}
+
+.crosshair-bottom {
+    width: 2px;
+    height: 14px;
+    margin: 1px 0 0 -2px;
+    border-width: 0 1px 1px 1px;
+    border-radius: 0 0 2px 2px;
+}
+
+.crosshair-left {
+    width: 14px;
+    height: 2px;
+    margin: -2px 0 0 -16px;
+    border-width: 1px 0 1px 1px;
+    border-radius: 2px 0 0 2px;
+}
+
+.crosshair-right {
+    width: 14px;
+    height: 2px;
+    margin: -2px 0 0 1px;
+    border-width: 1px 1px 1px 0;
+    border-radius: 0 2px 2px 0;
+}

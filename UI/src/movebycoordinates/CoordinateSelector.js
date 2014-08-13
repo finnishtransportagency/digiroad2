@@ -48,7 +48,7 @@ window.CoordinateSelector = function(parentElement, extent) {
         });
 
         $('input', crosshairToggle).change(function() {
-            $('.crossHair').toggle(this.checked);
+            $('.crosshair').toggle(this.checked);
         });
     };
 
