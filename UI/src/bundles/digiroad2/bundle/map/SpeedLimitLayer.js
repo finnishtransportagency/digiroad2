@@ -70,9 +70,13 @@ window.SpeedLimitLayer = function(backend) {
     }
   }, this);
 
+  var zoomToStrokeWidth = {9: 3,
+                           10: 5,
+                           11: 9,
+                           12: 16};
+
   var adjustLineWidths = function(zoomLevel) {
-    var widthBase = 2 + (zoomLevel - zoomlevels.minZoomForRoadLinks);
-    var strokeWidth = widthBase * widthBase;
+    var strokeWidth = zoomToStrokeWidth[zoomLevel];
     styleMap.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
     dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
