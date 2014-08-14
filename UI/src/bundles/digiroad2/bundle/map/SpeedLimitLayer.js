@@ -55,16 +55,16 @@ window.SpeedLimitLayer = function(backend) {
     100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
     120: { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/120.svg' }
   };
-  var styleMap = new OpenLayers.StyleMap({
+  var browseStyle = new OpenLayers.StyleMap({
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeWidth: 6,
       strokeOpacity: 0.7,
       pointRadius: 20
     }))
   });
+  browseStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
 
-  styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap,
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle,
     eventListeners: {
       featureclick: function(event) {
         selectedSpeedLimit.open(getKey(event.feature.attributes));
@@ -86,7 +86,7 @@ window.SpeedLimitLayer = function(backend) {
                     12: 20};
 
   var adjustSigns = function(zoom) {
-    var defaultStyle = styleMap.styles.default.defaultStyle;
+    var defaultStyle = browseStyle.styles.default.defaultStyle;
     defaultStyle.pointRadius = zoomToSize[zoom] || 0;
   };
 
@@ -122,7 +122,7 @@ window.SpeedLimitLayer = function(backend) {
 
   var adjustLineWidths = function(zoomLevel) {
     var strokeWidth = zoomToStrokeWidth[zoomLevel];
-    styleMap.styles.default.defaultStyle.strokeWidth = strokeWidth;
+    browseStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
     dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
   };
