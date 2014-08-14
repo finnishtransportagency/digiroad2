@@ -47,8 +47,6 @@
           }, {
             "id": "Oskari.mapframework.mapmodule.WmsLayerPlugin"
           }, {
-            "id": "Oskari.mapframework.mapmodule.MarkersPlugin"
-          }, {
             "id": "Oskari.mapframework.mapmodule.ControlsPlugin",
             "config" : {
               "keyboardControls" : false
