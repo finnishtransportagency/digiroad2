@@ -33,7 +33,7 @@ var SelectedSpeedLimit = function(collection) {
   };
 };
 
-window.SpeedLimitLayer = function(backend) {
+window.SpeedLimitLayer = function(map, backend) {
   var eventListener = _.extend({started: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
   var selectedSpeedLimit = new SelectedSpeedLimit(collection);
@@ -64,15 +64,14 @@ window.SpeedLimitLayer = function(backend) {
   });
   browseStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
 
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle,
-    eventListeners: {
-      featureclick: function(event) {
-        selectedSpeedLimit.open(getKey(event.feature.attributes));
-        return false;
-      }
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle });
+  vectorLayer.setOpacity(1);
+  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+    onSelect: function(feature) {
+      selectedSpeedLimit.open(getKey(feature.attributes));
     }
   });
-  vectorLayer.setOpacity(1);
+  map.addControl(selectControl);
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
@@ -98,9 +97,11 @@ window.SpeedLimitLayer = function(backend) {
       eventListener.started = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
     }
+    selectControl.activate();
   };
 
   var stop = function() {
+    selectControl.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.started = false;
   };

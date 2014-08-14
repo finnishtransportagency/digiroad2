@@ -11,6 +11,10 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
       var layer;
       before(function() {
         layer = new SpeedLimitLayer({
+          addControl: function(control) {
+            control.handlers.feature.activate = function() {};
+          }
+        }, {
           getSpeedLimits: function() {
             eventbus.trigger('speedLimits:fetched', [
               {id: 1, points: [ {x: 0, y: 0} ]},

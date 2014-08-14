@@ -221,7 +221,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
 
       var layers = {
         asset: new AssetLayer(this._map, this.roadLayer),
-        speedLimit: new SpeedLimitLayer(backend)
+        speedLimit: new SpeedLimitLayer(this._map, backend)
       };
       this._map.addLayer(this._centerMarkerLayer);
 
