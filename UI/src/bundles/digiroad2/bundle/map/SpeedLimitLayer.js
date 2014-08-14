@@ -1,5 +1,23 @@
+var SpeedLimitsCollection = function(backend) {
+  var speedLimits = {};
+
+  this.fetch = function(boundingBox) {
+    backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
+      _.each(fetchedSpeedLimits, function(speedLimit) {
+        if (speedLimits[speedLimit.id]) {
+          _.merge(speedLimits[speedLimit.id], speedLimit);
+        } else {
+          speedLimits[speedLimit.id] = speedLimit;
+        }
+      });
+      eventbus.trigger('speedLimits:fetched', speedLimits);
+    });
+  };
+};
+
 window.SpeedLimitLayer = function(backend) {
   var eventListener = _.extend({started: false}, eventbus);
+  var collection = new SpeedLimitsCollection(backend);
 
   var dottedOverlayStyle = {
     strokeWidth: 4,
@@ -25,6 +43,7 @@ window.SpeedLimitLayer = function(backend) {
       pointRadius: 20
     }))
   });
+
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap,
     eventListeners: {
@@ -39,7 +58,7 @@ window.SpeedLimitLayer = function(backend) {
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       start(zoom);
-      backend.getSpeedLimits(boundingBox);
+      collection.fetch(boundingBox);
     }
   };
 
@@ -70,7 +89,7 @@ window.SpeedLimitLayer = function(backend) {
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       start(state.zoom);
-      backend.getSpeedLimits(state.bbox);
+      collection.fetch(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
       stop();
