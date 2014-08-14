@@ -1,5 +1,42 @@
+var getKey = function(speedLimit) {
+  return speedLimit.id + '-' + speedLimit.roadLinkId;
+};
+
+var SpeedLimitsCollection = function(backend) {
+  var speedLimits = {};
+
+  this.fetch = function(boundingBox) {
+    backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
+      _.merge(speedLimits, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
+        acc[getKey(speedLimit)] = speedLimit;
+        return acc;
+      }, {}));
+      eventbus.trigger('speedLimits:fetched', speedLimits);
+    });
+  };
+
+  this.get = function(id) {
+    return speedLimits[id];
+  };
+};
+
+var SelectedSpeedLimit = function(collection) {
+  var current = null;
+
+  this.open = function(id) {
+    if (current) {
+      current.iSelected = false;
+    }
+    current = collection.get(id);
+    current.isSelected = true;
+    console.log('selected speed limit is:', current);
+  };
+};
+
 window.SpeedLimitLayer = function(backend) {
   var eventListener = _.extend({started: false}, eventbus);
+  var collection = new SpeedLimitsCollection(backend);
+  var selectedSpeedLimit = new SelectedSpeedLimit(collection);
 
   var dottedOverlayStyle = {
     strokeWidth: 4,
@@ -25,14 +62,22 @@ window.SpeedLimitLayer = function(backend) {
       pointRadius: 20
     }))
   });
+
   styleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap,
+    eventListeners: {
+      featureclick: function(event) {
+        selectedSpeedLimit.open(getKey(event.feature.attributes));
+        return false;
+      }
+    }
+  });
   vectorLayer.setOpacity(1);
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       start(zoom);
-      backend.getSpeedLimits(boundingBox);
+      collection.fetch(boundingBox);
     }
   };
 
@@ -63,7 +108,7 @@ window.SpeedLimitLayer = function(backend) {
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       start(state.zoom);
-      backend.getSpeedLimits(state.bbox);
+      collection.fetch(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
       stop();

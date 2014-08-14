@@ -25,9 +25,9 @@
         .fail(function() { console.log("error"); });
     }, 1000);
 
-    this.getSpeedLimits = _.throttle(function (boundingBox) {
+    this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
       $.getJSON('api/linearassets?bbox=' + boundingBox, function (speedLimits) {
-        eventbus.trigger('speedLimits:fetched', speedLimits);
+        callback(speedLimits);
       });
     }, 1000);
 
