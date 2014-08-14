@@ -22,11 +22,11 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimits(bounds: BoundingRectangle): Seq[(Long, Int, Int, Seq[(Double, Double)])] = {
+  def getSpeedLimits(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
     val boundingBox = new JGeometry(bounds.leftBottom.x, bounds.leftBottom.y, bounds.rightTop.x, bounds.rightTop.y, 3067)
     val geometry = storeGeometry(boundingBox, dynamicSession.conn)
     val speedLimits = sql"""
-      select a.id, pos.side_code, e.name_fi as speed_limit, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
+      select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -36,10 +36,10 @@ object OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and SDO_FILTER(rl.geom, $geometry) = 'TRUE'
         group by a.id, rl.id, pos.side_code, e.name_fi
-        """.as[(Long, Int, Int, Array[Byte])].list
-    speedLimits.map { case (id, sideCode, limit, pos) =>
+        """.as[(Long, Long, Int, Int, Array[Byte])].list
+    speedLimits.map { case (id, roadLinkId, sideCode, limit, pos) =>
       val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
-      (id, sideCode, limit, points.map { pointArray =>
+      (id, roadLinkId, sideCode, limit, points.map { pointArray =>
         (pointArray(0), pointArray(1))
       }.toSeq)
     }

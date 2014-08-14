@@ -8,9 +8,9 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
-  private def toSpeedLimit(entity: (Long, Int, Int, Seq[(Double, Double)])): SpeedLimit = {
-    val (id, sideCode, limit, points) = entity
-    SpeedLimit(id, sideCode, limit, points.map { case (x, y) => Point(x, y) })
+  private def toSpeedLimit(entity: (Long, Long, Int, Int, Seq[(Double, Double)])): SpeedLimit = {
+    val (id, roadLinkId, sideCode, limit, points) = entity
+    SpeedLimit(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) })
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimit] = {

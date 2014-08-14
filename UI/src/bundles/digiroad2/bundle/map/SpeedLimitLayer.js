@@ -1,23 +1,46 @@
+var getKey = function(speedLimit) {
+  return speedLimit.id + '-' + speedLimit.roadLinkId;
+};
+
 var SpeedLimitsCollection = function(backend) {
   var speedLimits = {};
 
   this.fetch = function(boundingBox) {
     backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
       _.each(fetchedSpeedLimits, function(speedLimit) {
-        if (speedLimits[speedLimit.id]) {
-          _.merge(speedLimits[speedLimit.id], speedLimit);
+        var compoundKey = getKey(speedLimit);
+        if (speedLimits[compoundKey]) {
+          _.merge(speedLimits[compoundKey], speedLimit);
         } else {
-          speedLimits[speedLimit.id] = speedLimit;
+          speedLimits[compoundKey] = speedLimit;
         }
       });
       eventbus.trigger('speedLimits:fetched', speedLimits);
     });
+  };
+
+  this.get = function(id) {
+    return speedLimits[id];
+  };
+};
+
+var SelectedSpeedLimit = function(collection) {
+  var current = null;
+
+  this.open = function(id) {
+    if (current) {
+      current.iSelected = false;
+    }
+    current = collection.get(id);
+    current.isSelected = true;
+    console.log('selected speed limit is:', current);
   };
 };
 
 window.SpeedLimitLayer = function(backend) {
   var eventListener = _.extend({started: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
+  var selectedSpeedLimit = new SelectedSpeedLimit(collection);
 
   var dottedOverlayStyle = {
     strokeWidth: 4,
@@ -48,7 +71,7 @@ window.SpeedLimitLayer = function(backend) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: styleMap,
     eventListeners: {
       featureclick: function(event) {
-        console.log('selected segment id:', event.feature.attributes.id);
+        selectedSpeedLimit.open(getKey(event.feature.attributes));
         return false;
       }
     }
