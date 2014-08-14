@@ -7,14 +7,10 @@ var SpeedLimitsCollection = function(backend) {
 
   this.fetch = function(boundingBox) {
     backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-      _.each(fetchedSpeedLimits, function(speedLimit) {
-        var compoundKey = getKey(speedLimit);
-        if (speedLimits[compoundKey]) {
-          _.merge(speedLimits[compoundKey], speedLimit);
-        } else {
-          speedLimits[compoundKey] = speedLimit;
-        }
-      });
+      _.merge(speedLimits, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
+        acc[getKey(speedLimit)] = speedLimit;
+        return acc;
+      }, {}));
       eventbus.trigger('speedLimits:fetched', speedLimits);
     });
   };
