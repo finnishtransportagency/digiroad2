@@ -25,7 +25,7 @@ var SelectedSpeedLimit = function(collection) {
 
   this.open = function(id) {
     if (current) {
-      current.iSelected = false;
+      current.isSelected = false;
     }
     current = collection.get(id);
     current.isSelected = true;
