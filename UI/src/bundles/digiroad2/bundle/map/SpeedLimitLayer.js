@@ -91,6 +91,10 @@ window.SpeedLimitLayer = function(map, backend) {
         }
       });
       vectorLayer.redraw();
+    },
+    onUnselect: function() {
+      vectorLayer.styleMap = browseStyle;
+      vectorLayer.redraw();
     }
   });
   map.addControl(selectControl);
