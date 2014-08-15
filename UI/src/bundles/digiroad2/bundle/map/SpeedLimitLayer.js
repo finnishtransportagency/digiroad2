@@ -43,8 +43,8 @@ var SelectedSpeedLimit = function(collection) {
     return current !== null;
   };
 
-  this.get = function() {
-    return current;
+  this.getKey = function() {
+    return getKey(current);
   };
 };
 
@@ -99,7 +99,7 @@ window.SpeedLimitLayer = function(map, backend) {
       selectedSpeedLimit.open(getKey(feature.attributes));
       vectorLayer.styleMap = selectionStyle;
       _.each(vectorLayer.features, function(x) {
-        if (x.attributes.roadLinkId === feature.attributes.roadLinkId) {
+        if (getKey(x.attributes) === getKey(feature.attributes)) {
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -110,7 +110,7 @@ window.SpeedLimitLayer = function(map, backend) {
     onUnselect: function() {
       if (selectedSpeedLimit.exists()) {
         _.each(_.filter(vectorLayer.features, function(feature) {
-          return feature.attributes.roadLinkId === selectedSpeedLimit.get().roadLinkId;
+          return getKey(feature.attributes) === selectedSpeedLimit.getKey();
         }), function(feature) {
           selectControl.unhighlight(feature);
         });
@@ -191,7 +191,7 @@ window.SpeedLimitLayer = function(map, backend) {
 
     if (selectedSpeedLimit.exists()) {
       var selectedFeature = _.find(vectorLayer.features, function(feature) {
-        return feature.attributes.roadLinkId === selectedSpeedLimit.get().roadLinkId;
+        return getKey(feature.attributes) === selectedSpeedLimit.getKey();
       });
       selectControl.select(selectedFeature);
     }
