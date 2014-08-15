@@ -64,11 +64,33 @@ window.SpeedLimitLayer = function(map, backend) {
   });
   browseStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
 
+  var selectionStyle = new OpenLayers.StyleMap({
+    default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeWidth: 6,
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.5
+    })),
+    select: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0
+    }))
+  });
+  selectionStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
+
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle });
   vectorLayer.setOpacity(1);
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: function(feature) {
       selectedSpeedLimit.open(getKey(feature.attributes));
+      vectorLayer.styleMap = selectionStyle;
+      _.each(vectorLayer.features, function(x) {
+        if (x.attributes.roadLinkId === feature.attributes.roadLinkId) {
+          selectControl.highlight(x);
+        } else {
+          selectControl.unhighlight(x);
+        }
+      });
+      vectorLayer.redraw();
     }
   });
   map.addControl(selectControl);
@@ -85,8 +107,9 @@ window.SpeedLimitLayer = function(map, backend) {
                     12: 20};
 
   var adjustSigns = function(zoom) {
-    var defaultStyle = browseStyle.styles.default.defaultStyle;
-    defaultStyle.pointRadius = zoomToSize[zoom] || 0;
+    var pointRadius = zoomToSize[zoom] || 0;
+    browseStyle.styles.default.defaultStyle.pointRadius = pointRadius;
+    selectionStyle.styles.default.defaultStyle.pointRadius = pointRadius;
   };
 
   var start = function(zoom) {
@@ -124,6 +147,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var adjustLineWidths = function(zoomLevel) {
     var strokeWidth = zoomToStrokeWidth[zoomLevel];
     browseStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
+    selectionStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
     dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
   };
