@@ -108,6 +108,13 @@ window.SpeedLimitLayer = function(map, backend) {
       vectorLayer.redraw();
     },
     onUnselect: function() {
+      if (selectedSpeedLimit.exists()) {
+        _.each(_.filter(vectorLayer.features, function(feature) {
+          return feature.attributes.roadLinkId === selectedSpeedLimit.get().roadLinkId;
+        }), function(feature) {
+          selectControl.unhighlight(feature);
+        });
+      }
       selectedSpeedLimit.close();
       vectorLayer.styleMap = browseStyle;
       vectorLayer.redraw();
