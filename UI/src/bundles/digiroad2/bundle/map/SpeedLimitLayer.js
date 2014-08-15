@@ -80,11 +80,7 @@ window.SpeedLimitLayer = function(map, backend) {
     12: { strokeWidth: 16, pointRadius: 20 }
   };
   var browseStyle = new OpenLayers.StyleMap({
-    default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeWidth: 6,
-      strokeOpacity: 0.7,
-      pointRadius: 20
-    }))
+    default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.7 }))
   });
   browseStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
   browseStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
