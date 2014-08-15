@@ -31,6 +31,13 @@ var SelectedSpeedLimit = function(collection) {
     current.isSelected = true;
     console.log('selected speed limit is:', current);
   };
+
+  this.close = function() {
+    if (current) {
+      current.isSelected = false;
+      current = null;
+    }
+  };
 };
 
 window.SpeedLimitLayer = function(map, backend) {
@@ -93,6 +100,7 @@ window.SpeedLimitLayer = function(map, backend) {
       vectorLayer.redraw();
     },
     onUnselect: function() {
+      selectedSpeedLimit.close();
       vectorLayer.styleMap = browseStyle;
       vectorLayer.redraw();
     }
