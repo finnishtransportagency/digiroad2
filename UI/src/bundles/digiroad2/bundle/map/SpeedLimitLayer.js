@@ -93,7 +93,6 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var selectionStyle = new OpenLayers.StyleMap({
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeWidth: 6,
       strokeOpacity: 0.3,
       graphicOpacity: 0.5
     })),
