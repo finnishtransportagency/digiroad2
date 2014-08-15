@@ -46,6 +46,10 @@ var SelectedSpeedLimit = function(collection) {
   this.getKey = function() {
     return getKey(current);
   };
+
+  this.getStartAndEndPoint = function() {
+    return [_.first(current.points), _.last(current.points)];
+  };
 };
 
 window.SpeedLimitLayer = function(map, backend) {
@@ -92,8 +96,22 @@ window.SpeedLimitLayer = function(map, backend) {
   });
   selectionStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
 
+  var selectionEndPointStyle = {
+    externalGraphic: 'images/speed-limits/selected.svg',
+    pointRadius: 15
+  };
+
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle });
   vectorLayer.setOpacity(1);
+
+  var selectionFeatures;
+  var createSelectionEndPoints = function(points) {
+    return _.map(points, function(point) {
+      return new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Point(point.x, point.y), null, selectionEndPointStyle);
+    });
+  };
+
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: function(feature) {
       selectedSpeedLimit.open(getKey(feature.attributes));
@@ -105,10 +123,13 @@ window.SpeedLimitLayer = function(map, backend) {
           selectControl.unhighlight(x);
         }
       });
+      selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
+      vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
     },
     onUnselect: function() {
       if (selectedSpeedLimit.exists()) {
+        vectorLayer.removeFeatures(selectionFeatures);
         _.each(_.filter(vectorLayer.features, function(feature) {
           return getKey(feature.attributes) === selectedSpeedLimit.getKey();
         }), function(feature) {
@@ -142,6 +163,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var start = function(zoom) {
     adjustSigns(zoom);
     adjustLineWidths(zoom);
+    selectionEndPointStyle.pointRadius = zoomToStrokeWidth[zoom];
     vectorLayer.redraw();
     if (!eventListener.started) {
       eventListener.started = true;
