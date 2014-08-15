@@ -56,6 +56,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var eventListener = _.extend({started: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
   var selectedSpeedLimit = new SelectedSpeedLimit(collection);
+  var uiState = { zoomLevel: 9 };
 
   var dottedOverlayStyle = {
     strokeWidth: 4,
@@ -74,6 +75,12 @@ window.SpeedLimitLayer = function(map, backend) {
     100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
     120: { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/120.svg' }
   };
+  var speedLimitFeatureSizeLookup = {
+    9: { strokeWidth: 3, pointRadius: 0 },
+    10: { strokeWidth: 5, pointRadius: 13 },
+    11: { strokeWidth: 9, pointRadius: 16 },
+    12: { strokeWidth: 16, pointRadius: 20 }
+  };
   var browseStyle = new OpenLayers.StyleMap({
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeWidth: 6,
@@ -82,6 +89,7 @@ window.SpeedLimitLayer = function(map, backend) {
     }))
   });
   browseStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
+  browseStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
 
   var selectionStyle = new OpenLayers.StyleMap({
     default: new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -166,11 +174,11 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var adjustSigns = function(zoom) {
     var pointRadius = zoomToSpeedLimitSignSize[zoom] || 0;
-    browseStyle.styles.default.defaultStyle.pointRadius = pointRadius;
     selectionStyle.styles.default.defaultStyle.pointRadius = pointRadius;
   };
 
   var adjustStylesByZoomLevel = function(zoom) {
+    uiState.zoomLevel = zoom;
     adjustSigns(zoom);
     adjustLineWidths(zoom);
     selectionEndPointStyle.pointRadius = zoomToSpeedLimitWidth[zoom];
@@ -204,7 +212,6 @@ window.SpeedLimitLayer = function(map, backend) {
 
  var adjustLineWidths = function(zoomLevel) {
     var strokeWidth = zoomToSpeedLimitWidth[zoomLevel];
-    browseStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     selectionStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
     dottedOverlayStyle.strokeDashstyle = '1 ' + 2 * strokeWidth;
