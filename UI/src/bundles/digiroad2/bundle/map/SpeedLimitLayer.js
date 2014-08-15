@@ -60,7 +60,6 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var dottedOverlayStyle = {
     strokeColor: '#ffffff',
-    strokeDashstyle: '1 12',
     strokeLinecap: 'square'
   };
   var speedLimitStyleLookup = {
