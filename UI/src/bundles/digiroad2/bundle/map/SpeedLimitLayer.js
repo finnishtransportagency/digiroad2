@@ -59,7 +59,6 @@ window.SpeedLimitLayer = function(map, backend) {
   var uiState = { zoomLevel: 9 };
 
   var dottedOverlayStyle = {
-    strokeWidth: 4,
     strokeColor: '#ffffff',
     strokeDashstyle: '1 12',
     strokeLinecap: 'square'
