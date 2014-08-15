@@ -154,22 +154,26 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
-      start(zoom);
+      adjustStylesByZoomLevel(zoom);
+      start();
       collection.fetch(boundingBox);
     }
   };
 
- var adjustSigns = function(zoom) {
+  var adjustSigns = function(zoom) {
     var pointRadius = zoomToSpeedLimitSignSize[zoom] || 0;
     browseStyle.styles.default.defaultStyle.pointRadius = pointRadius;
     selectionStyle.styles.default.defaultStyle.pointRadius = pointRadius;
   };
 
-  var start = function(zoom) {
+  var adjustStylesByZoomLevel = function(zoom) {
     adjustSigns(zoom);
     adjustLineWidths(zoom);
     selectionEndPointStyle.pointRadius = zoomToSpeedLimitWidth[zoom];
     vectorLayer.redraw();
+  };
+
+  var start = function() {
     if (!eventListener.started) {
       eventListener.started = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
@@ -185,7 +189,8 @@ window.SpeedLimitLayer = function(map, backend) {
 
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
-      start(state.zoom);
+      adjustStylesByZoomLevel(state.zoom);
+      start();
       collection.fetch(state.bbox);
     } else {
       vectorLayer.removeAllFeatures();
