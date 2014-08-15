@@ -38,6 +38,14 @@ var SelectedSpeedLimit = function(collection) {
       current = null;
     }
   };
+
+  this.exists = function() {
+    return current !== null;
+  };
+
+  this.get = function() {
+    return current;
+  };
 };
 
 window.SpeedLimitLayer = function(map, backend) {
@@ -173,6 +181,13 @@ window.SpeedLimitLayer = function(map, backend) {
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
     vectorLayer.addFeatures(limitSigns(speedLimits));
+
+    if (selectedSpeedLimit.exists()) {
+      var selectedFeature = _.find(vectorLayer.features, function(feature) {
+        return feature.attributes.roadLinkId === selectedSpeedLimit.get().roadLinkId;
+      });
+      selectControl.select(selectedFeature);
+    }
   };
 
   var dottedLineFeatures = function(speedLimits) {
