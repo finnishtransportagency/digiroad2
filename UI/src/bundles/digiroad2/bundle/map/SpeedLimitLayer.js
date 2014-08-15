@@ -252,8 +252,15 @@ window.SpeedLimitLayer = function(map, backend) {
     });
   };
 
+  var reset = function() {
+    stop();
+    selectControl.unselectAll();
+    vectorLayer.styleMap = browseStyle;
+  };
+
   return {
     update: update,
-    vectorLayer: vectorLayer
+    vectorLayer: vectorLayer,
+    reset: reset
   };
 };

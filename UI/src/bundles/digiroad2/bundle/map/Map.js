@@ -92,6 +92,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         speedLimitLayer.update(map.getZoom(), map.getExtent());
       };
       var hideSpeedLimitLayer = function() {
+        layers.speedLimit.reset();
         map.removeLayer(layers.speedLimit.vectorLayer);
       };
       this._map.events.register('moveend', this, function() {
