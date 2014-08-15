@@ -121,17 +121,21 @@ window.SpeedLimitLayer = function(map, backend) {
     });
   };
 
+  var highlightSpeedLimitFeatures = function(feature) {
+    _.each(vectorLayer.features, function(x) {
+      if (getKey(x.attributes) === getKey(feature.attributes)) {
+        selectControl.highlight(x);
+      } else {
+        selectControl.unhighlight(x);
+      }
+    });
+  };
+
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: function(feature) {
       selectedSpeedLimit.open(getKey(feature.attributes));
       vectorLayer.styleMap = selectionStyle;
-      _.each(vectorLayer.features, function(x) {
-        if (getKey(x.attributes) === getKey(feature.attributes)) {
-          selectControl.highlight(x);
-        } else {
-          selectControl.unhighlight(x);
-        }
-      });
+      highlightSpeedLimitFeatures(feature);
       selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
       vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
