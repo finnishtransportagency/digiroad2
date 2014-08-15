@@ -101,6 +101,15 @@ window.SpeedLimitLayer = function(map, backend) {
     pointRadius: 15
   };
 
+  var zoomToSpeedLimitWidth = {9: 3,
+                               10: 5,
+                               11: 9,
+                               12: 16};
+
+  var zoomToSpeedLimitSignSize = {10: 13,
+                                  11: 16,
+                                  12: 20};
+
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyle });
   vectorLayer.setOpacity(1);
 
@@ -150,12 +159,8 @@ window.SpeedLimitLayer = function(map, backend) {
     }
   };
 
-  var zoomToSize = {10: 13,
-                    11: 16,
-                    12: 20};
-
-  var adjustSigns = function(zoom) {
-    var pointRadius = zoomToSize[zoom] || 0;
+ var adjustSigns = function(zoom) {
+    var pointRadius = zoomToSpeedLimitSignSize[zoom] || 0;
     browseStyle.styles.default.defaultStyle.pointRadius = pointRadius;
     selectionStyle.styles.default.defaultStyle.pointRadius = pointRadius;
   };
@@ -163,7 +168,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var start = function(zoom) {
     adjustSigns(zoom);
     adjustLineWidths(zoom);
-    selectionEndPointStyle.pointRadius = zoomToStrokeWidth[zoom];
+    selectionEndPointStyle.pointRadius = zoomToSpeedLimitWidth[zoom];
     vectorLayer.redraw();
     if (!eventListener.started) {
       eventListener.started = true;
@@ -188,13 +193,8 @@ window.SpeedLimitLayer = function(map, backend) {
     }
   }, this);
 
-  var zoomToStrokeWidth = {9: 3,
-                           10: 5,
-                           11: 9,
-                           12: 16};
-
-  var adjustLineWidths = function(zoomLevel) {
-    var strokeWidth = zoomToStrokeWidth[zoomLevel];
+ var adjustLineWidths = function(zoomLevel) {
+    var strokeWidth = zoomToSpeedLimitWidth[zoomLevel];
     browseStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     selectionStyle.styles.default.defaultStyle.strokeWidth = strokeWidth;
     dottedOverlayStyle.strokeWidth = strokeWidth - 2;
