@@ -177,8 +177,8 @@ window.SpeedLimitLayer = function(map, backend) {
     if (!eventListener.started) {
       eventListener.started = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
+      selectControl.activate();
     }
-    selectControl.activate();
   };
 
   var stop = function() {
