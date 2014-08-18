@@ -2,7 +2,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
   function() {
     this.mapModule = null;
   }, {
-    __name: 'Map',
     getName: function() {
     },
     getMapModule: function() {
