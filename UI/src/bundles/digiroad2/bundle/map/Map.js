@@ -52,9 +52,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
         this._addMapLayerToMap(layer);
       }
     },
-    _afterMapLayerAddEvent: function(event) {
-      this._addMapLayerToMap(event.getMapLayer(), event.getKeepLayersOrder(), event.isBasemap());
-    },
     getOLMapLayers: function(layer) {
       if (!layer.isLayerOfType(this._layerType)) {
         return null;
