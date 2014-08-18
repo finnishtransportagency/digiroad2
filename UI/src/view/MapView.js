@@ -1,5 +1,5 @@
 (function(root) {
-  root.MapView = function(map, sandbox) {
+  root.MapView = function(map) {
     var roadLayer;
     var selectControl;
     var roadTypeSelected;
@@ -137,8 +137,7 @@
       $('.olMap').css('cursor', cursor[action]);
     });
     eventbus.on('coordinates:selected coordinates:marked', function(position) {
-      // TODO: Implement this without calling into Oskari
-      sandbox.postRequestByName('MapMoveRequest', [position.lon, position.lat, zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom())]);
+      map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
     }, this);
     eventbus.on('map:moved', mapMovedHandler, this);
     eventbus.on('coordinates:marked', function(position) {

@@ -11,7 +11,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this.mapModule.setLayerPlugin('map', this);
     },
     init: function(sandbox) {
-      new MapView(this.mapModule.getMap(), sandbox);
+      new MapView(this.mapModule.getMap());
 
       // register domain builder
       var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
