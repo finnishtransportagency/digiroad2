@@ -43,15 +43,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     },
     start: function(sandbox) {
     },
-    preselectLayers: function(layers) {
-      for (var i = 0; i < layers.length; i++) {
-        var layer = layers[i];
-        if (!layer.isLayerOfType(this._layerType)) {
-          continue;
-        }
-        this._addMapLayerToMap(layer);
-      }
-    },
     getOLMapLayers: function(layer) {
       if (!layer.isLayerOfType(this._layerType)) {
         return null;
