@@ -163,6 +163,7 @@ window.SpeedLimitLayer = function(map, backend) {
       selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
       vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
+      eventbus.trigger('speedLimit:selected', feature.attributes);
     },
     onUnselect: function() {
       if (selectedSpeedLimit.exists()) {
@@ -176,6 +177,7 @@ window.SpeedLimitLayer = function(map, backend) {
       selectedSpeedLimit.close();
       vectorLayer.styleMap = browseStyleMap;
       vectorLayer.redraw();
+      eventbus.trigger('speedLimit:unselected');
     }
   });
   map.addControl(selectControl);

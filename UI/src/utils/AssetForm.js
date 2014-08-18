@@ -148,7 +148,6 @@
 
       var createSingleChoiceElement = function(readOnly, property, choices) {
         var element;
-        var wrapper;
         var enumValues = _.find(choices, function(choice){
           return choice.publicId === property.publicId;
         }).values;

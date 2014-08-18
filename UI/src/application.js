@@ -107,6 +107,7 @@
     window.applicationModel = new ApplicationModel();
     ActionPanel.initialize(backend);
     AssetForm.initialize(backend);
+    SpeedLimitForm.initialize();
     backend.getApplicationSetup();
     backend.getConfiguration(assetIdFromURL());
     backend.getAssetPropertyNames();
