@@ -7,12 +7,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
   }, {
     __name: 'Map',
     _layerType: 'map',
-    _unknownAssetType: '99',
-    _selectedValidityPeriods: ['current'],
-    _roadTypeSelected: false,
-    _visibilityZoomLevelForRoads: 10,
-    _centerMarkerLayer: null,
-    _isInitialized: false,
     getName: function() {
       return this.pluginName;
     },
