@@ -44,10 +44,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     start: function(sandbox) {
     },
     getOLMapLayers: function(layer) {
-      if (!layer.isLayerOfType(this._layerType)) {
-        return null;
-      }
-      return [this.roadLayer];
     }
   }, {
     'protocol': ["Oskari.mapframework.module.Module", "Oskari.mapframework.ui.module.common.mapmodule.Plugin"]
