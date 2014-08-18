@@ -32,9 +32,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     unregister: function() {
       this.getMapModule().setLayerPlugin('map', null);
     },
-    onEvent: function(event) {
-      return this.eventHandlers[event.getName()].apply(this, [event]);
-    },
     init: function(sandbox) {
       eventbus.on('application:initialized', function() {
         var zoom = this._map.getZoom();
@@ -133,11 +130,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this._sandbox = sandbox;
       this._map = this.getMapModule().getMap();
       sandbox.register(this);
-      for (var p in this.eventHandlers) {
-        if (this.eventHandlers.hasOwnProperty(p)) {
-          sandbox.registerForEventByName(this, p);
-        }
-      }
     },
     showAssetZoomDialog: function() {
       var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
