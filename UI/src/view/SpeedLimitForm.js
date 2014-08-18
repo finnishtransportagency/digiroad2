@@ -1,6 +1,7 @@
 (function (root) {
   var template = function(speedLimit) {
-    return '<div class="wrapper read-only">' +
+    return '<header>Segmentin ID: ' + speedLimit.id + '</header>' +
+           '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                 '<div class="form-group">' +
                   '<label class="control-label">Rajoitus</label>' +
