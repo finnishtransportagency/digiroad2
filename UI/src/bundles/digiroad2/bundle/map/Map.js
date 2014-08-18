@@ -4,17 +4,14 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
   }, {
     getName: function() {
     },
-    getMapModule: function() {
-      return this.mapModule;
-    },
     setMapModule: function(mapModule) {
       this.mapModule = mapModule;
     },
     register: function() {
-      this.getMapModule().setLayerPlugin('map', this);
+      this.mapModule.setLayerPlugin('map', this);
     },
     unregister: function() {
-      this.getMapModule().setLayerPlugin('map', null);
+      this.mapModule.setLayerPlugin('map', null);
     },
     init: function(sandbox) {
       new MapView(this.mapModule.getMap(), sandbox);
