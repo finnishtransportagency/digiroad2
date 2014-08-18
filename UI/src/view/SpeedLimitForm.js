@@ -14,6 +14,9 @@
     eventbus.on('speedLimit:selected', function(speedLimit) {
       $('#feature-attributes').html(template(speedLimit));
     });
+    eventbus.on('speedLimit:unselected', function() {
+      $("#feature-attributes").empty();
+    });
   };
 
   root.SpeedLimitForm = {
