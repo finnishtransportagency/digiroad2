@@ -205,7 +205,10 @@ window.SpeedLimitLayer = function(map, backend) {
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
+    selectControl.deactivate();
     vectorLayer.removeAllFeatures();
+    selectControl.activate();
+
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
     vectorLayer.addFeatures(limitSigns(speedLimits));
