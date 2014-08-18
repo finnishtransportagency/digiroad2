@@ -2,8 +2,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
   function() {
     this.mapModule = null;
     this.pluginName = null;
-    this._sandbox = null;
-    this._map = null;
   }, {
     __name: 'Map',
     _layerType: 'map',
@@ -27,7 +25,7 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       this.getMapModule().setLayerPlugin('map', null);
     },
     init: function(sandbox) {
-      new MapView(this._map, sandbox);
+      new MapView(this.mapModule.getMap(), sandbox);
 
       // register domain builder
       var mapLayerService = sandbox.getService('Oskari.mapframework.service.MapLayerService');
@@ -37,8 +35,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
       sandbox.postRequestByName('RearrangeSelectedMapLayerRequest', ['base_35', 0]);
     },
     startPlugin: function(sandbox) {
-      this._sandbox = sandbox;
-      this._map = this.getMapModule().getMap();
       sandbox.register(this);
     },
     start: function(sandbox) {
