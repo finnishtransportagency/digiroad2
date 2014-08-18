@@ -10,9 +10,6 @@ Oskari.clazz.define('Oskari.digiroad2.bundle.map.Map',
     register: function() {
       this.mapModule.setLayerPlugin('map', this);
     },
-    unregister: function() {
-      this.mapModule.setLayerPlugin('map', null);
-    },
     init: function(sandbox) {
       new MapView(this.mapModule.getMap(), sandbox);
 
