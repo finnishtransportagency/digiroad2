@@ -181,11 +181,11 @@ window.SpeedLimitLayer = function(map, backend) {
         }), function(feature) {
           selectControl.unhighlight(feature);
         });
+        selectedSpeedLimit.close();
+        vectorLayer.styleMap = browseStyleMap;
+        vectorLayer.redraw();
+        eventbus.trigger('speedLimit:unselected');
       }
-      selectedSpeedLimit.close();
-      vectorLayer.styleMap = browseStyleMap;
-      vectorLayer.redraw();
-      eventbus.trigger('speedLimit:unselected');
     }
   });
   map.addControl(selectControl);
