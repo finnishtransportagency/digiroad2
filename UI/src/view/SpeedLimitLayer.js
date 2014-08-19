@@ -141,7 +141,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {
       return new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(point.x, point.y), null, selectionEndPointStyle);
+        new OpenLayers.Geometry.Point(point.x, point.y), {type: 'endpoint'}, selectionEndPointStyle);
     });
   };
 
@@ -157,17 +157,25 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: function(feature) {
+      if (feature.attributes.type === 'endpoint') {
+        return false;
+      }
       selectedSpeedLimit.open(getKey(feature.attributes));
       vectorLayer.styleMap = selectionStyle;
       highlightSpeedLimitFeatures(feature);
+      if (_.isArray(selectionFeatures)) {
+        vectorLayer.removeFeatures(selectionFeatures);
+      }
       selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
       vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
       eventbus.trigger('speedLimit:selected', feature.attributes);
     },
-    onUnselect: function() {
+    onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
-        vectorLayer.removeFeatures(selectionFeatures);
+        _.each(selectionFeatures, function(feature) {
+          feature.style = {display: 'none'};
+        });
         _.each(_.filter(vectorLayer.features, function(feature) {
           return getKey(feature.attributes) === selectedSpeedLimit.getKey();
         }), function(feature) {
