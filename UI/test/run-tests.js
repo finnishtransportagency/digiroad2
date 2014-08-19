@@ -9,7 +9,7 @@ require.config({
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
         'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
-        'zoomlevels':               '../src/utils/zoomLevels',
+        'zoomlevels':               '../src/utils/zoom-levels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
         'assetGrouping':            '../src/assetgrouping/asset-grouping'
     },
