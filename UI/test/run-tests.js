@@ -7,7 +7,7 @@ require.config({
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
-        'SpeedLimitLayer':          '../src/bundles/digiroad2/bundle/map/SpeedLimitLayer',
+        'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoomLevels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
