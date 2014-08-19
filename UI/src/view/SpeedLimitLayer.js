@@ -58,26 +58,17 @@ window.SpeedLimitLayer = function(map, backend) {
   var selectedSpeedLimit = new SelectedSpeedLimit(collection);
   var uiState = { zoomLevel: 9 };
 
-  var overlayStyleRule = function(zoomLevel, style) {
-    return new OpenLayers.Rule({
+  var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
+     return new OpenLayers.Rule({
       filter: new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: [
-        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' }),
+        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type }),
         new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
       ] }),
       symbolizer: style
     });
   };
 
-  var selectionEndPointStyleRule = function(zoomLevel, style) {
-    return new OpenLayers.Rule({
-      filter: new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: [
-        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'endpoint' }),
-        new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
-      ]}),
-      symbolizer: style
-    });
-  };
-
+  var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
   var overlayStyleRules = [
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
     overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
@@ -85,11 +76,12 @@ window.SpeedLimitLayer = function(map, backend) {
     overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
   ];
 
-  var selectionEndPointStyleRules = [
-    selectionEndPointStyleRule(9, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 3 }),
-    selectionEndPointStyleRule(10, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
-    selectionEndPointStyleRule(11, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
-    selectionEndPointStyleRule(12, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
+  var endpointStyleRule = _.partial(createZoomAndTypeDependentRule, 'endpoint');
+  var endpointStyleRules = [
+    endpointStyleRule(9, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 3 }),
+    endpointStyleRule(10, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
+    endpointStyleRule(11, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
+    endpointStyleRule(12, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
   ];
 
   var speedLimitStyleLookup = {
@@ -139,7 +131,7 @@ window.SpeedLimitLayer = function(map, backend) {
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', speedLimitFeatureOpacityLookup);
   selectionDefaultStyle.addRules(overlayStyleRules);
-  selectionDefaultStyle.addRules(selectionEndPointStyleRules);
+  selectionDefaultStyle.addRules(endpointStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
