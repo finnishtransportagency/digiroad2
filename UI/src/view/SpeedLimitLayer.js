@@ -7,7 +7,8 @@ var SpeedLimitsCollection = function(backend) {
 
   this.fetch = function(boundingBox) {
     backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-      _.merge(speedLimits, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
+      var selectedSpeedLimit = _.pick(speedLimits, function(speedLimit) { return speedLimit.isSelected; });
+      speedLimits = _.merge(selectedSpeedLimit, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
         acc[getKey(speedLimit)] = speedLimit;
         return acc;
       }, {}));
