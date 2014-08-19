@@ -121,6 +121,7 @@
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
+
     eventbus.on('asset:moving', function(nearestLine) {
       var nearestFeature = _.find(roadLayer.features, function(feature) {
         return feature.attributes.roadLinkId == nearestLine.roadLinkId;
@@ -128,24 +129,32 @@
       selectControl.unselectAll();
       selectControl.select(nearestFeature);
     }, this);
+
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       selectControl.unselectAll();
     }, this);
+
     eventbus.on('road-type:selected', toggleRoadType, this);
+
     eventbus.on('tool:changed', function(action) {
       var cursor = {'Select': 'default', 'Add': 'crosshair', 'Remove': 'no-drop'};
       $('.olMap').css('cursor', cursor[action]);
     });
+
     eventbus.on('coordinates:selected coordinates:marked', function(position) {
       map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
     }, this);
+
     eventbus.on('map:moved', mapMovedHandler, this);
+
     eventbus.on('coordinates:marked', function(position) {
       drawCenterMarker(position);
     }, this);
+
     eventbus.on('roadLinks:fetched', function(roadLinks) {
       drawRoadLinks(roadLinks);
     }, this);
+
     eventbus.on('layer:selected', function(layer) {
       var assetLayer = layers.asset;
       if (layer === 'speedLimit') {
