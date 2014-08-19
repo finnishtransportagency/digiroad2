@@ -28,9 +28,6 @@ Oskari.clazz.define("Oskari.digiroad2.bundle.map.Map", function() {
                 "src" : "../../../../bundles/digiroad2/bundle/map/AssetLayer.js"
             },{
                 "type" : "text/javascript",
-                "src" : "../../../../bundles/digiroad2/bundle/map/template/Templates.js"
-            },{
-                "type" : "text/javascript",
                 "src" : "../../../../bundles/digiroad2/bundle/map/SpeedLimitLayer.js"
             },{
                 "type" : "text/javascript",
