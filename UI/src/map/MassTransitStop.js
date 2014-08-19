@@ -12,7 +12,7 @@
         }
         return bearing + (90 * validityDirection);
       };
-      var validityDirection = (data.validityDirection === 3) ? 1 : -1;
+      var validityDirection = (data.validityDirection === validitydirections.oppositeDirection) ? 1 : -1;
       var angle = getAngleFromBearing(data.bearing, validityDirection);
       return new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),

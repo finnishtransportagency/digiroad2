@@ -62,7 +62,7 @@
           return $(streetViewTemplate({
             wgs84X: wgs84.x,
             wgs84Y: wgs84.y,
-            heading: (model.get('validityDirection') === 3 ? model.get('bearing') - 90 : model.get('bearing') + 90),
+            heading: (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90),
             protocol: location.protocol
           })).addClass('street-view');
         };

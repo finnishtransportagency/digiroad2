@@ -158,7 +158,7 @@
     };
 
     var switchDirection = function() {
-      var validityDirection = get('validityDirection') == 2 ? 3 : 2;
+      var validityDirection = validitydirections.switchDirection(get('validityDirection'));
       setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
       currentAsset.payload.validityDirection = validityDirection;
     };

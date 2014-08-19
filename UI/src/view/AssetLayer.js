@@ -339,7 +339,7 @@ window.AssetLayer = function(map, roadLayer) {
     if (propertyData.propertyData.publicId === 'vaikutussuunta') {
       var value = propertyData.propertyData.values[0].propertyValue;
       selectedAsset.data.validityDirection = value;
-      var validityDirection = (value == 3) ? 1 : -1;
+      var validityDirection = (value == validitydirections.oppositeDirection) ? 1 : -1;
       turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
     }
   };
@@ -353,7 +353,7 @@ window.AssetLayer = function(map, roadLayer) {
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
       bearing: bearing,
-      validityDirection: 2,
+      validityDirection: validitydirections.sameDirection,
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId
@@ -439,7 +439,7 @@ window.AssetLayer = function(map, roadLayer) {
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = angle + (90 * (selectedAsset.data.validityDirection == 3 ? 1 : -1 ));
+      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = angle + (90 * (selectedAsset.data.validityDirection == validitydirections.oppositeDirection ? 1 : -1 ));
       var position = geometrycalculator.nearestPointOnLine(
         nearestLine,
         { x: lonlat.lon, y: lonlat.lat});
