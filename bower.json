@@ -22,6 +22,7 @@
   "devDependencies": {
     "mocha": "1.13.0",
     "chai": "1.8.1",
-    "chai-jquery": "1.2.2"
+    "chai-jquery": "1.2.2",
+    "WebConsole-reporter": "https://github.com/eeroan/WebConsole-reporter.git"
   }
 }
