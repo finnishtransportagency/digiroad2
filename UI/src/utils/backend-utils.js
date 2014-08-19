@@ -178,8 +178,8 @@
     };
 
     this.withSpeedLimitsData = function(speedLimitsData) {
-      self.getSpeedLimits = function(boundingBox) {
-        eventbus.trigger('speedLimits:fetched', speedLimitsData);
+      self.getSpeedLimits = function(boundingBox, callback) {
+        callback(speedLimitsData);
       };
       return self;
     };
