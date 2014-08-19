@@ -66,6 +66,14 @@
     return angleDeg * (Math.PI / 180);
   };
 
+  geometrycalculator.convertCompassToPolarCoordinates = function(angle) {
+    return (angle - 90) % 360;
+  };
+
+  geometrycalculator.oppositeAngle = function(angle) {
+    return (angle + 180) % 360;
+  };
+
   geometrycalculator.isInBounds = function(bounds, x, y) {
     return (x > bounds.left && x < bounds.right && y > bounds.bottom && y < bounds.top);
   };

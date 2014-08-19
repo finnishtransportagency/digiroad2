@@ -5,21 +5,13 @@
     var cachedMassTransitMarker = null;
 
     var createDirectionArrow = function() {
-      var getAngleFromBearing = function(bearing, validityDirection) {
-        if (bearing === null || bearing === undefined) {
-          console.log('Bearing was null, find out why');
-          return 90;
-        }
-        return bearing + (90 * validityDirection);
-      };
-      var validityDirection = (data.validityDirection === validitydirections.oppositeDirection) ? 1 : -1;
-      var angle = getAngleFromBearing(data.bearing, validityDirection);
+      var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
       return new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),
         null,
         {
           externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
-          graphicHeight: 16, graphicWidth: 30, graphicXOffset: -15, graphicYOffset: -8, rotation: angle
+          graphicHeight: 16, graphicWidth: 30, graphicXOffset: -15, graphicYOffset: -8, rotation: rotation
         }
       );
     };

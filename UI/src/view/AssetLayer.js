@@ -337,10 +337,9 @@ window.AssetLayer = function(map, roadLayer) {
     };
 
     if (propertyData.propertyData.publicId === 'vaikutussuunta') {
-      var value = propertyData.propertyData.values[0].propertyValue;
-      selectedAsset.data.validityDirection = value;
-      var validityDirection = (value == validitydirections.oppositeDirection) ? 1 : -1;
-      turnArrow(selectedAsset, selectedAsset.data.bearing + (90 * validityDirection));
+      var validityDirection = propertyData.propertyData.values[0].propertyValue;
+      selectedAsset.data.validityDirection = validityDirection;
+      turnArrow(selectedAsset, validitydirections.calculateRotation(selectedAsset.data.bearing, validityDirection));
     }
   };
 
@@ -439,7 +438,7 @@ window.AssetLayer = function(map, roadLayer) {
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;
-      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = angle + (90 * (selectedAsset.data.validityDirection == validitydirections.oppositeDirection ? 1 : -1 ));
+      selectedAsset.massTransitStop.getDirectionArrow().style.rotation = validitydirections.calculateRotation(angle, selectedAsset.data.validityDirection);
       var position = geometrycalculator.nearestPointOnLine(
         nearestLine,
         { x: lonlat.lon, y: lonlat.lat});
