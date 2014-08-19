@@ -37,7 +37,8 @@ require(['chai',
          'AssetMoveSpec',
          'SpeedLimitVisualizationSpec',
          'RegroupingAssetsSpec',
-         'GroupingInCreationSpec'],
+         'GroupingInCreationSpec',
+         'SpeedLimitSelectionSpec'],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
 
