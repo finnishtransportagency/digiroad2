@@ -86,6 +86,13 @@
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
+  var setupMap = function() {
+    var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
+
+    new MapView(map);
+    map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
+  };
+
   var startApplication = function() {
     // check that both setup and config are loaded 
     // before actually starting the application
@@ -94,6 +101,7 @@
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function() {
+        setupMap();
         eventbus.trigger('application:initialized');
       });
     }

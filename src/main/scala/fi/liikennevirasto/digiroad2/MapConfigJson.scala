@@ -61,8 +61,6 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
           }, {
-            "id": "Oskari.digiroad2.bundle.map.Map"
-          }, {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
@@ -88,16 +86,6 @@ object MapConfigJson {
             }
           }],
           "layers": [{
-            "wmsName": "bussit",
-            "type": "map",
-            "id": 235,
-            "minScale": 6000,
-            "roadLinesUrl": "api/roadlinks",
-            "maxScale": 1,
-            "orgName": "LiVi",
-            "inspire": "Ominaisuustiedot",
-            "name": "Voimassaolevat"
-          }, {
             "dataUrl_uuid": "c22da116-5095-4878-bb04-dd7db3a1a341",
             "wmsName": "taustakartta",
             "styles": [{

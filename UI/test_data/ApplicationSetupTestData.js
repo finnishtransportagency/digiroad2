@@ -86,9 +86,6 @@
                 },
                 "event-map": {
                   "bundlePath": "../bower_components/oskari.org/packages/framework/bundle/"
-                },
-                "map": {
-                  "bundlePath": "../src/packages/digiroad2/bundle/"
                 }
               },
               "Require-Bundle-Instance": []
