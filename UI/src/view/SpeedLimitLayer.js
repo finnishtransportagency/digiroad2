@@ -29,7 +29,6 @@ var SelectedSpeedLimit = function(collection) {
     }
     current = collection.get(id);
     current.isSelected = true;
-    console.log('selected speed limit is:', current);
   };
 
   this.close = function() {
