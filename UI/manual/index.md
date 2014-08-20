@@ -10,7 +10,7 @@ _Katselutila._
 1. Tietolajit -paletti
 1. Koordinaattihaku
 1. "Siirry muokkaustilaan"-painike
-1. Valittu pys&auml;kki
+1. Valittu kohde
 1. Google Street View
 1. Ominaisuustieto -n&auml;kym&auml;
 1. Mittakaavapainike
@@ -191,8 +191,18 @@ Ominaisuustieto-n&auml;kym&auml;ss&auml; kaikki kent&auml;t ovat disabloituja el
 
 _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
-4.2 Nopeusrajoitusten tietojen katselu
+4.2 Nopeusrajoituksen tietojen katselu
 --------------------------------------
+
+Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in muut nopeusrajoitukset haalenevat, valittuna oleva nopeusrajoitus korostuu ja sen geometrian p&auml;&auml;tepisteet merkit&auml;&auml;n kartalle palloilla (4). Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+
+Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h) ja alku- ja loppupisteen koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;.
+
+Nopeusrajoituksen valinnan saa pois klikkaamalla karttaa. 
+
+![Nopeusrajoituksen tietojen katselu](k24.JPG)
+
+_Nopeusrajoituksen tietojen katselu._
 
 5. Muokkaustila
 ---------------
