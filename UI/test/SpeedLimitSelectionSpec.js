@@ -12,6 +12,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     control.select(feature);
   };
 
+  var clickElement = function(element) {
+    var event = document.createEvent("MouseEvent");
+    event.initMouseEvent("click", true, true, window, null, 0, 0, 0, 0, false, false, false, false, 0, null);
+    element.dispatchEvent(event);
+  };
+
   describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
@@ -39,10 +45,10 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
       });
 
-      describe('and clicking outside the speed limit', function() {
+      describe('and clicking on the background map', function() {
         before(function() {
-          var startPoint = _.first(speedLimit.points);
-          testHelpers.clickMap(openLayersMap, startPoint.x - 10, startPoint.y);
+          var layer = $('.olLayerDiv').filter(function(i, e) { return _.contains($(e).attr('id'), 'OpenLayers_Layer_WMTS'); });
+          clickElement(_.first(layer));
         });
         it('deselects speed limit', function() {
           expect($('#feature-attributes header')).not.to.exist;
