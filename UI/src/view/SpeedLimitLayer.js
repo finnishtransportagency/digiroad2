@@ -47,6 +47,10 @@ var SelectedSpeedLimit = function(collection) {
     return getKey(current);
   };
 
+  this.getId = function() {
+    return current.id;
+  };
+
   this.getStartAndEndPoint = function() {
     return [_.first(current.points), _.last(current.points)];
   };
@@ -146,7 +150,7 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var highlightSpeedLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
-      if (getKey(x.attributes) === getKey(feature.attributes)) {
+      if (x.attributes.id === feature.attributes.id) {
         selectControl.highlight(x);
       } else {
         selectControl.unhighlight(x);
@@ -176,7 +180,7 @@ window.SpeedLimitLayer = function(map, backend) {
           feature.style = {display: 'none'};
         });
         _.each(_.filter(vectorLayer.features, function(feature) {
-          return getKey(feature.attributes) === selectedSpeedLimit.getKey();
+          return feature.attributes.id === selectedSpeedLimit.getId();
         }), function(feature) {
           selectControl.unhighlight(feature);
         });
