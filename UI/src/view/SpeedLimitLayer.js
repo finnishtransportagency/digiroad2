@@ -116,8 +116,8 @@ window.SpeedLimitLayer = function(map, backend) {
   browseStyle.addRules(overlayStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.3,
-    graphicOpacity: 0.5
+    strokeOpacity: 0.15,
+    graphicOpacity: 0.3
   }));
   var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.7,
