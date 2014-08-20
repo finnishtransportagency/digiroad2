@@ -25,6 +25,15 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
       });
+
+      describe('and zooming in', function() {
+        before(function() {
+          $('.pzbDiv-plus').click();
+        });
+        it('maintains speed limit selection', function() {
+          expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
+        });
+      });
     });
   });
 });
