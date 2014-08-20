@@ -34,6 +34,16 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
         });
       });
+
+      describe('and clicking outside the speed limit', function() {
+        before(function() {
+          var startPoint = _.first(speedLimit.points);
+          testHelpers.clickMap(openLayersMap, startPoint.x - 10, startPoint.y);
+        });
+        it('deselects speed limit', function() {
+          expect($('#feature-attributes header')).not.to.exist;
+        });
+      });
     });
   });
 });
