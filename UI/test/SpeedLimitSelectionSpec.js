@@ -4,6 +4,14 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var speedLimitsData = SpeedLimitsTestData.generate(1);
   var speedLimit = _.first(speedLimitsData);
 
+  var selectSpeedLimit = function(map, speedLimitId) {
+    var control = _.first(map.getControlsBy('displayClass', 'olControlSelectFeature'));
+    var feature = _.find(testHelpers.getSpeedLimitFeatures(map), function(feature) {
+      return feature.attributes.id === speedLimitId;
+    });
+    control.select(feature);
+  };
+
   describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
@@ -16,11 +24,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and selecting speed limit', function() {
       before(function() {
-        var control = _.first(openLayersMap.getControlsBy('displayClass', 'olControlSelectFeature'));
-        var feature = _.find(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-          return feature.attributes.id === speedLimit.id;
-        });
-        control.select(feature);
+        selectSpeedLimit(openLayersMap, speedLimit.id);
       });
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
@@ -42,6 +46,25 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
         it('deselects speed limit', function() {
           expect($('#feature-attributes header')).not.to.exist;
+        });
+      });
+    });
+
+    describe('and selecting speed limit', function() {
+      before(function() {
+        selectSpeedLimit(openLayersMap, speedLimit.id);
+      });
+      describe('and selecting assets layer', function() {
+        before(function() {
+          $('.panel-header').filter(':visible').filter(function (i, element) {return _.contains($(element).text(), 'Joukkoliikenteen pysäkit'); }).click();
+        });
+        describe('and reselecting speed limits layer', function() {
+          before(function() {
+            $('.speed-limits').click();
+          });
+          it('deselects speed limit', function() {
+            expect($('#feature-attributes header')).not.to.exist;
+          });
         });
       });
     });
