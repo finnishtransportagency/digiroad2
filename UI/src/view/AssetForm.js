@@ -6,10 +6,6 @@
       var streetViewHandler;
       var activeLayer = 'asset';
 
-      _.templateSettings = {
-        interpolate: /\{\{(.+?)\}\}/g
-      };
-
       var renderAssetForm = function() {
         if (activeLayer !== 'asset') {
           return;
@@ -348,14 +344,14 @@
       };
 
       var streetViewTemplate  = _.template(
-          '<a target="_blank" href="{{protocol}}//maps.google.com/?ll={{wgs84Y}},{{wgs84X}}&cbll={{wgs84Y}},{{wgs84X}}&cbp=12,{{heading}}.09,,0,5&layer=c&t=m">' +
-          '<img alt="Google StreetView-n&auml;kym&auml;" src="http://maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location={{wgs84Y}}' +
-          ', {{wgs84X}}&fov=110&heading={{heading}}&pitch=-10&sensor=false">' +
+          '<a target="_blank" href="<%= protocol %>//maps.google.com/?ll=<%= wgs84Y %>,<%= wgs84X %>&cbll=<%= wgs84Y %>,<%= wgs84X %>&cbp=12,<%= heading %>.09,,0,5&layer=c&t=m">' +
+          '<img alt="Google StreetView-n&auml;kym&auml;" src="http://maps.googleapis.com/maps/api/streetview?key=AIzaSyBh5EvtzXZ1vVLLyJ4kxKhVRhNAq-_eobY&size=360x180&location=<%= wgs84Y %>' +
+          ', <%= wgs84X %>&fov=110&heading=<%= heading %>&pitch=-10&sensor=false">' +
           '</a>');
 
       var featureDataTemplateNA = _.template('<div class="formAttributeContentRow">' +
-        '<div class="formLabels">{{localizedName}}</div>' +
-        '<div class="featureAttributeNA">{{propertyValue}}</div>' +
+        '<div class="formLabels"><%= localizedName %></div>' +
+        '<div class="featureAttributeNA"><%= propertyValue %></div>' +
         '</div>');
 
       var closeAsset = function() {

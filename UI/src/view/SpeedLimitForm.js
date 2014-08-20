@@ -13,8 +13,8 @@
 
     var formElementTemplate = _.template(
       '<div class="form-group">' +
-        '<label class="control-label">{{ key }}</label>' +
-        '<p class="form-control-static">{{ value }}</p>' +
+        '<label class="control-label"><%= key %></label>' +
+        '<p class="form-control-static"><%= value %></p>' +
       '</div>'
     );
 

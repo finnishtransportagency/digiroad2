@@ -1,7 +1,4 @@
 var RoadStyles = function() {
-  _.templateSettings = {
-    interpolate: /\{\{(.+?)\}\}/g
-  };
   var styleMap = new OpenLayers.StyleMap({
     "select": new OpenLayers.Style({
       strokeWidth: 6,
