@@ -1,4 +1,34 @@
 (function(root) {
+  var SaveButton = function() {
+    var element = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('save btn btn-primary').text('Tallenna').click(function() {
+      element.prop('disabled', true);
+      selectedAssetModel.save();
+    });
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      element.prop('disabled', false);
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
+  var CancelButton = function() {
+    var element = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+      $("#feature-attributes").empty();
+      selectedAssetModel.cancel();
+    });
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      element.prop('disabled', false);
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
   root.AssetForm = {
     initialize: function(backend) {
       var enumeratedPropertyValues = null;
@@ -23,22 +53,11 @@
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
-        var cancelBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-          $("#feature-attributes").empty();
-          selectedAssetModel.cancel();
-        });
-
-        var saveBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('save btn btn-primary').text('Tallenna').click(function() {
-          selectedAssetModel.save();
-        });
-
-        eventbus.on('asset:moved assetPropertyValue:changed', function() {
-          saveBtn.prop('disabled', false);
-          cancelBtn.prop('disabled', false);
-        }, this);
+        var saveBtn = new SaveButton();
+        var cancelBtn = new CancelButton();
 
         // TODO: cleaner html
-        featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn).append(cancelBtn));
+        featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn.element).append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -195,7 +214,6 @@
 
       var createDirectionChoiceElement = function(property) {
         var element;
-        var wrapper;
 
         element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
           selectedAssetModel.switchDirection();
