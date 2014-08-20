@@ -30,12 +30,14 @@ var SelectedSpeedLimit = function(collection) {
     }
     current = collection.get(id);
     current.isSelected = true;
+    eventbus.trigger('speedLimit:selected', current);
   };
 
   this.close = function() {
     if (current) {
       current.isSelected = false;
       current = null;
+      eventbus.trigger('speedLimit:unselected');
     }
   };
 
@@ -162,7 +164,6 @@ window.SpeedLimitLayer = function(map, backend) {
       vectorLayer.styleMap = selectionStyle;
       highlightSpeedLimitFeatures(feature);
       vectorLayer.redraw();
-      eventbus.trigger('speedLimit:selected', feature.attributes);
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
@@ -174,7 +175,6 @@ window.SpeedLimitLayer = function(map, backend) {
         selectedSpeedLimit.close();
         vectorLayer.styleMap = browseStyleMap;
         vectorLayer.redraw();
-        eventbus.trigger('speedLimit:unselected');
       }
     }
   });
