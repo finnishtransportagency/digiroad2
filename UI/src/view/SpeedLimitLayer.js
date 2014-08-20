@@ -53,7 +53,7 @@ var SelectedSpeedLimit = function(collection) {
 };
 
 window.SpeedLimitLayer = function(map, backend) {
-  var eventListener = _.extend({started: false}, eventbus);
+  var eventListener = _.extend({running: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
   var selectedSpeedLimit = new SelectedSpeedLimit(collection);
   var uiState = { zoomLevel: 9 };
@@ -203,8 +203,8 @@ window.SpeedLimitLayer = function(map, backend) {
   };
 
   var start = function() {
-    if (!eventListener.started) {
-      eventListener.started = true;
+    if (!eventListener.running) {
+      eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
       selectControl.activate();
     }
@@ -213,7 +213,7 @@ window.SpeedLimitLayer = function(map, backend) {
   var stop = function() {
     selectControl.deactivate();
     eventListener.stopListening(eventbus);
-    eventListener.started = false;
+    eventListener.running = false;
   };
 
   eventbus.on('map:moved', function(state) {
