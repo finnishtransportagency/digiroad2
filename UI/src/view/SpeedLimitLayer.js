@@ -140,7 +140,6 @@ window.SpeedLimitLayer = function(map, backend) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
-  var selectionFeatures;
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {
       return new OpenLayers.Feature.Vector(
@@ -166,19 +165,11 @@ window.SpeedLimitLayer = function(map, backend) {
       selectedSpeedLimit.open(getKey(feature.attributes));
       vectorLayer.styleMap = selectionStyle;
       highlightSpeedLimitFeatures(feature);
-      if (_.isArray(selectionFeatures)) {
-        vectorLayer.removeFeatures(selectionFeatures);
-      }
-      selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
-      vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
       eventbus.trigger('speedLimit:selected', feature.attributes);
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
-        _.each(selectionFeatures, function(feature) {
-          feature.style = {display: 'none'};
-        });
         _.each(_.filter(vectorLayer.features, function(feature) {
           return feature.attributes.id === selectedSpeedLimit.getId();
         }), function(feature) {
