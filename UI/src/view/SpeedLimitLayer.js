@@ -47,8 +47,8 @@ var SelectedSpeedLimit = function(collection) {
     return getKey(current);
   };
 
-  this.getStartAndEndPoint = function() {
-    return [_.first(current.points), _.last(current.points)];
+  this.getId = function() {
+    return current.id;
   };
 };
 
@@ -116,8 +116,8 @@ window.SpeedLimitLayer = function(map, backend) {
   browseStyle.addRules(overlayStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.3,
-    graphicOpacity: 0.5
+    strokeOpacity: 0.15,
+    graphicOpacity: 0.3
   }));
   var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.7,
@@ -136,7 +136,6 @@ window.SpeedLimitLayer = function(map, backend) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
-  var selectionFeatures;
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {
       return new OpenLayers.Feature.Vector(
@@ -146,7 +145,7 @@ window.SpeedLimitLayer = function(map, backend) {
 
   var highlightSpeedLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
-      if (getKey(x.attributes) === getKey(feature.attributes)) {
+      if (x.attributes.id === feature.attributes.id) {
         selectControl.highlight(x);
       } else {
         selectControl.unhighlight(x);
@@ -162,21 +161,13 @@ window.SpeedLimitLayer = function(map, backend) {
       selectedSpeedLimit.open(getKey(feature.attributes));
       vectorLayer.styleMap = selectionStyle;
       highlightSpeedLimitFeatures(feature);
-      if (_.isArray(selectionFeatures)) {
-        vectorLayer.removeFeatures(selectionFeatures);
-      }
-      selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getStartAndEndPoint());
-      vectorLayer.addFeatures(selectionFeatures);
       vectorLayer.redraw();
       eventbus.trigger('speedLimit:selected', feature.attributes);
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
-        _.each(selectionFeatures, function(feature) {
-          feature.style = {display: 'none'};
-        });
         _.each(_.filter(vectorLayer.features, function(feature) {
-          return getKey(feature.attributes) === selectedSpeedLimit.getKey();
+          return feature.attributes.id === selectedSpeedLimit.getId();
         }), function(feature) {
           selectControl.unhighlight(feature);
         });
