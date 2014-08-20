@@ -1,7 +1,5 @@
 (function (root) {
   var template = function(speedLimit) {
-    var startPoint = _.first(speedLimit.points);
-    var endPoint = _.last(speedLimit.points);
     var fields = [
       {key: "Rajoitus", value: speedLimit.limit}
     ];

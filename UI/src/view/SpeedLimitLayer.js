@@ -50,10 +50,6 @@ var SelectedSpeedLimit = function(collection) {
   this.getId = function() {
     return current.id;
   };
-
-  this.getStartAndEndPoint = function() {
-    return [_.first(current.points), _.last(current.points)];
-  };
 };
 
 window.SpeedLimitLayer = function(map, backend) {
