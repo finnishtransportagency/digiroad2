@@ -1,4 +1,5 @@
 window.AssetLayer = function(map, roadLayer) {
+  var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var readOnly = true;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
@@ -14,20 +15,6 @@ window.AssetLayer = function(map, roadLayer) {
   var clickCoords;
   var assetIsMoving = false;
 
-  var show = function() {
-    map.addLayer(assetDirectionLayer);
-    map.addLayer(assetLayer);
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      assetsModel.fetchAssets(map.getExtent());
-    }
-  };
-
-  var hide = function() {
-    if (assetLayer.map && assetDirectionLayer.map) {
-      map.removeLayer(assetLayer);
-      map.removeLayer(assetDirectionLayer);
-    }
-  };
 
   var hideAsset = function(asset) {
     assetDirectionLayer.destroyFeatures(asset.massTransitStop.getDirectionArrow());
@@ -534,36 +521,6 @@ window.AssetLayer = function(map, roadLayer) {
     }
   };
 
-  eventbus.on('validityPeriod:changed', handleValidityPeriodChanged, this);
-  eventbus.on('tool:changed', toolSelectionChange, this);
-  eventbus.on('assetPropertyValue:saved', updateAsset, this);
-  eventbus.on('assetPropertyValue:changed', handleAssetPropertyValueChanged, this);
-  eventbus.on('asset:saved', handleAssetSaved, this);
-  eventbus.on('asset:created', handleAssetCreated, this);
-  eventbus.on('asset:fetched', handleAssetFetched, this);
-  eventbus.on('asset:created', removeOverlay, this);
-  eventbus.on('asset:creationCancelled asset:creationFailed', cancelCreate, this);
-  eventbus.on('asset:updateCancelled asset:updateFailed', cancelUpdate, this);
-  eventbus.on('asset:closed', closeAsset, this);
-  eventbus.on('application:readOnly', function(value) {
-    readOnly = value;
-  }, this);
-  eventbus.on('assets:fetched', function(assets) {
-    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      var groupedAssets = assetGrouping.groupByDistance(assets, map.getZoom());
-      renderAssets(groupedAssets);
-    }
-  }, this);
-
-  eventbus.on('assets:all-updated', handleAllAssetsUpdated, this);
-  eventbus.on('assets:new-fetched', handleNewAssetsFetched, this);
-  eventbus.on('assetModifications:confirm', function() {
-    new Confirm();
-  }, this);
-  eventbus.on('assets:outOfZoom', hideAssets, this);
-  eventbus.on('assetGroup:destroyed', reRenderGroup, this);
-  eventbus.on('map:mouseMoved', handleMouseMoved, this);
-
   var approximately = function(n, m) {
     var threshold = 10;
     return threshold >= Math.abs(n - m);
@@ -602,7 +559,6 @@ window.AssetLayer = function(map, roadLayer) {
   });
   var click = new Click();
   map.addControl(click);
-  click.activate();
 
   var handleMapClick = function(coordinates) {
     if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
@@ -619,13 +575,79 @@ window.AssetLayer = function(map, roadLayer) {
   };
 
 
-  eventbus.on('map:clicked', handleMapClick, this);
-  eventbus.on('layer:selected', closeAsset, this);
   $('#mapdiv').on('mouseleave', function() {
     if (assetIsMoving === true) {
       mouseUpHandler(selectedAsset);
     }
   });
+
+  var bindEvents = function() {
+    eventListener.listenTo(eventbus, 'validityPeriod:changed', handleValidityPeriodChanged);
+    eventListener.listenTo(eventbus, 'tool:changed', toolSelectionChange);
+    eventListener.listenTo(eventbus, 'assetPropertyValue:saved', updateAsset);
+    eventListener.listenTo(eventbus, 'assetPropertyValue:changed', handleAssetPropertyValueChanged);
+    eventListener.listenTo(eventbus, 'asset:saved', handleAssetSaved);
+    eventListener.listenTo(eventbus, 'asset:created', handleAssetCreated);
+    eventListener.listenTo(eventbus, 'asset:fetched', handleAssetFetched);
+    eventListener.listenTo(eventbus, 'asset:created', removeOverlay);
+    eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed', cancelCreate);
+    eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed', cancelUpdate);
+    eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
+    eventListener.listenTo(eventbus, 'application:readOnly', function(value) {
+      readOnly = value;
+    });
+    eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
+      if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+        var groupedAssets = assetGrouping.groupByDistance(assets, map.getZoom());
+        renderAssets(groupedAssets);
+      }
+    });
+
+    eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
+    eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
+    eventListener.listenTo(eventbus, 'assetModifications:confirm', function() {
+      new Confirm();
+    });
+    eventListener.listenTo(eventbus, 'assets:outOfZoom', hideAssets);
+    eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
+    eventListener.listenTo(eventbus, 'map:mouseMoved', handleMouseMoved);
+
+    eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+    eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
+
+    click.activate();
+  };
+
+  var startListening = function() {
+    if (!eventListener.running) {
+      eventListener.running = true;
+      bindEvents();
+    }
+  };
+  startListening();
+
+  var stopListening = function() {
+    click.deactivate();
+    eventListener.stopListening(eventbus);
+    eventListener.running = false;
+  };
+
+  var show = function() {
+    startListening();
+    map.addLayer(assetDirectionLayer);
+    map.addLayer(assetLayer);
+    if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
+      assetsModel.fetchAssets(map.getExtent());
+    }
+  };
+
+  var hide = function() {
+    if (assetLayer.map && assetDirectionLayer.map) {
+      map.removeLayer(assetLayer);
+      map.removeLayer(assetDirectionLayer);
+    }
+    stopListening();
+  };
 
   return {
     show: show,
