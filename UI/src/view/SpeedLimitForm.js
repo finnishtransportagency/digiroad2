@@ -14,7 +14,11 @@
                  '<select class="form-control" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
              '</div>' +
-           '</div>';
+           '</div>' +
+           '<footer class="form-controls" style="display: none">' +
+             '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+             '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+           '</footer>';
   };
 
   var bindEvents = function () {
