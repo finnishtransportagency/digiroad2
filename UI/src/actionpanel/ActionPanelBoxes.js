@@ -199,7 +199,7 @@
       elements.expanded.find('button.edit-mode-btn').click(function() {
         elements.expanded.hide();
         elements.editMode.show();
-        eventbus.trigger('application:readOnly', false);
+        applicationModel.setReadOnly(false);
       });
 
       elements.editMode.find('button.read-only-btn').click(function() {
@@ -210,7 +210,7 @@
         elements.expanded.show();
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');
-        eventbus.trigger('application:readOnly', true);
+        applicationModel.setReadOnly(true);
       });
 
       actionButtons.on('click', function() {
@@ -284,7 +284,7 @@
           elements.editMode.hide();
           elements.collapsed.show();
         } else {
-            eventbus.trigger('application:readOnly', true);
+          applicationModel.setReadOnly(true);
         }
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');
