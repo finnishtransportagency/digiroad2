@@ -19,5 +19,10 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     }
   }
 
-  def calculateSpeedLimitEndPoints(linkEndPoints: List[(Double, Double)]): List[(Double, Double)] = linkEndPoints
+  def calculateSpeedLimitEndPoints(linkEndPoints: List[Point]): List[Point] = {
+    if (linkEndPoints.length == 2) linkEndPoints
+    else {
+      linkEndPoints
+    }
+  }
 }
