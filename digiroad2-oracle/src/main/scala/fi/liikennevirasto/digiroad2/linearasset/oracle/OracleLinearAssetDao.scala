@@ -53,7 +53,7 @@ object OracleLinearAssetDao {
         join LRM_POSITION pos on al.position_id = pos.id
         join ROAD_LINK rl on pos.road_link_id = rl.id
         where a.asset_type_id = 20 and a.id = $id
-        group by a.id
+        group by a.id, rl.id
         """.as[(Long, Array[Byte])].list
     speedLimits.map { case (id, pos) =>
       val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
