@@ -7,8 +7,8 @@ case class Point(x: Double, y: Double) {
     Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
 }
 
-case class SpeedLimit(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point])
+case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point])
 
 trait LinearAssetProvider {
-  def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimit]
+  def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink]
 }
