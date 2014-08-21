@@ -23,6 +23,9 @@
       '  <div class="panel-section panel-legend speed-limit-legend">',
             speedLimitLegendTemplate,
       '  </div>',
+      '  <div class="panel-section">',
+      '    <button class="action-mode-btn edit-mode-btn btn btn-primary btn-block" style="display: none;">Siirry muokkaustilaan</button>',
+      '  </div>',
       '</div>'].join('');
 
     var elements = {
@@ -48,6 +51,11 @@
           elements.collapsed.show();
         }
       }, this);
+      eventbus.on('roles:fetched', function(roles) {
+        if (_.contains(roles, 'operator')) {
+          elements.expanded.find('.action-mode-btn').show();
+        }
+      });
     };
 
     bindDOMEventHandlers();
