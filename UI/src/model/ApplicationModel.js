@@ -4,8 +4,10 @@
     var selectedLayer = 'asset';
     var readOnly = true;
     var setReadOnly = function(newState) {
-      readOnly = newState;
-      eventbus.trigger('application:readOnly', newState);
+      if (readOnly !== newState) {
+        readOnly = newState;
+        eventbus.trigger('application:readOnly', newState);
+      }
     };
     return {
       moveMap: function(zoom, bbox) {
