@@ -283,8 +283,6 @@
           elements.expanded.hide();
           elements.editMode.hide();
           elements.collapsed.show();
-        } else {
-          applicationModel.setReadOnly(true);
         }
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');
