@@ -25,10 +25,10 @@
       '  </div>',
       '</div>'].join('');
 
-    var buttonTemplate = function(editModeActive) {
+    var buttonTemplate = function(readOnly) {
       var editButton = '<button class="action-mode-btn edit-mode-btn btn btn-primary btn-block">Siirry muokkaustilaan</button>';
       var viewButton = '<button class="action-mode-btn read-only-btn btn btn-secondary btn-block">Siirry katselutilaan</button>';
-      return '<div class="panel-section panel-toggle-edit-mode">' + (editModeActive ? viewButton : editButton) + '</div>';
+      return '<div class="panel-section panel-toggle-edit-mode">' + (readOnly ? editButton : viewButton) + '</div>';
     };
 
     var elements = {
@@ -45,12 +45,8 @@
         elements.expanded.show();
         applicationModel.selectLayer('speedLimit');
       });
-      elements.expanded.on('click', '.edit-mode-btn', function() {
-        elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate(true));
-      });
-      elements.expanded.on('click', '.read-only-btn', function() {
-        elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate(false));
-      });
+      elements.expanded.on('click', '.edit-mode-btn', function() { applicationModel.setReadOnly(false); });
+      elements.expanded.on('click', '.read-only-btn', function() { applicationModel.setReadOnly(true); });
     };
 
     var bindExternalEventHandlers = function() {
@@ -62,8 +58,12 @@
       }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator')) {
-          elements.expanded.append(buttonTemplate(false));
+          elements.expanded.append(buttonTemplate(true));
         }
+      });
+      eventbus.on('application:readOnly', function(readOnly) {
+        elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate(readOnly));
+        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
       });
     };
 
