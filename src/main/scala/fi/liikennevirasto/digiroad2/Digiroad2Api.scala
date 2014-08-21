@@ -229,4 +229,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
+
+  get("/linearassets/:segmentId") {
+    val segmentId = params("segmentId")
+    linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
+  }
 }

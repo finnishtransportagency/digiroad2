@@ -44,4 +44,22 @@ object OracleLinearAssetDao {
       }.toSeq)
     }
   }
+
+  def getSpeedLimits(id: Long): Seq[(Long, Seq[(Double, Double)])] = {
+    val speedLimits = sql"""
+      select a.id, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        join ROAD_LINK rl on pos.road_link_id = rl.id
+        where a.asset_type_id = 20 and a.id = $id
+        group by a.id
+        """.as[(Long, Array[Byte])].list
+    speedLimits.map { case (id, pos) =>
+      val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
+      (id, points.map { pointArray =>
+        (pointArray(0), pointArray(1))
+      }.toSeq)
+    }
+  }
 }

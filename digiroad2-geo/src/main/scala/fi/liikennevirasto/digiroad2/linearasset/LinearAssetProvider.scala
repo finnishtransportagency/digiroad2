@@ -8,7 +8,9 @@ case class Point(x: Double, y: Double) {
 }
 
 case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point])
+case class SpeedLimit(id: Long, endpoints: Set[Point])
 
 trait LinearAssetProvider {
   def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink]
+  def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
 }
