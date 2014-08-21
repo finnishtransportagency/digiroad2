@@ -18,4 +18,6 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
       OracleLinearAssetDao.getSpeedLimits(bounds).map(toSpeedLimit)
     }
   }
+
+  def calculateSpeedLimitEndPoints(linkEndPoints: List[(Double, Double)]): List[(Double, Double)] = linkEndPoints
 }
