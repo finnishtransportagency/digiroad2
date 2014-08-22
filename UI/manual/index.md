@@ -91,7 +91,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman tietolajit-paletista (1).
 
-Muokkaustilan saa aktivoitua klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
+Muokkaustilan saa aktivoitua klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
 ![Katselutila](k3.jpg)
 
@@ -226,6 +226,18 @@ _Muokkaustilaan p&auml;&auml;see klikkaamalla "Siirry muokkaustilaan"-painiketta
 
 _Muokkaustilasta p&auml;&auml;see pois klikkaamalla "Siirry katselutilaan" -painiketta (11)._
 
+Muokkaustilassa tietolajeihin tehdyt muutokset tallentuvat painamalla ominaisuustieton&auml;kym&auml;ss&auml; olevaa Tallenna-nappia (15). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika. Tehdyt muutokset peruuntuvat painamalla Peruuta-nappia (16). Tallenna- ja Peruuta -napit ovat disabloituja, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
+
+Jotta tietolajeja voi muokata, t&auml;ytyy kartan mittakaavan olla 1:20 000 tai tarkempi (9). Ep&auml;tarkemmilla zoomitasoilla sovellus antaa ilmoituksen:"Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita."
+
+![Tietolajin ominaisuustietojen muokkaus.](k25.JPG)
+
+_Tietolajin ominaisuustietojen muokkaus._
+
+![Muutos-dialogi.](k21.JPG)
+
+_Muutos-dialogi._
+
 5.1 Joukkoliikenteen pys&auml;kit
 ----------------------------
 
@@ -233,21 +245,13 @@ Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; o
 
 5.1.1 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus
 --------------------------------------------------------
-Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (12). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. Pys&auml;kki&auml; valittaessa kartan mittakaavatason t&auml;ytyy olla 1:20 000 tai tarkempi, jotta pys&auml;kin ominaisuustietojen muokkaaminen on mahdollista (9). Sovellus ilmoittaa, kun mittakaavataso on liian ep&auml;tarkka pys&auml;kkien muokkaamista varten.
+Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (12). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta kuplasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). 
 
-P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta kuplasta.
-
-Muokkaustilassa ruudun oikeassa alareunassa olevat Tallenna ja Peruuta napit ovat disabloituja, kunnes pys&auml;kin tietoja on muokannut. Tehdyt muutokset (sek&auml; pys&auml;kin ominaisuustietojen ett&auml; sijainnin) tallentuvat painamalla "Tallenna"-painiketta (15). Muutosten tallentamisen j&auml;lkeen pys&auml;kille tallentuu tieto viimeisest&auml; muokkaajasta ja muokkaushetkest&auml;, ja tietojen muutoksesta l&auml;htee muutossanoma Valluun. Pys&auml;kin ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy kohdassa "Muokattu viimeksi" sovellukseen kirjautuneen k&auml;ytt&auml;j&auml;n k&auml;ytt&auml;j&auml;tunnus ja muokkausajankohdan p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika. Tehdyt muutokset voi perua painamalla "Peruuta"-painiketta (16), jolloin pys&auml;kki palautetaan muutoksia edelt&auml;neeseen tilaan. Sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). 
-
-Jos pys&auml;kin muutoksia ei peru tai tallenna ennen kuin siirtyy muokkaamaan muita pys&auml;kkej&auml; tai pois pys&auml;kkien muokkaustilasta, sovellus tulostaa muutos-dialogin. Muutos-dialogi kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa. Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
+Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
 
 ![Pys&auml;kin ominaisuustietojen muokkaus.](k12.jpg)
 
 _Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus._
-
-![Muutos-dialogi.](k21.JPG)
-
-_Muutos-dialogi._
 
 ####Pys&auml;kin vaikutussuunnan muuttaminen####
 
@@ -388,8 +392,15 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 
 Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus.
 
-5.2.1 Nopeusrajoituksen ominaisustietojen muokkaus
+5.2.1 Nopeusrajoituksen ominaisuustietojen muokkaus
 --------------------------------------------------
 
-Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
+Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n. Nopeusrajoituksen tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6).
+
+![Nopeusrajoituksen muokkaus.](k26.JPG)
+
+_Nopeusrajoituksen tietojen muokkaus._
+
+
+
 
