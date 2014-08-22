@@ -91,7 +91,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman tietolajit-paletista (1).
 
-Muokkaustilan saa aktivoitua klikkaamalla "Muokkaa"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
+Muokkaustilan saa aktivoitua klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
 ![Katselutila](k3.jpg)
 
@@ -194,7 +194,7 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 4.2 Nopeusrajoituksen tietojen katselu
 --------------------------------------
 
-Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in muut nopeusrajoitukset haalenevat, valittuna oleva nopeusrajoitus korostuu ja sen geometrian p&auml;&auml;tepisteet merkit&auml;&auml;n kartalle palloilla (4). Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Valitun geometrian p&auml;&auml;tepisteet merkit&auml;&auml;n kartalle palloilla (4). Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
 Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h), vaikutussuunta ja alku- ja loppupisteen koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Vaikutussuunnan arvot ovat: pohjoisesta etel&auml;&auml;n, etel&auml;st&auml; pohjoiseen, id&auml;st&auml; l&auml;nteen ja l&auml;nnest&auml; it&auml;&auml;n. Vaikutussuunta lasketaan nopeusrajoituksen alku- ja loppupisteen v&auml;lisen janan kulmasta. Pohjoinen on nolla astetta ja koko kierros 360 astetta. Arvot m&auml;&auml;r&auml;ytyv&auml;t kulman mukaan seuraavasti:
 
@@ -386,4 +386,10 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 5.2 Nopeusrajoitukset
 ---------------------
 
+Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus.
+
+5.2.1 Nopeusrajoituksen ominaisustietojen muokkaus
+--------------------------------------------------
+
+Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
 
