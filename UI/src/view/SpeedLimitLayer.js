@@ -161,9 +161,6 @@ window.SpeedLimitLayer = function(map, backend) {
         return false;
       }
       selectedSpeedLimit.open(getKey(feature.attributes));
-      vectorLayer.styleMap = selectionStyle;
-      highlightSpeedLimitFeatures(feature);
-      vectorLayer.redraw();
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
@@ -206,6 +203,13 @@ window.SpeedLimitLayer = function(map, backend) {
     eventListener.stopListening(eventbus);
     eventListener.running = false;
   };
+
+  eventbus.on('speedLimit:selected', function(speedLimit) {
+    var feature = _.find(vectorLayer.features, function(x) { return x.attributes.id === speedLimit.id; });
+    vectorLayer.styleMap = selectionStyle;
+    highlightSpeedLimitFeatures(feature);
+    vectorLayer.redraw();
+  });
 
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
