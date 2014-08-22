@@ -1,4 +1,4 @@
-window.AssetLayer = function(map, roadLayer) {
+window.AssetLayer = function(map, roadCollection) {
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var readOnly = true;
@@ -333,8 +333,7 @@ window.AssetLayer = function(map, roadLayer) {
   var createNewAsset = function(lonlat) {
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
-    var features = roadLayer.features;
-    var nearestLine = geometrycalculator.findNearestLine(features, selectedLon, selectedLat);
+    var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), selectedLon, selectedLat);
     var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
@@ -420,7 +419,7 @@ window.AssetLayer = function(map, roadLayer) {
     if (selectedAsset.massTransitStop.getMarker()) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
-      var nearestLine = geometrycalculator.findNearestLine(roadLayer.features, lonlat.lon, lonlat.lat);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), lonlat.lon, lonlat.lat);
       eventbus.trigger('asset:moving', nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;

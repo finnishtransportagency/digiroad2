@@ -124,7 +124,7 @@ var RoadStyles = function() {
       map.addLayer(roadLayer);
 
       var layers = {
-        asset: new AssetLayer(map, roadLayer),
+        asset: new AssetLayer(map, roadCollection),
         speedLimit: new SpeedLimitLayer(map, backend)
       };
       map.addLayer(centerMarkerLayer);

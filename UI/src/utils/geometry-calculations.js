@@ -26,13 +26,13 @@
     var fromFeatureVectorToLine = function(vector) {
       var temp = {};
       var min_distance = 100000000.0;
-      for (var i = 0; i < vector.geometry.components.length - 1; i++) {
-        var start_point = vector.geometry.components[i];
-        var end_point = vector.geometry.components[i + 1];
+      for (var i = 0; i < vector.points.length - 1; i++) {
+        var start_point = vector.points[i];
+        var end_point = vector.points[i + 1];
         var point_distance = calculatedistance({ start: start_point, end: end_point });
         if (point_distance < min_distance) {
           min_distance = point_distance;
-          temp = { id: vector.id, roadLinkId: vector.attributes.roadLinkId, start: start_point, end: end_point, distance: point_distance };
+          temp = { id: vector.roadLinkId, roadLinkId: vector.roadLinkId, start: start_point, end: end_point, distance: point_distance };
         }
       }
       return temp;
