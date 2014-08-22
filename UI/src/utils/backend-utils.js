@@ -184,6 +184,13 @@
       return self;
     };
 
+    this.withSpeedLimitData = function(speedLimitData) {
+      self.getSpeedLimit = function(id, callback) {
+        callback(speedLimitData);
+      };
+      return self;
+    };
+
     this.withPassThroughAssetCreation = function() {
       self.createAsset = function(data) {
         eventbus.trigger('asset:created', data);
