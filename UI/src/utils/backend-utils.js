@@ -38,6 +38,12 @@
       });
     }, 1000);
 
+    this.getSpeedLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/linearassets/' + id, function(speedLimit) {
+        callback(speedLimit);
+      });
+    }, 1000);
+
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);
