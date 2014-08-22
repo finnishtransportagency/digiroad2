@@ -18,10 +18,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     element.dispatchEvent(event);
   };
 
-  var endPointFeatures = function(features) {
-    return _.filter(features, function(x) { return x.attributes.type === 'endpoint'; });
-  };
-
   describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
@@ -38,13 +34,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
-      });
-      it('shows speed limit end point markers at both ends of one link speed limit segment', function() {
-        var endPoints = endPointFeatures(testHelpers.getSpeedLimitFeatures(openLayersMap));
-        var endPointCoordinates = _.map(_.pluck(endPoints, 'geometry'), function(geometry) { return {x: geometry.x, y: geometry.y}; });
-        expect(endPointCoordinates).to.have.length(2);
-        expect(endPointCoordinates[0]).to.deep.equal(speedLimit.points[0]);
-        expect(endPointCoordinates[1]).to.deep.equal(speedLimit.points[1]);
       });
 
       describe('and zooming in', function() {
