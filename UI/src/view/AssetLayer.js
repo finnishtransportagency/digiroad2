@@ -1,7 +1,6 @@
 window.AssetLayer = function(map, roadCollection) {
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
-  var readOnly = true;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
   var assetLayer = new OpenLayers.Layer.Boxes('asset');
 
@@ -507,7 +506,7 @@ window.AssetLayer = function(map, roadCollection) {
   }
 
   var handleMouseMoved = function(event) {
-    if (readOnly || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
+    if (applicationModel.isReadOnly() || !selectedAsset || !zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       return;
     }
     if (clickTimestamp && (new Date().getTime() - clickTimestamp) >= applicationModel.assetDragDelay &&
@@ -592,9 +591,6 @@ window.AssetLayer = function(map, roadCollection) {
     eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed', cancelCreate);
     eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
-    eventListener.listenTo(eventbus, 'application:readOnly', function(value) {
-      readOnly = value;
-    });
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
         var groupedAssets = assetGrouping.groupByDistance(assets, map.getZoom());
