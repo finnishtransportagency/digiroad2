@@ -87,17 +87,23 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
-  xdescribe('when loading application with speed limits', function() {
+  describe('when loading application with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) { return link.id === speedLimitId; });
+    var speedLimitConstructor = function(id) {
+      return {
+        id: id,
+        endpoints: [speedLimits[0].points[0], _.last(speedLimits[1].points)]
+      };
+    };
 
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         $('.speed-limits').click();
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits));
+      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits).withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and selecting speed limit that spans over multiple links', function() {
