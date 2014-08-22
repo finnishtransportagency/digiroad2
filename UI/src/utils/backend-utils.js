@@ -31,6 +31,12 @@
       });
     }, 1000);
 
+    this.getSpeedLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/linearassets/' + id, function(speedLimit) {
+        callback(speedLimit);
+      });
+    }, 1000);
+
     this.getRoadLinks = _.throttle(function (boundingBox) {
       $.getJSON('api/roadlinks?bbox=' + boundingBox, function (roadLinks) {
         eventbus.trigger('roadLinks:fetched', roadLinks);

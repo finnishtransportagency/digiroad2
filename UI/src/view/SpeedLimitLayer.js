@@ -21,7 +21,7 @@ var SpeedLimitsCollection = function(backend) {
   };
 };
 
-var SelectedSpeedLimit = function(collection) {
+var SelectedSpeedLimit = function(collection, backend) {
   var current = null;
 
   this.open = function(id) {
@@ -30,7 +30,9 @@ var SelectedSpeedLimit = function(collection) {
     }
     current = collection.get(id);
     current.isSelected = true;
-    eventbus.trigger('speedLimit:selected', current);
+    backend.getSpeedLimit(current.id, function(speedLimit) {
+      eventbus.trigger('speedLimit:selected', _.merge({}, current, speedLimit));
+    });
   };
 
   this.close = function() {
@@ -57,7 +59,7 @@ var SelectedSpeedLimit = function(collection) {
 window.SpeedLimitLayer = function(map, backend) {
   var eventListener = _.extend({running: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
-  var selectedSpeedLimit = new SelectedSpeedLimit(collection);
+  var selectedSpeedLimit = new SelectedSpeedLimit(collection, backend);
   var uiState = { zoomLevel: 9 };
 
   var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
@@ -209,17 +211,13 @@ window.SpeedLimitLayer = function(map, backend) {
   };
 
   eventbus.on('speedLimit:selected', function(speedLimit) {
-    var getStartAndEndPoint = function(points) {
-      return [_.first(points), _.last(points)];
-    };
-
     var feature = _.find(vectorLayer.features, function(x) { return x.attributes.id === speedLimit.id; });
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
     if (_.isArray(selectionFeatures)) {
       vectorLayer.removeFeatures(selectionFeatures);
     }
-    selectionFeatures = createSelectionEndPoints(getStartAndEndPoint(speedLimit.points));
+    selectionFeatures = createSelectionEndPoints(speedLimit.endpoints);
     vectorLayer.addFeatures(selectionFeatures);
     vectorLayer.redraw();
   });
