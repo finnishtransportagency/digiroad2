@@ -12,7 +12,6 @@ require.config({
     ConfigurationTestData:            '../test_data/ConfigurationTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
     SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
-    SpeedLimitTestData:               '../test_data/SpeedLimitTestData',
     AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
   },
   shim: {
@@ -26,7 +25,6 @@ require.config({
     'ConfigurationTestData': { exports: 'ConfigurationTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
     'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
-    'SpeedLimitTestData': { exports: 'SpeedLimitTestData' },
     'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
   },
   waitSeconds: 10
