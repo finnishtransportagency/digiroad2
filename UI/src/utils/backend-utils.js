@@ -31,12 +31,6 @@
       });
     }, 1000);
 
-    this.getRoadLinks = _.throttle(function (boundingBox) {
-      $.getJSON('api/roadlinks?bbox=' + boundingBox, function (roadLinks) {
-        eventbus.trigger('roadLinks:fetched', roadLinks);
-      });
-    }, 1000);
-
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);

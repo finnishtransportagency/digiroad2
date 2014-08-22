@@ -20,7 +20,7 @@ var RoadStyles = function() {
 };
 
 (function(root) {
-  root.MapView = function(map) {
+  root.MapView = function(map, roadCollection) {
     var roadLayer;
     var selectControl;
     var roadTypeSelected;
@@ -79,7 +79,7 @@ var RoadStyles = function() {
     var mapMovedHandler = function(mapState) {
       if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
         changeRoadsWidthByZoomLevel();
-        backend.getRoadLinks(mapState.bbox);
+        roadCollection.fetch(mapState.bbox);
       } else {
         roadLayer.removeAllFeatures();
       }
