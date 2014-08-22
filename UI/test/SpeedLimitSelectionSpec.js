@@ -86,4 +86,33 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
     });
   });
+
+  xdescribe('when loading application with speed limits', function() {
+    var openLayersMap;
+    var speedLimitId = 13;
+    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) { return link.id === speedLimitId; });
+
+    before(function(done) {
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        $('.speed-limits').click();
+        done();
+      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits));
+    });
+
+    describe('and selecting speed limit that spans over multiple links', function() {
+      before(function() {
+        selectSpeedLimit(openLayersMap, speedLimitId);
+      });
+      it('shows speed limit end point markers at both ends of speed limit segment that spans over multiple links', function() {
+        var endPoints = endPointFeatures(testHelpers.getSpeedLimitFeatures(openLayersMap));
+        var endPointCoordinates = _.map(_.pluck(endPoints, 'geometry'), function(geometry) {
+          return {x: geometry.x, y: geometry.y};
+        });
+        expect(endPointCoordinates).to.have.length(2);
+        expect(endPointCoordinates[0]).to.deep.equal(speedLimits[0].points[0]);
+        expect(endPointCoordinates[1]).to.deep.equal(_.last(speedLimits[1].points));
+      });
+    });
+  });
 });
