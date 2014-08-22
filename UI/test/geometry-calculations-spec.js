@@ -48,21 +48,13 @@ define(['chai', 'geometrycalculator'], function(chai, geometrycalculator) {
     describe('Geometry calculations: nearest line', function(){
         var fut = geometrycalculator.findNearestLine;
         var set1 = {
-            id: 1,
-            attributes: {
-                roadLinkId: "roadLink1"
-            },
-            geometry: {
-                components: [{ x: 0.0, y: 0.0 }, { x: 1.0, y: 1.0 },
-                             { x: 2.0, y: 1.0 }, { x: 2.0, y: 2.0 } ] } };
+            roadLinkId: 'roadLink1',
+            points: [{ x: 0.0, y: 0.0 }, { x: 1.0, y: 1.0 },
+                     { x: 2.0, y: 1.0 }, { x: 2.0, y: 2.0 } ] };
         var set2 = {
-            id: 2,
-            attributes: {
-                roadLinkId: "roadLink2"
-            },
-            geometry: {
-                components: [{ x: 0.0, y: 1.0 }, { x: 1.0, y: 2.0 },
-                             { x: 2.0, y: 2.0 }, { x: 2.0, y: 3.0 } ] } };
+            roadLinkId: 'roadLink2',
+            points: [{ x: 0.0, y: 1.0 }, { x: 1.0, y: 2.0 },
+                     { x: 2.0, y: 2.0 }, { x: 2.0, y: 3.0 } ] };
 
         it('perf', function(){
             var tmp = [];
@@ -75,22 +67,22 @@ define(['chai', 'geometrycalculator'], function(chai, geometrycalculator) {
         });
 
         it('should return correct line if in first set, first line', function(){
-            assert.deepEqual({ id: 1, roadLinkId: "roadLink1", start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
+            assert.deepEqual({ id: 'roadLink1', roadLinkId: "roadLink1", start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
                                fut([set1, set2], 0.5, 0.5));
         });
 
         it('should return correct line if in first set, not first line ', function(){
-            assert.deepEqual({ id: 1, roadLinkId: "roadLink1", start: { x: 2, y: 1 }, end: { x: 2, y: 2 } },
+            assert.deepEqual({ id: 'roadLink1', roadLinkId: "roadLink1", start: { x: 2, y: 1 }, end: { x: 2, y: 2 } },
                                fut([set1, set2], 1.8, 1.5));
         });
 
         it('should return correct line if not in first set, first line', function(){
-            assert.deepEqual({ id: 2, roadLinkId: "roadLink2", start: { x: 0, y: 1 }, end: { x: 1, y: 2 } },
+            assert.deepEqual({ id: 'roadLink2', roadLinkId: "roadLink2", start: { x: 0, y: 1 }, end: { x: 1, y: 2 } },
                 fut([set1, set2], 0, 2.0));
         });
 
         it('should return correct line if not in first set, not first line ', function(){
-            assert.deepEqual({ id: 2, roadLinkId: "roadLink2", start: { x: 2, y: 2 }, end: { x: 2, y: 3 } },
+            assert.deepEqual({ id: 'roadLink2', roadLinkId: "roadLink2", start: { x: 2, y: 2 }, end: { x: 2, y: 3 } },
                 fut([set1, set2], 1.8, 2.5));
         });
     });
