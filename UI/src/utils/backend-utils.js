@@ -184,9 +184,9 @@
       return self;
     };
 
-    this.withSpeedLimitData = function(speedLimitData) {
+    this.withSpeedLimitConstructor = function(speedLimitConstructor) {
       self.getSpeedLimit = function(id, callback) {
-        callback(speedLimitData);
+        callback(speedLimitConstructor(id));
       };
       return self;
     };

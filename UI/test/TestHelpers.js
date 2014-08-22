@@ -6,7 +6,6 @@ define(['AssetsTestData',
         'ConfigurationTestData',
         'AssetPropertyNamesTestData',
         'SpeedLimitsTestData',
-        'SpeedLimitTestData',
         'AssetTypePropertiesTestData'],
        function(AssetsTestData,
                 RoadLinkTestData,
@@ -16,7 +15,6 @@ define(['AssetsTestData',
                 ConfigurationTestData,
                 AssetPropertyNamesTestData,
                 SpeedLimitsTestData,
-                SpeedLimitTestData,
                 AssetTypePropertiesTestData) {
 
   var unbindEvents = function() {
@@ -55,6 +53,14 @@ define(['AssetsTestData',
     return fakeBackend(AssetsTestData.generate(), {});
   };
 
+  var defaultSpeedLimitConstructor = function(id) {
+    var points = _.find(SpeedLimitsTestData.generate(), function(x) { return x.id === id; }).points;
+    return {
+      id: id,
+      endpoints: [_.first(points), _.last(points)]
+    };
+  };
+
   var fakeBackend = function(assetsData, assetData, zoomLevel) {
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
@@ -65,7 +71,7 @@ define(['AssetsTestData',
       .withAssetsData(assetsData)
       .withAssetData(assetData)
       .withSpeedLimitsData(SpeedLimitsTestData.generate(2))
-      .withSpeedLimitData(SpeedLimitTestData.generate())
+      .withSpeedLimitConstructor(defaultSpeedLimitConstructor)
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
   };
