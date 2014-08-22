@@ -6,6 +6,7 @@ define(['AssetsTestData',
         'ConfigurationTestData',
         'AssetPropertyNamesTestData',
         'SpeedLimitsTestData',
+        'SpeedLimitTestData',
         'AssetTypePropertiesTestData'],
        function(AssetsTestData,
                 RoadLinkTestData,
@@ -15,6 +16,7 @@ define(['AssetsTestData',
                 ConfigurationTestData,
                 AssetPropertyNamesTestData,
                 SpeedLimitsTestData,
+                SpeedLimitTestData,
                 AssetTypePropertiesTestData) {
 
   var unbindEvents = function() {
@@ -63,6 +65,7 @@ define(['AssetsTestData',
       .withAssetsData(assetsData)
       .withAssetData(assetData)
       .withSpeedLimitsData(SpeedLimitsTestData.generate(2))
+      .withSpeedLimitData(SpeedLimitTestData.generate())
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
   };
