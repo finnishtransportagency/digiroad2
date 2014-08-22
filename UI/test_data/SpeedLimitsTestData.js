@@ -595,9 +595,9 @@
           ]
         },
         {
-          "id": 14,
-          "roadLinkId": 1,
-          "limit": 70,
+          "id": 13,
+          "roadLinkId": 2,
+          "limit": 60,
           "points": [
             {
               "x": 374748.721,
