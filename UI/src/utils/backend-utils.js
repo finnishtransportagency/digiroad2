@@ -14,6 +14,13 @@
       putAssetPropertyValue(assetId, propertyPublicId, data);
     };
 
+    this.getRoadLinks = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
+        callback(data);
+        eventbus.trigger('roadLinks:fetched', data);
+      });
+    }, 1000);
+
     this.getAssets = function (assetTypeId, boundingBox) {
       self.getAssetsWithCallback(assetTypeId, boundingBox, function (assets) {
         eventbus.trigger('assets:fetched', assets);
@@ -109,7 +116,8 @@
     };
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function () {
+      self.getRoadLinks = function (boundingBox, callback) {
+        callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched', roadLinkData);
       };
       return self;

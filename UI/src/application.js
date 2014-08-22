@@ -1,12 +1,11 @@
-var RoadCollection = function() {
+var RoadCollection = function(backend) {
   var roadLinks = [];
 
-  this.fetch = _.throttle(function(boundingBox) {
-    $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
+  this.fetch = function(boundingBox) {
+    backend.getRoadLinks(boundingBox, function(data) {
       roadLinks = data;
-      eventbus.trigger('roadLinks:fetched', data);
     });
-  }, 1000);
+  };
 
   this.getAll = function() {
     return roadLinks;
@@ -104,7 +103,7 @@ var RoadCollection = function() {
   var setupMap = function() {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
 
-    var roadCollection = new RoadCollection();
+    var roadCollection = new RoadCollection(backend);
     new MapView(map, roadCollection);
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
   };
