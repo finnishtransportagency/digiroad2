@@ -155,6 +155,7 @@ window.SpeedLimitLayer = function(map, backend) {
     });
   };
 
+  var selectionFeatures = [];
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: function(feature) {
       if (feature.attributes.type === 'endpoint') {
@@ -164,6 +165,9 @@ window.SpeedLimitLayer = function(map, backend) {
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
+         _.each(selectionFeatures, function(feature) {
+          feature.style = {display: 'none'};
+        });
         _.each(_.filter(vectorLayer.features, function(feature) {
           return feature.attributes.id === selectedSpeedLimit.getId();
         }), function(feature) {
@@ -205,9 +209,18 @@ window.SpeedLimitLayer = function(map, backend) {
   };
 
   eventbus.on('speedLimit:selected', function(speedLimit) {
+    var getStartAndEndPoint = function(points) {
+      return [_.first(points), _.last(points)];
+    };
+
     var feature = _.find(vectorLayer.features, function(x) { return x.attributes.id === speedLimit.id; });
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
+    if (_.isArray(selectionFeatures)) {
+      vectorLayer.removeFeatures(selectionFeatures);
+    }
+    selectionFeatures = createSelectionEndPoints(getStartAndEndPoint(speedLimit.points));
+    vectorLayer.addFeatures(selectionFeatures);
     vectorLayer.redraw();
   });
 
