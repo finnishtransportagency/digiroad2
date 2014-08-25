@@ -28,9 +28,5 @@
     this.getId = function() {
       return current.id;
     };
-
-    this.isLink = function(link) {
-      return link.id === current.id && link.roadLinkId === current.roadLinkId;
-    };
   };
 })(this);

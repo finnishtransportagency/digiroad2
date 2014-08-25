@@ -22,10 +22,10 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var endpointStyleRule = _.partial(createZoomAndTypeDependentRule, 'endpoint');
   var endpointStyleRules = [
-    endpointStyleRule(9, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 3 }),
-    endpointStyleRule(10, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
-    endpointStyleRule(11, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
-    endpointStyleRule(12, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
+    endpointStyleRule(9, { graphicZIndex: 1, graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 3 }),
+    endpointStyleRule(10, { graphicZIndex: 1, graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
+    endpointStyleRule(11, { graphicZIndex: 1, graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
+    endpointStyleRule(12, { graphicZIndex: 1, graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
   ];
 
   var speedLimitStyleLookup = {
@@ -61,11 +61,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15,
-    graphicOpacity: 0.3
+    graphicOpacity: 0.3,
+    graphicZIndex: 0
   }));
   var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.7,
-    graphicOpacity: 1.0
+    graphicOpacity: 1.0,
+    graphicZIndex: 0
   }));
   var selectionStyle = new OpenLayers.StyleMap({
     default: selectionDefaultStyle,
@@ -77,7 +79,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(endpointStyleRules);
 
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap, rendererOptions: {zIndexing: true} });
   vectorLayer.setOpacity(1);
 
   var createSelectionEndPoints = function(points) {
@@ -97,18 +99,19 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     });
   };
 
+  var speedLimitOnSelect = function(feature) {
+    if (feature.attributes.type === 'endpoint') {
+      return false;
+    }
+    vectorLayer.styleMap = selectionStyle;
+    highlightSpeedLimitFeatures(feature);
+    vectorLayer.redraw();
+    selectedSpeedLimit.openByLink(feature.attributes);
+  };
+
   var selectionFeatures = [];
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-    onSelect: function(feature) {
-      if (feature.attributes.type === 'endpoint') {
-        return false;
-      }
-      vectorLayer.styleMap = selectionStyle;
-      highlightSpeedLimitFeatures(feature);
-      vectorLayer.removeFeatures(selectionFeatures);
-      vectorLayer.redraw();
-      selectedSpeedLimit.openByLink(feature.attributes);
-    },
+    onSelect: speedLimitOnSelect,
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
          _.each(selectionFeatures, function(feature) {
@@ -155,6 +158,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   };
 
   eventbus.on('speedLimit:selected', function(speedLimit) {
+    vectorLayer.removeFeatures(selectionFeatures);
     selectionFeatures = createSelectionEndPoints(speedLimit.endpoints);
     vectorLayer.addFeatures(selectionFeatures);
   });
@@ -178,7 +182,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
     selectControl.deactivate();
-    vectorLayer.removeAllFeatures();
+    vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'other'));
     selectControl.activate();
 
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
@@ -186,10 +190,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     vectorLayer.addFeatures(limitSigns(speedLimitsWithType));
 
     if (selectedSpeedLimit.exists()) {
-      var selectedFeature = _.find(vectorLayer.features, function(feature) {
-        return selectedSpeedLimit.isLink(feature.attributes);
-      });
-      selectControl.select(selectedFeature);
+      selectControl.onSelect = function() {};
+      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+      if (feature) {
+        selectControl.select(feature);
+        highlightSpeedLimitFeatures(feature);
+      }
+      selectControl.onSelect = speedLimitOnSelect;
     }
   };
 
