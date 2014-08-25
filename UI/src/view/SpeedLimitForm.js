@@ -25,6 +25,7 @@
                formFieldTemplate("Y", firstPoint.y) +
                formFieldTemplate("Loppupiste X", lastPoint.x) +
                formFieldTemplate("Y", lastPoint.y) +
+               formFieldTemplate("Vaikutussuunta", convertSideCodeToValidityDirection(speedLimit.sideCode, firstPoint, lastPoint)) +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
@@ -33,6 +34,18 @@
            '</footer>';
   };
 
+  var convertSideCodeToValidityDirection = function(sideCode, firstPoint, lastPoint) {
+    if (sideCode === validitydirections.bothDirections) return "Molempiin suuntiin";
+
+    var angleThreshold = 20;
+    var angle = geometrycalculator.getLineDirectionDegAngle({start: firstPoint, end: lastPoint});
+    if (sideCode === validitydirections.oppositeDirection) angle = geometrycalculator.oppositeAngle(angle);
+
+    if (angle >= 90 - angleThreshold / 2 && angle < 90 + angleThreshold / 2) return "Lännestä itään";
+    if (angle >= 90 + angleThreshold / 2 && angle < 270 - angleThreshold / 2) return "Pohjoisesta etelään";
+    if (angle >= 270 - angleThreshold / 2 && angle < 270 + angleThreshold / 2) return "Idästä länteen";
+    return "Etelästä pohjoiseen";
+  };
 
   var bindEvents = function () {
     var toggleMode = function(readOnly) {
