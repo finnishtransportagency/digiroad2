@@ -35,6 +35,7 @@
           {},
           _.pick(property, 'publicId', 'propertyType'),
           {
+            required: property.required,
             values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
           });
       };

@@ -111,27 +111,39 @@
         }
       };
 
+      var createWrapper = function(property) {
+        var wrapper = createFormRowDiv();
+        wrapper.append(createLabelElement(property));
+        return wrapper;
+      };
+
+      var createFormRowDiv = function() {
+        return $('<div />').addClass('form-group');
+      };
+
+      var createLabelElement = function(property) {
+        var label = $('<label />').addClass('control-label').text(property.localizedName);
+        if (property.required) {
+          label.addClass('required');
+        }
+        return label;
+      };
+
       var readOnlyHandler = function(property){
-        var outer = $('<div />').addClass('form-group');
+        var outer = createFormRowDiv();
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
         // TODO: use cleaner html
         if (property.propertyType === 'read_only_text') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
-          outer.append($('<label />').addClass('control-label').text(property.localizedName));
+          outer.append(createLabelElement(property));
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
         }
         return outer;
       };
 
       var textHandler = function(property){
-        return createTextWrapper(property).append(createTextElement(readOnly, property));
-      };
-
-      var createTextWrapper = function(property) {
-        var wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createTextElement(readOnly, property));
       };
 
       var createTextElement = function(readOnly, property) {
@@ -163,13 +175,7 @@
       };
 
       var singleChoiceHandler = function(property, choices){
-        return createSingleChoiceWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
-      };
-
-      var createSingleChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
       };
 
       var createSingleChoiceElement = function(readOnly, property, choices) {
@@ -209,20 +215,12 @@
 
       var directionChoiceHandler = function(property){
         if (!readOnly) {
-          return createDirectionChoiceWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
         }
       };
 
-      var createDirectionChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
-      };
-
       var createDirectionChoiceElement = function(property) {
-        var element;
-
-        element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+        var element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
           selectedAssetModel.switchDirection();
           streetViewHandler.update();
         });
@@ -235,18 +233,11 @@
       };
 
       var dateHandler = function(property){
-        return createDateWrapper(property).append(createDateElement(readOnly, property));
-      };
-
-      var createDateWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createDateElement(readOnly, property));
       };
 
       var createDateElement = function(readOnly, property) {
         var element;
-        var wrapper;
 
         if (readOnly) {
           element = $('<p />').addClass('form-control-static');
@@ -266,7 +257,7 @@
             selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
           }, 500));
 
-          if(property.values[0]) {
+          if (property.values[0]) {
             element.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
           }
         }
@@ -274,20 +265,12 @@
         return element;
       };
 
-
       var multiChoiceHandler = function(property, choices){
-        return createMultiChoiceWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
-      };
-
-      var createMultiChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
-        var wrapper;
         var currentValue = _.cloneDeep(property);
         var enumValues = _.chain(choices)
           .filter(function(choice){
