@@ -1,19 +1,44 @@
 (function(root) {
 
+  var ValidationErrorLabel = function() {
+    var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
+
+    var updateVisibility = function() {
+      if (selectedAssetModel.isDirty() && selectedAssetModel.requiredPropertiesMissing()) {
+        element.show();
+      } else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
       selectedAssetModel.save();
     });
+    var updateStatus = function() {
+      if (selectedAssetModel.isDirty() && !selectedAssetModel.requiredPropertiesMissing()) {
+        element.prop('disabled', false);
+      } else {
+        element.prop('disabled', true);
+      }
+    };
 
-    element.prop('disabled', (!selectedAssetModel.isDirty() || selectedAssetModel.requiredPropertiesMissing()));
+    updateStatus();
 
     eventbus.on('asset:moved assetPropertyValue:changed', function() {
-      if (selectedAssetModel.requiredPropertiesMissing()) {
-        element.prop('disabled', true);
-      } else {
-        element.prop('disabled', false);
-      }
+      updateStatus();
     }, this);
 
     return {
@@ -58,9 +83,10 @@
 
         var saveBtn = new SaveButton();
         var cancelBtn = new CancelButton();
+        var validationErrorLabel = new ValidationErrorLabel();
 
         // TODO: cleaner html
-        featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn.element).append(cancelBtn.element));
+        featureAttributesElement.append($('<footer />').addClass('form-controls').append(validationErrorLabel.element).append(saveBtn.element).append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
