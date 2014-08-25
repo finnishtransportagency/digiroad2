@@ -48,7 +48,7 @@ var RoadCollection = function(backend) {
     $(window).on('hashchange', hashChangeHandler);
   };
 
-  var bindEvents = function() {
+  var bindEvents = function(backend) {
     eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
@@ -81,18 +81,18 @@ var RoadCollection = function(backend) {
 
     eventbus.on('applicationSetup:fetched', function(setup) {
       appSetup = setup;
-      startApplication();
+      startApplication(backend);
     });
 
     eventbus.on('configuration:fetched', function(config) {
       appConfig = config;
-      startApplication();
+      startApplication(backend);
     });
 
     eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
       localizedStrings = assetPropertyNames;
       window.localizedStrings = assetPropertyNames;
-      startApplication();
+      startApplication(backend);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });
@@ -100,7 +100,7 @@ var RoadCollection = function(backend) {
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
-  var setupMap = function() {
+  var setupMap = function(backend) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
 
     var roadCollection = new RoadCollection(backend);
@@ -113,7 +113,7 @@ var RoadCollection = function(backend) {
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
   };
 
-  var startApplication = function() {
+  var startApplication = function(backend) {
     // check that both setup and config are loaded 
     // before actually starting the application
     if (appSetup && appConfig && localizedStrings) {
@@ -121,15 +121,15 @@ var RoadCollection = function(backend) {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function() {
-        setupMap();
+        setupMap(backend);
         eventbus.trigger('application:initialized');
       });
     }
   };
 
   application.start = function(customBackend) {
-    bindEvents();
     window.backend = customBackend || new Backend();
+    bindEvents(backend);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel();
