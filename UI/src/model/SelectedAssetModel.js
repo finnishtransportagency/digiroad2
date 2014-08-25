@@ -152,7 +152,10 @@
       };
 
       return _.some(currentAsset.payload.properties, function(property) {
-        return isRequiredProperty(property.publicId) && (_.isEmpty(property.values) || _.some(property.values, function(value) { return value.propertyValue == 99; }));
+        return isRequiredProperty(property.publicId) && (_.isEmpty(property.values) || 
+                _.some(property.values, function(value) { return value.propertyValue == 99; }) ||
+                  _.all(property.values, function(value) { return value.propertyValue.length < 1; } )
+          );
       });
     };
 
