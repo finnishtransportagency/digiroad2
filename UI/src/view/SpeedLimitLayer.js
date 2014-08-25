@@ -214,9 +214,7 @@ window.SpeedLimitLayer = function(map, backend) {
     var feature = _.find(vectorLayer.features, function(x) { return x.attributes.id === speedLimit.id; });
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
-    if (_.isArray(selectionFeatures)) {
-      vectorLayer.removeFeatures(selectionFeatures);
-    }
+    vectorLayer.removeFeatures(selectionFeatures);
     selectionFeatures = createSelectionEndPoints(speedLimit.endpoints);
     vectorLayer.addFeatures(selectionFeatures);
     vectorLayer.redraw();
