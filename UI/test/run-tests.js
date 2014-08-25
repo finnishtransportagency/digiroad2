@@ -8,6 +8,8 @@ require.config({
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
         'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
+        'SpeedLimitsCollection':    '../src/model/SpeedLimitsCollection',
+        'SelectedSpeedLimit':       '../src/model/SelectedSpeedLimit',
         'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoom-levels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
@@ -29,6 +31,12 @@ require.config({
         'SpeedLimitLayer': {
             exports: 'SpeedLimitLayer',
             deps: ['OpenLayers']
+        },
+        'SpeedLimitsCollection': {
+            exports: 'SpeedLimitsCollection'
+        },
+        'SelectedSpeedLimit': {
+            exports: 'SelectedSpeedLimit'
         },
         'geometrycalculator': {
             exports: 'geometrycalculator'

@@ -1,4 +1,4 @@
-define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer) {
+define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels'], function(chai, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit) {
   var assert = chai.assert;
   var lineStringFeatures = function(layer) {
     return _.filter(layer.vectorLayer.features, function(feature) {
@@ -10,11 +10,7 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
     describe('when moving map', function() {
       var layer;
       before(function() {
-        layer = new SpeedLimitLayer({
-          addControl: function(control) {
-            control.handlers.feature.activate = function() {};
-          }
-        }, {
+        var speedLimitsCollection = new SpeedLimitsCollection({
           getSpeedLimits: function() {
             eventbus.trigger('speedLimits:fetched', [
               {id: 1, points: [ {x: 0, y: 0} ]},
@@ -22,6 +18,12 @@ define(['chai', 'SpeedLimitLayer', 'zoomlevels'], function(chai, SpeedLimitLayer
             ]);
           }
         });
+        var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);
+        layer = new SpeedLimitLayer({
+          addControl: function(control) {
+            control.handlers.feature.activate = function() {};
+          }
+        }, speedLimitsCollection, selectedSpeedLimit);
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
       });

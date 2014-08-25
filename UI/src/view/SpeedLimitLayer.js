@@ -2,66 +2,8 @@ var getKey = function(speedLimit) {
   return speedLimit.id + '-' + speedLimit.roadLinkId;
 };
 
-var SpeedLimitsCollection = function(backend) {
-  var speedLimits = {};
-
-  this.fetch = function(boundingBox) {
-    backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-      var selectedSpeedLimit = _.pick(speedLimits, function(speedLimit) { return speedLimit.isSelected; });
-      speedLimits = _.merge(selectedSpeedLimit, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
-        acc[getKey(speedLimit)] = speedLimit;
-        return acc;
-      }, {}));
-      eventbus.trigger('speedLimits:fetched', speedLimits);
-    });
-  };
-
-  this.get = function(id, callback) {
-    backend.getSpeedLimit(speedLimits[id].id, function(speedLimit) {
-      callback(_.merge({}, speedLimits[id], speedLimit));
-    });
-  };
-};
-
-var SelectedSpeedLimit = function(collection) {
-  var current = null;
-
-  this.open = function(id) {
-    if (current) {
-      current.isSelected = false;
-    }
-    collection.get(id, function(speedLimit) {
-      current = speedLimit;
-      current.isSelected = true;
-      eventbus.trigger('speedLimit:selected', current);
-    });
-  };
-
-  this.close = function() {
-    if (current) {
-      current.isSelected = false;
-      current = null;
-      eventbus.trigger('speedLimit:unselected');
-    }
-  };
-
-  this.exists = function() {
-    return current !== null;
-  };
-
-  this.getKey = function() {
-    return getKey(current);
-  };
-
-  this.getId = function() {
-    return current.id;
-  };
-};
-
-window.SpeedLimitLayer = function(map, backend) {
+window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var eventListener = _.extend({running: false}, eventbus);
-  var collection = new SpeedLimitsCollection(backend);
-  var selectedSpeedLimit = new SelectedSpeedLimit(collection);
   var uiState = { zoomLevel: 9 };
 
   var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {

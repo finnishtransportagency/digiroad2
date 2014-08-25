@@ -48,7 +48,7 @@ var RoadCollection = function(backend) {
     $(window).on('hashchange', hashChangeHandler);
   };
 
-  var bindEvents = function(backend) {
+  var bindEvents = function(backend, models) {
     eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
@@ -81,18 +81,18 @@ var RoadCollection = function(backend) {
 
     eventbus.on('applicationSetup:fetched', function(setup) {
       appSetup = setup;
-      startApplication(backend);
+      startApplication(backend, models);
     });
 
     eventbus.on('configuration:fetched', function(config) {
       appConfig = config;
-      startApplication(backend);
+      startApplication(backend, models);
     });
 
     eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
       localizedStrings = assetPropertyNames;
       window.localizedStrings = assetPropertyNames;
-      startApplication(backend);
+      startApplication(backend, models);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });
@@ -100,20 +100,20 @@ var RoadCollection = function(backend) {
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
-  var setupMap = function(backend) {
+  var setupMap = function(backend, models) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
 
     var roadCollection = new RoadCollection(backend);
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, backend)
+      speedLimit: new SpeedLimitLayer(map, models.speedLimitsCollection, models.selectedSpeedLimit)
     };
     new MapView(map, layers);
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
   };
 
-  var startApplication = function(backend) {
+  var startApplication = function(backend, models) {
     // check that both setup and config are loaded 
     // before actually starting the application
     if (appSetup && appConfig && localizedStrings) {
@@ -121,7 +121,7 @@ var RoadCollection = function(backend) {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function() {
-        setupMap(backend);
+        setupMap(backend, models);
         eventbus.trigger('application:initialized');
       });
     }
@@ -129,7 +129,12 @@ var RoadCollection = function(backend) {
 
   application.start = function(customBackend) {
     var backend = customBackend || new Backend();
-    bindEvents(backend);
+    var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    var models = {
+      speedLimitsCollection: speedLimitsCollection,
+      selectedSpeedLimit: new SelectedSpeedLimit(speedLimitsCollection)
+    };
+    bindEvents(backend, models);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel();
