@@ -2,7 +2,11 @@
   root.MapView = function(map, roadCollection) {
     var isInitialized = false;
     var centerMarkerLayer;
-    var layers;
+    var layers = {
+      road: new RoadLayer(map, roadCollection),
+      asset: new AssetLayer(map, roadCollection),
+      speedLimit: new SpeedLimitLayer(map, backend)
+    };
 
     var showAssetZoomDialog = function() {
       var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
@@ -28,17 +32,9 @@
       centerMarkerLayer.addMarker(marker);
     };
 
-    var addLayersToMap = function() {
+    var addCenterMarkerLayerToMap = function(map) {
       centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
-
-      var layers = {
-        road: new RoadLayer(map, roadCollection),
-        asset: new AssetLayer(map, roadCollection),
-        speedLimit: new SpeedLimitLayer(map, backend)
-      };
       map.addLayer(centerMarkerLayer);
-
-      return layers;
     };
 
     eventbus.on('application:initialized', function() {
@@ -94,6 +90,6 @@
       applicationModel.moveMap(map.getZoom(), map.getExtent());
     });
 
-    layers = addLayersToMap();
+    addCenterMarkerLayerToMap(map);
   };
 })(this);
