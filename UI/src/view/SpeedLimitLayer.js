@@ -16,22 +16,24 @@ var SpeedLimitsCollection = function(backend) {
     });
   };
 
-  this.get = function(id) {
-    return speedLimits[id];
+  this.get = function(id, callback) {
+    backend.getSpeedLimit(speedLimits[id].id, function(speedLimit) {
+      callback(_.merge({}, speedLimits[id], speedLimit));
+    });
   };
 };
 
-var SelectedSpeedLimit = function(collection, backend) {
+var SelectedSpeedLimit = function(collection) {
   var current = null;
 
   this.open = function(id) {
     if (current) {
       current.isSelected = false;
     }
-    current = collection.get(id);
-    current.isSelected = true;
-    backend.getSpeedLimit(current.id, function(speedLimit) {
-      eventbus.trigger('speedLimit:selected', _.merge({}, current, speedLimit));
+    collection.get(id, function(speedLimit) {
+      current = speedLimit;
+      current.isSelected = true;
+      eventbus.trigger('speedLimit:selected', current);
     });
   };
 
@@ -59,7 +61,7 @@ var SelectedSpeedLimit = function(collection, backend) {
 window.SpeedLimitLayer = function(map, backend) {
   var eventListener = _.extend({running: false}, eventbus);
   var collection = new SpeedLimitsCollection(backend);
-  var selectedSpeedLimit = new SelectedSpeedLimit(collection, backend);
+  var selectedSpeedLimit = new SelectedSpeedLimit(collection);
   var uiState = { zoomLevel: 9 };
 
   var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
