@@ -29,12 +29,12 @@
       return current !== null;
     };
 
-    this.getKey = function() {
-      return getKey(current);
-    };
-
     this.getId = function() {
       return current.id;
+    };
+
+    this.isLink = function(link) {
+      return getKey(link) === getKey(current);
     };
   };
 })(this);

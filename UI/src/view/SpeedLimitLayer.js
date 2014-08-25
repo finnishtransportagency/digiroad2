@@ -190,7 +190,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
     if (selectedSpeedLimit.exists()) {
       var selectedFeature = _.find(vectorLayer.features, function(feature) {
-        return getKey(feature.attributes) === selectedSpeedLimit.getKey();
+        return selectedSpeedLimit.isLink(feature.attributes);
       });
       selectControl.select(selectedFeature);
     }
