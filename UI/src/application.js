@@ -128,7 +128,7 @@ var RoadCollection = function(backend) {
   };
 
   application.start = function(customBackend) {
-    window.backend = customBackend || new Backend();
+    var backend = customBackend || new Backend();
     bindEvents(backend);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
