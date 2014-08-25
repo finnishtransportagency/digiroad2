@@ -5,14 +5,26 @@
       var selected = limit === speedLimit.limit ? " selected" : "";
       return '<option value="' + limit + '"' + selected + '>' + limit + '</option>';
     });
+    var formFieldTemplate = function(key, value) {
+      return '<div class="form-group">' +
+               '<label class="control-label">' + key + '</label>' +
+               '<p class="form-control-static">' + value + '</p>' +
+             '</div>';
+    };
+    var firstPoint = _.first(speedLimit.endpoints);
+    var lastPoint = _.last(speedLimit.endpoints);
     return '<header>Segmentin ID: ' + speedLimit.id + '</header>' +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
-               '<div class="form-group">' +
+               '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
                  '<p class="form-control-static">' + speedLimit.limit + '</p>' +
                  '<select class="form-control" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
+               formFieldTemplate("Alkupiste X", firstPoint.x) +
+               formFieldTemplate("Y", firstPoint.y) +
+               formFieldTemplate("Loppupiste X", lastPoint.x) +
+               formFieldTemplate("Y", lastPoint.y) +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
@@ -21,10 +33,12 @@
            '</footer>';
   };
 
+
   var bindEvents = function () {
     var toggleMode = function(readOnly) {
-      $('#feature-attributes').find('.form-control-static').toggle(readOnly);
-      $('#feature-attributes').find('.form-control, .form-controls').toggle(!readOnly);
+      $('#feature-attributes .editable').find('.form-control-static').toggle(readOnly);
+      $('#feature-attributes .editable').find('.form-control').toggle(!readOnly);
+      $('#feature-attributes').find('.form-controls').toggle(!readOnly);
     };
     eventbus.on('speedLimit:selected', function(speedLimit) {
       $('#feature-attributes').html(template(speedLimit));
