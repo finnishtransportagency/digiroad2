@@ -1,8 +1,4 @@
 (function(root) {
-  var getKey = function(speedLimit) {
-    return speedLimit.id + '-' + speedLimit.roadLinkId;
-  };
-
   root.SelectedSpeedLimit = function(collection) {
     var current = null;
 
@@ -10,7 +6,7 @@
       if (current) {
         current.isSelected = false;
       }
-      collection.get(getKey(link), function(speedLimit) {
+      collection.getByLink(link, function(speedLimit) {
         current = speedLimit;
         current.isSelected = true;
         eventbus.trigger('speedLimit:selected', current);
@@ -34,7 +30,7 @@
     };
 
     this.isLink = function(link) {
-      return getKey(link) === getKey(current);
+      return link.id === current.id && link.roadLinkId === current.roadLinkId;
     };
   };
 })(this);

@@ -19,9 +19,10 @@
       });
     };
 
-    this.get = function(id, callback) {
-      backend.getSpeedLimit(speedLimits[id].id, function(speedLimit) {
-        callback(_.merge({}, speedLimits[id], speedLimit));
+    this.getByLink = function(link, callback) {
+      var key = getKey(link);
+      backend.getSpeedLimit(speedLimits[key].id, function(speedLimit) {
+        callback(_.merge({}, speedLimits[key], speedLimit));
       });
     };
   };
