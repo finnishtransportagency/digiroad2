@@ -118,6 +118,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
                 assert.deepEqual(properties[0], {
                     publicId: 'pysakin_tyyppi',
                     propertyType: 'multiple_choice',
+                    required: true,
                     values: [{
                         propertyDisplayValue: 'Linja-autojen paikallisliikenne',
                         propertyValue: '2'
