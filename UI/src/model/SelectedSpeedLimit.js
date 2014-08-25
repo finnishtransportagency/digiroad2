@@ -6,11 +6,11 @@
   root.SelectedSpeedLimit = function(collection) {
     var current = null;
 
-    this.open = function(id) {
+    this.openByLink = function(link) {
       if (current) {
         current.isSelected = false;
       }
-      collection.get(id, function(speedLimit) {
+      collection.get(getKey(link), function(speedLimit) {
         current = speedLimit;
         current.isSelected = true;
         eventbus.trigger('speedLimit:selected', current);

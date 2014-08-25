@@ -1,7 +1,3 @@
-var getKey = function(speedLimit) {
-  return speedLimit.id + '-' + speedLimit.roadLinkId;
-};
-
 window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
@@ -111,7 +107,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       highlightSpeedLimitFeatures(feature);
       vectorLayer.removeFeatures(selectionFeatures);
       vectorLayer.redraw();
-      selectedSpeedLimit.open(getKey(feature.attributes));
+      selectedSpeedLimit.openByLink(feature.attributes);
     },
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
