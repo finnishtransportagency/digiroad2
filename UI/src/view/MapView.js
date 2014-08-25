@@ -1,12 +1,7 @@
 (function(root) {
-  root.MapView = function(map, roadCollection) {
+  root.MapView = function(map, layers) {
     var isInitialized = false;
     var centerMarkerLayer;
-    var layers = {
-      road: new RoadLayer(map, roadCollection),
-      asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, backend)
-    };
 
     var showAssetZoomDialog = function() {
       var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');

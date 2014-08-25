@@ -104,7 +104,12 @@ var RoadCollection = function(backend) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
 
     var roadCollection = new RoadCollection(backend);
-    new MapView(map, roadCollection);
+    var layers = {
+      road: new RoadLayer(map, roadCollection),
+      asset: new AssetLayer(map, roadCollection),
+      speedLimit: new SpeedLimitLayer(map, backend)
+    };
+    new MapView(map, layers);
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
   };
 
