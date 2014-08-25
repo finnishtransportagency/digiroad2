@@ -64,12 +64,21 @@
         });
     };
 
+    var gatherRequiredPropertyIds = function(propertyData) {
+      return _.transform(propertyData, function(acc, property) {
+        if (property.required === true) {
+          return acc.push (property.publicId);
+        }
+      });
+    };
+
     eventbus.on('asset:placed', function(asset) {
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(10, function(properties) {
         currentAsset.propertyData = properties;
+        currentAsset.requiredProperties = gatherRequiredPropertyIds(properties);
         currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
@@ -122,6 +131,7 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
+      currentAsset.requiredProperties = gatherRequiredPropertyIds(asset.propertyData);
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
       currentAsset.validityPeriod = asset.validityPeriod;
       eventbus.trigger('asset:modified');
@@ -131,6 +141,18 @@
 
     var getProperties = function() {
       return currentAsset.payload.properties;
+    };
+
+    var requiredPropertiesMissing = function() {
+      var isRequiredProperty = function(publicId) {
+        return _.some(currentAsset.requiredProperties, function(requiredPublicId) {
+          return requiredPublicId === publicId;
+        });
+      };
+
+      return _.some(currentAsset.payload.properties, function(property) {
+        return isRequiredProperty(property.publicId) && (_.isEmpty(property.values) || _.some(property.values, function(value) { return value.propertyValue == 99; }));
+      });
     };
 
     var save = function() {
@@ -168,7 +190,7 @@
       changedProps = _.union(changedProps, [publicId]);
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
-      eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData, id: currentAsset.id});
+      eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
     };
 
     var exists = function() {
@@ -222,7 +244,8 @@
       get: get,
       getProperties: getProperties,
       switchDirection: switchDirection,
-      move: move
+      move: move,
+      requiredPropertiesMissing: requiredPropertiesMissing
     };
   };
 

@@ -1,12 +1,19 @@
 (function(root) {
+
   var SaveButton = function() {
-    var element = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('save btn btn-primary').text('Tallenna').click(function() {
+    var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
       element.prop('disabled', true);
       selectedAssetModel.save();
     });
 
+    element.prop('disabled', (!selectedAssetModel.isDirty() || selectedAssetModel.requiredPropertiesMissing()));
+
     eventbus.on('asset:moved assetPropertyValue:changed', function() {
-      element.prop('disabled', false);
+      if (selectedAssetModel.requiredPropertiesMissing()) {
+        element.prop('disabled', true);
+      } else {
+        element.prop('disabled', false);
+      }
     }, this);
 
     return {
