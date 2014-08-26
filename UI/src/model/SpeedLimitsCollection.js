@@ -25,5 +25,9 @@
         callback(_.merge({}, speedLimits[key], speedLimit));
       });
     };
+
+    this.getSpeedLimitLinks = function(id) {
+      return _.filter(_.values(speedLimits), function(link) { return link.id === id; });
+    };
   };
 })(this);

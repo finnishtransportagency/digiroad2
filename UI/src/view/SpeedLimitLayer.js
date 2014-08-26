@@ -163,6 +163,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     vectorLayer.addFeatures(selectionFeatures);
   });
 
+  eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
+    var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+    vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
+    var updatedSpeedLimitLinks = _.map(collection.getSpeedLimitLinks(selectedSpeedLimit.getId()), function(limit) { return _.merge({}, limit, { limit: selectedSpeedLimit.getLimit() }); });
+    drawSpeedLimits(updatedSpeedLimitLinks);
+  });
+
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       vectorLayer.setVisibility(true);
