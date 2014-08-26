@@ -146,7 +146,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var start = function() {
     if (!eventListener.running) {
       eventListener.running = true;
-      eventListener.listenTo(eventbus, 'speedLimits:fetched', drawSpeedLimits);
+      eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
       selectControl.activate();
     }
   };
@@ -175,15 +175,19 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     }
   }, this);
 
+  var redrawSpeedLimits = function(speedLimits) {
+    selectControl.deactivate();
+    vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'other'));
+    selectControl.activate();
+
+    drawSpeedLimits(speedLimits);
+  };
+
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithType, function(speedLimit) { return speedLimit.limit >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
-
-    selectControl.deactivate();
-    vectorLayer.removeFeatures(vectorLayer.getFeaturesByAttribute('type', 'other'));
-    selectControl.activate();
 
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
