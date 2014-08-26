@@ -45,8 +45,8 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
           eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 8});
         });
 
-        it('should not contain speed limits', function() {
-          assert.equal(lineStringFeatures(layer).length, 0);
+        it('hides features', function() {
+          assert.equal(lineStringFeatures(layer)[0].getVisibility(), false);
         });
 
         describe('and zooming in', function() {

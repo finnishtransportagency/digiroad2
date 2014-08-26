@@ -161,11 +161,12 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
+      vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
       collection.fetch(state.bbox);
     } else {
-      vectorLayer.removeAllFeatures();
+      vectorLayer.setVisibility(false);
       stop();
     }
   }, this);
