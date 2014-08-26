@@ -41,6 +41,7 @@
     };
 
     this.setLimit = function(limit) {
+      collection.changeLimit(current.id, limit);
       current.limit = limit;
       eventbus.trigger('speedLimit:limitChanged', self);
     };

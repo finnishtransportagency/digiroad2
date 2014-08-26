@@ -8,13 +8,13 @@
 
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-        var selectedSpeedLimit = _.pick(speedLimits, function(speedLimit) {
+        var selectedSpeedLimitLinks = _.pick(speedLimits, function(speedLimit) {
           return speedLimit.isSelected;
         });
-        speedLimits = _.merge(selectedSpeedLimit, _.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
+        speedLimits = _.merge(_.reduce(fetchedSpeedLimits, function(acc, speedLimit) {
           acc[getKey(speedLimit)] = speedLimit;
           return acc;
-        }, {}));
+        }, {}), selectedSpeedLimitLinks);
         eventbus.trigger('speedLimits:fetched', speedLimits);
       });
     };
@@ -39,6 +39,12 @@
     this.markAsDeselectedById = function(id) {
       _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
         speedLimitLink.isSelected = false;
+      });
+    };
+
+    this.changeLimit = function(id, limit) {
+      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+        speedLimitLink.limit = limit;
       });
     };
   };
