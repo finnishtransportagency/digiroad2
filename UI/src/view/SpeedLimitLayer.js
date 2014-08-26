@@ -253,12 +253,12 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
 
-  var lineFeatures = function(speedLimits, customStyle) {
+  var lineFeatures = function(speedLimits) {
     return _.map(speedLimits, function(speedLimit) {
       var points = _.map(speedLimit.points, function(point) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit, customStyle);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit);
     });
   };
 
