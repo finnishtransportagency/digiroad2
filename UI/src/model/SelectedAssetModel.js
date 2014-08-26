@@ -36,6 +36,7 @@
           _.pick(property, 'publicId', 'propertyType'),
           {
             required: property.required,
+            propertyType: property.propertyType,
             values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
           });
       };
@@ -68,7 +69,10 @@
     var gatherRequiredPropertyIds = function(propertyData) {
       return _.transform(propertyData, function(acc, property) {
         if (property.required === true) {
-          return acc.push (property.publicId);
+          return acc.push ({
+            publicId: property.publicId,
+            propertyType: property.propertyType
+          });
         }
       });
     };
@@ -146,15 +150,19 @@
 
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
-        return _.some(currentAsset.requiredProperties, function(requiredPublicId) {
-          return requiredPublicId === publicId;
+        return _.some(currentAsset.requiredProperties, function(requiredProperty) {
+          return requiredProperty.publicId === publicId;
         });
+      };
+      var isChoicePropertyWithUnkownValue = function(property) {
+        var prop = _.find(currentAsset.requiredProperties, function(requiredProperty) { return requiredProperty.publicId === property.publicId; });
+        return _.some((prop.propertyType === "single_choice" || prop.propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
       };
 
       return _.some(currentAsset.payload.properties, function(property) {
-        return isRequiredProperty(property.publicId) && (_.isEmpty(property.values) || 
-                _.some(property.values, function(value) { return value.propertyValue == 99; }) ||
-                  _.all(property.values, function(value) { return value.propertyValue.length < 1; } )
+        return isRequiredProperty(property.publicId) && (
+                isChoicePropertyWithUnkownValue(property) ||
+                  _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
           );
       });
     };
