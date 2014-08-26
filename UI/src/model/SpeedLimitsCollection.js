@@ -5,6 +5,7 @@
 
   root.SpeedLimitsCollection = function(backend) {
     var speedLimits = {};
+    var self = this;
 
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
@@ -31,19 +32,19 @@
     };
 
     this.markAsSelectedById = function(id) {
-      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+      _.each(self.getSpeedLimitLinks(id), function(speedLimitLink) {
         speedLimitLink.isSelected = true;
       });
     };
 
     this.markAsDeselectedById = function(id) {
-      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+      _.each(self.getSpeedLimitLinks(id), function(speedLimitLink) {
         speedLimitLink.isSelected = false;
       });
     };
 
     this.changeLimit = function(id, limit) {
-      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+      _.each(self.getSpeedLimitLinks(id), function(speedLimitLink) {
         speedLimitLink.limit = limit;
       });
     };
