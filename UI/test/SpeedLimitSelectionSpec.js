@@ -121,4 +121,35 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
     });
   });
+
+  describe('when loading application in edit mode with speed limits', function() {
+    var openLayersMap;
+    var speedLimitId = 13;
+    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) { return link.id === speedLimitId; });
+
+    before(function(done) {
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        $('.speed-limits').click();
+        applicationModel.setReadOnly(false);
+        done();
+      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits));
+    });
+
+    describe('and changing value of speed limit', function() {
+      before(function() {
+        selectSpeedLimit(openLayersMap, speedLimitId);
+        $('#feature-attributes .form-control.speed-limit').val('100').change();
+      });
+      it('should update all speed limit links on map', function() {
+        var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
+          return feature.attributes.id === speedLimitId;
+        });
+        expect(features.length).not.to.equal(0);
+        _.each(features, function(feature) {
+          expect(feature.attributes.limit).to.equal(100);
+        });
+      });
+    });
+  });
 });
