@@ -1,6 +1,7 @@
 (function(root) {
   root.SelectedSpeedLimit = function(collection) {
     var current = null;
+    var self = this;
 
     this.openByLink = function(link) {
       if (current) {
@@ -9,7 +10,7 @@
       collection.getByLink(link, function(speedLimit) {
         current = speedLimit;
         current.isSelected = true;
-        eventbus.trigger('speedLimit:selected', current);
+        eventbus.trigger('speedLimit:selected', self);
       });
     };
 
@@ -27,6 +28,18 @@
 
     this.getId = function() {
       return current.id;
+    };
+
+    this.getEndpoints = function() {
+      return current.endpoints;
+    };
+
+    this.getLimit = function() {
+      return current.limit;
+    };
+
+    this.getSideCode = function() {
+      return current.sideCode;
     };
   };
 })(this);

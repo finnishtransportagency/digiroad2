@@ -157,9 +157,9 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     eventListener.running = false;
   };
 
-  eventbus.on('speedLimit:selected', function(speedLimit) {
+  eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
     vectorLayer.removeFeatures(selectionFeatures);
-    selectionFeatures = createSelectionEndPoints(speedLimit.endpoints);
+    selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getEndpoints());
     vectorLayer.addFeatures(selectionFeatures);
   });
 

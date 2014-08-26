@@ -1,8 +1,8 @@
 (function (root) {
-  var template = function(speedLimit) {
+  var template = function(selectedSpeedLimit) {
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(limit) {
-      var selected = limit === speedLimit.limit ? " selected" : "";
+      var selected = limit === selectedSpeedLimit.getLimit() ? " selected" : "";
       return '<option value="' + limit + '"' + selected + '>' + limit + '</option>';
     });
     var formFieldTemplate = function(key, value) {
@@ -11,21 +11,21 @@
                '<p class="form-control-static">' + value + '</p>' +
              '</div>';
     };
-    var firstPoint = _.first(speedLimit.endpoints);
-    var lastPoint = _.last(speedLimit.endpoints);
-    return '<header>Segmentin ID: ' + speedLimit.id + '</header>' +
+    var firstPoint = _.first(selectedSpeedLimit.getEndpoints());
+    var lastPoint = _.last(selectedSpeedLimit.getEndpoints());
+    return '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static">' + speedLimit.limit + '</p>' +
+                 '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
                  '<select class="form-control" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
                formFieldTemplate("Alkupiste X", firstPoint.x) +
                formFieldTemplate("Y", firstPoint.y) +
                formFieldTemplate("Loppupiste X", lastPoint.x) +
                formFieldTemplate("Y", lastPoint.y) +
-               formFieldTemplate("Vaikutussuunta", convertSideCodeToValidityDirection(speedLimit.sideCode, firstPoint, lastPoint)) +
+               formFieldTemplate("Vaikutussuunta", convertSideCodeToValidityDirection(selectedSpeedLimit.getSideCode(), firstPoint, lastPoint)) +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
@@ -53,8 +53,8 @@
       $('#feature-attributes .editable').find('.form-control').toggle(!readOnly);
       $('#feature-attributes').find('.form-controls').toggle(!readOnly);
     };
-    eventbus.on('speedLimit:selected', function(speedLimit) {
-      $('#feature-attributes').html(template(speedLimit));
+    eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
+      $('#feature-attributes').html(template(selectedSpeedLimit));
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
