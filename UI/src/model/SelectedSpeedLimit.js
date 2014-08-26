@@ -2,6 +2,7 @@
   root.SelectedSpeedLimit = function(collection) {
     var current = null;
     var self = this;
+    var dirty = false;
 
     this.openByLink = function(link) {
       self.close();
@@ -13,7 +14,7 @@
     };
 
     this.close = function() {
-      if (current) {
+      if (current && !dirty) {
         collection.markAsDeselectedById(current.id);
         current = null;
         eventbus.trigger('speedLimit:unselected');
@@ -41,9 +42,16 @@
     };
 
     this.setLimit = function(limit) {
-      collection.changeLimit(current.id, limit);
-      current.limit = limit;
-      eventbus.trigger('speedLimit:limitChanged', self);
+      if (limit != current.limit) {
+        collection.changeLimit(current.id, limit);
+        current.limit = limit;
+        dirty = true;
+        eventbus.trigger('speedLimit:limitChanged', self);
+      }
+    };
+
+    this.isDirty = function() {
+      return dirty;
     };
   };
 })(this);
