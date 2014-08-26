@@ -62,6 +62,9 @@
       $('#feature-attributes').empty();
     });
     eventbus.on('application:readOnly', toggleMode);
+    eventbus.on('speedLimit:limitChanged', function() {
+      $('#feature-attributes .form-controls button').attr('disabled', false);
+    });
   };
 
   root.SpeedLimitForm = {
