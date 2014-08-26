@@ -110,7 +110,7 @@ Karttaa liikutetaan raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan vasemmassa alakulmassa (9).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista  (7). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan vasemmassa alakulmassa (9).
 
 ####Koordinaattihaku####
 
