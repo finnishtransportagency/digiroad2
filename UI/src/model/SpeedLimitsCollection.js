@@ -19,7 +19,7 @@
       });
     };
 
-    this.getByLink = function(link, callback) {
+    this.fetchSpeedLimitByLink = function(link, callback) {
       var key = getKey(link);
       backend.getSpeedLimit(speedLimits[key].id, function(speedLimit) {
         callback(_.merge({}, speedLimits[key], speedLimit));

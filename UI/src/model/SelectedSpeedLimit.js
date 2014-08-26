@@ -5,7 +5,7 @@
 
     this.openByLink = function(link) {
       self.close();
-      collection.getByLink(link, function(speedLimit) {
+      collection.fetchSpeedLimitByLink(link, function(speedLimit) {
         current = speedLimit;
         current.isSelected = true;
         eventbus.trigger('speedLimit:selected', self);
