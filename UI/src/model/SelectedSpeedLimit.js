@@ -2,6 +2,7 @@
   root.SelectedSpeedLimit = function(collection) {
     var current = null;
     var self = this;
+    var dirty = false;
 
     this.openByLink = function(link) {
       self.close();
@@ -43,7 +44,12 @@
     this.setLimit = function(limit) {
       collection.changeLimit(current.id, limit);
       current.limit = limit;
+      dirty = true;
       eventbus.trigger('speedLimit:limitChanged', self);
+    };
+
+    this.isDirty = function() {
+      return dirty;
     };
   };
 })(this);
