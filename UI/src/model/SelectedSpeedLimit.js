@@ -42,10 +42,12 @@
     };
 
     this.setLimit = function(limit) {
-      collection.changeLimit(current.id, limit);
-      current.limit = limit;
-      dirty = true;
-      eventbus.trigger('speedLimit:limitChanged', self);
+      if (limit != current.limit) {
+        collection.changeLimit(current.id, limit);
+        current.limit = limit;
+        dirty = true;
+        eventbus.trigger('speedLimit:limitChanged', self);
+      }
     };
 
     this.isDirty = function() {
