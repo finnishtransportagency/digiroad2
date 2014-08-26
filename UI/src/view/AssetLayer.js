@@ -628,6 +628,7 @@ window.AssetLayer = function(map, roadCollection) {
   };
 
   var show = function() {
+    selectedControl = 'Select';
     startListening();
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
