@@ -637,6 +637,7 @@ window.AssetLayer = function(map, roadCollection) {
   };
 
   var hide = function() {
+    selectedAssetModel.close();
     if (assetLayer.map && assetDirectionLayer.map) {
       map.removeLayer(assetLayer);
       map.removeLayer(assetDirectionLayer);
