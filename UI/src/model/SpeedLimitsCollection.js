@@ -29,5 +29,17 @@
     this.getSpeedLimitLinks = function(id) {
       return _.filter(_.values(speedLimits), function(link) { return link.id === id; });
     };
+
+    this.markAsSelectedById = function(id) {
+      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+        speedLimitLink.isSelected = true;
+      });
+    };
+
+    this.markAsDeselectedById = function(id) {
+      _.each(_.filter(_.values(speedLimits), function(link) { return link.id === id; }), function(speedLimitLink) {
+        speedLimitLink.isSelected = false;
+      });
+    };
   };
 })(this);

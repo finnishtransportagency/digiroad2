@@ -7,14 +7,14 @@
       self.close();
       collection.fetchSpeedLimitByLink(link, function(speedLimit) {
         current = speedLimit;
-        current.isSelected = true;
+        collection.markAsSelectedById(speedLimit.id);
         eventbus.trigger('speedLimit:selected', self);
       });
     };
 
     this.close = function() {
       if (current) {
-        current.isSelected = false;
+        collection.markAsDeselectedById(current.id);
         current = null;
         eventbus.trigger('speedLimit:unselected');
       }
