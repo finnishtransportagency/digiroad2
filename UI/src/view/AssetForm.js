@@ -79,7 +79,7 @@
         var container = $("#feature-attributes").empty();
 
         var element = $('<header />').html(busStopHeader());
-        var wrapper = $('<div />').addClass('wrapper');
+        var wrapper = $('<div />').addClass('wrapper edit-mode');
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
         var featureAttributesElement = container.append(element).append(wrapper);
@@ -95,6 +95,7 @@
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
           wrapper.addClass('read-only');
+          wrapper.removeClass('edit-mode');
         }
 
         function busStopHeader(asset) {
