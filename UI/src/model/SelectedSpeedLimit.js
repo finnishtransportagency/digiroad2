@@ -41,5 +41,10 @@
     this.getSideCode = function() {
       return current.sideCode;
     };
+
+    this.setLimit = function(limit) {
+      current.limit = limit;
+      eventbus.trigger('speedLimit:limitChanged', self);
+    };
   };
 })(this);

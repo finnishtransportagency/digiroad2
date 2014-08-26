@@ -19,7 +19,7 @@
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
-                 '<select class="form-control" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
+                 '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
                formFieldTemplate("Alkupiste X", firstPoint.x) +
                formFieldTemplate("Y", firstPoint.y) +
@@ -55,6 +55,7 @@
     };
     eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
       $('#feature-attributes').html(template(selectedSpeedLimit));
+      $('#feature-attributes .speed-limit').change(function(event) { selectedSpeedLimit.setLimit($(event.currentTarget).find(':selected').attr('value')); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
