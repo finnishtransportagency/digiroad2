@@ -4,9 +4,7 @@
     var self = this;
 
     this.openByLink = function(link) {
-      if (current) {
-        current.isSelected = false;
-      }
+      self.close();
       collection.getByLink(link, function(speedLimit) {
         current = speedLimit;
         current.isSelected = true;
