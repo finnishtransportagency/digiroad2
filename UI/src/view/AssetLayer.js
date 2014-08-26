@@ -8,7 +8,7 @@ window.AssetLayer = function(map, roadCollection) {
   map.addLayer(assetLayer);
 
   var overlay;
-  var selectedControl = 'Select';
+  var selectedControl;
 
   var clickTimestamp;
   var clickCoords;
@@ -628,6 +628,7 @@ window.AssetLayer = function(map, roadCollection) {
   };
 
   var show = function() {
+    selectedControl = 'Select';
     startListening();
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
