@@ -14,7 +14,7 @@
     };
 
     this.close = function() {
-      if (current) {
+      if (current && !dirty) {
         collection.markAsDeselectedById(current.id);
         current = null;
         eventbus.trigger('speedLimit:unselected');
