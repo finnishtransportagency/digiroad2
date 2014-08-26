@@ -55,7 +55,7 @@
     };
     eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
       $('#feature-attributes').html(template(selectedSpeedLimit));
-      $('#feature-attributes .speed-limit').change(function(event) { selectedSpeedLimit.setLimit($(event.currentTarget).find(':selected').attr('value')); });
+      $('#feature-attributes .speed-limit').change(function(event) { selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10)); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
