@@ -401,6 +401,10 @@ Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&aum
 
 _Nopeusrajoituksen tietojen muokkaus._
 
+####Nopeusrajoituksen arvon muuttaminen####
+
+Nopeusrajoitukselle valitaan uusi arvo pudotusvalikosta. Valinnan yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa.
+
 
 
 
