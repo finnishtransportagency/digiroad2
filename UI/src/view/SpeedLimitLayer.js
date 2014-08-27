@@ -104,7 +104,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
     vectorLayer.redraw();
-    selectedSpeedLimit.openByLink(feature.attributes);
+    selectedSpeedLimit.open(feature.attributes.id);
   };
 
   var selectionFeatures = [];
@@ -164,8 +164,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    var updatedSpeedLimitLinks = _.map(collection.getSpeedLimitLinks(selectedSpeedLimit.getId()), function(limit) { return _.merge({}, limit, { limit: selectedSpeedLimit.getLimit() }); });
-    drawSpeedLimits(updatedSpeedLimitLinks);
+    drawSpeedLimits([selectedSpeedLimit.get()]);
   });
 
   eventbus.on('map:moved', function(state) {
@@ -217,14 +216,16 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   };
 
   var limitSigns = function(speedLimits) {
-    return _.map(speedLimits, function(speedLimit) {
-      var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+    return _.flatten(_.map(speedLimits, function(speedLimit) {
+      return _.map(speedLimit.links, function(link) {
+        var points = _.map(link, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var road = new OpenLayers.Geometry.LineString(points);
+        var signPosition = calculateMidpoint(road.getVertices());
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
       });
-      var road = new OpenLayers.Geometry.LineString(points);
-      var signPosition = calculateMidpoint(road.getVertices());
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
-    });
+    }));
   };
 
   var calculateMidpoint = function(road) {
@@ -264,12 +265,14 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   };
 
   var lineFeatures = function(speedLimits) {
-    return _.map(speedLimits, function(speedLimit) {
-      var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+    return _.flatten(_.map(speedLimits, function(speedLimit) {
+      return _.map(speedLimit.links, function(link) {
+        var points = _.map(link, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit);
       });
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit);
-    });
+    }));
   };
 
   var reset = function() {

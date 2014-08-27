@@ -4,18 +4,18 @@
     var self = this;
     var dirty = false;
 
-    this.openByLink = function(link) {
+    this.open = function(id) {
       self.close();
-      collection.fetchSpeedLimitByLink(link, function(speedLimit) {
+      collection.fetchSpeedLimit(id, function(speedLimit) {
         current = speedLimit;
-        collection.markAsSelectedById(speedLimit.id);
+        collection.markAsSelected(speedLimit.id);
         eventbus.trigger('speedLimit:selected', self);
       });
     };
 
     this.close = function() {
       if (current && !dirty) {
-        collection.markAsDeselectedById(current.id);
+        collection.markAsDeselected(current.id);
         current = null;
         eventbus.trigger('speedLimit:unselected');
       }
@@ -39,6 +39,10 @@
 
     this.getSideCode = function() {
       return current.sideCode;
+    };
+
+    this.get = function() {
+      return current;
     };
 
     this.setLimit = function(limit) {

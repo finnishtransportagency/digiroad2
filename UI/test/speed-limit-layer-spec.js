@@ -13,8 +13,8 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
         var speedLimitsCollection = new SpeedLimitsCollection({
           getSpeedLimits: function() {
             eventbus.trigger('speedLimits:fetched', [
-              {id: 1, points: [ {x: 0, y: 0} ]},
-              {id: 2, points: [ {x: 10, y: 10} ]}
+              {id: 1, links: [[{x: 0, y: 0}]]},
+              {id: 2, links: [[{x: 10, y: 10}]]}
             ]);
           }
         });
