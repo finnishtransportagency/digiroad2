@@ -64,24 +64,12 @@
         });
     };
 
-    var gatherRequiredPropertyIds = function(propertyData) {
-      return _.transform(propertyData, function(acc, property) {
-        if (property.required) {
-          return acc.push ({
-            publicId: property.publicId,
-            propertyType: property.propertyType
-          });
-        }
-      });
-    };
-
     eventbus.on('asset:placed', function(asset) {
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(10, function(properties) {
         currentAsset.propertyData = properties;
-        currentAsset.requiredProperties = gatherRequiredPropertyIds(properties);
         currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
@@ -134,7 +122,7 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
-      currentAsset.requiredProperties = gatherRequiredPropertyIds(asset.propertyData);
+      currentAsset.propertyData = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
       currentAsset.validityPeriod = asset.validityPeriod;
       eventbus.trigger('asset:modified');
@@ -148,12 +136,10 @@
 
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
-        return _.some(currentAsset.requiredProperties, function(requiredProperty) {
-          return requiredProperty.publicId === publicId;
-        });
+        return _.find(currentAsset.propertyData, function(property) { return property.publicId === publicId; }).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
-        var prop = _.find(currentAsset.requiredProperties, function(requiredProperty) { return requiredProperty.publicId === property.publicId; });
+        var prop = _.find(currentAsset.propertyData, function(metadata) { return metadata.publicId === property.publicId; });
         return _.some((prop.propertyType === "single_choice" || prop.propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
       };
 
