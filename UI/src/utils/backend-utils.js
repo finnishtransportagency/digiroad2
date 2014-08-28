@@ -10,10 +10,6 @@
         });
     };
 
-    this.putAssetPropertyValue = function (assetId, propertyPublicId, data) {
-      putAssetPropertyValue(assetId, propertyPublicId, data);
-    };
-
     this.getRoadLinks = _.throttle(function(boundingBox, callback) {
       $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
         callback(data);
