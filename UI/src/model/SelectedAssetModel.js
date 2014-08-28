@@ -154,14 +154,14 @@
           return requiredProperty.publicId === publicId;
         });
       };
-      var isChoicePropertyWithUnkownValue = function(property) {
+      var isChoicePropertyWithUnknownValue = function(property) {
         var prop = _.find(currentAsset.requiredProperties, function(requiredProperty) { return requiredProperty.publicId === property.publicId; });
         return _.some((prop.propertyType === "single_choice" || prop.propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
       };
 
       return _.some(currentAsset.payload.properties, function(property) {
         return isRequiredProperty(property.publicId) && (
-                isChoicePropertyWithUnkownValue(property) ||
+                isChoicePropertyWithUnknownValue(property) ||
                   _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
           );
       });
