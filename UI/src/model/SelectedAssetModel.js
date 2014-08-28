@@ -33,10 +33,8 @@
       var transformProperty = function(property) {
         return _.merge(
           {},
-          _.pick(property, 'publicId', 'propertyType'),
+          _.pick(property, 'publicId', 'propertyType', 'required'),
           {
-            required: property.required,
-            propertyType: property.propertyType,
             values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
           });
       };
