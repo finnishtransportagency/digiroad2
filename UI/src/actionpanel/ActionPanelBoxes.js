@@ -65,6 +65,10 @@
         elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate(readOnly));
         elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
       });
+      eventbus.on('speedLimit:limitChanged', function() {
+        elements.expanded.off('click', '.read-only-btn');
+        elements.expanded.on('click', '.read-only-btn', function() { new Confirm(); });
+      });
     };
 
     bindDOMEventHandlers();
@@ -293,6 +297,10 @@
           elements.expanded.find('.action-mode-btn').show();
           elements.editMode.find('.action-mode-btn').show();
         }
+      });
+      eventbus.on('speedLimit:limitChanged', function() {
+        elements.collapsed.off('click');
+        elements.collapsed.click(function() { new Confirm(); });
       });
     };
 

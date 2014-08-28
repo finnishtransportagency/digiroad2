@@ -162,6 +162,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   });
 
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
+    selectControl.deactivate();
+    map.events.register('click', vectorLayer, function() { new Confirm(); });
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits([selectedSpeedLimit.get()]);
@@ -173,6 +175,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       adjustStylesByZoomLevel(state.zoom);
       start();
       collection.fetch(state.bbox);
+    } else if (selectedSpeedLimit.isDirty()) {
+      new Confirm();
     } else {
       vectorLayer.setVisibility(false);
       stop();
@@ -182,7 +186,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
-    selectControl.activate();
+    if (!selectedSpeedLimit.isDirty()) selectControl.activate();
 
     drawSpeedLimits(speedLimits);
   };
