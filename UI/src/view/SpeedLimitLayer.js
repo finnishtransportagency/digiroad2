@@ -175,6 +175,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       adjustStylesByZoomLevel(state.zoom);
       start();
       collection.fetch(state.bbox);
+    } else if (selectedSpeedLimit.isDirty()) {
+      new Confirm();
     } else {
       vectorLayer.setVisibility(false);
       stop();
