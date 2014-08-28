@@ -68,7 +68,7 @@
 
     var gatherRequiredPropertyIds = function(propertyData) {
       return _.transform(propertyData, function(acc, property) {
-        if (property.required === true) {
+        if (property.required == true) {
           return acc.push ({
             publicId: property.publicId,
             propertyType: property.propertyType
