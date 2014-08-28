@@ -39,7 +39,7 @@
           });
       };
       return {
-        properties: _.map(propertyData.propertyData, transformProperty)
+        properties: _.map(propertyData, transformProperty)
       };
     };
 
@@ -70,7 +70,7 @@
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(10, function(properties) {
         currentAsset.propertyData = properties;
-        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
+        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
       });
@@ -123,7 +123,7 @@
     var open = function(asset) {
       currentAsset.id = asset.id;
       currentAsset.propertyData = asset.propertyData;
-      currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+      currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
       eventbus.trigger('asset:modified');
     };
