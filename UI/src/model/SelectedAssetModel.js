@@ -69,7 +69,7 @@
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(10, function(properties) {
-        currentAsset.propertyData = properties;
+        currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
@@ -122,7 +122,7 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
-      currentAsset.propertyData = asset.propertyData;
+      currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
       eventbus.trigger('asset:modified');
@@ -136,10 +136,10 @@
 
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
-        return _.find(currentAsset.propertyData, function(property) { return property.publicId === publicId; }).required;
+        return _.find(currentAsset.propertyMetadata, function(property) { return property.publicId === publicId; }).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
-        var prop = _.find(currentAsset.propertyData, function(metadata) { return metadata.publicId === property.publicId; });
+        var prop = _.find(currentAsset.propertyMetadata, function(metadata) { return metadata.publicId === property.publicId; });
         return _.some((prop.propertyType === "single_choice" || prop.propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
       };
 
