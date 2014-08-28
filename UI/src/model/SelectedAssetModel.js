@@ -134,13 +134,19 @@
       return currentAsset.payload.properties;
     };
 
+    var getPropertyMetadata = function(publicId) {
+      return _.find(currentAsset.propertyMetadata, function(metadata) {
+        return metadata.publicId === publicId;
+      });
+    };
+
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
-        return _.find(currentAsset.propertyMetadata, function(property) { return property.publicId === publicId; }).required;
+        return getPropertyMetadata(publicId).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
-        var prop = _.find(currentAsset.propertyMetadata, function(metadata) { return metadata.publicId === property.publicId; });
-        return _.some((prop.propertyType === "single_choice" || prop.propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
+        var propertyType = getPropertyMetadata(property.publicId).propertyType;
+        return _.some((propertyType === "single_choice" || propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
       };
 
       return _.some(currentAsset.payload.properties, function(property) {
