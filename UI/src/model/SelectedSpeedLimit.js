@@ -3,11 +3,13 @@
     var current = null;
     var self = this;
     var dirty = false;
+    var originalSpeedLimit = null;
 
     this.open = function(id) {
       self.close();
       collection.fetchSpeedLimit(id, function(speedLimit) {
         current = speedLimit;
+        originalSpeedLimit = speedLimit.limit;
         collection.markAsSelected(speedLimit.id);
         eventbus.trigger('speedLimit:selected', self);
       });
@@ -19,6 +21,13 @@
         current = null;
         eventbus.trigger('speedLimit:unselected');
       }
+    };
+
+    this.cancel = function() {
+      current.limit = originalSpeedLimit;
+      collection.changeLimit(current.id, originalSpeedLimit);
+      dirty = false;
+      eventbus.trigger('speedLimit:cancelled', self);
     };
 
     this.exists = function() {
