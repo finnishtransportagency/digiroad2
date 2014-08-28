@@ -48,20 +48,24 @@
   };
 
   var bindEvents = function () {
+    var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
-      $('#feature-attributes .editable').find('.form-control-static').toggle(readOnly);
-      $('#feature-attributes .editable').find('.form-control').toggle(!readOnly);
-      $('#feature-attributes').find('.form-controls').toggle(!readOnly);
+      rootElement.find('.editable .form-control-static').toggle(readOnly);
+      rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.form-controls').toggle(!readOnly);
     };
     eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
-      $('#feature-attributes').html(template(selectedSpeedLimit));
-      $('#feature-attributes .speed-limit').change(function(event) { selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10)); });
+      rootElement.html(template(selectedSpeedLimit));
+      rootElement.find('.speed-limit').change(function(event) { selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10)); });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
-      $('#feature-attributes').empty();
+      rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);
+    eventbus.on('speedLimit:limitChanged', function() {
+      rootElement.find('.form-controls button').attr('disabled', false);
+    });
   };
 
   root.SpeedLimitForm = {
