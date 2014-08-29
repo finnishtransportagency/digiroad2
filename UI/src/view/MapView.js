@@ -86,5 +86,9 @@
     });
 
     addCenterMarkerLayerToMap(map);
+
+    if (applicationModel.getSelectedLayer() === 'speedLimit') {
+      showSpeedLimitLayer();
+    }
   };
 })(this);
