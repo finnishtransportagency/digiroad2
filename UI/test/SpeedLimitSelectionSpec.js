@@ -150,6 +150,22 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           expect(feature.attributes.limit).to.equal(100);
         });
       });
+
+      describe('and cancelling the change', function() {
+        before(function() {
+          $('#feature-attributes button.cancel').click();
+        });
+        it('resets the update but maintains selection state', function() {
+          var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
+            return feature.attributes.id === speedLimitId;
+          });
+          expect(features.length).not.to.equal(0);
+          _.each(features, function(feature) {
+            expect(feature.attributes.limit).to.equal(60);
+            expect(feature.attributes.isSelected).to.be.true;
+          });
+        });
+      });
     });
   });
 });
