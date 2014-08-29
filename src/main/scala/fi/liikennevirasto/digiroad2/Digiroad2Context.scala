@@ -42,7 +42,10 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetProvider: LinearAssetProvider = {
-    Class.forName(properties.getProperty("digiroad2.linearAssetProvider")).newInstance().asInstanceOf[LinearAssetProvider]
+    Class.forName(properties.getProperty("digiroad2.linearAssetProvider"))
+      .getDeclaredConstructor(classOf[UserProvider])
+      .newInstance(userProvider)
+      .asInstanceOf[LinearAssetProvider]
   }
 
   lazy val userProvider: UserProvider = {

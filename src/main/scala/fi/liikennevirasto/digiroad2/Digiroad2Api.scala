@@ -234,4 +234,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val segmentId = params("segmentId")
     linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
   }
+
+  put("/linearassets/:speedLimitId") {
+    val speedLimitId = params("speedLimitId").toLong
+    (parsedBody \ "limit").extractOpt[Int] match {
+      case Some(limit) => linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit).getOrElse(NotFound("Speed limit " + speedLimitId + " not found"))
+      case _ => throw new IllegalArgumentException("Speed limit value not provided")
+    }
+  }
 }

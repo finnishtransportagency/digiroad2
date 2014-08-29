@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
 import org.scalatest.Tag
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -239,6 +240,23 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       parse(body).extract[AssetWithProperties].propertyData.map(p => p.publicId)
     }
     propIds should be(assetPropNames)
+  }
+
+  test("update speed limit value", Tag("db")) {
+    putJsonWithUserAuth("/linearassets/700898", """{"limit":60}""".getBytes) {
+      status should equal(200)
+      getWithUserAuth("/linearassets?bbox=371375,6676711,372093,6677147") {
+        val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
+        speedLimitLinks.foreach(link => link.limit should equal(60))
+        putJsonWithUserAuth("/linearassets/700898", """{"limit":100}""".getBytes) {
+          status should equal(200)
+          getWithUserAuth("/linearassets?bbox=371375,6676711,372093,6677147") {
+            val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
+            speedLimitLinks.foreach(link => link.limit should equal(100))
+          }
+        }
+      }
+    }
   }
 
   private[this] def propertiesToJson(prop: SimpleProperty): String = {
