@@ -45,8 +45,9 @@
         elements.expanded.show();
         applicationModel.selectLayer('speedLimit');
       });
-      elements.expanded.on('click', '.edit-mode-btn', function() { applicationModel.setReadOnly(false); });
-      elements.expanded.on('click', '.read-only-btn', function() { applicationModel.setReadOnly(true); });
+      elements.expanded.click(function() { if (isDirty()) return false; });
+      elements.expanded.on('click', '.edit-mode-btn', function() { if (!isDirty()) applicationModel.setReadOnly(false); });
+      elements.expanded.on('click', '.read-only-btn', function() { if (!isDirty()) applicationModel.setReadOnly(true); });
     };
 
     var bindExternalEventHandlers = function() {
@@ -65,10 +66,6 @@
         elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate(readOnly));
         elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
       });
-      eventbus.on('speedLimit:limitChanged', function() {
-        elements.expanded.off('click', '.read-only-btn');
-        elements.expanded.on('click', '.read-only-btn', function() { new Confirm(); });
-      });
     };
 
     bindDOMEventHandlers();
@@ -81,7 +78,7 @@
   };
 
   var isDirty = function() {
-    if (window.selectedAssetModel && selectedAssetModel.isDirty()) {
+    if (applicationModel.isDirty()) {
       new Confirm();
       return true;
     }
@@ -246,6 +243,7 @@
       elements.editMode.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
 
       elements.collapsed.click(function() {
+        if (isDirty()) return;
         elements.collapsed.hide();
         elements.expanded.show();
         applicationModel.selectLayer('asset');
@@ -297,10 +295,6 @@
           elements.expanded.find('.action-mode-btn').show();
           elements.editMode.find('.action-mode-btn').show();
         }
-      });
-      eventbus.on('speedLimit:limitChanged', function() {
-        elements.collapsed.off('click');
-        elements.collapsed.click(function() { new Confirm(); });
       });
     };
 
