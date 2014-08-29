@@ -2,6 +2,10 @@
   root.SpeedLimitsCollection = function(backend) {
     var speedLimits = {};
 
+    this.getAll = function() {
+      return _.values(speedLimits);
+    };
+
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
         var selected = _.find(_.values(speedLimits), function(speedLimit) { return speedLimit.isSelected; });

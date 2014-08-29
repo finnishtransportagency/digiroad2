@@ -1,5 +1,5 @@
 (function(root) {
-  root.ApplicationModel = function() {
+  root.ApplicationModel = function(selectedAssetModel, selectedSpeedLimit) {
     var zoomLevel;
     var selectedLayer = 'asset';
     var readOnly = true;
@@ -29,6 +29,9 @@
       setReadOnly: setReadOnly,
       isReadOnly: function() {
         return readOnly;
+      },
+      isDirty: function() {
+        return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty();
       },
       assetDragDelay: 100
     };

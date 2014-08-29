@@ -130,14 +130,15 @@ var RoadCollection = function(backend) {
   application.start = function(customBackend) {
     var backend = customBackend || new Backend();
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);
     var models = {
       speedLimitsCollection: speedLimitsCollection,
-      selectedSpeedLimit: new SelectedSpeedLimit(speedLimitsCollection)
+      selectedSpeedLimit: selectedSpeedLimit
     };
     bindEvents(backend, models);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
-    window.applicationModel = new ApplicationModel();
+    window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit);
     ActionPanel.initialize(backend);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize();

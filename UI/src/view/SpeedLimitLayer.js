@@ -161,12 +161,21 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     vectorLayer.addFeatures(selectionFeatures);
   });
 
+  var displayConfirmMessage = function() { new Confirm(); };
+
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
     selectControl.deactivate();
-    map.events.register('click', vectorLayer, function() { new Confirm(); });
+    map.events.unregister('click', vectorLayer, displayConfirmMessage);
+    map.events.register('click', vectorLayer, displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits([selectedSpeedLimit.get()]);
+  });
+
+  eventbus.on('speedLimit:cancelled', function() {
+    selectControl.activate();
+    map.events.unregister('click', vectorLayer, displayConfirmMessage);
+    redrawSpeedLimits(collection.getAll());
   });
 
   eventbus.on('map:moved', function(state) {
