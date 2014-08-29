@@ -38,16 +38,22 @@
 
     var bindDOMEventHandlers = function() {
       elements.collapsed.click(function() {
-        if (isDirty()) {
-          return;
-        }
-        elements.collapsed.hide();
-        elements.expanded.show();
-        applicationModel.selectLayer('speedLimit');
+        executeOrShowConfirmDialog(function() {
+          elements.collapsed.hide();
+          elements.expanded.show();
+          applicationModel.selectLayer('speedLimit');
+        });
       });
-      elements.expanded.click(function() { if (isDirty()) return false; });
-      elements.expanded.on('click', '.edit-mode-btn', function() { if (!isDirty()) applicationModel.setReadOnly(false); });
-      elements.expanded.on('click', '.read-only-btn', function() { if (!isDirty()) applicationModel.setReadOnly(true); });
+      elements.expanded.on('click', '.edit-mode-btn', function() {
+        executeOrShowConfirmDialog(function() {
+          applicationModel.setReadOnly(false);
+        });
+      });
+      elements.expanded.on('click', '.read-only-btn', function() {
+        executeOrShowConfirmDialog(function() {
+          applicationModel.setReadOnly(true);
+        });
+      });
     };
 
     var bindExternalEventHandlers = function() {
@@ -77,12 +83,12 @@
       .append(elements.expanded);
   };
 
-  var isDirty = function() {
+  var executeOrShowConfirmDialog = function(f) {
     if (applicationModel.isDirty()) {
       new Confirm();
-      return true;
+    } else {
+      f();
     }
-    return false;
   };
 
   ActionPanelBoxes.AssetBox = function() {
@@ -204,49 +210,54 @@
       });
 
       elements.editMode.find('button.read-only-btn').click(function() {
-        if (isDirty()) {
-          return;
-        }
-        elements.editMode.hide();
-        elements.expanded.show();
-        actionButtons.removeClass('active');
-        actionButtons.filter('.select').addClass('active');
-        applicationModel.setReadOnly(true);
+        executeOrShowConfirmDialog(function() {
+          elements.editMode.hide();
+          elements.expanded.show();
+          actionButtons.removeClass('active');
+          actionButtons.filter('.select').addClass('active');
+          applicationModel.setReadOnly(true);
+        });
       });
 
-      actionButtons.on('click', function() {
-        if (isDirty()) {
-          return;
-        }
-        var el = $(this);
-        var action = el.attr('data-action');
+      actionButtons.on('click', function(event) {
+        executeOrShowConfirmDialog(function() {
+          var el = $(event.currentTarget);
+          var action = el.attr('data-action');
 
-        actionButtons.removeClass('active');
-        el.addClass('active');
+          actionButtons.removeClass('active');
+          el.addClass('active');
 
-        eventbus.trigger('tool:changed', action);
+          eventbus.trigger('tool:changed', action);
+        });
       });
 
-      var validityPeriodChangeHandler = function(evt) {
-        if (isDirty()) {
-          var target = evt.currentTarget;
-          $(target).prop('checked', !target.checked);
-          evt.preventDefault();
-          return;
-        }
-        var el = $(this);
-        var validityPeriod = el.prop('name');
-        assetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+      var validityPeriodChangeHandler = function(event) {
+        executeOrShowConfirmDialog(function() {
+          var el = $(event.currentTarget);
+          var validityPeriod = el.prop('name');
+          assetsModel.selectValidityPeriod(validityPeriod, el.prop('checked'));
+        });
       };
 
       elements.expanded.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
       elements.editMode.find('.checkbox').find('input[type=checkbox]').change(validityPeriodChangeHandler);
+      elements.expanded.find('.checkbox').find('input[type=checkbox]').click(function(event) {
+        if (applicationModel.isDirty()) {
+          event.preventDefault();
+        }
+      });
+      elements.editMode.find('.checkbox').find('input[type=checkbox]').click(function(event) {
+        if (applicationModel.isDirty()) {
+          event.preventDefault();
+        }
+      });
 
       elements.collapsed.click(function() {
-        if (isDirty()) return;
-        elements.collapsed.hide();
-        elements.expanded.show();
-        applicationModel.selectLayer('asset');
+        executeOrShowConfirmDialog(function() {
+          elements.collapsed.hide();
+          elements.expanded.show();
+          applicationModel.selectLayer('asset');
+        });
       });
 
       var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
