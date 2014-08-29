@@ -1,4 +1,66 @@
 (function(root) {
+
+  var ValidationErrorLabel = function() {
+    var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
+
+    var updateVisibility = function() {
+      if (selectedAssetModel.isDirty() && selectedAssetModel.requiredPropertiesMissing()) {
+        element.show();
+      } else {
+        element.hide();
+      }
+    };
+
+    updateVisibility();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateVisibility();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
+  var SaveButton = function() {
+    var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function() {
+      element.prop('disabled', true);
+      selectedAssetModel.save();
+    });
+    var updateStatus = function() {
+      if (selectedAssetModel.isDirty() && !selectedAssetModel.requiredPropertiesMissing()) {
+        element.prop('disabled', false);
+      } else {
+        element.prop('disabled', true);
+      }
+    };
+
+    updateStatus();
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      updateStatus();
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
+  var CancelButton = function() {
+    var element = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+      $("#feature-attributes").empty();
+      selectedAssetModel.cancel();
+    });
+
+    eventbus.on('asset:moved assetPropertyValue:changed', function() {
+      element.prop('disabled', false);
+    }, this);
+
+    return {
+      element: element
+    };
+  };
+
   root.AssetForm = {
     initialize: function(backend) {
       var enumeratedPropertyValues = null;
@@ -13,32 +75,23 @@
         var container = $("#feature-attributes").empty();
 
         var element = $('<header />').html(busStopHeader());
-        var wrapper = $('<div />').addClass('wrapper');
+        var wrapper = $('<div />').addClass('wrapper edit-mode');
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
         var featureAttributesElement = container.append(element).append(wrapper);
         addDatePickers();
 
-        var cancelBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-          $("#feature-attributes").empty();
-          selectedAssetModel.cancel();
-        });
-
-        var saveBtn = $('<button />').prop('disabled', !selectedAssetModel.isDirty()).addClass('save btn btn-primary').text('Tallenna').click(function() {
-          selectedAssetModel.save();
-        });
-
-        eventbus.on('asset:moved assetPropertyValue:changed', function() {
-          saveBtn.prop('disabled', false);
-          cancelBtn.prop('disabled', false);
-        }, this);
+        var saveBtn = new SaveButton();
+        var cancelBtn = new CancelButton();
+        var validationErrorLabel = new ValidationErrorLabel();
 
         // TODO: cleaner html
-        featureAttributesElement.append($('<footer />').addClass('form-controls').append(saveBtn).append(cancelBtn));
+        featureAttributesElement.append($('<footer />').addClass('form-controls').append(validationErrorLabel.element).append(saveBtn.element).append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
           wrapper.addClass('read-only');
+          wrapper.removeClass('edit-mode');
         }
 
         function busStopHeader(asset) {
@@ -81,27 +134,39 @@
         }
       };
 
+      var createWrapper = function(property) {
+        var wrapper = createFormRowDiv();
+        wrapper.append(createLabelElement(property));
+        return wrapper;
+      };
+
+      var createFormRowDiv = function() {
+        return $('<div />').addClass('form-group');
+      };
+
+      var createLabelElement = function(property) {
+        var label = $('<label />').addClass('control-label').text(property.localizedName);
+        if (property.required) {
+          label.addClass('required');
+        }
+        return label;
+      };
+
       var readOnlyHandler = function(property){
-        var outer = $('<div />').addClass('form-group');
+        var outer = createFormRowDiv();
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
         // TODO: use cleaner html
         if (property.propertyType === 'read_only_text') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
-          outer.append($('<label />').addClass('control-label').text(property.localizedName));
+          outer.append(createLabelElement(property));
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
         }
         return outer;
       };
 
       var textHandler = function(property){
-        return createTextWrapper(property).append(createTextElement(readOnly, property));
-      };
-
-      var createTextWrapper = function(property) {
-        var wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createTextElement(readOnly, property));
       };
 
       var createTextElement = function(readOnly, property) {
@@ -133,13 +198,7 @@
       };
 
       var singleChoiceHandler = function(property, choices){
-        return createSingleChoiceWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
-      };
-
-      var createSingleChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
       };
 
       var createSingleChoiceElement = function(readOnly, property, choices) {
@@ -179,21 +238,12 @@
 
       var directionChoiceHandler = function(property){
         if (!readOnly) {
-          return createDirectionChoiceWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
         }
       };
 
-      var createDirectionChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
-      };
-
       var createDirectionChoiceElement = function(property) {
-        var element;
-        var wrapper;
-
-        element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+        var element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
           selectedAssetModel.switchDirection();
           streetViewHandler.update();
         });
@@ -206,18 +256,11 @@
       };
 
       var dateHandler = function(property){
-        return createDateWrapper(property).append(createDateElement(readOnly, property));
-      };
-
-      var createDateWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createDateElement(readOnly, property));
       };
 
       var createDateElement = function(readOnly, property) {
         var element;
-        var wrapper;
 
         if (readOnly) {
           element = $('<p />').addClass('form-control-static');
@@ -237,7 +280,7 @@
             selectedAssetModel.setProperty(property.publicId, [{ propertyValue: propertyValue }]);
           }, 500));
 
-          if(property.values[0]) {
+          if (property.values[0]) {
             element.val(dateutil.iso8601toFinnish(property.values[0].propertyDisplayValue));
           }
         }
@@ -245,20 +288,12 @@
         return element;
       };
 
-
       var multiChoiceHandler = function(property, choices){
-        return createMultiChoiceWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
-      };
-
-      var createMultiChoiceWrapper = function(property) {
-        wrapper = $('<div />').addClass('form-group');
-        wrapper.append($('<label />').addClass('control-label').text(property.localizedName));
-        return wrapper;
+        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
         var element;
-        var wrapper;
         var currentValue = _.cloneDeep(property);
         var enumValues = _.chain(choices)
           .filter(function(choice){

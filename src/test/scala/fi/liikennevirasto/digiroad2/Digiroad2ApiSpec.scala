@@ -209,7 +209,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
-      p1.required should be (true)
+      p1.required should be (false)
       ps.find(_.publicId == "vaikutussuunta") should be ('defined)
     }
   }

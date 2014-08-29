@@ -33,13 +33,13 @@
       var transformProperty = function(property) {
         return _.merge(
           {},
-          _.pick(property, 'publicId', 'propertyType'),
+          _.pick(property, 'publicId', 'propertyType', 'required'),
           {
             values: transformValues(_.pick(property, 'publicId'), _.pick(property, 'values'))
           });
       };
       return {
-        properties: _.map(propertyData.propertyData, transformProperty)
+        properties: _.map(propertyData, transformProperty)
       };
     };
 
@@ -69,8 +69,8 @@
       currentAsset.payload = {};
       assetHasBeenModified = true;
       backend.getAssetTypeProperties(10, function(properties) {
-        currentAsset.propertyData = properties;
-        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(currentAsset, 'propertyData')));
+        currentAsset.propertyMetadata = properties;
+        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
       });
@@ -122,7 +122,8 @@
 
     var open = function(asset) {
       currentAsset.id = asset.id;
-      currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(_.pick(asset, 'propertyData')));
+      currentAsset.propertyMetadata = asset.propertyData;
+      currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
       eventbus.trigger('asset:modified');
     };
@@ -131,6 +132,29 @@
 
     var getProperties = function() {
       return currentAsset.payload.properties;
+    };
+
+    var getPropertyMetadata = function(publicId) {
+      return _.find(currentAsset.propertyMetadata, function(metadata) {
+        return metadata.publicId === publicId;
+      });
+    };
+
+    var requiredPropertiesMissing = function() {
+      var isRequiredProperty = function(publicId) {
+        return getPropertyMetadata(publicId).required;
+      };
+      var isChoicePropertyWithUnknownValue = function(property) {
+        var propertyType = getPropertyMetadata(property.publicId).propertyType;
+        return _.some((propertyType === "single_choice" || propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
+      };
+
+      return _.some(currentAsset.payload.properties, function(property) {
+        return isRequiredProperty(property.publicId) && (
+                isChoicePropertyWithUnknownValue(property) ||
+                  _.all(property.values, function(value) { return $.trim(value.propertyValue) === ""; })
+          );
+      });
     };
 
     var save = function() {
@@ -168,7 +192,7 @@
       changedProps = _.union(changedProps, [publicId]);
       currentAsset.payload.properties = updatePropertyData(currentAsset.payload.properties, propertyData);
       assetHasBeenModified = true;
-      eventbus.trigger('assetPropertyValue:changed', {propertyData: propertyData, id: currentAsset.id});
+      eventbus.trigger('assetPropertyValue:changed', { propertyData: propertyData, id: currentAsset.id });
     };
 
     var exists = function() {
@@ -222,7 +246,8 @@
       get: get,
       getProperties: getProperties,
       switchDirection: switchDirection,
-      move: move
+      move: move,
+      requiredPropertiesMissing: requiredPropertiesMissing
     };
   };
 
