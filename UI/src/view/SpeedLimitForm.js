@@ -54,7 +54,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
-    eventbus.on('speedLimit:selected speedLimit:cancelled', function(selectedSpeedLimit) {
+    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(selectedSpeedLimit) {
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) { selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10)); });
       toggleMode(applicationModel.isReadOnly());
@@ -65,6 +65,7 @@
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
       rootElement.find('.form-controls button').attr('disabled', false);
+      rootElement.find('button.save').click(function() { selectedSpeedLimit.save(); });
       rootElement.find('button.cancel').click(function() { selectedSpeedLimit.cancel(); });
     });
   };

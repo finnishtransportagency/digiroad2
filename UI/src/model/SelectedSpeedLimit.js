@@ -23,6 +23,15 @@
       }
     };
 
+    this.save = function() {
+      $.post("api/linearassets/" + current.id, { limit: current.limit }).then(function() {
+        dirty = false;
+        eventbus.trigger('speedLimit:saved', self);
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
     this.cancel = function() {
       current.limit = originalSpeedLimit;
       collection.changeLimit(current.id, originalSpeedLimit);
