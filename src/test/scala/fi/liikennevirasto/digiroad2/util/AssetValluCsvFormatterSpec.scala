@@ -28,7 +28,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val created = inOutputDateFormat(testAsset.created.modificationTime.get)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;")
+    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";dr1conversion;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;;2")
   }
 
   it must "leave modification info empty if creation and modification info are unspecified" in {
@@ -37,7 +37,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
 
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;;;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;")
+    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;;;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;;2")
   }
 
   it must "specify creation date" in {
@@ -48,7 +48,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val created = inOutputDateFormat(creationDate)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";testCreator;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;")
+    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + created + ";testCreator;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;;2")
   }
 
   it must "specify modification date" in {
@@ -60,7 +60,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val modified = inOutputDateFormat(modificationInformation.modificationTime.get)
     val (validFrom: String, validTo: String) = assetValidityPeriod(testAsset)
 
-    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;")
+    csv must equal("5;;;;;374780.259160265;6677546.84962279;;;210;Etelä;;1;1;1;0;;;Ei tiedossa;" + modified + ";testModifier;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen;;;;2")
   }
 
   it must "filter tram stops from test data" in {
@@ -103,7 +103,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     val csv = AssetValluCsvFormatter.formatFromAssetWithPropertiesValluCsv(235, "Kauniainen", asset)
     csv must equal("5;id ;matkustaja ,tunnus;n imi suomeksi; nimi ruotsiksi ;374780.259160265;6677546.84962279;;;210;Etelä; liikennointisuunta ;1;1;1;0;;;Ei tiedossa;"
       + created
-      + ";dr1conversion;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen; lisatiedot;palauteosoite , teksti;")
+      + ";dr1conversion;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen; lisatiedot;palauteosoite , teksti;;2")
   }
 
   private def createStop(stopType: Seq[Long]): AssetWithProperties = {

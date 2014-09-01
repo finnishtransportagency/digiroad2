@@ -88,7 +88,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat,
-        created = row.created, modified = row.modified)
+        created = row.created, modified = row.modified, roadLinkType = row.roadLinkType)
   }
 
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {

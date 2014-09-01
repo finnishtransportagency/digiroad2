@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.RoadLinkType
 import fi.liikennevirasto.digiroad2.asset._
 import _root_.oracle.spatial.geometry.JGeometry
 import java.sql.{Timestamp, Connection}
@@ -32,7 +33,7 @@ object Queries {
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Int, created: Modification, modified: Modification, wgslon: Double, wgslat: Double)
+                      municipalityNumber: Int, created: Modification, modified: Modification, wgslon: Double, wgslat: Double, roadLinkType: RoadLinkType = UnknownRoad)
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
@@ -68,9 +69,10 @@ object Queries {
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val posGeom = JGeometry.load(pos)
       val posWsg84 = JGeometry.load(r.nextBytes)
+      val roadLinkType = RoadLinkType(r.nextInt / 10)
       (AssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        roadLinkEndDate, municipalityNumber, created, modified, wgslon = posWsg84.getJavaPoint.getX, wgslat = posWsg84.getJavaPoint.getY),
+        roadLinkEndDate, municipalityNumber, created, modified, wgslon = posWsg84.getJavaPoint.getX, wgslat = posWsg84.getJavaPoint.getY, roadLinkType),
         LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
     }
   }
@@ -88,8 +90,6 @@ object Queries {
     }
   }
 
-  val RoadLinkTypeMapping = Map((1 -> Road), (2 -> Street), (3 -> PrivateRoad))
-
   implicit val getRoadLink = new GetResult[RoadLink] {
     def apply(r: PositionedResult) = {
       val (id, geomBytes, endDate, municipalityNumber, linkType) = (r.nextLong, r.nextBytes, r.nextDateOption, r.nextInt, r.nextInt)
@@ -102,7 +102,7 @@ object Queries {
         (newFormat.format(points(geom.getDimensions * i)).toDouble,
          newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
       }
-      val roadLinkType = RoadLinkTypeMapping.getOrElse((linkType / 10), UnknownRoad)
+      val roadLinkType = RoadLinkType(linkType / 10)
       RoadLink(id = id,
                lonLat = coords,
                endDate = endDate.map(new LocalDate(_)),
@@ -147,7 +147,7 @@ object Queries {
     end as display_value,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
     rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by,
-    SDO_CS.TRANSFORM(SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))),4326) AS position_wgs84
+    SDO_CS.TRANSFORM(SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))),4326) AS position_wgs84, rl.functional_class
     from asset_type t
       join asset a on a.asset_type_id = t.id
         join lrm_position lrm on a.lrm_position_id = lrm.id

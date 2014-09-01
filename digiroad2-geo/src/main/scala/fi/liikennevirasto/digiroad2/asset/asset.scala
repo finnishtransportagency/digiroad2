@@ -3,11 +3,20 @@ package fi.liikennevirasto.digiroad2.asset
 import org.joda.time.LocalDate
 import org.joda.time.DateTime
 
-abstract class RoadLinkType
-case object PrivateRoad extends RoadLinkType
-case object Road extends RoadLinkType
-case object Street extends RoadLinkType
-case object UnknownRoad extends RoadLinkType
+sealed trait RoadLinkType {
+  def value: Int
+}
+object RoadLinkType {
+  val values = Set(Road, Street, PrivateRoad, UnknownRoad)
+
+  def apply(value: Int): RoadLinkType = {
+    values.find(_.value == value).getOrElse(UnknownRoad)
+  }
+}
+case object Road extends RoadLinkType { def value = 1 }
+case object Street extends RoadLinkType { def value = 2}
+case object PrivateRoad extends RoadLinkType { def value = 3}
+case object UnknownRoad extends RoadLinkType { def value = 99 }
 
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
@@ -21,7 +30,7 @@ case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lo
                  status: Option[String] = None, readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
-                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification) {
+                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: RoadLinkType = UnknownRoad) {
   def getPropertyValue(propertyName: String): Option[String] = {
     propertyData.find(_.publicId.equals(propertyName))
       .flatMap(_.values.headOption.map(_.propertyValue))

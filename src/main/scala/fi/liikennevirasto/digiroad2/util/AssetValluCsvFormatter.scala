@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
 import scala.collection.immutable
-import fi.liikennevirasto.digiroad2.asset.{Modification, PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset._
 import scala.language.postfixOps
 import org.joda.time.format.DateTimeFormat
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
+import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
 object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesReader {
 
@@ -43,6 +46,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
       .andThen (addComments)
       .andThen (addContactEmail)
       .andThen (addLiviId)
+      .andThen (addRoadType)
       .apply(asset, List())._2.reverse.mkString(";")
   }
 
@@ -197,5 +201,10 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
     val (asset, result) = params
     val liviId = getPropertyValuesByPublicId("yllapitajan_koodi", asset.propertyData)
     (asset, liviId.flatMap(_.propertyDisplayValue).headOption.getOrElse("") :: result)
+  }
+
+  private def addRoadType(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
+    val (asset, result) = params
+    (asset, asset.roadLinkType.value.toString :: result)
   }
 }
