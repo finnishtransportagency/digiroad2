@@ -29,13 +29,13 @@
     }, 1000);
 
     this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
-      $.getJSON('api/linearassets?bbox=' + boundingBox, function (speedLimits) {
+      $.getJSON('api/speedlimits?bbox=' + boundingBox, function (speedLimits) {
         callback(speedLimits);
       });
     }, 1000);
 
     this.getSpeedLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/linearassets/' + id, function(speedLimit) {
+      $.getJSON('api/speedlimits/' + id, function(speedLimit) {
         callback(speedLimit);
       });
     }, 1000);

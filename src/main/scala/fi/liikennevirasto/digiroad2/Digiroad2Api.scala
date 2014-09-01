@@ -220,7 +220,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  get("/linearassets") {
+  get("/speedlimits") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
@@ -230,12 +230,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/linearassets/:segmentId") {
+  get("/speedlimits/:segmentId") {
     val segmentId = params("segmentId")
     linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
   }
 
-  put("/linearassets/:speedLimitId") {
+  put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
     if (!user.configuration.roles.contains(Role.Operator)) { halt(Unauthorized("User not authorized")) }
     val speedLimitId = params("speedLimitId").toLong

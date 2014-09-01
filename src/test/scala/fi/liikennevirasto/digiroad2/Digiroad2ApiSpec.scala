@@ -243,14 +243,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("update speed limit value", Tag("db")) {
-    putJsonWithUserAuth("/linearassets/700898", """{"limit":60}""".getBytes, username = "test2") {
+    putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test2") {
       status should equal(200)
-      getWithUserAuth("/linearassets?bbox=371375,6676711,372093,6677147") {
+      getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
         val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
         speedLimitLinks.foreach(link => link.limit should equal(60))
-        putJsonWithUserAuth("/linearassets/700898", """{"limit":100}""".getBytes, username = "test2") {
+        putJsonWithUserAuth("/speedlimits/700898", """{"limit":100}""".getBytes, username = "test2") {
           status should equal(200)
-          getWithUserAuth("/linearassets?bbox=371375,6676711,372093,6677147") {
+          getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
             val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
             speedLimitLinks.foreach(link => link.limit should equal(100))
           }
@@ -260,7 +260,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/linearassets/700898", """{"limit":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
