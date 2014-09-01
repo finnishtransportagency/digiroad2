@@ -172,7 +172,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     drawSpeedLimits([selectedSpeedLimit.get()]);
   });
 
-  eventbus.on('speedLimit:cancelled', function() {
+  eventbus.on('speedLimit:cancelled speedLimit:saved', function() {
     selectControl.activate();
     map.events.unregister('click', vectorLayer, displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
