@@ -8,10 +8,7 @@ import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.DateTime
 
 object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesReader {
-  val fields = "STOP_ID;ADMIN_STOP_ID;STOP_CODE;NAME_FI;NAME_SV;COORDINATE_X;COORDINATE_Y;ADDRESS;" +
-    "ROAD_NUMBER;BEARING;BEARING_DESCRIPTION;DIRECTION;LOCAL_BUS;EXPRESS_BUS;NON_STOP_EXPRESS_BUS;" +
-    "VIRTUAL_STOP;EQUIPMENT;REACHABILITY;SPECIAL_NEEDS;MODIFIED_TIMESTAMP;MODIFIED_BY;VALID_FROM;" +
-    "VALID_TO;ADMINISTRATOR_CODE;MUNICIPALITY_CODE;MUNICIPALITY_NAME;COMMENTS;CONTACT_EMAILS"
+
   val OutputDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   def valluCsvRowsFromAssets(municipalityId: Long, municipalityName: String, assets: immutable.Iterable[AssetWithProperties], complementaryBusStopNames: Map[Long, String]): Iterable[String] = {
@@ -45,6 +42,7 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
       .andThen (addMunicipalityInfo(municipalityId, municipalityName, _))
       .andThen (addComments)
       .andThen (addContactEmail)
+      .andThen (addLiviId)
       .apply(asset, List())._2.reverse.mkString(";")
   }
 
@@ -193,5 +191,11 @@ object AssetValluCsvFormatter extends AssetCsvFormatter with AssetPropertiesRead
     val (asset, result) = params
     val (local, express, nonStopExpress, virtual) = describeBusStopTypes(asset)
     (asset, virtual :: nonStopExpress :: express :: local :: result)
+  }
+
+  private def addLiviId(params: (AssetWithProperties, List[String])): (AssetWithProperties, List[String]) = {
+    val (asset, result) = params
+    val liviId = getPropertyValuesByPublicId("yllapitajan_koodi", asset.propertyData)
+    (asset, liviId.flatMap(_.propertyDisplayValue).headOption.getOrElse("") :: result)
   }
 }
