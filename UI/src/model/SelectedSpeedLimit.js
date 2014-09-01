@@ -27,7 +27,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/linearassets/" + current.id,
+        url: "api/speedlimits/" + current.id,
         data: JSON.stringify({limit: current.limit}),
         dataType: "json"
       }).then(function() {
