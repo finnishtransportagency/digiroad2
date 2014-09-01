@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.linearasset.Point
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.user.UserProvider
+
 import scala.slick.driver.JdbcDriver.backend.Database
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import Database.dynamicSession
+import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
   private def toSpeedLimit(entity: (Long, Long, Int, Int, Seq[(Double, Double)])): SpeedLimitLink = {
@@ -65,6 +68,20 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
         }.toList
         val endpoints = calculateSpeedLimitEndPoints(points)
         Some(SpeedLimit(segmentId, endpoints))
+      }
+    }
+  }
+
+  override def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+    Database.forDataSource(ds).withDynTransaction {
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+      val assetsUpdated = Queries.updateAssetModified(id, username).first
+      val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
+      if (assetsUpdated == 1 && propertiesUpdated == 1) {
+        Some(id)
+      } else {
+        dynamicSession.rollback()
+        None
       }
     }
   }

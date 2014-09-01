@@ -24,7 +24,13 @@
     };
 
     this.save = function() {
-      $.post("api/linearassets/" + current.id, { limit: current.limit }).then(function() {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/linearassets/" + current.id,
+        data: JSON.stringify({limit: current.limit}),
+        dataType: "json"
+      }).then(function() {
         dirty = false;
         eventbus.trigger('speedLimit:saved', self);
       }, function() {

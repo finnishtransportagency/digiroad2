@@ -11,6 +11,7 @@ case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int,
 case class SpeedLimit(id: Long, endpoints: Set[Point])
 
 trait LinearAssetProvider {
+  def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long]
   def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink]
   def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
 }
