@@ -1,24 +1,20 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest._
+
 import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
-import org.joda.time.{LocalDate, DateTime}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.scalatest.mock.MockitoSugar
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
-import fi.liikennevirasto.digiroad2.asset.{Point, RoadLink}
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.DataFixture._
-import scala.Some
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
-import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.DummyEventBus
+import fi.liikennevirasto.digiroad2.asset.{Point, RoadLink}
+import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import org.joda.time.{DateTime, LocalDate}
+import org.mockito.Matchers._
+import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
+import scala.slick.jdbc.{StaticQuery => Q}
 
 class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll
   with MockitoSugar {
