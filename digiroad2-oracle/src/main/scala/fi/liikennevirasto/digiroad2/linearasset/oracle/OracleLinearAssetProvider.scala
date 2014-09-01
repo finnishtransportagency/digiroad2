@@ -80,6 +80,7 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
       if (assetsUpdated == 1 && propertiesUpdated == 1) {
         Some(id)
       } else {
+        dynamicSession.rollback()
         None
       }
     }
