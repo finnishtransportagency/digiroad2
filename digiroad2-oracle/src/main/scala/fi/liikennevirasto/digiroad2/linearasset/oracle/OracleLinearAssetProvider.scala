@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{Point, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._

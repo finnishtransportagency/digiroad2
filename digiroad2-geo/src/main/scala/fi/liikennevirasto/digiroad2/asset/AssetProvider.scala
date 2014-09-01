@@ -27,5 +27,4 @@ trait AssetProvider {
 class AssetNotFoundException(externalId: Long) extends RuntimeException
 class LRMPositionDeletionFailed(val reason: String) extends RuntimeException
 
-case class Point(x: Double, y: Double)
 case class BoundingRectangle(leftBottom: Point, rightTop: Point)
