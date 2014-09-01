@@ -74,7 +74,6 @@ class OracleLinearAssetProvider(userProvider: UserProvider) extends LinearAssetP
 
   override def updateSpeedLimitValue(id: Long, value: Int): Option[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      // TODO: verify user rights
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
       val assetsUpdated = Queries.updateAssetModified(id, userProvider.getCurrentUser().username).first
       val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
