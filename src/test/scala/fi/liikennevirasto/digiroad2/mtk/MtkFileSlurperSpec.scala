@@ -4,7 +4,7 @@ import org.scalatest._
 import org.apache.commons.io._
 import java.io.File
 import scala.collection.mutable
-import fi.liikennevirasto.digiroad2.asset.AssetProvider
+import fi.liikennevirasto.digiroad2.asset.{Point, AssetProvider}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.Matchers._

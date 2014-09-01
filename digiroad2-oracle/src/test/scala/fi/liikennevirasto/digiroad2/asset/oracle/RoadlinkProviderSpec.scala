@@ -8,19 +8,16 @@ import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.scalatest.mock.MockitoSugar
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
-import fi.liikennevirasto.digiroad2.mtk.Point
-import fi.liikennevirasto.digiroad2.asset.RoadLink
+import fi.liikennevirasto.digiroad2.asset.{Point, RoadLink}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.DataFixture._
-import fi.liikennevirasto.digiroad2.mtk.Point
 import scala.Some
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.asset.RoadLink
 import fi.liikennevirasto.digiroad2.DummyEventBus
 
 class RoadlinkProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll
