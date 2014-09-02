@@ -77,7 +77,14 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
-    val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    val newAsset = providerWithMockedEventBus.createAsset(
+      TestAssetTypeId,
+      existingAsset.lon,
+      existingAsset.lat,
+      existingAsset.roadLinkId,
+      180,
+      AssetCreator,
+      mandatoryBusStopProperties)
     try {
       newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
@@ -95,9 +102,16 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
     userProvider.setCurrentUser(creatingUser)
     val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
-    val newAsset = providerWithMockedEventBus.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    val newAsset = providerWithMockedEventBus.createAsset(
+      TestAssetTypeId,
+      existingAsset.lon,
+      existingAsset.lat,
+      existingAsset.roadLinkId,
+      180,
+      AssetCreator,
+      mandatoryBusStopProperties)
     try {
-      newAsset.propertyData.find( prop => prop.publicId == "pysakin_tyyppi" ).get.values.head.propertyValue shouldBe "99"
+      newAsset.propertyData.find( prop => prop.publicId == "katos" ).get.values.head.propertyValue shouldBe "99"
     } finally {
       deleteCreatedTestAsset(newAsset.id)
     }
@@ -113,9 +127,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       existingAsset.roadLinkId,
       180,
       AssetCreator,
-      List(
-        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
+      mandatoryBusStopProperties ++ List(SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10")))))
     try {
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
@@ -145,10 +157,10 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         existingAsset.roadLinkId,
         180,
         AssetCreator,
-        List(
-          SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
-          SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10"))),
-          SimpleProperty("vaikutussuunta", List(PropertyValue("2")))))
+        mandatoryBusStopProperties ++
+          List(
+            SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
+            SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10")))))
       fail("Should have thrown an exception")
     } catch {
       case e: SQLIntegrityConstraintViolationException =>
@@ -169,7 +181,11 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("remove asset from database", Tag("db")) {
-    val asset = provider.createAsset(TestAssetTypeId, 0, 0, 5771, 180, AssetCreator, Seq(SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2")))))
+    val asset = provider.createAsset(
+      TestAssetTypeId,
+      0, 0, 5771, 180,
+      AssetCreator,
+      mandatoryBusStopProperties)
     val assetId = asset.id
     val lrmPositionId = executeIntQuery(s"select lrm_position_id from asset where id = $assetId")
     amountOfSingleChoiceValues(assetId) should be > 0
@@ -181,6 +197,13 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     amountOfSingleChoiceValues(assetId) should be(0)
     amountOfLrmPositions(lrmPositionId) should equal(0)
     amountOfAssets(assetId) should be(0)
+  }
+
+  private def mandatoryBusStopProperties: Seq[SimpleProperty] = {
+    Seq(
+      SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
+      SimpleProperty(publicId = "nimi_suomeksi", values = Seq(PropertyValue("nimi"))),
+      SimpleProperty(publicId = "pysakin_tyyppi", values = Seq(PropertyValue("2"))))
   }
 
   private def amountOfSingleChoiceValues(assetId: Long): Int = {
