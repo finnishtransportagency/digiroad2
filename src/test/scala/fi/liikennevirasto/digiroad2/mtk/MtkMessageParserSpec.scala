@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.mtk
 
+import fi.liikennevirasto.digiroad2.Point
 import org.scalatest.{MustMatchers, BeforeAndAfter, FlatSpec}
 import scala.io.Source
 import org.joda.time.{LocalDate, DateTime}

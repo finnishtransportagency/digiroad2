@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
+import fi.liikennevirasto.digiroad2.Point
 import org.scalatest._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.mtk.Point
 import scala.collection.mutable
 
 class RoadnodeProviderSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {

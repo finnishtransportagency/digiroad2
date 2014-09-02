@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.Point
+
 import scala.language.implicitConversions
 
 import org.scalatest.FunSuite
@@ -7,14 +9,12 @@ import org.scalatest.Matchers
 import org.scalatest.Tag
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.linearasset.Point
-import fi.liikennevirasto.digiroad2.asset.{Point => AssetPoint}
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val provider = new OracleLinearAssetProvider()
 
   test("load speed limits with spatial bounds", Tag("db")) {
-    val speedLimits = provider.getSpeedLimits(BoundingRectangle(AssetPoint(374700, 6677595), AssetPoint(374750, 6677560)))
+    val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)))
     speedLimits.size shouldBe 4
   }
 

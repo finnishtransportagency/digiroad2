@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.mtk
 
+import fi.liikennevirasto.digiroad2.Point
 import org.joda.time.{LocalDate, DateTime}
 import java.text.{NumberFormat, DecimalFormat}
 import java.util.Locale
 
 case class MtkRoadLink(id: Long, startDate: DateTime, endDate: Option[LocalDate],
                        municipalityCode: Int, points: Seq[Point])
-case class Point(x: Double, y: Double, z: Double)
 
 object MtkRoadLinkUtils {
   private def pointToStoringItem(point: Point): String = {

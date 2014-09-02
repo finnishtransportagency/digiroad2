@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import fi.liikennevirasto.digiroad2.mtk.Point
+import fi.liikennevirasto.digiroad2.Point
 import oracle.spatial.geometry.JGeometry
 import scala.slick.jdbc.{PositionedResult, GetResult}
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession

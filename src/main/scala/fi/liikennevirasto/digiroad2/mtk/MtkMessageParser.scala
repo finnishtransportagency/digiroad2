@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.mtk
 
+import fi.liikennevirasto.digiroad2.Point
 import org.joda.time.{LocalDate, DateTime}
 import scala.xml.parsing.ConstructingParser
 import scala.io.Source
