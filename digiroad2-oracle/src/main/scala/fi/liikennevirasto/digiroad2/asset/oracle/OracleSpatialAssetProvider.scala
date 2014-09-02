@@ -73,7 +73,8 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
     Database.forDataSource(ds).withDynTransaction {
-      validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ OracleSpatialAssetDao.requiredProperties(assetTypeId), definedProperties)
+      val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
+      validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
