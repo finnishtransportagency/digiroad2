@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.mtk
 
-import fi.liikennevirasto.digiroad2.asset.Point
+import fi.liikennevirasto.digiroad2.Point
 import org.joda.time.{LocalDate, DateTime}
 import java.text.{NumberFormat, DecimalFormat}
 import java.util.Locale

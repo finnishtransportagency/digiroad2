@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.LocalDate

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import fi.liikennevirasto.digiroad2.asset.Point
+import fi.liikennevirasto.digiroad2.Point
 import org.scalatest._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q}

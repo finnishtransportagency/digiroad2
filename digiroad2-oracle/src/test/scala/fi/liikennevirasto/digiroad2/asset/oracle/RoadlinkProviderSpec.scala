@@ -4,8 +4,8 @@ import org.scalatest._
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.DummyEventBus
-import fi.liikennevirasto.digiroad2.asset.{Point, RoadLink}
+import fi.liikennevirasto.digiroad2.{Point, DummyEventBus}
+import fi.liikennevirasto.digiroad2.asset.RoadLink
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}

@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.Point
+
 import scala.language.implicitConversions
 
 import org.scalatest.FunSuite
@@ -7,7 +9,6 @@ import org.scalatest.Matchers
 import org.scalatest.Tag
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.Point
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val provider = new OracleLinearAssetProvider()

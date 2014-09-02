@@ -10,7 +10,7 @@ import scala.language.implicitConversions
 import fi.liikennevirasto.digiroad2.user.Role
 import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DigiroadEventBus}
+import fi.liikennevirasto.digiroad2.{Point, DummyEventBus, DigiroadEventBus}
 import org.mockito.Mockito.verify
 import fi.liikennevirasto.digiroad2.asset._
 import scala.Some

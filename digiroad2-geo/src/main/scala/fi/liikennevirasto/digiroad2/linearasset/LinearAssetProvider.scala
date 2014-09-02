@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{Point, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 
 case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point])
 case class SpeedLimit(id: Long, endpoints: Set[Point])

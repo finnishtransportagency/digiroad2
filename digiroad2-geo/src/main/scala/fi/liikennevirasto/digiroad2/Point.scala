@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.asset
+package fi.liikennevirasto.digiroad2
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {
   def distanceTo(point: Point): Double =
