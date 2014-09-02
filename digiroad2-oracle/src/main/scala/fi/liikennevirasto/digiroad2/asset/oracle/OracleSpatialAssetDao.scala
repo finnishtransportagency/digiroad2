@@ -409,6 +409,10 @@ object OracleSpatialAssetDao {
     """.as[String].first
   }
 
+  def requiredProperties(assetTypeId: Long): Set[String] = {
+    availableProperties(assetTypeId).filter(_.required).map(_.publicId).toSet
+  }
+
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     implicit val getPropertyDescription = new GetResult[Property] {
       def apply(r: PositionedResult) = {

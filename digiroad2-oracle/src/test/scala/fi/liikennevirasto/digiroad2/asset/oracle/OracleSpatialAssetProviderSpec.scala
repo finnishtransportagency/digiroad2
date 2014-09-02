@@ -72,6 +72,14 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     values.map(_.propertyName) should contain ("Vaikutussuunta")
   }
 
+  test("adding asset to database without bus stop type fails", Tag("db")) {
+    an[IllegalArgumentException] should be thrownBy provider.createAsset(
+      TestAssetTypeId,
+      0, 0, 5771, 180,
+      AssetCreator,
+      mandatoryBusStopProperties.filterNot(_.publicId.equals("pysakin_tyyppi")))
+ }
+
   test("add asset to database", Tag("db")) {
     val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
     val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
