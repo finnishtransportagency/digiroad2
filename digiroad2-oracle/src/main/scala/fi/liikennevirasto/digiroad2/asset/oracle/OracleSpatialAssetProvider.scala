@@ -5,6 +5,7 @@ import scala.concurrent.forkjoin.ForkJoinPool
 import scala.slick.driver.JdbcDriver.backend.Database
 import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
+import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
@@ -70,11 +71,34 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  private def validateMultipleChoice(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
+    values.foreach { value =>
+      if (value.propertyValue == "99") throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
+    }
+  }
+
+  private def validateNotBlank(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
+    values.foreach { value =>
+      if (isBlank(value.propertyValue)) throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
+    }
+  }
+
+  private def validateRequiredPropertyValues(requiredProperties: Set[Property], properties: Seq[SimpleProperty]): Unit = {
+    requiredProperties.foreach { requiredProperty =>
+      val values = properties.find(_.publicId == requiredProperty.publicId).get.values
+      requiredProperty.propertyType match {
+        case PropertyTypes.MultipleChoice => validateMultipleChoice(requiredProperty.publicId, values)
+        case _ => validateNotBlank(requiredProperty.publicId, values)
+      }
+    }
+  }
+
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
     Database.forDataSource(ds).withDynTransaction {
       val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
       validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
+      validateRequiredPropertyValues(requiredProperties, properties)
       if (!userCanModifyRoadLink(roadLinkId)) {
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
