@@ -409,8 +409,8 @@ object OracleSpatialAssetDao {
     """.as[String].first
   }
 
-  def requiredProperties(assetTypeId: Long): Set[String] = {
-    availableProperties(assetTypeId).filter(_.required).map(_.publicId).toSet
+  def requiredProperties(assetTypeId: Long): Set[Property] = {
+    availableProperties(assetTypeId).filter(_.required).toSet
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
