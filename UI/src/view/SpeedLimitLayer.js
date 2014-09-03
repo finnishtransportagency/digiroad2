@@ -238,9 +238,42 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       return speedLimit;
     }
     speedLimit.links = _.map(speedLimit.links, function(link) {
-      return _.map(link, _.partial(adjustSpeedLimitPointOffset, speedLimit.sideCode));
+      return _.map(link, function(point, index, geometry) {
+        return offsetPoint(point, index, geometry, speedLimit.sideCode);
+      });
     });
     return speedLimit;
+  };
+
+  var offsetPoint = function(point, index, geometry, sideCode) {
+    var scaleVector = function(vector, scalar) {
+      return {x: vector.x * scalar, y: vector.y * scalar};
+    };
+    var sumVectors = function(vector1, vector2) {
+      return {x: vector1.x + vector2.x, y: vector1.y + vector2.y};
+    };
+    var subtractVector = function(vector1, vector2) {
+      return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
+    };
+    var normalVector = function(vector) {
+      return {x: vector.y, y: -vector.x };
+    };
+    var length = function(vector) {
+      return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+    };
+    var unitVector = function(vector) {
+      var vectorLength = length(vector);
+      return {x: vector.x / vectorLength, y: vector.y / vectorLength};
+    };
+
+    var previousPoint = index > 0 ? geometry[index - 1] : point;
+    var nextPoint = geometry[index + 1] || point;
+
+    var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
+    var normal = normalVector(directionVector);
+    var sideCodeScalar = (2 * sideCode - 5) * -4;
+    var offset = scaleVector(unitVector(normal), sideCodeScalar);
+    return sumVectors(point, offset);
   };
 
   var drawSpeedLimits = function(speedLimits) {
