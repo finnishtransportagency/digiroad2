@@ -19,7 +19,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
         new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
       ] }),
       symbolizer: style
-    })
+    });
   };
 
   var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
