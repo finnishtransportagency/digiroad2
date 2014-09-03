@@ -6,6 +6,7 @@
           "id": 1123812,
           "roadLinkId": 1,
           "limit": 40,
+          "sideCode": 1,
           "points": [
             {
               "x": 374895.585,
@@ -21,6 +22,7 @@
           "id": 1123107,
           "roadLinkId": 1,
           "limit": 60,
+          "sideCode": 1,
           "points": [
             {
               "x": 374695.469,
@@ -44,6 +46,7 @@
           "id": 0,
           "roadLinkId": 1,
           "limit": 20,
+          "sideCode": 1,
           "points": [
             {
               "x": 374573.844,
@@ -103,6 +106,7 @@
           "id": 1,
           "roadLinkId": 1,
           "limit": 30,
+          "sideCode": 1,
           "points": [
             {
               "x": 374695.469,
@@ -138,6 +142,7 @@
           "id": 2,
           "roadLinkId": 1,
           "limit": 40,
+          "sideCode": 1,
           "points": [
             {
               "x": 374862.933,
@@ -169,6 +174,7 @@
           "id": 3,
           "roadLinkId": 1,
           "limit": 50,
+          "sideCode": 1,
           "points": [
             {
               "x": 374809.404,
@@ -200,6 +206,7 @@
           "id": 4,
           "roadLinkId": 1,
           "limit": 60,
+          "sideCode": 1,
           "points": [
             {
               "x": 374809.404,
@@ -235,6 +242,7 @@
           "id": 5,
           "roadLinkId": 1,
           "limit": 70,
+          "sideCode": 1,
           "points": [
             {
               "x": 374783.504,
@@ -262,6 +270,7 @@
           "id": 6,
           "roadLinkId": 1,
           "limit": 80,
+          "sideCode": 1,
           "points": [
             {
               "x": 374783.504,
@@ -297,6 +306,7 @@
           "id": 7,
           "roadLinkId": 1,
           "limit": 100,
+          "sideCode": 1,
           "points": [
             {
               "x": 374512.858,
@@ -360,6 +370,7 @@
           "id": 8,
           "roadLinkId": 1,
           "limit": 120,
+          "sideCode": 1,
           "points": [
             {
               "x": 374728.64,
@@ -391,6 +402,7 @@
           "id": 9,
           "roadLinkId": 1,
           "limit": 20,
+          "sideCode": 1,
           "points": [
             {
               "x": 374662.801,
@@ -430,6 +442,7 @@
           "id": 10,
           "roadLinkId": 1,
           "limit": 30,
+          "sideCode": 1,
           "points": [
             {
               "x": 374662.801,
@@ -461,6 +474,7 @@
           "id": 11,
           "roadLinkId": 1,
           "limit": 40,
+          "sideCode": 1,
           "points": [
             {
               "x": 374640.964,
@@ -497,9 +511,66 @@
           ]
         },
         {
-          "id": 12,
+          "id": 120,
           "roadLinkId": 1,
           "limit": 50,
+          "sideCode": 2,
+          "points": [
+            {
+              "x": 374704.813,
+              "y": 6677278.197
+            },
+            {
+              "x": 374709.501,
+              "y": 6677275.271
+            },
+            {
+              "x": 374716.755,
+              "y": 6677274.78
+            },
+            {
+              "x": 374725.156,
+              "y": 6677276.547
+            },
+            {
+              "x": 374795.627,
+              "y": 6677289.193
+            },
+            {
+              "x": 374804.107,
+              "y": 6677291.108
+            },
+            {
+              "x": 374810.516,
+              "y": 6677294.457
+            },
+            {
+              "x": 374817.873,
+              "y": 6677298.895
+            },
+            {
+              "x": 374821.241,
+              "y": 6677304.385
+            },
+            {
+              "x": 374837.754,
+              "y": 6677363.61
+            },
+            {
+              "x": 374839.486,
+              "y": 6677368.577
+            },
+            {
+              "x": 374841.639,
+              "y": 6677380.704
+            }
+          ]
+        },
+        {
+          "id": 121,
+          "roadLinkId": 1,
+          "limit": 50,
+          "sideCode": 3,
           "points": [
             {
               "x": 374704.813,
@@ -555,6 +626,7 @@
           "id": 13,
           "roadLinkId": 1,
           "limit": 60,
+          "sideCode": 1,
           "points": [
             {
               "x": 374699.369,
@@ -598,6 +670,7 @@
           "id": 13,
           "roadLinkId": 2,
           "limit": 60,
+          "sideCode": 1,
           "points": [
             {
               "x": 374748.721,
@@ -653,6 +726,7 @@
           "id": 15,
           "roadLinkId": 1,
           "limit": 80,
+          "sideCode": 1,
           "points": [
             {
               "x": 374945.976,
@@ -676,6 +750,7 @@
           "id": 16,
           "roadLinkId": 1,
           "limit": 100,
+          "sideCode": 1,
           "points": [
             {
               "x": 374817.814,
@@ -707,6 +782,7 @@
           "id": 17,
           "roadLinkId": 1,
           "limit": 120,
+          "sideCode": 1,
           "points": [
             {
               "x": 374867.016,
