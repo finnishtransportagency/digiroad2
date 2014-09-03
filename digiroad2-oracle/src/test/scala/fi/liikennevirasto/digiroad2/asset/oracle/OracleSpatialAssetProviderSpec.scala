@@ -155,11 +155,8 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     import scala.slick.jdbc.{StaticQuery => Q}
     import Database.dynamicSession
     import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-    val AssetCreator = "integration_test_add_asset"
+    val assetCreator = "spatial_asset_provider_spec_add_asset_is_transactional"
     val existingAsset = provider.getAssetById(TestAssetId).get
-    val oldCount = Database.forDataSource(ds).withDynSession {
-      Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head
-    }
     try {
       val newAsset = provider.createAsset(
         TestAssetTypeId,
@@ -167,7 +164,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         existingAsset.lat,
         existingAsset.roadLinkId,
         180,
-        AssetCreator,
+        assetCreator,
         mandatoryBusStopProperties ++
           List(
             SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
@@ -176,7 +173,8 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     } catch {
       case e: SQLIntegrityConstraintViolationException =>
         Database.forDataSource(ds).withDynSession {
-          oldCount should be (Q.queryNA[Long]("""SELECT COUNT(*) FROM asset""").list.head)
+          val assetCount = Q.queryNA[Long]("""SELECT COUNT(*) FROM asset where created_by = '""" + assetCreator + "'").list.head
+          assetCount should be (0)
         }
     }
   }
