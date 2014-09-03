@@ -237,13 +237,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, adjustSpeedLimitOffset);
-    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithType, function(speedLimit) { return speedLimit.limit >= 70; });
+    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.limit >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
-    vectorLayer.addFeatures(limitSigns(speedLimitsWithType));
+    vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
     vectorLayer.addFeatures(selectionFeatures);
 
     if (selectedSpeedLimit.exists()) {
