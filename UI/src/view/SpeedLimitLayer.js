@@ -12,6 +12,16 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     });
   };
 
+  var createZoomDependentOneWayRule = function(zoomLevel, style) {
+    return new OpenLayers.Rule({
+      filter: new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: [
+        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'sideCode', value: 1 }),
+        new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
+      ] }),
+      symbolizer: style
+    })
+  };
+
   var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
   var overlayStyleRules = [
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
@@ -26,6 +36,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     endpointStyleRule(10, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
     endpointStyleRule(11, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
     endpointStyleRule(12, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
+  ];
+
+  var validityDirectionStyleRules = [
+    createZoomDependentOneWayRule(9, { strokeWidth: 1 }),
+    createZoomDependentOneWayRule(10, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
+    createZoomDependentOneWayRule(12, { strokeWidth: 8 })
   ];
 
   var speedLimitStyleLookup = {
@@ -58,6 +75,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', speedLimitFeatureOpacityLookup);
   browseStyle.addRules(overlayStyleRules);
+  browseStyle.addRules(validityDirectionStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15,
@@ -76,6 +94,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   selectionStyle.addUniqueValueRules('select', 'type', speedLimitFeatureOpacityLookup);
   selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(endpointStyleRules);
+  selectionDefaultStyle.addRules(validityDirectionStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
