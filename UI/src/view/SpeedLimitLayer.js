@@ -219,8 +219,24 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     drawSpeedLimits(speedLimits);
   };
 
+  var adjustSpeedLimitOffset = function(speedLimit) {
+    if (speedLimit.sideCode === 1) {
+      return speedLimit;
+    }
+    speedLimit.links = _.map(speedLimit.links, function(link) {
+      return _.map(link, function(point) {
+        var offset = speedLimit.sideCode === 2 ? 5 : -5;
+        point.x = point.x + offset;
+        point.y = point.y + offset;
+        return point;
+      });
+    });
+    return speedLimit;
+  };
+
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
+    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, adjustSpeedLimitOffset);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithType, function(speedLimit) { return speedLimit.limit >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
