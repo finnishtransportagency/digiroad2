@@ -104,21 +104,17 @@
 
   .edit-mode {
     label.control-label.required:before {
-      content: "* ";
+      content: '* ';
     }
 
     label.control-label.required {
-      color: #e6d7b1;
+      color: @warning;
     }
   }
 
   span.validation-error {
-    color: #e6d7b1;
-    padding-right: 8px;
-    font-size: 11px;
-  }
-
-  span.validation-error:before {
-    content: "* ";
+    color: @warning;
+    padding-right: (@line-height-modifier*2) * 1px;
+    font-size: @font-size-small;
   }
 }
