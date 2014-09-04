@@ -395,16 +395,7 @@ Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu 
 5.2.1 Nopeusrajoituksen ominaisuustietojen muokkaus
 --------------------------------------------------
 
-Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n. Nopeusrajoituksen tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6).
+Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole nopeusrajoitusten muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n. Nopeusrajoituksen tietoja muokataan muokkaustilassa ominaisuustieton&auml;kym&auml;ss&auml; (6). Nopeusrajoitukselle valitaan uusi arvo pudotusvalikosta (7). Muutos tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutoksen voi peruuttaa painamalla Peruuta-painiketta (9), jolloin nopeusrajoituksen arvo palautuu alkuper&auml;iseksi.  Valintojen yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa. Tallenna ja peruuta –napit eiv&auml;t ole aktiivisena, jos muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-![Nopeusrajoituksen muokkaus.](k26.JPG)
-
-_Nopeusrajoituksen tietojen muokkaus._
-
-####Nopeusrajoituksen arvon muuttaminen####
-
-Nopeusrajoitukselle valitaan uusi arvo pudotusvalikosta. Valinnan yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa.
-
-
-
+![Nopeusrajoituksen muokkaus.](k26.png)
 
