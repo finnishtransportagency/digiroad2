@@ -65,13 +65,6 @@ object MapConfigJson {
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
           }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar",
-            "config" : {
-              "location" : {
-                "classes" : "left bottom"
-              }
-            }
-          }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
             "config": {
               "baseLayers": [
