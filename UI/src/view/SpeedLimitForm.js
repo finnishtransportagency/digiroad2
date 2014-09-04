@@ -21,9 +21,9 @@
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
-               formFieldTemplate("Alkupiste X", firstPoint.x) +
+               formFieldTemplate("Päätepiste 1 X", firstPoint.x) +
                formFieldTemplate("Y", firstPoint.y) +
-               formFieldTemplate("Loppupiste X", lastPoint.x) +
+               formFieldTemplate("Päätepiste 2 X", lastPoint.x) +
                formFieldTemplate("Y", lastPoint.y) +
              '</div>' +
            '</div>' +
