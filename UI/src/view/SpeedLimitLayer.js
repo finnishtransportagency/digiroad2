@@ -174,23 +174,9 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     eventListener.running = false;
   };
 
-  var adjustSpeedLimitPointOffset = function(sideCode, point) {
-    var offset = sideCode === 2 ? 5 : -5;
-    point.x = point.x + offset;
-    point.y = point.y + offset;
-    return point;
-  };
-
   eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
     vectorLayer.removeFeatures(selectionFeatures);
-    var adjustedEndpoints = _.map(selectedSpeedLimit.getEndpoints(), function(point) {
-      var sideCode = selectedSpeedLimit.get().sideCode;
-      if (sideCode === 1) {
-        return point;
-      }
-      return adjustSpeedLimitPointOffset(sideCode, point);
-    });
-    selectionFeatures = createSelectionEndPoints(adjustedEndpoints);
+    selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getEndpoints());
     vectorLayer.addFeatures(selectionFeatures);
   });
 
