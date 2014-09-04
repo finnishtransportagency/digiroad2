@@ -111,6 +111,8 @@ var RoadCollection = function(backend) {
     };
     new MapView(map, layers);
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
+
+    new ZoomBox(map, $('.mapplugins.bottom.left .mappluginsContent'));
   };
 
   var startApplication = function(backend, models) {
