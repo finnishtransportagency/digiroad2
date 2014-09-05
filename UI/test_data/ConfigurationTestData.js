@@ -58,13 +58,6 @@
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
           }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.Portti2Zoombar",
-            "config" : {
-              "location" : {
-                "classes" : "right top"
-              }
-            }
-          }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
             "config": {
               "baseLayers": [
