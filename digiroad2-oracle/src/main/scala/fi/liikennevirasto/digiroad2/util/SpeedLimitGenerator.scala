@@ -8,6 +8,89 @@ import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
 
 object SpeedLimitGenerator {
+  private def subtractInterval(remainingRoadLinks: List[(Double, Double)], span: (Double, Double)): List[(Double, Double)] = {
+    val (spanStart, spanEnd) = (math.min(span._1, span._2), math.max(span._1, span._2))
+    def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+      measure >= interval._1 && measure <= interval._2
+    }
+    remainingRoadLinks.flatMap {
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
+      case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
+      case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
+      case x => List(x)
+    }
+  }
+
+  private def findPartiallyCoveredRoadLinks(municipality: Option[Int]): Iterator[(Long, List[(Double, Double)])] = {
+    val query = """
+      select id, SDO_LRS.GEOM_SEGMENT_LENGTH(geom) from road_link
+      where id in (
+        select lp.road_link_id from lrm_position lp
+        join asset_link al on al.position_id = lp.id
+      )
+      and mod(functional_class, 10) IN (1, 2, 3, 4, 5, 6)
+    """
+    val roadLinks = Q.queryNA[(Long, Double)](
+      municipality match {
+        case Some(m) => query + " and road_link.MUNICIPALITY_NUMBER = " + m.toString
+        case _ => query
+      }
+    ).iterator()
+
+    val partiallyCoveredLinks = roadLinks.map { case (id, length) =>
+      val lrmPositions = sql"""select start_measure, end_measure from lrm_position join asset_link on asset_link.POSITION_ID = lrm_position.id join asset on asset_link.ASSET_ID = asset.id where lrm_position.road_link_id = $id""".as[(Double, Double)].list
+      val remainders = lrmPositions.foldLeft(List((0.0, length)))(subtractInterval).filter { case (start, end) => math.abs(end - start) > 0.01 }
+      (id, remainders)
+    }
+
+    partiallyCoveredLinks.filterNot(_._2.isEmpty)
+  }
+
+  def fillPartiallyFilledRoads(municipality: Option[Int]) = {
+    Database.forDataSource(ds).withDynSession {
+      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
+      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+      val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'automatic_speed_limit_generation')")
+
+      val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks(municipality)
+      partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
+        emptySegments.foreach { case (start, end) =>
+          val assetId = nextPrimaryKeyId.as[Long].first
+          val lrmPositionId = nextPrimaryKeyId.as[Long].first
+          val speedLimit = 50
+          assetPS.setLong(1, assetId)
+          assetPS.addBatch()
+
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setDouble(3, start)
+          lrmPositionPS.setDouble(4, end)
+          lrmPositionPS.setInt(5, 1)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          speedLimitPS.setLong(1, assetId)
+          speedLimitPS.setInt(2, speedLimit)
+          speedLimitPS.addBatch()
+        }
+      }
+
+      assetPS.executeBatch()
+      lrmPositionPS.executeBatch()
+      assetLinkPS.executeBatch()
+      speedLimitPS.executeBatch()
+      assetPS.close()
+      lrmPositionPS.close()
+      assetLinkPS.close()
+      speedLimitPS.close()
+    }
+  }
+  
   private def generateSpeedLimitsForEmptyLinks(speedLimitValue: Int, functionalClasses: List[Int], municipalities: Seq[Int]): Unit = {
     println("Running speed limit generation...")
     var handledCount = 0l
