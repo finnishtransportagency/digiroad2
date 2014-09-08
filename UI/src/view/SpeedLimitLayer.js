@@ -32,12 +32,27 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     });
   };
 
+  var createZoomAndTypeDependentOneWayRule = function(type, zoomLevel, style) {
+    return new OpenLayers.Rule({
+      filter: combineFilters([typeFilter(type), oneWayFilter(), zoomLevelFilter(zoomLevel)]),
+      symbolizer: style
+    });
+  };
+
   var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
   var overlayStyleRules = [
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
     overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
     overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
     overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
+  ];
+
+  var oneWayOverlayStyleRule = _.partial(createZoomAndTypeDependentOneWayRule, 'overlay');
+  var oneWayOverlayStyleRules = [
+    oneWayOverlayStyleRule(9, { strokeDashstyle: '1 6' }),
+    oneWayOverlayStyleRule(10, { strokeDashstyle: '1 10' }),
+    oneWayOverlayStyleRule(11, { strokeDashstyle: '1 10' }),
+    oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' })
   ];
 
   var endpointStyleRule = _.partial(createZoomAndTypeDependentRule, 'endpoint');
@@ -86,6 +101,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   browseStyleMap.addUniqueValueRules('default', 'type', speedLimitFeatureOpacityLookup);
   browseStyle.addRules(overlayStyleRules);
   browseStyle.addRules(validityDirectionStyleRules);
+  browseStyle.addRules(oneWayOverlayStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15,
@@ -105,6 +121,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(endpointStyleRules);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
+  selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
