@@ -39,8 +39,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   ];
 
   var validityDirectionStyleRules = [
-    createZoomDependentOneWayRule(9, { strokeWidth: 1 }),
-    createZoomDependentOneWayRule(10, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
+    createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
     createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
     createZoomDependentOneWayRule(12, { strokeWidth: 8 })
   ];
