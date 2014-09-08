@@ -22,7 +22,8 @@ object SpeedLimitGenerator {
       """
       val roadLinks = Q.queryNA[(Long, Double)](
         if (municipalities.isEmpty) baseQuery
-        else baseQuery + " and rl.MUNICIPALITY_NUMBER in (" + municipalities.mkString(", ") + ")").list()
+        else baseQuery + " and rl.MUNICIPALITY_NUMBER in (" + municipalities.mkString(", ") + ")").iterator()
+      println("got road link iterator")
 
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
