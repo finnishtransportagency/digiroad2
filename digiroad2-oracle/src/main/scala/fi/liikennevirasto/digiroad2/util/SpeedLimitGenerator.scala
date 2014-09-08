@@ -8,8 +8,9 @@ import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
 
 object SpeedLimitGenerator {
-  def generateForCityAreas(municipalities: Int*) = {
+  def generateForCityAreas(municipalities: Int*): Unit = {
     println("Running speed limit generation...")
+    var handledCount = 0l
     Database.forDataSource(ds).withDynSession {
       val baseQuery = """
         select id, SDO_LRS.GEOM_SEGMENT_LENGTH(rl.geom) as length FROM road_link rl
@@ -49,6 +50,10 @@ object SpeedLimitGenerator {
         speedLimitPS.setLong(1, assetId)
         speedLimitPS.setInt(2, speedLimit)
         speedLimitPS.addBatch()
+        handledCount = handledCount + 1
+        if (handledCount % 1000 == 0) {
+          println("generated " + handledCount + " speed limits")
+        }
       }
 
       assetPS.executeBatch()
@@ -60,6 +65,6 @@ object SpeedLimitGenerator {
       assetLinkPS.close()
       speedLimitPS.close()
     }
-    println("...done!")
+    println("...done (generated " + handledCount + " speed limits).")
   }
 }
