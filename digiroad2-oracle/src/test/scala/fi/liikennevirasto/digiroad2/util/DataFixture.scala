@@ -122,6 +122,7 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
+        SpeedLimitGenerator.generateForCityAreas(235)
       case Some("full") =>
         tearDown()
         setUpFull()

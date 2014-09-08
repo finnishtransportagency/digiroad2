@@ -8,17 +8,20 @@ import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
 
 object SpeedLimitGenerator {
-  def generateForCityAreas() = {
+  def generateForCityAreas(municipalities: Int*) = {
     println("Running speed limit generation...")
     Database.forDataSource(ds).withDynSession {
-      val roadLinks = sql"""
+      val baseQuery = """
         select id, SDO_LRS.GEOM_SEGMENT_LENGTH(rl.geom) as length FROM road_link rl
         where id not in (
           select lp.road_link_id from lrm_position lp
           join asset_link al on al.position_id = lp.id
         )
-        and rl.MUNICIPALITY_NUMBER = 235
-        and mod(functional_class, 10) IN (2, 3, 4, 5, 6)""".as[(Long, Double)].list()
+        and mod(functional_class, 10) IN (2, 3, 4, 5, 6)
+      """
+      val roadLinks = Q.queryNA[(Long, Double)](
+        if (municipalities.isEmpty) baseQuery
+        else baseQuery + " and rl.MUNICIPALITY_NUMBER in (" + municipalities.mkString(", ") + ")").list()
 
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
       val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
