@@ -29,7 +29,7 @@ object SpeedLimitGenerator {
       roadLinks.foreach { case (roadLinkId, length) =>
         val assetId = nextPrimaryKeyId.as[Long].first
         val lrmPositionId = nextPrimaryKeyId.as[Long].first
-        val speedLimit = 50
+        val speedLimit = 100
         assetPS.setLong(1, assetId)
         assetPS.addBatch()
 
