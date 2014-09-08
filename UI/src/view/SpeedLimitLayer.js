@@ -2,22 +2,32 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
+  var combineFilters = function(filters) {
+    return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
+  };
+
+  var typeFilter = function(type) {
+    return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
+  };
+
+  var zoomLevelFilter = function(zoomLevel) {
+    return new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } });
+  };
+
+  var oneWayFilter = function() {
+    return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'sideCode', value: 1 });
+  };
+
   var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
      return new OpenLayers.Rule({
-      filter: new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: [
-        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type }),
-        new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
-      ] }),
-      symbolizer: style
-    });
+       filter: combineFilters([typeFilter(type), zoomLevelFilter(zoomLevel)]),
+       symbolizer: style
+     });
   };
 
   var createZoomDependentOneWayRule = function(zoomLevel, style) {
     return new OpenLayers.Rule({
-      filter: new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: [
-        new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'sideCode', value: 1 }),
-        new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } })
-      ] }),
+      filter: combineFilters([oneWayFilter(), zoomLevelFilter(zoomLevel)]),
       symbolizer: style
     });
   };
