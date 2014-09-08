@@ -233,10 +233,6 @@
       }
     };
 
-    var attachToRoad = function(road) {
-      eventbus.trigger('asset:moving', road);
-    };
-
     return {
       close: close,
       save: save,
@@ -254,7 +250,6 @@
       switchDirection: switchDirection,
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
-      attachToRoad: attachToRoad,
       place: place
     };
   };

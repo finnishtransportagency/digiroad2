@@ -89,9 +89,9 @@ var RoadStyles = function() {
       vectorLayer.addFeatures(features);
     };
 
-    eventbus.on('asset:moving', function(nearestLine) {
+    eventbus.on('road:active', function(roadLinkId) {
       var nearestFeature = _.find(vectorLayer.features, function(feature) {
-        return feature.attributes.roadLinkId == nearestLine.roadLinkId;
+        return feature.attributes.roadLinkId == roadLinkId;
       });
       selectControl.unselectAll();
       selectControl.select(nearestFeature);

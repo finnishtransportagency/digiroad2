@@ -420,7 +420,7 @@ window.AssetLayer = function(map, roadCollection) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), lonlat.lon, lonlat.lat);
-      selectedAssetModel.attachToRoad(nearestLine);
+      roadCollection.activate(nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;

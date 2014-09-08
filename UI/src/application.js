@@ -10,6 +10,10 @@ var RoadCollection = function(backend) {
   this.getAll = function() {
     return roadLinks;
   };
+
+  this.activate = function(road) {
+    eventbus.trigger('road:active', road.roadLinkId);
+  };
 };
 
 (function(application) {
