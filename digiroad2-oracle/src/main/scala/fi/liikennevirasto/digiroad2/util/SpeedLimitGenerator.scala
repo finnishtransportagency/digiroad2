@@ -8,8 +8,7 @@ import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
 
 object SpeedLimitGenerator {
-  def importSpeedLimits() = {
-
+  def generateForCityAreas() = {
     println("Running speed limit generation...")
     Database.forDataSource(ds).withDynSession {
       val roadLinks = sql"""
