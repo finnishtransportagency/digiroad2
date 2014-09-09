@@ -66,26 +66,7 @@ object SpeedLimitGenerator {
       println("Partially covered road links found")
       partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
         emptySegments.foreach { case (start, end) =>
-          val assetId = nextPrimaryKeyId.as[Long].first
-          val lrmPositionId = nextPrimaryKeyId.as[Long].first
-          val speedLimit = 50
-          assetPS.setLong(1, assetId)
-          assetPS.addBatch()
-
-          lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, roadLinkId)
-          lrmPositionPS.setDouble(3, start)
-          lrmPositionPS.setDouble(4, end)
-          lrmPositionPS.setInt(5, 1)
-          lrmPositionPS.addBatch()
-
-          assetLinkPS.setLong(1, assetId)
-          assetLinkPS.setLong(2, lrmPositionId)
-          assetLinkPS.addBatch()
-
-          speedLimitPS.setLong(1, assetId)
-          speedLimitPS.setInt(2, speedLimit)
-          speedLimitPS.addBatch()
+          generateNewSpeedLimit(roadLinkId, start, end, 50, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
         }
         roadLinksProcessed = roadLinksProcessed + 1
         println("New speed limits generated to " + roadLinksProcessed + " partially covered road links")
