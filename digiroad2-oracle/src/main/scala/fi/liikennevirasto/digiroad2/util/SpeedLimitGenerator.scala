@@ -24,7 +24,7 @@ object SpeedLimitGenerator {
     }
   }
 
-  private def findPartiallyCoveredRoadLinks(municipality: Option[Int]): Iterator[(Long, List[(Double, Double)])] = {
+  private def findPartiallyCoveredRoadLinks(): Iterator[(Long, List[(Double, Double)])] = {
     val query = """
       select id, SDO_LRS.GEOM_SEGMENT_LENGTH(geom) from road_link
       where id in (
@@ -33,12 +33,7 @@ object SpeedLimitGenerator {
       )
       and floor(functional_class / 10) in (2, 3)
     """
-    val roadLinks = Q.queryNA[(Long, Double)](
-      municipality match {
-        case Some(m) => query + " and road_link.MUNICIPALITY_NUMBER = " + m.toString
-        case _ => query
-      }
-    ).iterator()
+    val roadLinks = Q.queryNA[(Long, Double)](query).iterator()
 
     val partiallyCoveredLinks = roadLinks.map { case (id, length) =>
       val lrmPositions = sql"""select start_measure, end_measure from lrm_position join asset_link on asset_link.POSITION_ID = lrm_position.id join asset on asset_link.ASSET_ID = asset.id where lrm_position.road_link_id = $id""".as[(Double, Double)].list
@@ -68,17 +63,14 @@ object SpeedLimitGenerator {
     speedLimitPS.close()
   }
 
-  def fillPartiallyFilledRoads(municipality: Option[Int]) = {
-    municipality match {
-      case Some(m) => println("Filling partially filled speed limits on municipality: " + m.toString)
-      case _ => println("Filling partially filled speed limits")
-    }
+  def fillPartiallyFilledRoads() = {
+    println("Filling partially filled speed limits")
     Database.forDataSource(ds).withDynSession {
       var roadLinksProcessed = 0l
 
       withSpeedLimitInsertions { case (assetPS, lrmPositionPS, assetLinkPS, speedLimitPS) =>
         println("Finding partially covered road links")
-        val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks(municipality)
+        val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks()
         println("Partially covered road links found")
         partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
           emptySegments.foreach { case (start, end) =>
