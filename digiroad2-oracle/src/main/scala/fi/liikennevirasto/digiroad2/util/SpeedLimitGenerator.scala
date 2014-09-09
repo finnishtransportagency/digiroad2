@@ -31,7 +31,7 @@ object SpeedLimitGenerator {
         select lp.road_link_id from lrm_position lp
         join asset_link al on al.position_id = lp.id
       )
-      and mod(functional_class, 10) IN (1, 2, 3, 4, 5, 6)
+      and floor(functional_class / 10) in (2, 3)
     """
     val roadLinks = Q.queryNA[(Long, Double)](
       municipality match {
