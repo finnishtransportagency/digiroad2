@@ -16,6 +16,9 @@
     return '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
+               '<div class="form-group">' +
+                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: -</p>' +
+               '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
