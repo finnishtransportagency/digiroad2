@@ -138,27 +138,15 @@ object SpeedLimitGenerator {
         else baseQuery + " and rl.MUNICIPALITY_NUMBER in (" + municipalities.mkString(", ") + ")").iterator()
       println("got road link iterator")
 
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
-      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-      val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'automatic_speed_limit_generation')")
-
-      roadLinks.foreach { case (roadLinkId, length) =>
-        generateNewSpeedLimit(roadLinkId, 0.0, length, speedLimitValue, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
-        handledCount = handledCount + 1
-        if (handledCount % 1000 == 0) {
-          println("generated " + handledCount + " speed limits")
+      withSpeedLimitInsertions { case (assetPS, lrmPositionPS, assetLinkPS, speedLimitPS) =>
+        roadLinks.foreach { case (roadLinkId, length) =>
+          generateNewSpeedLimit(roadLinkId, 0.0, length, speedLimitValue, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
+          handledCount = handledCount + 1
+          if (handledCount % 1000 == 0) {
+            println("generated " + handledCount + " speed limits")
+          }
         }
       }
-
-      assetPS.executeBatch()
-      lrmPositionPS.executeBatch()
-      assetLinkPS.executeBatch()
-      speedLimitPS.executeBatch()
-      assetPS.close()
-      lrmPositionPS.close()
-      assetLinkPS.close()
-      speedLimitPS.close()
     }
     println("...done (generated " + handledCount + " speed limits).")
   }
