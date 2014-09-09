@@ -85,11 +85,13 @@ object SpeedLimitGenerator {
             generateNewSpeedLimit(roadLinkId, start, end, 50, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
           }
           roadLinksProcessed = roadLinksProcessed + 1
-          println("New speed limits generated to " + roadLinksProcessed + " partially covered road links")
+          if (roadLinksProcessed % 100 == 0) {
+            println("New speed limits generated to " + roadLinksProcessed + " partially covered road links")
+          }
         }
       }
 
-      println("Partially covered road links filled with speed limits")
+      println(roadLinksProcessed.toString + " partially covered road links filled with speed limits")
     }
   }
 
