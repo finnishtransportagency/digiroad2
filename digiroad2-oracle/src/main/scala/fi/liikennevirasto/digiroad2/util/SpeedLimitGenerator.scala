@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.sql.PreparedStatement
+
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -101,7 +103,36 @@ object SpeedLimitGenerator {
       println("Partially covered road links filled with speed limits")
     }
   }
-  
+
+  private def generateNewSpeedLimit(roadLinkId: Long,
+                                    startMeasure: Double,
+                                    endMeasure: Double,
+  speedLimitValue: Int,
+                                    assetStatement: PreparedStatement,
+                                    lrmPositionStatement: PreparedStatement,
+                                    assetLinkStatement: PreparedStatement,
+                                    speedLimitStatement: PreparedStatement): Unit = {
+    val assetId = nextPrimaryKeyId.as[Long].first
+    val lrmPositionId = nextPrimaryKeyId.as[Long].first
+    assetStatement.setLong(1, assetId)
+    assetStatement.addBatch()
+
+    lrmPositionStatement.setLong(1, lrmPositionId)
+    lrmPositionStatement.setLong(2, roadLinkId)
+    lrmPositionStatement.setDouble(3, startMeasure)
+    lrmPositionStatement.setDouble(4, endMeasure)
+    lrmPositionStatement.setInt(5, 1)
+    lrmPositionStatement.addBatch()
+
+    assetLinkStatement.setLong(1, assetId)
+    assetLinkStatement.setLong(2, lrmPositionId)
+    assetLinkStatement.addBatch()
+
+    speedLimitStatement.setLong(1, assetId)
+    speedLimitStatement.setInt(2, speedLimitValue)
+    speedLimitStatement.addBatch()
+  }
+
   private def generateSpeedLimitsForEmptyLinks(speedLimitValue: Int, functionalClasses: List[Int], municipalities: Seq[Int]): Unit = {
     println("Running speed limit generation...")
     var handledCount = 0l
@@ -124,25 +155,7 @@ object SpeedLimitGenerator {
       val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'automatic_speed_limit_generation')")
 
       roadLinks.foreach { case (roadLinkId, length) =>
-        val assetId = nextPrimaryKeyId.as[Long].first
-        val lrmPositionId = nextPrimaryKeyId.as[Long].first
-        assetPS.setLong(1, assetId)
-        assetPS.addBatch()
-
-        lrmPositionPS.setLong(1, lrmPositionId)
-        lrmPositionPS.setLong(2, roadLinkId)
-        lrmPositionPS.setDouble(3, 0)
-        lrmPositionPS.setDouble(4, length)
-        lrmPositionPS.setInt(5, 1)
-        lrmPositionPS.addBatch()
-
-        assetLinkPS.setLong(1, assetId)
-        assetLinkPS.setLong(2, lrmPositionId)
-        assetLinkPS.addBatch()
-
-        speedLimitPS.setLong(1, assetId)
-        speedLimitPS.setInt(2, speedLimitValue)
-        speedLimitPS.addBatch()
+        generateNewSpeedLimit(roadLinkId, 0.0, length, speedLimitValue, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
         handledCount = handledCount + 1
         if (handledCount % 1000 == 0) {
           println("generated " + handledCount + " speed limits")
