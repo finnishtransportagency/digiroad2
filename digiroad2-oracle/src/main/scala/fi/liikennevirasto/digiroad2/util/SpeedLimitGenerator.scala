@@ -96,7 +96,7 @@ object SpeedLimitGenerator {
   private def generateNewSpeedLimit(roadLinkId: Long,
                                     startMeasure: Double,
                                     endMeasure: Double,
-  speedLimitValue: Int,
+                                    speedLimitValue: Int,
                                     assetStatement: PreparedStatement,
                                     lrmPositionStatement: PreparedStatement,
                                     assetLinkStatement: PreparedStatement,
