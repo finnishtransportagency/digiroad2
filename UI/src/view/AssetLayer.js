@@ -29,7 +29,8 @@ window.AssetLayer = function(map, roadCollection) {
     clickTimestamp = null;
     unregisterMouseUpHandler(asset);
     if (assetIsMoving) {
-      eventbus.trigger('asset:moved', {
+      selectedAssetModel.move(
+        {
         lon: selectedAssetModel.get('lon'),
         lat: selectedAssetModel.get('lat'),
         bearing: selectedAssetModel.get('bearing'),
@@ -350,7 +351,7 @@ window.AssetLayer = function(map, roadCollection) {
       data: data,
       massTransitStop: massTransitStop};
     selectedAsset.data.imageIds = [];
-    eventbus.trigger('asset:placed', selectedAsset.data);
+    selectedAssetModel.place(selectedAsset.data);
 
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
     assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
@@ -419,7 +420,7 @@ window.AssetLayer = function(map, roadCollection) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), lonlat.lon, lonlat.lat);
-      eventbus.trigger('asset:moving', nearestLine);
+      roadCollection.activate(nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;

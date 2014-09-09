@@ -64,7 +64,8 @@
         });
     };
 
-    eventbus.on('asset:placed', function(asset) {
+    var place = function(asset) {
+      eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
@@ -74,7 +75,7 @@
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
       });
-    }, this);
+    };
 
     var move = function(position) {
       currentAsset.payload.bearing = position.bearing;
@@ -83,6 +84,7 @@
       currentAsset.payload.roadLinkId = position.roadLinkId;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
+      eventbus.trigger('asset:moved', position);
     };
 
     var cancel = function() {
@@ -247,7 +249,8 @@
       getProperties: getProperties,
       switchDirection: switchDirection,
       move: move,
-      requiredPropertiesMissing: requiredPropertiesMissing
+      requiredPropertiesMissing: requiredPropertiesMissing,
+      place: place
     };
   };
 
