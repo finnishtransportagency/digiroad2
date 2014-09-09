@@ -122,7 +122,8 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
-        SpeedLimitGenerator.fillPartiallyFilledRoads()
+        SpeedLimitGenerator.fillPartiallyFilledHighways()
+        SpeedLimitGenerator.fillPartiallyFilledCityAreaRoads()
         SpeedLimitGenerator.generateForCityAreas(235)
         SpeedLimitGenerator.generateForHighways(235)
       case Some("full") =>
@@ -148,7 +149,8 @@ object DataFixture {
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
       case Some("generatespeedlimits") =>
-        SpeedLimitGenerator.fillPartiallyFilledRoads()
+        SpeedLimitGenerator.fillPartiallyFilledHighways()
+        SpeedLimitGenerator.fillPartiallyFilledCityAreaRoads()
         SpeedLimitGenerator.generateForCityAreas()
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {

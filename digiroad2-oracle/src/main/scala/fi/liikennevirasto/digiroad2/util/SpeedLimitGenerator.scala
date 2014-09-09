@@ -24,15 +24,14 @@ object SpeedLimitGenerator {
     }
   }
 
-  private def findPartiallyCoveredRoadLinks(): Iterator[(Long, List[(Double, Double)])] = {
+  private def findPartiallyCoveredRoadLinks(functionalClasses: List[Int]): Iterator[(Long, List[(Double, Double)])] = {
     val query = """
       select id, SDO_LRS.GEOM_SEGMENT_LENGTH(geom) from road_link
       where id in (
         select lp.road_link_id from lrm_position lp
         join asset_link al on al.position_id = lp.id
       )
-      and floor(functional_class / 10) in (2, 3)
-    """
+      and floor(functional_class / 10) in (""" + functionalClasses.mkString(", ") +  ")"
     val roadLinks = Q.queryNA[(Long, Double)](query).iterator()
 
     val partiallyCoveredLinks = roadLinks.map { case (id, length) =>
@@ -63,18 +62,18 @@ object SpeedLimitGenerator {
     speedLimitPS.close()
   }
 
-  def fillPartiallyFilledRoads() = {
+  def fillPartiallyFilledRoads(speedLimit: Int, functionalClasses: List[Int]) = {
     println("Filling partially filled speed limits")
     Database.forDataSource(ds).withDynSession {
       var roadLinksProcessed = 0l
 
       withSpeedLimitInsertions { case (assetPS, lrmPositionPS, assetLinkPS, speedLimitPS) =>
         println("Finding partially covered road links")
-        val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks()
+        val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks(functionalClasses)
         println("Partially covered road links found")
         partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
           emptySegments.foreach { case (start, end) =>
-            generateNewSpeedLimit(roadLinkId, start, end, 50, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
+            generateNewSpeedLimit(roadLinkId, start, end, speedLimit, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
           }
           roadLinksProcessed = roadLinksProcessed + 1
           if (roadLinksProcessed % 100 == 0) {
@@ -151,5 +150,13 @@ object SpeedLimitGenerator {
 
   def generateForCityAreas(municipalities: Int*): Unit = {
     generateSpeedLimitsForEmptyLinks(50, List(2, 3), municipalities)
+  }
+
+  def fillPartiallyFilledHighways(): Unit = {
+    fillPartiallyFilledRoads(80, List(1))
+  }
+
+  def fillPartiallyFilledCityAreaRoads(): Unit = {
+    fillPartiallyFilledRoads(50, List(2, 3))
   }
 }
