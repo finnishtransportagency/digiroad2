@@ -8,7 +8,7 @@ import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
 
 object SpeedLimitGenerator {
-  def generateForCityAreas(municipalities: Int*): Unit = {
+  private def generateSpeedLimitsForEmptyLinks(speedLimitValue: Int, functionalClasses: List[Int], municipalities: Seq[Int]): Unit = {
     println("Running speed limit generation...")
     var handledCount = 0l
     Database.forDataSource(ds).withDynSession {
@@ -18,8 +18,7 @@ object SpeedLimitGenerator {
           select lp.road_link_id from lrm_position lp
           join asset_link al on al.position_id = lp.id
         )
-        and mod(functional_class, 10) IN (2, 3, 4, 5, 6)
-      """
+        and floor(functional_class / 10) in (""" + functionalClasses.mkString(", ") + ")"
       val roadLinks = Q.queryNA[(Long, Double)](
         if (municipalities.isEmpty) baseQuery
         else baseQuery + " and rl.MUNICIPALITY_NUMBER in (" + municipalities.mkString(", ") + ")").iterator()
@@ -33,7 +32,6 @@ object SpeedLimitGenerator {
       roadLinks.foreach { case (roadLinkId, length) =>
         val assetId = nextPrimaryKeyId.as[Long].first
         val lrmPositionId = nextPrimaryKeyId.as[Long].first
-        val speedLimit = 50
         assetPS.setLong(1, assetId)
         assetPS.addBatch()
 
@@ -49,7 +47,7 @@ object SpeedLimitGenerator {
         assetLinkPS.addBatch()
 
         speedLimitPS.setLong(1, assetId)
-        speedLimitPS.setInt(2, speedLimit)
+        speedLimitPS.setInt(2, speedLimitValue)
         speedLimitPS.addBatch()
         handledCount = handledCount + 1
         if (handledCount % 1000 == 0) {
@@ -67,5 +65,13 @@ object SpeedLimitGenerator {
       speedLimitPS.close()
     }
     println("...done (generated " + handledCount + " speed limits).")
+  }
+
+  def generateForHighways(municipalities: Int*): Unit = {
+    generateSpeedLimitsForEmptyLinks(80, List(1), municipalities)
+  }
+
+  def generateForCityAreas(municipalities: Int*): Unit = {
+    generateSpeedLimitsForEmptyLinks(50, List(2, 3), municipalities)
   }
 }

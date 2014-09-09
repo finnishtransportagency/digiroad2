@@ -123,6 +123,7 @@ object DataFixture {
         BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
         SpeedLimitGenerator.generateForCityAreas(235)
+        SpeedLimitGenerator.generateForHighways(235)
       case Some("full") =>
         tearDown()
         setUpFull()
