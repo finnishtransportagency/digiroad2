@@ -49,38 +49,46 @@ object SpeedLimitGenerator {
     partiallyCoveredLinks.filterNot(_._2.isEmpty)
   }
 
+  private def withSpeedLimitInsertions(callback: (PreparedStatement, PreparedStatement, PreparedStatement, PreparedStatement) => Unit): Unit = {
+    val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
+    val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+    val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'automatic_speed_limit_generation')")
+
+    callback(assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
+
+    println("Writing new speed limits to database")
+    assetPS.executeBatch()
+    lrmPositionPS.executeBatch()
+    assetLinkPS.executeBatch()
+    speedLimitPS.executeBatch()
+    assetPS.close()
+    lrmPositionPS.close()
+    assetLinkPS.close()
+    speedLimitPS.close()
+  }
+
   def fillPartiallyFilledRoads(municipality: Option[Int]) = {
     municipality match {
       case Some(m) => println("Filling partially filled speed limits on municipality: " + m.toString)
       case _ => println("Filling partially filled speed limits")
     }
     Database.forDataSource(ds).withDynSession {
-      var roadLinksProcessed = 0l;
-      val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'automatic_speed_limit_generation')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
-      val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-      val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'automatic_speed_limit_generation')")
+      var roadLinksProcessed = 0l
 
-      println("Finding partially covered road links")
-      val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks(municipality)
-      println("Partially covered road links found")
-      partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
-        emptySegments.foreach { case (start, end) =>
-          generateNewSpeedLimit(roadLinkId, start, end, 50, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
+      withSpeedLimitInsertions { case (assetPS, lrmPositionPS, assetLinkPS, speedLimitPS) =>
+        println("Finding partially covered road links")
+        val partiallyCoveredRoadLinks = findPartiallyCoveredRoadLinks(municipality)
+        println("Partially covered road links found")
+        partiallyCoveredRoadLinks.foreach { case (roadLinkId, emptySegments) =>
+          emptySegments.foreach { case (start, end) =>
+            generateNewSpeedLimit(roadLinkId, start, end, 50, assetPS, lrmPositionPS, assetLinkPS, speedLimitPS)
+          }
+          roadLinksProcessed = roadLinksProcessed + 1
+          println("New speed limits generated to " + roadLinksProcessed + " partially covered road links")
         }
-        roadLinksProcessed = roadLinksProcessed + 1
-        println("New speed limits generated to " + roadLinksProcessed + " partially covered road links")
       }
 
-      println("Writing new speed limits to database")
-      assetPS.executeBatch()
-      lrmPositionPS.executeBatch()
-      assetLinkPS.executeBatch()
-      speedLimitPS.executeBatch()
-      assetPS.close()
-      lrmPositionPS.close()
-      assetLinkPS.close()
-      speedLimitPS.close()
       println("Partially covered road links filled with speed limits")
     }
   }
