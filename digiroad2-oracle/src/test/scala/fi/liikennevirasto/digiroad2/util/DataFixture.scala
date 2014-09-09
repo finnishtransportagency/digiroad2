@@ -152,6 +152,7 @@ object DataFixture {
         SpeedLimitGenerator.fillPartiallyFilledHighways()
         SpeedLimitGenerator.fillPartiallyFilledCityAreaRoads()
         SpeedLimitGenerator.generateForCityAreas()
+        SpeedLimitGenerator.generateForHighways()
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {
           val adminCodeWriter = new PrintWriter(new File("admincode.sql"))
