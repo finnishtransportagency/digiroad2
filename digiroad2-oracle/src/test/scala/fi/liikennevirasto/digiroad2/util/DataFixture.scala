@@ -148,6 +148,7 @@ object DataFixture {
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
       case Some("generatespeedlimits") =>
+        SpeedLimitGenerator.fillPartiallyFilledRoads(None)
         SpeedLimitGenerator.generateForCityAreas()
       case Some("AdminIdUpdate") =>
         Database.forDataSource(ds).withDynSession {
