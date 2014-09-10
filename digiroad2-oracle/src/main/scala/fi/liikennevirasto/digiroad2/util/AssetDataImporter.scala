@@ -25,6 +25,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import java.sql.Statement
 import java.text.{DecimalFormat, NumberFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrimaryKeySeqValue, nextLrmPositionPrimaryKeySeqValue}
 
 object AssetDataImporter {
 
@@ -216,8 +217,6 @@ class AssetDataImporter {
     insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
-  def generateId = sql"select primary_key_seq.nextval from dual".as[Long].first
-
   var insertSpeedLimitsCount = 0;
 
   def importSpeedLimits(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
@@ -268,7 +267,7 @@ class AssetDataImporter {
         val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'dr1_conversion')")
 
         segments.foreach { segment =>
-          val assetId = generateId
+          val assetId = nextPrimaryKeySeqValue
           var speedLimit = -1
           assetPS.setLong(1, assetId)
           assetPS.addBatch()
@@ -281,7 +280,7 @@ class AssetDataImporter {
             val endMeasure   = insertValues.next.toDouble
             speedLimit = insertValues.next.toInt
             val sideCode = insertValues.next.toInt
-            val lrmPositionId = generateId
+            val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
 
             lrmPositionPS.setLong(1, lrmPositionId)
             lrmPositionPS.setLong(2, roadLinkId)
@@ -382,7 +381,7 @@ class AssetDataImporter {
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
     Database.forDataSource(ds).withDynSession {
-      val assetId = busStop.assetId.getOrElse(sql"select primary_key_seq.nextval from dual".as[Long].first)
+      val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
 
       sqlu"""
         insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)

@@ -190,7 +190,7 @@ object OracleSpatialAssetDao {
 
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val assetId = nextPrimaryKeySeqValue
-    val lrmPositionId = nextPrimaryKeySeqValue
+    val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
     val externalId = getNationalBusStopId
     val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)

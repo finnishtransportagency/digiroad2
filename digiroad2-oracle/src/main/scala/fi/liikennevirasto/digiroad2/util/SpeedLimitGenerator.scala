@@ -5,9 +5,9 @@ import java.sql.PreparedStatement
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.nextPrimaryKeyId
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Q.interpolation
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrimaryKeySeqValue, nextLrmPositionPrimaryKeySeqValue}
 
 object SpeedLimitGenerator {
   private def subtractInterval(remainingRoadLinks: List[(Double, Double)], span: (Double, Double)): List[(Double, Double)] = {
@@ -94,8 +94,8 @@ object SpeedLimitGenerator {
                                     lrmPositionStatement: PreparedStatement,
                                     assetLinkStatement: PreparedStatement,
                                     speedLimitStatement: PreparedStatement): Unit = {
-    val assetId = nextPrimaryKeyId.as[Long].first
-    val lrmPositionId = nextPrimaryKeyId.as[Long].first
+    val assetId = nextPrimaryKeySeqValue
+    val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
     assetStatement.setLong(1, assetId)
     assetStatement.addBatch()
 
