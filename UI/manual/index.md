@@ -196,20 +196,17 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
 Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Valitun geometrian p&auml;&auml;tepisteet merkit&auml;&auml;n kartalle palloilla (4). Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
-Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h), vaikutussuunta ja alku- ja loppupisteen koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Vaikutussuunnan arvot ovat: molempiin suuntiin, pohjoisesta etel&auml;&auml;n, etel&auml;st&auml; pohjoiseen, id&auml;st&auml; l&auml;nteen ja l&auml;nnest&auml; it&auml;&auml;n. Jos vaikutussuunta ei ole molempiin suuntiin, lasketaan se nopeusrajoituksen alku- ja loppupisteen v&auml;lisen janan kulmasta. Pohjoinen on nolla astetta ja koko kierros 360 astetta. Arvot m&auml;&auml;r&auml;ytyv&auml;t kulman mukaan seuraavasti:
-
-|Kulma|Vaikutussuunta|
-|-----|--------------|
-|[280, 80]|Etel&auml;st&auml; pohjoiseen|
-|[80, 100]|L&auml;nnest&auml; it&auml;&auml;n|
-|[100, 260]| Pohjoisesta etel&auml;&auml;n|
-|[260, 280]|Id&auml;st&auml; l&auml;nteen|
-
-Nopeusrajoituksen valinnan saa pois klikkaamalla karttaa. 
+Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h) sek&auml; p&auml;&auml;tepisteen 1 ja p&auml;&auml;tepisteen 2 koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;.
 
 ![Nopeusrajoituksen tietojen katselu](k24.JPG)
 
 _Nopeusrajoituksen tietojen katselu._
+
+Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusrajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan. Jos vaikutussuunta on molempiin suuntiin, nopeusrajoitus on visualisoitu yhdellä paksulla viivalla (23). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (24).
+
+![Nopeusrajoitusten visualisointi](k27.JPG)
+
+_Nopeusrajoitusten visualisointi._
 
 5. Muokkaustila
 ---------------
