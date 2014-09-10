@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Q.interpolation
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -10,6 +11,7 @@ import Database.dynamicSession
 import Q.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 object OracleLinearAssetDao {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -63,14 +65,14 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitDetails(id: Long): (Option[String], Int) = {
+  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Int) = {
     sql"""
-      select a.modified_by, e.name_fi
+      select a.modified_by, a.modified_date, e.name_fi
       from ASSET a
       join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
       join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
       join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
       where a.id = $id
-    """.as[(Option[String], Int)].first
+    """.as[(Option[String], Option[DateTime], Int)].first
   }
 }

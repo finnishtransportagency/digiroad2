@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -68,8 +68,8 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
           (Point(first._1, first._2), Point(last._1, last._2))
         }.toList
         val endpoints = calculateSpeedLimitEndPoints(points)
-        val (modifiedBy, limit) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
-        Some(SpeedLimit(segmentId, limit, endpoints, modifiedBy))
+        val (modifiedBy, modifiedDateTime, limit) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
+        Some(SpeedLimit(segmentId, limit, endpoints, modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.Format.print(_))))
       }
     }
   }
