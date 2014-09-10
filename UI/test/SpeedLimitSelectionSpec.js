@@ -198,7 +198,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimits)
         .withSpeedLimitConstructor(speedLimitConstructor)
-        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier'})));
+        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58'})));
     });
 
     describe('and changing value of speed limit', function() {
@@ -211,8 +211,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         before(function() {
           $('#feature-attributes button.save').click();
         });
-        it('it updates the modified by - field', function() {
-          expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: modifier');
+        it('it updates the modified-field', function() {
+          expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
     });

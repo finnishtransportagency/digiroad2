@@ -60,6 +60,10 @@
       return current.modifiedBy;
     };
 
+    this.getModifiedDateTime = function() {
+      return current.modifiedDateTime;
+    };
+
     this.get = function() {
       return current;
     };
