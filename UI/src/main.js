@@ -17,9 +17,11 @@ $(function() {
 
   if (fakeMode) {
     getScripts(['test_data/RoadLinkTestData.js', 'test_data/SpeedLimitsTestData.js'], function() {
+      var speedLimitsData = SpeedLimitsTestData.generate();
       Application.start(new Backend()
         .withRoadLinkData(RoadLinkTestData.generate())
-        .withSpeedLimitsData(SpeedLimitsTestData.generate()));
+        .withSpeedLimitsData(speedLimitsData)
+        .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsData)));
     });
   } else {
     Application.start();
