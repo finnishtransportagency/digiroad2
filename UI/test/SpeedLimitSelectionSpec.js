@@ -180,4 +180,41 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
     });
   });
+
+  describe('when loading application in edit mode with speed limits', function() {
+    var openLayersMap;
+    var speedLimitId = 13;
+    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) {
+      return link.id === speedLimitId;
+    });
+    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits);
+
+    before(function(done) {
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        $('.speed-limits').click();
+        applicationModel.setReadOnly(false);
+        done();
+      }, testHelpers.defaultBackend()
+        .withSpeedLimitsData(speedLimits)
+        .withSpeedLimitConstructor(speedLimitConstructor)
+        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier'})));
+    });
+
+    describe('and changing value of speed limit', function() {
+      before(function() {
+        selectSpeedLimit(openLayersMap, speedLimitId);
+        $('#feature-attributes .form-control.speed-limit').val('100').change();
+      });
+
+      describe('and saving the change', function() {
+        before(function() {
+          $('#feature-attributes button.save').click();
+        });
+        it('it updates the modified by - field', function() {
+          expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: modifier');
+        });
+      });
+    });
+  });
 });
