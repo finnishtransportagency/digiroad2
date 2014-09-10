@@ -40,6 +40,18 @@
       });
     }, 1000);
 
+    this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/speedlimits/" + id,
+        data: JSON.stringify({limit: limit}),
+        dataType: "json",
+        success: success,
+        failure: failure
+      });
+    }, 1000);
+
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);

@@ -136,7 +136,7 @@ var RoadCollection = function(backend) {
   application.start = function(customBackend) {
     var backend = customBackend || new Backend();
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
-    var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);
+    var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var models = {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit

@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedSpeedLimit = function(collection) {
+  root.SelectedSpeedLimit = function(backend, collection) {
     var current = null;
     var self = this;
     var dirty = false;
@@ -24,13 +24,7 @@
     };
 
     this.save = function() {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/speedlimits/" + current.id,
-        data: JSON.stringify({limit: current.limit}),
-        dataType: "json"
-      }).then(function() {
+      backend.updateSpeedLimit(current.id, current.limit, function() {
         dirty = false;
         eventbus.trigger('speedLimit:saved', self);
       }, function() {
