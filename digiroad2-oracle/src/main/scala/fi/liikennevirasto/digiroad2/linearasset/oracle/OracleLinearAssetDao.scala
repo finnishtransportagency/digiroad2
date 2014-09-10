@@ -62,4 +62,8 @@ object OracleLinearAssetDao {
       }.toSeq)
     }
   }
+
+  def getSpeedLimitModifiedBy(id: Long): Option[String] = {
+    sql"select modified_by from ASSET where id = $id".as[Option[String]].first
+  }
 }
