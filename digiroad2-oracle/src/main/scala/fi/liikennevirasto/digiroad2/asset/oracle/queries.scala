@@ -129,7 +129,7 @@ object Queries {
 
   def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
 
-  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq from dual"
+  def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq.nextval from dual"
 
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
