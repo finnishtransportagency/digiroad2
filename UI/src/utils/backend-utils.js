@@ -207,6 +207,13 @@
       return self;
     };
 
+    this.withSpeedLimitUpdate = function(speedLimitData) {
+      self.updateSpeedLimit = function(id, limit, success) {
+        success(speedLimitData);
+      };
+      return self;
+    };
+
     this.withPassThroughAssetCreation = function() {
       self.createAsset = function(data) {
         eventbus.trigger('asset:created', data);
