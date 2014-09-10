@@ -15,10 +15,13 @@
     var lastPoint = _.last(selectedSpeedLimit.getEndpoints());
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
-
+    var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
     return '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
+               '<div class="form-group">' +
+                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + '</p>' +
+               '</div>' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
                '</div>' +

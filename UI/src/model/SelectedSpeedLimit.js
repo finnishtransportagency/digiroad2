@@ -64,6 +64,10 @@
       return current.modifiedDateTime;
     };
 
+    this.getCreatedBy = function() {
+      return current.createdBy;
+    };
+
     this.get = function() {
       return current;
     };
