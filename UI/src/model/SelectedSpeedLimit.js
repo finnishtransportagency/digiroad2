@@ -56,10 +56,6 @@
       return current.limit;
     };
 
-    this.getSideCode = function() {
-      return current.sideCode;
-    };
-
     this.getModifiedBy = function() {
       return current.modifiedBy;
     };
