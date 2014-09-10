@@ -68,8 +68,8 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
           (Point(first._1, first._2), Point(last._1, last._2))
         }.toList
         val endpoints = calculateSpeedLimitEndPoints(points)
-        val modifiedBy = OracleLinearAssetDao.getSpeedLimitModifiedBy(segmentId)
-        Some(SpeedLimit(segmentId, endpoints, modifiedBy))
+        val (modifiedBy, limit) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
+        Some(SpeedLimit(segmentId, limit, endpoints, modifiedBy))
       }
     }
   }

@@ -63,7 +63,14 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitModifiedBy(id: Long): Option[String] = {
-    sql"select modified_by from ASSET where id = $id".as[Option[String]].first
+  def getSpeedLimitDetails(id: Long): (Option[String], Int) = {
+    sql"""
+      select a.modified_by, e.name_fi
+      from ASSET a
+      join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+      join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+      join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+      where a.id = $id
+    """.as[(Option[String], Int)].first
   }
 }
