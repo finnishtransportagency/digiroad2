@@ -9,7 +9,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     return {
       id: id,
       endpoints: [_.first(points), _.last(points)],
-      modifiedBy: 'test'
+      modifiedBy: 'modifier',
+      createdBy: 'creator'
     };
   };
 
@@ -48,8 +49,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
       });
-      it('it displays speed limit modifier', function() {
-        expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: test');
+      it('it displays speed limit creator and modifier', function() {
+        expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
+        expect($('#feature-attributes .asset-log-info:last')).to.have.text('Muokattu viimeksi: modifier');
       });
       it('shows speed limit end point markers at both ends of one link speed limit segment', function() {
         var endPoints = endPointFeatures(testHelpers.getSpeedLimitFeatures(openLayersMap));
@@ -198,7 +200,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimits)
         .withSpeedLimitConstructor(speedLimitConstructor)
-        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58'})));
+        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58', createdBy: 'creator'})));
     });
 
     describe('and changing value of speed limit', function() {
@@ -211,8 +213,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         before(function() {
           $('#feature-attributes button.save').click();
         });
-        it('it updates the modified-field', function() {
-          expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
+        it('it updates the modified and created fields', function() {
+          expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
+          expect($('#feature-attributes .asset-log-info:last')).to.have.text('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
     });
