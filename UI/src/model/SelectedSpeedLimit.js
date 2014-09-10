@@ -65,6 +65,10 @@
       return current.sideCode;
     };
 
+    this.getModifiedBy = function() {
+      return current.modifiedBy;
+    };
+
     this.get = function() {
       return current;
     };
