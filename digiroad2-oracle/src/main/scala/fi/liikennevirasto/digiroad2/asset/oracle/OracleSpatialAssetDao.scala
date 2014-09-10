@@ -38,6 +38,10 @@ object OracleSpatialAssetDao {
     nextPrimaryKeyId.as[Long].first
   }
 
+  def nextLrmPositionPrimaryKeySeqValue = {
+    nextLrmPositionPrimaryKeyId.as[Long].first
+  }
+
   def getNationalBusStopId = {
     nextNationalBusStopId.as[Long].first
   }
