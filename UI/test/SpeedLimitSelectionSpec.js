@@ -145,7 +145,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('.speed-limits').click();
         applicationModel.setReadOnly(false);
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits));
+      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits).withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits)));
     });
 
     describe('and changing value of speed limit', function() {

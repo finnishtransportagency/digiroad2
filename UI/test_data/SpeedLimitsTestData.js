@@ -800,7 +800,18 @@
     return data;
   };
 
+  var generateSpeedLimitConstructor = function(speedLimitsTestData) {
+    return function(id) {
+      var points = _.find(speedLimitsTestData, function(x) { return x.id === id; }).points;
+      return {
+        id: id,
+        endpoints: [_.first(points), _.last(points)]
+      };
+    };
+  };
+
   root.SpeedLimitsTestData = {
-    generate: generate
+    generate: generate,
+    generateSpeedLimitConstructor: generateSpeedLimitConstructor
   };
 })(this);

@@ -53,15 +53,8 @@ define(['AssetsTestData',
     return fakeBackend(AssetsTestData.generate(), {});
   };
 
-  var defaultSpeedLimitConstructor = function(id) {
-    var points = _.find(SpeedLimitsTestData.generate(), function(x) { return x.id === id; }).points;
-    return {
-      id: id,
-      endpoints: [_.first(points), _.last(points)]
-    };
-  };
-
   var fakeBackend = function(assetsData, assetData, zoomLevel) {
+    var speedLimitsTestData = SpeedLimitsTestData.generate(2);
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
@@ -70,8 +63,8 @@ define(['AssetsTestData',
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)
-      .withSpeedLimitsData(SpeedLimitsTestData.generate(2))
-      .withSpeedLimitConstructor(defaultSpeedLimitConstructor)
+      .withSpeedLimitsData(speedLimitsTestData)
+      .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsTestData))
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
   };
