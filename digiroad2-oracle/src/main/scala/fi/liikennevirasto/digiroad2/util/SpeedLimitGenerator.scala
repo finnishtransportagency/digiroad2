@@ -144,19 +144,19 @@ object SpeedLimitGenerator {
     println("...done (generated " + handledCount + " speed limits).")
   }
 
-  def generateForHighways(municipalities: Int*): Unit = {
-    generateSpeedLimitsForEmptyLinks(80, List(1), municipalities)
+  def generateForHighwaysAndPrivateRoads(municipalities: Int*): Unit = {
+    generateSpeedLimitsForEmptyLinks(80, List(1, 3), municipalities)
   }
 
-  def generateForCityAreas(municipalities: Int*): Unit = {
-    generateSpeedLimitsForEmptyLinks(50, List(2, 3), municipalities)
+  def generateForStreets(municipalities: Int*): Unit = {
+    generateSpeedLimitsForEmptyLinks(50, List(2), municipalities)
   }
 
-  def fillPartiallyFilledHighways(): Unit = {
-    fillPartiallyFilledRoads(80, List(1))
+  def fillPartiallyFilledHighwaysAndPrivateRoads(): Unit = {
+    fillPartiallyFilledRoads(80, List(1, 3))
   }
 
-  def fillPartiallyFilledCityAreaRoads(): Unit = {
-    fillPartiallyFilledRoads(50, List(2, 3))
+  def fillPartiallyFilledStreets(): Unit = {
+    fillPartiallyFilledRoads(50, List(2))
   }
 }
