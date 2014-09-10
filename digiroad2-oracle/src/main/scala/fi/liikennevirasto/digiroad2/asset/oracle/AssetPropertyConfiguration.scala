@@ -14,7 +14,7 @@ object AssetPropertyConfiguration {
   val ValidToId = "viimeinen_voimassaolopaiva"
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
-  val Format = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
     LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi"),
     LangSv -> Map()
@@ -50,6 +50,6 @@ object AssetPropertyConfiguration {
   }
 
   private def createProperty(id: String, value: Option[String], dateTime: Option[DateTime]): Property = {
-    createProperty(id, Some(value.getOrElse("-") + " " + dateTime.map(Format.print(_)).getOrElse("")))
+    createProperty(id, Some(value.getOrElse("-") + " " + dateTime.map(DateTimePropertyFormat.print(_)).getOrElse("")))
   }
 }
