@@ -4,6 +4,15 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var speedLimitsData = SpeedLimitsTestData.generate(1);
   var speedLimit = _.first(speedLimitsData);
 
+  var speedLimitConstructor = function(id) {
+    var points = speedLimitsData[0].points;
+    return {
+      id: id,
+      endpoints: [_.first(points), _.last(points)],
+      modifiedBy: 'test'
+    };
+  };
+
   var selectSpeedLimit = function(map, speedLimitId) {
     var control = _.first(map.getControlsBy('displayClass', 'olControlSelectFeature'));
     var feature = _.find(testHelpers.getSpeedLimitFeatures(map), function(feature) {
@@ -29,7 +38,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         $('.speed-limits').click();
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimitsData));
+      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimitsData).withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and selecting speed limit', function() {
@@ -38,6 +47,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
+      });
+      it('it displays speed limit modifier', function() {
+        expect($('#feature-attributes .asset-log-info')).to.have.text('Muokattu viimeksi: test');
       });
       it('shows speed limit end point markers at both ends of one link speed limit segment', function() {
         var endPoints = endPointFeatures(testHelpers.getSpeedLimitFeatures(openLayersMap));
