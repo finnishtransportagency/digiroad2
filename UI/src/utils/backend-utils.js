@@ -123,12 +123,6 @@
       });
     };
 
-    // FIXME: Dummy implementation
-    var id = 0;
-    this.createSpeedLimit = function (startPosition, endPosition) {
-      eventbus.trigger('speedLimit:created', {id: ++id, points: [startPosition, endPosition]});
-    };
-
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
         callback(roadLinkData);
