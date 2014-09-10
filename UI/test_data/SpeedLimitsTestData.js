@@ -805,7 +805,8 @@
       var points = _.find(speedLimitsTestData, function(x) { return x.id === id; }).points;
       return {
         id: id,
-        endpoints: [_.first(points), _.last(points)]
+        endpoints: [_.first(points), _.last(points)],
+        modifiedBy: id === 16 ? 'test' : null
       };
     };
   };
