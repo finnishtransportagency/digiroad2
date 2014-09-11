@@ -13,7 +13,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
   def generatePositionIndices(segments: Seq[(Point, Point)]): Seq[Int] = {
-    Seq(0)
+    segments.zipWithIndex.map(_._2)
   }
 
   private def toSpeedLimit(entity: (Long, Long, Int, Int, Seq[(Double, Double)])): SpeedLimitLink = {
