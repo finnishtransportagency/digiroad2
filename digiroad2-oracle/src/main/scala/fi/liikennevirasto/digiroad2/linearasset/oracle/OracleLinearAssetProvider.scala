@@ -12,6 +12,10 @@ import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
+  def generatePositionIndices(segments: Seq[(Point, Point)]): Seq[Int] = {
+    Seq(0)
+  }
+
   private def toSpeedLimit(entity: (Long, Long, Int, Int, Seq[(Double, Double)])): SpeedLimitLink = {
     val (id, roadLinkId, sideCode, limit, points) = entity
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) })

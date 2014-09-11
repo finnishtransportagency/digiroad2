@@ -24,6 +24,11 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
                                            Point(372450.464234144,6678051.64592463)))
   }
 
+  test("generate position indices for segment sequence of one segment") {
+    val segments = List((Point(373028.812006694, 6678475.44858997), Point(373044.204553789, 6678442.81292882)))
+    provider.generatePositionIndices(segments) shouldBe (Seq(0))
+  }
+
   test("calculate end points of one link speed limit") {
     val links = List((Point(373028.812006694,6678475.44858997), Point(373044.204553789,6678442.81292882)))
     provider.calculateSpeedLimitEndPoints(links) shouldBe(Set(Point(373028.812006694,6678475.44858997),
