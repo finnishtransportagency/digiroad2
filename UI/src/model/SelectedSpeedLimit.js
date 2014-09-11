@@ -27,6 +27,7 @@
       backend.updateSpeedLimit(current.id, current.limit, function(speedLimit) {
         dirty = false;
         current = _.merge({}, current, speedLimit);
+        originalSpeedLimit = current.limit;
         eventbus.trigger('speedLimit:saved', self);
       }, function() {
         eventbus.trigger('asset:updateFailed');
