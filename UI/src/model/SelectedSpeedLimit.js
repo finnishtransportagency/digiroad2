@@ -68,6 +68,10 @@
       return current.createdBy;
     };
 
+    this.getCreatedDateTime = function() {
+      return current.createdDateTime;
+    };
+
     this.get = function() {
       return current;
     };

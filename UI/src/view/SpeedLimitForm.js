@@ -16,11 +16,12 @@
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
+    var createdDateTime = selectedSpeedLimit.getCreatedDateTime() ? ' ' + selectedSpeedLimit.getCreatedDateTime() : '';
     return '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + createdDateTime + '</p>' +
                '</div>' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
