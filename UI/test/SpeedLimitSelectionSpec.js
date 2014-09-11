@@ -32,6 +32,18 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     return _.filter(features, function(x) { return x.attributes.type === 'endpoint'; });
   };
 
+  var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
+    var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
+      return feature.attributes.id === speedLimitId;
+    });
+    expect(features.length).not.to.equal(0);
+    _.each(features, function(feature) {
+      expect(feature.attributes.limit).to.equal(limitValue);
+      expect(feature.attributes.isSelected).to.be.true;
+    });
+    expect($('#feature-attributes .speed-limit :selected')).to.have.text(limitValue.toString());
+  };
+
   describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
@@ -169,16 +181,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         before(function() {
           $('#feature-attributes button.cancel').click();
         });
-        it('resets the update but maintains selection state', function() {
-          var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-            return feature.attributes.id === speedLimitId;
-          });
-          expect(features.length).not.to.equal(0);
-          _.each(features, function(feature) {
-            expect(feature.attributes.limit).to.equal(60);
-            expect(feature.attributes.isSelected).to.be.true;
-          });
-        });
+        it('resets the update but maintains selection state', function() { assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 60); });
       });
     });
   });
@@ -229,17 +232,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
             $('#feature-attributes button.cancel').click();
           });
 
-          it('resets back to saved speed limit value', function() {
-            var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-              return feature.attributes.id === speedLimitId;
-            });
-            expect(features.length).not.to.equal(0);
-            _.each(features, function(feature) {
-              expect(feature.attributes.limit).to.equal(100);
-              expect(feature.attributes.isSelected).to.be.true;
-            });
-            expect($('#feature-attributes .speed-limit :selected')).to.have.text('100');
-          });
+          it('resets back to saved speed limit value', function() { assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 100); });
         });
       });
     });
