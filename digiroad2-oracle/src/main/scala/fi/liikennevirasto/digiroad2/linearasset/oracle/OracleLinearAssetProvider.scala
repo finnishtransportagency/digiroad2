@@ -95,14 +95,23 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     }
   }
 
-  private def toSpeedLimit(entity: (Long, Long, Int, Int, Seq[(Double, Double)])): SpeedLimitLink = {
-    val (id, roadLinkId, sideCode, limit, points) = entity
-    SpeedLimitLink(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) })
+  private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[(Double, Double)]), Int)): SpeedLimitLink = {
+    val ((id, roadLinkId, sideCode, limit, points), positionNumber) = linkAndPositionNumber
+    SpeedLimitLink(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) }, positionNumber)
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.getSpeedLimits(bounds).map(toSpeedLimit)
+      OracleLinearAssetDao.getSpeedLimits(bounds).groupBy(_._1).mapValues { links =>
+        val linkEndpoints: Seq[(Point, Point)] = links.map { link =>
+          val (_, _, _, _, points) = link
+          val firstPoint: Point = points.head match { case (x, y) => Point(x, y) }
+          val lastPoint: Point = points.last match { case (x, y) => Point(x, y) }
+          (firstPoint, lastPoint)
+        }
+        val positionNumbers = generatePositionIndices(linkEndpoints)
+        links.zip(positionNumbers).map(toSpeedLimit)
+      }.values.flatten.toSeq
     }
   }
 
