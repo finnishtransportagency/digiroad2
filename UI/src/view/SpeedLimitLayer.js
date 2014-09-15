@@ -193,8 +193,16 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var start = function() {
     if (!eventListener.running) {
+      var scissorFeatures = [];
+      var redrawScissorFeatures = function(x, y) {
+        vectorLayer.removeFeatures(scissorFeatures);
+        scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
+        vectorLayer.addFeatures(scissorFeatures);
+      };
+      var redrawScissorFeaturesByMousePosition = _.partial(redrawByMousePosition, redrawScissorFeatures);
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
+      eventListener.listenTo(eventbus, 'map:mouseMoved', redrawScissorFeaturesByMousePosition);
       selectControl.activate();
     }
   };
@@ -241,6 +249,21 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       stop();
     }
   }, this);
+
+  var redrawByMousePosition = function(redrawFeatures, event) {
+    var lonlat = map.getLonLatFromPixel(event.xy);
+    var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+    var closestSpeedLimitLink = _.chain(vectorLayer.features)
+      .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
+      .pluck('geometry')
+      .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
+      .sortBy('distance')
+      .head()
+      .value();
+    if (closestSpeedLimitLink) {
+      redrawFeatures(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+    }
+  };
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
