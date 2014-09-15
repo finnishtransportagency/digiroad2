@@ -58,6 +58,7 @@
       elements.expanded.find('.action').removeClass('active');
       elements.expanded.find('.action.select').addClass('active');
       selectedSpeedLimit.close();
+      eventbus.trigger('tool:changed', 'Select');
     };
 
     var bindDOMEventHandlers = function() {
@@ -85,6 +86,7 @@
           elements.expanded.find('.action').removeClass('active');
           $(evt.currentTarget).addClass('active');
           selectedSpeedLimit.close();
+          eventbus.trigger('tool:changed', 'Cut');
         });
       });
 
