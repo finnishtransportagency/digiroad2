@@ -165,7 +165,6 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   map.addControl(selectControl);
 
   eventbus.on('speedLimit:unselected', function(id) {
-    console.log('closing');
     _.each(selectionFeatures, function(feature) {
       feature.style = {display: 'none'};
     });
