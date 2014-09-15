@@ -80,6 +80,15 @@
           selectedSpeedLimit.close();
         });
       });
+
+      elements.expanded.on('click', '.select', function(evt) {
+        executeOrShowConfirmDialog(function() {
+          elements.expanded.find('.action').removeClass('active');
+          $(evt.currentTarget).addClass('active');
+          selectedSpeedLimit.close();
+        });
+      });
+
     };
 
     var bindExternalEventHandlers = function() {
