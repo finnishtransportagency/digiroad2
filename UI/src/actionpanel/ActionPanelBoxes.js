@@ -101,6 +101,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== 'speedLimit') {
+          resetTools();
           elements.expanded.hide();
           elements.collapsed.show();
         }
