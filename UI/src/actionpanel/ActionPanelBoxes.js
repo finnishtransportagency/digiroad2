@@ -54,6 +54,12 @@
       expanded: $(expandedTemplate).hide()
     };
 
+    var resetTools = function() {
+      elements.expanded.find('.action').removeClass('active');
+      elements.expanded.find('.action.select').addClass('active');
+      selectedSpeedLimit.close();
+    };
+
     var bindDOMEventHandlers = function() {
       elements.collapsed.click(function() {
         executeOrShowConfirmDialog(function() {
@@ -69,6 +75,7 @@
       });
       elements.expanded.on('click', '.read-only-btn', function() {
         executeOrShowConfirmDialog(function() {
+          resetTools();
           applicationModel.setReadOnly(true);
         });
       });
@@ -84,7 +91,7 @@
       elements.expanded.on('click', '.select', function(evt) {
         executeOrShowConfirmDialog(function() {
           elements.expanded.find('.action').removeClass('active');
-          $(evt.currentTarget).addClass('active');
+          elements.expanded.find('.action.select').addClass('active');
           selectedSpeedLimit.close();
         });
       });
