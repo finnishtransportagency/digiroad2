@@ -145,7 +145,7 @@ var RoadCollection = function(backend) {
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit);
-    ActionPanel.initialize(backend);
+    ActionPanel.initialize(backend, selectedSpeedLimit);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize();
     backend.getApplicationSetup();

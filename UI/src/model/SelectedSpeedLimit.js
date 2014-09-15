@@ -18,8 +18,9 @@
     this.close = function() {
       if (current && !dirty) {
         collection.markAsDeselected(current.id);
+        var id = current.id;
         current = null;
-        eventbus.trigger('speedLimit:unselected');
+        eventbus.trigger('speedLimit:unselected', id);
       }
     };
 

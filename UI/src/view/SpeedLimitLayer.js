@@ -158,21 +158,26 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     onSelect: speedLimitOnSelect,
     onUnselect: function(feature) {
       if (selectedSpeedLimit.exists()) {
-         _.each(selectionFeatures, function(feature) {
-          feature.style = {display: 'none'};
-        });
-        _.each(_.filter(vectorLayer.features, function(feature) {
-          return feature.attributes.id === selectedSpeedLimit.getId();
-        }), function(feature) {
-          selectControl.unhighlight(feature);
-        });
         selectedSpeedLimit.close();
-        vectorLayer.styleMap = browseStyleMap;
-        vectorLayer.redraw();
       }
     }
   });
   map.addControl(selectControl);
+
+  eventbus.on('speedLimit:unselected', function(id) {
+    console.log('closing');
+    _.each(selectionFeatures, function(feature) {
+      feature.style = {display: 'none'};
+    });
+    _.each(_.filter(vectorLayer.features, function(feature) {
+      return feature.attributes.id === id;
+    }), function(feature) {
+      selectControl.unhighlight(feature);
+    });
+
+    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.redraw();
+  });
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {

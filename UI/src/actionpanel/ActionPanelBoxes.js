@@ -1,5 +1,5 @@
 (function(ActionPanelBoxes) {
-  ActionPanelBoxes.SpeedLimitBox = function() {
+  ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var collapsedTemplate = [
       '<div class="panel speed-limits">',
       '  <header class="panel-header">',
@@ -70,6 +70,14 @@
       elements.expanded.on('click', '.read-only-btn', function() {
         executeOrShowConfirmDialog(function() {
           applicationModel.setReadOnly(true);
+        });
+      });
+
+      elements.expanded.on('click', '.cut', function(evt) {
+        executeOrShowConfirmDialog(function() {
+          elements.expanded.find('.action').removeClass('active');
+          $(evt.currentTarget).addClass('active');
+          selectedSpeedLimit.close();
         });
       });
     };
