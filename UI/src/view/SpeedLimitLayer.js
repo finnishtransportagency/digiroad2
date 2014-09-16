@@ -1,8 +1,27 @@
 window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
+  var SpeedLimitCutter = function(vectorLayer) {
+    var scissorFeatures = [];
+
+    var moveTo = function(x, y) {
+      vectorLayer.removeFeatures(scissorFeatures);
+      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
+      vectorLayer.addFeatures(scissorFeatures);
+    };
+
+    var remove = function() {
+      vectorLayer.removeFeatures(scissorFeatures);
+      scissorFeatures = [];
+    };
+
+    return {
+      moveTo: moveTo,
+      remove: remove
+    };
+  };
+
   var selectedTool = 'Select';
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
-  var scissorFeatures = [];
 
   var combineFilters = function(filters) {
     return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
@@ -128,6 +147,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
+  var speedLimitCutter = new SpeedLimitCutter(vectorLayer);
+
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {
       return new OpenLayers.Feature.Vector(
@@ -195,12 +216,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var start = function() {
     if (!eventListener.running) {
-      var redrawScissorFeatures = function(x, y) {
-        vectorLayer.removeFeatures(scissorFeatures);
-        scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
-        vectorLayer.addFeatures(scissorFeatures);
-      };
-      var redrawScissorFeaturesByMousePosition = _.partial(redrawByMousePosition, redrawScissorFeatures);
+      var redrawScissorFeaturesByMousePosition = _.partial(redrawByMousePosition, speedLimitCutter.moveTo);
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
       eventListener.listenTo(eventbus, 'map:mouseMoved', redrawScissorFeaturesByMousePosition);
@@ -253,8 +269,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   eventbus.on('tool:changed', function(tool) {
     selectedTool = tool;
-    vectorLayer.removeFeatures(scissorFeatures);
-    scissorFeatures = [];
+    speedLimitCutter.remove();
   });
 
   var redrawByMousePosition = function(redrawFeatures, event) {
