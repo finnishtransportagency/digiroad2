@@ -3,6 +3,12 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     var scissorFeatures = [];
     var ShowCutterCursorThreshold = 20;
 
+    map.events.register('click', vectorLayer, function(evt) {
+      if (applicationModel.getSelectedTool() === 'Cut') {
+        speedLimitCutter.cut(evt.xy);
+      }
+    });
+
     var moveTo = function(x, y) {
       vectorLayer.removeFeatures(scissorFeatures);
       scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y), { type: 'cutter' })];
@@ -301,10 +307,6 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  map.events.register('click', vectorLayer, function(evt) {
-    speedLimitCutter.cut(evt.xy);
-  });
-
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
     selectControl.deactivate();
     map.events.unregister('click', vectorLayer, displayConfirmMessage);
@@ -334,7 +336,9 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     }
   }, this);
 
-  eventbus.on('tool:changed', function() { speedLimitCutter.remove(); });
+  eventbus.on('tool:changed', function(tool) {
+    speedLimitCutter.remove();
+  });
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
