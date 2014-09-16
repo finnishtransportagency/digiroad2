@@ -5,7 +5,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
     var moveTo = function(x, y) {
       vectorLayer.removeFeatures(scissorFeatures);
-      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
+      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y), { type: 'cutter' })];
       vectorLayer.addFeatures(scissorFeatures);
     };
 
@@ -128,16 +128,17 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     12: { strokeWidth: 16, pointRadius: 20 }
   };
 
-  var speedLimitFeatureOpacityLookup = {
+  var typeSpecificStyleLookup = {
     overlay: { strokeOpacity: 1.0 },
-    other: { strokeOpacity: 0.7 }
+    other: { strokeOpacity: 0.7 },
+    cutter: { externalGraphic: 'images/speed-limits/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
   browseStyleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
-  browseStyleMap.addUniqueValueRules('default', 'type', speedLimitFeatureOpacityLookup);
+  browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(overlayStyleRules);
   browseStyle.addRules(validityDirectionStyleRules);
   browseStyle.addRules(oneWayOverlayStyleRules);
@@ -156,7 +157,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   });
   selectionStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
-  selectionStyle.addUniqueValueRules('select', 'type', speedLimitFeatureOpacityLookup);
+  selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(endpointStyleRules);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
