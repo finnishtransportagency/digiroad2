@@ -9,32 +9,65 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       vectorLayer.addFeatures(scissorFeatures);
     };
 
-    var remove = function() {
+    this.remove = function() {
       vectorLayer.removeFeatures(scissorFeatures);
       scissorFeatures = [];
     };
 
-    var updateByPosition = function(position) {
-      var lonlat = map.getLonLatFromPixel(position);
-      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var closestSpeedLimitLink = _.chain(vectorLayer.features)
+    var findNearestSpeedLimitLink = function(point) {
+      return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .pluck('geometry')
-        .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
-        .sortBy('distance')
+        .map(function(feature) {
+          return {feature: feature,
+                  distanceObject: feature.geometry.distanceTo(point, {details: true})};
+        })
+        .sortBy(function(x) {
+          return x.distanceObject.distance;
+        })
         .head()
         .value();
+    };
+
+    this.updateByPosition = function(position) {
+      var lonlat = map.getLonLatFromPixel(position);
+      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+      var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint).distanceObject;
       if (closestSpeedLimitLink && closestSpeedLimitLink.distance < ShowCutterCursorThreshold) {
         moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
       }
       else {
-        remove();
+        this.remove();
       }
     };
 
-    return {
-      updateByPosition: updateByPosition,
-      remove: remove
+    this.cut = function(position) {
+      var pixel = new OpenLayers.Pixel(position.x, position.y);
+      var mouseLonLat = map.getLonLatFromPixel(pixel);
+      var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
+      var nearest = findNearestSpeedLimitLink(mousePoint);
+
+      var baseLonLat = {x: nearest.distanceObject.x0, y: nearest.distanceObject.y0};
+      var decLonLat = {x: nearest.distanceObject.x0 - 0.1, y: nearest.distanceObject.y0};
+      var incLonLat = {x: nearest.distanceObject.x0 + 0.1, y: nearest.distanceObject.y0};
+      var splitter = new OpenLayers.Geometry.LineString(
+        [
+         new OpenLayers.Geometry.Point(decLonLat.x, decLonLat.y),
+         new OpenLayers.Geometry.Point(baseLonLat.x, baseLonLat.y),
+         new OpenLayers.Geometry.Point(incLonLat.x, incLonLat.y)
+         ]
+      );
+
+      var parts = splitter.split(nearest.feature.geometry);
+      var splitGeometry =
+        _.chain(parts)
+         .map(function(part) {
+           return _.map(part.components, function(component) {
+             return {x: component.x, y: component.y};
+           });
+         })
+         .value();
+      collection.splitSpeedLimit(nearest.feature.attributes.id, splitGeometry);
+      this.remove();
     };
   };
 
@@ -185,6 +218,14 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     });
   };
 
+  eventbus.on('tool:changed', function(tool) {
+    if (tool === 'Cut') {
+      selectControl.deactivate();
+    } else if (tool === 'Select') {
+      selectControl.activate();
+    }
+  });
+
   var speedLimitOnSelect = function(feature) {
     if (feature.attributes.type === 'endpoint') {
       return false;
@@ -260,6 +301,10 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var displayConfirmMessage = function() { new Confirm(); };
 
+  map.events.register('click', vectorLayer, function(evt) {
+    speedLimitCutter.cut(evt.xy);
+  });
+
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
     selectControl.deactivate();
     map.events.unregister('click', vectorLayer, displayConfirmMessage);
@@ -294,7 +339,9 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
-    if (!selectedSpeedLimit.isDirty()) selectControl.activate();
+    if (!selectedSpeedLimit.isDirty() && applicationModel.getSelectedTool() === 'Select') {
+      selectControl.activate();
+    }
 
     drawSpeedLimits(speedLimits);
   };

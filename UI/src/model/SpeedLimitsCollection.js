@@ -45,5 +45,16 @@
     this.changeLimit = function(id, limit) {
       speedLimits[id].limit = limit;
     };
+
+    this.splitSpeedLimit = function(id, splitGeometry) {
+      var existingLimit = speedLimits[id];
+      existingLimit.links = [splitGeometry[0]];
+      var newLimit = _.clone(existingLimit);
+      newLimit.id = -1;
+      newLimit.links = [splitGeometry[1]];
+      newLimit.limit = 120;
+      speedLimits[newLimit.id] = newLimit;
+      eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+    };
   };
 })(this);
