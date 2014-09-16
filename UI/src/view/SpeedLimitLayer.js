@@ -1,5 +1,5 @@
 window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
-  var SpeedLimitCutter = function(vectorLayer) {
+  var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var ShowCutterCursorThreshold = 20;
 
@@ -20,6 +20,12 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       scissorFeatures = [];
     };
 
+    var shouldShowCursorOn = function(closestSpeedLimitLink) {
+      return !collection.isDirty() &&
+             closestSpeedLimitLink &&
+             closestSpeedLimitLink.distance < ShowCutterCursorThreshold;
+    };
+
     var findNearestSpeedLimitLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
@@ -38,7 +44,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
       var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint).distanceObject;
-      if (closestSpeedLimitLink && closestSpeedLimitLink.distance < ShowCutterCursorThreshold) {
+      if (shouldShowCursorOn(closestSpeedLimitLink)) {
         moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
       }
       else {
@@ -205,7 +211,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
-  var speedLimitCutter = new SpeedLimitCutter(vectorLayer);
+  var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
 
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {

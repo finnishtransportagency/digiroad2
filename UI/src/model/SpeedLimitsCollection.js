@@ -1,6 +1,7 @@
 (function(root) {
   root.SpeedLimitsCollection = function(backend) {
     var speedLimits = {};
+    var dirty = false;
 
     this.getAll = function() {
       return _.values(speedLimits);
@@ -55,6 +56,12 @@
       newLimit.limit = 120;
       speedLimits[newLimit.id] = newLimit;
       eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+      dirty = true;
     };
+
+    this.isDirty = function() {
+      return dirty;
+    };
+
   };
 })(this);
