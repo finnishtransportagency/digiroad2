@@ -44,7 +44,7 @@
     }, this);
 
     eventbus.on('tool:changed', function(action) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair'};
+      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer'};
       $('.olMap').css('cursor', cursor[action]);
     });
 

@@ -94,6 +94,7 @@
         executeOrShowConfirmDialog(function() {
           elements.expanded.find('.action').removeClass('active');
           elements.expanded.find('.action.select').addClass('active');
+          resetTools();
           selectedSpeedLimit.close();
         });
       });
