@@ -15,6 +15,9 @@
         zoomLevel = zoom;
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
       },
+      setSelectedTool: function(tool) {
+        eventbus.trigger('tool:changed', tool);
+      },
       setZoomLevel: function(level) {
         zoomLevel = level;
       },

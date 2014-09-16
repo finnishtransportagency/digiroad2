@@ -26,7 +26,7 @@
       };
 
       eventbus.on('application:readOnly', function() {
-        eventbus.trigger('tool:changed', 'Select');
+        applicationModel.setSelectedTool('Select');
       });
 
       eventbus.on('application:readOnly', handleEditMessage);
