@@ -34,7 +34,6 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     };
   };
 
-  var selectedTool = 'Select';
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
@@ -234,7 +233,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-        if (selectedTool === 'Cut') {
+        if (applicationModel.getSelectedTool() === 'Cut') {
           speedLimitCutter.moveToPosition(event.xy);
         }
       });
@@ -285,10 +284,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     }
   }, this);
 
-  eventbus.on('tool:changed', function(tool) {
-    selectedTool = tool;
-    speedLimitCutter.remove();
-  });
+  eventbus.on('tool:changed', function() { speedLimitCutter.remove(); });
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
