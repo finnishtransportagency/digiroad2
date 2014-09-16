@@ -2,6 +2,7 @@
   root.ApplicationModel = function(selectedAssetModel, selectedSpeedLimit) {
     var zoomLevel;
     var selectedLayer = 'asset';
+    var selectedTool = 'Select';
     var readOnly = true;
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
@@ -14,6 +15,13 @@
         var hasZoomLevelChanged = zoomLevel !== zoom;
         zoomLevel = zoom;
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
+      },
+      setSelectedTool: function(tool) {
+        selectedTool = tool;
+        eventbus.trigger('tool:changed', tool);
+      },
+      getSelectedTool: function() {
+        return selectedTool;
       },
       setZoomLevel: function(level) {
         zoomLevel = level;

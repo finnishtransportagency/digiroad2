@@ -1,4 +1,39 @@
 window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
+  var SpeedLimitCutter = function(vectorLayer) {
+    var scissorFeatures = [];
+
+    var moveTo = function(x, y) {
+      vectorLayer.removeFeatures(scissorFeatures);
+      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
+      vectorLayer.addFeatures(scissorFeatures);
+    };
+
+    var remove = function() {
+      vectorLayer.removeFeatures(scissorFeatures);
+      scissorFeatures = [];
+    };
+
+    var moveToPosition = function(position) {
+      var lonlat = map.getLonLatFromPixel(position);
+      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+      var closestSpeedLimitLink = _.chain(vectorLayer.features)
+        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
+        .pluck('geometry')
+        .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
+        .sortBy('distance')
+        .head()
+        .value();
+      if (closestSpeedLimitLink) {
+        moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+      }
+    };
+
+    return {
+      moveToPosition: moveToPosition,
+      remove: remove
+    };
+  };
+
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
@@ -126,6 +161,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
+  var speedLimitCutter = new SpeedLimitCutter(vectorLayer);
+
   var createSelectionEndPoints = function(points) {
     return _.map(points, function(point) {
       return new OpenLayers.Feature.Vector(
@@ -195,6 +232,11 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     if (!eventListener.running) {
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
+      eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
+        if (applicationModel.getSelectedTool() === 'Cut') {
+          speedLimitCutter.moveToPosition(event.xy);
+        }
+      });
       selectControl.activate();
     }
   };
@@ -241,6 +283,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       stop();
     }
   }, this);
+
+  eventbus.on('tool:changed', function() { speedLimitCutter.remove(); });
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();

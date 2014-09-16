@@ -58,7 +58,7 @@
       elements.expanded.find('.action').removeClass('active');
       elements.expanded.find('.action.select').addClass('active');
       selectedSpeedLimit.close();
-      eventbus.trigger('tool:changed', 'Select');
+      applicationModel.setSelectedTool('Select');
     };
 
     var bindDOMEventHandlers = function() {
@@ -86,7 +86,7 @@
           elements.expanded.find('.action').removeClass('active');
           $(evt.currentTarget).addClass('active');
           selectedSpeedLimit.close();
-          eventbus.trigger('tool:changed', 'Cut');
+          applicationModel.setSelectedTool('Cut');
         });
       });
 
@@ -280,7 +280,7 @@
           actionButtons.removeClass('active');
           el.addClass('active');
 
-          eventbus.trigger('tool:changed', action);
+          applicationModel.setSelectedTool(action);
         });
       });
 
