@@ -13,8 +13,23 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       scissorFeatures = [];
     };
 
+    var moveByMousePosition = function(event) {
+      var lonlat = map.getLonLatFromPixel(event.xy);
+      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+      var closestSpeedLimitLink = _.chain(vectorLayer.features)
+        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
+        .pluck('geometry')
+        .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
+        .sortBy('distance')
+        .head()
+        .value();
+      if (closestSpeedLimitLink) {
+        moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+      }
+    };
+
     return {
-      moveTo: moveTo,
+      moveByMousePosition: moveByMousePosition,
       remove: remove
     };
   };
@@ -216,10 +231,13 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var start = function() {
     if (!eventListener.running) {
-      var redrawScissorFeaturesByMousePosition = _.partial(redrawByMousePosition, speedLimitCutter.moveTo);
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
-      eventListener.listenTo(eventbus, 'map:mouseMoved', redrawScissorFeaturesByMousePosition);
+      eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
+        if (selectedTool === 'Cut') {
+          speedLimitCutter.moveByMousePosition(event);
+        }
+      });
       selectControl.activate();
     }
   };
@@ -271,23 +289,6 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     selectedTool = tool;
     speedLimitCutter.remove();
   });
-
-  var redrawByMousePosition = function(redrawFeatures, event) {
-    if (selectedTool === 'Cut') {
-      var lonlat = map.getLonLatFromPixel(event.xy);
-      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var closestSpeedLimitLink = _.chain(vectorLayer.features)
-        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .pluck('geometry')
-        .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
-        .sortBy('distance')
-        .head()
-        .value();
-      if (closestSpeedLimitLink) {
-        redrawFeatures(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
-      }
-    }
-  };
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
