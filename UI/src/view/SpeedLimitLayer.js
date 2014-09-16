@@ -13,8 +13,8 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       scissorFeatures = [];
     };
 
-    var moveByMousePosition = function(event) {
-      var lonlat = map.getLonLatFromPixel(event.xy);
+    var moveToPosition = function(position) {
+      var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
       var closestSpeedLimitLink = _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
@@ -29,7 +29,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     };
 
     return {
-      moveByMousePosition: moveByMousePosition,
+      moveToPosition: moveToPosition,
       remove: remove
     };
   };
@@ -235,7 +235,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (selectedTool === 'Cut') {
-          speedLimitCutter.moveByMousePosition(event);
+          speedLimitCutter.moveToPosition(event.xy);
         }
       });
       selectControl.activate();
