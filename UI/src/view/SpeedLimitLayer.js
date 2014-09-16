@@ -1,6 +1,8 @@
 window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
+  var selectedTool = 'Select';
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
+  var scissorFeatures = [];
 
   var combineFilters = function(filters) {
     return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
@@ -193,7 +195,6 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
 
   var start = function() {
     if (!eventListener.running) {
-      var scissorFeatures = [];
       var redrawScissorFeatures = function(x, y) {
         vectorLayer.removeFeatures(scissorFeatures);
         scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y))];
@@ -250,18 +251,26 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
     }
   }, this);
 
+  eventbus.on('tool:changed', function(tool) {
+    selectedTool = tool;
+    vectorLayer.removeFeatures(scissorFeatures);
+    scissorFeatures = [];
+  });
+
   var redrawByMousePosition = function(redrawFeatures, event) {
-    var lonlat = map.getLonLatFromPixel(event.xy);
-    var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-    var closestSpeedLimitLink = _.chain(vectorLayer.features)
-      .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-      .pluck('geometry')
-      .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
-      .sortBy('distance')
-      .head()
-      .value();
-    if (closestSpeedLimitLink) {
-      redrawFeatures(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+    if (selectedTool === 'Cut') {
+      var lonlat = map.getLonLatFromPixel(event.xy);
+      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+      var closestSpeedLimitLink = _.chain(vectorLayer.features)
+        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
+        .pluck('geometry')
+        .map(function(geometry) { return geometry.distanceTo(mousePoint, {details: true}); })
+        .sortBy('distance')
+        .head()
+        .value();
+      if (closestSpeedLimitLink) {
+        redrawFeatures(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+      }
     }
   };
 
