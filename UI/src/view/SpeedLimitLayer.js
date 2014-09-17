@@ -1,10 +1,10 @@
-window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
+window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit) {
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var ShowCutterCursorThreshold = 20;
 
     map.events.register('click', vectorLayer, function(evt) {
-      if (applicationModel.getSelectedTool() === 'Cut') {
+      if (application.getSelectedTool() === 'Cut') {
         speedLimitCutter.cut(evt.xy);
       }
     });
@@ -291,7 +291,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-        if (applicationModel.getSelectedTool() === 'Cut') {
+        if (application.getSelectedTool() === 'Cut') {
           speedLimitCutter.updateByPosition(event.xy);
         }
       });
@@ -349,7 +349,7 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
-    if (!selectedSpeedLimit.isDirty() && applicationModel.getSelectedTool() === 'Select') {
+    if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectControl.activate();
     }
 
