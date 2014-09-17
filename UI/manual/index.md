@@ -31,8 +31,8 @@ _Katselijan roolissa karttak&auml;ytt&ouml;liittym&auml;ss&auml; ei ole "Siirry 
 _Muokkaustila._
 
 11."Siirry katselutilaan"-painike
-12.Muokkausty&ouml;kalu
-13.Lis&auml;ysty&ouml;kalu
+12.Ty&ouml;kalu 1
+13.Ty&ouml;kalu 2
 14.Muokkaustilan tunnusteksti
 15.Tallenna-painike
 16.Peruuta-painike
@@ -392,7 +392,23 @@ Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu 
 5.2.1 Nopeusrajoituksen ominaisuustietojen muokkaus
 --------------------------------------------------
 
-Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole nopeusrajoitusten muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n. Nopeusrajoituksen tietoja muokataan muokkaustilassa ominaisuustieton&auml;kym&auml;ss&auml; (6). Nopeusrajoitukselle valitaan uusi arvo pudotusvalikosta (7). Muutos tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutoksen voi peruuttaa painamalla Peruuta-painiketta (9), jolloin nopeusrajoituksen arvo palautuu alkuper&auml;iseksi.  Valintojen yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa. Tallenna ja peruuta –napit eiv&auml;t ole aktiivisena, jos muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole nopeusrajoitusten muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
+
+Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisena, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 ![Nopeusrajoituksen muokkaus.](k26.png)
 
+_Nopeusrajoituksen ominaisuustietojen muokkaus._
+
+####Nopeusrajoituksen arvon muokkaus####
+
+Uusi nopeusrajoituksen arvo valitaan Rajoitus-pudotusvalikosta. Valinnan yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa.
+
+5.2.2 Nopeusrajoituksen katkaiseminen
+-------------------------------------
+
+Nopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (13). Leikkausty&ouml;kalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;.
+
+![Nopeusrajoituksen katkaiseminen.](k28.jpg)
+
+_Nopeusrajoituksen katkaiseminen._
