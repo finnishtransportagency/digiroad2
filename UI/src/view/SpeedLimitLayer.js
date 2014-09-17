@@ -1,4 +1,44 @@
 window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit) {
+  var splitLineStringByPoint = function(lineString, point) {
+    var segments = _.reduce(lineString.getVertices(), function(acc, vertex, index, vertices) {
+      if (index > 0) {
+        var previousVertex = vertices[index - 1];
+        var segmentGeometry = new OpenLayers.Geometry.LineString([previousVertex, vertex]);
+        var distanceObject = segmentGeometry.distanceTo(point, { details: true });
+        var segment = {
+          distance: distanceObject.distance,
+          splitPoint: {
+            x: distanceObject.x0,
+            y: distanceObject.y0
+          },
+          index: index - 1
+        };
+        return acc.concat([segment]);
+      } else {
+        return acc;
+      }
+    }, []);
+    var splitSegment = _.head(_.sortBy(segments, 'distance'));
+    var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
+      if (acc.firstSplit) {
+        acc.firstSplitVertices.push({ x: vertex.x, y: vertex.y });
+        if (index === splitSegment.index) {
+          acc.firstSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
+          acc.secondSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
+          acc.firstSplit = false;
+        }
+      } else {
+        acc.secondSplitVertices.push({ x: vertex.x, y: vertex.y });
+      }
+      return acc;
+    }, {
+      firstSplit: true,
+      firstSplitVertices: [],
+      secondSplitVertices: []
+    });
+    return [split.firstSplitVertices, split.secondSplitVertices];
+  };
+
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
@@ -62,27 +102,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      var baseLonLat = {x: nearest.distanceObject.x0, y: nearest.distanceObject.y0};
-      var decLonLat = {x: nearest.distanceObject.x0 - 0.1, y: nearest.distanceObject.y0};
-      var incLonLat = {x: nearest.distanceObject.x0 + 0.1, y: nearest.distanceObject.y0};
-      var splitter = new OpenLayers.Geometry.LineString(
-        [
-         new OpenLayers.Geometry.Point(decLonLat.x, decLonLat.y),
-         new OpenLayers.Geometry.Point(baseLonLat.x, baseLonLat.y),
-         new OpenLayers.Geometry.Point(incLonLat.x, incLonLat.y)
-         ]
-      );
-
-      var parts = splitter.split(nearest.feature.geometry);
-      var splitGeometry =
-        _.chain(parts)
-         .map(function(part) {
-           return _.map(part.components, function(component) {
-             return {x: component.x, y: component.y};
-           });
-         })
-         .value();
-      collection.splitSpeedLimit(nearest.feature.attributes.id, splitGeometry);
+      collection.splitSpeedLimit(nearest.feature.attributes.id, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
       this.remove();
     };
   };
