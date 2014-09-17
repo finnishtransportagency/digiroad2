@@ -3,8 +3,22 @@
     var speedLimits = {};
     var dirty = false;
 
+    var splitSpeedLimits = {};
+
     this.getAll = function() {
       return _.values(speedLimits);
+    };
+
+    var buildPayload = function(speedLimits, splitSpeedLimits) {
+      var payload = _.chain(speedLimits)
+                     .reject(function(speedLimit, id) {
+                       return id === splitSpeedLimits.existing.id.toString();
+                     })
+                     .values()
+                     .value();
+      payload.push(splitSpeedLimits.existing);
+      payload.push(splitSpeedLimits.created);
+      return payload;
     };
 
     this.fetch = function(boundingBox) {
@@ -25,7 +39,11 @@
           selectedInCollection.limit = selected.limit;
         }
 
-        eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+        if (splitSpeedLimits.existing) {
+          eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
+        } else {
+          eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+        }
       });
     };
 
@@ -48,14 +66,13 @@
     };
 
     this.splitSpeedLimit = function(id, splitGeometry) {
-      var existingLimit = speedLimits[id];
-      existingLimit.links = [splitGeometry[0]];
-      var newLimit = _.clone(existingLimit);
-      newLimit.id = -1;
-      newLimit.links = [splitGeometry[1]];
-      speedLimits[newLimit.id] = newLimit;
-      eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+      splitSpeedLimits.existing = _.clone(speedLimits[id]);
+      splitSpeedLimits.existing.links = [splitGeometry[0]];
+      splitSpeedLimits.created = _.clone(splitSpeedLimits.existing);
+      splitSpeedLimits.created.links = [splitGeometry[1]];
+
       dirty = true;
+      eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
     };
 
     this.isDirty = function() {
