@@ -1,7 +1,7 @@
 window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit) {
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
-    var ShowCutterCursorThreshold = 20;
+    var CUT_THRESHOLD = 20;
 
     map.events.register('click', vectorLayer, function(evt) {
       if (application.getSelectedTool() === 'Cut') {
@@ -20,10 +20,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       scissorFeatures = [];
     };
 
-    var shouldShowCursorOn = function(speedLimitLink) {
+    var isWithinCutThreshold = function(speedLimitLink) {
       return !collection.isDirty() &&
              speedLimitLink &&
-             speedLimitLink.distance < ShowCutterCursorThreshold;
+             speedLimitLink.distance < CUT_THRESHOLD;
     };
 
     var findNearestSpeedLimitLink = function(point) {
@@ -44,7 +44,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
       var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint).distanceObject;
-      if (shouldShowCursorOn(closestSpeedLimitLink)) {
+      if (isWithinCutThreshold(closestSpeedLimitLink)) {
         moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
       }
       else {
@@ -57,6 +57,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
       var nearest = findNearestSpeedLimitLink(mousePoint);
+
+      if (!isWithinCutThreshold(nearest.distanceObject)) {
+        return;
+      }
 
       var baseLonLat = {x: nearest.distanceObject.x0, y: nearest.distanceObject.y0};
       var decLonLat = {x: nearest.distanceObject.x0 - 0.1, y: nearest.distanceObject.y0};
