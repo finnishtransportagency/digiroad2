@@ -53,7 +53,6 @@
       var newLimit = _.clone(existingLimit);
       newLimit.id = -1;
       newLimit.links = [splitGeometry[1]];
-      newLimit.limit = 120;
       speedLimits[newLimit.id] = newLimit;
       eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
       dirty = true;
