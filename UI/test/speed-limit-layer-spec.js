@@ -22,7 +22,12 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
         layer = new SpeedLimitLayer({
           addControl: function(control) {
             control.handlers.feature.activate = function() {};
+          },
+          events: {
+            register: function() {}
           }
+        }, {
+          getSelectedTool: function() { return 'Select'; }
         }, speedLimitsCollection, selectedSpeedLimit);
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
