@@ -111,7 +111,7 @@ var RoadCollection = function(backend) {
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, models.speedLimitsCollection, models.selectedSpeedLimit)
+      speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit)
     };
     new MapView(map, layers);
     map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
