@@ -276,13 +276,17 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     }
   });
 
-  var speedLimitOnSelect = function(feature) {
+  var setSelectionStyleAndHighlightFeature = function(feature) {
     if (feature.attributes.type === 'endpoint') {
       return false;
     }
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
     vectorLayer.redraw();
+  };
+
+  var speedLimitOnSelect = function(feature) {
+    setSelectionStyleAndHighlightFeature(feature);
     selectedSpeedLimit.open(feature.attributes.id);
   };
 
@@ -341,6 +345,11 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   };
 
   eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
+    if (selectedSpeedLimit.isNew()) {
+      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+      setSelectionStyleAndHighlightFeature(feature);
+    }
+
     vectorLayer.removeFeatures(selectionFeatures);
     selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getEndpoints());
     vectorLayer.addFeatures(selectionFeatures);

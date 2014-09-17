@@ -48,9 +48,13 @@
     };
 
     this.fetchSpeedLimit = function(id, callback) {
-      backend.getSpeedLimit(id, function(speedLimit) {
-        callback(_.merge({}, speedLimits[id], speedLimit));
-      });
+      if (id) {
+        backend.getSpeedLimit(id, function(speedLimit) {
+          callback(_.merge({}, speedLimits[id], speedLimit));
+        });
+      } else {
+        callback(_.merge({}, splitSpeedLimits.created));
+      }
     };
 
     this.markAsSelected = function(id) {
@@ -62,17 +66,23 @@
     };
 
     this.changeLimit = function(id, limit) {
-      speedLimits[id].limit = limit;
+      if (splitSpeedLimits.created) {
+        splitSpeedLimits.created.limit = limit;
+      } else {
+        speedLimits[id].limit = limit;
+      }
     };
 
     this.splitSpeedLimit = function(id, splitGeometry) {
       splitSpeedLimits.existing = _.clone(speedLimits[id]);
       splitSpeedLimits.existing.links = [splitGeometry[0]];
       splitSpeedLimits.created = _.clone(splitSpeedLimits.existing);
+      splitSpeedLimits.created.id = null;
       splitSpeedLimits.created.links = [splitGeometry[1]];
 
       dirty = true;
       eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
+      eventbus.trigger('speedLimit:split');
     };
 
     this.isDirty = function() {

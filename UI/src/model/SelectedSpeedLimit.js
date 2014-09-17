@@ -5,6 +5,15 @@
     var dirty = false;
     var originalSpeedLimit = null;
 
+    eventbus.on('speedLimit:split', function() {
+      collection.fetchSpeedLimit(null, function(speedLimit) {
+        current = speedLimit;
+        originalSpeedLimit = speedLimit.limit;
+        eventbus.trigger('speedLimit:selected', self);
+      });
+
+    });
+
     this.open = function(id) {
       self.close();
       collection.fetchSpeedLimit(id, function(speedLimit) {
@@ -89,6 +98,10 @@
 
     this.isDirty = function() {
       return dirty;
+    };
+
+    this.isNew = function() {
+      return current.id === null;
     };
   };
 })(this);

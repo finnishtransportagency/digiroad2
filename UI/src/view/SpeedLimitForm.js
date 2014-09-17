@@ -17,7 +17,10 @@
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
     var createdDateTime = selectedSpeedLimit.getCreatedDateTime() ? ' ' + selectedSpeedLimit.getCreatedDateTime() : '';
-    return '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' +
+    var header = selectedSpeedLimit.getId() ?
+                   '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' :
+                   '<header>Uusi nopeusrajoitus</header>';
+    return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group">' +
@@ -31,10 +34,10 @@
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
-               formFieldTemplate("Päätepiste 1 X", firstPoint.x) +
-               formFieldTemplate("Y", firstPoint.y) +
-               formFieldTemplate("Päätepiste 2 X", lastPoint.x) +
-               formFieldTemplate("Y", lastPoint.y) +
+               formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
+               formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
+               formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
+               formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
