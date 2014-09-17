@@ -20,10 +20,10 @@ window.SpeedLimitLayer = function(map, collection, selectedSpeedLimit) {
       scissorFeatures = [];
     };
 
-    var shouldShowCursorOn = function(closestSpeedLimitLink) {
+    var shouldShowCursorOn = function(speedLimitLink) {
       return !collection.isDirty() &&
-             closestSpeedLimitLink &&
-             closestSpeedLimitLink.distance < ShowCutterCursorThreshold;
+             speedLimitLink &&
+             speedLimitLink.distance < ShowCutterCursorThreshold;
     };
 
     var findNearestSpeedLimitLink = function(point) {
