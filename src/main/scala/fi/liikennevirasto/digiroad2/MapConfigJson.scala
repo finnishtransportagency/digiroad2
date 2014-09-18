@@ -52,8 +52,6 @@ object MapConfigJson {
           "plugins": [{
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.LayersPlugin"
           }, {
-            "id": "Oskari.mapframework.mapmodule.WmsLayerPlugin"
-          }, {
             "id": "Oskari.mapframework.mapmodule.ControlsPlugin",
               "config" : {
                 "keyboardControls" : false
