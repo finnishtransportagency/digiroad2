@@ -96,9 +96,13 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     this.updateByPosition = function(position) {
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint).distanceObject;
-      if (isWithinCutThreshold(closestSpeedLimitLink)) {
-        moveTo(closestSpeedLimitLink.x0, closestSpeedLimitLink.y0);
+      var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint);
+      if (!closestSpeedLimitLink) {
+        return;
+      }
+      var distanceObject = closestSpeedLimitLink.distanceObject;
+      if (isWithinCutThreshold(distanceObject)) {
+        moveTo(distanceObject.x0, distanceObject.y0);
       } else {
         remove();
       }
