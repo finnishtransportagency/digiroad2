@@ -62,10 +62,25 @@
 
     var backgroundMapLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
     var aerialMapLayer = new OpenLayers.Layer.WMTS(aerialMapConfig);
+    var tileMapLayers = {
+      background: backgroundMapLayer,
+      aerial: aerialMapLayer
+    };
     map.addLayers([backgroundMapLayer, aerialMapLayer]);
 
     backgroundMapLayer.setVisibility(true);
     aerialMapLayer.setVisibility(false);
     map.setBaseLayer(backgroundMapLayer);
+
+    eventbus.on('tileMap:selected', function(tileMap) {
+      _.forEach(tileMapLayers, function(layer, key) {
+        if (key === tileMap) {
+          layer.setVisibility(true);
+          map.setBaseLayer(layer);
+        } else {
+          layer.setVisibility(false);
+        }
+      });
+    });
   };
 })(this);
