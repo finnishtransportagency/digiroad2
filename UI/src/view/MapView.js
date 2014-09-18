@@ -43,9 +43,13 @@
       eventbus.trigger('map:initialized', map);
     }, this);
 
-    eventbus.on('tool:changed', function(action) {
+    var setCursor = function(tool) {
       var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer'};
-      $('.olMap').css('cursor', cursor[action]);
+      $('.olMap').css('cursor', cursor[tool]);
+    };
+
+    eventbus.on('tool:changed', function(tool) {
+      setCursor(tool);
     });
 
     eventbus.on('coordinates:selected coordinates:marked', function(position) {
@@ -90,5 +94,7 @@
     if (applicationModel.getSelectedLayer() === 'speedLimit') {
       showSpeedLimitLayer();
     }
+
+    setCursor(applicationModel.getSelectedTool());
   };
 })(this);
