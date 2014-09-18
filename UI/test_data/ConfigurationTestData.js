@@ -50,8 +50,6 @@
               "keyboardControls" : false
             }
           }, {
-            "id": "Oskari.mapframework.mapmodule.GetInfoPlugin"
-          }, {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
