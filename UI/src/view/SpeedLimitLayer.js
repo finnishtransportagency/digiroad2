@@ -43,11 +43,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
-    map.events.register('click', vectorLayer, function(evt) {
-      if (application.getSelectedTool() === 'Cut') {
-        speedLimitCutter.cut(evt.xy);
-      }
-    });
+
 
     var moveTo = function(x, y) {
       vectorLayer.removeFeatures(scissorFeatures);
@@ -58,6 +54,18 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     this.remove = function() {
       vectorLayer.removeFeatures(scissorFeatures);
       scissorFeatures = [];
+    };
+
+    this.deactivate = function() {
+      map.events.remove('click');
+    };
+
+    this.activate = function() {
+      map.events.register('click', vectorLayer, function(evt) {
+        if (application.getSelectedTool() === 'Cut') {
+          speedLimitCutter.cut(evt.xy);
+        }
+      });
     };
 
     var isWithinCutThreshold = function(speedLimitLink) {
@@ -320,11 +328,13 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         }
       });
       selectControl.activate();
+      speedLimitCutter.activate();
     }
   };
 
   var stop = function() {
     selectControl.deactivate();
+    speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
   };

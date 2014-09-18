@@ -24,7 +24,8 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
             control.handlers.feature.activate = function() {};
           },
           events: {
-            register: function() {}
+            register: function() {},
+            remove: function() {}
           }
         }, {
           getSelectedTool: function() { return 'Select'; }
