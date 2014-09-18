@@ -53,16 +53,6 @@
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
-          }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
-            "config": {
-              "baseLayers": [
-                "base_2",
-                "24",
-                "base_35"
-              ],
-              "showAsDropdown": false
-            }
           }],
             "layers": [{
             "dataUrl_uuid": "c22da116-5095-4878-bb04-dd7db3a1a341",

@@ -116,7 +116,9 @@ var RoadCollection = function(backend) {
     };
     new MapView(map, layers);
 
-    new ZoomBox(map, $('.mapplugins.bottom.left .mappluginsContent'));
+    var mapPluginsContainer = $('.mapplugins.bottom.left .mappluginsContent');
+    new TileMapSelector(mapPluginsContainer);
+    new ZoomBox(map, mapPluginsContainer);
   };
 
   var startApplication = function(backend, models) {

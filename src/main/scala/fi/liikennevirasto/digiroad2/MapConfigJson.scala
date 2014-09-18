@@ -60,19 +60,6 @@ object MapConfigJson {
             "id": "Oskari.mapframework.wmts.mapmodule.plugin.WmtsLayerPlugin"
           }, {
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
-          }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.BackgroundLayerSelectionPlugin",
-            "config": {
-              "baseLayers": [
-                "base_2",
-                "24",
-                "base_35"
-              ],
-              "showAsDropdown": false,
-              "location" : {
-                "classes" : "left bottom"
-              }
-            }
           }],
           "layers": [{
             "dataUrl_uuid": "b20a360b-1734-41e5-a5b8-0e90dd9f2af3",
