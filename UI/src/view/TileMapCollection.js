@@ -29,7 +29,7 @@
         { identifier: '14', scaleDenominator: 1785.7142857142858 }
       ]
     };
-    var layer = new OpenLayers.Layer.WMTS(config);
-    map.addLayer(layer);
+    var backgroundMapLayer = new OpenLayers.Layer.WMTS(config);
+    map.addLayer(backgroundMapLayer);
   };
 })(this);
