@@ -54,18 +54,20 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       scissorFeatures = [];
     };
 
+    var clickHandler = function(evt) {
+      if (application.getSelectedTool() === 'Cut') {
+        speedLimitCutter.cut(evt.xy);
+      }
+    };
+
     this.deactivate = function() {
-      map.events.remove('click');
+      map.events.unregister('click', this, clickHandler);
       eventListener.stopListening(eventbus, 'map:mouseMoved');
       remove();
     };
 
     this.activate = function() {
-      map.events.register('click', vectorLayer, function(evt) {
-        if (application.getSelectedTool() === 'Cut') {
-          speedLimitCutter.cut(evt.xy);
-        }
-      });
+      map.events.register('click', this, clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut') {
           speedLimitCutter.updateByPosition(event.xy);
