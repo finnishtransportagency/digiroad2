@@ -115,7 +115,6 @@ var RoadCollection = function(backend) {
       speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit)
     };
     new MapView(map, layers);
-    map.setBaseLayer(_.first(map.getLayersBy('layer', 'taustakartta')));
 
     new ZoomBox(map, $('.mapplugins.bottom.left .mappluginsContent'));
   };
