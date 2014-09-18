@@ -25,7 +25,7 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
           },
           events: {
             register: function() {},
-            remove: function() {}
+            unregister: function() {}
           }
         }, {
           getSelectedTool: function() { return 'Select'; }
