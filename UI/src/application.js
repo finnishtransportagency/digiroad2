@@ -119,6 +119,8 @@ var RoadCollection = function(backend) {
     var mapPluginsContainer = $('.mapplugins.bottom.left .mappluginsContent');
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
+
+    applicationModel.moveMap(map.getZoom(), map.getExtent());
   };
 
   var startApplication = function(backend, models, withTileMaps) {
