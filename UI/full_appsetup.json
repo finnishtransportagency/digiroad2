@@ -31,9 +31,6 @@
       "bundlename": "mapfull",
       "metadata": {
          "Import-Bundle": {
-            "mapwmts": {
-               "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
-            },
             "service-base": {
                "bundlePath": "bower_components/oskari.org/packages/framework/bundle/"
             },
