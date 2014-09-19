@@ -26,7 +26,7 @@
       ]
     };
 
-   var aerialMapConfig = _.merge({}, mapConfig, {
+    var aerialMapConfig = _.merge({}, mapConfig, {
       url: 'maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg',
       layer: 'aerialmap',
       format: 'image/jpeg'
@@ -52,14 +52,8 @@
       aerial: aerialMapLayer,
       terrain: terrainMapLayer
     };
-    map.addLayers([backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
 
-    backgroundMapLayer.setVisibility(true);
-    aerialMapLayer.setVisibility(false);
-    terrainMapLayer.setVisibility(false);
-    map.setBaseLayer(backgroundMapLayer);
-
-    eventbus.on('tileMap:selected', function(tileMap) {
+    var selectMap = function(tileMap) {
       _.forEach(tileMapLayers, function(layer, key) {
         if (key === tileMap) {
           layer.setVisibility(true);
@@ -68,6 +62,10 @@
           layer.setVisibility(false);
         }
       });
-    });
+    };
+
+    map.addLayers([backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
+    selectMap('background');
+    eventbus.on('tileMap:selected', selectMap);
   };
 })(this);
