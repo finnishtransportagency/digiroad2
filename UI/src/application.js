@@ -52,7 +52,7 @@ var RoadCollection = function(backend) {
     $(window).on('hashchange', hashChangeHandler);
   };
 
-  var bindEvents = function(backend, models) {
+  var bindEvents = function(backend, models, withTileMaps) {
     eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
@@ -85,18 +85,18 @@ var RoadCollection = function(backend) {
 
     eventbus.on('applicationSetup:fetched', function(setup) {
       appSetup = setup;
-      startApplication(backend, models);
+      startApplication(backend, models, withTileMaps);
     });
 
     eventbus.on('configuration:fetched', function(config) {
       appConfig = config;
-      startApplication(backend, models);
+      startApplication(backend, models, withTileMaps);
     });
 
     eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
       localizedStrings = assetPropertyNames;
       window.localizedStrings = assetPropertyNames;
-      startApplication(backend, models);
+      startApplication(backend, models, withTileMaps);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });
@@ -104,10 +104,10 @@ var RoadCollection = function(backend) {
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
-  var setupMap = function(backend, models) {
+  var setupMap = function(backend, models, withTileMaps) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
 
-    new TileMapCollection(map);
+    if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
     var layers = {
       road: new RoadLayer(map, roadCollection),
@@ -121,7 +121,7 @@ var RoadCollection = function(backend) {
     new ZoomBox(map, mapPluginsContainer);
   };
 
-  var startApplication = function(backend, models) {
+  var startApplication = function(backend, models, withTileMaps) {
     // check that both setup and config are loaded 
     // before actually starting the application
     if (appSetup && appConfig && localizedStrings) {
@@ -129,21 +129,22 @@ var RoadCollection = function(backend) {
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       app.startApplication(function() {
-        setupMap(backend, models);
+        setupMap(backend, models, withTileMaps);
         eventbus.trigger('application:initialized');
       });
     }
   };
 
-  application.start = function(customBackend) {
+  application.start = function(customBackend, withTileMaps) {
     var backend = customBackend || new Backend();
+    var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var models = {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit
     };
-    bindEvents(backend, models);
+    bindEvents(backend, models, tileMaps);
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit);
@@ -155,11 +156,11 @@ var RoadCollection = function(backend) {
     backend.getAssetPropertyNames();
   };
 
-  application.restart = function(backend) {
+  application.restart = function(backend, withTileMaps) {
     appSetup = undefined;
     appConfig = undefined;
     localizedStrings = undefined;
-    this.start(backend);
+    this.start(backend, withTileMaps);
   };
 
 }(window.Application = window.Application || {}));
