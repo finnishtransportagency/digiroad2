@@ -27,21 +27,18 @@
     };
 
    var aerialMapConfig = _.merge({}, mapConfig, {
-      name: 'layer_24',
       url: 'maasto/wmts/1.0.0/ortokuva/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg',
       layer: 'aerialmap',
       format: 'image/jpeg'
     });
 
     var backgroundMapConfig = _.merge({}, mapConfig, {
-      name: 'layer_base_35',
       url: 'maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png',
       layer: 'taustakartta',
       format: 'image/png'
     });
 
     var terrainMapConfig = _.merge({}, mapConfig, {
-      name: 'layer_base_2',
       url: 'maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png',
       layer: 'terrainmap',
       format: 'image/png'
