@@ -34,7 +34,7 @@
 
     var backgroundMapConfig = _.merge({}, mapConfig, {
       url: 'maasto/wmts/1.0.0/taustakartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png',
-      layer: 'taustakartta',
+      layer: 'backgroundmap',
       format: 'image/png'
     });
 
