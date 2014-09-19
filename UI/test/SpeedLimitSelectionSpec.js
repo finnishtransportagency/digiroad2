@@ -84,8 +84,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and clicking on the background map', function() {
         before(function() {
-          var layer = $('.olLayerDiv').filter(function(i, e) { return _.contains($(e).attr('id'), 'OpenLayers_Layer_WMTS'); });
-          clickElement(_.first(layer));
+          var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
+          clickElement(layer);
         });
         it('deselects speed limit', function() {
           expect($('#feature-attributes header')).not.to.exist;
