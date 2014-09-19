@@ -85,6 +85,12 @@
       eventbus.trigger('speedLimit:split');
     };
 
+    this.cancelSplit = function() {
+      dirty = false;
+      splitSpeedLimits = {};
+      eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+    };
+
     this.isDirty = function() {
       return dirty;
     };

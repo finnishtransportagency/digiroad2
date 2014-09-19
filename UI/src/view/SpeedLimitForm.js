@@ -20,6 +20,9 @@
     var header = selectedSpeedLimit.getId() ?
                    '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' :
                    '<header>Uusi nopeusrajoitus</header>';
+    var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
+    var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
+                   '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -41,12 +44,11 @@
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
-             '<button class="save btn btn-primary" disabled>Tallenna</button>' +
-             '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
+             buttons +
            '</footer>';
   };
 
-  var bindEvents = function () {
+  var bindEvents = function(selectedSpeedLimit) {
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -55,7 +57,9 @@
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(selectedSpeedLimit) {
       rootElement.html(template(selectedSpeedLimit));
-      rootElement.find('.speed-limit').change(function(event) { selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10)); });
+      rootElement.find('.speed-limit').change(function(event) {
+        selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+      });
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
@@ -64,14 +68,20 @@
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
       rootElement.find('.form-controls button').attr('disabled', false);
-      rootElement.find('button.save').click(function() { selectedSpeedLimit.save(); });
-      rootElement.find('button.cancel').click(function() { selectedSpeedLimit.cancel(); });
+    });
+    rootElement.on('click', 'button.save', function() { selectedSpeedLimit.save(); });
+    rootElement.on('click', 'button.cancel', function() {
+      if (selectedSpeedLimit.isNew()) {
+        selectedSpeedLimit.cancelSplit();
+      } else {
+        selectedSpeedLimit.cancel();
+      }
     });
   };
 
   root.SpeedLimitForm = {
-    initialize: function () {
-      bindEvents();
+    initialize: function(selectedSpeedLimit) {
+      bindEvents(selectedSpeedLimit);
     }
   };
 })(this);

@@ -378,6 +378,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     redrawSpeedLimits(collection.getAll());
   });
 
+  eventbus.on('speedLimit:unselected', function() {
+    map.events.unregister('click', vectorLayer, displayConfirmMessage);
+  });
+
   eventbus.on('map:moved', function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       vectorLayer.setVisibility(true);
