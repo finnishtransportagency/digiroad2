@@ -48,6 +48,6 @@ require(['chai',
   });
 
   jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
-  Application.start(testHelpers.defaultBackend());
+  Application.start(testHelpers.defaultBackend(), false);
 });
 
