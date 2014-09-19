@@ -6,8 +6,8 @@
       '<div class="content">' +
         '<ul>' +
           '<li data-layerid="base_2" title="Maastokartta">Maastokartta</li>' +
-          '<li data-layerid="24" title="Ortokuvat">Ortokuvat</li>' +
-          '<li data-layerid="base_35" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
+          '<li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>' +
+          '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
         '</ul>' +
       '</div>' +
     '</div>';
@@ -15,7 +15,9 @@
     var contentContainer = container.find('.tileMapSelector .content');
     contentContainer.find('li').click(function(event) {
       contentContainer.find('li.selected').removeClass('selected');
-      $(event.target).addClass('selected');
+      var selectedTileMap = $(event.target);
+      selectedTileMap.addClass('selected');
+      eventbus.trigger('tileMap:selected', selectedTileMap.attr('data-layerid'));
     });
   };
 })(this);
