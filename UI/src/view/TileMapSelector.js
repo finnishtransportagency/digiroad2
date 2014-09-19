@@ -5,7 +5,7 @@
       '<div class="bg"></div>' +
       '<div class="content">' +
         '<ul>' +
-          '<li data-layerid="base_2" title="Maastokartta">Maastokartta</li>' +
+          '<li data-layerid="terrain" title="Maastokartta">Maastokartta</li>' +
           '<li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>' +
           '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
         '</ul>' +

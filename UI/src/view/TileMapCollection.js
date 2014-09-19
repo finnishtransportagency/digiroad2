@@ -40,16 +40,26 @@
       format: 'image/png'
     });
 
+    var terrainMapConfig = _.merge({}, mapConfig, {
+      name: 'layer_base_2',
+      url: 'maasto/wmts/1.0.0/maastokartta/default/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png',
+      layer: 'terrainmap',
+      format: 'image/png'
+    });
+
     var backgroundMapLayer = new OpenLayers.Layer.WMTS(backgroundMapConfig);
     var aerialMapLayer = new OpenLayers.Layer.WMTS(aerialMapConfig);
+    var terrainMapLayer = new OpenLayers.Layer.WMTS(terrainMapConfig);
     var tileMapLayers = {
       background: backgroundMapLayer,
-      aerial: aerialMapLayer
+      aerial: aerialMapLayer,
+      terrain: terrainMapLayer
     };
-    map.addLayers([backgroundMapLayer, aerialMapLayer]);
+    map.addLayers([backgroundMapLayer, aerialMapLayer, terrainMapLayer]);
 
     backgroundMapLayer.setVisibility(true);
     aerialMapLayer.setVisibility(false);
+    terrainMapLayer.setVisibility(false);
     map.setBaseLayer(backgroundMapLayer);
 
     eventbus.on('tileMap:selected', function(tileMap) {
