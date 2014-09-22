@@ -1,4 +1,71 @@
 (function(ActionPanelBoxes) {
+  var selectToolIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>';
+  var cutToolIcon = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-cut" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" d="M12.5 17c1.1 0 2 0.9 2 2 0 1.1-0.9 2-2 2s-2-0.9-2-2C10.5 17.9 11.4 17 12.5 17M12.5 16c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3S14.2 16 12.5 16L12.5 16z"/><path class="shape" d="M18.1 13.8c0.3 0 0.7 0.1 1 0.3 1 0.6 1.3 1.8 0.7 2.7 -0.4 0.6-1 1-1.7 1 -0.3 0-0.7-0.1-1-0.3 -1-0.6-1.3-1.8-0.7-2.7C16.8 14.1 17.4 13.8 18.1 13.8M18.1 12.8c-1.1 0-2.1 0.6-2.6 1.5 -0.8 1.4-0.3 3.3 1.1 4.1 0.5 0.3 1 0.4 1.5 0.4 1.1 0 2.1-0.6 2.6-1.5 0.4-0.7 0.5-1.5 0.3-2.3 -0.2-0.8-0.7-1.4-1.4-1.8C19.2 12.9 18.7 12.8 18.1 12.8L18.1 12.8z"/><path class="shape" d="M14 7c0-1.6-1.3-3-3-3h0v4.7l3 1.7V7zM17.1 13.5L15.6 16 7 11C5.5 10.2 5.1 8.4 5.9 7l0 0L17.1 13.5zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6zM11 9.9l3 1.7V17h-3V9.9zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6z"/></svg>';
+
+  var Tool = function(toolName, icon, selectedSpeedLimit) {
+    var className = toolName.toLowerCase();
+    var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+      executeOrShowConfirmDialog(function() {
+        activate();
+        selectedSpeedLimit.close();
+        eventbus.trigger('tool:changed', toolName);
+      });
+    });
+    var deactivate = function() {
+      element.removeClass('active');
+    };
+    var activate = function() {
+      element.addClass('active');
+      applicationModel.setSelectedTool(toolName);
+    };
+
+    return {
+      element: element,
+      deactivate: deactivate,
+      activate: activate,
+      name: toolName
+    };
+  };
+
+  var ToolSelection = function(selectedSpeedLimit, tools) {
+    var element = $('<div class="panel-section panel-actions" />');
+    _.each(tools, function(tool) {
+      element.append(tool.element);
+    });
+    var hide = function() {
+      element.hide();
+    };
+    var show = function() {
+      element.show();
+    };
+    var deactivateAll = function() {
+      _.each(tools, function(tool) {
+        tool.deactivate();
+      });
+    };
+    var reset = function() {
+      selectedSpeedLimit.close();
+      deactivateAll();
+      tools[0].activate();
+    };
+    eventbus.on('tool:changed', function(name) {
+      _.each(tools, function(tool) {
+        if (tool.name != name) {
+          tool.deactivate();
+        }
+      });
+    });
+
+    hide();
+
+    return {
+      element: element,
+      reset: reset,
+      show: show,
+      hide: hide
+    };
+  };
+
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var collapsedTemplate = [
       '<div class="panel speed-limits">',
@@ -25,28 +92,37 @@
       '  </div>',
       '</div>'].join('');
 
-    var buttonTemplate = function() {
-      if (applicationModel.isReadOnly()) {
-        return '<div class="panel-section panel-toggle-edit-mode"><button class="action-mode-btn edit-mode-btn btn btn-primary btn-block">Siirry muokkaustilaan</button></div>';
-      } else {
-        return '<div class="panel-section panel-toggle-edit-mode"><button class="action-mode-btn read-only-btn btn btn-secondary btn-block">Siirry katselutilaan</button></div>';
-      }
-    };
+    var EditModeToggleButton = function(toolSelection) {
+      var button = $('<button class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
+      var element = $('<div class="panel-section panel-toggle-edit-mode">').append(button);
+      var toggleReadOnlyMode = function(mode) {
+        var readOnly = mode;
+        applicationModel.setReadOnly(readOnly);
+        if (readOnly) {
+          toolSelection.hide();
+        } else {
+          toolSelection.reset();
+          toolSelection.show();
+        }
+        button.toggleClass('edit-mode-btn');
+        button.toggleClass('read-only-btn');
+        button.toggleClass('btn-primary');
+        button.toggleClass('btn-secondary');
+        button.text(mode ? 'Siirry muokkaustilaan' : 'Siirry katselutilaan');
+      };
+      button.click(function() {
+        executeOrShowConfirmDialog(function() {
+          toggleReadOnlyMode(!applicationModel.isReadOnly());
+        });
+      });
+      var reset = function() {
+        toggleReadOnlyMode(true);
+      };
 
-    var speedLimitToolSelection = function() {
-      return [
-        '  <div class="panel-section panel-actions">',
-        '    <div data-action="Select" class="action select active">',
-        '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-select" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve"><path class="shape" fill-rule="evenodd" clip-rule="evenodd" fill="#171717" d="M6 7l7 13v-6h6L6 7z"/></svg>',
-        '    </div>',
-        '    <div data-action="Cut" class="action cut">',
-        '      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="icon-cut" x="0px" y="0px" viewBox="0 0 26 26" enable-background="new 0 0 26 26" xml:space="preserve">',
-        '        <path class="shape" d="M12.5 17c1.1 0 2 0.9 2 2 0 1.1-0.9 2-2 2s-2-0.9-2-2C10.5 17.9 11.4 17 12.5 17M12.5 16c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3S14.2 16 12.5 16L12.5 16z"/>',
-        '        <path class="shape" d="M18.1 13.8c0.3 0 0.7 0.1 1 0.3 1 0.6 1.3 1.8 0.7 2.7 -0.4 0.6-1 1-1.7 1 -0.3 0-0.7-0.1-1-0.3 -1-0.6-1.3-1.8-0.7-2.7C16.8 14.1 17.4 13.8 18.1 13.8M18.1 12.8c-1.1 0-2.1 0.6-2.6 1.5 -0.8 1.4-0.3 3.3 1.1 4.1 0.5 0.3 1 0.4 1.5 0.4 1.1 0 2.1-0.6 2.6-1.5 0.4-0.7 0.5-1.5 0.3-2.3 -0.2-0.8-0.7-1.4-1.4-1.8C19.2 12.9 18.7 12.8 18.1 12.8L18.1 12.8z"/>',
-        '        <path class="shape" d="M14 7c0-1.6-1.3-3-3-3h0v4.7l3 1.7V7zM17.1 13.5L15.6 16 7 11C5.5 10.2 5.1 8.4 5.9 7l0 0L17.1 13.5zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6zM11 9.9l3 1.7V17h-3V9.9zM13 11.6c-0.5-0.3-1.1-0.1-1.4 0.4s-0.1 1.1 0.4 1.4 1.1 0.1 1.4-0.4S13.5 11.9 13 11.6z"/>',
-        '      </svg>',
-        '    </div>',
-        '  </div>'].join('');
+      return {
+        element: element,
+        reset: reset
+      };
     };
 
     var elements = {
@@ -54,12 +130,8 @@
       expanded: $(expandedTemplate).hide()
     };
 
-    var resetTools = function() {
-      elements.expanded.find('.action').removeClass('active');
-      elements.expanded.find('.action.select').addClass('active');
-      selectedSpeedLimit.close();
-      applicationModel.setSelectedTool('Select');
-    };
+    var toolSelection = new ToolSelection(selectedSpeedLimit, [new Tool('Select', selectToolIcon, selectedSpeedLimit), new Tool('Cut', cutToolIcon, selectedSpeedLimit)]);
+    var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {
       elements.collapsed.click(function() {
@@ -69,60 +141,24 @@
           applicationModel.selectLayer('speedLimit');
         });
       });
-      elements.expanded.on('click', '.edit-mode-btn', function() {
-        executeOrShowConfirmDialog(function() {
-          applicationModel.setReadOnly(false);
-        });
-      });
-      elements.expanded.on('click', '.read-only-btn', function() {
-        executeOrShowConfirmDialog(function() {
-          resetTools();
-          applicationModel.setReadOnly(true);
-        });
-      });
-
-      elements.expanded.on('click', '.cut', function(evt) {
-        executeOrShowConfirmDialog(function() {
-          elements.expanded.find('.action').removeClass('active');
-          $(evt.currentTarget).addClass('active');
-          selectedSpeedLimit.close();
-          applicationModel.setSelectedTool('Cut');
-        });
-      });
-
-      elements.expanded.on('click', '.select', function(evt) {
-        executeOrShowConfirmDialog(function() {
-          elements.expanded.find('.action').removeClass('active');
-          elements.expanded.find('.action.select').addClass('active');
-          resetTools();
-          selectedSpeedLimit.close();
-        });
-      });
-
     };
 
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== 'speedLimit') {
-          resetTools();
+          editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
         }
       }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator')) {
-          elements.expanded.append($(speedLimitToolSelection()).hide());
-          elements.expanded.append(buttonTemplate());
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
         }
       });
       eventbus.on('application:readOnly', function(readOnly) {
-        var actionButtons = elements.expanded.find('.panel-section.panel-actions');
-        if (applicationModel.isReadOnly()) {
-          actionButtons.hide();
-        } else {
-          actionButtons.show();
-        }
-        elements.expanded.find('.panel-toggle-edit-mode').replaceWith(buttonTemplate());
         elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
       });
     };
