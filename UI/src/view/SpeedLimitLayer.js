@@ -181,14 +181,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' })
   ];
 
-  var endpointStyleRule = _.partial(createZoomAndTypeDependentRule, 'endpoint');
-  var endpointStyleRules = [
-    endpointStyleRule(9, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 3 }),
-    endpointStyleRule(10, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 5 }),
-    endpointStyleRule(11, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 9 }),
-    endpointStyleRule(12, { graphicOpacity: 1.0, externalGraphic: 'images/speed-limits/selected.svg', pointRadius: 16 })
-  ];
-
   var validityDirectionStyleRules = [
     createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
     createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
@@ -246,7 +238,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(overlayStyleRules);
-  selectionDefaultStyle.addRules(endpointStyleRules);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
 
@@ -254,13 +245,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   vectorLayer.setOpacity(1);
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
-
-  var createSelectionEndPoints = function(points) {
-    return _.map(points, function(point) {
-      return new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(point.x, point.y), {type: 'endpoint'});
-    });
-  };
 
   var highlightSpeedLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
@@ -283,9 +267,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   });
 
   var setSelectionStyleAndHighlightFeature = function(feature) {
-    if (feature.attributes.type === 'endpoint') {
-      return false;
-    }
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
     vectorLayer.redraw();
@@ -296,7 +277,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     selectedSpeedLimit.open(feature.attributes.id);
   };
 
-  var selectionFeatures = [];
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
     onSelect: speedLimitOnSelect,
     onUnselect: function(feature) {
@@ -308,9 +288,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   map.addControl(selectControl);
 
   eventbus.on('speedLimit:unselected', function(id) {
-    _.each(selectionFeatures, function(feature) {
-      feature.style = {display: 'none'};
-    });
     _.each(_.filter(vectorLayer.features, function(feature) {
       return feature.attributes.id === id;
     }), function(feature) {
@@ -355,10 +332,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
       setSelectionStyleAndHighlightFeature(feature);
     }
-
-    vectorLayer.removeFeatures(selectionFeatures);
-    selectionFeatures = createSelectionEndPoints(selectedSpeedLimit.getEndpoints());
-    vectorLayer.addFeatures(selectionFeatures);
   });
 
   var displayConfirmMessage = function() { new Confirm(); };
@@ -455,7 +428,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
     vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
-    vectorLayer.addFeatures(selectionFeatures);
 
     if (selectedSpeedLimit.exists()) {
       selectControl.onSelect = function() {};
