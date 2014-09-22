@@ -80,7 +80,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         AssetCreator,
         Nil)
     }
-    exception.getMessage should equal("Missing required properties: vaikutussuunta, nimi_suomeksi, pysakin_tyyppi")
+    exception.getMessage should equal("Missing required properties: vaikutussuunta, pysakin_tyyppi")
  }
 
   test("add asset to database", Tag("db")) {
