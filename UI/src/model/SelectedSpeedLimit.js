@@ -9,9 +9,9 @@
       collection.fetchSpeedLimit(null, function(speedLimit) {
         current = speedLimit;
         originalSpeedLimit = speedLimit.limit;
+        dirty = true;
         eventbus.trigger('speedLimit:selected', self);
       });
-
     });
 
     this.open = function(id) {
@@ -31,6 +31,14 @@
         current = null;
         eventbus.trigger('speedLimit:unselected', id);
       }
+    };
+
+    this.cancelSplit = function() {
+      var id = current.id;
+      current = null;
+      dirty = false;
+      collection.cancelSplit();
+      eventbus.trigger('speedLimit:unselected', id);
     };
 
     this.save = function() {
