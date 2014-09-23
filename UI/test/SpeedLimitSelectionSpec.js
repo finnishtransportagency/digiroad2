@@ -115,7 +115,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         $('.speed-limits').click();
-        applicationModel.setReadOnly(false);
+        testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits).withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits)));
     });
@@ -156,7 +156,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         $('.speed-limits').click();
-        applicationModel.setReadOnly(false);
+        testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimits)

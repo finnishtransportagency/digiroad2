@@ -20,7 +20,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
 
     describe('and creating bus stop near bus stop and saving', function() {
       before(function(done) {
-        $('.edit-mode-btn').click();
+        testHelpers.clickVisibleEditModeButton();
         $('.action.add').click();
         testHelpers.clickMap(openLayersMap, testAsset1.lon, testAsset1.lat + 4.0, function() {
           $('button.save').click();

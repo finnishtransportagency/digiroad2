@@ -8,7 +8,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        $('.edit-mode-btn').click();
+        testHelpers.clickVisibleEditModeButton();
         $('.action.add').click();
         done();
       });

@@ -69,6 +69,10 @@ define(['AssetsTestData',
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
   };
 
+  var clickVisibleEditModeButton = function() {
+    $('.edit-mode-btn:visible').click();
+  };
+
   var clickMarker = function(id, map) {
     var markerBounds = _.find(map.getLayersByName('asset')[0].markers, {id: id}).bounds;
     var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
@@ -114,6 +118,7 @@ define(['AssetsTestData',
     restartApplication: restartApplication,
     defaultBackend: defaultBackend,
     fakeBackend: fakeBackend,
+    clickVisibleEditModeButton: clickVisibleEditModeButton,
     clickMarker: clickMarker,
     moveMarker: moveMarker,
     clickMap: clickMap,

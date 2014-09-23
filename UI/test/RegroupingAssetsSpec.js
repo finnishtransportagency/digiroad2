@@ -20,7 +20,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
       before(function() {
         var marker1 = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAsset1.id});
         originalMarker1Position = marker1.bounds;
-        $('.edit-mode-btn').click();
+        testHelpers.clickVisibleEditModeButton();
         testHelpers.clickMarker(testAsset2.id, openLayersMap);
         testHelpers.moveMarker(testAsset2.id, openLayersMap, -1, 1);
         $('button.save').click();
