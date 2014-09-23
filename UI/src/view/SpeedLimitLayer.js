@@ -120,7 +120,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.position, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
       remove();
     };
   };
@@ -384,9 +384,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       return speedLimit;
     }
     speedLimit.links = _.map(speedLimit.links, function(link) {
-      return _.map(link, function(point, index, geometry) {
+      link.points = _.map(link.points, function(point, index, geometry) {
         return offsetPoint(point, index, geometry, speedLimit.sideCode);
       });
+      return link;
     });
     return speedLimit;
   };
@@ -453,7 +454,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   var limitSigns = function(speedLimits) {
     return _.flatten(_.map(speedLimits, function(speedLimit) {
       return _.map(speedLimit.links, function(link) {
-        var points = _.map(link, function(point) {
+        var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
@@ -502,10 +503,12 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
   var lineFeatures = function(speedLimits) {
     return _.flatten(_.map(speedLimits, function(speedLimit) {
       return _.map(speedLimit.links, function(link) {
-        var points = _.map(link, function(point) {
+        var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimit);
+        var speedLimitWithPosition = _.clone(speedLimit);
+        speedLimitWithPosition.position = link.position;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitWithPosition);
       });
     }));
   };

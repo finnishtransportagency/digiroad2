@@ -27,7 +27,14 @@
 
         speedLimits = _.chain(fetchedSpeedLimits)
           .groupBy('id')
-          .map(function(values, key) { return [key, { id: values[0].id, links: _.pluck(values, 'points'), sideCode: values[0].sideCode, limit: values[0].limit }]; })
+          .map(function(values, key) {
+            return [key, { id: values[0].id, links: _.map(values, function(value) {
+              return {
+                position: value.position,
+                points: value.points
+              };
+            }), sideCode: values[0].sideCode, limit: values[0].limit }];
+          })
           .object()
           .value();
 
@@ -73,12 +80,19 @@
       }
     };
 
-    this.splitSpeedLimit = function(id, splitGeometry) {
-      splitSpeedLimits.existing = _.clone(speedLimits[id]);
-      splitSpeedLimits.existing.links = [splitGeometry[0]];
-      splitSpeedLimits.created = _.clone(splitSpeedLimits.existing);
+    this.splitSpeedLimit = function(id, position, splitGeometry) {
+      splitSpeedLimits.existing = _.cloneDeep(speedLimits[id]);
+      var existing = _.filter(splitSpeedLimits.existing.links, function(it) {
+        return it.position < position;
+      });
+      splitSpeedLimits.existing.links = existing.concat([{points: splitGeometry[0], position: position}]);
+
+      splitSpeedLimits.created = _.cloneDeep(speedLimits[id]);
       splitSpeedLimits.created.id = null;
-      splitSpeedLimits.created.links = [splitGeometry[1]];
+      var created = _.filter(splitSpeedLimits.created.links, function(it) {
+        return it.position > position;
+      });
+      splitSpeedLimits.created.links = [{points: splitGeometry[1], position: position}].concat(created);
 
       dirty = true;
       eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
