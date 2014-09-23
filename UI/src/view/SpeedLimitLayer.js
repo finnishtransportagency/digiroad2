@@ -511,9 +511,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var speedLimitWithPosition = _.clone(speedLimit);
-        speedLimitWithPosition.position = link.position;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitWithPosition);
+        var speedLimitLink = _.clone(speedLimit);
+        speedLimitLink.position = link.position;
+        speedLimitLink.roadLinkId = link.roadLinkId;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitLink);
       });
     }));
   };

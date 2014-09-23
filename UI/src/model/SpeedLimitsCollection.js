@@ -30,6 +30,7 @@
           .map(function(values, key) {
             return [key, { id: values[0].id, links: _.map(values, function(value) {
               return {
+                roadLinkId: value.roadLinkId,
                 position: value.position,
                 points: value.points
               };
