@@ -127,8 +127,8 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       }
     };
 
-    this.cut = function(position) {
-      var pixel = new OpenLayers.Pixel(position.x, position.y);
+    this.cut = function(point) {
+      var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
       var nearest = findNearestSpeedLimitLink(mousePoint);
