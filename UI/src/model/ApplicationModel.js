@@ -17,8 +17,10 @@
         eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       setSelectedTool: function(tool) {
-        selectedTool = tool;
-        eventbus.trigger('tool:changed', tool);
+        if (tool !== selectedTool) {
+          selectedTool = tool;
+          eventbus.trigger('tool:changed', tool);
+        }
       },
       getSelectedTool: function() {
         return selectedTool;

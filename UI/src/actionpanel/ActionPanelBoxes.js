@@ -8,7 +8,7 @@
       executeOrShowConfirmDialog(function() {
         activate();
         selectedSpeedLimit.close();
-        eventbus.trigger('tool:changed', toolName);
+        applicationModel.setSelectedTool(toolName);
       });
     });
     var deactivate = function() {
