@@ -303,20 +303,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     vectorLayer.redraw();
   };
 
-
-  eventbus.on('tool:changed', function(tool) {
-    if (!eventListener.running)
-      return;
-
-    if (tool === 'Cut') {
-      selectControl.deactivate();
-      speedLimitCutter.activate();
-    } else if (tool === 'Select') {
-      speedLimitCutter.deactivate();
-      selectControl.activate();
-    }
-  });
-
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       selectControl.deactivate();
