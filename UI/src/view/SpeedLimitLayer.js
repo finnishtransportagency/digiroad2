@@ -54,9 +54,11 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       scissorFeatures = [];
     };
 
+    var self = this;
+
     var clickHandler = function(evt) {
       if (application.getSelectedTool() === 'Cut') {
-        speedLimitCutter.cut(evt.xy);
+        self.cut(evt.xy);
       }
     };
 
@@ -70,7 +72,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       map.events.register('click', this, clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut') {
-          speedLimitCutter.updateByPosition(event.xy);
+          self.updateByPosition(event.xy);
         }
       });
     };
