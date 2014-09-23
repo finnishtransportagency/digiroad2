@@ -256,15 +256,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     });
   };
 
-  eventbus.on('tool:changed', function(tool) {
-    if (tool === 'Cut') {
-      selectControl.deactivate();
-      speedLimitCutter.activate();
-    } else if (tool === 'Select') {
-      speedLimitCutter.deactivate();
-      selectControl.activate();
-    }
-  });
+
 
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
@@ -311,12 +303,36 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     vectorLayer.redraw();
   };
 
+
+  eventbus.on('tool:changed', function(tool) {
+    if (!eventListener.running)
+      return;
+
+    if (tool === 'Cut') {
+      selectControl.deactivate();
+      speedLimitCutter.activate();
+    } else if (tool === 'Select') {
+      speedLimitCutter.deactivate();
+      selectControl.activate();
+    }
+  });
+
+  var changeTool = function(tool) {
+    if (tool === 'Cut') {
+      selectControl.deactivate();
+      speedLimitCutter.activate();
+    } else if (tool === 'Select') {
+      speedLimitCutter.deactivate();
+      selectControl.activate();
+    }
+  };
+
   var start = function() {
     if (!eventListener.running) {
       eventListener.running = true;
       eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
-      selectControl.activate();
-      speedLimitCutter.activate();
+      eventListener.listenTo(eventbus, 'tool:changed', changeTool);
+      changeTool(application.getSelectedTool());
     }
   };
 
@@ -324,6 +340,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     selectControl.deactivate();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus, 'speedLimits:fetched');
+    eventListener.stopListening(eventbus, 'tool:changed');
     eventListener.running = false;
   };
 
