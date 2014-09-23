@@ -82,22 +82,19 @@
 
     this.splitSpeedLimit = function(id, position, splitGeometry) {
       splitSpeedLimits.existing = _.cloneDeep(speedLimits[id]);
+      var existing = _.filter(splitSpeedLimits.existing.links, function(it) {
+        return it.position < position;
+      });
+      splitSpeedLimits.existing.links = existing.concat([{points: splitGeometry[0], position: position}]);
+
       splitSpeedLimits.created = _.cloneDeep(speedLimits[id]);
-
-      var findLinkByPosition = function(links, position) {
-        return _.find(links, function(link) {
-          return link.position === position;
-        });
-      };
-
-      findLinkByPosition(splitSpeedLimits.existing.links, position)
-        .points = splitGeometry[0];
-
-      findLinkByPosition(splitSpeedLimits.created.links, position)
-        .points = splitGeometry[1];
+      splitSpeedLimits.created.id = null;
+      var created = _.filter(splitSpeedLimits.created.links, function(it) {
+        return it.position > position;
+      });
+      splitSpeedLimits.created.links = [{points: splitGeometry[1], position: position}].concat(created);
 
       dirty = true;
-      splitSpeedLimits.created.id = null;
       eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
       eventbus.trigger('speedLimit:split');
     };
