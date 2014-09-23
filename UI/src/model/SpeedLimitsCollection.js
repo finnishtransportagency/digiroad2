@@ -32,6 +32,7 @@
               return {
                 roadLinkId: value.roadLinkId,
                 position: value.position,
+                roadLinkId: value.roadLinkId,
                 points: value.points
               };
             }), sideCode: values[0].sideCode, limit: values[0].limit }];
@@ -81,26 +82,34 @@
       }
     };
 
-    this.splitSpeedLimit = function(id, position, roadLinkId, split) {
-      splitSpeedLimits.existing = _.cloneDeep(speedLimits[id]);
-      var existing = _.filter(splitSpeedLimits.existing.links, function(it) {
-        return it.position < position;
+    this.splitSpeedLimit = function(id, roadLinkId, split) {
+      backend.getSpeedLimit(id, function(speedLimit) {
+        var speedLimitLinks = speedLimit.speedLimitLinks;
+        var position = _.find(speedLimitLinks, function(link) {
+          return link.roadLinkId === roadLinkId;
+        }).position;
+
+        splitSpeedLimits.existing = _.cloneDeep(speedLimits[id]);
+        splitSpeedLimits.existing.links = _.cloneDeep(speedLimitLinks);
+        var existing = _.filter(splitSpeedLimits.existing.links, function(it) {
+          return it.position < position;
+        });
+        splitSpeedLimits.existing.links = existing.concat([{points: split.firstSplitVertices, position: position, roadLinkId: roadLinkId}]);
+
+        splitSpeedLimits.created = _.cloneDeep(speedLimits[id]);
+        splitSpeedLimits.created.id = null;
+        splitSpeedLimits.created.links = _.cloneDeep(speedLimitLinks);
+        var created = _.filter(splitSpeedLimits.created.links, function(it) {
+          return it.position > position;
+        });
+        splitSpeedLimits.created.links = [{points: split.secondSplitVertices, position: position, roadLinkId: roadLinkId}].concat(created);
+
+        splitSpeedLimits.splitMeasure = split.splitMeasure;
+        splitSpeedLimits.splitRoadLinkId = roadLinkId;
+        dirty = true;
+        eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
+        eventbus.trigger('speedLimit:split');
       });
-      splitSpeedLimits.existing.links = existing.concat([{points: split.firstSplitVertices, position: position, roadLinkId: roadLinkId}]);
-
-      splitSpeedLimits.created = _.cloneDeep(speedLimits[id]);
-      splitSpeedLimits.created.id = null;
-      var created = _.filter(splitSpeedLimits.created.links, function(it) {
-        return it.position > position;
-      });
-      splitSpeedLimits.created.links = [{points: split.secondSplitVertices, position: position, roadLinkId: roadLinkId}].concat(created);
-
-      splitSpeedLimits.splitMeasure = split.splitMeasure;
-      splitSpeedLimits.splitRoadLinkId = roadLinkId;
-
-      dirty = true;
-      eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
-      eventbus.trigger('speedLimit:split');
     };
 
     this.saveSplit = function() {

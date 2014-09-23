@@ -137,7 +137,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.position, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
       remove();
     };
   };
@@ -526,10 +526,9 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var speedLimitLink = _.clone(speedLimit);
-        speedLimitLink.position = link.position;
-        speedLimitLink.roadLinkId = link.roadLinkId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitLink);
+        var speedLimitWithRoadLinkId = _.cloneDeep(speedLimit);
+        speedLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitWithRoadLinkId);
       });
     }));
   };

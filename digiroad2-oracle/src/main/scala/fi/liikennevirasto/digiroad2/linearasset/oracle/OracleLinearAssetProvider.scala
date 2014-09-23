@@ -100,18 +100,22 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) }, positionNumber)
   }
 
+  private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[(Double, Double)])): (Point, Point) = {
+    val (_, _, _, _, points) = link
+    val firstPoint: Point = points.head match { case (x, y) => Point(x, y) }
+    val lastPoint: Point = points.last match { case (x, y) => Point(x, y) }
+    (firstPoint, lastPoint)
+  }
+
+  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])]): Seq[SpeedLimitLink] = {
+    val linkEndpoints: Seq[(Point, Point)] = links.map(getLinkEndpoints)
+    val positionNumbers = generatePositionIndices(linkEndpoints)
+    links.zip(positionNumbers).map(toSpeedLimit)
+  }
+
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.getSpeedLimits(bounds).groupBy(_._1).mapValues { links =>
-        val linkEndpoints: Seq[(Point, Point)] = links.map { link =>
-          val (_, _, _, _, points) = link
-          val firstPoint: Point = points.head match { case (x, y) => Point(x, y) }
-          val lastPoint: Point = points.last match { case (x, y) => Point(x, y) }
-          (firstPoint, lastPoint)
-        }
-        val positionNumbers = generatePositionIndices(linkEndpoints)
-        links.zip(positionNumbers).map(toSpeedLimit)
-      }.values.flatten.toSeq
+      OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds).groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
@@ -133,10 +137,11 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
           (Point(first._1, first._2), Point(last._1, last._2))
         }.toList
         val endpoints = calculateSpeedLimitEndPoints(points)
-        val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
+        val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
         Some(SpeedLimit(segmentId, limit, endpoints,
                         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
-                        createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print)))
+                        createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
+                        getLinksWithPositions(speedLimitLinks)))
       }
     }
   }
