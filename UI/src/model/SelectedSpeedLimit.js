@@ -33,6 +33,10 @@
       }
     };
 
+    this.saveSplit = function() {
+      collection.saveSplit();
+    };
+
     this.cancelSplit = function() {
       var id = current.id;
       current = null;

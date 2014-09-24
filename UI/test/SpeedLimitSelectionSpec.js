@@ -28,10 +28,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     element.dispatchEvent(event);
   };
 
-  var endPointFeatures = function(features) {
-    return _.filter(features, function(x) { return x.attributes.type === 'endpoint'; });
-  };
-
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
       return feature.attributes.id === speedLimitId;

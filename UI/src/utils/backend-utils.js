@@ -52,6 +52,11 @@
       });
     }, 1000);
 
+    this.splitSpeedLimit = function(id, roadLinkId, splitMeasure, success, failure) {
+      console.log('Sending speed limit split to backend with speed limit id: ' + id + ' road link id: ' + roadLinkId + ' and split measure: ' + splitMeasure);
+      success();
+    };
+
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);
@@ -205,6 +210,11 @@
       self.updateSpeedLimit = function(id, limit, success) {
         success(speedLimitData);
       };
+      return self;
+    };
+
+    this.withSpeedLimitSplitting = function(speedLimitSplitting) {
+      self.splitSpeedLimit = speedLimitSplitting;
       return self;
     };
 
