@@ -21,23 +21,27 @@
       return payload;
     };
 
+    var transformSpeedLimits = function(speedLimits) {
+      return _.chain(speedLimits)
+        .groupBy('id')
+        .map(function(values, key) {
+          return [key, { id: values[0].id, links: _.map(values, function(value) {
+            return {
+              roadLinkId: value.roadLinkId,
+                 position: value.position,
+                 points: value.points
+            };
+          }), sideCode: values[0].sideCode, limit: values[0].limit }];
+        })
+        .object()
+        .value();
+    };
+
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
         var selected = _.find(_.values(speedLimits), function(speedLimit) { return speedLimit.isSelected; });
 
-        speedLimits = _.chain(fetchedSpeedLimits)
-          .groupBy('id')
-          .map(function(values, key) {
-            return [key, { id: values[0].id, links: _.map(values, function(value) {
-              return {
-                roadLinkId: value.roadLinkId,
-                position: value.position,
-                points: value.points
-              };
-            }), sideCode: values[0].sideCode, limit: values[0].limit }];
-          })
-          .object()
-          .value();
+        speedLimits = transformSpeedLimits(fetchedSpeedLimits);
 
         if (selected && !speedLimits[selected.id]) {
           speedLimits[selected.id] = selected;
@@ -112,8 +116,8 @@
         });
 
         left.links = leftLinks.concat([{points: split.firstSplitVertices,
-                                             position: position,
-                                             roadLinkId: roadLinkId}]);
+                                        position: position,
+                                        roadLinkId: roadLinkId}]);
 
         right.links = [{points: split.secondSplitVertices,
                         position: position,
@@ -137,7 +141,30 @@
     };
 
     this.saveSplit = function() {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, function() {});
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, function(updatedSpeedLimits) {
+        var isDummy = !updatedSpeedLimits;
+        if (isDummy) {
+          // TODO: Remove once backend works
+          splitSpeedLimits.created.id = new Date().getTime();
+          updatedSpeedLimits = [splitSpeedLimits.created,
+                                splitSpeedLimits.existing];
+        }
+        var existingId = splitSpeedLimits.existing.id;
+        splitSpeedLimits = {};
+        dirty = false;
+        delete speedLimits[existingId];
+
+        if (isDummy) {
+          // TODO: Remove once backend works
+          speedLimits[updatedSpeedLimits[0].id] = updatedSpeedLimits[0];
+          speedLimits[updatedSpeedLimits[1].id] = updatedSpeedLimits[1];
+        } else {
+          _.merge(speedLimits, transformSpeedLimits(updatedSpeedLimits));
+        }
+
+        eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+        eventbus.trigger('speedLimit:unselected');
+      });
     };
 
     this.cancelSplit = function() {
