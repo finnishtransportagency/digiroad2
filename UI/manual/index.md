@@ -194,7 +194,7 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 4.2 Nopeusrajoituksen tietojen katselu
 --------------------------------------
 
-Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Valitun geometrian p&auml;&auml;tepisteet merkit&auml;&auml;n kartalle palloilla (4). Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
 Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h) sek&auml; p&auml;&auml;tepisteen 1 ja p&auml;&auml;tepisteen 2 koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;.
 
@@ -412,3 +412,8 @@ Nopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (13). Leikkaus
 ![Nopeusrajoituksen katkaiseminen.](k28.jpg)
 
 _Nopeusrajoituksen katkaiseminen._
+
+<!---
+Nopeusrajoitusten ominaisuustieton&auml;kym&auml;&auml;n avautuu katkaistun nopeusrajoituksen toisen p&auml;tk&auml;n ominaisuustiedot ja sen geometria on kartalla valittuna. Rajoitus-pudotusvalikosta voi valita nopeusrajoitukselle uuden arvon. Oletusarvona on sama nopeusrajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. 
+
+Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. -->
