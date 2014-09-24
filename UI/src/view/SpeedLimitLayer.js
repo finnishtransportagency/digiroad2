@@ -1,5 +1,13 @@
 window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit) {
   var splitLineStringByPoint = function(lineString, point) {
+    var subtractVector = function(vector1, vector2) {
+      return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
+    };
+
+    var length = function(vector) {
+      return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+    };
+
     var segments = _.reduce(lineString.getVertices(), function(acc, vertex, index, vertices) {
       if (index > 0) {
         var previousVertex = vertices[index - 1];
@@ -22,21 +30,28 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
       if (acc.firstSplit) {
         acc.firstSplitVertices.push({ x: vertex.x, y: vertex.y });
+        if (acc.previousVertex) {
+          acc.splitMeasure = acc.splitMeasure + length(subtractVector(acc.previousVertex, vertex));
+        }
         if (index === splitSegment.index) {
+          acc.splitMeasure = acc.splitMeasure + length(subtractVector(vertex, splitSegment.splitPoint));
           acc.firstSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
           acc.secondSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
           acc.firstSplit = false;
         }
+        acc.previousVertex = vertex;
       } else {
         acc.secondSplitVertices.push({ x: vertex.x, y: vertex.y });
       }
       return acc;
     }, {
       firstSplit: true,
+      previousVertex: null,
+      splitMeasure: 0.0,
       firstSplitVertices: [],
       secondSplitVertices: []
     });
-    return [split.firstSplitVertices, split.secondSplitVertices];
+    return split;
   };
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
@@ -122,7 +137,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.position, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.position, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
       remove();
     };
   };
