@@ -96,10 +96,15 @@
       splitSpeedLimits.created.links = [{points: split.secondSplitVertices, position: position, roadLinkId: roadLinkId}].concat(created);
 
       splitSpeedLimits.splitMeasure = split.splitMeasure;
+      splitSpeedLimits.splitRoadLinkId = roadLinkId;
 
       dirty = true;
       eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
       eventbus.trigger('speedLimit:split');
+    };
+
+    this.saveSplit = function() {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, function() {});
     };
 
     this.cancelSplit = function() {

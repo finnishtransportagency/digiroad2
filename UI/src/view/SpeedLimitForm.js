@@ -69,7 +69,13 @@
     eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
-    rootElement.on('click', 'button.save', function() { selectedSpeedLimit.save(); });
+    rootElement.on('click', 'button.save', function() {
+      if (selectedSpeedLimit.isNew()) {
+        selectedSpeedLimit.saveSplit();
+      } else {
+        selectedSpeedLimit.save();
+      }
+    });
     rootElement.on('click', 'button.cancel', function() {
       if (selectedSpeedLimit.isNew()) {
         selectedSpeedLimit.cancelSplit();
