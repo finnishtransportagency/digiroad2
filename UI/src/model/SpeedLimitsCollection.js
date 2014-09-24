@@ -81,6 +81,18 @@
       }
     };
 
+    var calculateMeasure = function(links) {
+      var geometries = _.map(links, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        return new OpenLayers.Geometry.LineString(points);
+      });
+      return _.reduce(geometries, function(acc, x) {
+        return acc + x.getLength();
+      }, 0);
+    };
+
     this.splitSpeedLimit = function(id, roadLinkId, split) {
       backend.getSpeedLimit(id, function(speedLimit) {
         var speedLimitLinks = speedLimit.speedLimitLinks;
@@ -88,21 +100,34 @@
           return link.roadLinkId === roadLinkId;
         }).position;
 
-        splitSpeedLimits.existing = _.cloneDeep(speedLimits[id]);
-        splitSpeedLimits.existing.links = _.cloneDeep(speedLimitLinks);
-        var existing = _.filter(splitSpeedLimits.existing.links, function(it) {
+        var left = _.cloneDeep(speedLimits[id]);
+        var right = _.cloneDeep(speedLimits[id]);
+
+        var leftLinks = _.filter(_.cloneDeep(speedLimitLinks), function(it) {
           return it.position < position;
         });
-        splitSpeedLimits.existing.links = existing.concat([{points: split.firstSplitVertices, position: position, roadLinkId: roadLinkId}]);
 
-        splitSpeedLimits.created = _.cloneDeep(speedLimits[id]);
-        splitSpeedLimits.created.id = null;
-        splitSpeedLimits.created.links = _.cloneDeep(speedLimitLinks);
-        var created = _.filter(splitSpeedLimits.created.links, function(it) {
+        var rightLinks = _.filter(_.cloneDeep(speedLimitLinks), function(it) {
           return it.position > position;
         });
-        splitSpeedLimits.created.links = [{points: split.secondSplitVertices, position: position, roadLinkId: roadLinkId}].concat(created);
 
+        left.links = leftLinks.concat([{points: split.firstSplitVertices,
+                                             position: position,
+                                             roadLinkId: roadLinkId}]);
+
+        right.links = [{points: split.secondSplitVertices,
+                        position: position,
+                        roadLinkId: roadLinkId}].concat(rightLinks);
+
+        if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
+          splitSpeedLimits.created = left;
+          splitSpeedLimits.existing = right;
+        } else {
+          splitSpeedLimits.created = right;
+          splitSpeedLimits.existing = left;
+        }
+
+        splitSpeedLimits.created.id = null;
         splitSpeedLimits.splitMeasure = split.splitMeasure;
         splitSpeedLimits.splitRoadLinkId = roadLinkId;
         dirty = true;
