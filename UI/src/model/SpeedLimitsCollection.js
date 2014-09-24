@@ -32,7 +32,6 @@
               return {
                 roadLinkId: value.roadLinkId,
                 position: value.position,
-                roadLinkId: value.roadLinkId,
                 points: value.points
               };
             }), sideCode: values[0].sideCode, limit: values[0].limit }];
