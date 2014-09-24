@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
@@ -95,5 +96,9 @@ object OracleLinearAssetDao {
     """.as[(Option[String], Option[DateTime], Option[String], Option[DateTime], Int)].first
     val speedLimitLinks = getSpeedLimitLinksById(id)
     (modifiedBy, modifiedDate, createdBy, createdDate, name, speedLimitLinks)
+  }
+
+  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Unit = {
+    Queries.updateAssetModified(id, username).execute()
   }
 }

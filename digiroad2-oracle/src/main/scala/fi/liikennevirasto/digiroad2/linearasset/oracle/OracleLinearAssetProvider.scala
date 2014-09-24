@@ -159,4 +159,10 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
       }
     }
   }
+
+  override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, username)
+    }
+  }
 }
