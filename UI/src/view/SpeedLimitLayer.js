@@ -127,8 +127,8 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
       }
     };
 
-    this.cut = function(position) {
-      var pixel = new OpenLayers.Pixel(position.x, position.y);
+    this.cut = function(point) {
+      var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
       var nearest = findNearestSpeedLimitLink(mousePoint);
@@ -137,7 +137,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.position, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
       remove();
     };
   };
@@ -526,10 +526,9 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var speedLimitLink = _.clone(speedLimit);
-        speedLimitLink.position = link.position;
-        speedLimitLink.roadLinkId = link.roadLinkId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitLink);
+        var speedLimitWithRoadLinkId = _.cloneDeep(speedLimit);
+        speedLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitWithRoadLinkId);
       });
     }));
   };
