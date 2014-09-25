@@ -109,11 +109,20 @@ object OracleLinearAssetDao {
     """.as[(Double, Double)].list.head
   }
 
-  def createSpeedLimit(creator: String): Long = {
+  def createSpeedLimit(creator: String, roadLinkId: Long, startMeasure: Double, endMeasure: Double): Long = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert into asset(id, asset_type_id, created_by)
       values ($assetId, 20, $creator)
+    """.execute()
+    sqlu"""
+      insert into lrm_position(id, start_measure, end_measure, road_link_id)
+      values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId)
+    """.execute()
+    sqlu"""
+      insert into asset_link(asset_id, position_id)
+      values ($assetId, $lrmPositionId)
     """.execute()
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
     Queries.insertSingleChoiceProperty(assetId, propertyId, 50).execute()
@@ -125,16 +134,17 @@ object OracleLinearAssetDao {
     val (startMeasure, endMeasure) = getSpeedLimitLinkStartAndEndMeasure(id, roadLinkId)
     val firstSplitLength = splitMeasure - startMeasure
     val secondSplitLength = endMeasure - splitMeasure
-    val (targetStartMeasure, targetEndMeasure) = firstSplitLength > secondSplitLength match {
-      case true => (startMeasure, splitMeasure)
-      case false => (splitMeasure, endMeasure)
+    val (existingLinkMeasures, createdLinkMeasures) = firstSplitLength > secondSplitLength match {
+      case true => ((startMeasure, splitMeasure), (splitMeasure, endMeasure))
+      case false => ((splitMeasure, endMeasure), (startMeasure, splitMeasure))
     }
+    val (existingLinkStartMeasure, existingLinkEndMeasure) = existingLinkMeasures
 
     sql"""
       update LRM_POSITION
       set
-        start_measure = $targetStartMeasure,
-        end_measure = $targetEndMeasure
+        start_measure = $existingLinkStartMeasure,
+        end_measure = $existingLinkEndMeasure
       where id = (
         select lrm.id
           from asset a
@@ -144,6 +154,6 @@ object OracleLinearAssetDao {
           where a.id = $id)
     """.asUpdate.execute()
 
-    createSpeedLimit(username)
+    createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2)
   }
 }
