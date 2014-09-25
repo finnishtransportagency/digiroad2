@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
@@ -109,7 +109,18 @@ object OracleLinearAssetDao {
     """.as[(Double, Double)].list.head
   }
 
-  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Unit = {
+  def createSpeedLimit(creator: String): Long = {
+    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    sqlu"""
+      insert into asset(id, asset_type_id, created_by)
+      values ($assetId, 20, $creator)
+    """.execute()
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+    Queries.insertSingleChoiceProperty(assetId, propertyId, 50).execute()
+    assetId
+  }
+
+  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
     val (startMeasure, endMeasure) = getSpeedLimitLinkStartAndEndMeasure(id, roadLinkId)
     val firstSplitLength = splitMeasure - startMeasure
@@ -132,5 +143,7 @@ object OracleLinearAssetDao {
           join road_link rl on rl.id = lrm.ROAD_LINK_ID
           where a.id = $id)
     """.asUpdate.execute()
+
+    createSpeedLimit(username)
   }
 }
