@@ -1,14 +1,14 @@
-window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit) {
-  var splitLineStringByPoint = function(lineString, point) {
-    var subtractVector = function(vector1, vector2) {
-      return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
-    };
+window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit, roadCollection) {
+  var subtractVector = function(vector1, vector2) {
+    return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
+  };
 
-    var length = function(vector) {
-      return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-    };
+  var vectorLength = function(vector) {
+    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+  };
 
-    var segments = _.reduce(lineString.getVertices(), function(acc, vertex, index, vertices) {
+  var segmentsOfLineString = function(lineString, point) {
+    return _.reduce(lineString.getVertices(), function(acc, vertex, index, vertices) {
       if (index > 0) {
         var previousVertex = vertices[index - 1];
         var segmentGeometry = new OpenLayers.Geometry.LineString([previousVertex, vertex]);
@@ -26,32 +26,52 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return acc;
       }
     }, []);
+  };
+
+  var calculateMeasureAtPoint = function(lineString, point) {
+    var segments = segmentsOfLineString(lineString, point);
+    var splitSegment = _.head(_.sortBy(segments, 'distance'));
+    var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
+      if (acc.firstSplit) {
+        if (acc.previousVertex) {
+          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, vertex));
+        }
+        if (index === splitSegment.index) {
+          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(vertex, splitSegment.splitPoint));
+          acc.firstSplit = false;
+        }
+        acc.previousVertex = vertex;
+      }
+      return acc;
+    }, {
+      firstSplit: true,
+      previousVertex: null,
+      splitMeasure: 0.0
+    });
+    return split.splitMeasure;
+  };
+
+  var splitByPoint = function(lineString, point) {
+    var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
     var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
       if (acc.firstSplit) {
         acc.firstSplitVertices.push({ x: vertex.x, y: vertex.y });
-        if (acc.previousVertex) {
-          acc.splitMeasure = acc.splitMeasure + length(subtractVector(acc.previousVertex, vertex));
-        }
         if (index === splitSegment.index) {
-          acc.splitMeasure = acc.splitMeasure + length(subtractVector(vertex, splitSegment.splitPoint));
           acc.firstSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
           acc.secondSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
           acc.firstSplit = false;
         }
-        acc.previousVertex = vertex;
       } else {
         acc.secondSplitVertices.push({ x: vertex.x, y: vertex.y });
       }
       return acc;
     }, {
       firstSplit: true,
-      previousVertex: null,
-      splitMeasure: 0.0,
       firstSplitVertices: [],
       secondSplitVertices: []
     });
-    return split;
+    return _.pick(split, 'firstSplitVertices', 'secondSplitVertices');
   };
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
@@ -137,7 +157,16 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
         return;
       }
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, splitLineStringByPoint(nearest.feature.geometry, mousePoint));
+      var points = _.chain(roadCollection.getPointsOfRoadLink(nearest.feature.attributes.roadLinkId))
+                     .map(function(point) {
+                       return new OpenLayers.Geometry.Point(point.x, point.y);
+                     })
+                     .value();
+      var lineString = new OpenLayers.Geometry.LineString(points);
+      var split = {splitMeasure: calculateMeasureAtPoint(lineString, mousePoint)};
+      _.merge(split, splitByPoint(nearest.feature.geometry, mousePoint));
+
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
     };
   };
