@@ -46,4 +46,17 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("splitting one link speed limit where split measure is before link middle point modifies start measure of existing speed limit", Tag("db")) {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 50, "test")
+      val (modifiedBy, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
+      val truncatedEndPoints = endPoints(truncateLinkGeometry(5537, 50, 136.788).toList)
+      val speedLimitEndPoints = endPoints(OracleLinearAssetDao.getSpeedLimits(700114).head._2.toList)
+      truncatedEndPoints._1.distanceTo(speedLimitEndPoints._1) should be(0.0 +- 0.01)
+      truncatedEndPoints._2.distanceTo(speedLimitEndPoints._2) should be(0.0 +- 0.01)
+      modifiedBy shouldBe Some("test")
+      dynamicSession.rollback()
+    }
+  }
 }

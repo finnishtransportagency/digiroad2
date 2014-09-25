@@ -98,11 +98,32 @@ object OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, name, speedLimitLinks)
   }
 
+  def getSpeedLimitLinkStartAndEndMeasure(id: Long, roadLinkId: Long): (Double, Double) = {
+    sql"""
+      select lrm.START_MEASURE, lrm.END_MEASURE
+        from asset a
+        join asset_link al on a.ID = al.ASSET_ID
+        join lrm_position lrm on lrm.id = al.POSITION_ID
+        join road_link rl on rl.id = lrm.ROAD_LINK_ID
+        where a.id = $id
+    """.as[(Double, Double)].list.head
+  }
+
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Unit = {
     Queries.updateAssetModified(id, username).execute()
+    val (startMeasure, endMeasure) = getSpeedLimitLinkStartAndEndMeasure(id, roadLinkId)
+    val firstSplitLength = splitMeasure - startMeasure
+    val secondSplitLength = endMeasure - splitMeasure
+    val (targetStartMeasure, targetEndMeasure) = firstSplitLength > secondSplitLength match {
+      case true => (startMeasure, splitMeasure)
+      case false => (splitMeasure, endMeasure)
+    }
+
     sql"""
       update LRM_POSITION
-      set end_measure = $splitMeasure
+      set
+        start_measure = $targetStartMeasure,
+        end_measure = $targetEndMeasure
       where id = (
         select lrm.id
           from asset a
