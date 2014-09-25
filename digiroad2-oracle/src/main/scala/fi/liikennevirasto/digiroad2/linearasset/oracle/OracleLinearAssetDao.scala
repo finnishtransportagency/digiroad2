@@ -100,5 +100,16 @@ object OracleLinearAssetDao {
 
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Unit = {
     Queries.updateAssetModified(id, username).execute()
+    sql"""
+      update LRM_POSITION
+      set end_measure = $splitMeasure
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          join road_link rl on rl.id = lrm.ROAD_LINK_ID
+          where a.id = $id)
+    """.asUpdate.execute()
   }
 }
