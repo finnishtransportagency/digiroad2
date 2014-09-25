@@ -14,6 +14,13 @@ var RoadCollection = function(backend) {
   this.activate = function(road) {
     eventbus.trigger('road:active', road.roadLinkId);
   };
+
+  this.getPointsOfRoadLink = function(id) {
+    var road = _.find(roadLinks, function(road) {
+      return road.roadLinkId === id;
+    });
+    return _.cloneDeep(road.points);
+  };
 };
 
 (function(application) {
@@ -112,7 +119,7 @@ var RoadCollection = function(backend) {
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit)
+      speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit, roadCollection)
     };
     new MapView(map, layers);
 
