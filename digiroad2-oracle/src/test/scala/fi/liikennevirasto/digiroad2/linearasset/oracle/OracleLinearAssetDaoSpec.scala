@@ -34,6 +34,13 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     (Point(firstPointX, firstPointY), Point(lastPointX, lastPointY))
   }
 
+  def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, roadLinkId: Long, startMeasure: Double, endMeasure: Double) = {
+    val expectedEndPoints = endPoints(truncateLinkGeometry(roadLinkId, startMeasure, endMeasure).toList)
+    val limitEndPoints = endPoints(OracleLinearAssetDao.getSpeedLimits(speedLimitId).head._2.toList)
+    expectedEndPoints._1.distanceTo(limitEndPoints._1) should be(0.0 +- 0.01)
+    expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
+  }
+
   test("splitting one link speed limit" +
     "where split measure is after link middle point" +
     "modifies end measure of existing speed limit" +
@@ -43,15 +50,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val (existingModifiedBy, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
       val (_, _, newCreatedBy, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
-      val expectedExistingLimitEndPoints = endPoints(truncateLinkGeometry(5537, 0, 100).toList)
-      val existingLimitEndPoints = endPoints(OracleLinearAssetDao.getSpeedLimits(700114).head._2.toList)
-      expectedExistingLimitEndPoints._1.distanceTo(existingLimitEndPoints._1) should be(0.0 +- 0.01)
-      expectedExistingLimitEndPoints._2.distanceTo(existingLimitEndPoints._2) should be(0.0 +- 0.01)
-
-      val expectedCreatedLimitEndPoints = endPoints(truncateLinkGeometry(5537, 100, 136.788).toList)
-      val createdLimitEndPoints = endPoints(OracleLinearAssetDao.getSpeedLimits(createdId).head._2.toList)
-      expectedCreatedLimitEndPoints._1.distanceTo(createdLimitEndPoints._1) should be(0.0 +- 0.01)
-      expectedCreatedLimitEndPoints._2.distanceTo(createdLimitEndPoints._2) should be(0.0 +- 0.01)
+      assertSpeedLimitEndPointsOnLink(700114, 5537, 0, 100)
+      assertSpeedLimitEndPointsOnLink(createdId, 5537, 100, 136.788)
 
       existingModifiedBy shouldBe Some("test")
       newCreatedBy shouldBe Some("test")
@@ -63,10 +63,9 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     Database.forDataSource(ds).withDynTransaction {
       OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 50, "test")
       val (modifiedBy, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
-      val truncatedEndPoints = endPoints(truncateLinkGeometry(5537, 50, 136.788).toList)
-      val speedLimitEndPoints = endPoints(OracleLinearAssetDao.getSpeedLimits(700114).head._2.toList)
-      truncatedEndPoints._1.distanceTo(speedLimitEndPoints._1) should be(0.0 +- 0.01)
-      truncatedEndPoints._2.distanceTo(speedLimitEndPoints._2) should be(0.0 +- 0.01)
+
+      assertSpeedLimitEndPointsOnLink(700114, 5537, 50, 136.788)
+
       modifiedBy shouldBe Some("test")
       dynamicSession.rollback()
     }
