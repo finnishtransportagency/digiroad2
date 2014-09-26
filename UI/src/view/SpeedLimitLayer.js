@@ -1,6 +1,20 @@
-window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit, roadCollection) {
+var GeometryUtils = function() {
   var subtractVector = function(vector1, vector2) {
     return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
+  };
+
+  var scaleVector = function(vector, scalar) {
+    return {x: vector.x * scalar, y: vector.y * scalar};
+  };
+  var sumVectors = function(vector1, vector2) {
+    return {x: vector1.x + vector2.x, y: vector1.y + vector2.y};
+  };
+  var normalVector = function(vector) {
+    return {x: vector.y, y: -vector.x};
+  };
+  var unitVector = function(vector) {
+    var n = vectorLength(vector);
+    return {x: vector.x / n, y: vector.y / n};
   };
 
   var vectorLength = function(vector) {
@@ -28,7 +42,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     }, []);
   };
 
-  var calculateMeasureAtPoint = function(lineString, point) {
+  this.calculateMeasureAtPoint = function(lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
     var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
@@ -51,7 +65,7 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     return split.splitMeasure;
   };
 
-  var splitByPoint = function(lineString, point) {
+  this.splitByPoint = function(lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
     var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
@@ -73,6 +87,47 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     });
     return _.pick(split, 'firstSplitVertices', 'secondSplitVertices');
   };
+
+  this.offsetPoint = function(point, index, geometry, sideCode) {
+     var previousPoint = index > 0 ? geometry[index - 1] : point;
+    var nextPoint = geometry[index + 1] || point;
+
+    var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
+    var normal = normalVector(directionVector);
+    var sideCodeScalar = (2 * sideCode - 5) * -4;
+    var offset = scaleVector(unitVector(normal), sideCodeScalar);
+    return sumVectors(point, offset);
+  };
+
+  var distanceOfPoints = function(end, start) {
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+  };
+
+  this.calculateMidpointOfLineString = function(lineString) {
+    var length = lineString.getLength();
+    var vertices = lineString.getVertices();
+    var firstVertex = _.first(vertices);
+    var optionalMidpoint = _.reduce(_.tail(vertices), function(acc, vertex) {
+      if (acc.midpoint) return acc;
+      var accumulatedDistance = acc.distanceTraversed + distanceOfPoints(vertex, acc.previousVertex);
+      if (accumulatedDistance < length / 2) {
+        return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
+      } else {
+        return {
+          midpoint: {
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed))
+          }
+        };
+      }
+    }, {previousVertex: firstVertex, distanceTraversed: 0});
+    if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
+    else return firstVertex;
+  };
+};
+
+window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit, roadCollection) {
+  var geometryUtils = new GeometryUtils();
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -163,8 +218,8 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
                      })
                      .value();
       var lineString = new OpenLayers.Geometry.LineString(points);
-      var split = {splitMeasure: calculateMeasureAtPoint(lineString, mousePoint)};
-      _.merge(split, splitByPoint(nearest.feature.geometry, mousePoint));
+      var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
+      _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
 
       collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
@@ -302,8 +357,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     });
   };
 
-
-
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
@@ -434,39 +487,11 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     }
     speedLimit.links = _.map(speedLimit.links, function(link) {
       link.points = _.map(link.points, function(point, index, geometry) {
-        return offsetPoint(point, index, geometry, speedLimit.sideCode);
+        return geometryUtils.offsetPoint(point, index, geometry, speedLimit.sideCode);
       });
       return link;
     });
     return speedLimit;
-  };
-
-  var offsetPoint = function(point, index, geometry, sideCode) {
-    var scaleVector = function(vector, scalar) {
-      return {x: vector.x * scalar, y: vector.y * scalar};
-    };
-    var sumVectors = function(vector1, vector2) {
-      return {x: vector1.x + vector2.x, y: vector1.y + vector2.y};
-    };
-    var subtractVector = function(vector1, vector2) {
-      return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
-    };
-    var normalVector = function(vector) {
-      return {x: vector.y, y: -vector.x };
-    };
-    var unitVector = function(vector) {
-      var n = vectorLength(vector);
-      return {x: vector.x / n, y: vector.y / n};
-    };
-
-    var previousPoint = index > 0 ? geometry[index - 1] : point;
-    var nextPoint = geometry[index + 1] || point;
-
-    var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
-    var normal = normalVector(directionVector);
-    var sideCodeScalar = (2 * sideCode - 5) * -4;
-    var offset = scaleVector(unitVector(normal), sideCodeScalar);
-    return sumVectors(point, offset);
   };
 
   var drawSpeedLimits = function(speedLimits) {
@@ -504,36 +529,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = calculateMidpointOfLineString(road);
+        var signPosition = geometryUtils.calculateMidpointOfLineString(road);
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
       });
     }));
-  };
-
-  var calculateMidpointOfLineString = function(lineString) {
-    var length = lineString.getLength();
-    var vertices = lineString.getVertices();
-    var firstVertex = _.first(vertices);
-    var optionalMidpoint = _.reduce(_.tail(vertices), function(acc, vertex) {
-      if (acc.midpoint) return acc;
-      var accumulatedDistance = acc.distanceTraversed + distanceOfPoints(vertex, acc.previousVertex);
-      if (accumulatedDistance < length / 2) {
-        return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
-      } else {
-        return {
-          midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed))
-          }
-        };
-      }
-    }, {previousVertex: firstVertex, distanceTraversed: 0});
-    if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
-    else return firstVertex;
-  };
-
-  var distanceOfPoints = function(end, start) {
-    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
 
   var lineFeatures = function(speedLimits) {
