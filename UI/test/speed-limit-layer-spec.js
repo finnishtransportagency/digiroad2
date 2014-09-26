@@ -1,4 +1,5 @@
-define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels'], function(chai, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit) {
+define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils'],
+       function(chai, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils) {
   var assert = chai.assert;
   var lineStringFeatures = function(layer) {
     return _.filter(layer.vectorLayer.features, function(feature) {
@@ -29,7 +30,7 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
           }
         }, {
           getSelectedTool: function() { return 'Select'; }
-        }, speedLimitsCollection, selectedSpeedLimit);
+        }, speedLimitsCollection, selectedSpeedLimit, null, new GeometryUtils());
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
       });
