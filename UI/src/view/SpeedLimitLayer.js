@@ -454,12 +454,9 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     var normalVector = function(vector) {
       return {x: vector.y, y: -vector.x };
     };
-    var length = function(vector) {
-      return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-    };
     var unitVector = function(vector) {
-      var vectorLength = length(vector);
-      return {x: vector.x / vectorLength, y: vector.y / vectorLength};
+      var n = vectorLength(vector);
+      return {x: vector.x / n, y: vector.y / n};
     };
 
     var previousPoint = index > 0 ? geometry[index - 1] : point;
