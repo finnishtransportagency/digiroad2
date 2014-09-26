@@ -515,14 +515,14 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     var firstVertex = _.first(road);
     var optionalMidpoint = _.reduce(_.tail(road), function(acc, vertex) {
       if (acc.midpoint) return acc;
-      var accumulatedDistance = acc.distanceTraversed + length(vertex, acc.previousVertex);
+      var accumulatedDistance = acc.distanceTraversed + distanceOfPoints(vertex, acc.previousVertex);
       if (accumulatedDistance < roadLength / 2) {
         return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
       } else {
         return {
           midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed))
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed))
           }
         };
       }
@@ -536,13 +536,13 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     var lengthObject = _.reduce(_.tail(lineString), function(acc, vertex) {
       return {
         previousVertex: vertex,
-        totalLength: acc.totalLength + length(vertex, acc.previousVertex)
+        totalLength: acc.totalLength + distanceOfPoints(vertex, acc.previousVertex)
       };
     }, { previousVertex: firstVertex, totalLength: 0 });
     return lengthObject.totalLength;
   };
 
-  var length = function(end, start) {
+  var distanceOfPoints = function(end, start) {
     return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
 
