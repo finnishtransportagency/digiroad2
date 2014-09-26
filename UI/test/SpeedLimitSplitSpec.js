@@ -13,6 +13,15 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     success();
   };
 
+  var speedLimitConstructor = function(id) {
+    return {
+      speedLimitLinks: [{
+        roadLinkId: 5540,
+        position: 0
+      }]
+    };
+  };
+
   describe('when loading application in edit mode with speed limit data', function() {
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -20,7 +29,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('.speed-limits').click();
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitSplitting(speedLimitSplitting));
+      }, testHelpers.defaultBackend().withSpeedLimitSplitting(speedLimitSplitting).withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and selecting cut tool', function() {
@@ -41,7 +50,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
             expect(splitBackendCalls).to.have.length(1);
             var backendCall = _.first(splitBackendCalls);
             expect(backendCall.id).to.equal(1123812);
-            expect(backendCall.roadLinkId).to.equal(1);
+            expect(backendCall.roadLinkId).to.equal(5540);
             expect(backendCall.splitMeasure).to.be.closeTo(58.414, 0.5);
           });
         });
