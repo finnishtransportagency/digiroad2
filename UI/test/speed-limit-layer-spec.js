@@ -21,16 +21,22 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
         });
         var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);
         layer = new SpeedLimitLayer({
-          addControl: function(control) {
-            control.handlers.feature.activate = function() {};
+          map: {
+            addControl: function(control) {
+              control.handlers.feature.activate = function() {};
+            },
+            events: {
+              register: function() {},
+              unregister: function() {}
+            }
           },
-          events: {
-            register: function() {},
-            unregister: function() {}
-          }
-        }, {
-          getSelectedTool: function() { return 'Select'; }
-        }, speedLimitsCollection, selectedSpeedLimit, null, new GeometryUtils());
+          application: {
+            getSelectedTool: function() { return 'Select'; }
+          },
+          collection: speedLimitsCollection,
+          selectedSpeedLimit: selectedSpeedLimit,
+          geometryUtils: new GeometryUtils()
+        });
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
       });

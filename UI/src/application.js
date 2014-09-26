@@ -120,7 +120,14 @@ var RoadCollection = function(backend) {
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit, roadCollection, geometryUtils)
+      speedLimit: new SpeedLimitLayer({
+        map: map,
+        application: applicationModel,
+        collection: models.speedLimitsCollection,
+        selectedSpeedLimit: models.selectedSpeedLimit,
+        roadCollection: roadCollection,
+        geometryUtils: geometryUtils
+      })
     };
     new MapView(map, layers);
 

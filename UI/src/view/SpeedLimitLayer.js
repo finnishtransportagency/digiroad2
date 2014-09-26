@@ -1,4 +1,11 @@
-window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit, roadCollection, geometryUtils) {
+window.SpeedLimitLayer = function(params) {
+  var map = params.map,
+      application = params.application,
+      collection = params.collection,
+      selectedSpeedLimit = params.selectedSpeedLimit,
+      roadCollection = params.roadCollection,
+      geometryUtils = params.geometryUtils;
+
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
