@@ -504,42 +504,32 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = calculateMidpoint(road.getVertices());
+        var signPosition = calculateMidpointOfLineString(road);
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
       });
     }));
   };
 
-  var calculateMidpoint = function(road) {
-    var roadLength = lineStringLength(road);
-    var firstVertex = _.first(road);
-    var optionalMidpoint = _.reduce(_.tail(road), function(acc, vertex) {
+  var calculateMidpointOfLineString = function(lineString) {
+    var length = lineString.getLength();
+    var vertices = lineString.getVertices();
+    var firstVertex = _.first(vertices);
+    var optionalMidpoint = _.reduce(_.tail(vertices), function(acc, vertex) {
       if (acc.midpoint) return acc;
       var accumulatedDistance = acc.distanceTraversed + distanceOfPoints(vertex, acc.previousVertex);
-      if (accumulatedDistance < roadLength / 2) {
+      if (accumulatedDistance < length / 2) {
         return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
       } else {
         return {
           midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed))
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed))
           }
         };
       }
     }, {previousVertex: firstVertex, distanceTraversed: 0});
     if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
     else return firstVertex;
-  };
-
-  var lineStringLength = function(lineString) {
-    var firstVertex = _.first(lineString);
-    var lengthObject = _.reduce(_.tail(lineString), function(acc, vertex) {
-      return {
-        previousVertex: vertex,
-        totalLength: acc.totalLength + distanceOfPoints(vertex, acc.previousVertex)
-      };
-    }, { previousVertex: firstVertex, totalLength: 0 });
-    return lengthObject.totalLength;
   };
 
   var distanceOfPoints = function(end, start) {
