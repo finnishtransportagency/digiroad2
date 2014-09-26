@@ -110,14 +110,15 @@
       var firstVertex = _.first(vertices);
       var optionalMidpoint = _.reduce(_.tail(vertices), function(acc, vertex) {
         if (acc.midpoint) return acc;
-        var accumulatedDistance = acc.distanceTraversed + distanceOfPoints(vertex, acc.previousVertex);
+        var distance = distanceOfPoints(vertex, acc.previousVertex);
+        var accumulatedDistance = acc.distanceTraversed + distance;
         if (accumulatedDistance < length / 2) {
           return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
         } else {
           return {
             midpoint: {
-              x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed)),
-              y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distanceOfPoints(vertex, acc.previousVertex)) * (length / 2 - acc.distanceTraversed))
+              x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
+              y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed))
             }
           };
         }
