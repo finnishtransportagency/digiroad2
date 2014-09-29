@@ -113,8 +113,8 @@ object OracleLinearAssetDao {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
-      insert into asset(id, asset_type_id, created_by)
-      values ($assetId, 20, $creator)
+      insert into asset(id, asset_type_id, created_by, created_date)
+      values ($assetId, 20, $creator, sysdate)
     """.execute()
     sqlu"""
       insert into lrm_position(id, start_measure, end_measure, road_link_id)
