@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{RoadLink, AssetWithProperties}
 
 object GeometryUtils {
@@ -23,5 +24,11 @@ object GeometryUtils {
     } else {
       direction(closest, roadLink.lonLat(closestIdx + 1)).toInt
     }
+  }
+
+  def geometryEndpoints(geometry: Seq[(Double, Double)]): (Point, Point) = {
+    val firstPoint: Point = geometry.head match { case (x, y) => Point(x, y) }
+    val lastPoint: Point = geometry.last match { case (x, y) => Point(x, y) }
+    (firstPoint, lastPoint)
   }
 }

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Qu
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.SpeedLimitLinkPositions
+import fi.liikennevirasto.digiroad2.util.{GeometryUtils, SpeedLimitLinkPositions}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -20,9 +20,7 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
 
   private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[(Double, Double)])): (Point, Point) = {
     val (_, _, _, _, points) = link
-    val firstPoint: Point = points.head match { case (x, y) => Point(x, y) }
-    val lastPoint: Point = points.last match { case (x, y) => Point(x, y) }
-    (firstPoint, lastPoint)
+    GeometryUtils.geometryEndpoints(points)
   }
 
   private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])]): Seq[SpeedLimitLink] = {
