@@ -44,7 +44,7 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
 
   override def getSpeedLimit(segmentId: Long): Option[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
-      val links = OracleLinearAssetDao.getSpeedLimits(segmentId)
+      val links = OracleLinearAssetDao.getSpeedLimitLinks(segmentId)
       if (links.isEmpty) None
       else {
         val points: List[(Point, Point)] = links.map { link =>

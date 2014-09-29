@@ -67,7 +67,7 @@ object OracleLinearAssetDao {
     speedLimits.map(transformLink)
   }
 
-  def getSpeedLimits(id: Long): Seq[(Long, Seq[(Double, Double)])] = {
+  def getSpeedLimitLinks(id: Long): Seq[(Long, Seq[(Double, Double)])] = {
     val speedLimits = sql"""
       select a.id, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
         from ASSET a
