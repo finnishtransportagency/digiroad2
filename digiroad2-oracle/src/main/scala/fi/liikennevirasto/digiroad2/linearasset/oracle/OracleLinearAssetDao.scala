@@ -98,18 +98,18 @@ object OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, name, speedLimitLinks)
   }
 
-  def getSpeedLimitLinkStartAndEndMeasure(id: Long, roadLinkId: Long): (Double, Double) = {
+  def getSpeedLimitLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
     sql"""
-      select lrm.START_MEASURE, lrm.END_MEASURE
+      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
         from asset a
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
         join road_link rl on rl.id = lrm.ROAD_LINK_ID
         where a.id = $id
-    """.as[(Double, Double)].list.head
+    """.as[(Double, Double, Int)].list.head
   }
 
-  def createSpeedLimit(creator: String, roadLinkId: Long, startMeasure: Double, endMeasure: Double): Long = {
+  def createSpeedLimit(creator: String, roadLinkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int): Long = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -117,8 +117,8 @@ object OracleLinearAssetDao {
       values ($assetId, 20, $creator, sysdate)
     """.execute()
     sqlu"""
-      insert into lrm_position(id, start_measure, end_measure, road_link_id)
-      values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId)
+      insert into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+      values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
     """.execute()
     sqlu"""
       insert into asset_link(asset_id, position_id)
@@ -131,7 +131,7 @@ object OracleLinearAssetDao {
 
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
-    val (startMeasure, endMeasure) = getSpeedLimitLinkStartAndEndMeasure(id, roadLinkId)
+    val (startMeasure, endMeasure, sideCode) = getSpeedLimitLinkGeometryData(id, roadLinkId)
     val firstSplitLength = splitMeasure - startMeasure
     val secondSplitLength = endMeasure - splitMeasure
     val (existingLinkMeasures, createdLinkMeasures) = firstSplitLength > secondSplitLength match {
@@ -154,6 +154,6 @@ object OracleLinearAssetDao {
           where a.id = $id and rl.id = $roadLinkId)
     """.asUpdate.execute()
 
-    createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2)
+    createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2, sideCode)
   }
 }
