@@ -42,9 +42,9 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     Set(orderedLinks.head._1._1, orderedLinks.last._1._2)
  }
 
-  override def getSpeedLimit(segmentId: Long): Option[SpeedLimit] = {
+  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
-      val links = OracleLinearAssetDao.getSpeedLimitLinks(segmentId)
+      val links = OracleLinearAssetDao.getSpeedLimitLinks(speedLimitId)
       if (links.isEmpty) None
       else {
         val points: List[(Point, Point)] = links.map { link =>
@@ -53,8 +53,8 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
           (Point(first._1, first._2), Point(last._1, last._2))
         }.toList
         val endpoints = calculateSpeedLimitEndPoints(points)
-        val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(segmentId)
-        Some(SpeedLimit(segmentId, limit, endpoints,
+        val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(speedLimitId)
+        Some(SpeedLimit(speedLimitId, limit, endpoints,
                         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
                         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
                         getLinksWithPositions(speedLimitLinks)))
