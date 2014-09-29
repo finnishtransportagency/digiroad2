@@ -142,25 +142,18 @@
 
     this.saveSplit = function() {
       backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, function(updatedSpeedLimits) {
-        var isDummy = !updatedSpeedLimits;
-        if (isDummy) {
-          // TODO: Remove once backend works
-          splitSpeedLimits.created.id = new Date().getTime();
-          updatedSpeedLimits = [splitSpeedLimits.created,
-                                splitSpeedLimits.existing];
-        }
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
         dirty = false;
         delete speedLimits[existingId];
 
-        if (isDummy) {
-          // TODO: Remove once backend works
-          speedLimits[updatedSpeedLimits[0].id] = updatedSpeedLimits[0];
-          speedLimits[updatedSpeedLimits[1].id] = updatedSpeedLimits[1];
-        } else {
-          _.merge(speedLimits, transformSpeedLimits(updatedSpeedLimits));
-        }
+        _.each(updatedSpeedLimits, function(speedLimit) {
+          speedLimit.links = speedLimit.speedLimitLinks;
+          delete speedLimit.speedLimitLinks;
+          speedLimit.sideCode = speedLimit.links[0].sideCode;
+          speedLimits[speedLimit.id] = speedLimit;
+        });
+
 
         eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
         eventbus.trigger('speedLimit:unselected');

@@ -248,4 +248,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case _ => throw new IllegalArgumentException("Speed limit value not provided")
     }
   }
+
+  post("/speedlimits/:speedLimitId") {
+    linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
+                                        (parsedBody \ "roadLinkId").extract[Long],
+                                        (parsedBody \ "splitMeasure").extract[Double],
+                                        userProvider.getCurrentUser().username)
+  }
 }

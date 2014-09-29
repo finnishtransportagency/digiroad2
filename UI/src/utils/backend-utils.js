@@ -53,8 +53,15 @@
     }, 1000);
 
     this.splitSpeedLimit = function(id, roadLinkId, splitMeasure, success, failure) {
-      console.log('Sending speed limit split to backend with speed limit id: ' + id + ' road link id: ' + roadLinkId + ' and split measure: ' + splitMeasure);
-      success();
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/speedlimits/" + id,
+        data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure}),
+        dataType: "json",
+        success: success,
+        failure: failure
+      });
     };
 
     this.getAsset = function (assetId) {
