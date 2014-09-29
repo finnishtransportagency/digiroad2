@@ -47,8 +47,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 100, "test")
-      val (existingModifiedBy, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
-      val (_, _, newCreatedBy, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
+      val (existingModifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
+      val (_, _, newCreatedBy, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
       assertSpeedLimitEndPointsOnLink(700114, 5537, 0, 100)
       assertSpeedLimitEndPointsOnLink(createdId, 5537, 100, 136.788)
@@ -65,8 +65,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 50, "test")
-      val (modifiedBy, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
-      val (_, _, newCreatedBy, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
+      val (modifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
+      val (_, _, newCreatedBy, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
       assertSpeedLimitEndPointsOnLink(700114, 5537, 50, 136.788)
       assertSpeedLimitEndPointsOnLink(createdId, 5537, 0, 50)
