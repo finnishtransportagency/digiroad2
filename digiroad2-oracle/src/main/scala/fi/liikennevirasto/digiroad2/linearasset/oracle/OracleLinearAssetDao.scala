@@ -151,7 +151,7 @@ object OracleLinearAssetDao {
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
           join road_link rl on rl.id = lrm.ROAD_LINK_ID
-          where a.id = $id)
+          where a.id = $id and rl.id = $roadLinkId)
     """.asUpdate.execute()
 
     createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2)
