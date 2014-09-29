@@ -1,78 +1,10 @@
-window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLimit, roadCollection) {
-  var subtractVector = function(vector1, vector2) {
-    return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
-  };
-
-  var vectorLength = function(vector) {
-    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-  };
-
-  var segmentsOfLineString = function(lineString, point) {
-    return _.reduce(lineString.getVertices(), function(acc, vertex, index, vertices) {
-      if (index > 0) {
-        var previousVertex = vertices[index - 1];
-        var segmentGeometry = new OpenLayers.Geometry.LineString([previousVertex, vertex]);
-        var distanceObject = segmentGeometry.distanceTo(point, { details: true });
-        var segment = {
-          distance: distanceObject.distance,
-          splitPoint: {
-            x: distanceObject.x0,
-            y: distanceObject.y0
-          },
-          index: index - 1
-        };
-        return acc.concat([segment]);
-      } else {
-        return acc;
-      }
-    }, []);
-  };
-
-  var calculateMeasureAtPoint = function(lineString, point) {
-    var segments = segmentsOfLineString(lineString, point);
-    var splitSegment = _.head(_.sortBy(segments, 'distance'));
-    var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
-      if (acc.firstSplit) {
-        if (acc.previousVertex) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, vertex));
-        }
-        if (index === splitSegment.index) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(vertex, splitSegment.splitPoint));
-          acc.firstSplit = false;
-        }
-        acc.previousVertex = vertex;
-      }
-      return acc;
-    }, {
-      firstSplit: true,
-      previousVertex: null,
-      splitMeasure: 0.0
-    });
-    return split.splitMeasure;
-  };
-
-  var splitByPoint = function(lineString, point) {
-    var segments = segmentsOfLineString(lineString, point);
-    var splitSegment = _.head(_.sortBy(segments, 'distance'));
-    var split = _.reduce(lineString.getVertices(), function(acc, vertex, index) {
-      if (acc.firstSplit) {
-        acc.firstSplitVertices.push({ x: vertex.x, y: vertex.y });
-        if (index === splitSegment.index) {
-          acc.firstSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
-          acc.secondSplitVertices.push({ x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y });
-          acc.firstSplit = false;
-        }
-      } else {
-        acc.secondSplitVertices.push({ x: vertex.x, y: vertex.y });
-      }
-      return acc;
-    }, {
-      firstSplit: true,
-      firstSplitVertices: [],
-      secondSplitVertices: []
-    });
-    return _.pick(split, 'firstSplitVertices', 'secondSplitVertices');
-  };
+window.SpeedLimitLayer = function(params) {
+  var map = params.map,
+      application = params.application,
+      collection = params.collection,
+      selectedSpeedLimit = params.selectedSpeedLimit,
+      roadCollection = params.roadCollection,
+      geometryUtils = params.geometryUtils;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -163,8 +95,8 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
                      })
                      .value();
       var lineString = new OpenLayers.Geometry.LineString(points);
-      var split = {splitMeasure: calculateMeasureAtPoint(lineString, mousePoint)};
-      _.merge(split, splitByPoint(nearest.feature.geometry, mousePoint));
+      var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
+      _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
 
       collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
@@ -302,8 +234,6 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     });
   };
 
-
-
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
     highlightSpeedLimitFeatures(feature);
@@ -434,42 +364,11 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
     }
     speedLimit.links = _.map(speedLimit.links, function(link) {
       link.points = _.map(link.points, function(point, index, geometry) {
-        return offsetPoint(point, index, geometry, speedLimit.sideCode);
+        return geometryUtils.offsetPoint(point, index, geometry, speedLimit.sideCode);
       });
       return link;
     });
     return speedLimit;
-  };
-
-  var offsetPoint = function(point, index, geometry, sideCode) {
-    var scaleVector = function(vector, scalar) {
-      return {x: vector.x * scalar, y: vector.y * scalar};
-    };
-    var sumVectors = function(vector1, vector2) {
-      return {x: vector1.x + vector2.x, y: vector1.y + vector2.y};
-    };
-    var subtractVector = function(vector1, vector2) {
-      return {x: vector1.x - vector2.x, y: vector1.y - vector2.y};
-    };
-    var normalVector = function(vector) {
-      return {x: vector.y, y: -vector.x };
-    };
-    var length = function(vector) {
-      return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-    };
-    var unitVector = function(vector) {
-      var vectorLength = length(vector);
-      return {x: vector.x / vectorLength, y: vector.y / vectorLength};
-    };
-
-    var previousPoint = index > 0 ? geometry[index - 1] : point;
-    var nextPoint = geometry[index + 1] || point;
-
-    var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
-    var normal = normalVector(directionVector);
-    var sideCodeScalar = (2 * sideCode - 5) * -4;
-    var offset = scaleVector(unitVector(normal), sideCodeScalar);
-    return sumVectors(point, offset);
   };
 
   var drawSpeedLimits = function(speedLimits) {
@@ -507,46 +406,10 @@ window.SpeedLimitLayer = function(map, application, collection, selectedSpeedLim
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = calculateMidpoint(road.getVertices());
+        var signPosition = geometryUtils.calculateMidpointOfLineString(road);
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
       });
     }));
-  };
-
-  var calculateMidpoint = function(road) {
-    var roadLength = lineStringLength(road);
-    var firstVertex = _.first(road);
-    var optionalMidpoint = _.reduce(_.tail(road), function(acc, vertex) {
-      if (acc.midpoint) return acc;
-      var accumulatedDistance = acc.distanceTraversed + length(vertex, acc.previousVertex);
-      if (accumulatedDistance < roadLength / 2) {
-        return { previousVertex: vertex, distanceTraversed: accumulatedDistance };
-      } else {
-        return {
-          midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / length(vertex, acc.previousVertex)) * (roadLength / 2 - acc.distanceTraversed))
-          }
-        };
-      }
-    }, {previousVertex: firstVertex, distanceTraversed: 0});
-    if (optionalMidpoint.midpoint) return optionalMidpoint.midpoint;
-    else return firstVertex;
-  };
-
-  var lineStringLength = function(lineString) {
-    var firstVertex = _.first(lineString);
-    var lengthObject = _.reduce(_.tail(lineString), function(acc, vertex) {
-      return {
-        previousVertex: vertex,
-        totalLength: acc.totalLength + length(vertex, acc.previousVertex)
-      };
-    }, { previousVertex: firstVertex, totalLength: 0 });
-    return lengthObject.totalLength;
-  };
-
-  var length = function(end, start) {
-    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
 
   var lineFeatures = function(speedLimits) {

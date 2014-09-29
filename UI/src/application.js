@@ -116,10 +116,18 @@ var RoadCollection = function(backend) {
 
     if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
+    var geometryUtils = new GeometryUtils();
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection),
-      speedLimit: new SpeedLimitLayer(map, applicationModel, models.speedLimitsCollection, models.selectedSpeedLimit, roadCollection)
+      speedLimit: new SpeedLimitLayer({
+        map: map,
+        application: applicationModel,
+        collection: models.speedLimitsCollection,
+        selectedSpeedLimit: models.selectedSpeedLimit,
+        roadCollection: roadCollection,
+        geometryUtils: geometryUtils
+      })
     };
     new MapView(map, layers);
 
@@ -131,7 +139,7 @@ var RoadCollection = function(backend) {
   };
 
   var startApplication = function(backend, models, withTileMaps) {
-    // check that both setup and config are loaded 
+    // check that both setup and config are loaded
     // before actually starting the application
     if (appSetup && appConfig && localizedStrings) {
       var app = Oskari.app;
