@@ -126,7 +126,8 @@ object OracleLinearAssetDao {
     """.as[(Double, Double, Int)].list.head
   }
 
-  def createSpeedLimit(creator: String, roadLinkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int): Long = {
+  def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int): Long = {
+    val (startMeasure, endMeasure) = linkMeasures
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -201,7 +202,7 @@ object OracleLinearAssetDao {
     }
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2, sideCode)
+    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode)
     if (linksToMove.nonEmpty) moveLinksToSpeedLimit(id, createdId, linksToMove.map(_._1))
     createdId
   }
