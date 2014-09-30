@@ -240,6 +240,10 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.redraw();
   };
 
+  var findFeatureById = function(id) {
+    return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
+  };
+
   var speedLimitOnSelect = function(feature) {
     setSelectionStyleAndHighlightFeature(feature);
     selectedSpeedLimit.open(feature.attributes.id);
@@ -308,9 +312,14 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
     if (selectedSpeedLimit.isNew()) {
-      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+      var feature = findFeatureById(selectedSpeedLimit.getId());
       setSelectionStyleAndHighlightFeature(feature);
     }
+  });
+
+  eventbus.on('speedLimit:saved', function(speedLimit) {
+    var feature = findFeatureById(speedLimit.id);
+    setSelectionStyleAndHighlightFeature(feature);
   });
 
   var displayConfirmMessage = function() { new Confirm(); };

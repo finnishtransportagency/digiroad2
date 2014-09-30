@@ -55,7 +55,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
-    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(selectedSpeedLimit) {
+    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(speedLimit) {
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));

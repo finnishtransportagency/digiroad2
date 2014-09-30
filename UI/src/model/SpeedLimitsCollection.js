@@ -154,9 +154,11 @@
           speedLimits[speedLimit.id] = speedLimit;
         });
 
-
         eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
-        eventbus.trigger('speedLimit:unselected');
+        eventbus.trigger('speedLimit:saved', (_.find(updatedSpeedLimits, function(speedLimit) {
+          return existingId !== speedLimit.id;
+        })));
+        applicationModel.setSelectedTool('Select');
       });
     };
 

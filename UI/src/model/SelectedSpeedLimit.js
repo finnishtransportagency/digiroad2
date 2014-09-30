@@ -115,5 +115,12 @@
     this.isNew = function() {
       return current.id === null;
     };
+
+    eventbus.on('speedLimit:saved', function(speedLimit) {
+      current = speedLimit;
+      originalSpeedLimit = speedLimit.limit;
+      collection.markAsSelected(speedLimit.id);
+      dirty = false;
+    });
   };
 })(this);

@@ -6,7 +6,6 @@
     var className = toolName.toLowerCase();
     var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
       executeOrShowConfirmDialog(function() {
-        activate();
         selectedSpeedLimit.close();
         applicationModel.setSelectedTool(toolName);
       });
@@ -16,7 +15,6 @@
     };
     var activate = function() {
       element.addClass('active');
-      applicationModel.setSelectedTool(toolName);
     };
 
     return {
@@ -52,6 +50,8 @@
       _.each(tools, function(tool) {
         if (tool.name != name) {
           tool.deactivate();
+        } else {
+          tool.activate();
         }
       });
     });
