@@ -157,6 +157,26 @@ object OracleLinearAssetDao {
     """.execute()
   }
 
+  def updateLinkStartAndEndMeasures(speedLimitId: Long,
+                                    roadLinkId: Long,
+                                    linkMeasures: (Double, Double)): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
+
+    sqlu"""
+      update LRM_POSITION
+      set
+        start_measure = $startMeasure,
+        end_measure = $endMeasure
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          join road_link rl on rl.id = lrm.ROAD_LINK_ID
+          where a.id = $speedLimitId and rl.id = $roadLinkId)
+    """.execute()
+  }
+
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
     val (startMeasure, endMeasure, sideCode) = getSpeedLimitLinkGeometryData(id, roadLinkId)
@@ -179,22 +199,8 @@ object OracleLinearAssetDao {
       case true => ((startMeasure, splitMeasure), (splitMeasure, endMeasure), linksAfterSplitLink)
       case false => ((splitMeasure, endMeasure), (startMeasure, splitMeasure), linksBeforeSplitLink)
     }
-    val (existingLinkStartMeasure, existingLinkEndMeasure) = existingLinkMeasures
 
-    sql"""
-      update LRM_POSITION
-      set
-        start_measure = $existingLinkStartMeasure,
-        end_measure = $existingLinkEndMeasure
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          join road_link rl on rl.id = lrm.ROAD_LINK_ID
-          where a.id = $id and rl.id = $roadLinkId)
-    """.asUpdate.execute()
-
+    updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures._1, createdLinkMeasures._2, sideCode)
     if (linksToMove.nonEmpty) moveLinksToSpeedLimit(id, createdId, linksToMove.map(_._1))
     createdId
