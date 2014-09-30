@@ -141,7 +141,7 @@
     };
 
     this.saveSplit = function() {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, function(updatedSpeedLimits) {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.limit, function(updatedSpeedLimits) {
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
         dirty = false;
