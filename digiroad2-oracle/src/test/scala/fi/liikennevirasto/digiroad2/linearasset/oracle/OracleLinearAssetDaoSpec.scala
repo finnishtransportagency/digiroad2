@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.util.GeometryUtils
+import fi.liikennevirasto.digiroad2.util.{SpeedLimitLinkPositions, GeometryUtils}
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
@@ -67,6 +67,45 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
       modifiedBy shouldBe Some("test")
       newCreatedBy shouldBe Some("test")
+      dynamicSession.rollback()
+    }
+  }
+
+  test("splitting three link speed limit " +
+    "where first split is longer than second" +
+    "existing speed limit should cover only first split", Tag("db")) {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 150, "test")
+      val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(700490)
+
+      existingLinks.length shouldBe 2
+      existingLinks.map(_._1) should contain only (5752, 5695)
+      dynamicSession.rollback()
+    }
+  }
+
+  test("splitting three link speed limit " +
+    "where first split is shorter than second" +
+    "existing speed limit should cover only second split", Tag("db")) {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 10, "test")
+      val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(700490)
+
+      existingLinks.length shouldBe 2
+      existingLinks.map(_._1) should contain only (5695, 5904)
+      dynamicSession.rollback()
+    }
+  }
+
+  test("splitting speed limit " +
+    "so that shorter split contains multiple linear references " +
+    "moves all linear references to newly created speed limit", Tag("db")) {
+    Database.forDataSource(ds).withDynTransaction {
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(700642, 5872, 148, "test")
+      val createdLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(createdId)
+
+      createdLinks.length shouldBe 3
+      createdLinks.map(_._1) should contain only (5613, 5631, 5872)
       dynamicSession.rollback()
     }
   }
