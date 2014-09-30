@@ -30,7 +30,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, roadLinkId: Long, startMeasure: Double, endMeasure: Double) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(roadLinkId, startMeasure, endMeasure).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(OracleLinearAssetDao.getSpeedLimitLinks(speedLimitId).head._2.toList)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(OracleLinearAssetDao.getSpeedLimitLinksWithLength(speedLimitId).find { link => link._1 == roadLinkId }.get._3)
     expectedEndPoints._1.distanceTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
