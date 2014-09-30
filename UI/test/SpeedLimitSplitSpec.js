@@ -10,7 +10,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       roadLinkId: roadLinkId,
       splitMeasure: splitMeasure
     });
-    success();
+    success([{ id: id, limit: 50, speedLimitLinks: SpeedLimitsTestData.generate(1) }, { id: 123456, limit: 50, speedLimitLinks: SpeedLimitsTestData.generate(1) }]);
   };
 
   var speedLimitConstructor = function(id) {
