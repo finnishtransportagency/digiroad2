@@ -42,20 +42,27 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           openLayersMap.events.triggerEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
         });
 
-        describe('and saving split speed limit', function() {
+        describe('and setting limit for new speed limit', function() {
           before(function() {
-            $('.save.btn').click();
+            $('select.speed-limit option[value="100"]').prop('selected', true).change();
           });
 
-          it('relays split speed limit to backend', function() {
-            expect(splitBackendCalls).to.have.length(1);
-            var backendCall = _.first(splitBackendCalls);
-            expect(backendCall.id).to.equal(1123812);
-            expect(backendCall.roadLinkId).to.equal(5540);
-            expect(backendCall.splitMeasure).to.be.closeTo(58.414, 0.5);
-            expect(backendCall.limit).to.equal(40);
+          describe('and saving split speed limit', function() {
+            before(function() {
+              $('.save.btn').click();
+            });
+
+            it('relays split speed limit to backend', function() {
+              expect(splitBackendCalls).to.have.length(1);
+              var backendCall = _.first(splitBackendCalls);
+              expect(backendCall.id).to.equal(1123812);
+              expect(backendCall.roadLinkId).to.equal(5540);
+              expect(backendCall.splitMeasure).to.be.closeTo(58.414, 0.5);
+              expect(backendCall.limit).to.equal(100);
+            });
           });
         });
+
       });
     });
   });
