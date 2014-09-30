@@ -25,7 +25,11 @@ window.SpeedLimitLayer = function(params) {
 
     var clickHandler = function(evt) {
       if (application.getSelectedTool() === 'Cut') {
-        self.cut(evt.xy);
+        if (collection.isDirty()) {
+          displayConfirmMessage();
+        } else {
+          self.cut(evt.xy);
+        }
       }
     };
 
@@ -38,16 +42,14 @@ window.SpeedLimitLayer = function(params) {
     this.activate = function() {
       map.events.register('click', this, clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-        if (application.getSelectedTool() === 'Cut') {
+        if (application.getSelectedTool() === 'Cut' && !collection.isDirty()) {
           self.updateByPosition(event.xy);
         }
       });
     };
 
     var isWithinCutThreshold = function(speedLimitLink) {
-      return !collection.isDirty() &&
-             speedLimitLink &&
-             speedLimitLink.distance < CUT_THRESHOLD;
+      return speedLimitLink && speedLimitLink.distance < CUT_THRESHOLD;
     };
 
     var findNearestSpeedLimitLink = function(point) {
