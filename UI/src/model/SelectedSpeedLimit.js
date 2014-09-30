@@ -50,7 +50,7 @@
         dirty = false;
         current = _.merge({}, current, speedLimit);
         originalSpeedLimit = current.limit;
-        eventbus.trigger('speedLimit:saved', self);
+        eventbus.trigger('speedLimit:saved', current);
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
