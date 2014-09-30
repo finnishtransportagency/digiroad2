@@ -253,6 +253,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         (parsedBody \ "roadLinkId").extract[Long],
                                         (parsedBody \ "splitMeasure").extract[Double],
+                                        (parsedBody \ "limit").extract[Int],
                                         userProvider.getCurrentUser().username)
   }
 }

@@ -68,21 +68,14 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
 
   override def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        dynamicSession.rollback()
-        None
-      }
+      OracleLinearAssetDao.updateSpeedLimitValue(id, value, username)
     }
   }
 
-  override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Seq[SpeedLimit] = {
+  override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, limit: Int, username: String): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
       val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, username)
+      OracleLinearAssetDao.updateSpeedLimitValue(newId, limit, username)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }
