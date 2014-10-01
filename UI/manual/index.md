@@ -69,10 +69,11 @@ p. 040-507 2301
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysystyt kysymykset
+1.2 Usein kysytyt kysymykset
 -----------------------------
 
-Digiroad 2 -sovelluksen k&auml;yt&ouml;st&auml; usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set [t&auml;&auml;lt&auml;.](http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/ )
+Digiroad 2 -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set [t&auml;&auml;lt&auml;.](http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/ )
+
 2. Kirjautuminen Digiroad-sovellukseen
 --------------------------------------
 
