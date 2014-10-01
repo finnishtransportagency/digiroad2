@@ -44,11 +44,19 @@ body {
   }
 
   .manual-link {
-    padding: 5px 0;
+    display: inline-block;
+    float: right;
+    margin: 5px 0;
+    padding: 0 8px;
+    border-radius: @border-radius-base;
+    font-size: 11px;
     text-decoration: none;
     color: #fff;
-    float: right;
-    font-size: 11px;
+    background-color: @gray-darker;
+
+    &:hover, &:focus {
+      background-color: @gray-dark-2;
+    }
   }
 }
 
