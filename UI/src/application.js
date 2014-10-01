@@ -133,6 +133,7 @@ var RoadCollection = function(backend) {
     new MapView(map, layers, new ZoomInstructionsPopup($('.digiroad2')));
 
     var mapPluginsContainer = $('.mapplugins.bottom.left .mappluginsContent');
+    new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
 

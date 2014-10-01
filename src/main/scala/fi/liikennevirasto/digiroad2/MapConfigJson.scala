@@ -51,8 +51,6 @@ object MapConfigJson {
           "globalMapAjaxUrl": "api/layers?",
           "plugins": [{
             "id": "Oskari.mapframework.bundle.mapmodule.plugin.LayersPlugin"
-          }, {
-            "id": "Oskari.mapframework.bundle.mapmodule.plugin.ScaleBarPlugin"
           }],
           "layers": [],
           "imageLocation": "./bower_components/oskari.org/resources",
