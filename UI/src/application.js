@@ -129,7 +129,7 @@ var RoadCollection = function(backend) {
         geometryUtils: geometryUtils
       })
     };
-    new MapView(map, layers);
+    new MapView(map, layers, new ZoomInstructionsPopup($('.digiroad2')));
 
     var mapPluginsContainer = $('.mapplugins.bottom.left .mappluginsContent');
     new TileMapSelector(mapPluginsContainer);

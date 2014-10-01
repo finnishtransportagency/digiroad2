@@ -40,11 +40,16 @@
 //** Asset visibility info modal on zoom changes
 
 .digiroad2 {
-    .divmanazerpopup {
+    .zoom-instructions-popup {
         border: none;
         border-radius: @border-radius-base;
         background-color: @gray-lighter;
         box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+        top: 50%;
+        left: 50%;
+        position: fixed;
+        margin-left: -135.5px;
+        margin-top: -20px;
 
         .popupHeader {
             margin: 0;

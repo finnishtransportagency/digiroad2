@@ -1,12 +1,10 @@
 (function(root) {
-  root.MapView = function(map, layers) {
+  root.MapView = function(map, layers, zoomInstructions) {
     var isInitialized = false;
     var centerMarkerLayer;
 
     var showAssetZoomDialog = function() {
-      var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-      dialog.show('Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita');
-      dialog.fadeout(2000);
+      zoomInstructions.show(2000);
     };
 
     var mapMovedHandler = function(mapState) {
