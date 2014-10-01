@@ -48,7 +48,7 @@ object OracleSpatialAssetDao {
 
   def getAssetsByMunicipality(municipality: Int) = {
     def withMunicipality = {
-      Some(" WHERE rl.municipality_number = ?", List(municipality))
+      Some(" AND rl.municipality_number = ?", List(municipality))
     }
     val q = QueryCollector(allAssets).add(withMunicipality)
     collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
@@ -195,7 +195,8 @@ object OracleSpatialAssetDao {
     val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
     val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
-    insertAsset(assetId, externalId, assetTypeId, lrmPositionId, bearing, creator).execute
+    insertAsset(assetId, externalId, assetTypeId, bearing, creator).execute
+    insertAssetPosition(assetId, lrmPositionId).execute
     val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     updateAssetProperties(assetId, properties ++ defaultValues)
     getAssetById(assetId).get
@@ -205,13 +206,14 @@ object OracleSpatialAssetDao {
     val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).firstOption(assetId)
     optionalLrmPositionId match {
       case Some(lrmPositionId) =>
-      deleteAssetProperties(assetId)
-      deleteAsset(assetId).execute()
-      try {
-        deleteLRMPosition(lrmPositionId).execute()
-      } catch {
-        case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
-      }
+        deleteAssetProperties(assetId)
+        deleteAssetLink(assetId).execute
+        deleteAsset(assetId).execute
+        try {
+          deleteLRMPosition(lrmPositionId).execute
+        } catch {
+          case e: SQLException => throw new LRMPositionDeletionFailed("LRM position " + lrmPositionId + " deletion failed with exception " + e.toString)
+        }
       case None => ()
     }
   }

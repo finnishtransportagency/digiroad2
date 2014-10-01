@@ -384,8 +384,13 @@ class AssetDataImporter {
       val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
 
       sqlu"""
-        insert into asset(id, external_id, asset_type_id, lrm_position_id, created_by, valid_from, valid_to)
-        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, ${busStop.lrmPositionId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to)
+        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+      """.execute
+
+      sqlu"""
+         insert into asset_link(asset_id, position_id)
+         values($assetId, ${busStop.lrmPositionId})
       """.execute
 
       val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {

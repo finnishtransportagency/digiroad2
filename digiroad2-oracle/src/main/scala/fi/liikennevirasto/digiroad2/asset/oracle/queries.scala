@@ -152,14 +152,16 @@ object Queries {
     SDO_CS.TRANSFORM(SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))),4326) AS position_wgs84, rl.functional_class
     from asset_type t
       join asset a on a.asset_type_id = t.id
-        join lrm_position lrm on a.lrm_position_id = lrm.id
-          join road_link rl on lrm.road_link_id = rl.id
+        join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+            join road_link rl on lrm.road_link_id = rl.id
         join property p on t.id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join image i on e.image_id = i.id"""
+          left join image i on e.image_id = i.id
+    where a.asset_type_id = 10"""
 
   def allAssetsWithoutProperties =
     """
@@ -170,24 +172,26 @@ object Queries {
     rl.end_date, rl.municipality_number
     from asset_type t
       join asset a on a.asset_type_id = t.id
-        join lrm_position lrm on a.lrm_position_id = lrm.id
-          join road_link rl on lrm.road_link_id = rl.id
+        join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+           join road_link rl on lrm.road_link_id = rl.id
         join property p on t.id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          join image i on e.image_id = i.id"""
+          join image i on e.image_id = i.id
+    where a.asset_type_id = 10"""
 
   def assetLrmPositionId =
-    "select lrm_position_id from asset where id = ?"
+    "select position_id from asset_link where asset_id = ?"
 
-  def assetsByTypeWithPosition = allAssetsWithoutProperties + " where t.id = ?"
+  def assetsByTypeWithPosition = allAssetsWithoutProperties + " AND t.id = ?"
 
-  def assetWithPositionById = allAssets + " WHERE a.id = ?"
+  def assetWithPositionById = allAssets + " AND a.id = ?"
 
-  def assetByExternalId = allAssets + " WHERE a.external_id = ?"
+  def assetByExternalId = allAssets + " AND a.external_id = ?"
 
-  def assetsByIds(ids: Seq[Long]) = " WHERE a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
+  def assetsByIds(ids: Seq[Long]) = " AND a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
 
   def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
 
@@ -197,13 +201,21 @@ object Queries {
 
   def updateAssetBearing(assetId: Long, bearing: Int) = sqlu"update asset set bearing = $bearing where id = $assetId"
 
-  def insertAsset(assetId: Long, externalId: Long, assetTypeId: Long, roadLinkId: Long, bearing: Int, creator: String) =
+  def insertAsset(assetId: Long, externalId: Long, assetTypeId: Long, bearing: Int, creator: String) =
     sqlu"""
-      insert into asset(id, external_id, asset_type_id, lrm_position_id, bearing, valid_from, created_by)
-      values ($assetId, $externalId, $assetTypeId, $roadLinkId, $bearing, ${new LocalDate()}, $creator)
+      insert into asset(id, external_id, asset_type_id, bearing, valid_from, created_by)
+      values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator)
+    """
+
+  def insertAssetPosition(assetId: Long, lrmPositionId: Long) =
+    sqlu"""
+      insert into asset_link(asset_id, position_id)
+      values ($assetId, $lrmPositionId)
     """
 
   def deleteAsset(assetId: Long) = sqlu"""delete from asset where id = $assetId"""
+
+  def deleteAssetLink(assetId: Long) = sqlu"""delete from asset_link where asset_id = $assetId"""
 
   def propertyIdByPublicId = "select id from property where public_id = ?"
 
@@ -271,13 +283,13 @@ object Queries {
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select lrm_position_id from asset where id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
   def updateCommonDateProperty(assetId: Long, propertyColumn: String, value: Option[DateTime], isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
-      sqlu"update lrm_position set #$propertyColumn = $value where id = (select lrm_position_id from asset where id = $assetId)"
+      sqlu"update lrm_position set #$propertyColumn = $value where id = (select position_id from asset_link where asset_id = $assetId)"
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
