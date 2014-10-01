@@ -65,6 +65,7 @@ Yhteystiedot:
 Digiroad-palvelu:
 info@digiroad.fi
 p. 040-507 2301
+http://www.digiroad.fi/
 
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
@@ -159,7 +160,7 @@ _Joukkoliikenteen pys&auml;kkien valinta._
 3.3.1 Joukkoliikenteen pys&auml;kkien haku
 -------------------------------------
 
-Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin kansallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
+Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin kansallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
 
 https://testiextranet.liikennevirasto.fi/digiroad/#/asset/95374  (17)
 
