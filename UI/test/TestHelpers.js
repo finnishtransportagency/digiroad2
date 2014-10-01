@@ -97,13 +97,9 @@ define(['AssetsTestData',
     }
   };
 
-  var clickMap = function(map, longitude, latitude, callback) {
+  var clickMap = function(map, longitude, latitude) {
     var pixel = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude, latitude));
-
     map.events.triggerEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
-    eventbus.once('map:clicked', function() {
-      callback();
-    });
   };
 
   var getAssetMarkers = function(map) {
