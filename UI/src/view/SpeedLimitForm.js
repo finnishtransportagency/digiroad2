@@ -41,6 +41,10 @@
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
                formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
                formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
+               '<div class="form-group editable valid-in-edit-only" style="display: none">' +
+                 '<label class="control-label">Vaikutussuunta</label>' +
+                 '<button class="form-control">Muuta rajoitus yksisuuntaiseksi</button>' +
+               '</div>' +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
@@ -54,6 +58,7 @@
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
+      rootElement.find('.form-group.valid-in-edit-only').toggle(!readOnly);
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(speedLimit) {
       rootElement.html(template(selectedSpeedLimit));
