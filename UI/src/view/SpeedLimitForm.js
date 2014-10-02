@@ -43,7 +43,7 @@
                formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
                '<div class="form-group editable edit-only" style="display: none">' +
                  '<label class="control-label">Vaikutussuunta</label>' +
-                 '<button class="form-control">Muuta rajoitus yksisuuntaiseksi</button>' +
+                 '<button class="btn btn-secondary btn-block">Muuta rajoitus yksisuuntaiseksi</button>' +
                '</div>' +
              '</div>' +
            '</div>' +
