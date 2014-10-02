@@ -87,6 +87,14 @@
       applicationModel.moveMap(map.getZoom(), map.getExtent());
     });
 
+    map.events.register('mousemove', map, function(event) {
+      eventbus.trigger('map:mouseMoved', event);
+    }, true);
+
+    map.events.register('click', map, function(event) {
+      eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
+    });
+
     addCenterMarkerLayerToMap(map);
 
     if (applicationModel.getSelectedLayer() === 'speedLimit') {

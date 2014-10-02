@@ -525,13 +525,7 @@ window.AssetLayer = function(map, roadCollection) {
     return threshold >= Math.abs(n - m);
   };
 
-  var events = map.events;
   var initialClickOffsetFromMarkerBottomleft = { x: 0, y: 0 };
-  events.register('mousemove', map, function(event) { eventbus.trigger('map:mouseMoved', event); }, true);
-  events.register('click', map, function(event) {
-    eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
-  });
-  
   var handleMapClick = function(coordinates) {
     if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
