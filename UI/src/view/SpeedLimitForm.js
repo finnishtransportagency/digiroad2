@@ -54,18 +54,18 @@
 
   var bindEvents = function(selectedSpeedLimit) {
     var rootElement = $('#feature-attributes');
-    var toggleMode = function(readOnly) {
+    var toggleMode = function(readOnly, isValidInBothDirections) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
-      rootElement.find('.form-group.edit-only').toggle(!readOnly);
+      rootElement.find('.form-group.edit-only').toggle(!readOnly && isValidInBothDirections);
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(speedLimit) {
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
       });
-      toggleMode(applicationModel.isReadOnly());
+      toggleMode(applicationModel.isReadOnly(), selectedSpeedLimit.isValidInBothDirections());
     });
     eventbus.on('speedLimit:unselected', function() {
       rootElement.empty();
