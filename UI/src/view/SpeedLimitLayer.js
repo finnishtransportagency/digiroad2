@@ -28,19 +28,19 @@ window.SpeedLimitLayer = function(params) {
         if (collection.isDirty()) {
           displayConfirmMessage();
         } else {
-          self.cut(evt.xy);
+          self.cut(evt);
         }
       }
     };
 
     this.deactivate = function() {
-      map.events.unregister('click', this, clickHandler);
+      eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
       eventListener.stopListening(eventbus, 'map:mouseMoved');
       remove();
     };
 
     this.activate = function() {
-      map.events.register('click', this, clickHandler);
+      eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut' && !collection.isDirty()) {
           self.updateByPosition(event.xy);
@@ -328,8 +328,8 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
     selectControl.deactivate();
-    map.events.unregister('click', vectorLayer, displayConfirmMessage);
-    map.events.register('click', vectorLayer, displayConfirmMessage);
+    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits([selectedSpeedLimit.get()]);
@@ -337,12 +337,12 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('speedLimit:cancelled speedLimit:saved', function() {
     selectControl.activate();
-    map.events.unregister('click', vectorLayer, displayConfirmMessage);
+    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   });
 
   eventbus.on('speedLimit:unselected', function() {
-    map.events.unregister('click', vectorLayer, displayConfirmMessage);
+    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
   });
 
   eventbus.on('map:moved', function(state) {
