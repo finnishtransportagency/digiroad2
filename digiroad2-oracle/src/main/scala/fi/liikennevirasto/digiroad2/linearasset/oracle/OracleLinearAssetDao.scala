@@ -29,7 +29,7 @@ object OracleLinearAssetDao {
 
   implicit val SetParameterFromLong: SetParameter[Seq[Long]] = new SetParameter[Seq[Long]] {
     def apply(seq: Seq[Long], p: PositionedParameters): Unit = {
-      seq.zipWithIndex.foreach { case (parameter, index) => p.ps.setLong(index + 1, parameter) }
+      seq.foreach(p.setLong)
     }
   }
 
