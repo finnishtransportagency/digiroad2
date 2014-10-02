@@ -27,6 +27,12 @@ object OracleLinearAssetDao {
     }
   }
 
+  implicit val SetParameterFromLong: SetParameter[Seq[Long]] = new SetParameter[Seq[Long]] {
+    def apply(seq: Seq[Long], p: PositionedParameters): Unit = {
+      seq.zipWithIndex.foreach { case (parameter, index) => p.ps.setLong(index + 1, parameter) }
+    }
+  }
+
   def transformLink(link: (Long, Long, Int, Int, Array[Byte])) = {
     val (id, roadLinkId, sideCode, limit, pos) = link
     val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
@@ -148,14 +154,15 @@ object OracleLinearAssetDao {
   }
 
   def moveLinksToSpeedLimit(sourceSpeedLimitId: Long, targetSpeedLimitId: Long, roadLinkIds: Seq[Long]) = {
-    val roadLinks = roadLinkIds.mkString(",")
-    sqlu"""
+    val roadLinks = roadLinkIds.map(_ => "?").mkString(",")
+    val sql = s"""
       update ASSET_LINK
       set
         asset_id = $targetSpeedLimitId
       where asset_id = $sourceSpeedLimitId and position_id in (
-        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in (#$roadLinks))
-    """.execute()
+        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in ($roadLinks))
+    """
+    Q.update[Seq[Long]](sql).list(roadLinkIds)
   }
 
   def updateLinkStartAndEndMeasures(speedLimitId: Long,
