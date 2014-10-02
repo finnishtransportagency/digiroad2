@@ -525,40 +525,7 @@ window.AssetLayer = function(map, roadCollection) {
     return threshold >= Math.abs(n - m);
   };
 
-  var events = map.events;
   var initialClickOffsetFromMarkerBottomleft = { x: 0, y: 0 };
-  events.register('mousemove', map, function(event) { eventbus.trigger('map:mouseMoved', event); }, true);
-
-  var Click = OpenLayers.Class(OpenLayers.Control, {
-    defaultHandlerOptions: {
-      'single': true,
-      'double': false,
-      'pixelTolerance': 0,
-      'stopSingle': false,
-      'stopDouble': false
-    },
-
-    initialize: function(options) {
-      this.handlerOptions = OpenLayers.Util.extend(
-        {}, this.defaultHandlerOptions
-      );
-      OpenLayers.Control.prototype.initialize.apply(
-        this, arguments
-      );
-      this.handler = new OpenLayers.Handler.Click(
-        this, {
-          'click': this.onClick
-        }, this.handlerOptions
-      );
-    },
-
-    onClick: function(event) {
-      eventbus.trigger('map:clicked', {x: event.xy.x, y: event.xy.y});
-    }
-  });
-  var click = new Click();
-  map.addControl(click);
-
   var handleMapClick = function(coordinates) {
     if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
       var pixel = new OpenLayers.Pixel(coordinates.x, coordinates.y);
@@ -572,7 +539,6 @@ window.AssetLayer = function(map, roadCollection) {
       }
     }
   };
-
 
   $('#mapdiv').on('mouseleave', function() {
     if (assetIsMoving === true) {
@@ -610,8 +576,6 @@ window.AssetLayer = function(map, roadCollection) {
 
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
-
-    click.activate();
   };
 
   var startListening = function() {
@@ -623,7 +587,6 @@ window.AssetLayer = function(map, roadCollection) {
   startListening();
 
   var stopListening = function() {
-    click.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
   };

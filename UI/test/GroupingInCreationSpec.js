@@ -19,13 +19,11 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
     });
 
     describe('and creating bus stop near bus stop and saving', function() {
-      before(function(done) {
+      before(function() {
         testHelpers.clickVisibleEditModeButton();
         $('.action.add').click();
-        testHelpers.clickMap(openLayersMap, testAsset1.lon, testAsset1.lat + 4.0, function() {
-          $('button.save').click();
-          done();
-        });
+        testHelpers.clickMap(openLayersMap, testAsset1.lon, testAsset1.lat + 4.0);
+        $('button.save').click();
       });
       it('groups the bus stops', function() {
         expect($('.root').length).to.equal(1);
