@@ -196,7 +196,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       AssetCreator,
       mandatoryBusStopProperties)
     val assetId = asset.id
-    val lrmPositionId = executeIntQuery(s"select lrm_position_id from asset where id = $assetId")
+    val lrmPositionId = executeIntQuery(s"select position_id from asset_link where asset_id = $assetId")
     amountOfSingleChoiceValues(assetId) should be > 0
     amountOfLrmPositions(lrmPositionId) should equal(1)
     amountOfAssets(assetId) should be(1)
