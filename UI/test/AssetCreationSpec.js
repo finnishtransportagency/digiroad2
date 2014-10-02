@@ -15,8 +15,8 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     });
 
     describe('and creating a new asset', function() {
-      before(function(done) {
-        testHelpers.clickMap(openLayersMap, 100, 100, done);
+      before(function() {
+        testHelpers.clickMap(openLayersMap, 100, 100);
       });
 
       it('it shows new marker', function() {
