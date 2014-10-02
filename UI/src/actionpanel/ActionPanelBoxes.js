@@ -42,7 +42,6 @@
       });
     };
     var reset = function() {
-      selectedSpeedLimit.close();
       deactivateAll();
       tools[0].activate();
     };

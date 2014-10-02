@@ -54,7 +54,13 @@
 
   var bindEvents = function(selectedSpeedLimit) {
     var rootElement = $('#feature-attributes');
-    var toggleMode = function(readOnly, isValidInBothDirections) {
+    var toggleMode = function() {
+      if (applicationModel.getSelectedLayer() !== 'speedLimit' || !selectedSpeedLimit.get())
+        return;
+
+      var readOnly = applicationModel.isReadOnly();
+      var isValidInBothDirections = selectedSpeedLimit.isValidInBothDirections();
+
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
@@ -65,7 +71,7 @@
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
       });
-      toggleMode(applicationModel.isReadOnly(), selectedSpeedLimit.isValidInBothDirections());
+      toggleMode();
     });
     eventbus.on('speedLimit:unselected', function() {
       rootElement.empty();
