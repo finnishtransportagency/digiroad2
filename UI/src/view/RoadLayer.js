@@ -117,7 +117,9 @@ var RoadStyles = function() {
     }, this);
 
     eventbus.on('layer:selected', function(layer) {
-      fetchRoads(map.getExtent());
+      if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
+        fetchRoads(map.getExtent());
+      }
       if (layer === 'speedLimit') {
         disableColorsOnRoadLayer();
         vectorLayer.redraw();
