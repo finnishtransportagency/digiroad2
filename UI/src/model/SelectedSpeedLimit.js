@@ -116,10 +116,6 @@
       return current.id === null;
     };
 
-    this.isValidInBothDirections = function() {
-      return current.sideCode == 1;
-    };
-
     eventbus.on('speedLimit:saved', function(speedLimit) {
       current = speedLimit;
       originalSpeedLimit = speedLimit.limit;

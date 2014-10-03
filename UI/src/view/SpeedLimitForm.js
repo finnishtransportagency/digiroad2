@@ -41,10 +41,6 @@
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
                formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
                formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
-               '<div class="form-group editable edit-only" style="display: none">' +
-                 '<label class="control-label">Vaikutussuunta</label>' +
-                 '<button class="btn btn-secondary btn-block">Jaa kahdeksi erisuuntaiseksi</button>' +
-               '</div>' +
              '</div>' +
            '</div>' +
            '<footer class="form-controls" style="display: none">' +
@@ -54,24 +50,17 @@
 
   var bindEvents = function(selectedSpeedLimit) {
     var rootElement = $('#feature-attributes');
-    var toggleMode = function() {
-      if (applicationModel.getSelectedLayer() !== 'speedLimit' || !selectedSpeedLimit.get())
-        return;
-
-      var readOnly = applicationModel.isReadOnly();
-      var isValidInBothDirections = selectedSpeedLimit.isValidInBothDirections();
-
+    var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
-      rootElement.find('.form-group.edit-only').toggle(!readOnly && isValidInBothDirections);
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(speedLimit) {
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
       });
-      toggleMode();
+      toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('speedLimit:unselected', function() {
       rootElement.empty();
