@@ -8,6 +8,13 @@ var RoadCollection = function(backend) {
     });
   };
 
+  this.fetch2 = function(boundingBox) {
+    backend.getRoadLinks2(boundingBox, function(data) {
+      roadLinks = data;
+      eventbus.trigger('roadLinks:fetched', roadLinks);
+    });
+  };
+
   this.getAll = function() {
     return roadLinks;
   };

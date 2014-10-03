@@ -67,14 +67,21 @@ var RoadStyles = function() {
       }
     };
 
+    var fetchRoads = function(bbox) {
+      if (applicationModel.getSelectedLayer() === 'asset') {
+        roadCollection.fetch(bbox);
+      } else {
+        roadCollection.fetch2(bbox);
+      }
+    };
+
     var mapMovedHandler = function(mapState) {
       if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
+        fetchRoads(mapState.bbox);
         changeRoadsWidthByZoomLevel();
-        roadCollection.fetch(mapState.bbox);
       } else {
         vectorLayer.removeAllFeatures();
       }
-
       handleRoadsVisibility();
     };
 
@@ -110,6 +117,7 @@ var RoadStyles = function() {
     }, this);
 
     eventbus.on('layer:selected', function(layer) {
+      fetchRoads(map.getExtent());
       if (layer === 'speedLimit') {
         disableColorsOnRoadLayer();
         vectorLayer.redraw();
