@@ -4,6 +4,7 @@ var RoadCollection = function(backend) {
   this.fetch = function(boundingBox) {
     backend.getRoadLinks(boundingBox, function(data) {
       roadLinks = data;
+      eventbus.trigger('roadLinks:fetched', roadLinks);
     });
   };
 
