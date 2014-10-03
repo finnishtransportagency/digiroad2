@@ -86,16 +86,6 @@ object MapConfigJson {
         "conf": {
 
         }
-      },
-      "coordinatedisplay": {
-        "state": {
-
-        },
-        "conf" : {
-          "location" : {
-            "classes" : "left bottom"
-          }
-        }
       }
     }"""
   }

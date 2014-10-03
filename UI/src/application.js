@@ -122,6 +122,7 @@ var RoadCollection = function(backend) {
   var setupMap = function(backend, models, withTileMaps) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
     map.addControl(new OpenLayers.Control.Navigation());
+    new MouseCoordinatesDisplay(map, $('.mapplugins.right.top .mappluginsContent'));
 
     if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
