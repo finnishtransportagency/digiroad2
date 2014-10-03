@@ -14,6 +14,7 @@ import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.user.{Role, User}
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.RoadLinkService
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -161,6 +162,20 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
         Map("x" -> ll._1, "y" -> ll._2)
       })
     }
+  }
+
+  get("/roadlinks2") {
+    val user = userProvider.getCurrentUser()
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      RoadLinkService.getRoadLinks(user, boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+
   }
 
   get("/images/:imageId") {
