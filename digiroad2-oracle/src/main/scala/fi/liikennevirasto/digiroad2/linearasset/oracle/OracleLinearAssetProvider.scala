@@ -52,11 +52,7 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     val links = OracleLinearAssetDao.getSpeedLimitLinks(speedLimitId)
     if (links.isEmpty) None
     else {
-      val points: List[(Point, Point)] = links.map { link =>
-        val first = link._2.head
-        val last = link._2.last
-        (Point(first._1, first._2), Point(last._1, last._2))
-      }.toList
+      val points: List[(Point, Point)] = links.map {case (_, p) => GeometryUtils.geometryEndpoints(p)}.toList
       val endpoints = calculateSpeedLimitEndPoints(points)
       val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(speedLimitId)
       Some(SpeedLimit(speedLimitId, limit, endpoints,
