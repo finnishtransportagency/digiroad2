@@ -2,7 +2,6 @@
   root.TileMapSelector = function(container) {
     var element =
     '<div class="tileMapSelector">' +
-      '<div class="bg"></div>' +
       '<div class="content">' +
         '<ul>' +
           '<li data-layerid="terrain" title="Maastokartta">Maastokartta</li>' +
