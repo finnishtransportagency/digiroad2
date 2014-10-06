@@ -15,6 +15,7 @@ import Q.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.RoadLinkService
 
 object OracleLinearAssetDao {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -43,16 +44,16 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksWithLength(id: Long): Seq[(Long, Double, Seq[(Double, Double)])] = {
     val speedLimitLinks = sql"""
-      select rl.id, pos.start_measure, pos.end_measure, to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure))
+      select rl.id, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join ROAD_LINK rl on pos.road_link_id = rl.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Double, Double, Array[Byte])].list
-    speedLimitLinks.map { case (roadLinkId, startMeasure, endMeasure, pos) =>
-      val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
-      (roadLinkId, endMeasure - startMeasure, points.map { pointArray => (pointArray(0), pointArray(1)) }.toSeq)
+        """.as[(Long, Double, Double)].list
+    speedLimitLinks.map { case (roadLinkId, startMeasure, endMeasure) =>
+      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
+      (roadLinkId, endMeasure - startMeasure, points)
     }
   }
 

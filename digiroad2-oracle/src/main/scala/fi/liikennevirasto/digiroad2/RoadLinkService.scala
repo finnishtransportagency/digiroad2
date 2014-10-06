@@ -32,6 +32,20 @@ object RoadLinkService {
     }.toList
   }
 
+  // TODO: Change signature to return `Seq[Point]`
+  def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[(Double, Double)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select to_2d(sdo_lrs.dynamic_segment(shape, $startMeasure, $endMeasure))
+        from tielinkki
+        where objectid = $id
+        """
+      toPoints(query.as[Array[Byte]].first).map { point =>
+        (point.x, point.y)
+      }
+    }
+  }
+
   def getRoadLinks(bounds: BoundingRectangle): Seq[Map[String, Any]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
