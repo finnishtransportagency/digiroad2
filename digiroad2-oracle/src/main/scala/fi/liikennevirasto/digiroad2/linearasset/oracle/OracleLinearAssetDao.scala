@@ -127,8 +127,7 @@ object OracleLinearAssetDao {
         from asset a
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
-        join road_link rl on rl.id = lrm.ROAD_LINK_ID
-        where a.id = $id and rl.id = $roadLinkId
+        where a.id = $id and lrm.road_link_id = $roadLinkId
     """.as[(Double, Double, Int)].list.head
   }
 
