@@ -1,8 +1,11 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import fi.liikennevirasto.digiroad2.util.{SpeedLimitLinkPositions, GeometryUtils}
+import oracle.jdbc.OracleConnection
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
@@ -109,4 +112,23 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("using road link service returns identical results to direct database query", Tag("db")) {
+   Database.forDataSource(ds).withDynTransaction {
+     val boundingBox = BoundingRectangle(Point(371560, 6674372), Point(375344, 6679784))
+
+     val timeBeforeDbFetch = System.currentTimeMillis()
+     val dbLinks = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(boundingBox)
+     val timeAfterDbFetch = System.currentTimeMillis()
+
+     val timeBeforeServiceFetch = System.currentTimeMillis()
+     val serviceLinks = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox2(boundingBox)
+     val timeAfterServiceFetch = System.currentTimeMillis()
+
+     println("*** Calculated time for DB fetch: " + (timeAfterDbFetch - timeBeforeDbFetch))
+     println("*** Calculated time for service fetch: " + (timeAfterServiceFetch - timeBeforeServiceFetch))
+     serviceLinks should contain theSameElementsAs dbLinks
+   }
+  }
+
 }

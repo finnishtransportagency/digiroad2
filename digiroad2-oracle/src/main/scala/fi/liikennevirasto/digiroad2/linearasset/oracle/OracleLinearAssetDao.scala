@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -74,6 +74,35 @@ object OracleLinearAssetDao {
         """.as[(Long, Long, Int, Int, Array[Byte])].list
     speedLimits.map(transformLink)
   }
+
+  def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
+    val links = RoadLinkService.getRoadLinks(bounds)
+    links
+      .map { link => link("roadLinkId").asInstanceOf[Long] }
+      .grouped(1000)
+      .map { linkIds: Seq[Long] =>
+      val placeHolders = linkIds.map(_ => "?").mkString(",")
+
+      val sql = s"""
+      select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+        where a.asset_type_id = 20 and pos.road_link_id in ($placeHolders)
+        """
+      val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.query[Seq[Long], (Long, Long, Int, Int, Double, Double)](sql).list(linkIds)
+      val speedLimits: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = assetLinks.map { link =>
+        val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
+        val geometry = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
+        (assetId, roadLinkId, sideCode, speedLimit, geometry)
+      }
+      speedLimits
+    }.flatten.toSeq
+  }
+
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
     val speedLimits = sql"""
