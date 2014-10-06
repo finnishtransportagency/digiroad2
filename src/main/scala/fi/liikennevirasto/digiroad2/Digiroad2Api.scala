@@ -14,7 +14,6 @@ import scala.Some
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.user.{Role, User}
 import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.RoadLinkService
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
