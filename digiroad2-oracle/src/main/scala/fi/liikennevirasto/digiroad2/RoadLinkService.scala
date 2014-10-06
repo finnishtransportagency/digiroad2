@@ -41,7 +41,7 @@ object RoadLinkService {
 
       val query =
         sql"""
-            select objectid, nvl(formofway,99), to_2d(shape)
+            select objectid, to_2d(shape)
               from tielinkki
               where mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and
                     mdsys.sdo_filter(tielinkki.shape,
@@ -62,10 +62,9 @@ object RoadLinkService {
                                     ) = 'TRUE'
         """
 
-      query.as[(Long, Int, Array[Byte])].list().map { roadLink =>
-        val (id, roadLinkType, geometry) = roadLink
+      query.as[(Long, Array[Byte])].list().map { roadLink =>
+        val (id, geometry) = roadLink
         Map("roadLinkId" -> id,
-            "type" -> RoadLinkType(roadLinkType / 10).toString,
             "points" -> toPoints(geometry))
       }
     }
