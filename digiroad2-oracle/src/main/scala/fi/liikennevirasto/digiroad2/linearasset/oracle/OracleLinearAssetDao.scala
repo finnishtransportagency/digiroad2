@@ -77,7 +77,7 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
     val speedLimits = sql"""
-      select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
+      select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -86,9 +86,11 @@ object OracleLinearAssetDao {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        group by a.id, rl.id, pos.side_code, e.name_fi
-        """.as[(Long, Long, Int, Int, Array[Byte])].list
-    speedLimits.map(transformLink)
+        """.as[(Long, Long, Int, Int, Double, Double)].list
+    speedLimits.map { case (id, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
+      (id, roadLinkId, sideCode, value, points)
+    }
   }
 
   def getSpeedLimitLinks(id: Long): Seq[(Long, Seq[(Double, Double)])] = {
