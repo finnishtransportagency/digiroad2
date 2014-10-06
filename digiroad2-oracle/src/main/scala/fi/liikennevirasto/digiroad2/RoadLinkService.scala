@@ -32,7 +32,7 @@ object RoadLinkService {
     }.toList
   }
 
-  def getRoadLinks(user: User, bounds: BoundingRectangle): Seq[Map[String, Any]] = {
+  def getRoadLinks(bounds: BoundingRectangle): Seq[Map[String, Any]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y

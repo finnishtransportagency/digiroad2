@@ -164,13 +164,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks2") {
-    val user = userProvider.getCurrentUser()
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      RoadLinkService.getRoadLinks(user, boundingRectangle)
+      RoadLinkService.getRoadLinks(boundingRectangle)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
