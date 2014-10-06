@@ -93,21 +93,6 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitLinks(id: Long): Seq[(Long, Seq[(Double, Double)])] = {
-    val speedLimits = sql"""
-      select a.id, rl.id, pos.start_measure, pos.end_measure
-        from ASSET a
-        join ASSET_LINK al on a.id = al.asset_id
-        join LRM_POSITION pos on al.position_id = pos.id
-        join ROAD_LINK rl on pos.road_link_id = rl.id
-        where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, Double, Double)].list
-    speedLimits.map { case (id, roadLinkId, startMeasure, endMeasure) =>
-      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (id, points)
-    }
-  }
-
   def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Int, Seq[(Long, Long, Int, Int, Seq[(Double, Double)])]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, name) = sql"""
       select a.modified_by, a.modified_date, a.created_by, a.created_date, e.name_fi

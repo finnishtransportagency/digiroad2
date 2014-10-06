@@ -49,13 +49,13 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
   }
 
   private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
-    val links = OracleLinearAssetDao.getSpeedLimitLinks(speedLimitId)
+    val links = OracleLinearAssetDao.getSpeedLimitLinksById(speedLimitId)
     if (links.isEmpty) None
     else {
-      val points: List[(Point, Point)] = links.map {case (_, p) => GeometryUtils.geometryEndpoints(p)}.toList
-      val endpoints = calculateSpeedLimitEndPoints(points)
+      val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
+      val limitEndpoints = calculateSpeedLimitEndPoints(linkEndpoints)
       val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(speedLimitId)
-      Some(SpeedLimit(speedLimitId, limit, endpoints,
+      Some(SpeedLimit(speedLimitId, limit, limitEndpoints,
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         getLinksWithPositions(speedLimitLinks)))
