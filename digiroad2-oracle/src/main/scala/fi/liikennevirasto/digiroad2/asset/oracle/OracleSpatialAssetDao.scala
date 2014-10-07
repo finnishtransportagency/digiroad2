@@ -132,7 +132,7 @@ object OracleSpatialAssetDao {
     }.headOption
   }
 
-  def getAssets(assetTypeId: Long, user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andMunicipality =
       if (user.configuration.roles.contains(Role.Operator)) {
         None
@@ -158,7 +158,7 @@ object OracleSpatialAssetDao {
         case _ => None
       }
     }
-    val q = QueryCollector(assetsByTypeWithPosition, IndexedSeq(assetTypeId.toString)).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
+    val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
     collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = row.lon,

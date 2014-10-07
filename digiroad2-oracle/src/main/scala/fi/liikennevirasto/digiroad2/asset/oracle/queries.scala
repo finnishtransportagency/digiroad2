@@ -185,8 +185,6 @@ object Queries {
   def assetLrmPositionId =
     "select position_id from asset_link where asset_id = ?"
 
-  def assetsByTypeWithPosition = allAssetsWithoutProperties + " AND t.id = ?"
-
   def assetWithPositionById = allAssets + " AND a.id = ?"
 
   def assetByExternalId = allAssets + " AND a.external_id = ?"

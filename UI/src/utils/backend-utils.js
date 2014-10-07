@@ -22,14 +22,14 @@
       });
     }, 1000);
 
-    this.getAssets = function (assetTypeId, boundingBox) {
-      self.getAssetsWithCallback(assetTypeId, boundingBox, function (assets) {
+    this.getAssets = function (boundingBox) {
+      self.getAssetsWithCallback(boundingBox, function (assets) {
         eventbus.trigger('assets:fetched', assets);
       });
     };
 
-    this.getAssetsWithCallback = _.throttle(function(assetTypeId, boundingBox, callback) {
-      $.getJSON('api/assets?assetTypeId=' + assetTypeId + '&bbox=' + boundingBox, callback)
+    this.getAssetsWithCallback = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/assets?bbox=' + boundingBox, callback)
         .fail(function() { console.log("error"); });
     }, 1000);
 
@@ -184,7 +184,7 @@
     };
 
     this.withAssetsData = function(assetsData) {
-      self.getAssetsWithCallback = function (assetTypeId, boundingBox, callback) {
+      self.getAssetsWithCallback = function (boundingBox, callback) {
         callback(assetsData);
       };
       return self;

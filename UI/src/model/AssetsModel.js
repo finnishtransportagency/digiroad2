@@ -1,6 +1,5 @@
 (function(root) {
   root.AssetsModel = function(backend) {
-    var MASS_TRANSIT_STOP_ASSET_CODE = 10;
     var assets = {};
     var validityPeriods = {
       current: true,
@@ -21,7 +20,7 @@
       eventbus.on('map:moved', function(map) {
         if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
           if (applicationModel.getSelectedLayer() === 'asset') {
-            backend.getAssetsWithCallback(MASS_TRANSIT_STOP_ASSET_CODE, map.bbox, function(backendAssets) {
+            backend.getAssetsWithCallback(map.bbox, function(backendAssets) {
               if (map.hasZoomLevelChanged) {
                 eventbus.trigger('assets:all-updated', backendAssets);
               } else {
@@ -56,7 +55,7 @@
         return assets;
       },
       fetchAssets: function(boundingBox) {
-        backend.getAssets(MASS_TRANSIT_STOP_ASSET_CODE, boundingBox);
+        backend.getAssets(boundingBox);
       },
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
