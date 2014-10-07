@@ -50,13 +50,13 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("load assets by municipality number", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser())
+    val assets = provider.getAssets(userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
     assets.foreach(asset => asset.municipalityNumber shouldBe Some(MunicipalityKauniainen))
   }
 
   test("load assets with spatial bounds", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
+    val assets = provider.getAssets(userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     assets.size shouldBe 1
   }
@@ -255,7 +255,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update the position of an asset, changing road links", Tag("db")) {
-    val assets = provider.getAssets(TestAssetTypeId, userProvider.getCurrentUser(),
+    val assets = provider.getAssets(userProvider.getCurrentUser(),
       validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     val origAsset = assets(0)
     val refAsset = assets(1)
@@ -271,7 +271,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
-    val assets = provider.getAssets(TestAssetTypeId, user,
+    val assets = provider.getAssets(user,
       validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     val origAsset = assets(0)
     val refAsset = assets(1)
@@ -335,7 +335,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("asset on non-expired link is not marked as floating", Tag("db")) {
-    val assets = provider.getAssets(assetTypeId = 10,
+    val assets = provider.getAssets(
       user = espooKauniainenUser,
       validFrom = Some(new LocalDate(2013, 6, 1)),
       validTo = Some(new LocalDate(2013, 6, 1)))
@@ -344,7 +344,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("asset on expired link is marked as floating", Tag("db")) {
-    val assets = provider.getAssets(assetTypeId = 10,
+    val assets = provider.getAssets(
       user = espooUser,
       validFrom = Some(new LocalDate(2014, 6, 1)),
       validTo = Some(new LocalDate(2014, 6, 1)))
