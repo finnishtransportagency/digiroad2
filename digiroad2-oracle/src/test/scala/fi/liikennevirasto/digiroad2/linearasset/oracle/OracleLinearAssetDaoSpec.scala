@@ -131,4 +131,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
    }
   }
 
+  test("truncate empty geometry") {
+    val truncated = OracleLinearAssetDao.truncateGeometry(Nil, 10, 15)
+    truncated should be (Nil)
+  }
 }

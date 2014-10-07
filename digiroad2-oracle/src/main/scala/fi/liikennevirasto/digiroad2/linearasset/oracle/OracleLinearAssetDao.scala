@@ -75,6 +75,10 @@ object OracleLinearAssetDao {
     speedLimits.map(transformLink)
   }
 
+  def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+    geometry
+  }
+
   def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
     val links = RoadLinkService.getRoadLinks(bounds)
     links
