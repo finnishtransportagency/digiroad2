@@ -81,32 +81,41 @@ object OracleLinearAssetDao {
     geometry
   }
 
+  def doTruncation(roadLinkId: Long, geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+    RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure).map { case(x, y) => Point(x, y) }
+  }
+
   def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
     val links = RoadLinkService.getRoadLinks(bounds)
     links
-      .map { link => link("roadLinkId").asInstanceOf[Long] }
-      .grouped(1000)
-      .map { linkIds: Seq[Long] =>
-      val placeHolders = linkIds.map(_ => "?").mkString(",")
-
-      val sql = s"""
-      select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
-        from ASSET a
-        join ASSET_LINK al on a.id = al.asset_id
-        join LRM_POSITION pos on al.position_id = pos.id
-        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
-        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
-        where a.asset_type_id = 20 and pos.road_link_id in ($placeHolders)
-        """
-      val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.query[Seq[Long], (Long, Long, Int, Int, Double, Double)](sql).list(linkIds)
-      val speedLimits: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = assetLinks.map { link =>
-        val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
-        val geometry = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-        (assetId, roadLinkId, sideCode, speedLimit, geometry)
+      .map { link =>
+        (link("roadLinkId").asInstanceOf[Long], link("points").asInstanceOf[Seq[Point]])
       }
-      speedLimits
-    }.flatten.toSeq
+      .grouped(1000)
+      .map { linksWithGeometries: Seq[(Long, Seq[Point])] =>
+        val linkIds = linksWithGeometries.map(_._1)
+        val linkGeometries = linksWithGeometries.map(_._2)
+        val placeHolders = linkIds.map(_ => "?").mkString(",")
+
+        val sql = s"""
+          select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
+          from ASSET a
+          join ASSET_LINK al on a.id = al.asset_id
+          join LRM_POSITION pos on al.position_id = pos.id
+          join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+          join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+          join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
+          where a.asset_type_id = 20 and pos.road_link_id in ($placeHolders)
+        """
+        val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.query[Seq[Long], (Long, Long, Int, Int, Double, Double)](sql).list(linkIds)
+        val assetLinksWithGeometries = assetLinks.zip(linkGeometries)
+        val speedLimits: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = assetLinksWithGeometries.map { case (link, originalGeometry) =>
+          val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
+          val geometry = doTruncation(roadLinkId, originalGeometry, startMeasure, endMeasure).map { point => (point.x, point.y) }
+          (assetId, roadLinkId, sideCode, speedLimit, geometry)
+        }
+        speedLimits
+      }.flatten.toSeq
   }
 
 
