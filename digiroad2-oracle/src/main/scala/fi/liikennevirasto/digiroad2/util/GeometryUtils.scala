@@ -26,9 +26,9 @@ object GeometryUtils {
     }
   }
 
-  def geometryEndpoints(geometry: Seq[(Double, Double)]): (Point, Point) = {
-    val firstPoint: Point = geometry.head match { case (x, y) => Point(x, y) }
-    val lastPoint: Point = geometry.last match { case (x, y) => Point(x, y) }
+  def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
+    val firstPoint: Point = geometry.head
+    val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
   }
 }

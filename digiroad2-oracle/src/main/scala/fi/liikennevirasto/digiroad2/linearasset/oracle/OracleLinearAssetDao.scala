@@ -38,11 +38,10 @@ object OracleLinearAssetDao {
     val (id, roadLinkId, sideCode, limit, pos) = link
     val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
     (id, roadLinkId, sideCode, limit, points.map { pointArray =>
-      (pointArray(0), pointArray(1))
-    }.toSeq)
+      Point(pointArray(0), pointArray(1))}.toSeq)
   }
 
-  def getSpeedLimitLinksWithLength(id: Long): Seq[(Long, Double, Seq[(Double, Double)])] = {
+  def getSpeedLimitLinksWithLength(id: Long): Seq[(Long, Double, Seq[Point])] = {
     val speedLimitLinks = sql"""
       select rl.id, pos.start_measure, pos.end_measure
         from ASSET a
@@ -57,7 +56,7 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val boundingBox = new JGeometry(bounds.leftBottom.x, bounds.leftBottom.y, bounds.rightTop.x, bounds.rightTop.y, 3067)
     val geometry = storeGeometry(boundingBox, dynamicSession.conn)
     val speedLimits = sql"""
@@ -82,7 +81,7 @@ object OracleLinearAssetDao {
   }
 
   def doTruncation(roadLinkId: Long, geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure).map { case(x, y) => Point(x, y) }
+    RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
   }
 
   private def updateRoadLinkLookupTable(ids: Seq[Long]): Unit = {
@@ -95,7 +94,7 @@ object OracleLinearAssetDao {
     Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
   }
 
-  def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
+  def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds).map {
       link => (link("roadLinkId").asInstanceOf[Long], link("points").asInstanceOf[Seq[Point]])
     }
@@ -118,16 +117,16 @@ object OracleLinearAssetDao {
         """
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).list()
     val assetLinksWithGeometries = assetLinks.zip(linkGeometries)
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = assetLinksWithGeometries.map {
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinksWithGeometries.map {
       case (link, originalGeometry) =>
         val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
-        val geometry = doTruncation(roadLinkId, originalGeometry, startMeasure, endMeasure).map { point => (point.x, point.y) }
+        val geometry = doTruncation(roadLinkId, originalGeometry, startMeasure, endMeasure)
         (assetId, roadLinkId, sideCode, speedLimit, geometry)
     }
     speedLimits
   }
 
-  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[(Double, Double)])] = {
+  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val speedLimits = sql"""
       select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
         from ASSET a
@@ -145,7 +144,7 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Int, Seq[(Long, Long, Int, Int, Seq[(Double, Double)])]) = {
+  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Int, Seq[(Long, Long, Int, Int, Seq[Point])]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, name) = sql"""
       select a.modified_by, a.modified_date, a.created_by, a.created_date, e.name_fi
       from ASSET a

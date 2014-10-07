@@ -19,7 +19,7 @@ import Database.dynamicSession
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
-  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[(Double, Double)] = {
+  private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     val truncatedGeometry: Array[Byte] = sql"""
       select to_2d(sdo_lrs.dynamic_segment(rl.geom, $startMeasure, $endMeasure))
         from ROAD_LINK rl
@@ -27,7 +27,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
         """.as[Array[Byte]].list.head
     val points = JGeometry.load(truncatedGeometry).getOrdinatesArray.grouped(2)
     points.map { pointArray =>
-      (pointArray(0), pointArray(1))
+      Point(pointArray(0), pointArray(1))
     }.toSeq
   }
 

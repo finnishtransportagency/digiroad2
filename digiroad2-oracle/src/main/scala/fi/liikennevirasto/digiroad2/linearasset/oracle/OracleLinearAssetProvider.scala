@@ -13,17 +13,17 @@ import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleLinearAssetProvider extends LinearAssetProvider {
-  private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[(Double, Double)]), Int)): SpeedLimitLink = {
+  private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[Point]), Int)): SpeedLimitLink = {
     val ((id, roadLinkId, sideCode, limit, points), positionNumber) = linkAndPositionNumber
-    SpeedLimitLink(id, roadLinkId, sideCode, limit, points.map { case (x, y) => Point(x, y) }, positionNumber)
+    SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber)
   }
 
-  private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[(Double, Double)])): (Point, Point) = {
+  private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[Point])): (Point, Point) = {
     val (_, _, _, _, points) = link
     GeometryUtils.geometryEndpoints(points)
   }
 
-  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[(Double, Double)])]): Seq[SpeedLimitLink] = {
+  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[Point])]): Seq[SpeedLimitLink] = {
     val linkEndpoints: Seq[(Point, Point)] = links.map(getLinkEndpoints)
     val positionNumbers = SpeedLimitLinkPositions.generate(linkEndpoints)
     links.zip(positionNumbers).map(toSpeedLimit)
