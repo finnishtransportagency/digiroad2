@@ -76,6 +76,7 @@ object OracleLinearAssetDao {
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+    if (startMeasure > endMeasure) throw new IllegalArgumentException
     geometry
   }
 

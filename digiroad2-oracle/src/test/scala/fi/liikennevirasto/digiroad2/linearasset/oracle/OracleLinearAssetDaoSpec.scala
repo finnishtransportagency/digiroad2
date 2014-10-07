@@ -135,4 +135,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val truncated = OracleLinearAssetDao.truncateGeometry(Nil, 10, 15)
     truncated should be (Nil)
   }
+
+  test("truncation fails when start measure is after end measure") {
+    an [IllegalArgumentException] should be thrownBy OracleLinearAssetDao.truncateGeometry(Nil, 15, 10)
+  }
 }
