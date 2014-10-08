@@ -101,10 +101,7 @@ object OracleLinearAssetDao {
 
     updateRoadLinkLookupTable(linksWithGeometries.map(_._1))
 
-    val linkIds = linksWithGeometries.map(_._1)
     val linkGeometries = linksWithGeometries.map(_._2)
-    val placeHolders = linkIds.map(_ => "?").mkString(",")
-
     val sql = """
           select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
           from ASSET a
