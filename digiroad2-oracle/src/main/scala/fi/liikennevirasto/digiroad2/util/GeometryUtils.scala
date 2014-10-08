@@ -33,39 +33,43 @@ object GeometryUtils {
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    def startPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double) = {
-      (point.distanceTo(previousPoint) + accumulatedLength) > startMeasure
+    def startPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double): Boolean = {
+      (point.distanceTo(previousPoint) + accumulatedLength) >= startMeasure && accumulatedLength <= startMeasure
     }
 
-    def endPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double) = {
-      (point.distanceTo(previousPoint) + accumulatedLength) > endMeasure
+    def endPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double): Boolean = {
+      (point.distanceTo(previousPoint) + accumulatedLength) >= endMeasure && accumulatedLength <= endMeasure
+    }
+
+    def startPoint(previousPoint: Point, point: Point, accumulatedLength: Double): Point = {
+      val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
+      val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
+      previousPoint + directionVector
+    }
+
+    def endPoint(previousPoint: Point, point: Point, accumulatedLength: Double): Point = {
+      val endPointMeasureOnLineSegment = endMeasure - accumulatedLength
+      val directionVector = (point - previousPoint).normalize().scale(endPointMeasureOnLineSegment)
+      previousPoint + directionVector
     }
 
     if (startMeasure > endMeasure) throw new IllegalArgumentException
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 
-    val accuStart = (Seq.empty[Point], false, false, geometry.head, 0.0)
-    geometry.foldLeft(accuStart)((accu, point) => {
-      val (truncatedGeometry, firstPointFound, lastPointFound, previousPoint, accumulatedLength) = accu
-      val (pointsToAdd, foundFirstPoint, foundLastPoint) =
-        if (!firstPointFound) {
-          if (startPointOnSegment(previousPoint, point, accumulatedLength)) {
-            val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
-            val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
-            (List(previousPoint + directionVector, point), true, lastPointFound)
-          } else (Nil, firstPointFound, lastPointFound)
-        }
-        else {
-          if(!lastPointFound) {
-            if (endPointOnSegment(previousPoint, point, accumulatedLength)) {
-              val endPointMeasureOnLineSegment = endMeasure - accumulatedLength
-              val directionVector = (point - previousPoint).normalize().scale(endPointMeasureOnLineSegment)
-              (List(previousPoint + directionVector), firstPointFound, true)
-            } else (List(point), firstPointFound, lastPointFound)
-          } else (Nil, firstPointFound, lastPointFound)
-        }
-      (truncatedGeometry ++ pointsToAdd, foundFirstPoint, foundLastPoint, point, point.distanceTo(previousPoint) + accumulatedLength)
+    val accuStart = (Seq.empty[Point], false, geometry.head, 0.0)
+    geometry.tail.foldLeft(accuStart)((accu, point) => {
+      val (truncatedGeometry, onSelection, previousPoint, accumulatedLength) = accu
+
+      val (pointsToAdd, enteredSelection) = (startPointOnSegment(previousPoint, point, accumulatedLength), endPointOnSegment(previousPoint, point, accumulatedLength), onSelection) match {
+        case (false, false, true) => (List(point), true)
+        case (false, false, false) => (Nil, false)
+        case (true, false, _) => (List(startPoint(previousPoint, point, accumulatedLength), point), true)
+        case (false, true, _) => (List(endPoint(previousPoint, point, accumulatedLength)), false)
+        case (true, true, _) => (List(startPoint(previousPoint, point, accumulatedLength), endPoint(previousPoint, point, accumulatedLength)), false)
+      }
+
+      (truncatedGeometry ++ pointsToAdd, enteredSelection, point, point.distanceTo(previousPoint) + accumulatedLength)
     })._1
   }
 }
