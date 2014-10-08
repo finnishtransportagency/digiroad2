@@ -56,24 +56,6 @@ object OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
-    val boundingBox = new JGeometry(bounds.leftBottom.x, bounds.leftBottom.y, bounds.rightTop.x, bounds.rightTop.y, 3067)
-    val geometry = storeGeometry(boundingBox, dynamicSession.conn)
-    val speedLimits = sql"""
-      select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, SDO_AGGR_CONCAT_LINES(to_2d(sdo_lrs.dynamic_segment(rl.geom, pos.start_measure, pos.end_measure)))
-        from ASSET a
-        join ASSET_LINK al on a.id = al.asset_id
-        join LRM_POSITION pos on al.position_id = pos.id
-        join ROAD_LINK rl on pos.road_link_id = rl.id
-        join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
-        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
-        where a.asset_type_id = 20 and SDO_FILTER(rl.geom, $geometry) = 'TRUE'
-        group by a.id, rl.id, pos.side_code, e.name_fi
-        """.as[(Long, Long, Int, Int, Array[Byte])].list
-    speedLimits.map(transformLink)
-  }
-
   private def updateRoadLinkLookupTable(ids: Seq[Long]): Unit = {
     val insertAllRoadLinkIdsIntoLookupTable =
       "INSERT ALL\n" +
@@ -84,7 +66,7 @@ object OracleLinearAssetDao {
     Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
   }
 
-  def getSpeedLimitLinksByBoundingBox2(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds).map {
       link => (link("roadLinkId").asInstanceOf[Long], link("points").asInstanceOf[Seq[Point]])
     }
