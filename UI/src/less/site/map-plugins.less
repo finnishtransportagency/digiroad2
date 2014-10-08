@@ -11,14 +11,6 @@
     background-color: @gray-lighter;
 }
 
-//** FIX THIS: top right plugin container is forced to bottom right, because CoordinatesPlugin.js location is hardcoded
-
-#mapdiv {
-    .mappluginsContent {
-        margin-left: 0;
-    }
-}
-
 //** Zoom buttons
 
 #map-plugins {
@@ -81,43 +73,40 @@
 //** Background layer select
 
 #map-plugins {
-	.tileMapSelector {
+	.tile-map-selector {
         position: absolute;
         top: 9px;
+        padding: 0 (@line-height-modifier * 2);
 
-		.content {
-            margin-left: 10px;
+		ul {
+            margin: 0;
+            padding: 0;
+			height: auto;
 
-			ul {
-                margin: 0;
-                padding: 0;
-				height: auto;
+			li {
+				.btn;
+				.btn-sm;
+				.btn-tertiary;
+				position: relative;
+				width: auto;
+				margin: 0 0 0 -1px;
+				border-radius: 0;
 
-				li {
-					.btn;
-					.btn-sm;
-					.btn-tertiary;
-					position: relative;
-					width: auto;
-					margin: 0 0 0 -1px;
-					border-radius: 0;
+				&.selected {
+					.btn-secondary;
+					z-index: 2;
+					color: #fff;
+				}
 
-					&.selected {
-						.btn-secondary;
-						z-index: 2;
-						color: #fff;
-					}
+				&:first-child {
+					margin-left: 0;
+					border-top-left-radius: @border-radius-base;
+					border-bottom-left-radius: @border-radius-base;
+				}
 
-					&:first-child {
-						margin-left: 0;
-						border-top-left-radius: @border-radius-base;
-						border-bottom-left-radius: @border-radius-base;
-					}
-
-					&:last-child {
-						border-top-right-radius: @border-radius-base;
-						border-bottom-right-radius: @border-radius-base;
-					}
+				&:last-child {
+					border-top-right-radius: @border-radius-base;
+					border-bottom-right-radius: @border-radius-base;
 				}
 			}
 		}
