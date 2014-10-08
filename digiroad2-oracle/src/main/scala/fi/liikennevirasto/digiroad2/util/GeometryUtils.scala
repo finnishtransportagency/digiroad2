@@ -33,6 +33,14 @@ object GeometryUtils {
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+    def startPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double) = {
+      (point.distanceTo(previousPoint) + accumulatedLength) > startMeasure
+    }
+
+    def endPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double) = {
+      (point.distanceTo(previousPoint) + accumulatedLength) > endMeasure
+    }
+
     if (startMeasure > endMeasure) throw new IllegalArgumentException
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
@@ -42,7 +50,7 @@ object GeometryUtils {
       val (truncatedGeometry, firstPointFound, lastPointFound, previousPoint, accumulatedLength) = accu
       val (pointsToAdd, foundFirstPoint, foundLastPoint) =
         if (!firstPointFound) {
-          if ((point.distanceTo(previousPoint) + accumulatedLength) > startMeasure) {
+          if (startPointOnSegment(previousPoint, point, accumulatedLength)) {
             val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
             val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
             (List(previousPoint + directionVector, point), true, lastPointFound)
@@ -50,7 +58,7 @@ object GeometryUtils {
         }
         else {
           if(!lastPointFound) {
-            if ((point.distanceTo(previousPoint) + accumulatedLength) > endMeasure) {
+            if (endPointOnSegment(previousPoint, point, accumulatedLength)) {
               val endPointMeasureOnLineSegment = endMeasure - accumulatedLength
               val directionVector = (point - previousPoint).normalize().scale(endPointMeasureOnLineSegment)
               (List(previousPoint + directionVector), firstPointFound, true)
