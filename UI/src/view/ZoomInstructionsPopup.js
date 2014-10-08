@@ -7,11 +7,11 @@
     container.append(element);
 
     var show = function(timeout) {
-      container.find('.zoom-instructions-popup').show();
-      setTimeout(function() { container.find('.zoom-instructions-popup').hide(); }, timeout);
+      container.find('.zoom-instructions-popup').fadeIn(200);
+      setTimeout(function() { container.find('.zoom-instructions-popup').fadeOut(200); }, timeout);
     };
 
-    container.find('.zoom-instructions-popup').hide();
+    container.find('.zoom-instructions-popup').fadeOut(200);
 
     return {
       show: show
