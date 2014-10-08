@@ -37,20 +37,27 @@ object GeometryUtils {
     if (geometry.length == 1) throw new IllegalArgumentException
     if (geometry.isEmpty) return Nil
 
-    val accuStart = (Seq.empty[Point], false, geometry.head, 0.0)
+    val accuStart = (Seq.empty[Point], false, false, geometry.head, 0.0)
     geometry.foldLeft(accuStart)((accu, point) => {
-      val (truncatedGeometry, firstPointFound, previousPoint, accumulatedLength) = accu
-      val pointsToAdd =
+      val (truncatedGeometry, firstPointFound, lastPointFound, previousPoint, accumulatedLength) = accu
+      val (pointsToAdd, foundFirstPoint, foundLastPoint) =
         if (!firstPointFound) {
           if ((point.distanceTo(previousPoint) + accumulatedLength) > startMeasure) {
             val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
             val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
-            List(previousPoint + directionVector, point)
-          }
-          else Nil
+            (List(previousPoint + directionVector, point), true, lastPointFound)
+          } else (Nil, firstPointFound, lastPointFound)
         }
-        else List(point)
-      (truncatedGeometry ++ pointsToAdd, pointsToAdd.nonEmpty, point, point.distanceTo(previousPoint) + accumulatedLength)
+        else {
+          if(!lastPointFound) {
+            if ((point.distanceTo(previousPoint) + accumulatedLength) > endMeasure) {
+              val endPointMeasureOnLineSegment = endMeasure - accumulatedLength
+              val directionVector = (point - previousPoint).normalize().scale(endPointMeasureOnLineSegment)
+              (List(previousPoint + directionVector), firstPointFound, true)
+            } else (List(point), firstPointFound, lastPointFound)
+          } else (Nil, firstPointFound, lastPointFound)
+        }
+      (truncatedGeometry ++ pointsToAdd, foundFirstPoint, foundLastPoint, point, point.distanceTo(previousPoint) + accumulatedLength)
     })._1
   }
 }
