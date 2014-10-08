@@ -33,12 +33,9 @@ object GeometryUtils {
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    def startPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double): Boolean = {
-      (point.distanceTo(previousPoint) + accumulatedLength) >= startMeasure && accumulatedLength <= startMeasure
-    }
-
-    def endPointOnSegment(previousPoint: Point, point: Point, accumulatedLength: Double): Boolean = {
-      (point.distanceTo(previousPoint) + accumulatedLength) >= endMeasure && accumulatedLength <= endMeasure
+    def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double) = {
+      val (firstPoint, secondPoint) = segment
+      (firstPoint.distanceTo(secondPoint) + accumulatedLength) >= measure && accumulatedLength <= measure
     }
 
     def startPoint(previousPoint: Point, point: Point, accumulatedLength: Double): Point = {
@@ -61,7 +58,7 @@ object GeometryUtils {
     geometry.tail.foldLeft(accuStart)((accu, point) => {
       val (truncatedGeometry, onSelection, previousPoint, accumulatedLength) = accu
 
-      val (pointsToAdd, enteredSelection) = (startPointOnSegment(previousPoint, point, accumulatedLength), endPointOnSegment(previousPoint, point, accumulatedLength), onSelection) match {
+      val (pointsToAdd, enteredSelection) = (measureOnSegment(startMeasure, (previousPoint, point), accumulatedLength), measureOnSegment(endMeasure, (previousPoint, point), accumulatedLength), onSelection) match {
         case (false, false, true) => (List(point), true)
         case (false, false, false) => (Nil, false)
         case (true, false, _) => (List(startPoint(previousPoint, point, accumulatedLength), point), true)
