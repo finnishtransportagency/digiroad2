@@ -33,4 +33,9 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   test("truncation fails on one point geometry") {
     an [IllegalArgumentException] should be thrownBy truncateGeometry(Seq(Point(0.0, 0.0)), 10, 15)
   }
+
+  test("truncate geometry from beginning") {
+    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 6, 10)
+    truncatedGeometry should be (Seq(Point(6.0, 0.0), Point(10.0, 0.0)))
+  }
 }

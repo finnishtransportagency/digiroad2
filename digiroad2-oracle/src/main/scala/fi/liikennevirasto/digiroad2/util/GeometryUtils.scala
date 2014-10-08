@@ -35,6 +35,22 @@ object GeometryUtils {
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     if (startMeasure > endMeasure) throw new IllegalArgumentException
     if (geometry.length == 1) throw new IllegalArgumentException
-    geometry
+    if (geometry.isEmpty) return Nil
+
+    val accuStart = (Seq.empty[Point], false, geometry.head, 0.0)
+    geometry.foldLeft(accuStart)((accu, point) => {
+      val (truncatedGeometry, firstPointFound, previousPoint, accumulatedLength) = accu
+      val pointsToAdd =
+        if (!firstPointFound) {
+          if ((point.distanceTo(previousPoint) + accumulatedLength) > startMeasure) {
+            val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
+            val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
+            List(previousPoint + directionVector, point)
+          }
+          else Nil
+        }
+        else List(point)
+      (truncatedGeometry ++ pointsToAdd, pointsToAdd.nonEmpty, point, point.distanceTo(previousPoint) + accumulatedLength)
+    })._1
   }
 }
