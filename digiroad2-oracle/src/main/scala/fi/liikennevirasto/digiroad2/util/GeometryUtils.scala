@@ -33,21 +33,15 @@ object GeometryUtils {
   }
 
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double) = {
+    def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double): Boolean = {
       val (firstPoint, secondPoint) = segment
       (firstPoint.distanceTo(secondPoint) + accumulatedLength) >= measure && accumulatedLength <= measure
     }
 
-    def startPoint(previousPoint: Point, point: Point, accumulatedLength: Double): Point = {
-      val startPointMeasureOnLineSegment = startMeasure - accumulatedLength
-      val directionVector = (point - previousPoint).normalize().scale(startPointMeasureOnLineSegment)
-      previousPoint + directionVector
-    }
-
-    def endPoint(previousPoint: Point, point: Point, accumulatedLength: Double): Point = {
-      val endPointMeasureOnLineSegment = endMeasure - accumulatedLength
-      val directionVector = (point - previousPoint).normalize().scale(endPointMeasureOnLineSegment)
-      previousPoint + directionVector
+    def newPointOnSegment(measureOnSegment: Double, segment: (Point, Point)): Point = {
+      val (firstPoint, secondPoint) = segment
+      val directionVector = (secondPoint - firstPoint).normalize().scale(measureOnSegment)
+      firstPoint + directionVector
     }
 
     if (startMeasure > endMeasure) throw new IllegalArgumentException
@@ -61,9 +55,10 @@ object GeometryUtils {
       val (pointsToAdd, enteredSelection) = (measureOnSegment(startMeasure, (previousPoint, point), accumulatedLength), measureOnSegment(endMeasure, (previousPoint, point), accumulatedLength), onSelection) match {
         case (false, false, true) => (List(point), true)
         case (false, false, false) => (Nil, false)
-        case (true, false, _) => (List(startPoint(previousPoint, point, accumulatedLength), point), true)
-        case (false, true, _) => (List(endPoint(previousPoint, point, accumulatedLength)), false)
-        case (true, true, _) => (List(startPoint(previousPoint, point, accumulatedLength), endPoint(previousPoint, point, accumulatedLength)), false)
+        case (true, false, _) => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)), point), true)
+        case (false, true, _) => (List(newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
+        case (true, true, _)  => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)),
+                                       newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
       }
 
       (truncatedGeometry ++ pointsToAdd, enteredSelection, point, point.distanceTo(previousPoint) + accumulatedLength)
