@@ -74,10 +74,6 @@ object OracleLinearAssetDao {
     speedLimits.map(transformLink)
   }
 
-  def doTruncation(roadLinkId: Long, geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-  }
-
   private def updateRoadLinkLookupTable(ids: Seq[Long]): Unit = {
     val insertAllRoadLinkIdsIntoLookupTable =
       "INSERT ALL\n" +
