@@ -74,12 +74,6 @@ object OracleLinearAssetDao {
     speedLimits.map(transformLink)
   }
 
-  def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    if (startMeasure > endMeasure) throw new IllegalArgumentException
-    if (geometry.length == 1) throw new IllegalArgumentException
-    geometry
-  }
-
   def doTruncation(roadLinkId: Long, geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
   }

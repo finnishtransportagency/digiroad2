@@ -31,4 +31,10 @@ object GeometryUtils {
     val lastPoint: Point = geometry.last
     (firstPoint, lastPoint)
   }
+
+  def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
+    if (startMeasure > endMeasure) throw new IllegalArgumentException
+    if (geometry.length == 1) throw new IllegalArgumentException
+    geometry
+  }
 }

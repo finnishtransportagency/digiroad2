@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.Point
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink, Modification}
 import GeometryUtils._
@@ -18,5 +19,18 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     calculateBearing(asset, rlQuadrant2) should be (315)
     calculateBearing(asset, rlQuadrant3) should be (225)
     calculateBearing(asset, rlQuadrant4) should be (135)
+  }
+
+  test("truncate empty geometry") {
+    val truncated = truncateGeometry(Nil, 10, 15)
+    truncated should be (Nil)
+  }
+
+  test("truncation fails when start measure is after end measure") {
+    an [IllegalArgumentException] should be thrownBy truncateGeometry(Nil, 15, 10)
+  }
+
+  test("truncation fails on one point geometry") {
+    an [IllegalArgumentException] should be thrownBy truncateGeometry(Seq(Point(0.0, 0.0)), 10, 15)
   }
 }

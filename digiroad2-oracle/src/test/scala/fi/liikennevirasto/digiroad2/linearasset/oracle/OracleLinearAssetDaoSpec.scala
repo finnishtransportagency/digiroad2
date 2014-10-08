@@ -130,17 +130,4 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
      serviceLinks should contain theSameElementsAs dbLinks
    }
   }
-
-  test("truncate empty geometry") {
-    val truncated = OracleLinearAssetDao.truncateGeometry(Nil, 10, 15)
-    truncated should be (Nil)
-  }
-
-  test("truncation fails when start measure is after end measure") {
-    an [IllegalArgumentException] should be thrownBy OracleLinearAssetDao.truncateGeometry(Nil, 15, 10)
-  }
-
-  test("truncation fails on one point geometry") {
-    an [IllegalArgumentException] should be thrownBy OracleLinearAssetDao.truncateGeometry(Seq(Point(0.0, 0.0)), 10, 15)
-  }
 }
