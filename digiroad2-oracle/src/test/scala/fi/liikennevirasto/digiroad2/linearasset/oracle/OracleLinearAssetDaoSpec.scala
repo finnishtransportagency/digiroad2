@@ -134,8 +134,6 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
      println("*** Calculated time for DB fetch: " + (timeAfterDbFetch - timeBeforeDbFetch))
      println("*** Calculated time for service fetch: " + (timeAfterServiceFetch - timeBeforeServiceFetch))
-     println("*** ServiceLinks: " + serviceLinks)
-     println("*** DBLinks: " + dbLinks.toList)
      serviceLinks.map(withRoundedGeometries) should contain theSameElementsAs dbLinks.map(withRoundedGeometries)
    }
   }
