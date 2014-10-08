@@ -1,5 +1,16 @@
 //== Map plugin control component styles
 
+#map-plugins {
+	position: absolute;
+	left: 0;
+	bottom: 40px;
+	z-index: 15000;
+	width: 100%;
+	height: 39px;
+    border-top: 1px solid @gray-light-2;
+    background-color: @gray-lighter;
+}
+
 //** FIX THIS: top right plugin container is forced to bottom right, because CoordinatesPlugin.js location is hardcoded
 
 #mapdiv {
@@ -10,265 +21,240 @@
 
 //** Zoom buttons
 
-#mapdiv {
-	.mapplugins {
-		.zoombar {
-			position: absolute;
-			left: @line-height-modifier * 2;
-			bottom: @line-height-base * 2.5;
-			width: auto;
-			margin: 0;
+#map-plugins {
+	.zoombar {
+		position: absolute;
+		left: @line-height-modifier * 2;
+		bottom: @line-height-base * 2.5;
+		z-index: 15000;
+		width: auto;
+		margin: 0;
 
-			.pzbDiv-plus,
-			.pzbDiv-minus {
-				width: 30px;
-				height: 30px;
-				margin-left: auto;
-				border: 1px solid @gray-light-2;
-				.box-sizing(border-box);
-				background-color: @gray-lighter-2;
-				background-image: none;
-				cursor: pointer;
-				.icon-font;
+		.pzbDiv-plus,
+		.pzbDiv-minus {
+			width: 30px;
+			height: 30px;
+			margin-left: auto;
+			border: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+			text-align: center;
+			background-color: @gray-lighter-2;
+			background-image: none;
+			cursor: pointer;
+			.icon-font;
+			.transition(all .2s @easing-swift-out);
+
+			&:before {
+				line-height: 30px;
+				color: @gray-darker-2;
+			}
+
+			&:hover {
+				background-color: @gray-lighter;
+			}
+
+			&:active {
+				background-color: @gray-light-2;
 
 				&:before {
-					line-height: 30px;
-					color: @gray-darker-2;
+					color: @gray-darkest;
 				}
+			}
+		}
 
-				&:hover {
-					background-color: @gray-lighter;
-				}
+		.pzbDiv-plus {
+			&:before {
+				content: '\e800';
+			}
+		}
 
-				&:active {
-					background-color: @gray-light-2;
+		.pzbDiv-minus {
+			margin-top: -1px;
 
-					&:before {
-						color: @gray-darkest;
+			&:before {
+				content: '\e801';
+			}
+		}		
+	}
+}
+
+//** Background layer select
+
+#map-plugins {
+	.tileMapSelector {
+        position: absolute;
+        top: 9px;
+
+		.content {
+            margin-left: 10px;
+
+			ul {
+                margin: 0;
+                padding: 0;
+				height: auto;
+
+				li {
+					.btn;
+					.btn-sm;
+					.btn-tertiary;
+					position: relative;
+					width: auto;
+					margin: 0 0 0 -1px;
+					border-radius: 0;
+
+					&.selected {
+						.btn-secondary;
+						z-index: 2;
+						color: #fff;
 					}
-				}
-			}
 
-			.pzbDiv-plus {
-				&:before {
-					content: '\e800';
-				}
-			}
+					&:first-child {
+						margin-left: 0;
+						border-top-left-radius: @border-radius-base;
+						border-bottom-left-radius: @border-radius-base;
+					}
 
-			.pzbDiv-minus {
-				margin-top: -1px;
-
-				&:before {
-					content: '\e801';
+					&:last-child {
+						border-top-right-radius: @border-radius-base;
+						border-bottom-right-radius: @border-radius-base;
+					}
 				}
 			}
 		}
 	}	
 }
 
-#mapdiv {
-    .bg {
-        width: 100%;
-        height: 100%;
-        border-top: 1px solid @gray-light-2;
-        background-color: @gray-lighter;
-        .opacity(1);
-    }
-}
-
-
-//** Background layer select
-//** Overrides Oskari styles
-
-#mapdiv {
-	.mapplugins {
-		&.bottom {
-			width: 100%;
-		}
-
-		.tileMapSelector {
-            position: absolute;
-            top: 10px;
-
-			.content {
-				text-align: left;
-                margin-left: 10px;
-
-				ul {
-                    margin: 0;
-                    padding: 0;
-					height: auto;
-
-					li {
-						.btn;
-						.btn-sm;
-						.btn-tertiary;
-						position: relative;
-						width: auto;
-						margin: 0 0 0 -1px;
-						border-radius: 0;
-
-						&.selected {
-							.btn-secondary;
-							z-index: 2;
-							color: #fff;
-						}
-
-						&:first-child {
-							margin-left: 0;
-							border-top-left-radius: @border-radius-base;
-							border-bottom-left-radius: @border-radius-base;
-						}
-
-						&:last-child {
-							border-top-right-radius: @border-radius-base;
-							border-bottom-right-radius: @border-radius-base;
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 //** Scale
 
-#mapdiv {
-	.mapplugins {
-		.scalebar {
-			display: block;
-			float: none;
-			position: absolute;
-			left: @line-height-base * 2.5;
-			bottom: @line-height-base * 2.5;
-			font-size: 9px;
-			line-height: @line-height-modifier * 3;
-			color: @gray-darker-2;
+#map-plugins {
+	.scalebar {
+		position: absolute;
+		left: @line-height-base * 2.5;
+		bottom: @line-height-base * 2.5;
+		font-size: 9px;
+		line-height: @line-height-modifier * 3;
+		color: @gray-darker-2;
 
-			.olControlScaleLineTop,
-			.olControlScaleLineBottom {
-				border-color: @gray-darker-2;
-			}
-
-			.olControlScaleLineBottom {
-				display: none;
-			}
+		.olControlScaleLineTop,
+		.olControlScaleLineBottom {
+			border-color: @gray-darker-2;
 		}
-	}
+
+		.olControlScaleLineBottom {
+			display: none;
+		}
+	}	
 }
 
 //** Coordinates
-//** Overrides Oskari styles
 
-#mapdiv {
-	.mapplugins {
-		.coordinates {
+#map-plugins {
+	.coordinates {
+        position: absolute;
+        top: 0;
+        right: 10px;
+		font-size: 0px;
+		color: @gray-darkest;
+		text-align: right;
+
+		.cbSpansWrapper {
+			display: inline-block;
+			vertical-align: middle;
 			width: auto;
-			height: auto;
-			border: none;
-			font-size: 0px;
-			color: @gray-darkest;
-			text-align: right;
-			background-color: transparent;
-            position: absolute;
-            top: 0;
-            right: 10px;
+			padding: 0;
 
-			.cbSpansWrapper {
+			.cbRow {
 				display: inline-block;
-				vertical-align: middle;
-				width: auto;
-				padding: 0;
-
-				.cbRow {
-					display: inline-block;
-					height: @line-height-base * 2;
-					padding: (@line-height-modifier * 2) 0;
-					margin-right: @line-height-modifier;
-					.box-sizing(border-box);
-					.clearfix();
-
-					.cbCrsLabel {
-						font-size: @font-size-xs;
-						color: @gray;
-					}
-
-					.cbLabel {
-						display: inline-block;
-						float: none;
-						width: auto;
-						margin-right: 3px;
-						font-size: @font-size-xs;
-					}
-
-					.cbValue {
-						display: inline-block;
-						float: none;
-						width: auto;
-						padding: 0;
-						font-size: @font-size-xs;
-					}
-				}
-
-				br {
-					display: none;
-				}
-			}
-
-			.coordinates-wrapper {
-				display: inline-block;
-				vertical-align: middle;
 				height: @line-height-base * 2;
+				padding: (@line-height-modifier * 2) 0;
 				margin-right: @line-height-modifier;
-				padding: 9px 0 0 @line-height-modifier;
-				border-left: 1px solid @gray-light-2;
 				.box-sizing(border-box);
+				.clearfix();
 
-				.lonlat {
+				.cbCrsLabel {
+					font-size: @font-size-xs;
+					color: @gray;
+				}
+
+				.cbLabel {
 					display: inline-block;
-					vertical-align: middle;
-					width: 110px;
-					margin-right: @line-height-modifier;
-					padding-left: @line-height-modifier;
-					padding-right: @line-height-modifier;
+					float: none;
+					width: auto;
+					margin-right: 3px;
 					font-size: @font-size-xs;
 				}
 
-				.btn {
-					border-radius: 0;
+				.cbValue {
+					display: inline-block;
+					float: none;
+					width: auto;
+					padding: 0;
+					font-size: @font-size-xs;
+				}
 
-					&:first-of-type {
-						border-top-left-radius: @border-radius-base;
-						border-bottom-left-radius: @border-radius-base;
-					}
-
-					&:last-child {
-						margin-left: -1px;
-						border-top-right-radius: @border-radius-base;
-						border-bottom-right-radius: @border-radius-base;
-					}
+				&:last-child {
+					margin-right: @line-height-modifier * 2;
 				}
 			}
 
-			.crosshair-wrapper {
+			br {
+				display: none;
+			}
+		}
+
+		.coordinates-wrapper {
+			display: inline-block;
+			vertical-align: middle;
+			height: @line-height-base * 2;
+			margin-right: @line-height-modifier * 2;
+			padding: 9px 0 0 (@line-height-modifier * 2);
+			border-left: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+
+			.lonlat {
 				display: inline-block;
 				vertical-align: middle;
-				height: @line-height-base * 2;
-				padding: (@line-height-modifier * 2) 0 0 @line-height-modifier;
-				border-left: 1px solid @gray-light-2;
-				.box-sizing(border-box);
+				width: 110px;
+				margin-right: @line-height-modifier;
+				padding-left: @line-height-modifier;
+				padding-right: @line-height-modifier;
+				font-size: @font-size-xs;
+			}
 
-				label {
-					padding-left: @line-height-modifier * 3;
-					font-size: @font-size-xs;
-				}			
+			.btn {
+				border-radius: 0;
 
-				input {
-					margin-left: -15px;
+				&:first-of-type {
+					border-top-left-radius: @border-radius-base;
+					border-bottom-left-radius: @border-radius-base;
+				}
+
+				&:last-child {
+					margin-left: -1px;
+					border-top-right-radius: @border-radius-base;
+					border-bottom-right-radius: @border-radius-base;
 				}
 			}
 		}
-	}
+
+		.crosshair-wrapper {
+			display: inline-block;
+			vertical-align: middle;
+			height: @line-height-base * 2;
+			padding: (@line-height-modifier * 2) 0 0 (@line-height-modifier * 2);
+			border-left: 1px solid @gray-light-2;
+			.box-sizing(border-box);
+
+			label {
+				padding-left: @line-height-modifier * 3;
+				font-size: @font-size-xs;
+			}			
+
+			input {
+				margin-left: -15px;
+			}
+		}
+	}	
 }
 
 //** Crosshair

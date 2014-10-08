@@ -139,8 +139,7 @@ var RoadCollection = function(backend) {
       })
     };
 
-    var mapPluginsContainer = $('.mapplugins.bottom.left .mappluginsContent');
-    mapPluginsContainer.append('<div class="bg"/>');
+    var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
