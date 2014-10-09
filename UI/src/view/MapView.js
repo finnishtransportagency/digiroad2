@@ -4,7 +4,7 @@
     var centerMarkerLayer;
 
     var showAssetZoomDialog = function() {
-      zoomInstructions.show(2000);
+      zoomInstructions.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
     };
 
     var mapMovedHandler = function(mapState) {
