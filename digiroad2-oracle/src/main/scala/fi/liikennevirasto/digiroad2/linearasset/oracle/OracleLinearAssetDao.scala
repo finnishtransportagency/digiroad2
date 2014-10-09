@@ -76,7 +76,7 @@ object OracleLinearAssetDao {
 
   private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
 
-  private def generateSpeedLimitForEmptyLink(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
+  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
@@ -119,14 +119,19 @@ object OracleLinearAssetDao {
     val generatedFullLinkSpeedLimits = uncoveredLinkIds.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
-      generateSpeedLimitForEmptyLink(roadLinkId, (0, length), 1, roadLinkType)
+      generateSpeedLimit(roadLinkId, (0, length), 1, roadLinkType)
     }
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
-    println("*** Partially covered links: " + partiallyCoveredLinks)
+    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+      val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
+      unfilledSegments.map { segment =>
+        generateSpeedLimit(roadLinkId, segment, 1, roadLinkType)
+      }
+    }
 
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits).map { link =>
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits ++ generatedPartialLinkSpeedLimits).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
