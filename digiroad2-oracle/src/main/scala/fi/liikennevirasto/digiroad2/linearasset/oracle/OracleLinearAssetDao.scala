@@ -79,12 +79,7 @@ object OracleLinearAssetDao {
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
-    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds).map {
-      link => (link("roadLinkId").asInstanceOf[Long],
-               link("points").asInstanceOf[Seq[Point]],
-               link("length").asInstanceOf[Double],
-               link("type").asInstanceOf[Int])
-    }
+    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds)
 
     updateRoadLinkLookupTable(linksWithGeometries.map(_._1))
 
@@ -102,7 +97,7 @@ object OracleLinearAssetDao {
           join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
           where a.asset_type_id = 20 and pos.road_link_id in (select id from road_link_lookup)
         """
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).list()
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).iterator().toSeq
 
     val uncoveredLinkIds = findUncoveredLinkIds(linksWithGeometries, assetLinks)
     val generatedSpeedLimitLinks = uncoveredLinkIds.map { roadLinkId =>

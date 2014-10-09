@@ -43,7 +43,7 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle): Seq[Map[String, Any]] = {
+  def getRoadLinks(bounds: BoundingRectangle): Seq[(Long, Seq[Point], Double, Int)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
@@ -73,13 +73,7 @@ object RoadLinkService {
                                     ) = 'TRUE'
         """
 
-      query.as[(Long, Seq[Point], Double, Int)].iterator().map { roadLink =>
-        val (id, points, length, roadLinkType) = roadLink
-        Map("roadLinkId" -> id,
-            "points" -> points,
-            "length" -> length,
-            "type" -> roadLinkType)
-      }.toSeq
+      query.as[(Long, Seq[Point], Double, Int)].iterator().toSeq
     }
   }
 }
