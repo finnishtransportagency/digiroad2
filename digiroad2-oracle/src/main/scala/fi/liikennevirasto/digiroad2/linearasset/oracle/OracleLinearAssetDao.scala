@@ -76,7 +76,7 @@ object OracleLinearAssetDao {
 
   private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
 
-  private def generateSpeedLimitForEmptyLink(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
+  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
@@ -119,7 +119,7 @@ object OracleLinearAssetDao {
     val generatedFullLinkSpeedLimits = uncoveredLinkIds.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
-      generateSpeedLimitForEmptyLink(roadLinkId, (0, length), 1, roadLinkType)
+      generateSpeedLimit(roadLinkId, (0, length), 1, roadLinkType)
     }
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
@@ -127,7 +127,7 @@ object OracleLinearAssetDao {
     val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
       val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
       unfilledSegments.map { segment =>
-        generateSpeedLimitForEmptyLink(roadLinkId, segment, 1, roadLinkType)
+        generateSpeedLimit(roadLinkId, segment, 1, roadLinkType)
       }
     }
 
