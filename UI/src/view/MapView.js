@@ -36,7 +36,7 @@
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
       }
-      new CoordinateSelector($('.mapplugin.coordinates'), map.getMaxExtent());
+      new CoordinateSelector($('.mapplugin.coordinates'), map.getMaxExtent(), instructionsPopup);
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);

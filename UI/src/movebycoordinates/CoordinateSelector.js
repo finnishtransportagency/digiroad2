@@ -1,4 +1,4 @@
-window.CoordinateSelector = function(parentElement, extent) {
+window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
   var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
   var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
   var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
@@ -17,15 +17,13 @@ window.CoordinateSelector = function(parentElement, extent) {
       var result = lonlat.match(regex);
 
       var showDialog = function(message) {
-        var dialog = Oskari.clazz.create('Oskari.userinterface.component.Popup');
-        dialog.show(message);
-        dialog.fadeout(3000);
+        instructionsPopup.show(message, 3000);
       };
 
       if (!result) {
-        showDialog('K&auml;yt&auml; koordinaateissa P ja I numeroarvoja.');
+        showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
       } else if (!geometrycalculator.isInBounds(extent, result[2], result[1])) {
-        showDialog('Koordinaatit eiv&auml;t osu kartalle.');
+        showDialog('Koordinaatit eivät osu kartalle.');
       } else {
         var position = {
           lat: result[1],
