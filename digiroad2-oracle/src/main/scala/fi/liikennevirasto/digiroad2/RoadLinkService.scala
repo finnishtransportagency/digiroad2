@@ -21,8 +21,8 @@ object RoadLinkService {
     new BoneCPDataSource(cfg)
   }
 
-  implicit object GetByteArray extends GetResult[Array[Byte]] {
-    def apply(rs: PositionedResult) = rs.nextBytes()
+  implicit object GetPointSeq extends GetResult[Seq[Point]] {
+    def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
   }
 
   private def toPoints(bytes: Array[Byte]): Seq[Point] = {
@@ -39,7 +39,7 @@ object RoadLinkService {
         from tielinkki
         where objectid = $id
         """
-      toPoints(query.as[Array[Byte]].first)
+      query.as[Seq[Point]].first
     }
   }
 
@@ -73,10 +73,10 @@ object RoadLinkService {
                                     ) = 'TRUE'
         """
 
-      query.as[(Long, Array[Byte], Double, Int)].list().map { roadLink =>
-        val (id, geometry, length, roadLinkType) = roadLink
+      query.as[(Long, Seq[Point], Double, Int)].list().map { roadLink =>
+        val (id, points, length, roadLinkType) = roadLink
         Map("roadLinkId" -> id,
-            "points" -> toPoints(geometry),
+            "points" -> points,
             "length" -> length,
             "type" -> roadLinkType)
       }
