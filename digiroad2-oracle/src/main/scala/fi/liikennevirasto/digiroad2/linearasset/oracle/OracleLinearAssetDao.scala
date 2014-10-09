@@ -122,6 +122,11 @@ object OracleLinearAssetDao {
       generateSpeedLimit(roadLinkId, (0, length), 1, roadLinkType)
     }
 
+    generatedFullLinkSpeedLimits.foreach { speedLimit =>
+      val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = speedLimit
+      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode)
+    }
+
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
     val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
@@ -181,12 +186,16 @@ object OracleLinearAssetDao {
   }
 
   def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int): Long = {
-    val (startMeasure, endMeasure) = linkMeasures
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode)
+  }
+
+  def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int): Long = {
+    val (startMeasure, endMeasure) = linkMeasures
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert into asset(id, asset_type_id, created_by, created_date)
-      values ($assetId, 20, $creator, sysdate)
+      values ($speedLimitId, 20, $creator, sysdate)
     """.execute()
     sqlu"""
       insert into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
@@ -194,11 +203,11 @@ object OracleLinearAssetDao {
     """.execute()
     sqlu"""
       insert into asset_link(asset_id, position_id)
-      values ($assetId, $lrmPositionId)
+      values ($speedLimitId, $lrmPositionId)
     """.execute()
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-    Queries.insertSingleChoiceProperty(assetId, propertyId, 50).execute()
-    assetId
+    Queries.insertSingleChoiceProperty(speedLimitId, propertyId, 50).execute()
+    speedLimitId
   }
 
   def moveLinksToSpeedLimit(sourceSpeedLimitId: Long, targetSpeedLimitId: Long, roadLinkIds: Seq[Long]) = {
