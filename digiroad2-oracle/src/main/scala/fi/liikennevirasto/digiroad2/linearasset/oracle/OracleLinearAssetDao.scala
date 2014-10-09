@@ -116,7 +116,7 @@ object OracleLinearAssetDao {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).iterator().toSeq
 
     val uncoveredLinkIds = findUncoveredLinkIds(linksWithGeometries, assetLinks)
-    val generatedSpeedLimitLinks = uncoveredLinkIds.map { roadLinkId =>
+    val generatedFullLinkSpeedLimits = uncoveredLinkIds.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
       generateSpeedLimitForEmptyLink(roadLinkId, (0, length), 1, roadLinkType)
@@ -126,7 +126,7 @@ object OracleLinearAssetDao {
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
     println("*** Partially covered links: " + partiallyCoveredLinks)
 
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedSpeedLimitLinks).map { link =>
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
