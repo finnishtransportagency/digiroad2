@@ -31,7 +31,7 @@ object RoadLinkService {
       Point(point(0), point(1))
     }.toList
   }
-  
+
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
@@ -52,7 +52,7 @@ object RoadLinkService {
 
       val query =
         sql"""
-            select objectid, to_2d(shape)
+            select objectid, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, floor(functionalroadclass / 10) as roadLinkType
               from tielinkki
               where mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and
                     mdsys.sdo_filter(tielinkki.shape,
@@ -73,10 +73,12 @@ object RoadLinkService {
                                     ) = 'TRUE'
         """
 
-      query.as[(Long, Array[Byte])].list().map { roadLink =>
-        val (id, geometry) = roadLink
+      query.as[(Long, Array[Byte], Double, Int)].list().map { roadLink =>
+        val (id, geometry, length, roadLinkType) = roadLink
         Map("roadLinkId" -> id,
-            "points" -> toPoints(geometry))
+            "points" -> toPoints(geometry),
+            "length" -> length,
+            "type" -> roadLinkType)
       }
     }
   }

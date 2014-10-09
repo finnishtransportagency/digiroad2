@@ -66,18 +66,32 @@ object OracleLinearAssetDao {
     Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
   }
 
-  def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point])], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]) = {
+  def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]) = {
     linksWithGeometries.map(_._1).toSet -- speedLimitLinks.map(_._2).toSet
+  }
+
+  private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
+
+  private def generateSpeedLimitForEmptyLink(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
+    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val value = limitValueLookup(roadLinkType)
+    (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds).map {
-      link => (link("roadLinkId").asInstanceOf[Long], link("points").asInstanceOf[Seq[Point]])
+      link => (link("roadLinkId").asInstanceOf[Long],
+               link("points").asInstanceOf[Seq[Point]],
+               link("length").asInstanceOf[Double],
+               link("type").asInstanceOf[Int])
     }
 
     updateRoadLinkLookupTable(linksWithGeometries.map(_._1))
 
-    val linkGeometries: Map[Long, Seq[Point]] = linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) => acc + (linkWithGeometry._1 -> linkWithGeometry._2) }
+    val linkGeometries: Map[Long, (Seq[Point], Double, Int)] =
+      linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, Int)]) { (acc, linkWithGeometry) =>
+        acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4))
+      }
     val sql = """
           select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
           from ASSET a
@@ -91,11 +105,15 @@ object OracleLinearAssetDao {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).list()
 
     val uncoveredLinkIds = findUncoveredLinkIds(linksWithGeometries, assetLinks)
-    println("*** Road links not covered by any speed limit: " + uncoveredLinkIds)
+    val generatedSpeedLimitLinks = uncoveredLinkIds.map { roadLinkId =>
+      val length = linkGeometries(roadLinkId)._2
+      val roadLinkType = linkGeometries(roadLinkId)._3
+      generateSpeedLimitForEmptyLink(roadLinkId, (0, length), 1, roadLinkType)
+    }
 
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedSpeedLimitLinks).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
     }
     speedLimits
