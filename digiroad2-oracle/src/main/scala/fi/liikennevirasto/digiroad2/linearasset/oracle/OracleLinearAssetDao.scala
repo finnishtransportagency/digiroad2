@@ -71,7 +71,7 @@ object OracleLinearAssetDao {
   }
 
   def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
-    roadLinks & speedLimitLinks.map(_._2).toSet
+    roadLinks intersect speedLimitLinks.map(_._2).toSet
   }
 
   private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
