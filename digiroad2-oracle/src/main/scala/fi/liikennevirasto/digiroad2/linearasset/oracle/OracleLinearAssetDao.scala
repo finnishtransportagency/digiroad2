@@ -124,9 +124,14 @@ object OracleLinearAssetDao {
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
-    println("*** Partially covered links: " + partiallyCoveredLinks)
+    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+      val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
+      unfilledSegments.map { segment =>
+        generateSpeedLimitForEmptyLink(roadLinkId, segment, 1, roadLinkType)
+      }
+    }
 
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits).map { link =>
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits ++ generatedPartialLinkSpeedLimits).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
