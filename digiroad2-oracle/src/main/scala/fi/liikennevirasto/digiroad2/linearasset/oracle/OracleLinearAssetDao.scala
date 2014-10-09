@@ -82,27 +82,13 @@ object OracleLinearAssetDao {
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
   }
 
-  private def subtractInterval(remainingRoadLinks: Seq[(Double, Double)], span: (Double, Double)): Seq[(Double, Double)] = {
-    val (spanStart, spanEnd) = (math.min(span._1, span._2), math.max(span._1, span._2))
-    def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
-      measure >= interval._1 && measure <= interval._2
-    }
-    remainingRoadLinks.flatMap {
-      case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
-      case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
-      case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
-      case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
-      case x => List(x)
-    }
-  }
-
   private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, (Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Seq[(Long, Int, Seq[(Double, Double)])] = {
     val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Int, Double, Double)]] = speedLimitLinks.groupBy(_._2)
     val partiallyCoveredLinks = roadLinkIds.map { roadLinkId =>
       val length = roadLinks(roadLinkId)._2
       val roadLinkType = roadLinks(roadLinkId)._3
       val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByRoadLinkId(roadLinkId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
-      val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(subtractInterval).filter { case (start, end) => math.abs(end - start) > 0.01}
+      val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
       (roadLinkId, roadLinkType, remainders)
     }
     partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
