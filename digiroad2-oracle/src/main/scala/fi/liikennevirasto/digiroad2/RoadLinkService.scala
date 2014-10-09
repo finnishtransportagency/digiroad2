@@ -73,13 +73,13 @@ object RoadLinkService {
                                     ) = 'TRUE'
         """
 
-      query.as[(Long, Seq[Point], Double, Int)].list().map { roadLink =>
+      query.as[(Long, Seq[Point], Double, Int)].iterator().map { roadLink =>
         val (id, points, length, roadLinkType) = roadLink
         Map("roadLinkId" -> id,
             "points" -> points,
             "length" -> length,
             "type" -> roadLinkType)
-      }
+      }.toSeq
     }
   }
 }
