@@ -66,8 +66,12 @@ object OracleLinearAssetDao {
     Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
   }
 
-  def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]) = {
+  def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
     linksWithGeometries.map(_._1).toSet -- speedLimitLinks.map(_._2).toSet
+  }
+
+  def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
+    roadLinks & speedLimitLinks.map(_._2).toSet
   }
 
   private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
@@ -76,6 +80,32 @@ object OracleLinearAssetDao {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
+  }
+
+  private def subtractInterval(remainingRoadLinks: Seq[(Double, Double)], span: (Double, Double)): Seq[(Double, Double)] = {
+    val (spanStart, spanEnd) = (math.min(span._1, span._2), math.max(span._1, span._2))
+    def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+      measure >= interval._1 && measure <= interval._2
+    }
+    remainingRoadLinks.flatMap {
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
+      case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
+      case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
+      case x => List(x)
+    }
+  }
+
+  private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, (Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Seq[(Long, Int, Seq[(Double, Double)])] = {
+    val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Int, Double, Double)]] = speedLimitLinks.groupBy(_._2)
+    val partiallyCoveredLinks = roadLinkIds.map { roadLinkId =>
+      val length = roadLinks(roadLinkId)._2
+      val roadLinkType = roadLinks(roadLinkId)._3
+      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByRoadLinkId(roadLinkId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
+      val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(subtractInterval).filter { case (start, end) => math.abs(end - start) > 0.01}
+      (roadLinkId, roadLinkType, remainders)
+    }
+    partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): Seq[(Long, Long, Int, Int, Seq[Point])] = {
@@ -105,6 +135,10 @@ object OracleLinearAssetDao {
       val roadLinkType = linkGeometries(roadLinkId)._3
       generateSpeedLimitForEmptyLink(roadLinkId, (0, length), 1, roadLinkType)
     }
+
+    val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
+    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
+    println("*** Partially covered links: " + partiallyCoveredLinks)
 
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedSpeedLimitLinks).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
