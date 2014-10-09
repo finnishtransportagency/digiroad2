@@ -261,7 +261,7 @@ window.SpeedLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  eventbus.on('speedLimit:unselected', function(id) {
+  var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
       return feature.attributes.id === id;
     }), function(feature) {
@@ -270,7 +270,8 @@ window.SpeedLimitLayer = function(params) {
 
     vectorLayer.styleMap = browseStyleMap;
     vectorLayer.redraw();
-  });
+    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+  };
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
@@ -298,8 +299,7 @@ window.SpeedLimitLayer = function(params) {
   var start = function() {
     if (!eventListener.running) {
       eventListener.running = true;
-      eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
-      eventListener.listenTo(eventbus, 'tool:changed', changeTool);
+      bindEvents();
       changeTool(application.getSelectedTool());
     }
   };
@@ -307,45 +307,51 @@ window.SpeedLimitLayer = function(params) {
   var stop = function() {
     selectControl.deactivate();
     speedLimitCutter.deactivate();
-    eventListener.stopListening(eventbus, 'speedLimits:fetched');
-    eventListener.stopListening(eventbus, 'tool:changed');
+    eventListener.stopListening(eventbus);
     eventListener.running = false;
   };
 
-  eventbus.on('speedLimit:selected', function(selectedSpeedLimit) {
+  var bindEvents = function() {
+    eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
+    eventListener.listenTo(eventbus, 'tool:changed', changeTool);
+    eventListener.listenTo(eventbus, 'speedLimit:selected', handleSpeedLimitSelected);
+    eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
+    eventListener.listenTo(eventbus, 'speedLimit:limitChanged', handleSpeedLimitChanged);
+    eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
+    eventListener.listenTo(eventbus, 'speedLimit:unselected', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
+  };
+
+  var handleSpeedLimitSelected = function(selectedSpeedLimit) {
     if (selectedSpeedLimit.isNew()) {
       var feature = findFeatureById(selectedSpeedLimit.getId());
       setSelectionStyleAndHighlightFeature(feature);
     }
-  });
+  };
 
-  eventbus.on('speedLimit:saved', function(speedLimit) {
+  var handleSpeedLimitSaved = function(speedLimit) {
     var feature = findFeatureById(speedLimit.id);
     setSelectionStyleAndHighlightFeature(feature);
-  });
+  };
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
+  var handleSpeedLimitChanged = function(selectedSpeedLimit) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits([selectedSpeedLimit.get()]);
-  });
+  };
 
-  eventbus.on('speedLimit:cancelled speedLimit:saved', function() {
+  var handleSpeedLimitCancelled = function() {
     selectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
-  });
+  };
 
-  eventbus.on('speedLimit:unselected', function() {
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-  });
-
-  eventbus.on('map:moved', function(state) {
+  var handleMapMoved = function(state) {
     if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
@@ -357,7 +363,7 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(false);
       stop();
     }
-  }, this);
+  };
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
