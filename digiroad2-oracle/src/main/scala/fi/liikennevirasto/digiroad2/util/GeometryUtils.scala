@@ -32,10 +32,15 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
+  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+    measure >= interval._1 && measure <= interval._2
+  }
+
   def truncateGeometry(geometry: Seq[Point], startMeasure: Double, endMeasure: Double): Seq[Point] = {
     def measureOnSegment(measure: Double, segment: (Point, Point), accumulatedLength: Double): Boolean = {
       val (firstPoint, secondPoint) = segment
-      (firstPoint.distanceTo(secondPoint) + accumulatedLength) >= measure && accumulatedLength <= measure
+      val interval = (accumulatedLength, firstPoint.distanceTo(secondPoint) + accumulatedLength)
+      liesInBetween(measure, interval)
     }
 
     def newPointOnSegment(measureOnSegment: Double, segment: (Point, Point)): Point = {
@@ -63,5 +68,16 @@ object GeometryUtils {
 
       (truncatedGeometry ++ pointsToAdd, enteredSelection, point, point.distanceTo(previousPoint) + accumulatedLength)
     })._1
+  }
+
+  def subtractIntervalFromIntervals(intervals: Seq[(Double, Double)], interval: (Double, Double)): Seq[(Double, Double)] = {
+    val (spanStart, spanEnd) = (math.min(interval._1, interval._2), math.max(interval._1, interval._2))
+    intervals.flatMap {
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
+      case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
+      case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
+      case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
+      case x => List(x)
+    }
   }
 }
