@@ -145,7 +145,7 @@ var RoadCollection = function(backend) {
     new ZoomBox(map, mapPluginsContainer);
     new MouseCoordinatesDisplay(map, mapPluginsContainer);
 
-    new MapView(map, layers, new ZoomInstructionsPopup($('.digiroad2')));
+    new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(map.getZoom(), map.getExtent());
   };

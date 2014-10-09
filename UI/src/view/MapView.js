@@ -1,10 +1,10 @@
 (function(root) {
-  root.MapView = function(map, layers, zoomInstructions) {
+  root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer;
 
     var showAssetZoomDialog = function() {
-      zoomInstructions.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
+      instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
     };
 
     var mapMovedHandler = function(mapState) {
