@@ -121,12 +121,9 @@ object OracleLinearAssetDao {
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
       generateSpeedLimit(roadLinkId, (0, length), 1, roadLinkType)
-    }
+    }.toSeq
 
-    generatedFullLinkSpeedLimits.foreach { speedLimit =>
-      val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = speedLimit
-      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode, value)
-    }
+    createSpeedLimits(generatedFullLinkSpeedLimits)
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
@@ -137,10 +134,7 @@ object OracleLinearAssetDao {
       }
     }
 
-    generatedPartialLinkSpeedLimits.foreach { speedLimit =>
-      val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = speedLimit
-      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode, value)
-    }
+    createSpeedLimits(generatedPartialLinkSpeedLimits)
 
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits ++ generatedPartialLinkSpeedLimits).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
@@ -195,23 +189,56 @@ object OracleLinearAssetDao {
     createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
   }
 
+  private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
+    if (!speedLimits.isEmpty) {
+      val sb = new StringBuilder()
+      sb.append("INSERT ALL\n")
+      speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+        val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+        val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+        sb.append(
+          s"""
+            into asset(id, asset_type_id, created_by, created_date)
+            values ($speedLimitId, 20, 'automatic_speed_limit_generation', sysdate)
+
+            into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+            values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+
+            into asset_link(asset_id, position_id)
+            values ($speedLimitId, $lrmPositionId)
+
+            into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
+            values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+          """)
+      }
+      sb.append("\nSELECT * FROM DUAL\n")
+      Q.updateNA(sb.toString).execute()
+    }
+  }
+
   def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
-    val (startMeasure, endMeasure) = linkMeasures
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
-    sqlu"""
-      insert into asset(id, asset_type_id, created_by, created_date)
-      values ($speedLimitId, 20, $creator, sysdate)
-    """.execute()
-    sqlu"""
-      insert into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-      values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
-    """.execute()
-    sqlu"""
-      insert into asset_link(asset_id, position_id)
-      values ($speedLimitId, $lrmPositionId)
-    """.execute()
+    val (startMeasure, endMeasure) = linkMeasures
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-    Queries.insertSingleChoiceProperty(speedLimitId, propertyId, value).execute()
+
+    val insertAll =
+      s"""
+      INSERT ALL
+        into asset(id, asset_type_id, created_by, created_date)
+        values ($speedLimitId, 20, '$creator', sysdate)
+
+        into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+
+        into asset_link(asset_id, position_id)
+        values ($speedLimitId, $lrmPositionId)
+
+        into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
+        values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+      SELECT * FROM DUAL
+      """
+    Q.updateNA(insertAll).execute()
+
     speedLimitId
   }
 
