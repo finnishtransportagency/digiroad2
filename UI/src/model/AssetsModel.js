@@ -16,31 +16,17 @@
         return selected;
       }));
     };
-    var bindEvents = function() {
-      eventbus.on('map:moved', function(map) {
-        if (zoomlevels.isInAssetZoomLevel(map.zoom)) {
-          if (applicationModel.getSelectedLayer() === 'asset') {
-            backend.getAssetsWithCallback(map.bbox, function(backendAssets) {
-              if (map.hasZoomLevelChanged) {
-                eventbus.trigger('assets:all-updated', backendAssets);
-              } else {
-                eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
-              }
-            });
-          }
+
+    var refreshAssets = function(mapMoveEvent) {
+      backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
+        if (mapMoveEvent.hasZoomLevelChanged) {
+          eventbus.trigger('assets:all-updated', backendAssets);
         } else {
-          if (selectedAssetModel.isDirty()) {
-            eventbus.trigger('assetModifications:confirm');
-          } else {
-            if (applicationModel.getSelectedLayer() === 'asset') {
-              eventbus.trigger('assets:outOfZoom');
-            }
-          }
+          eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
         }
-      }, this);
+      });
     };
 
-    bindEvents();
     return {
       insertAsset: function(asset, assetId) {
         assets[assetId] = asset;
@@ -57,6 +43,7 @@
       fetchAssets: function(boundingBox) {
         backend.getAssets(boundingBox);
       },
+      refreshAssets: refreshAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
           assets[asset.data.id.toString()] = asset;

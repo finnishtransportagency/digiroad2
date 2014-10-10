@@ -546,6 +546,22 @@ window.AssetLayer = function(map, roadCollection) {
     }
   });
 
+  var handleMapMoved = function(mapMoveEvent) {
+    if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
+      if (mapMoveEvent.selectedLayer === 'asset') {
+        assetsModel.refreshAssets(mapMoveEvent);
+      }
+    } else {
+      if (selectedAssetModel.isDirty()) {
+        new Confirm();
+      } else {
+        if (applicationModel.getSelectedLayer() === 'asset') {
+          hideAssets();
+        }
+      }
+    }
+  };
+
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'validityPeriod:changed', handleValidityPeriodChanged);
     eventListener.listenTo(eventbus, 'tool:changed', toolSelectionChange);
@@ -567,13 +583,9 @@ window.AssetLayer = function(map, roadCollection) {
 
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
-    eventListener.listenTo(eventbus, 'assetModifications:confirm', function() {
-      new Confirm();
-    });
-    eventListener.listenTo(eventbus, 'assets:outOfZoom', hideAssets);
     eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
     eventListener.listenTo(eventbus, 'map:mouseMoved', handleMouseMoved);
-
+    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
   };
