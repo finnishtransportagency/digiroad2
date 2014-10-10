@@ -137,6 +137,11 @@ object OracleLinearAssetDao {
       }
     }
 
+    generatedPartialLinkSpeedLimits.foreach { speedLimit =>
+      val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = speedLimit
+      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode, value)
+    }
+
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedFullLinkSpeedLimits ++ generatedPartialLinkSpeedLimits).map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
