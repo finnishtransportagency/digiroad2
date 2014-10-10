@@ -93,21 +93,8 @@
       });
     };
 
-    this.getApplicationSetup = function() {
-      $.getJSON('full_appsetup.json', function(setup) {
-        eventbus.trigger('applicationSetup:fetched', setup);
-      });
-    };
-
     this.getApplicationSetupWithCallback = function(callback) {
       $.getJSON('full_appsetup.json', callback);
-    };
-
-    this.getConfiguration = function(selectedAsset) {
-      var url = 'api/config' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : '');
-      $.getJSON(url, function(config) {
-        eventbus.trigger('configuration:fetched', config);
-      });
     };
 
     this.getConfigurationWithCallback = function(selectedAsset, callback) {
@@ -118,12 +105,6 @@
     this.getStartupParametersWithCallback = function(selectedAsset, callback) {
       var url = 'api/startupParameters' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : '');
       $.getJSON(url, callback);
-    };
-
-    this.getAssetPropertyNames = function() {
-      $.getJSON('api/assetPropertyNames/fi', function(propertyNames) {
-        eventbus.trigger('assetPropertyNames:fetched', propertyNames);
-      });
     };
 
     this.getAssetPropertyNamesWithCallback = function(callback) {
@@ -186,25 +167,16 @@
     };
 
     this.withApplicationSetupData = function(applicationSetupData) {
-      self.getApplicationSetup = function () {
-        eventbus.trigger('applicationSetup:fetched', applicationSetupData);
-      };
       self.getApplicationSetupWithCallback = function(callback) { callback(applicationSetupData); };
       return self;
     };
 
     this.withConfigurationData = function(configurationData) {
-      self.getConfiguration = function () {
-        eventbus.trigger('configuration:fetched', configurationData);
-      };
       self.getConfigurationWithCallback = function(assetId, callback) { callback(configurationData); };
       return self;
     };
 
     this.withAssetPropertyNamesData = function(assetPropertyNamesData) {
-      self.getAssetPropertyNames = function () {
-        eventbus.trigger('assetPropertyNames:fetched', assetPropertyNamesData);
-      };
       self.getAssetPropertyNamesWithCallback = function(callback) { callback(assetPropertyNamesData); };
       return self;
     };

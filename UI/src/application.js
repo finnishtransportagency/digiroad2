@@ -67,7 +67,7 @@ var RoadCollection = function(backend) {
     $(window).on('hashchange', hashChangeHandler);
   };
 
-  var bindEvents = function(backend, models, withTileMaps) {
+  var bindEvents = function() {
     eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
@@ -96,22 +96,6 @@ var RoadCollection = function(backend) {
     eventbus.on('asset:updateFailed asset:creationFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
-    });
-
-    eventbus.on('applicationSetup:fetched', function(setup) {
-      appSetup = setup;
-      startApplication(backend, models, withTileMaps);
-    });
-
-    eventbus.on('configuration:fetched', function(config) {
-      appConfig = config;
-      startApplication(backend, models, withTileMaps);
-    });
-
-    eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
-      localizedStrings = assetPropertyNames;
-      window.localizedStrings = assetPropertyNames;
-      startApplication(backend, models, withTileMaps);
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });
@@ -175,7 +159,7 @@ var RoadCollection = function(backend) {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit
     };
-    bindEvents(backend, models, tileMaps);
+    bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit);
