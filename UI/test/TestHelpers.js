@@ -58,6 +58,7 @@ define(['AssetsTestData',
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
+      .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 })
       .withApplicationSetupData(ApplicationSetupTestData.generate())
       .withConfigurationData(ConfigurationTestData.generate(zoomLevel))
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())

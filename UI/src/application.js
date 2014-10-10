@@ -182,10 +182,20 @@ var RoadCollection = function(backend) {
     ActionPanel.initialize(backend, selectedSpeedLimit);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    backend.getApplicationSetup();
-    backend.getConfiguration(assetIdFromURL());
-    backend.getAssetPropertyNames();
-    backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) { console.log(startupParameters); });
+    backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
+      console.log(startupParameters);
+      backend.getApplicationSetupWithCallback(function(applicationSetup) {
+        appSetup = applicationSetup;
+        backend.getConfigurationWithCallback(assetIdFromURL(), function(configuration) {
+          appConfig = configuration;
+          backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+            localizedStrings = assetPropertyNames;
+            window.localizedStrings = assetPropertyNames;
+            startApplication(backend, models, tileMaps);
+          });
+        });
+      });
+    });
   };
 
   application.restart = function(backend, withTileMaps) {
