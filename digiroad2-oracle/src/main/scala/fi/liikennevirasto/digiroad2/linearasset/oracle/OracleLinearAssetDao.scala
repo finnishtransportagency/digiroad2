@@ -56,13 +56,15 @@ object OracleLinearAssetDao {
   }
 
   private def updateRoadLinkLookupTable(ids: Seq[Long]): Unit = {
-    val insertAllRoadLinkIdsIntoLookupTable =
-      "INSERT ALL\n" +
-      ids.map { id =>
-        s"INTO road_link_lookup (id) VALUES ($id)"
-      }.mkString("\n") +
-      "\nSELECT * FROM DUAL"
-    Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
+    if (!ids.isEmpty) {
+      val insertAllRoadLinkIdsIntoLookupTable =
+        "INSERT ALL\n" +
+        ids.map { id =>
+          s"INTO road_link_lookup (id) VALUES ($id)"
+        }.mkString("\n") +
+        "\nSELECT * FROM DUAL"
+      Q.updateNA(insertAllRoadLinkIdsIntoLookupTable).execute()
+    }
   }
 
   def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
