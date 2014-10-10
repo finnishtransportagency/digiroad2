@@ -319,7 +319,6 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:limitChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselected', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -364,6 +363,8 @@ window.SpeedLimitLayer = function(params) {
       stop();
     }
   };
+
+  eventbus.on('map:moved', handleMapMoved);
 
   var redrawSpeedLimits = function(speedLimits) {
     selectControl.deactivate();
