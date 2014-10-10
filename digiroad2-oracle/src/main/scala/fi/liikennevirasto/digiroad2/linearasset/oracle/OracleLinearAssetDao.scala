@@ -43,11 +43,10 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksWithLength(id: Long): Seq[(Long, Double, Seq[Point])] = {
     val speedLimitLinks = sql"""
-      select rl.id, pos.start_measure, pos.end_measure
+      select pos.road_link_id, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
-        join ROAD_LINK rl on pos.road_link_id = rl.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Double, Double)].list
     speedLimitLinks.map { case (roadLinkId, startMeasure, endMeasure) =>
@@ -146,11 +145,10 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val speedLimits = sql"""
-      select a.id, rl.id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
+      select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
-        join ROAD_LINK rl on pos.road_link_id = rl.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
