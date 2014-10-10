@@ -103,8 +103,32 @@ var RoadCollection = function(backend) {
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
-  var setupMap = function(backend, models, withTileMaps) {
-    var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
+  var createOpenLayersMap = function(startupParameters) {
+    var map = new OpenLayers.Map({
+      controls: [],
+      units: 'm',
+      maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
+      resolutions: [2049, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5],
+      projection: 'EPSG:3067',
+      isBaseLayer: true,
+      center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
+      fallThrough: true,
+      theme: null,
+      zoomMethod: null
+    });
+    var base = new OpenLayers.Layer("BaseLayer", {
+      layerId: 0,
+      isBaseLayer: true,
+      displayInLayerSwitcher: false
+    });
+    map.addLayer(base);
+    map.render('mapdiv');
+    map.zoomTo(startupParameters.zoom);
+    return map;
+  };
+
+  var setupMap = function(backend, models, withTileMaps, startupParameters) {
+    var map = createOpenLayersMap(startupParameters);
     map.addControl(new OpenLayers.Control.Navigation());
 
     var mapOverlay = new MapOverlay($('.container'));
@@ -136,17 +160,15 @@ var RoadCollection = function(backend) {
     applicationModel.moveMap(map.getZoom(), map.getExtent());
   };
 
-  var startApplication = function(backend, models, withTileMaps) {
+  var startApplication = function(backend, models, withTileMaps, startupParameters) {
     // check that both setup and config are loaded
     // before actually starting the application
     if (appSetup && appConfig && localizedStrings) {
       var app = Oskari.app;
       app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
-      app.startApplication(function() {
-        setupMap(backend, models, withTileMaps);
-        eventbus.trigger('application:initialized');
-      });
+      setupMap(backend, models, withTileMaps, startupParameters);
+      eventbus.trigger('application:initialized');
     }
   };
 
@@ -175,7 +197,7 @@ var RoadCollection = function(backend) {
           backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
             localizedStrings = assetPropertyNames;
             window.localizedStrings = assetPropertyNames;
-            startApplication(backend, models, tileMaps);
+            startApplication(backend, models, tileMaps, startupParameters);
           });
         });
       });
