@@ -185,6 +185,7 @@ var RoadCollection = function(backend) {
     backend.getApplicationSetup();
     backend.getConfiguration(assetIdFromURL());
     backend.getAssetPropertyNames();
+    backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) { console.log(startupParameters); });
   };
 
   application.restart = function(backend, withTileMaps) {

@@ -39,6 +39,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int)
+  get("/startupParameters") {
+    val (east, north, zoom) = params.get("externalAssetId").flatMap { assetId =>
+      assetProvider.getAssetPositionByExternalId(assetId.toLong).map { case (assetLon, assetLat) =>
+        (Some(assetLon), Some(assetLat), Some(12))
+      }
+    }.getOrElse {
+      val config = userProvider.getCurrentUser().configuration
+      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
+    }
+    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
+  }
+
   get("/config") {
     val (east, north, zoom) = params.get("externalAssetId").flatMap { assetId =>
         assetProvider.getAssetPositionByExternalId(assetId.toLong).map { case (east, north) =>

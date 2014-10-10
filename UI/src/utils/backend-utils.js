@@ -106,6 +106,11 @@
       });
     };
 
+    this.getStartupParametersWithCallback = function(selectedAsset, callback) {
+      var url = 'api/startupParameters' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : '');
+      $.getJSON(url, callback);
+    };
+
     this.getAssetPropertyNames = function() {
       $.getJSON('api/assetPropertyNames/fi', function(propertyNames) {
         eventbus.trigger('assetPropertyNames:fetched', propertyNames);
