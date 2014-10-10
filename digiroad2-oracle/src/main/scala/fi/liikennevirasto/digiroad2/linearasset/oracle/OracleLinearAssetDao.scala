@@ -125,7 +125,7 @@ object OracleLinearAssetDao {
 
     generatedFullLinkSpeedLimits.foreach { speedLimit =>
       val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = speedLimit
-      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode)
+      createSpeedLimit("automatic_speed_limit_generation", assetId, roadLinkId, (startMeasure, endMeasure), sideCode, value)
     }
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
@@ -185,12 +185,12 @@ object OracleLinearAssetDao {
     """.as[(Double, Double, Int)].list.head
   }
 
-  def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int): Long = {
+  def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-    createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode)
+    createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
   }
 
-  def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int): Long = {
+  def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -206,7 +206,7 @@ object OracleLinearAssetDao {
       values ($speedLimitId, $lrmPositionId)
     """.execute()
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-    Queries.insertSingleChoiceProperty(speedLimitId, propertyId, 50).execute()
+    Queries.insertSingleChoiceProperty(speedLimitId, propertyId, value).execute()
     speedLimitId
   }
 
@@ -241,7 +241,7 @@ object OracleLinearAssetDao {
     """.execute()
   }
 
-  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, username: String): Long = {
+  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
     val (startMeasure, endMeasure, sideCode) = getSpeedLimitLinkGeometryData(id, roadLinkId)
     val links: Seq[(Long, Double, (Point, Point))] = getSpeedLimitLinksWithLength(id).map { link =>
@@ -265,7 +265,7 @@ object OracleLinearAssetDao {
     }
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode)
+    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
     if (linksToMove.nonEmpty) moveLinksToSpeedLimit(id, createdId, linksToMove.map(_._1))
     createdId
   }

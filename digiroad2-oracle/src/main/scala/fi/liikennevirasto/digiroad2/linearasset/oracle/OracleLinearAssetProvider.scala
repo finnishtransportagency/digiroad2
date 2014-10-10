@@ -70,8 +70,7 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
 
   override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, limit: Int, username: String): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
-      val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, username)
-      OracleLinearAssetDao.updateSpeedLimitValue(newId, limit, username)
+      val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, limit, username)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }

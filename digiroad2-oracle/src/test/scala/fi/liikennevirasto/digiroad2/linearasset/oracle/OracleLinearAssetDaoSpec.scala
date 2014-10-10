@@ -43,7 +43,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 100, "test")
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 100, 120, "test")
       val (existingModifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
       val (_, _, newCreatedBy, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
@@ -61,7 +61,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "modifies start measure of existing speed limit " +
     "and creates new speed limit for first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 50, "test")
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 50, 120, "test")
       val (modifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
       val (_, _, newCreatedBy, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
@@ -78,7 +78,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "where first split is longer than second" +
     "existing speed limit should cover only first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 150, "test")
+      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 150, 120, "test")
       val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(700490)
 
       existingLinks.length shouldBe 2
@@ -91,7 +91,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "where first split is shorter than second" +
     "existing speed limit should cover only second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 10, "test")
+      OracleLinearAssetDao.splitSpeedLimit(700490, 5695, 10, 120, "test")
       val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(700490)
 
       existingLinks.length shouldBe 2
@@ -104,7 +104,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "so that shorter split contains multiple linear references " +
     "moves all linear references to newly created speed limit", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      val createdId = OracleLinearAssetDao.splitSpeedLimit(700642, 5872, 148, "test")
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(700642, 5872, 148, 120, "test")
       val createdLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(createdId)
 
       createdLinks.length shouldBe 3
