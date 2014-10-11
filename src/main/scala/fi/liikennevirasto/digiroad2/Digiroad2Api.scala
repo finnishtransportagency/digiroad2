@@ -52,18 +52,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
 
-  get("/config") {
-    val (east, north, zoom) = params.get("externalAssetId").flatMap { assetId =>
-        assetProvider.getAssetPositionByExternalId(assetId.toLong).map { case (east, north) =>
-        (Some(east), Some(north), Some(12))
-      }
-    }.getOrElse {
-      val config = userProvider.getCurrentUser.configuration
-      (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
-    }
-    readJsonFromBody(MapConfigJson.mapConfig(userProvider.getCurrentUser.configuration, east, north, zoom))
-  }
-
   post("/layers") {
     if (params("action_route") == "GetSupportedLocales") {
       "[\"fi_FI\"]"

@@ -8,7 +8,6 @@ require.config({
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
     UserRolesTestData:                '../test_data/UserRolesTestData',
     EnumeratedPropertyValuesTestData: '../test_data/EnumeratedPropertyValuesTestData',
-    ConfigurationTestData:            '../test_data/ConfigurationTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
     SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
     AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
@@ -20,7 +19,6 @@ require.config({
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
     'UserRolesTestData': { exports: 'UserRolesTestData' },
     'EnumeratedPropertyValuesTestData': { exports: 'EnumeratedPropertyValuesTestData' },
-    'ConfigurationTestData': { exports: 'ConfigurationTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
     'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
     'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
