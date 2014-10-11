@@ -44,7 +44,6 @@ require(['chai',
     else { mocha.run(); }
   });
 
-  jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
   Application.start(testHelpers.defaultBackend(), false);
 });
 
