@@ -11,7 +11,6 @@ require.config({
         'GeometryUtils':            '../src/utils/GeometryUtils',
         'SpeedLimitsCollection':    '../src/model/SpeedLimitsCollection',
         'SelectedSpeedLimit':       '../src/model/SelectedSpeedLimit',
-        'OpenLayers':               '../bower_components/oskari.org/packages/openlayers/bundle/openlayers-build/OpenLayers',
         'zoomlevels':               '../src/utils/zoom-levels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
         'assetGrouping':            '../src/assetgrouping/asset-grouping'
@@ -30,8 +29,7 @@ require.config({
             deps: ['EventBus', 'lodash']
         },
         'SpeedLimitLayer': {
-            exports: 'SpeedLimitLayer',
-            deps: ['OpenLayers']
+            exports: 'SpeedLimitLayer'
         },
         'SpeedLimitsCollection': {
             exports: 'SpeedLimitsCollection'
