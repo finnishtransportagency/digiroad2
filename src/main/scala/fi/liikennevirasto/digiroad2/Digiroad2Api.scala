@@ -52,12 +52,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
 
-  post("/layers") {
-    if (params("action_route") == "GetSupportedLocales") {
-      "[\"fi_FI\"]"
-    }
-  }
-
   get("/assets") {
     val user = userProvider.getCurrentUser
     val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {
