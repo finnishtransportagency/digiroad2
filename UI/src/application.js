@@ -32,8 +32,6 @@ var RoadCollection = function(backend) {
 };
 
 (function(application) {
-  Oskari.setLang('fi');
-  Oskari.setLoaderMode('dev');
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
@@ -159,10 +157,7 @@ var RoadCollection = function(backend) {
   };
 
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
-    // check that both setup and config are loaded
-    // before actually starting the application
     if (localizedStrings) {
-      var app = Oskari.app;
       setupMap(backend, models, withTileMaps, startupParameters);
       eventbus.trigger('application:initialized');
     }
