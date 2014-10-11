@@ -2,7 +2,6 @@ define(['AssetsTestData',
         'RoadLinkTestData',
         'UserRolesTestData',
         'EnumeratedPropertyValuesTestData',
-        'ApplicationSetupTestData',
         'ConfigurationTestData',
         'AssetPropertyNamesTestData',
         'SpeedLimitsTestData',
@@ -11,7 +10,6 @@ define(['AssetsTestData',
                 RoadLinkTestData,
                 UserRolesTestData,
                 EnumeratedPropertyValuesTestData,
-                ApplicationSetupTestData,
                 ConfigurationTestData,
                 AssetPropertyNamesTestData,
                 SpeedLimitsTestData,
@@ -59,7 +57,6 @@ define(['AssetsTestData',
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 })
-      .withApplicationSetupData(ApplicationSetupTestData.generate())
       .withConfigurationData(ConfigurationTestData.generate(zoomLevel))
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)

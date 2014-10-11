@@ -93,10 +93,6 @@
       });
     };
 
-    this.getApplicationSetupWithCallback = function(callback) {
-      $.getJSON('full_appsetup.json', callback);
-    };
-
     this.getConfigurationWithCallback = function(selectedAsset, callback) {
       var url = 'api/config' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : '');
       $.getJSON(url, callback);
@@ -163,11 +159,6 @@
 
     this.withStartupParameters = function(startupParameters) {
       self.getStartupParametersWithCallback = function(assetId, callback) { callback(startupParameters); };
-      return self;
-    };
-
-    this.withApplicationSetupData = function(applicationSetupData) {
-      self.getApplicationSetupWithCallback = function(callback) { callback(applicationSetupData); };
       return self;
     };
 

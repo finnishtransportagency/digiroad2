@@ -34,7 +34,6 @@ var RoadCollection = function(backend) {
 (function(application) {
   Oskari.setLang('fi');
   Oskari.setLoaderMode('dev');
-  var appSetup;
   var appConfig;
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
@@ -163,9 +162,8 @@ var RoadCollection = function(backend) {
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
     // check that both setup and config are loaded
     // before actually starting the application
-    if (appSetup && appConfig && localizedStrings) {
+    if (appConfig && localizedStrings) {
       var app = Oskari.app;
-      app.setApplicationSetup(appSetup);
       app.setConfiguration(appConfig);
       setupMap(backend, models, withTileMaps, startupParameters);
       eventbus.trigger('application:initialized');
@@ -189,22 +187,18 @@ var RoadCollection = function(backend) {
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
-      backend.getApplicationSetupWithCallback(function(applicationSetup) {
-        appSetup = applicationSetup;
-        backend.getConfigurationWithCallback(assetIdFromURL(), function(configuration) {
-          appConfig = configuration;
-          backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
-            localizedStrings = assetPropertyNames;
-            window.localizedStrings = assetPropertyNames;
-            startApplication(backend, models, tileMaps, startupParameters);
-          });
+      backend.getConfigurationWithCallback(assetIdFromURL(), function(configuration) {
+        appConfig = configuration;
+        backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+          localizedStrings = assetPropertyNames;
+          window.localizedStrings = assetPropertyNames;
+          startApplication(backend, models, tileMaps, startupParameters);
         });
       });
     });
   };
 
   application.restart = function(backend, withTileMaps) {
-    appSetup = undefined;
     appConfig = undefined;
     localizedStrings = undefined;
     this.start(backend, withTileMaps);
