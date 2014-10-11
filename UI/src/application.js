@@ -123,12 +123,14 @@ var RoadCollection = function(backend) {
     var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
     map.addControl(new OpenLayers.Control.Navigation());
 
+    var mapOverlay = new MapOverlay($('.container'));
+
     if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
     var layers = {
       road: new RoadLayer(map, roadCollection),
-      asset: new AssetLayer(map, roadCollection),
+      asset: new AssetLayer(map, roadCollection, mapOverlay),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,

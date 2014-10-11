@@ -1,4 +1,4 @@
-window.AssetLayer = function(map, roadCollection) {
+window.AssetLayer = function(map, roadCollection, mapOverlay) {
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
@@ -7,7 +7,6 @@ window.AssetLayer = function(map, roadCollection) {
   map.addLayer(assetDirectionLayer);
   map.addLayer(assetLayer);
 
-  var overlay;
   var selectedControl = 'Select';
 
   var clickTimestamp;
@@ -357,18 +356,13 @@ window.AssetLayer = function(map, roadCollection) {
     assetLayer.addMarker(selectedAsset.massTransitStop.createNewMarker());
 
     var applyBlockingOverlays = function() {
-      var overlay = Oskari.clazz.create('Oskari.userinterface.component.Overlay');
-      overlay.overlay('#contentMap,#map-tools');
-      overlay.followResizing(true);
-      return overlay;
+      mapOverlay.show();
     };
-    overlay = applyBlockingOverlays();
+    applyBlockingOverlays();
   };
 
   var removeOverlay = function() {
-    if (overlay) {
-      overlay.close();
-    }
+    mapOverlay.hide();
   };
 
   var addNewAsset = function(asset) {
