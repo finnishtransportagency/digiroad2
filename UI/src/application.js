@@ -189,7 +189,6 @@ var RoadCollection = function(backend) {
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
-      console.log(startupParameters);
       backend.getApplicationSetupWithCallback(function(applicationSetup) {
         appSetup = applicationSetup;
         backend.getConfigurationWithCallback(assetIdFromURL(), function(configuration) {
