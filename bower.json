@@ -17,7 +17,6 @@
     "momentjs": "2.5.0",
     "pikaday": "1.2.0",
     "openlayers": "release-2.13.1",
-    "oskari.org": "https://github.com/finnishtransportagency/oskari.git#master",
     "backbone": "1.1.2"
   },
   "devDependencies": {
