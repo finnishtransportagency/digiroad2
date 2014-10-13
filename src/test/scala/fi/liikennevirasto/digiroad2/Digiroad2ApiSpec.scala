@@ -89,13 +89,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("get map configuration", Tag("db")) {
-    getWithUserAuth("/config") {
+  test("get startup parameters", Tag("db")) {
+    getWithUserAuth("/startupParameters") {
       status should equal(200)
       val responseJson = parse(body)
-      (responseJson \ "mapfull" \ "state" \ "zoom").values should equal(8)
-      (responseJson \ "mapfull" \ "state" \ "east").values should equal("373560.0")
-      (responseJson \ "mapfull" \ "state" \ "north").values should equal("6677676.0")
+      (responseJson \ "zoom").values should equal(8)
+      (responseJson \ "lon").values should equal(373560)
+      (responseJson \ "lat").values should equal(6677676)
     }
   }
 
