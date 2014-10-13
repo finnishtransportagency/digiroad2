@@ -8,8 +8,6 @@ require.config({
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
     UserRolesTestData:                '../test_data/UserRolesTestData',
     EnumeratedPropertyValuesTestData: '../test_data/EnumeratedPropertyValuesTestData',
-    ApplicationSetupTestData:         '../test_data/ApplicationSetupTestData',
-    ConfigurationTestData:            '../test_data/ConfigurationTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
     SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
     AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
@@ -21,8 +19,6 @@ require.config({
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
     'UserRolesTestData': { exports: 'UserRolesTestData' },
     'EnumeratedPropertyValuesTestData': { exports: 'EnumeratedPropertyValuesTestData' },
-    'ApplicationSetupTestData': { exports: 'ApplicationSetupTestData' },
-    'ConfigurationTestData': { exports: 'ConfigurationTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
     'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
     'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
@@ -48,7 +44,6 @@ require(['chai',
     else { mocha.run(); }
   });
 
-  jQuery.browser = {msie: false}; // Fixes broken oskari ie browser test
   Application.start(testHelpers.defaultBackend(), false);
 });
 

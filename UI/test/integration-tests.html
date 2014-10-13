@@ -1,14 +1,17 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="../../bower_components/openlayers/theme/default/style.css">
     <link rel="stylesheet" type="text/css" href="../../bower_components/pikaday/css/pikaday.css">
-    <link rel="stylesheet" type="text/css" href="../css/digiroad2.css?rel=bc259fef7e">
+    <link rel="stylesheet" type="text/css" href="../css/digiroad2.css">
     <script type="text/javascript" src="../../bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="../../bower_components/jquery-migrate/jquery-migrate.min.js"></script>
     <script type="text/javascript" src="../../bower_components/momentjs/min/moment.min.js"></script>
     <script type="text/javascript" src="../../bower_components/lodash/dist/lodash.min.js"></script>
     <script type="text/javascript" src="../../bower_components/backbone/backbone.js"></script>
     <script type="text/javascript" src="../../bower_components/pikaday/pikaday.js"></script>
+    <script type="text/javascript" src="../../bower_components/openlayers/lib/OpenLayers.js"></script>
+    <script type="text/javascript" src="../../bower_components/proj4/dist/proj4.js"></script>
     <script type="text/javascript" src="../src/utils/eventbus.js"></script>
     <script type="text/javascript" src="../src/utils/geometry-calculations.js"></script>
     <script type="text/javascript" src="../src/utils/session.js"></script>
@@ -39,6 +42,7 @@
 <script type="text/javascript" src="../src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="../src/view/RoadLayer.js"></script>
 <script type="text/javascript" src="../src/view/MapView.js"></script>
+<script type="text/javascript" src="../src/view/MapOverlay.js"></script>
 <script type="text/javascript" src="../src/view/MouseCoordinatesDisplay.js"></script>
 <script type="text/javascript" src="../src/view/ScaleBar.js"></script>
 <script type="text/javascript" src="../src/view/TileMapSelector.js"></script>
@@ -49,7 +53,6 @@
 <script type="text/javascript" src="../src/view/SpeedLimitLayer.js"></script>
 <script type="text/javascript" src="../src/map/MassTransitMarker.js"></script>
 <script type="text/javascript" src="../src/map/MassTransitStop.js"></script>
-<script type="text/javascript" src="../../bower_components/oskari.org/bundles/bundle.js"></script>
 <script type="text/javascript" src="../src/application.js"></script>
 <script type="text/javascript" src="../src/actionpanel/ActionPanelBoxes.js"></script>
 <script type="text/javascript" src="../src/actionpanel/ActionPanel.js"></script>

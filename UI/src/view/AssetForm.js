@@ -105,12 +105,10 @@
       var getStreetView = function() {
         var model = selectedAssetModel;
         var render = function() {
-          var wgs84 = OpenLayers.Projection.transform(
-            new OpenLayers.Geometry.Point(model.get('lon'), model.get('lat')),
-            new OpenLayers.Projection('EPSG:3067'), new OpenLayers.Projection('EPSG:4326'));
+          var wgs84 = proj4('EPSG:3067', 'WGS84', [model.get('lon'), model.get('lat')]);
           return $(streetViewTemplate({
-            wgs84X: wgs84.x,
-            wgs84Y: wgs84.y,
+            wgs84X: wgs84[0],
+            wgs84Y: wgs84[1],
             heading: (model.get('validityDirection') === validitydirections.oppositeDirection ? model.get('bearing') - 90 : model.get('bearing') + 90),
             protocol: location.protocol
           })).addClass('street-view');

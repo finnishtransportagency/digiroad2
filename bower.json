@@ -16,8 +16,9 @@
     "jquery-migrate": "1.2.1",
     "momentjs": "2.5.0",
     "pikaday": "1.2.0",
-    "oskari.org": "https://github.com/finnishtransportagency/oskari.git#master",
-    "backbone": "1.1.2"
+    "openlayers": "release-2.13.1",
+    "backbone": "1.1.2",
+    "proj4": "2.3.3"
   },
   "devDependencies": {
     "mocha": "1.13.0",

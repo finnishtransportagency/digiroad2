@@ -2,8 +2,6 @@ define(['AssetsTestData',
         'RoadLinkTestData',
         'UserRolesTestData',
         'EnumeratedPropertyValuesTestData',
-        'ApplicationSetupTestData',
-        'ConfigurationTestData',
         'AssetPropertyNamesTestData',
         'SpeedLimitsTestData',
         'AssetTypePropertiesTestData'],
@@ -11,8 +9,6 @@ define(['AssetsTestData',
                 RoadLinkTestData,
                 UserRolesTestData,
                 EnumeratedPropertyValuesTestData,
-                ApplicationSetupTestData,
-                ConfigurationTestData,
                 AssetPropertyNamesTestData,
                 SpeedLimitsTestData,
                 AssetTypePropertiesTestData) {
@@ -58,8 +54,7 @@ define(['AssetsTestData',
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-      .withApplicationSetupData(ApplicationSetupTestData.generate())
-      .withConfigurationData(ConfigurationTestData.generate(zoomLevel))
+      .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 })
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)

@@ -32,10 +32,6 @@ var RoadCollection = function(backend) {
 };
 
 (function(application) {
-  Oskari.setLang('fi');
-  Oskari.setLoaderMode('dev');
-  var appSetup;
-  var appConfig;
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
@@ -67,7 +63,7 @@ var RoadCollection = function(backend) {
     $(window).on('hashchange', hashChangeHandler);
   };
 
-  var bindEvents = function(backend, models, withTileMaps) {
+  var bindEvents = function() {
     eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
       window.location.hash = '';
     });
@@ -98,37 +94,47 @@ var RoadCollection = function(backend) {
       alert(assetUpdateFailedMessage);
     });
 
-    eventbus.on('applicationSetup:fetched', function(setup) {
-      appSetup = setup;
-      startApplication(backend, models, withTileMaps);
-    });
-
-    eventbus.on('configuration:fetched', function(config) {
-      appConfig = config;
-      startApplication(backend, models, withTileMaps);
-    });
-
-    eventbus.on('assetPropertyNames:fetched', function(assetPropertyNames) {
-      localizedStrings = assetPropertyNames;
-      window.localizedStrings = assetPropertyNames;
-      startApplication(backend, models, withTileMaps);
-    });
-
     eventbus.on('confirm:show', function() { new Confirm(); });
 
     eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
-  var setupMap = function(backend, models, withTileMaps) {
-    var map = Oskari.getSandbox()._modulesByName.MainMapModule.getMap();
+  var createOpenLayersMap = function(startupParameters) {
+    var map = new OpenLayers.Map({
+      controls: [],
+      units: 'm',
+      maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
+      resolutions: [2049, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5],
+      projection: 'EPSG:3067',
+      isBaseLayer: true,
+      center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
+      fallThrough: true,
+      theme: null,
+      zoomMethod: null
+    });
+    var base = new OpenLayers.Layer("BaseLayer", {
+      layerId: 0,
+      isBaseLayer: true,
+      displayInLayerSwitcher: false
+    });
+    map.addLayer(base);
+    map.render('mapdiv');
+    map.zoomTo(startupParameters.zoom);
+    return map;
+  };
+
+  var setupMap = function(backend, models, withTileMaps, startupParameters) {
+    var map = createOpenLayersMap(startupParameters);
     map.addControl(new OpenLayers.Control.Navigation());
+
+    var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
     var layers = {
       road: new RoadLayer(map, roadCollection),
-      asset: new AssetLayer(map, roadCollection),
+      asset: new AssetLayer(map, roadCollection, mapOverlay),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
@@ -150,17 +156,15 @@ var RoadCollection = function(backend) {
     applicationModel.moveMap(map.getZoom(), map.getExtent());
   };
 
-  var startApplication = function(backend, models, withTileMaps) {
-    // check that both setup and config are loaded
-    // before actually starting the application
-    if (appSetup && appConfig && localizedStrings) {
-      var app = Oskari.app;
-      app.setApplicationSetup(appSetup);
-      app.setConfiguration(appConfig);
-      app.startApplication(function() {
-        setupMap(backend, models, withTileMaps);
-        eventbus.trigger('application:initialized');
-      });
+  var setupProjections = function() {
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+  };
+
+  var startApplication = function(backend, models, withTileMaps, startupParameters) {
+    if (localizedStrings) {
+      setupProjections();
+      setupMap(backend, models, withTileMaps, startupParameters);
+      eventbus.trigger('application:initialized');
     }
   };
 
@@ -173,21 +177,23 @@ var RoadCollection = function(backend) {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit
     };
-    bindEvents(backend, models, tileMaps);
+    bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit);
     ActionPanel.initialize(backend, selectedSpeedLimit);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    backend.getApplicationSetup();
-    backend.getConfiguration(assetIdFromURL());
-    backend.getAssetPropertyNames();
+    backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
+      backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+        localizedStrings = assetPropertyNames;
+        window.localizedStrings = assetPropertyNames;
+        startApplication(backend, models, tileMaps, startupParameters);
+      });
+    });
   };
 
   application.restart = function(backend, withTileMaps) {
-    appSetup = undefined;
-    appConfig = undefined;
     localizedStrings = undefined;
     this.start(backend, withTileMaps);
   };
