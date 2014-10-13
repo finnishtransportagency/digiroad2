@@ -156,8 +156,13 @@ var RoadCollection = function(backend) {
     applicationModel.moveMap(map.getZoom(), map.getExtent());
   };
 
+  var setupProjections = function() {
+    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+  };
+
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
     if (localizedStrings) {
+      setupProjections();
       setupMap(backend, models, withTileMaps, startupParameters);
       eventbus.trigger('application:initialized');
     }
