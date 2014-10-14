@@ -134,7 +134,7 @@ var RoadCollection = function(backend) {
     var geometryUtils = new GeometryUtils();
     var layers = {
       road: new RoadLayer(map, roadCollection),
-      asset: new AssetLayer(map, roadCollection, mapOverlay),
+      asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping()),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,

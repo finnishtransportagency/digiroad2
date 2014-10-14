@@ -1,5 +1,6 @@
-define(['chai', 'assetGrouping'], function(chai, assetGrouping) {
+define(['chai', 'assetGrouping'], function(chai, AssetGrouping) {
   var assert = chai.assert;
+  var assetGrouping = new AssetGrouping();
 
   describe('Asset grouping', function() {
     describe('should be distance aware', function() {

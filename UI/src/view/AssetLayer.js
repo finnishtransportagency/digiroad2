@@ -1,4 +1,4 @@
-window.AssetLayer = function(map, roadCollection, mapOverlay) {
+window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');

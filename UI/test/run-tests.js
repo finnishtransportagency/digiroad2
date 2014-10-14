@@ -44,7 +44,7 @@ require.config({
           exports: 'GeometryUtils'
         },
         'assetGrouping': {
-            exports: 'assetGrouping'
+            exports: 'AssetGrouping'
         }
     },
     waitSeconds: 10
