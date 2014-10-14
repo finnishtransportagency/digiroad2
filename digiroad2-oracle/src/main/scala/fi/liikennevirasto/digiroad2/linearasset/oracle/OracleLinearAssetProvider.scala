@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -12,7 +12,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 
-class OracleLinearAssetProvider extends LinearAssetProvider {
+class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
   private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[Point]), Int)): SpeedLimitLink = {
     val ((id, roadLinkId, sideCode, limit, points), positionNumber) = linkAndPositionNumber
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber)
@@ -31,7 +31,11 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds).groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
+      val (speedLimits, roadLinksUncoveredBySpeedLimits) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds)
+      if (roadLinksUncoveredBySpeedLimits.nonEmpty) {
+        eventbus.publish("speedLimits:uncoveredRoadLinksFound", roadLinksUncoveredBySpeedLimits)
+      }
+      speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
@@ -72,6 +76,12 @@ class OracleLinearAssetProvider extends LinearAssetProvider {
     Database.forDataSource(ds).withDynTransaction {
       val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, limit, username)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
+    }
+  }
+
+  override def fillUncoveredRoadLinks(uncoveredRoadLinks: Map[Long, RoadLinkUncoveredBySpeedLimit]): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      OracleLinearAssetDao.fillUncoveredRoadLinks(uncoveredRoadLinks)
     }
   }
 }
