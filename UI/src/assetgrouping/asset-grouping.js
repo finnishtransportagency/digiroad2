@@ -1,13 +1,10 @@
 (function (root) {
-  root.AssetGrouping = function() {
-    // TODO: Take zoom-level dependent grouping distance in use when group visualization has been improved
-    //    var delta = Math.pow((zoomlevels.maxZoomLevel + 1) - zoomLevel, 2) * 6;
-    var delta = 6;
+  root.AssetGrouping = function(applicationModel) {
     var doGroupingByDistance = function(items, zoomLevel) {
       var result = [];
       var item;
       var findProximityStops = function(x) {
-        return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < delta * delta;
+        return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < applicationModel.assetGroupingDistance;
       };
       while (_.isEmpty(items) === false) {
         item = _.first(items);
@@ -28,7 +25,7 @@
 
       return _.chain(uiAssets)
         .filter(function(uiAsset) {
-          return calculateDistanceToBackendAsset(uiAsset) < delta * delta;
+          return calculateDistanceToBackendAsset(uiAsset) < applicationModel.assetGroupingDistance;
         })
         .sortBy(calculateDistanceToBackendAsset)
         .head()

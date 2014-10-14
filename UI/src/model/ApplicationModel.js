@@ -43,7 +43,8 @@
       isDirty: function() {
         return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty();
       },
-      assetDragDelay: 100
+      assetDragDelay: 100,
+      assetGroupingDistance: 36
     };
   };
 })(this);
