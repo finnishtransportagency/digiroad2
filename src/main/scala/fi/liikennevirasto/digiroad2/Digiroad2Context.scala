@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkUncoveredBySpeedLimit, LinearAssetProvider}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
@@ -18,6 +18,13 @@ class ValluActor extends Actor {
   }
 }
 
+class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
+  def receive = {
+    case x: Map[Long, RoadLinkUncoveredBySpeedLimit] => linearAssetProvider.fillUncoveredRoadLinks(x)
+    case _                                           => println("speedLimitFiller: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -27,8 +34,12 @@ object Digiroad2Context {
   }
 
   val system = ActorSystem("Digiroad2")
+
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
+
+  val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
+  eventbus.subscribe(speedLimitFiller, "speedLimits:uncoveredRoadLinksFound")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -42,7 +53,10 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetProvider: LinearAssetProvider = {
-    Class.forName(properties.getProperty("digiroad2.linearAssetProvider")).newInstance().asInstanceOf[LinearAssetProvider]
+    Class.forName(properties.getProperty("digiroad2.linearAssetProvider"))
+      .getDeclaredConstructor(classOf[DigiroadEventBus])
+      .newInstance(eventbus)
+      .asInstanceOf[LinearAssetProvider]
   }
 
   lazy val userProvider: UserProvider = {
