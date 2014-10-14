@@ -19,6 +19,10 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
       var originalMarker1Position;
       before(function() {
         var marker1 = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAsset1.id});
+        applicationModel.assetGroupingDistance = geometrycalculator.getSquaredDistanceBetweenPoints(testAsset1, {
+          lon: testAsset2.lon - 1,
+          lat: testAsset2.lat + 1
+        });
         originalMarker1Position = marker1.bounds;
         testHelpers.clickVisibleEditModeButton();
         testHelpers.clickMarker(testAsset2.id, openLayersMap);
