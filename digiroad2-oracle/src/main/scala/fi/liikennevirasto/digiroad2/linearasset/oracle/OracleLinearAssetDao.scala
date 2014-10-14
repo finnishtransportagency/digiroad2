@@ -322,7 +322,7 @@ object OracleLinearAssetDao {
           join LRM_POSITION pos on al.position_id = pos.id
           where a.asset_type_id = 20 and pos.road_link_id in (select id from road_link_lookup)
               """
-    val coveredRoadLinks: Seq[(Long)] = Q.queryNA[(Long)](sql).iterator().toSeq
+    val coveredRoadLinks: Seq[Long] = Q.queryNA[Long](sql).iterator().toSeq
     val roadLinkIdsToBeFilled = uncoveredRoadLinks.keySet -- coveredRoadLinks.toSet
     val roadLinksToBeFilled = roadLinkIdsToBeFilled.map { id =>
       val speedLimitId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
