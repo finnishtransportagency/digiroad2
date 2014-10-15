@@ -44,7 +44,11 @@
         return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty();
       },
       assetDragDelay: 100,
-      assetGroupingDistance: 36
+      assetGroupingDistance: 36,
+      isProduction: function() {
+        return window.location.href.indexOf('testiextranet') != 0;
+      }
     };
   };
 })(this);
+

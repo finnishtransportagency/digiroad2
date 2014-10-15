@@ -8,8 +8,10 @@
       var assetBox = new ActionPanelBoxes.AssetBox();
       $('.action-panels').append(assetBox.element);
 
-      var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
-      $('.action-panels').append(speedLimitBox.element);
+      if (!applicationModel.isProduction()) {
+        var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
+        $('.action-panels').append(speedLimitBox.element);
+      }
 
       backend.getUserRoles();
 
