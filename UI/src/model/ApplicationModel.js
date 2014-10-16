@@ -46,7 +46,7 @@
       assetDragDelay: 100,
       assetGroupingDistance: 36,
       isProduction: function() {
-        return window.location.href.indexOf('testiextranet') != 0;
+        return window.location.href.indexOf('testiextranet') !== -1;
       }
     };
   };
