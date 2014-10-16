@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
+import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
@@ -17,6 +18,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.RoadLinkService
+import collection.JavaConversions._
 
 object OracleLinearAssetDao {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -99,23 +101,12 @@ object OracleLinearAssetDao {
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, RoadLinkUncoveredBySpeedLimit]) = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds)
 
-    updateRoadLinkLookupTable(linksWithGeometries.map(_._1))
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
     val linkGeometries: Map[Long, (Seq[Point], Double, Int)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, Int)]) { (acc, linkWithGeometry) =>
         acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4))
       }
-    val sql = """
-          select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
-          from ASSET a
-          join ASSET_LINK al on a.id = al.asset_id
-          join LRM_POSITION pos on al.position_id = pos.id
-          join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
-          join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-          join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
-          where a.asset_type_id = 20 and pos.road_link_id in (select id from road_link_lookup)
-        """
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = Q.queryNA[(Long, Long, Int, Int, Double, Double)](sql).iterator().toSeq
 
     val uncoveredLinkIds = findUncoveredLinkIds(linksWithGeometries, assetLinks)
     val roadLinksUncoveredBySpeedLimits: Map[Long, RoadLinkUncoveredBySpeedLimit] = uncoveredLinkIds.toSeq.map { roadLinkId =>
