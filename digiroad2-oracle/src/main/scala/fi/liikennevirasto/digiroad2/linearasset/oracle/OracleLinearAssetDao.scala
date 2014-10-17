@@ -305,15 +305,7 @@ object OracleLinearAssetDao {
   }
 
   def fillUncoveredRoadLinks(uncoveredRoadLinks: Map[Long, RoadLinkUncoveredBySpeedLimit]): Unit = {
-    updateRoadLinkLookupTable(uncoveredRoadLinks.keys.toSeq)
-    val sql = """
-          select pos.road_link_id
-          from ASSET a
-          join ASSET_LINK al on a.id = al.asset_id
-          join LRM_POSITION pos on al.position_id = pos.id
-          where a.asset_type_id = 20 and pos.road_link_id in (select id from road_link_lookup)
-              """
-    val coveredRoadLinks: Seq[Long] = Q.queryNA[Long](sql).iterator().toSeq
+    val coveredRoadLinks: Seq[Long] = OracleArray.fetchAssetLinksByRoadLinkIds(uncoveredRoadLinks.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn)).map(_._1)
     val roadLinkIdsToBeFilled = uncoveredRoadLinks.keySet -- coveredRoadLinks.toSet
     val roadLinksToBeFilled = roadLinkIdsToBeFilled.map { id =>
       val speedLimitId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
