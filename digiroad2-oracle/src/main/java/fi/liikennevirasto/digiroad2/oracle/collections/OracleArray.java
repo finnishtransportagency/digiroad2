@@ -33,7 +33,7 @@ public class OracleArray {
             oraclePreparedStatement.setArray(1, oracleArray);
             ResultSet resultSet = oraclePreparedStatement.executeQuery();
             try {
-                ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>> assetLinks = new ArrayList<>();
+                ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>> assetLinks = new ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>>();
                 while (resultSet.next()) {
                     long id = resultSet.getLong(1);
                     long roadLinkId = resultSet.getLong(2);
