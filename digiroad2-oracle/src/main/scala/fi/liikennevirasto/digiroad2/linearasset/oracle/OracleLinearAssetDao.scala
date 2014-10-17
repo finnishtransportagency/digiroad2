@@ -86,7 +86,7 @@ object OracleLinearAssetDao {
     partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, RoadLinkUncoveredBySpeedLimit]) = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, RoadLinkUncoveredBySpeedLimit], Map[Long, (Seq[Point], Double, Int)]) = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds)
 
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
@@ -103,23 +103,12 @@ object OracleLinearAssetDao {
       roadLinkId -> RoadLinkUncoveredBySpeedLimit(roadLinkId, 1, limitValueLookup(roadLinkType), 0, length)
     }.toMap
 
-    val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
-    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
-    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
-      val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
-      unfilledSegments.map { segment =>
-        generateSpeedLimit(roadLinkId, segment, 1, roadLinkType)
-      }
-    }
-
-    createSpeedLimits(generatedPartialLinkSpeedLimits)
-
-    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = (assetLinks ++ generatedPartialLinkSpeedLimits).map { link =>
+    val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
     }
-    (speedLimits, roadLinksUncoveredBySpeedLimits)
+    (speedLimits, roadLinksUncoveredBySpeedLimits, linkGeometries)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
@@ -301,5 +290,18 @@ object OracleLinearAssetDao {
       (speedLimitId, roadLink.roadLinkId, roadLink.sideCode, roadLink.speedLimitValue, roadLink.startMeasure, roadLink.endMeasure)
     }.toSeq
     createSpeedLimits(roadLinksToBeFilled)
+  }
+
+  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
+    val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
+    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
+    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+      val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
+      unfilledSegments.map { segment =>
+        generateSpeedLimit(roadLinkId, segment, 1, roadLinkType)
+      }
+    }
+    createSpeedLimits(generatedPartialLinkSpeedLimits)
   }
 }

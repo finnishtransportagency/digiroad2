@@ -40,6 +40,7 @@ object Digiroad2Context {
 
   val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
   eventbus.subscribe(speedLimitFiller, "speedLimits:uncoveredRoadLinksFound")
+  eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
