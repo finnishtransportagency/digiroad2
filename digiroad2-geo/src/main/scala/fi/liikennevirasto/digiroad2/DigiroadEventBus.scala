@@ -7,6 +7,8 @@ import akka.event.LookupClassification
 import akka.event.EventBus
 import akka.actor.ActorRef
 
+case class Message(s: String, payload: Any)
+
 class DigiroadEventBus extends EventBus with LookupClassification {
   case class Event(name: String, value: Any)
   type Classifier = String
@@ -20,6 +22,10 @@ class DigiroadEventBus extends EventBus with LookupClassification {
 
   def publish(name: String, value: Any): Unit = {
     publish(Event(name, value))
+  }
+
+  def publish(msg: Message): Unit = {
+    publish(Event(msg.s, msg))
   }
 
   override protected def compareSubscribers(a: Subscriber, b: Subscriber): Int =
