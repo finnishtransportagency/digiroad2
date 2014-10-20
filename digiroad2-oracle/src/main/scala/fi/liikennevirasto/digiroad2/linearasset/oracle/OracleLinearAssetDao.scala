@@ -96,19 +96,12 @@ object OracleLinearAssetDao {
         acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4))
       }
 
-    val uncoveredLinkIds = findUncoveredLinkIds(linkGeometries.keySet, assetLinks)
-    val roadLinksUncoveredBySpeedLimits: Map[Long, RoadLinkUncoveredBySpeedLimit] = uncoveredLinkIds.toSeq.map { roadLinkId =>
-      val length = linkGeometries(roadLinkId)._2
-      val roadLinkType = linkGeometries(roadLinkId)._3
-      roadLinkId -> RoadLinkUncoveredBySpeedLimit(roadLinkId, 1, limitValueLookup(roadLinkType), 0, length)
-    }.toMap
-
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>
       val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
     }
-    (speedLimits, roadLinksUncoveredBySpeedLimits, linkGeometries)
+    (speedLimits, Map.empty, linkGeometries)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
@@ -294,6 +287,15 @@ object OracleLinearAssetDao {
 
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
+
+    val uncoveredLinkIds = findUncoveredLinkIds(linkGeometries.keySet, assetLinks)
+    val roadLinksUncoveredBySpeedLimits: Map[Long, RoadLinkUncoveredBySpeedLimit] = uncoveredLinkIds.toSeq.map { roadLinkId =>
+      val length = linkGeometries(roadLinkId)._2
+      val roadLinkType = linkGeometries(roadLinkId)._3
+      roadLinkId -> RoadLinkUncoveredBySpeedLimit(roadLinkId, 1, limitValueLookup(roadLinkType), 0, length)
+    }.toMap
+    fillUncoveredRoadLinks(roadLinksUncoveredBySpeedLimits)
+
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
     val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>

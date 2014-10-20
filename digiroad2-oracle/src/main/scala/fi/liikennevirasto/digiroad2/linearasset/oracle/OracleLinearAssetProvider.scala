@@ -33,6 +33,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     Database.forDataSource(ds).withDynTransaction {
       val (speedLimits, roadLinksUncoveredBySpeedLimits, linkGeometries) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds)
       if (roadLinksUncoveredBySpeedLimits.nonEmpty) {
+        println("**** UNCOVERED ROAD LINKS FOUND! ****")
         eventbus.publish(Message("speedLimits:uncoveredRoadLinksFound", roadLinksUncoveredBySpeedLimits))
       }
       eventbus.publish(Message("speedLimits:linkGeometriesRetrieved", linkGeometries))
