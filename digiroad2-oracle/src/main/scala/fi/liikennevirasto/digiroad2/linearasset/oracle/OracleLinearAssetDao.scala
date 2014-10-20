@@ -58,21 +58,7 @@ object OracleLinearAssetDao {
     }
   }
 
-  def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
-    roadLinks -- speedLimitLinks.map(_._2).toSet
-  }
 
-  def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
-    roadLinks intersect speedLimitLinks.map(_._2).toSet
-  }
-
-  private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
-
-  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
-    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-    val value = limitValueLookup(roadLinkType)
-    (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
-  }
 
   private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, (Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Seq[(Long, Int, Seq[(Double, Double)])] = {
     val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Int, Double, Double)]] = speedLimitLinks.groupBy(_._2)
@@ -147,33 +133,6 @@ object OracleLinearAssetDao {
   def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
-  }
-
-  private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
-    if (!speedLimits.isEmpty) {
-      val sb = new StringBuilder()
-      sb.append("INSERT ALL\n")
-      speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
-        val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
-        val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-        sb.append(
-          s"""
-            into asset(id, asset_type_id, created_by, created_date)
-            values ($speedLimitId, 20, 'automatic_speed_limit_generation', sysdate)
-
-            into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-            values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
-
-            into asset_link(asset_id, position_id)
-            values ($speedLimitId, $lrmPositionId)
-
-            into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-            values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
-          """)
-      }
-      sb.append("\nSELECT * FROM DUAL\n")
-      Q.updateNA(sb.toString).execute()
-    }
   }
 
   def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
@@ -271,6 +230,48 @@ object OracleLinearAssetDao {
     } else {
       dynamicSession.rollback()
       None
+    }
+  }
+
+  private def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
+    roadLinks -- speedLimitLinks.map(_._2).toSet
+  }
+
+  private def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
+    roadLinks intersect speedLimitLinks.map(_._2).toSet
+  }
+
+  private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
+  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
+    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val value = limitValueLookup(roadLinkType)
+    (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
+  }
+
+  private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
+    if (!speedLimits.isEmpty) {
+      val sb = new StringBuilder()
+      sb.append("INSERT ALL\n")
+      speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+        val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+        val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+        sb.append(
+          s"""
+            into asset(id, asset_type_id, created_by, created_date)
+            values ($speedLimitId, 20, 'automatic_speed_limit_generation', sysdate)
+
+            into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+            values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+
+            into asset_link(asset_id, position_id)
+            values ($speedLimitId, $lrmPositionId)
+
+            into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
+            values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+          """)
+      }
+      sb.append("\nSELECT * FROM DUAL\n")
+      Q.updateNA(sb.toString).execute()
     }
   }
 
