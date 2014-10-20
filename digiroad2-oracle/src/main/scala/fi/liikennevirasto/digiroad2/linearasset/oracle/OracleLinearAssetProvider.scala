@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{GeometryUtils, SpeedLimitLinkPositions}
-
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
@@ -31,10 +30,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      val (speedLimits, roadLinksUncoveredBySpeedLimits) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds)
-      if (roadLinksUncoveredBySpeedLimits.nonEmpty) {
-        eventbus.publish("speedLimits:uncoveredRoadLinksFound", roadLinksUncoveredBySpeedLimits)
-      }
+      val (speedLimits, linkGeometries) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds)
+      eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
@@ -79,9 +76,9 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
-  override def fillUncoveredRoadLinks(uncoveredRoadLinks: Map[Long, RoadLinkUncoveredBySpeedLimit]): Unit = {
+  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.fillUncoveredRoadLinks(uncoveredRoadLinks)
+      OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
     }
   }
 }

@@ -20,8 +20,8 @@ class ValluActor extends Actor {
 
 class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case x: Map[Long, RoadLinkUncoveredBySpeedLimit] => linearAssetProvider.fillUncoveredRoadLinks(x)
-    case _                                           => println("speedLimitFiller: Received unknown message")
+    case x: Map[Long, (Seq[Point], Double, Int)] => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
+    case _                                       => println("speedLimitFiller: Received unknown message")
   }
 }
 
@@ -39,7 +39,7 @@ object Digiroad2Context {
   eventbus.subscribe(vallu, "asset:saved")
 
   val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
-  eventbus.subscribe(speedLimitFiller, "speedLimits:uncoveredRoadLinksFound")
+  eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
