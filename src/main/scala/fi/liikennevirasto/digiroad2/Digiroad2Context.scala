@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.Props
-import fi.liikennevirasto.digiroad2.Message
 
 class ValluActor extends Actor {
   def receive = {
@@ -21,8 +20,8 @@ class ValluActor extends Actor {
 
 class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case Message("speedLimits:linkGeometriesRetrieved", x) => linearAssetProvider.fillPartiallyFilledRoadLinks(x.asInstanceOf[Map[Long, (Seq[Point], Double, Int)]])
-    case _                                           => println("speedLimitFiller: Received unknown message")
+    case x: Map[Long, (Seq[Point], Double, Int)] => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
+    case _                                       => println("speedLimitFiller: Received unknown message")
   }
 }
 
