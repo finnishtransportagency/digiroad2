@@ -58,8 +58,8 @@ object OracleLinearAssetDao {
     }
   }
 
-  def findUncoveredLinkIds(linksWithGeometries: Seq[(Long, Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
-    linksWithGeometries.map(_._1).toSet -- speedLimitLinks.map(_._2).toSet
+  def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
+    roadLinks -- speedLimitLinks.map(_._2).toSet
   }
 
   def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Set[Long] = {
@@ -96,7 +96,7 @@ object OracleLinearAssetDao {
         acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4))
       }
 
-    val uncoveredLinkIds = findUncoveredLinkIds(linksWithGeometries, assetLinks)
+    val uncoveredLinkIds = findUncoveredLinkIds(linkGeometries.keySet, assetLinks)
     val roadLinksUncoveredBySpeedLimits: Map[Long, RoadLinkUncoveredBySpeedLimit] = uncoveredLinkIds.toSeq.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
