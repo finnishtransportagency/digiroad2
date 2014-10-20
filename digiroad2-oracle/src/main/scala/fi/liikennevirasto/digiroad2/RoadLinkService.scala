@@ -55,21 +55,21 @@ object RoadLinkService {
             select objectid, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, floor(functionalroadclass / 10) as roadLinkType
               from tielinkki
               where mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and
-                    mdsys.sdo_filter(tielinkki.shape,
-                                      sdo_cs.viewport_transform(
-                                        mdsys.sdo_geometry(
-                                          2003,
-                                          0,
-                                          NULL,
-                                          mdsys.sdo_elem_info_array(1,1003,3),
-                                          mdsys.sdo_ordinate_array($leftBottomX,
-                                                                   $leftBottomY,
-                                                                   $rightTopX,
-                                                                   $rightTopY)
-                                        ),
-                                        3067
-                                      ),
-                                      'querytype=WINDOW'
+                    mdsys.sdo_filter(shape,
+                                     sdo_cs.viewport_transform(
+                                       mdsys.sdo_geometry(
+                                         2003,
+                                         0,
+                                         NULL,
+                                         mdsys.sdo_elem_info_array(1,1003,3),
+                                         mdsys.sdo_ordinate_array($leftBottomX,
+                                                                  $leftBottomY,
+                                                                  $rightTopX,
+                                                                  $rightTopY)
+                                       ),
+                                       3067
+                                     ),
+                                     'querytype=WINDOW'
                                     ) = 'TRUE'
         """
 
