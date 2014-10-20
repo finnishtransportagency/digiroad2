@@ -289,12 +289,12 @@ object OracleLinearAssetDao {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
 
     val uncoveredLinkIds = findUncoveredLinkIds(linkGeometries.keySet, assetLinks)
-    val roadLinksUncoveredBySpeedLimits: Map[Long, RoadLinkUncoveredBySpeedLimit] = uncoveredLinkIds.toSeq.map { roadLinkId =>
+    val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Int, Double, Double)] = uncoveredLinkIds.toSeq.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
-      roadLinkId -> RoadLinkUncoveredBySpeedLimit(roadLinkId, 1, limitValueLookup(roadLinkType), 0, length)
-    }.toMap
-    fillUncoveredRoadLinks(roadLinksUncoveredBySpeedLimits)
+      generateSpeedLimit(roadLinkId, (0.0, length), 1, roadLinkType)
+    }
+    createSpeedLimits(roadLinksUncoveredBySpeedLimits)
 
     val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
     val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
