@@ -274,17 +274,6 @@ object OracleLinearAssetDao {
     }
   }
 
-  def fillUncoveredRoadLinks(uncoveredRoadLinks: Map[Long, RoadLinkUncoveredBySpeedLimit]): Unit = {
-    val coveredRoadLinks: Seq[Long] = OracleArray.fetchAssetLinksByRoadLinkIds(uncoveredRoadLinks.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn)).map(_._2)
-    val roadLinkIdsToBeFilled = uncoveredRoadLinks.keySet -- coveredRoadLinks.toSet
-    val roadLinksToBeFilled = roadLinkIdsToBeFilled.map { id =>
-      val speedLimitId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-      val roadLink = uncoveredRoadLinks(id)
-      (speedLimitId, roadLink.roadLinkId, roadLink.sideCode, roadLink.speedLimitValue, roadLink.startMeasure, roadLink.endMeasure)
-    }.toSeq
-    createSpeedLimits(roadLinksToBeFilled)
-  }
-
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
 

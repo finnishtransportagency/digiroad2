@@ -77,12 +77,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
-  override def fillUncoveredRoadLinks(uncoveredRoadLinks: Map[Long, RoadLinkUncoveredBySpeedLimit]): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.fillUncoveredRoadLinks(uncoveredRoadLinks)
-    }
-  }
-
   override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
