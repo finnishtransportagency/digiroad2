@@ -212,38 +212,10 @@
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="StopType" minOccurs="4" maxOccurs="unbounded">
-					<xs:annotation>
-						<xs:documentation>Indicates whether certain traffic type is
-							enabled or not.</xs:documentation>
-					</xs:annotation>
-					<xs:complexType>
-						<xs:simpleContent>
-							<xs:extension base="xs:boolean">
-								<xs:attribute name="name" type="StopTypeDetail"/>
-							</xs:extension>
-						</xs:simpleContent>
-					</xs:complexType>
-				</xs:element>
+				<xs:element name="StopType" type="xs:nonNegativeInteger"/>
 			</xs:sequence>
 		</xs:complexType>
-		<xs:unique name="UniqueTrafficType">
-			<xs:selector xpath="StopType"/>
-			<xs:field xpath="@type"/>
-		</xs:unique>
 	</xs:element>
-	<xs:simpleType name="StopTypeDetail">
-		<xs:annotation>
-			<xs:documentation>This restricts what kind of traffic types are
-				supported.</xs:documentation>
-		</xs:annotation>
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="LOCAL_BUS"/>
-			<xs:enumeration value="EXPRESS_BUS"/>
-			<xs:enumeration value="NON_STOP_EXPRESS_BUS"/>
-			<xs:enumeration value="VIRTUAL_STOP"/>
-		</xs:restriction>
-	</xs:simpleType>
 
 	<xs:simpleType name="BearingDescriptionType">
 		<xs:annotation>
