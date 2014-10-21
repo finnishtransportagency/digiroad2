@@ -87,7 +87,11 @@ object OracleLinearAssetDao {
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
       (assetId, roadLinkId, sideCode, speedLimit, geometry)
     }
-    (speedLimits, linkGeometries)
+    // FIXME: Remove filtering once speed limits fetched from DR1 production
+    val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
+      speedLimit._5.isEmpty
+    }
+    (filteredSpeedLimits, linkGeometries)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {

@@ -52,8 +52,8 @@ object RoadLinkService {
 
       val query =
         sql"""
-            select objectid, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, floor(functionalroadclass / 10) as roadLinkType
-              from tielinkki
+            select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, floor(functionalroadclass / 10) as roadLinkType
+              from tielinkki_ctas
               where mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and
                     mdsys.sdo_filter(shape,
                                      sdo_cs.viewport_transform(
