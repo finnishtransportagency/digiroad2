@@ -212,7 +212,7 @@
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="StopType" type="xs:nonNegativeInteger"/>
+				<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

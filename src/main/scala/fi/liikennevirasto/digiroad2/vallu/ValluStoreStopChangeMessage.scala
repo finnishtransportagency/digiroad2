@@ -62,11 +62,10 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
   }
 
   def getBusstopBlock(asset: AssetWithProperties) = {
-    val busStopTypes = describeBusStopTypes(asset)
-    <StopType name="LOCAL_BUS">{busStopTypes._1}</StopType>
-    <StopType name="EXPRESS_BUS">{busStopTypes._2}</StopType>
-    <StopType name="NON_STOP_EXPRESS_BUS">{busStopTypes._3}</StopType>
-    <StopType name="VIRTUAL_STOP">{busStopTypes._4}</StopType>
+    val busStopTypes = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(x => x.propertyValue.toLong)
+    busStopTypes.map { busStopType =>
+      <StopType>{busStopType}</StopType>
+    }
   }
 
   private def localizedNameIsDefined(asset: AssetWithProperties): Boolean = {
