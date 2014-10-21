@@ -82,7 +82,7 @@
 								</xs:annotation>
 							</xs:element>
 
-							<xs:element ref="StopAttribute"/>
+							<xs:element name="StopAttribute" type="StopAttribute"/>
 
 							<xs:element name="Equipment" type="xs:string">
 								<xs:annotation>
@@ -205,17 +205,15 @@
 		</xs:attribute>
 	</xs:complexType>
 
-	<xs:element name="StopAttribute">
+	<xs:complexType name="StopAttribute">
 		<xs:annotation>
 			<xs:documentation>This element lists traffic types that this stop
 				supports.</xs:documentation>
 		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
+		<xs:sequence>
+			<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
 
 	<xs:simpleType name="BearingDescriptionType">
 		<xs:annotation>

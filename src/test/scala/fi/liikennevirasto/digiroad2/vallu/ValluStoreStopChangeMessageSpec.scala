@@ -129,11 +129,8 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   it must "specify busstop types" in {
     val xml = validateAndParseTestAssetMessage(testAsset)
-    val stopAttributes = xml \ "StopAttribute" \ "StopType"
-    stopAttributes(0) must equal(<StopType name="LOCAL_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">0</StopType>)
-    stopAttributes(1) must equal(<StopType name="EXPRESS_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">0</StopType>)
-    stopAttributes(2) must equal(<StopType name="NON_STOP_EXPRESS_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">0</StopType>)
-    stopAttributes(3) must equal(<StopType name="VIRTUAL_STOP" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">0</StopType>)
+    val stopAttributes = xml \ "StopAttribute"
+    (stopAttributes \ "StopType") must be ('empty)
   }
 
   it must "specify busstop types when values present" in {
@@ -143,10 +140,10 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
       Property(id = 1, publicId = "pysakin_tyyppi", propertyType = "text", values = busTypes)
     )))
     val stopAttributes = xml \ "StopAttribute" \ "StopType"
-    stopAttributes(0) must equal(<StopType name="LOCAL_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</StopType>)
-    stopAttributes(1) must equal(<StopType name="EXPRESS_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</StopType>)
-    stopAttributes(2) must equal(<StopType name="NON_STOP_EXPRESS_BUS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</StopType>)
-    stopAttributes(3) must equal(<StopType name="VIRTUAL_STOP" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</StopType>)
+    stopAttributes(0) must equal(<StopType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2</StopType>)
+    stopAttributes(1) must equal(<StopType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">3</StopType>)
+    stopAttributes(2) must equal(<StopType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">4</StopType>)
+    stopAttributes(3) must equal(<StopType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">5</StopType>)
   }
 
   it must "specify modified timestamp" in {
