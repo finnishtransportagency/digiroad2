@@ -211,7 +211,19 @@
 				supports.</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="StopType" type="xs:nonNegativeInteger" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            This element defines type of stop. Stop can have multiple types. If there are no types on a stop, the type of the stop is undefined or unknown.
+            Type is specified as one of the following integers:
+            1 - Tram stop
+            2 - Local bus stop
+            3 - Express bus stop
+            4 - Non-stop express bus stop
+            5 - Virtual stop
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
 		</xs:sequence>
 	</xs:complexType>
 
