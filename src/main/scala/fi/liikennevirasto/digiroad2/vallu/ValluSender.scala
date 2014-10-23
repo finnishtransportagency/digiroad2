@@ -26,7 +26,6 @@ object ValluSender extends AssetPropertiesReader {
   val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
 
   def postToVallu(municipalityName: String, asset: AssetWithProperties) {
-    if (isTramStop(asset)) return
     val payload = ValluStoreStopChangeMessage.create(municipalityName, asset)
     withLogging(payload) {
       postToVallu
