@@ -175,6 +175,8 @@ _Joukkoliikenteen pys&auml;kkien haku._
 
 Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
 
+Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse. Nopeusrajoitus tulee n&auml;kyviin, kun sovellus on generoinut sen.
+
 ![Nopeusrajoitusten valinta](k18.jpg)
 
 _Nopeusrajoitusten valinta._
