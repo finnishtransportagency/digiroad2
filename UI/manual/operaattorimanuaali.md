@@ -86,7 +86,15 @@ Vienti luo FTP-palvelimelle pys&auml;kkitiedot zip-pakattuna .csv-tiedostona nim
 
 K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedoston k&auml;ytt&ouml;&ouml;nottoymp&auml;rist&ouml;n deployment-hakemistosta release-hakemistoon osana k&auml;ytt&ouml;&ouml;nottoa. N&auml;in ymp&auml;rist&ouml;kohtaista 'ftp.conf'-tiedostoa, joka sis&auml;lt&auml;&auml; kirjautumistietoja, voidaan yll&auml;pit&auml;&auml; tietoturvallisesti k&auml;ytt&ouml;&ouml;nottopalvelimella. 
 
-### 2.1 XML- viestin l&auml;hetys VALLUun###
+<!---
+###3.1.1 Pys&auml;kkimuutosten reaaliaikainen p&auml;ivitys Vallu-j&auml;rjestelm&auml;&auml;n###
+
+Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee reaaliaikaisesti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
+
+Muuttuneita tietoja voi tarkastella lokista: https://devtest.liikennevirasto.fi/digiroad/vallu-server.log 
+-->
+
+### 3.1.2 XML- viestin l&auml;hetys VALLUun###
 
 Tallentamisen yhteydess&auml; l&auml;hetet&auml;&auml;n VALLU- j&auml;rjestelm&auml;&auml;n xml- viesti.
 
@@ -96,6 +104,7 @@ digiroad2.vallu.server.sending_enabled=true
 digiroad2.vallu.server.address=http://localhost:9002
 ```
 L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta.
+
 
 3.2 Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------------------------
