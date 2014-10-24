@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import org.scalatest.{MustMatchers, FunSuite}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, AssetRow}
 import fi.liikennevirasto.digiroad2.asset.Modification
+import scala.slick.driver.JdbcDriver.backend.Database
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
@@ -41,6 +43,16 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
     properties.head.publicId must equal("sometestproperty")
     properties.head.values.head.propertyDisplayValue must equal(Some("foo"))
     properties.head.values.head.propertyValue must equal("123")
+  }
+
+  test("asset geometry matches lrm position") {
+    Database.forDataSource(ds).withDynTransaction {
+      val id = 300000
+      val asset = OracleSpatialAssetDao.getAssetById(id).get
+      val assetGeometry = OracleSpatialAssetDao.getAssetGeometryById(id)
+      asset.lon must equal(assetGeometry.x)
+      asset.lat must equal(assetGeometry.y)
+    }
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {

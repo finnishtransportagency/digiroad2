@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import java.sql.SQLException
-
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
@@ -21,6 +20,7 @@ import fi.liikennevirasto.digiroad2.asset.ValidityPeriod
 import org.joda.time.Interval
 import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.Point
 
 // TODO: trait + class?
 object OracleSpatialAssetDao {
@@ -452,5 +452,20 @@ object OracleSpatialAssetDao {
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+  }
+
+  implicit val getPoint = new GetResult[Point] {
+    def apply(r: PositionedResult) = {
+      val bytes = r.nextBytes
+      val geometry = JGeometry.load(bytes)
+      val point = geometry.getPoint()
+      Point(point(0), point(1))
+    }
+  }
+
+  def getAssetGeometryById(id: Long): Point = {
+    sql"""
+      select geometry from asset where id = $id
+    """.as[Point].first
   }
 }

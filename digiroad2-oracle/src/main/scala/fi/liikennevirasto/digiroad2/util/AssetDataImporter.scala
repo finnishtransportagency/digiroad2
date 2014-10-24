@@ -411,6 +411,16 @@ class AssetDataImporter {
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
 
+      sqlu"""
+        update asset
+          set geometry = (select SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) from asset a
+                            join asset_link al on al.asset_id = a.id
+                            join lrm_position lrm on lrm.id = al.position_id
+                            join road_link rl on rl.id = lrm.road_link_id
+                            where a.id = $assetId)
+          where id = $assetId
+      """.execute
+
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 2)
       insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
