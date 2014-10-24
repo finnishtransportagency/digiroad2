@@ -238,7 +238,10 @@ object OracleSpatialAssetDao {
     }
     position match {
       case None => logger.debug("not updating position")
-      case Some(pos) => updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+      case Some(pos) => {
+        updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+        updateAssetGeometry(assetId)
+      }
     }
     getAssetById(assetId).get
   }
