@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import java.sql.SQLException
-
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.AssetStatus._
@@ -21,6 +20,7 @@ import fi.liikennevirasto.digiroad2.asset.ValidityPeriod
 import org.joda.time.Interval
 import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.Point
 
 // TODO: trait + class?
 object OracleSpatialAssetDao {
@@ -188,6 +188,18 @@ object OracleSpatialAssetDao {
     Some(status)
   }
 
+  def updateAssetGeometry(id: Long): Unit = {
+    sqlu"""
+      update asset
+        set geometry = (select SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) from asset a
+                          join asset_link al on al.asset_id = a.id
+                          join lrm_position lrm on lrm.id = al.position_id
+                          join road_link rl on rl.id = lrm.road_link_id
+                          where a.id = $id)
+        where id = $id
+    """.execute
+  }
+
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val assetId = nextPrimaryKeySeqValue
     val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
@@ -197,6 +209,7 @@ object OracleSpatialAssetDao {
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, bearing, creator).execute
     insertAssetPosition(assetId, lrmPositionId).execute
+    updateAssetGeometry(assetId)
     val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     updateAssetProperties(assetId, properties ++ defaultValues)
     getAssetById(assetId).get
@@ -225,7 +238,10 @@ object OracleSpatialAssetDao {
     }
     position match {
       case None => logger.debug("not updating position")
-      case Some(pos) => updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+      case Some(pos) => {
+        updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
+        updateAssetGeometry(assetId)
+      }
     }
     getAssetById(assetId).get
   }
@@ -452,5 +468,20 @@ object OracleSpatialAssetDao {
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+  }
+
+  implicit val getPoint = new GetResult[Point] {
+    def apply(r: PositionedResult) = {
+      val bytes = r.nextBytes
+      val geometry = JGeometry.load(bytes)
+      val point = geometry.getPoint()
+      Point(point(0), point(1))
+    }
+  }
+
+  def getAssetGeometryById(id: Long): Point = {
+    sql"""
+      select geometry from asset where id = $id
+    """.as[Point].first
   }
 }
