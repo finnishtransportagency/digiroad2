@@ -188,6 +188,18 @@ object OracleSpatialAssetDao {
     Some(status)
   }
 
+  def updateAssetGeometry(id: Long): Unit = {
+    sqlu"""
+      update asset
+        set geometry = (select SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) from asset a
+                          join asset_link al on al.asset_id = a.id
+                          join lrm_position lrm on lrm.id = al.position_id
+                          join road_link rl on rl.id = lrm.road_link_id
+                          where a.id = $id)
+        where id = $id
+    """.execute
+  }
+
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val assetId = nextPrimaryKeySeqValue
     val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
@@ -197,6 +209,7 @@ object OracleSpatialAssetDao {
     insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, bearing, creator).execute
     insertAssetPosition(assetId, lrmPositionId).execute
+    updateAssetGeometry(assetId)
     val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     updateAssetProperties(assetId, properties ++ defaultValues)
     getAssetById(assetId).get
