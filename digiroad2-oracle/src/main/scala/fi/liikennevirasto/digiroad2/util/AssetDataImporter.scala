@@ -224,20 +224,20 @@ class AssetDataImporter {
     val count = dataSet.database().withDynSession {
       sql"""
         select count(sl.segm_id)
-          from SPEED_LIMITS sl
+          from SPEED_LIMITS_PRODUCTION sl
           """.as[Int].list.head
     }
     val min = dataSet.database().withDynSession {
       sql"""
         select min(segm_id)
-          from SPEED_LIMITS sl
+          from SPEED_LIMITS_PRODUCTION sl
           order by sl.segm_id asc
           """.as[Int].list.head
     }
     val max = dataSet.database().withDynSession {
       sql"""
         select max(segm_id)
-          from SPEED_LIMITS sl
+          from SPEED_LIMITS_PRODUCTION sl
           order by sl.segm_id desc
           """.as[Int].list.head
     }
@@ -247,7 +247,7 @@ class AssetDataImporter {
       sql"""
        select sl.SEGM_ID,
               stragg(sl.tielinkki_id || ';' || sl.alkum || ';' || sl.loppum || ';' || sl.nopeus || ';' || sl.puoli) insert_exprs
-         from SPEED_LIMITS sl
+         from SPEED_LIMITS_PRODUCTION sl
          where segm_id between $n and $m
          group by sl.SEGM_ID
          order by sl.SEGM_ID
