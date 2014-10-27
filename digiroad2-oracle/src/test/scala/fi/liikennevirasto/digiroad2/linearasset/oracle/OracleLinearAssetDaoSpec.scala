@@ -35,12 +35,12 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      val createdId = OracleLinearAssetDao.splitSpeedLimit(700114, 5537, 100, 120, "test")
-      val (existingModifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(700114)
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(200097, 6551, 100, 120, "test")
+      val (existingModifiedBy, _, _, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(200097)
       val (_, _, newCreatedBy, _, _, _) = OracleLinearAssetDao.getSpeedLimitDetails(createdId)
 
-      assertSpeedLimitEndPointsOnLink(700114, 5537, 0, 100)
-      assertSpeedLimitEndPointsOnLink(createdId, 5537, 100, 136.788)
+      assertSpeedLimitEndPointsOnLink(200097, 6551, 0, 100)
+      assertSpeedLimitEndPointsOnLink(createdId, 6551, 100, 136.788)
 
       existingModifiedBy shouldBe Some("test")
       newCreatedBy shouldBe Some("test")
