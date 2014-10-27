@@ -36,8 +36,8 @@ object RoadLinkService {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
         select to_2d(sdo_lrs.dynamic_segment(shape, $startMeasure, $endMeasure))
-        from tielinkki
-        where objectid = $id
+          from tielinkki_ctas
+          where dr1_id = $id
         """
       query.as[Seq[Point]].first
     }
