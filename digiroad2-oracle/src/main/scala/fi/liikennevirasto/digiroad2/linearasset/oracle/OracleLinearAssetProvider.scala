@@ -31,7 +31,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
       val (speedLimits, linkGeometries) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds)
-      eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
+      // TODO: Enable speed limit generation once production speed limits have been inserted into database
+//      eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
