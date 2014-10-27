@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
@@ -20,15 +20,7 @@ import Database.dynamicSession
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    val truncatedGeometry: Array[Byte] = sql"""
-      select to_2d(sdo_lrs.dynamic_segment(rl.geom, $startMeasure, $endMeasure))
-        from ROAD_LINK rl
-        where id = $linkId
-        """.as[Array[Byte]].list.head
-    val points = JGeometry.load(truncatedGeometry).getOrdinatesArray.grouped(2)
-    points.map { pointArray =>
-      Point(pointArray(0), pointArray(1))
-    }.toSeq
+    RoadLinkService.getRoadLinkGeometry(linkId, startMeasure, endMeasure)
   }
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, roadLinkId: Long, startMeasure: Double, endMeasure: Double) = {
