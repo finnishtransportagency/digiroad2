@@ -243,15 +243,15 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("update speed limit value", Tag("db")) {
-    putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test2") {
+    putJsonWithUserAuth("/speedlimits/200276", """{"limit":60}""".getBytes, username = "test2") {
       status should equal(200)
       getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-        val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
+        val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
         speedLimitLinks.foreach(link => link.limit should equal(60))
-        putJsonWithUserAuth("/speedlimits/700898", """{"limit":100}""".getBytes, username = "test2") {
+        putJsonWithUserAuth("/speedlimits/200276", """{"limit":100}""".getBytes, username = "test2") {
           status should equal(200)
           getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-            val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 700898l)
+            val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
             speedLimitLinks.foreach(link => link.limit should equal(100))
           }
         }
