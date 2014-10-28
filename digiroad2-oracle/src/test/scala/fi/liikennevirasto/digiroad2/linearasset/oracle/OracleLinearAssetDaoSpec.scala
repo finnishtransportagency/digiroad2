@@ -96,11 +96,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "so that shorter split contains multiple linear references " +
     "moves all linear references to newly created speed limit", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
-      val createdId = OracleLinearAssetDao.splitSpeedLimit(700642, 5872, 148, 120, "test")
+      val createdId = OracleLinearAssetDao.splitSpeedLimit(200363, 7230, 148, 120, "test")
       val createdLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(createdId)
 
       createdLinks.length shouldBe 3
-      createdLinks.map(_._1) should contain only (5613, 5631, 5872)
+      createdLinks.map(_._1) should contain only (6710, 6740, 7230)
       dynamicSession.rollback()
     }
   }
