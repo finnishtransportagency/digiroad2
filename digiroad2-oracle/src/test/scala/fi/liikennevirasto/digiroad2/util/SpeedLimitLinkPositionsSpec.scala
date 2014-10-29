@@ -29,4 +29,15 @@ class SpeedLimitLinkPositionsSpec extends FunSuite with Matchers {
     )
     SpeedLimitLinkPositions.generate(segments) shouldBe Seq(1, 2, 0)
   }
+
+  test("generate position indices for all segments") {
+    val segments = List(
+      (Point(224768.5023,6826396.2046),Point(224819.13222717855,6826478.298482074)),
+      (Point(224726.0543,6826327.3731),Point(224768.5023,6826396.2046)),
+      (Point(224643.4389,6826195.211),Point(224787.5725,6826020.8164)),
+      (Point(224685.8604,6826262.2064),Point(224726.05413146524,6826327.372826754)),
+      (Point(224643.4389,6826195.211),Point(224685.86023184704,6826262.206127376))
+    )
+    SpeedLimitLinkPositions.generate(segments).length shouldBe 5
+  }
 }
