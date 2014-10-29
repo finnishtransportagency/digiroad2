@@ -225,7 +225,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
+      '        <input name="road-types" type="checkbox" checked> V&auml;yl&auml;tyyppi',
       '      </label>',
       '    </div>',
       '  </div>',
@@ -258,7 +258,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
+      '        <input name="road-types" type="checkbox" checked> V&auml;yl&auml;tyyppi',
       '      </label>',
       '    </div>',
       '  </div>',
@@ -357,7 +357,7 @@
         elements.editMode.find('.road-link-legend').toggle(checked);
         expandedRoadTypeCheckboxSelector.prop("checked", checked);
         editModeRoadTypeCheckboxSelector.prop("checked", checked);
-        eventbus.trigger('road-type:selected', checked);
+        applicationModel.setRoadTypeShown(checked);
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
