@@ -50,4 +50,11 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
     provider.calculateSpeedLimitEndPoints(links) shouldBe Set(Point(372573.640063694, 6678008.0175942),
                                                               Point(372450.464234144, 6678051.64592463))
   }
+
+  test("calculate end points of speed limit where end points are not first points of their respective links") {
+    val links = List((Point(1.0, 0.0), Point(0.0, 0.0)),
+                     (Point(1.0, 0.0), Point(2.0, 0.0)))
+
+    provider.calculateSpeedLimitEndPoints(links) shouldBe Set(Point(0.0, 0.0), Point(2.0, 0.0))
+  }
 }

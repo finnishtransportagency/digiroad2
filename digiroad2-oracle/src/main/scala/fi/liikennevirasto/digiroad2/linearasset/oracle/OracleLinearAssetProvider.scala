@@ -38,10 +38,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   def calculateSpeedLimitEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val positionIndices = SpeedLimitLinkPositions.generate(links)
-    val linksWithPositionIndices: Seq[((Point, Point), Int)] = links.zip(positionIndices)
-    val orderedLinks = linksWithPositionIndices.sortBy(_._2)
-    Set(orderedLinks.head._1._1, orderedLinks.last._1._2)
+    val endPoints = SpeedLimitLinkPositions.calculateLinkChainEndPoints(links)
+    Set(endPoints._1, endPoints._2)
  }
 
   override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
