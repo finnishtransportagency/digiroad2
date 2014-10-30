@@ -61,17 +61,12 @@ object SpeedLimitLinkPositions {
       }
     }
 
-    def isSegmentStartPoint(point: (PointIndex, (PointIndex, Double))): Boolean = {
-      val (index, _) = point
-      index % 2 == 0
-    }
-
     val indexedSegments = segments.zipWithIndex
     if (indexedSegments.length == 1) Seq(0)
     else {
       val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
 
-      val startingPoint: PointIndex = shortestDistances.filter(isSegmentStartPoint).sortWith { (point1, point2) =>
+      val startingPoint: PointIndex = shortestDistances.sortWith { (point1, point2) =>
         point1._2._2 > point2._2._2
       }.head._1
 
