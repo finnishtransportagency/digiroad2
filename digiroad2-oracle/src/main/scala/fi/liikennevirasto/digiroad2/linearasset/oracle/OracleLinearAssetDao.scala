@@ -203,26 +203,32 @@ object OracleLinearAssetDao {
       val (roadLinkId, length, geometry) = link
       (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints }
-    val linksWithPositions: Seq[(Long, Double, (Point, Point), Int)] = links
-      .zip(SpeedLimitLinkPositions.generate(endPoints))
-      .map { case ((linkId, length, linkEndPoints), position) => (linkId, length, linkEndPoints, position) }
-      .sortBy { case (_, _, _, position) => position }
-    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId }
-    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId }.tail
-
-    val firstSplitLength = splitMeasure - startMeasure + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-    val secondSplitLength = endMeasure - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = firstSplitLength > secondSplitLength match {
-      case true => ((startMeasure, splitMeasure), (splitMeasure, endMeasure), linksAfterSplitLink)
-      case false => ((splitMeasure, endMeasure), (startMeasure, splitMeasure), linksBeforeSplitLink)
-    }
+    val (existingLinkMeasures: (Double, Double), createdLinkMeasures: (Double, Double), linksToMove: Seq[(Long, Double, (Point, Point), Int)]) = calculateLinkChainSplits(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
     if (linksToMove.nonEmpty) moveLinksToSpeedLimit(id, createdId, linksToMove.map(_._1))
     createdId
+  }
+
+  def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
+    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
+    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
+    val linksWithPositions: Seq[(Long, Double, (Point, Point), Int)] = links
+      .zip(SpeedLimitLinkPositions.generate(endPoints))
+      .map { case ((linkId, length, linkEndPoints), position) => (linkId, length, linkEndPoints, position)}
+      .sortBy { case (_, _, _, position) => position}
+    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
+    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
+
+    val firstSplitLength = splitMeasure - startMeasureOfSplitLink + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
+    val secondSplitLength = endMeasureOfSplitLink - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
+
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = firstSplitLength > secondSplitLength match {
+      case true => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplitLink)
+      case false => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplitLink)
+    }
+    (existingLinkMeasures, createdLinkMeasures, linksToMove)
   }
 
   def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
