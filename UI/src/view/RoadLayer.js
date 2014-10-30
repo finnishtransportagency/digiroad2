@@ -23,7 +23,6 @@ var RoadStyles = function() {
   root.RoadLayer = function(map, roadCollection) {
     var vectorLayer;
     var selectControl;
-    var roadTypeSelected;
 
     var enableColorsOnRoadLayer = function() {
       var roadLinkTypeStyleLookup = {
@@ -41,7 +40,7 @@ var RoadStyles = function() {
     var changeRoadsWidthByZoomLevel = function() {
       var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
       var roadWidth = widthBase * widthBase;
-      if (roadTypeSelected) {
+      if (applicationModel.isRoadTypeShown()) {
         vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
         vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
       } else {
@@ -50,13 +49,12 @@ var RoadStyles = function() {
       }
     };
 
-    var toggleRoadType = function(toggle) {
-      if (toggle) {
+    var toggleRoadType = function() {
+      if (applicationModel.isRoadTypeShown()) {
         enableColorsOnRoadLayer();
       } else {
         disableColorsOnRoadLayer();
       }
-      roadTypeSelected = toggle;
       changeRoadsWidthByZoomLevel();
       vectorLayer.redraw();
     };
@@ -120,12 +118,7 @@ var RoadStyles = function() {
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         fetchRoads(map.getExtent());
       }
-      if (layer === 'speedLimit') {
-        disableColorsOnRoadLayer();
-        vectorLayer.redraw();
-      } else {
-        toggleRoadType(roadTypeSelected);
-      }
+      toggleRoadType();
     }, this);
 
     vectorLayer = new OpenLayers.Layer.Vector("road", {
@@ -134,5 +127,6 @@ var RoadStyles = function() {
     vectorLayer.setVisibility(false);
     selectControl = new OpenLayers.Control.SelectFeature(vectorLayer);
     map.addLayer(vectorLayer);
+    toggleRoadType();
   };
 })(this);

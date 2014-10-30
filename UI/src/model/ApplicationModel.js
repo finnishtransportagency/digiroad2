@@ -10,6 +10,8 @@
         eventbus.trigger('application:readOnly', newState);
       }
     };
+    var roadTypeShown = true;
+
     return {
       moveMap: function(zoom, bbox) {
         var hasZoomLevelChanged = zoomLevel !== zoom;
@@ -44,7 +46,16 @@
         return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty();
       },
       assetDragDelay: 100,
-      assetGroupingDistance: 36
+      assetGroupingDistance: 36,
+      setRoadTypeShown: function(bool) {
+        if (roadTypeShown !== bool) {
+          roadTypeShown = bool;
+          eventbus.trigger('road-type:selected', roadTypeShown);
+        }
+      },
+      isRoadTypeShown: function() {
+        return selectedLayer === 'asset' && roadTypeShown;
+      }
     };
   };
 })(this);
