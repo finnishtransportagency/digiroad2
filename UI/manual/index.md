@@ -138,7 +138,7 @@ _Karttan&auml;kym&auml;n muokkaus._
 3.2 Tielinkit
 -------------
 
-Tielinkeille saa v&auml;rill&auml; korostetun v&auml;yl&auml;tyypin n&auml;kyviin valitsemalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta V&auml;yl&auml;tyypit. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
+Tielinkeill&auml; on oletuksena v&auml;rill&auml; korostettu v&auml;yl&auml;tyyppivalinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta V&auml;yl&auml;tyyppi-valinnan pois. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
 
 V&auml;yl&auml;tyyppi kertoo tielinkin omistajasta. Maantiet omistaa valtio. Kadut omistaa kunta, jonka alueella katu on. Yksityistiet omistaa yksityiset tahot: tiekunta, yksityishenkil&ouml;, yritys tms.
 
