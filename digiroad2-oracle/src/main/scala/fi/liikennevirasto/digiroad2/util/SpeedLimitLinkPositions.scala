@@ -7,24 +7,25 @@ object SpeedLimitLinkPositions {
   type PointPosition = Int
   type SegmentIndex = Int
 
-  def generate(segments: Seq[(Point, Point)]): Seq[Int] = {
-    def fetchFromIndexedSegments(indexedSegments: Seq[((Point, Point), SegmentIndex)], index: PointIndex): Point = {
-      val segment = indexedSegments(pointIndexToSegmentIndex(index))
-      index % 2 match {
-        case 0 => segment._1._1
-        case 1 => segment._1._2
-      }
-    }
 
+  private def pointIndexToSegmentIndex(pointIndex: PointIndex): SegmentIndex = {
+    pointIndex / 2
+  }
+
+  private def fetchFromIndexedSegments(indexedSegments: Seq[((Point, Point), SegmentIndex)], index: PointIndex): Point = {
+    val segment = indexedSegments(pointIndexToSegmentIndex(index))
+    index % 2 match {
+      case 0 => segment._1._1
+      case 1 => segment._1._2
+    }
+  }
+
+  def generate(segments: Seq[(Point, Point)]): Seq[Int] = {
     def segmentIndexToPointIndices(segmentIndex: SegmentIndex): (PointIndex, PointIndex) = {
       (2 * segmentIndex, 2 * segmentIndex + 1)
     }
 
-    def pointIndexToSegmentIndex(pointIndex: PointIndex): SegmentIndex = {
-      pointIndex / 2
-    }
-
-    def findFriendIndex(pointIndex: PointIndex): PointIndex = {
+   def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
         case 0 => pointIndex + 1
         case 1 => pointIndex - 1
@@ -87,20 +88,8 @@ object SpeedLimitLinkPositions {
   }
 
   def calculateLinkChainEndPoints(segments: Seq[(Point, Point)]): (Point, Point) = {
-    def fetchFromIndexedSegments(indexedSegments: Seq[((Point, Point), SegmentIndex)], index: PointIndex): Point = {
-      val segment = indexedSegments(pointIndexToSegmentIndex(index))
-      index % 2 match {
-        case 0 => segment._1._1
-        case 1 => segment._1._2
-      }
-    }
-
-    def segmentIndexToPointIndices(segmentIndex: SegmentIndex): (PointIndex, PointIndex) = {
+   def segmentIndexToPointIndices(segmentIndex: SegmentIndex): (PointIndex, PointIndex) = {
       (2 * segmentIndex, 2 * segmentIndex + 1)
-    }
-
-    def pointIndexToSegmentIndex(pointIndex: PointIndex): SegmentIndex = {
-      pointIndex / 2
     }
 
     val indexedSegments = segments.zipWithIndex
