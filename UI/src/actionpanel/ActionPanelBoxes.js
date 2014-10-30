@@ -153,7 +153,8 @@
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator')) {
           toolSelection.reset();
-          elements.expanded.append(toolSelection.element);
+          // todo: enable cut tool once cutting is fixed for links with varying digitization directions
+          // elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
         }
       });
