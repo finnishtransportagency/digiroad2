@@ -10,8 +10,11 @@ import fi.liikennevirasto.digiroad2.util.{GeometryUtils, SpeedLimitLinkPositions
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
+import org.slf4j.LoggerFactory
 
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
+  val logger = LoggerFactory.getLogger(getClass)
+
   private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[Point]), Int)): SpeedLimitLink = {
     val ((id, roadLinkId, sideCode, limit, points), positionNumber) = linkAndPositionNumber
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber)
@@ -76,7 +79,9 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
+      logger.info("Filling partially filled road links, link count: " + linkGeometries.size)
       OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
+      logger.info("...done with filling.")
     }
   }
 }
