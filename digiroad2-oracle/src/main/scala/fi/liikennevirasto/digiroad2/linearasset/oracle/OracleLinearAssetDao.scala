@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.util.{SpeedLimitLinkPositions, GeometryUtils}
+import fi.liikennevirasto.digiroad2.util.{LinkChain, SpeedLimitLinkPositions, GeometryUtils}
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Q.interpolation
@@ -204,7 +204,7 @@ object OracleLinearAssetDao {
       val (roadLinkId, length, geometry) = link
       (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val (existingLinkMeasures: (Double, Double), createdLinkMeasures: (Double, Double), linksToMove: Seq[(Long, Double, (Point, Point), Int)]) = calculateLinkChainSplits(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+    val (existingLinkMeasures: (Double, Double), createdLinkMeasures: (Double, Double), linksToMove: Seq[(Long, Double, (Point, Point))]) = calculateLinkChainSplits(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
@@ -212,7 +212,7 @@ object OracleLinearAssetDao {
     createdId
   }
 
-  def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
+  def calculateLinkChainSplitsOld(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
     val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
     val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
     val (segmentIndices, geometryRunningDirections) = SpeedLimitLinkPositions.generate2(endPoints)
@@ -241,6 +241,38 @@ object OracleLinearAssetDao {
       case (false, false) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplitLink)
     }
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map { case (id, length, eps, chainedLink) => (id, length, eps, chainedLink.linkIndex) })
+  }
+
+  def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
+    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
+    def fetchLinkEndPoints(link: (Long, Double, (Point, Point))) = {
+      val (_, _, linkEndPoints) = link
+      linkEndPoints
+    }
+    def linkLength(link: (Long, Double, (Point, Point))) = {
+      val (_, length, _) = link
+      length
+    }
+
+    val (linksBeforeSplit, linkOfSplitting, linksAfterSplit) = LinkChain(links, fetchLinkEndPoints).splitBy {case (linkId, _, _) => linkId == roadLinkId}
+
+    val (firstSplitLength, secondSplitLength) = linkOfSplitting.geometryRunningDirection match {
+      case true =>
+        (splitMeasure - startMeasureOfSplitLink + linksBeforeSplit.length(linkLength),
+          endMeasureOfSplitLink - splitMeasure + linksAfterSplit.length(linkLength))
+      case false =>
+        (endMeasureOfSplitLink - splitMeasure + linksBeforeSplit.length(linkLength),
+          splitMeasure - startMeasureOfSplitLink + linksAfterSplit.length(linkLength))
+    }
+
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkOfSplitting.geometryRunningDirection) match {
+      case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
+      case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
+      case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
+      case (false, false) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplit)
+    }
+    (existingLinkMeasures, createdLinkMeasures, linksToMove.rawLinks())
   }
 
   def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {

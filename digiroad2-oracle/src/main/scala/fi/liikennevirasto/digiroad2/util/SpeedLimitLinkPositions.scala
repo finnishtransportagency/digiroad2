@@ -1,6 +1,44 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.util.LinkChain.{GeometryRunningDirection, LinkPosition}
+
+object LinkChain {
+  type LinkPosition = Int
+  type GeometryRunningDirection = Boolean
+  
+  def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)) = {
+    val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
+    val (segmentPositions, geometryRunningDirections) = SpeedLimitLinkPositions.generate2(endPoints)
+    val chainedLinks: Seq[ChainedLink2[T]] = rawLinks
+      .zip(segmentPositions)
+      .sortBy(_._2)
+      .zip(geometryRunningDirections).map { case ((link, segmentIndex), geometryRunningDirection) => new ChainedLink2[T](link, segmentIndex, geometryRunningDirection) }
+
+    new LinkChain[T](chainedLinks)
+  }
+}
+
+class ChainedLink2[T](val rawLink: T, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
+
+class LinkChain[T](val links: Seq[ChainedLink2[T]]) {
+
+  def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink2[T], LinkChain[T]) = {
+    val linksBeforeSplit: LinkChain[T] = new LinkChain[T](links.takeWhile { link => !isSplitLink(link.rawLink) })
+    val linksAfterSplit: LinkChain[T] = new LinkChain[T](links.dropWhile { link => !isSplitLink(link.rawLink) }.tail)
+    val splitLink: ChainedLink2[T] = links.find { link => isSplitLink(link.rawLink) }.get
+
+    (linksBeforeSplit, splitLink, linksAfterSplit)
+  }
+
+  def length(linkLength: (T) => Double): Double = {
+    links.foldLeft(0.0) { case (acc, link) => acc + linkLength(link.rawLink)}
+  }
+
+  def rawLinks(): Seq[T] = {
+    links.map(_.rawLink)
+  }
+}
 
 object SpeedLimitLinkPositions {
   type PointIndex = Int
