@@ -18,7 +18,10 @@ var server = http.createServer(function (req, res) {
       }
     });
     if (VALLU_API_URL) {
-      req.pipe(request({ url: VALLU_API_URL, strictSSL: false })).pipe(res);
+      req.pipe(request({ url: VALLU_API_URL, strictSSL: false },
+                       function(error, response, body) {
+                         console.log("Error when making request:", error, response, body);
+                       })).pipe(res);
     }
   } else {
     console.log('Vallu local test only handles POST request!');
