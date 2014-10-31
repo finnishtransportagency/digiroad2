@@ -6,7 +6,8 @@ object SpeedLimitLinkPositions {
   type PointIndex = Int
   type PointPosition = Int
   type SegmentIndex = Int
-
+  type SegmentPosition = Int
+  type GeometryRunningDirection = Boolean
 
   private def pointIndexToSegmentIndex(pointIndex: PointIndex): SegmentIndex = {
     pointIndex / 2
@@ -87,7 +88,7 @@ object SpeedLimitLinkPositions {
   }
 
   case class ChainedLink(linkIndex: Int, geometryRunningTowardsNextLink: Boolean)
-  def generate2(segments: Seq[(Point, Point)]): Seq[ChainedLink] = {
+  def generate2(segments: Seq[(Point, Point)]): (Seq[SegmentPosition], Seq[GeometryRunningDirection]) = {
    def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
         case 0 => pointIndex + 1
@@ -96,7 +97,7 @@ object SpeedLimitLinkPositions {
     }
 
     val indexedSegments = segments.zipWithIndex
-    if (indexedSegments.length == 1) Seq(ChainedLink(linkIndex = 0, geometryRunningTowardsNextLink = true))
+    if (indexedSegments.length == 1) (Seq(0), Seq(true))
     else {
       val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
 
@@ -104,23 +105,17 @@ object SpeedLimitLinkPositions {
         point1._2._2 > point2._2._2
       }.head._1
 
-      val pointsWithPositionNumbers: Map[PointIndex, PointPosition] = indexedSegments.foldLeft((startingPoint, Map.empty[Int, Int])) { (acc, indexedSegment) =>
-        val (_, segmentIndex) = indexedSegment
-        val (pointIndex, positionNumbers) = acc
+      val segmentPositionsAndRunningDirections: (Seq[(SegmentIndex, SegmentPosition)], Seq[GeometryRunningDirection]) = indexedSegments.foldLeft((startingPoint, (Seq.empty[(SegmentIndex, SegmentPosition)], Seq.empty[GeometryRunningDirection]))) { (acc, indexedSegment) =>
+        val (_, segmentPosition) = indexedSegment
+        val (pointIndex, (segmentIndices, geometryDirections)) = acc
         val friend = findFriendIndex(pointIndex)
+        val geometryRunningDirection = friend > pointIndex
         val closestNeighbourOfFriend = shortestDistances(friend)._2._1
-        val (pointPositionNumber, friendPositionNumber) = segmentIndexToPointIndices(segmentIndex)
-        (closestNeighbourOfFriend, positionNumbers + (pointIndex -> pointPositionNumber) + (friend -> friendPositionNumber))
+        (closestNeighbourOfFriend, (segmentIndices :+ (pointIndexToSegmentIndex(pointIndex) -> segmentPosition), geometryDirections :+ geometryRunningDirection))
       }._2
 
-      val positionNumbersInIndexOrder: Seq[(PointIndex, PointPosition)] = pointsWithPositionNumbers.toList.sortBy(_._1)
-      val segmentPositionNumbers: Seq[Int] = positionNumbersInIndexOrder.sliding(2, 2).map(_.head).map(_._2).map(pointIndexToSegmentIndex).toList
-      val geometryRunningDirections: Seq[Boolean] = positionNumbersInIndexOrder.sliding(2, 2).map { segment: Seq[(PointIndex, PointPosition)] =>
-        val (firstPointIndex, firstPointPosition) = segment(0)
-        val (secondPointIndex, secondPointPosition) = segment(1)
-        (secondPointIndex - firstPointIndex < 0) == (secondPointPosition - firstPointPosition < 0)
-      }.toList
-      segmentPositionNumbers.zip(geometryRunningDirections).map { case (index, runningDirection) => ChainedLink(linkIndex = index, geometryRunningTowardsNextLink = runningDirection) }
+      val segmentPositions = segmentPositionsAndRunningDirections._1.sortBy(_._1).map(_._2)
+      (segmentPositions, segmentPositionsAndRunningDirections._2)
     }
   }
 

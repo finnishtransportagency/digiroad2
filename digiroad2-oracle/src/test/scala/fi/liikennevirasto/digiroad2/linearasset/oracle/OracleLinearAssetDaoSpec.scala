@@ -66,21 +66,19 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("splitting three link speed limit " +
-    "where first split is longer than second" +
-    "existing speed limit should cover only first split", Tag("db")) {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.splitSpeedLimit(200217, 6871, 150, 120, "test")
-      val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(200217)
+  test("splitting three link speed limit where first split is longer than second should allocate first split to existing limit") {
+    val link1 = (0l, 154.0, (Point(372530, 6676811), Point(372378, 6676808)))
+    val link2 = (1l, 87.0, (Point(372614, 6676793), Point(372530, 6676811)))
+    val link3 = (2l, 224.0, (Point(372378, 6676808), Point(372164, 6676763)))
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.calculateLinkChainSplits(150.0, (0, 0.0, 154.0), Seq(link1, link2, link3))
 
-      existingLinks.length shouldBe 2
-      existingLinks.map(_._1) should contain only (6983, 6871)
-      dynamicSession.rollback()
-    }
+    existingLinkMeasures shouldBe(0.0, 150.0)
+    createdLinkMeasures shouldBe(150.0, 154.0)
+    linksToMove.map(_._1) shouldBe Seq(2)
   }
 
   test("splitting three link speed limit " +
-    "where first split is shorter than second" +
+    "where first split is shorter than second " +
     "existing speed limit should cover only second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       OracleLinearAssetDao.splitSpeedLimit(200217, 6871, 10, 120, "test")

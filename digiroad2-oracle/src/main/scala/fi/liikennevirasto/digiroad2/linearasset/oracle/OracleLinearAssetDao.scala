@@ -215,10 +215,12 @@ object OracleLinearAssetDao {
   def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
     val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
     val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
+    val (segmentIndices, geometryRunningDirections) = SpeedLimitLinkPositions.generate2(endPoints)
     val linksWithPositions: Seq[(Long, Double, (Point, Point), ChainedLink)] = links
-      .zip(SpeedLimitLinkPositions.generate2(endPoints))
-      .map { case ((linkId, length, linkEndPoints), position) => (linkId, length, linkEndPoints, position)}
-      .sortBy { case (_, _, _, position) => position.linkIndex}
+      .zip(segmentIndices)
+      .sortBy(_._2)
+      .zip(geometryRunningDirections)
+      .map { case (((linkId, length, linkEndPoints), segmentIndex), geometryRunningDirection) => (linkId, length, linkEndPoints, ChainedLink(linkIndex = segmentIndex, geometryRunningTowardsNextLink = geometryRunningDirection))}
     val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
     val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
     val linkToBeSplit: (Long, Double, (Point, Point), ChainedLink) = linksWithPositions.find { case (linkId, _, _, _) => linkId == roadLinkId }.get
