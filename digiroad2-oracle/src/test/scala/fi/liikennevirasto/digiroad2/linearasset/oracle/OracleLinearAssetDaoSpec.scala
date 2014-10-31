@@ -181,4 +181,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     createdLinkMeasures shouldBe(15.0, 16.0)
     linksToMove.map(_._1) shouldBe Seq(2)
   }
+
+  test("splitting speed limit where links are unordered and speed limit terminates to links pointing outwards and split link runs against indexing") {
+    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
+    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
+    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.calculateLinkChainSplits(15.0, (1, 0.0, 16.0), Seq(link1, link3, link2))
+
+    existingLinkMeasures shouldBe(0.0, 15.0)
+    createdLinkMeasures shouldBe(15.0, 16.0)
+    linksToMove.map(_._1) shouldBe Seq(0)
+  }
 }
