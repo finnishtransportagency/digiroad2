@@ -258,8 +258,11 @@ object OracleLinearAssetDao {
 
       println("creating " + speedLimits.size + " speed limits")
 
+      val enumeratedValues = sql"select value, id from enumerated_value where property_id = $propertyId".as[(Int, Long)].list.toMap
+
       speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
         val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+        val enumeratedValueId = enumeratedValues(value)
         val sb = new StringBuilder()
         sb.append("insert all")
         sb.append(
@@ -274,7 +277,7 @@ object OracleLinearAssetDao {
             values ($speedLimitId, $lrmPositionId)
 
             into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-            values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+            values ($speedLimitId, $enumeratedValueId, $propertyId, current_timestamp)
           """)
         sb.append("\nSELECT * FROM DUAL\n")
         val sql = sb.toString()
