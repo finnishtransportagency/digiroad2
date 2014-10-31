@@ -106,9 +106,9 @@ object OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Int, Double, Double)].list
-    speedLimits.map { case (id, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+    speedLimits.map { case (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (id, roadLinkId, sideCode, value, points)
+      (assetId, roadLinkId, sideCode, value, points)
     }
   }
 
