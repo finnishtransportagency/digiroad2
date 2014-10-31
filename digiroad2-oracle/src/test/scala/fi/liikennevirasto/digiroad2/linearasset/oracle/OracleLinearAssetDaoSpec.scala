@@ -30,8 +30,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
 
-  // TODO: Enable test once splitting works on link chains with varying geometry running order
-  ignore("splitting one link speed limit " +
+  test("splitting one link speed limit " +
     "where split measure is after link middle point " +
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
@@ -49,8 +48,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO: Enable test once splitting works on link chains with varying geometry running order
-  ignore("splitting one link speed limit " +
+  test("splitting one link speed limit " +
     "where split measure is before link middle point " +
     "modifies start measure of existing speed limit " +
     "and creates new speed limit for first split", Tag("db")) {
@@ -68,8 +66,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO: Enable test once splitting works on link chains with varying geometry running order
-  ignore("splitting three link speed limit " +
+  test("splitting three link speed limit " +
     "where first split is longer than second" +
     "existing speed limit should cover only first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
@@ -82,8 +79,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO: Enable test once splitting works on link chains with varying geometry running order
-  ignore("splitting three link speed limit " +
+  test("splitting three link speed limit " +
     "where first split is shorter than second" +
     "existing speed limit should cover only second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
@@ -96,8 +92,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO: Enable test once splitting works on link chains with varying geometry running order
-  ignore("splitting speed limit " +
+  test("splitting speed limit " +
     "so that shorter split contains multiple linear references " +
     "moves all linear references to newly created speed limit", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
@@ -108,5 +103,16 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       createdLinks.map(_._1) should contain only (6710, 6740, 7230)
       dynamicSession.rollback()
     }
+  }
+
+  test("splitting speed limit where geometry running order is against link indexing") {
+    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
+    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
+    val link3 = (2l, 10.0, (Point(46.0, 0.0), Point(36.0, 0.0)))
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.calculateLinkChainSplits(15.0, (1, 0.0, 16.0), Seq(link1, link2, link3))
+
+    existingLinkMeasures shouldBe (0.0, 15.0)
+    createdLinkMeasures shouldBe (15.0, 16.0)
+    linksToMove.map(_._1) shouldBe Seq(0)
   }
 }

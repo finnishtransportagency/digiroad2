@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+import fi.liikennevirasto.digiroad2.util.SpeedLimitLinkPositions.ChainedLink
 import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
@@ -214,21 +215,30 @@ object OracleLinearAssetDao {
   def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
     val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
     val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
-    val linksWithPositions: Seq[(Long, Double, (Point, Point), Int)] = links
-      .zip(SpeedLimitLinkPositions.generate(endPoints))
+    val linksWithPositions: Seq[(Long, Double, (Point, Point), ChainedLink)] = links
+      .zip(SpeedLimitLinkPositions.generate2(endPoints))
       .map { case ((linkId, length, linkEndPoints), position) => (linkId, length, linkEndPoints, position)}
-      .sortBy { case (_, _, _, position) => position}
-    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
-    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
+      .sortBy { case (_, _, _, position) => position.linkIndex}
+    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
+    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
+    val linkToBeSplit: (Long, Double, (Point, Point), ChainedLink) = linksWithPositions.find { case (linkId, _, _, _) => linkId == roadLinkId }.get
 
-    val firstSplitLength = splitMeasure - startMeasureOfSplitLink + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-    val secondSplitLength = endMeasureOfSplitLink - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = firstSplitLength > secondSplitLength match {
-      case true => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplitLink)
-      case false => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplitLink)
+    val (firstSplitLength, secondSplitLength) = linkToBeSplit._4.geometryRunningTowardsNextLink match {
+      case true =>
+        (splitMeasure - startMeasureOfSplitLink + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2},
+          endMeasureOfSplitLink - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
+      case false =>
+        (endMeasureOfSplitLink - splitMeasure + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2},
+          splitMeasure - startMeasureOfSplitLink + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
     }
-    (existingLinkMeasures, createdLinkMeasures, linksToMove)
+
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkToBeSplit._4.geometryRunningTowardsNextLink) match {
+      case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplitLink)
+      case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplitLink)
+      case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplitLink)
+      case (false, false) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplitLink)
+    }
+    (existingLinkMeasures, createdLinkMeasures, linksToMove.map { case (id, length, eps, chainedLink) => (id, length, eps, chainedLink.linkIndex) })
   }
 
   def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {

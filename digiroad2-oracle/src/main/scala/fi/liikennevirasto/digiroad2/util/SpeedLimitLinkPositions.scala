@@ -86,6 +86,44 @@ object SpeedLimitLinkPositions {
     }
   }
 
+  case class ChainedLink(linkIndex: Int, geometryRunningTowardsNextLink: Boolean)
+  def generate2(segments: Seq[(Point, Point)]): Seq[ChainedLink] = {
+   def findFriendIndex(pointIndex: PointIndex): PointIndex = {
+      pointIndex % 2 match {
+        case 0 => pointIndex + 1
+        case 1 => pointIndex - 1
+      }
+    }
+
+    val indexedSegments = segments.zipWithIndex
+    if (indexedSegments.length == 1) Seq(ChainedLink(linkIndex = 0, geometryRunningTowardsNextLink = true))
+    else {
+      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
+
+      val startingPoint: PointIndex = shortestDistances.sortWith { (point1, point2) =>
+        point1._2._2 > point2._2._2
+      }.head._1
+
+      val pointsWithPositionNumbers: Map[PointIndex, PointPosition] = indexedSegments.foldLeft((startingPoint, Map.empty[Int, Int])) { (acc, indexedSegment) =>
+        val (_, segmentIndex) = indexedSegment
+        val (pointIndex, positionNumbers) = acc
+        val friend = findFriendIndex(pointIndex)
+        val closestNeighbourOfFriend = shortestDistances(friend)._2._1
+        val (pointPositionNumber, friendPositionNumber) = segmentIndexToPointIndices(segmentIndex)
+        (closestNeighbourOfFriend, positionNumbers + (pointIndex -> pointPositionNumber) + (friend -> friendPositionNumber))
+      }._2
+
+      val positionNumbersInIndexOrder: Seq[(PointIndex, PointPosition)] = pointsWithPositionNumbers.toList.sortBy(_._1)
+      val segmentPositionNumbers: Seq[Int] = positionNumbersInIndexOrder.sliding(2, 2).map(_.head).map(_._2).map(pointIndexToSegmentIndex).toList
+      val geometryRunningDirections: Seq[Boolean] = positionNumbersInIndexOrder.sliding(2, 2).map { segment: Seq[(PointIndex, PointPosition)] =>
+        val (firstPointIndex, firstPointPosition) = segment(0)
+        val (secondPointIndex, secondPointPosition) = segment(1)
+        (secondPointIndex - firstPointIndex < 0) == (secondPointPosition - firstPointPosition < 0)
+      }.toList
+      segmentPositionNumbers.zip(geometryRunningDirections).map { case (index, runningDirection) => ChainedLink(linkIndex = index, geometryRunningTowardsNextLink = runningDirection) }
+    }
+  }
+
   def calculateLinkChainEndPoints(segments: Seq[(Point, Point)]): (Point, Point) = {
     val indexedSegments = segments.zipWithIndex
     if (indexedSegments.length == 1) segments.head
