@@ -243,9 +243,8 @@ object OracleLinearAssetDao {
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map { case (id, length, eps, chainedLink) => (id, length, eps, chainedLink.linkIndex) })
   }
 
-  def calculateLinkChainSplits(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
-    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
-    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
+  def calculateLinkChainSplits(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def fetchLinkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link
       linkEndPoints
@@ -255,9 +254,9 @@ object OracleLinearAssetDao {
       length
     }
 
-    val (linksBeforeSplit, linkOfSplitting, linksAfterSplit) = LinkChain(links, fetchLinkEndPoints).splitBy {case (linkId, _, _) => linkId == roadLinkId}
+    val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, fetchLinkEndPoints).splitBy {case (linkId, _, _) => linkId == roadLinkId}
 
-    val (firstSplitLength, secondSplitLength) = linkOfSplitting.geometryRunningDirection match {
+    val (firstSplitLength, secondSplitLength) = splitLink.geometryRunningDirection match {
       case true =>
         (splitMeasure - startMeasureOfSplitLink + linksBeforeSplit.length(linkLength),
           endMeasureOfSplitLink - splitMeasure + linksAfterSplit.length(linkLength))
@@ -266,7 +265,7 @@ object OracleLinearAssetDao {
           splitMeasure - startMeasureOfSplitLink + linksAfterSplit.length(linkLength))
     }
 
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkOfSplitting.geometryRunningDirection) match {
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, splitLink.geometryRunningDirection) match {
       case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
       case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
       case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
