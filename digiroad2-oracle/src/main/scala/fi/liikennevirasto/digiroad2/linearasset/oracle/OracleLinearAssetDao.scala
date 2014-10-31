@@ -254,11 +254,14 @@ object OracleLinearAssetDao {
 
   private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
     if (!speedLimits.isEmpty) {
-      val sb = new StringBuilder()
-      sb.append("INSERT ALL\n")
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+
+      println("creating " + speedLimits.size + " speed limits")
+
       speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
         val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
-        val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+        val sb = new StringBuilder()
+        sb.append("insert all")
         sb.append(
           s"""
             into asset(id, asset_type_id, created_by, created_date)
@@ -273,31 +276,42 @@ object OracleLinearAssetDao {
             into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
             values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
           """)
+        sb.append("\nSELECT * FROM DUAL\n")
+        val sql = sb.toString()
+        Q.updateNA(sql).execute()
       }
-      sb.append("\nSELECT * FROM DUAL\n")
-      Q.updateNA(sb.toString).execute()
     }
   }
 
-  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
+  private def timed[A](s: String, f: => A): A = {
+    val start = System.currentTimeMillis()
+    val retval = f
+    println(s + " finished in: " + (System.currentTimeMillis - start))
+    retval
+  }
 
-    val uncoveredLinkIds = findUncoveredLinkIds(linkGeometries.keySet, assetLinks)
-    val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Int, Double, Double)] = uncoveredLinkIds.toSeq.map { roadLinkId =>
+  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
+    val start = System.currentTimeMillis()
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = timed("fetchAssetLinks", { OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn)) })
+
+    val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
+    val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Int, Double, Double)] = timed("roadLinksUncoveredBySpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
       generateSpeedLimit(roadLinkId, (0.0, length), 1, roadLinkType)
     }
-    createSpeedLimits(roadLinksUncoveredBySpeedLimits)
+    })
+    timed("createSpeedLimitsForUncoveredLinks", { createSpeedLimits(roadLinksUncoveredBySpeedLimits) })
 
-    val coveredLinkIds = findCoveredRoadLinks(linkGeometries.keySet, assetLinks)
-    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
-    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+    val coveredLinkIds = timed("findCoveredLinks", { findCoveredRoadLinks(linkGeometries.keySet, assetLinks) })
+    val partiallyCoveredLinks = timed("findPartiallyCoveredLinks", { findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks) })
+    val generatedPartialLinkSpeedLimits = timed("generatedPartialLink", { partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
       val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
       unfilledSegments.map { segment =>
         generateSpeedLimit(roadLinkId, segment, 1, roadLinkType)
       }
     }
-    createSpeedLimits(generatedPartialLinkSpeedLimits)
+    })
+    timed("createSpeedLimitsForPartialLinks", { createSpeedLimits(generatedPartialLinkSpeedLimits) })
   }
 }
