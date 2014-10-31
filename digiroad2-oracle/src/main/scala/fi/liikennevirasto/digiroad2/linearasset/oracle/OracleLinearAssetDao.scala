@@ -269,7 +269,7 @@ object OracleLinearAssetDao {
   }
 
   private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
-    if (!speedLimits.isEmpty) {
+    if (speedLimits.nonEmpty) {
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
       println("creating " + speedLimits.size + " speed limits")
