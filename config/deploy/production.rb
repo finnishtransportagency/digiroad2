@@ -19,6 +19,18 @@ server 'production1', user: 'web', roles: %w{web app}, my_property: :my_value
 # FIXME: Disabled because in production speed limit generation is not tied to single instance
 #server 'production2', user: 'web', roles: %w{web app}, my_property: :my_value
 
+namespace :deploy do
+  task :start_vallu_server do
+    on roles(:all) do
+      execute "killall -q node; exit 0"
+      # Capistrano kills the vallu server before it gets to start up if sleep 1 is not defined
+      execute "cd #{release_path} && (nohup grunt vallu-test-server > ./src/main/webapp/vallu-server.log &) && sleep 1"
+    end
+  end
+
+  after :publishing, :start_vallu_server
+end
+
 # you can set custom ssh options
 # it's possible to pass any option but you need to keep in mind that net/ssh understand limited list of options
 # you can see them in [net/ssh documentation](http://net-ssh.github.io/net-ssh/classes/Net/SSH.html#method-c-start)
