@@ -87,7 +87,7 @@ object SpeedLimitLinkPositions {
     }
   }
 
-  case class ChainedLink(linkIndex: Int, geometryRunningTowardsNextLink: Boolean)
+  case class ChainedLink(linkIndex: Int, geometryRunningDirection: GeometryRunningDirection)
   def generate2(segments: Seq[(Point, Point)]): (Seq[SegmentPosition], Seq[GeometryRunningDirection]) = {
    def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {

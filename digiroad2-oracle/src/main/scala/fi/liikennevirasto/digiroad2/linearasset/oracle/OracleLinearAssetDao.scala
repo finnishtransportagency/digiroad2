@@ -220,12 +220,12 @@ object OracleLinearAssetDao {
       .zip(segmentIndices)
       .sortBy(_._2)
       .zip(geometryRunningDirections)
-      .map { case (((linkId, length, linkEndPoints), segmentIndex), geometryRunningDirection) => (linkId, length, linkEndPoints, ChainedLink(linkIndex = segmentIndex, geometryRunningTowardsNextLink = geometryRunningDirection))}
+      .map { case (((linkId, length, linkEndPoints), segmentIndex), geometryRunningDirection) => (linkId, length, linkEndPoints, ChainedLink(linkIndex = segmentIndex, geometryRunningDirection = geometryRunningDirection))}
     val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
     val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
     val linkToBeSplit: (Long, Double, (Point, Point), ChainedLink) = linksWithPositions.find { case (linkId, _, _, _) => linkId == roadLinkId }.get
 
-    val (firstSplitLength, secondSplitLength) = linkToBeSplit._4.geometryRunningTowardsNextLink match {
+    val (firstSplitLength, secondSplitLength) = linkToBeSplit._4.geometryRunningDirection match {
       case true =>
         (splitMeasure - startMeasureOfSplitLink + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2},
           endMeasureOfSplitLink - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
@@ -234,7 +234,7 @@ object OracleLinearAssetDao {
           splitMeasure - startMeasureOfSplitLink + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
     }
 
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkToBeSplit._4.geometryRunningTowardsNextLink) match {
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkToBeSplit._4.geometryRunningDirection) match {
       case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplitLink)
       case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplitLink)
       case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplitLink)
