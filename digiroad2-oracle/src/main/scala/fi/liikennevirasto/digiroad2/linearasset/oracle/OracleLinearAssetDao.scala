@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.util.SpeedLimitLinkPositions.ChainedLink
 import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
