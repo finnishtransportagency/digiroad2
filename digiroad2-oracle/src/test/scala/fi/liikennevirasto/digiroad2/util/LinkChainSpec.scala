@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.Point
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 
-class SpeedLimitLinkPositionsSpec extends FunSuite with Matchers {
+class LinkChainSpec extends FunSuite with Matchers {
   test("generate position indices for segment sequence of one segment") {
     val segments = List((Point(373028.812006694, 6678475.44858997), Point(373044.204553789, 6678442.81292882)))
     LinkChain.generateLinkPositionsAndGeometryRunningDirections(segments)._1 shouldBe Seq(0)
