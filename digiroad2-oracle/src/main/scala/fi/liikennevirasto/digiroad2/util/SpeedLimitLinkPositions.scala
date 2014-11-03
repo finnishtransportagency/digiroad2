@@ -9,7 +9,7 @@ object LinkChain {
   
   def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)) = {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
-    val (segmentPositions, geometryRunningDirections) = SpeedLimitLinkPositions.generate2(endPoints)
+    val (segmentPositions, geometryRunningDirections) = SpeedLimitLinkPositions.generateLinkPositionsAndGeometryRunningDirections(endPoints)
     val chainedLinks: Seq[ChainedLink[T]] = rawLinks
       .zip(segmentPositions)
       .sortBy(_._2)
@@ -93,7 +93,7 @@ object SpeedLimitLinkPositions {
     }
   }
 
-  def generate2(segments: Seq[(Point, Point)]): (Seq[SegmentPosition], Seq[GeometryRunningDirection]) = {
+  def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[SegmentPosition], Seq[GeometryRunningDirection]) = {
    def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
         case 0 => pointIndex + 1
