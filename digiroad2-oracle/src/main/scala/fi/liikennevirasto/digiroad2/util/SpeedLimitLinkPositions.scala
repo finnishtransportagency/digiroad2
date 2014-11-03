@@ -71,7 +71,7 @@ object SpeedLimitLinkPositions {
     }
   }
 
-  private def calculateShortestDistancesBetweenLinkEndPoints(indexedSegments: Seq[((Point, Point), Int)]): Seq[(PointIndex, (PointIndex, Double))] = {
+  private def shortestDistancesBetweenLinkEndPoints(indexedSegments: Seq[((Point, Point), Int)]): Seq[(PointIndex, (PointIndex, Double))] = {
     indexedSegments.foldLeft(Seq.empty[(PointIndex, (PointIndex, Double))]) { (acc, indexedSegment) =>
       val (segment, index) = indexedSegment
       val pointsToCompare: List[PointIndex] = indexedSegments.foldLeft(List.empty[PointIndex]) { (acc, otherIndexedSegment) =>
@@ -104,7 +104,7 @@ object SpeedLimitLinkPositions {
     val indexedSegments = segments.zipWithIndex
     if (indexedSegments.length == 1) Seq(0)
     else {
-      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
+      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
 
       val startingPoint: PointIndex = shortestDistances.sortWith { (point1, point2) =>
         point1._2._2 > point2._2._2
@@ -137,7 +137,7 @@ object SpeedLimitLinkPositions {
     val indexedSegments = segments.zipWithIndex
     if (indexedSegments.length == 1) (Seq(0), Seq(true))
     else {
-      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
+      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
 
       val startingPoint: PointIndex = shortestDistances.sortWith { (point1, point2) =>
         point1._2._2 > point2._2._2
@@ -161,7 +161,7 @@ object SpeedLimitLinkPositions {
     val indexedSegments = segments.zipWithIndex
     if (indexedSegments.length == 1) segments.head
     else {
-      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = calculateShortestDistancesBetweenLinkEndPoints(indexedSegments)
+      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
 
       val sortedPoints: Seq[(PointIndex, (PointIndex, Double))] = shortestDistances.sortWith { (point1, point2) =>
         point1._2._2 > point2._2._2
