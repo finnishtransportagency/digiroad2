@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Qu
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{LinkChain, GeometryUtils, SpeedLimitLinkPositions}
+import fi.liikennevirasto.digiroad2.util.{LinkChain, GeometryUtils}
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
@@ -39,7 +39,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   def calculateSpeedLimitEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val endPoints = SpeedLimitLinkPositions.calculateLinkChainEndPoints(links)
+    val endPoints = LinkChain.calculateLinkChainEndPoints(links)
     Set(endPoints._1, endPoints._2)
  }
 
