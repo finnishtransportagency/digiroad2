@@ -212,37 +212,6 @@ object OracleLinearAssetDao {
     createdId
   }
 
-  def calculateLinkChainSplitsOld(splitMeasure: Double, splitLink: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point), Int)]) = {
-    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = splitLink
-    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints}
-    val (segmentIndices, geometryRunningDirections) = SpeedLimitLinkPositions.generate2(endPoints)
-    val linksWithPositions: Seq[(Long, Double, (Point, Point), ChainedLink)] = links
-      .zip(segmentIndices)
-      .sortBy(_._2)
-      .zip(geometryRunningDirections)
-      .map { case (((linkId, length, linkEndPoints), segmentIndex), geometryRunningDirection) => (linkId, length, linkEndPoints, ChainedLink(linkIndex = segmentIndex, geometryRunningDirection = geometryRunningDirection))}
-    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId}
-    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), ChainedLink)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId}.tail
-    val linkToBeSplit: (Long, Double, (Point, Point), ChainedLink) = linksWithPositions.find { case (linkId, _, _, _) => linkId == roadLinkId }.get
-
-    val (firstSplitLength, secondSplitLength) = linkToBeSplit._4.geometryRunningDirection match {
-      case true =>
-        (splitMeasure - startMeasureOfSplitLink + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2},
-          endMeasureOfSplitLink - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
-      case false =>
-        (endMeasureOfSplitLink - splitMeasure + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2},
-          splitMeasure - startMeasureOfSplitLink + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2})
-    }
-
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, linkToBeSplit._4.geometryRunningDirection) match {
-      case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplitLink)
-      case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplitLink)
-      case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplitLink)
-      case (false, false) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplitLink)
-    }
-    (existingLinkMeasures, createdLinkMeasures, linksToMove.map { case (id, length, eps, chainedLink) => (id, length, eps, chainedLink.linkIndex) })
-  }
-
   def calculateLinkChainSplits(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def fetchLinkEndPoints(link: (Long, Double, (Point, Point))) = {
