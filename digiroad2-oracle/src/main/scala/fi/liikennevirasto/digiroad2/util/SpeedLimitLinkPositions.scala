@@ -93,39 +93,6 @@ object SpeedLimitLinkPositions {
     }
   }
 
-  def generate(segments: Seq[(Point, Point)]): Seq[Int] = {
-   def findFriendIndex(pointIndex: PointIndex): PointIndex = {
-      pointIndex % 2 match {
-        case 0 => pointIndex + 1
-        case 1 => pointIndex - 1
-      }
-    }
-
-    val indexedSegments = segments.zipWithIndex
-    if (indexedSegments.length == 1) Seq(0)
-    else {
-      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
-
-      val startingPoint: PointIndex = shortestDistances.sortWith { (point1, point2) =>
-        point1._2._2 > point2._2._2
-      }.head._1
-
-      val pointsWithPositionNumbers: Map[PointIndex, PointPosition] = indexedSegments.foldLeft((startingPoint, Map.empty[Int, Int])) { (acc, indexedSegment) =>
-        val (_, segmentIndex) = indexedSegment
-        val (pointIndex, positionNumbers) = acc
-        val friend = findFriendIndex(pointIndex)
-        val closestNeighbourOfFriend = shortestDistances(friend)._2._1
-        val (pointPositionNumber, friendPositionNumber) = segmentIndexToPointIndices(segmentIndex)
-        (closestNeighbourOfFriend, positionNumbers + (pointIndex -> pointPositionNumber) + (friend -> friendPositionNumber))
-      }._2
-
-      val positionNumbersInIndexOrder: Seq[(PointIndex, PointPosition)] = pointsWithPositionNumbers.toList.sortBy(_._1)
-      val segmentPositionNumbers: Seq[Int] = positionNumbersInIndexOrder.sliding(2, 2).map(_.head).map(_._2).map(pointIndexToSegmentIndex).toList
-
-      segmentPositionNumbers
-    }
-  }
-
   def generate2(segments: Seq[(Point, Point)]): (Seq[SegmentPosition], Seq[GeometryRunningDirection]) = {
    def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {

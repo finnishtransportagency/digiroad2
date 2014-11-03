@@ -27,7 +27,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[Point])]): Seq[SpeedLimitLink] = {
     val linkEndpoints: Seq[(Point, Point)] = links.map(getLinkEndpoints)
-    val positionNumbers = SpeedLimitLinkPositions.generate(linkEndpoints)
+    val positionNumbers = SpeedLimitLinkPositions.generate2(linkEndpoints)._1
     links.zip(positionNumbers).map(toSpeedLimit)
   }
 
