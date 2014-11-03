@@ -68,6 +68,7 @@ object LinkChain {
     }
   }
 
+  // TODO: Return both parameters in same order and embed in one segment
   private def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[LinkPosition], Seq[GeometryRunningDirection]) = {
     def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
