@@ -63,8 +63,16 @@ object SpeedLimitLinkPositions {
     (2 * segmentIndex, 2 * segmentIndex + 1)
   }
 
+  def replaceWithSmallerDistance(referencePoint: Point, smallestDistance: Option[(PointIndex, Double)], pointIndex: PointIndex, indexedSegments: Seq[((Point, Point), Int)]): Option[(PointIndex, Double)] = {
+    val point = fetchFromIndexedSegments(indexedSegments, pointIndex)
+    smallestDistance match {
+      case Some((_, minDistance)) => if (referencePoint.distanceTo(point) < minDistance) Some(pointIndex, referencePoint.distanceTo(point)) else smallestDistance
+      case None => Some(pointIndex, referencePoint.distanceTo(point))
+    }
+  }
+
   private def calculateShortestDistancesBetweenLinkEndPoints(indexedSegments: Seq[((Point, Point), Int)]): Seq[(PointIndex, (PointIndex, Double))] = {
-    val distances: Seq[(PointIndex, Map[PointIndex, Double])] = indexedSegments.foldLeft(Seq.empty[(PointIndex, Map[PointIndex, Double])]) { (acc, indexedSegment) =>
+    indexedSegments.foldLeft(Seq.empty[(PointIndex, (PointIndex, Double))]) { (acc, indexedSegment) =>
       val (segment, index) = indexedSegment
       val pointsToCompare: List[PointIndex] = indexedSegments.foldLeft(List.empty[PointIndex]) { (acc, otherIndexedSegment) =>
         val (_, otherIndex) = otherIndexedSegment
@@ -75,20 +83,13 @@ object SpeedLimitLinkPositions {
         }
       }
 
-      val indexedPoints = pointsToCompare.foldLeft(Map.empty[PointIndex, Point]) { (acc, idx) =>
-        acc + (idx -> fetchFromIndexedSegments(indexedSegments, idx))
+      val shortestDistances: (Option[(PointIndex, Double)], Option[(PointIndex, Double)]) = pointsToCompare.foldLeft((None, None): (Option[(PointIndex, Double)], Option[(PointIndex, Double)])) { (acc, pointIndex) =>
+        val firstEndPointOfSegment = segment._1
+        val secondEndPointOfSegment = segment._2
+        (replaceWithSmallerDistance(firstEndPointOfSegment, acc._1, pointIndex, indexedSegments), replaceWithSmallerDistance(secondEndPointOfSegment, acc._2, pointIndex, indexedSegments))
       }
-
-      val distancesFromFirstPoint: Map[PointIndex, Double] = indexedPoints.mapValues(segment._1.distanceTo)
-      val distancesFromSecondPoint: Map[PointIndex, Double] = indexedPoints.mapValues(segment._2.distanceTo)
       val (firstIndex, secondIndex) = segmentIndexToPointIndices(index)
-      acc ++ Seq((firstIndex, distancesFromFirstPoint), (secondIndex, distancesFromSecondPoint))
-    }
-
-    distances.map { distancesFromPoint =>
-      val (point, distances) = distancesFromPoint
-      val shortestDistance = distances.toList.sortBy(_._2).head
-      (point, shortestDistance)
+      acc ++ Seq((firstIndex, shortestDistances._1.get), (secondIndex, shortestDistances._2.get))
     }
   }
 
