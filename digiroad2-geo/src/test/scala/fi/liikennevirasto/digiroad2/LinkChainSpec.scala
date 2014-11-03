@@ -1,9 +1,6 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Point
-
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest._
 
 class LinkChainSpec extends FunSuite with Matchers {
   test("generate position indices for segment sequence of one segment") {

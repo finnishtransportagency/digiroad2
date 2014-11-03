@@ -1,7 +1,6 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.util.LinkChain.{GeometryRunningDirection, LinkPosition}
+import fi.liikennevirasto.digiroad2.LinkChain.{GeometryRunningDirection, LinkPosition}
 
 object LinkChain {
   type PointIndex = Int

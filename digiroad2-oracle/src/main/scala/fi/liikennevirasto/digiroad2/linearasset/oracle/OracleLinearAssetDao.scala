@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
+import fi.liikennevirasto.digiroad2.{LinkChain, RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.util.{LinkChain, GeometryUtils}
+import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Q.interpolation
@@ -17,7 +17,6 @@ import Q.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.RoadLinkService
 import collection.JavaConversions._
 
 object OracleLinearAssetDao {
