@@ -63,10 +63,10 @@ object SpeedLimitLinkPositions {
     (2 * segmentIndex, 2 * segmentIndex + 1)
   }
 
-  def replaceWithSmallerDistance(referencePoint: Point, smallestDistance: Option[(PointIndex, Double)], pointIndex: PointIndex, indexedSegments: Seq[((Point, Point), Int)]): Option[(PointIndex, Double)] = {
+  def shorterDistance(referencePoint: Point, distance: Option[(PointIndex, Double)], pointIndex: PointIndex, indexedSegments: Seq[((Point, Point), Int)]): Option[(PointIndex, Double)] = {
     val point = fetchFromIndexedSegments(indexedSegments, pointIndex)
-    smallestDistance match {
-      case Some((_, minDistance)) => if (referencePoint.distanceTo(point) < minDistance) Some(pointIndex, referencePoint.distanceTo(point)) else smallestDistance
+    distance match {
+      case Some((_, minDistance)) => if (referencePoint.distanceTo(point) < minDistance) Some(pointIndex, referencePoint.distanceTo(point)) else distance
       case None => Some(pointIndex, referencePoint.distanceTo(point))
     }
   }
@@ -86,7 +86,7 @@ object SpeedLimitLinkPositions {
       val shortestDistances: (Option[(PointIndex, Double)], Option[(PointIndex, Double)]) = pointsToCompare.foldLeft((None, None): (Option[(PointIndex, Double)], Option[(PointIndex, Double)])) { (acc, pointIndex) =>
         val firstEndPointOfSegment = segment._1
         val secondEndPointOfSegment = segment._2
-        (replaceWithSmallerDistance(firstEndPointOfSegment, acc._1, pointIndex, indexedSegments), replaceWithSmallerDistance(secondEndPointOfSegment, acc._2, pointIndex, indexedSegments))
+        (shorterDistance(firstEndPointOfSegment, acc._1, pointIndex, indexedSegments), shorterDistance(secondEndPointOfSegment, acc._2, pointIndex, indexedSegments))
       }
       val (firstIndex, secondIndex) = segmentIndexToPointIndices(index)
       acc ++ Seq((firstIndex, shortestDistances._1.get), (secondIndex, shortestDistances._2.get))
