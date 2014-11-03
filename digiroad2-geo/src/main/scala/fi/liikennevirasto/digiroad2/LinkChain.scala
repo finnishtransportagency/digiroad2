@@ -1,21 +1,23 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.LinkChain.{GeometryRunningDirection, LinkPosition}
+import fi.liikennevirasto.digiroad2.LinkChain.{LinkIndex, GeometryRunningDirection, LinkPosition}
 
 object LinkChain {
   type PointIndex = Int
   type PointPosition = Int
   type SegmentIndex = Int
   type LinkPosition = Int
+  type LinkIndex = Int
   type GeometryRunningDirection = Boolean
   
   def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)) = {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
     val (segmentPositions, geometryRunningDirections) = generateLinkPositionsAndGeometryRunningDirections(endPoints)
     val chainedLinks: Seq[ChainedLink[T]] = rawLinks
-      .zip(segmentPositions)
+      .zipWithIndex // (rawLink, linkIndex)
+      .zip(segmentPositions) // ((rawLink, linkIndex), position)
       .sortBy(_._2)
-      .zip(geometryRunningDirections).map { case ((link, segmentIndex), geometryRunningDirection) => new ChainedLink[T](link, segmentIndex, geometryRunningDirection) }
+      .zip(geometryRunningDirections).map { case (((link, linkIndex), linkPosition), geometryRunningDirection) => new ChainedLink[T](link, linkIndex, linkPosition, geometryRunningDirection) }
 
     new LinkChain[T](chainedLinks)
   }
@@ -80,7 +82,7 @@ object LinkChain {
     }
   }
 
-  def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[LinkPosition], Seq[GeometryRunningDirection]) = {
+  private def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[LinkPosition], Seq[GeometryRunningDirection]) = {
     def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
         case 0 => pointIndex + 1
@@ -112,11 +114,11 @@ object LinkChain {
   }
 }
 
-class ChainedLink[T](val rawLink: T, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
+class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
 
 class LinkChain[T](val links: Seq[ChainedLink[T]]) {
   def linkPositions(): Seq[LinkPosition] = {
-    links.map(_.linkPosition)
+    links.sortBy(_.linkIndex).map(_.linkPosition)
   }
 
   def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink[T], LinkChain[T]) = {
