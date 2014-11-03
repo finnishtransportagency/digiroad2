@@ -46,20 +46,6 @@ object LinkChain {
     }
   }
 
-  def calculateLinkChainEndPoints(segments: Seq[(Point, Point)]): (Point, Point) = {
-    val indexedSegments = segments.zipWithIndex
-    if (indexedSegments.length == 1) segments.head
-    else {
-      val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
-
-      val sortedPoints: Seq[(PointIndex, (PointIndex, Double))] = shortestDistances.sortWith { (point1, point2) =>
-        point1._2._2 > point2._2._2
-      }
-
-      (fetchFromIndexedSegments(indexedSegments, sortedPoints(0)._1), fetchFromIndexedSegments(indexedSegments, sortedPoints(1)._1))
-    }
-  }
-
   private def shortestDistancesBetweenLinkEndPoints(indexedSegments: Seq[((Point, Point), Int)]): Seq[(PointIndex, (PointIndex, Double))] = {
     indexedSegments.foldLeft(Seq.empty[(PointIndex, (PointIndex, Double))]) { (acc, indexedSegment) =>
       val (segment, index) = indexedSegment
@@ -117,6 +103,17 @@ object LinkChain {
 class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
 
 class LinkChain[T](val links: Seq[ChainedLink[T]]) {
+  def endPoints(linkEndPoints: (T) => (Point, Point)): (Point, Point) = {
+    val firstLinkEndPoints = linkEndPoints(links.head.rawLink)
+    val lastLinkEndPoints = linkEndPoints(links.last.rawLink)
+    (links.head.geometryRunningDirection, links.last.geometryRunningDirection) match {
+      case (true, true) => (firstLinkEndPoints._1, lastLinkEndPoints._2)
+      case (true, false) => (firstLinkEndPoints._1, lastLinkEndPoints._1)
+      case (false, true) => (firstLinkEndPoints._2, lastLinkEndPoints._2)
+      case (false, false) => (firstLinkEndPoints._2, lastLinkEndPoints._1)
+    }
+  }
+
   def linkPositions(): Seq[LinkPosition] = {
     links.sortBy(_.linkIndex).map(_.linkPosition)
   }

@@ -39,7 +39,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   def calculateSpeedLimitEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val endPoints = LinkChain.calculateLinkChainEndPoints(links)
+    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints(identity[(Point, Point)])
     Set(endPoints._1, endPoints._2)
  }
 
