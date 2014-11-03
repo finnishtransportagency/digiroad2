@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.util.{SpeedLimitLinkPositions, GeometryUtils}
+import fi.liikennevirasto.digiroad2.util.{GeometryUtils}
 import oracle.jdbc.OracleConnection
 
 import org.scalatest.FunSuite
