@@ -101,7 +101,7 @@ object LinkChain {
   }
 }
 
-class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
+class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection)
 
 class LinkChain[T](val links: Seq[ChainedLink[T]]) {
   def endPoints(linkEndPoints: (T) => (Point, Point)): (Point, Point) = {
