@@ -22,6 +22,9 @@ object LinkChain {
 class ChainedLink[T](val rawLink: T, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection) {}
 
 class LinkChain[T](val links: Seq[ChainedLink[T]]) {
+  def linkPositions(): Seq[LinkPosition] = {
+    links.map(_.linkPosition)
+  }
 
   def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink[T], LinkChain[T]) = {
     val linksBeforeSplit: LinkChain[T] = new LinkChain[T](links.takeWhile { link => !isSplitLink(link.rawLink) })

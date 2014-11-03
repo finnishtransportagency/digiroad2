@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Qu
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{GeometryUtils, SpeedLimitLinkPositions}
+import fi.liikennevirasto.digiroad2.util.{LinkChain, GeometryUtils, SpeedLimitLinkPositions}
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
@@ -26,9 +26,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[Point])]): Seq[SpeedLimitLink] = {
-    val linkEndpoints: Seq[(Point, Point)] = links.map(getLinkEndpoints)
-    val positionNumbers = SpeedLimitLinkPositions.generateLinkPositionsAndGeometryRunningDirections(linkEndpoints)._1
-    links.zip(positionNumbers).map(toSpeedLimit)
+    val linkPositions = LinkChain(links, getLinkEndpoints).linkPositions()
+    links.zip(linkPositions).map(toSpeedLimit)
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {
