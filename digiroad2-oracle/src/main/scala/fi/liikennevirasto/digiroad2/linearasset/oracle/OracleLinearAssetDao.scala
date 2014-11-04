@@ -203,7 +203,7 @@ object OracleLinearAssetDao {
       val (roadLinkId, length, geometry) = link
       (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val (existingLinkMeasures: (Double, Double), createdLinkMeasures: (Double, Double), linksToMove: Seq[(Long, Double, (Point, Point))]) = calculateLinkChainSplits(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+    val (existingLinkMeasures: (Double, Double), createdLinkMeasures: (Double, Double), linksToMove: Seq[(Long, Double, (Point, Point))]) = createSpeedLimitSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
@@ -211,7 +211,7 @@ object OracleLinearAssetDao {
     createdId
   }
 
-  def calculateLinkChainSplits(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+  def createSpeedLimitSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link
