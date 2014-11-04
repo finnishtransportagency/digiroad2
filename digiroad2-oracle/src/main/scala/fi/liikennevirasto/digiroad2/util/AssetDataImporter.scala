@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.{Locale, Properties}
+import fi.liikennevirasto.digiroad2.GeometryUtils
+
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession

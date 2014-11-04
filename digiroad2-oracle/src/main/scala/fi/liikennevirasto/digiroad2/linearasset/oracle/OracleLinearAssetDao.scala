@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.{RoadLinkService, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.util.{SpeedLimitLinkPositions, GeometryUtils}
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Q.interpolation
@@ -17,7 +19,6 @@ import Q.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.RoadLinkService
 import collection.JavaConversions._
 
 object OracleLinearAssetDao {
@@ -105,9 +106,9 @@ object OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Int, Double, Double)].list
-    speedLimits.map { case (id, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+    speedLimits.map { case (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (id, roadLinkId, sideCode, value, points)
+      (assetId, roadLinkId, sideCode, value, points)
     }
   }
 
@@ -203,21 +204,7 @@ object OracleLinearAssetDao {
       val (roadLinkId, length, geometry) = link
       (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val endPoints: Seq[(Point, Point)] = links.map { case (_, _, linkEndPoints) => linkEndPoints }
-    val linksWithPositions: Seq[(Long, Double, (Point, Point), Int)] = links
-      .zip(SpeedLimitLinkPositions.generate(endPoints))
-      .map { case ((linkId, length, linkEndPoints), position) => (linkId, length, linkEndPoints, position) }
-      .sortBy { case (_, _, _, position) => position }
-    val linksBeforeSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.takeWhile { case (linkId, _, _, _) => linkId != roadLinkId }
-    val linksAfterSplitLink: Seq[(Long, Double, (Point, Point), Int)] = linksWithPositions.dropWhile { case (linkId, _, _, _) => linkId != roadLinkId }.tail
-
-    val firstSplitLength = splitMeasure - startMeasure + linksBeforeSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-    val secondSplitLength = endMeasure - splitMeasure + linksAfterSplitLink.foldLeft(0.0) { case (acc, link) => acc + link._2}
-
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = firstSplitLength > secondSplitLength match {
-      case true => ((startMeasure, splitMeasure), (splitMeasure, endMeasure), linksAfterSplitLink)
-      case false => ((splitMeasure, endMeasure), (startMeasure, splitMeasure), linksBeforeSplitLink)
-    }
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSpeedLimitSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
@@ -253,7 +240,7 @@ object OracleLinearAssetDao {
   }
 
   private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
-    if (!speedLimits.isEmpty) {
+    if (speedLimits.nonEmpty) {
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
       println("creating " + speedLimits.size + " speed limits")

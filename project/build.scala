@@ -27,7 +27,8 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
-        "com.typesafe.akka" %% "akka-actor" % "2.3.2"
+        "com.typesafe.akka" %% "akka-actor" % "2.3.2",
+        "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
       )
     )
   )
@@ -97,7 +98,7 @@ object Digiroad2Build extends Build {
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
-  ) dependsOn(geoJar, oracleJar) aggregate(oracleJar)
+  ) dependsOn(geoJar, oracleJar) aggregate(geoJar, oracleJar)
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
