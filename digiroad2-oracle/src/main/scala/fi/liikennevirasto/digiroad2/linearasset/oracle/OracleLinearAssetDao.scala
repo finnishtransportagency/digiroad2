@@ -212,7 +212,7 @@ object OracleLinearAssetDao {
   }
 
   def calculateLinkChainSplits(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
-    val (roadLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
+    val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link
       linkEndPoints
@@ -222,7 +222,7 @@ object OracleLinearAssetDao {
       length
     }
 
-    val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy {case (linkId, _, _) => linkId == roadLinkId}
+    val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy {case (linkId, _, _) => linkId == splitLinkId}
 
     val (firstSplitLength, secondSplitLength) = splitLink.geometryDirection match {
       case GeometryDirection.TowardsLinkChain =>
