@@ -14,8 +14,8 @@ object LinkChain {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
     val (segmentPositions, geometryRunningDirections) = generateLinkPositionsAndGeometryRunningDirections(endPoints)
     val chainedLinks: Seq[ChainedLink[T]] = rawLinks
-      .zipWithIndex // (rawLink, linkIndex)
-      .zip(segmentPositions) // ((rawLink, linkIndex), position)
+      .zipWithIndex
+      .zip(segmentPositions)
       .sortBy(_._2)
       .zip(geometryRunningDirections).map { case (((link, linkIndex), linkPosition), geometryRunningDirection) => new ChainedLink[T](link, linkIndex, linkPosition, geometryRunningDirection) }
 
