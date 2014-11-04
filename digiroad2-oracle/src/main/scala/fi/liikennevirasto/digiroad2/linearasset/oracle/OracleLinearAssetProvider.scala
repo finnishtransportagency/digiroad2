@@ -1,5 +1,9 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
+
 import fi.liikennevirasto.digiroad2.{GeometryUtils, LinkChain, DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
@@ -14,9 +18,15 @@ import org.slf4j.LoggerFactory
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def toSpeedLimit(linkAndPositionNumber: ((Long, Long, Int, Int, Seq[Point]), Int)): SpeedLimitLink = {
-    val ((id, roadLinkId, sideCode, limit, points), positionNumber) = linkAndPositionNumber
-    SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber)
+  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Int, Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
+    val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
+
+    val towardsLinkChain = geometryDirection match {
+      case TowardsLinkChain => true
+      case AgainstLinkChain => false
+    }
+
+    SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber, towardsLinkChain)
   }
 
   private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[Point])): (Point, Point) = {
@@ -25,8 +35,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[Point])]): Seq[SpeedLimitLink] = {
-    val linkPositions = LinkChain(links, getLinkEndpoints).linkPositions()
-    links.zip(linkPositions).map(toSpeedLimit)
+    val linkChain = LinkChain(links, getLinkEndpoints)
+    val linkPositions = linkChain.linkPositions()
+    val linkGeomRunningDirections = linkChain.geometryDirections()
+    links.zip(linkPositions).zip(linkGeomRunningDirections).map {
+      case (((id, roadLinkId, sideCode, limit, points), position), geoemetryDirection) => (id, roadLinkId, sideCode, limit, points, position, geoemetryDirection)
+    }.map(toSpeedLimit)
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle): Seq[SpeedLimitLink] = {

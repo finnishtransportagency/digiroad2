@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 
-case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point], position: Int)
+case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, limit: Int, points: Seq[Point], position: Int, towardsLinkChain: Boolean)
 case class SpeedLimit(id: Long, limit: Int, endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String], createdBy: Option[String], createdDateTime: Option[String], speedLimitLinks: Seq[SpeedLimitLink])
 case class RoadLinkUncoveredBySpeedLimit(roadLinkId: Long, sideCode: Int, speedLimitValue: Int, startMeasure: Double, endMeasure: Double)
 
