@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import fi.liikennevirasto.digiroad2.{LinkChain, RoadLinkService, Point}
@@ -223,20 +224,20 @@ object OracleLinearAssetDao {
 
     val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy {case (linkId, _, _) => linkId == roadLinkId}
 
-    val (firstSplitLength, secondSplitLength) = splitLink.geometryRunningDirection match {
-      case true =>
+    val (firstSplitLength, secondSplitLength) = splitLink.geometryDirection match {
+      case GeometryDirection.TowardsLinkChain =>
         (splitMeasure - startMeasureOfSplitLink + linksBeforeSplit.length(linkLength),
           endMeasureOfSplitLink - splitMeasure + linksAfterSplit.length(linkLength))
-      case false =>
+      case GeometryDirection.AgainstLinkChain =>
         (endMeasureOfSplitLink - splitMeasure + linksBeforeSplit.length(linkLength),
           splitMeasure - startMeasureOfSplitLink + linksAfterSplit.length(linkLength))
     }
 
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, splitLink.geometryRunningDirection) match {
-      case (true, true) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
-      case (true, false) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
-      case (false, true) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
-      case (false, false) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplit)
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, splitLink.geometryDirection) match {
+      case (true, GeometryDirection.TowardsLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
+      case (true, GeometryDirection.AgainstLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
+      case (false, GeometryDirection.TowardsLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
+      case (false, GeometryDirection.AgainstLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplit)
     }
     (existingLinkMeasures, createdLinkMeasures, linksToMove.rawLinks())
   }

@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.LinkChain.{LinkIndex, GeometryRunningDirection, LinkPosition}
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.{GeometryDirection, LinkIndex, LinkPosition}
 
 object LinkChain {
   type PointIndex = Int
@@ -8,7 +10,11 @@ object LinkChain {
   type SegmentIndex = Int
   type LinkPosition = Int
   type LinkIndex = Int
-  type GeometryRunningDirection = Boolean
+
+  object GeometryDirection extends Enumeration {
+    type GeometryDirection = Value
+    val TowardsLinkChain, AgainstLinkChain = Value
+  }
   
   def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)): LinkChain[T] = {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
@@ -69,7 +75,7 @@ object LinkChain {
   }
 
   // TODO: Return both parameters in same order and embed in one segment
-  private def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[LinkPosition], Seq[GeometryRunningDirection]) = {
+  private def generateLinkPositionsAndGeometryRunningDirections(segments: Seq[(Point, Point)]): (Seq[LinkPosition], Seq[GeometryDirection]) = {
     def findFriendIndex(pointIndex: PointIndex): PointIndex = {
       pointIndex % 2 match {
         case 0 => pointIndex + 1
@@ -78,7 +84,7 @@ object LinkChain {
     }
 
     val indexedSegments = segments.zipWithIndex
-    if (indexedSegments.length == 1) (Seq(0), Seq(true))
+    if (indexedSegments.length == 1) (Seq(0), Seq(GeometryDirection.TowardsLinkChain))
     else {
       val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
 
@@ -86,13 +92,13 @@ object LinkChain {
         point1._2._2 > point2._2._2
       }.head._1
 
-      val segmentPositionsAndRunningDirections: (Seq[(SegmentIndex, LinkPosition)], Seq[GeometryRunningDirection]) = indexedSegments.foldLeft((startingPoint, (Seq.empty[(SegmentIndex, LinkPosition)], Seq.empty[GeometryRunningDirection]))) { (acc, indexedSegment) =>
+      val segmentPositionsAndRunningDirections: (Seq[(SegmentIndex, LinkPosition)], Seq[GeometryDirection]) = indexedSegments.foldLeft((startingPoint, (Seq.empty[(SegmentIndex, LinkPosition)], Seq.empty[GeometryDirection]))) { (acc, indexedSegment) =>
         val (_, segmentPosition) = indexedSegment
         val (pointIndex, (segmentIndices, geometryDirections)) = acc
         val friend = findFriendIndex(pointIndex)
-        val geometryRunningDirection = friend > pointIndex
+        val geometryDirection = if (friend > pointIndex) GeometryDirection.TowardsLinkChain else GeometryDirection.AgainstLinkChain
         val closestNeighbourOfFriend = shortestDistances(friend)._2._1
-        (closestNeighbourOfFriend, (segmentIndices :+ (pointIndexToSegmentIndex(pointIndex) -> segmentPosition), geometryDirections :+ geometryRunningDirection))
+        (closestNeighbourOfFriend, (segmentIndices :+ (pointIndexToSegmentIndex(pointIndex) -> segmentPosition), geometryDirections :+ geometryDirection))
       }._2
 
       val segmentPositions = segmentPositionsAndRunningDirections._1.sortBy(_._1).map(_._2)
@@ -101,17 +107,17 @@ object LinkChain {
   }
 }
 
-class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryRunningDirection: GeometryRunningDirection)
+class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryDirection: GeometryDirection)
 
 class LinkChain[T](val links: Seq[ChainedLink[T]]) {
   def endPoints(linkEndPoints: (T) => (Point, Point)): (Point, Point) = {
     val firstLinkEndPoints = linkEndPoints(links.head.rawLink)
     val lastLinkEndPoints = linkEndPoints(links.last.rawLink)
-    (links.head.geometryRunningDirection, links.last.geometryRunningDirection) match {
-      case (true, true) => (firstLinkEndPoints._1, lastLinkEndPoints._2)
-      case (true, false) => (firstLinkEndPoints._1, lastLinkEndPoints._1)
-      case (false, true) => (firstLinkEndPoints._2, lastLinkEndPoints._2)
-      case (false, false) => (firstLinkEndPoints._2, lastLinkEndPoints._1)
+    (links.head.geometryDirection, links.last.geometryDirection) match {
+      case (GeometryDirection.TowardsLinkChain, GeometryDirection.TowardsLinkChain) => (firstLinkEndPoints._1, lastLinkEndPoints._2)
+      case (GeometryDirection.TowardsLinkChain, GeometryDirection.AgainstLinkChain) => (firstLinkEndPoints._1, lastLinkEndPoints._1)
+      case (GeometryDirection.AgainstLinkChain, GeometryDirection.TowardsLinkChain) => (firstLinkEndPoints._2, lastLinkEndPoints._2)
+      case (GeometryDirection.AgainstLinkChain, GeometryDirection.AgainstLinkChain) => (firstLinkEndPoints._2, lastLinkEndPoints._1)
     }
   }
 
