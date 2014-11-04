@@ -165,7 +165,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       RoadLinkService.getRoadLinks(boundingRectangle).map { roadLink =>
-        val (id, points, length, roadLinkType) = roadLink
+        val (id, points, length, roadLinkType, _) = roadLink
         Map("roadLinkId" -> id,
             "points" -> points,
             "length" -> length,

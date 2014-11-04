@@ -299,7 +299,7 @@ object OracleSpatialAssetDao {
     def andMunicipality =
       if (user.configuration.roles.contains(Role.Operator)) None else Some((roadLinksAndMunicipality(user.configuration.authorizedMunicipalities.toList), user.configuration.authorizedMunicipalities.toList))
     def andWithinBoundingBox = bounds map { b =>
-      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067);
+      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
       (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
     val q = QueryCollector(roadLinks).add(andMunicipality).add(andWithinBoundingBox)

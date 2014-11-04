@@ -74,13 +74,13 @@ object OracleLinearAssetDao {
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, (Seq[Point], Double, Int)]) = {
-    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds)
+    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds, filterRoads = false)
 
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
-    val linkGeometries: Map[Long, (Seq[Point], Double, Int)] =
-      linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, Int)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4))
+    val linkGeometries: Map[Long, (Seq[Point], Double, Int, Int)] =
+      linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, Int, Int)]) { (acc, linkWithGeometry) =>
+        acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4, linkWithGeometry._5))
       }
 
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>
@@ -92,7 +92,16 @@ object OracleLinearAssetDao {
     val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
       speedLimit._5.isEmpty
     }
-    (filteredSpeedLimits, linkGeometries)
+
+    val linksOnRoads = linkGeometries.filter { link =>
+      val (_, _, _, functionalClass) = link._2
+      Set(1, 2, 3, 4, 5, 6).contains(functionalClass)
+    }.map { link =>
+      val (geometry, length, roadLinkType, _) = link._2
+      link._1 ->(geometry, length, roadLinkType)
+    }
+
+    (filteredSpeedLimits, linksOnRoads)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
