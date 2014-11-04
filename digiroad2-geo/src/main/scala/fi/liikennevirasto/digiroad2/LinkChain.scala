@@ -10,7 +10,7 @@ object LinkChain {
   type LinkIndex = Int
   type GeometryRunningDirection = Boolean
   
-  def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)) = {
+  def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)): LinkChain[T] = {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
     val (segmentPositions, geometryRunningDirections) = generateLinkPositionsAndGeometryRunningDirections(endPoints)
     val chainedLinks: Seq[ChainedLink[T]] = rawLinks
