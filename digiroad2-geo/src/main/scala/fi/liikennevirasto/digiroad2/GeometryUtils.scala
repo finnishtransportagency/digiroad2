@@ -1,10 +1,8 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.{LinkChain, Point}
-import fi.liikennevirasto.digiroad2.asset.{RoadLink, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink}
 
 object GeometryUtils {
   /**

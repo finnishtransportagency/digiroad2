@@ -1,9 +1,8 @@
-package fi.liikennevirasto.digiroad2.util
+package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.GeometryUtils._
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, RoadLink}
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink, Modification}
-import GeometryUtils._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("calculate bearing at asset position") {

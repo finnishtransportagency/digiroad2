@@ -6,11 +6,10 @@ import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.{ChainedLink, LinkChain, RoadLinkService, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.util.GeometryUtils
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Q.interpolation
