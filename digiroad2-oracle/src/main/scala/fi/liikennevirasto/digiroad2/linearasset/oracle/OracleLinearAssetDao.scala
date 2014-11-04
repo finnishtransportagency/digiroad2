@@ -2,9 +2,11 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.{LinkChain, RoadLinkService, Point}
+import fi.liikennevirasto.digiroad2.{ChainedLink, LinkChain, RoadLinkService, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -211,6 +213,24 @@ object OracleLinearAssetDao {
     createdId
   }
 
+  private def splitLengths(splitMeasure: Double,
+                           startMeasureOfSplitLink: Double,
+                           endMeasureOfSplitLink: Double,
+                           splitGeometryDirection: GeometryDirection,
+                           linkLength: ((Long, Double, (Point, Point))) => Double,
+                           linksBeforeSplit: LinkChain[(Long, Double, (Point, Point))],
+                           linksAfterSplit: LinkChain[(Long, Double, (Point, Point))]): (Double, Double) = {
+    val splitFromStart = splitMeasure - startMeasureOfSplitLink
+    val splitFromEnd = endMeasureOfSplitLink- splitMeasure
+    val (firstSplitLength, secondSplitLength) = splitGeometryDirection match {
+      case GeometryDirection.TowardsLinkChain =>
+        (splitFromStart + linksBeforeSplit.length(linkLength), splitFromEnd + linksAfterSplit.length(linkLength))
+      case GeometryDirection.AgainstLinkChain =>
+        (splitFromEnd + linksBeforeSplit.length(linkLength), splitFromStart + linksAfterSplit.length(linkLength))
+    }
+    (firstSplitLength, secondSplitLength)
+  }
+
   def createSpeedLimitSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
@@ -224,14 +244,7 @@ object OracleLinearAssetDao {
 
     val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy {case (linkId, _, _) => linkId == splitLinkId}
 
-    val (firstSplitLength, secondSplitLength) = splitLink.geometryDirection match {
-      case GeometryDirection.TowardsLinkChain =>
-        (splitMeasure - startMeasureOfSplitLink + linksBeforeSplit.length(linkLength),
-          endMeasureOfSplitLink - splitMeasure + linksAfterSplit.length(linkLength))
-      case GeometryDirection.AgainstLinkChain =>
-        (endMeasureOfSplitLink - splitMeasure + linksBeforeSplit.length(linkLength),
-          splitMeasure - startMeasureOfSplitLink + linksAfterSplit.length(linkLength))
-    }
+    val (firstSplitLength: Double, secondSplitLength: Double) = splitLengths(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linkLength, linksBeforeSplit, linksAfterSplit)
 
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = (firstSplitLength > secondSplitLength, splitLink.geometryDirection) match {
       case (true, GeometryDirection.TowardsLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
