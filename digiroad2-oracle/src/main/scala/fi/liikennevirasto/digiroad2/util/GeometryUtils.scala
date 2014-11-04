@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.{LinkChain, Point}
 import fi.liikennevirasto.digiroad2.asset.{RoadLink, AssetWithProperties}
 
 object GeometryUtils {
@@ -79,5 +82,58 @@ object GeometryUtils {
       case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
       case x => List(x)
     }
+  }
+
+  private def splitLengths(splitMeasure: Double,
+                           startMeasureOfSplitLink: Double,
+                           endMeasureOfSplitLink: Double,
+                           splitGeometryDirection: GeometryDirection,
+                           linkLength: ((Long, Double, (Point, Point))) => Double,
+                           linksBeforeSplit: LinkChain[(Long, Double, (Point, Point))],
+                           linksAfterSplit: LinkChain[(Long, Double, (Point, Point))]): (Double, Double) = {
+    val splitFromStart = splitMeasure - startMeasureOfSplitLink
+    val splitFromEnd = endMeasureOfSplitLink - splitMeasure
+    val (firstSplitLength, secondSplitLength) = splitGeometryDirection match {
+      case GeometryDirection.TowardsLinkChain =>
+        (splitFromStart + linksBeforeSplit.length(linkLength), splitFromEnd + linksAfterSplit.length(linkLength))
+      case GeometryDirection.AgainstLinkChain =>
+        (splitFromEnd + linksBeforeSplit.length(linkLength), splitFromStart + linksAfterSplit.length(linkLength))
+    }
+    (firstSplitLength, secondSplitLength)
+  }
+
+  private def splitResults(splitMeasure: Double,
+                           startMeasureOfSplitLink: Double,
+                           endMeasureOfSplitLink: Double,
+                           splitGeometryDirection: GeometryDirection,
+                           linksBeforeSplit: LinkChain[(Long, Double, (Point, Point))],
+                           linksAfterSplit: LinkChain[(Long, Double, (Point, Point))],
+                           firstSplitLength: Double,
+                           secondSplitLength: Double): ((Double, Double), (Double, Double), LinkChain[(Long, Double, (Point, Point))]) = {
+    (firstSplitLength > secondSplitLength, splitGeometryDirection) match {
+      case (true, GeometryDirection.TowardsLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
+      case (true, GeometryDirection.AgainstLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
+      case (false, GeometryDirection.TowardsLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
+      case (false, GeometryDirection.AgainstLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplit)
+    }
+  }
+
+  def createSpeedLimitSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+    val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
+    def linkEndPoints(link: (Long, Double, (Point, Point))) = {
+      val (_, _, linkEndPoints) = link
+      linkEndPoints
+    }
+    def linkLength(link: (Long, Double, (Point, Point))) = {
+      val (_, length, _) = link
+      length
+    }
+
+    val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy { case (linkId, _, _) => linkId == splitLinkId}
+
+    val (firstSplitLength, secondSplitLength) = splitLengths(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linkLength, linksBeforeSplit, linksAfterSplit)
+
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
+    (existingLinkMeasures, createdLinkMeasures, linksToMove.rawLinks())
   }
 }

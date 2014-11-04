@@ -66,17 +66,6 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("splitting three link speed limit where first split is longer than second should allocate first split to existing limit") {
-    val link1 = (0l, 154.0, (Point(372530, 6676811), Point(372378, 6676808)))
-    val link2 = (1l, 87.0, (Point(372614, 6676793), Point(372530, 6676811)))
-    val link3 = (2l, 224.0, (Point(372378, 6676808), Point(372164, 6676763)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(150.0, (0, 0.0, 154.0), Seq(link1, link2, link3))
-
-    existingLinkMeasures shouldBe(0.0, 150.0)
-    createdLinkMeasures shouldBe(150.0, 154.0)
-    linksToMove.map(_._1) shouldBe Seq(2)
-  }
-
   test("splitting three link speed limit " +
     "where first split is shorter than second " +
     "existing speed limit should cover only second split", Tag("db")) {
@@ -103,91 +92,5 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("splitting speed limit where all links run against link indexing") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(46.0, 0.0), Point(36.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link2, link3))
 
-    existingLinkMeasures shouldBe (0.0, 15.0)
-    createdLinkMeasures shouldBe (15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(0)
-  }
-
-  test("splitting speed limit where all links run towards link indexing") {
-    val link1 = (0l, 20.0, (Point(0.0, 0.0), Point(20.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(20.0, 0.0), Point(36.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link2, link3))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(2)
-  }
-
-  test("splitting speed limit where speed limit terminates to links pointing outwards") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(20.0, 0.0), Point(36.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link2, link3))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(2)
-  }
-
-  test("splitting speed limit where speed limit terminates to links pointing outwards and split link runs against indexing") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link2, link3))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(0)
-  }
-
-  test("splitting speed limit where links are unordered and links run against link indexing") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(46.0, 0.0), Point(36.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link3, link2))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(0)
-  }
-
-  test("splitting speed limit where links are unordered and links run towards link indexing") {
-    val link1 = (0l, 20.0, (Point(0.0, 0.0), Point(20.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(20.0, 0.0), Point(36.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link3, link2))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(2)
-  }
-
-  test("splitting speed limit where links are unordered and speed limit terminates to links pointing outwards") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(20.0, 0.0), Point(36.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link3, link2))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(2)
-  }
-
-  test("splitting speed limit where links are unordered and speed limit terminates to links pointing outwards and split link runs against indexing") {
-    val link1 = (0l, 20.0, (Point(20.0, 0.0), Point(0.0, 0.0)))
-    val link2 = (1l, 16.0, (Point(36.0, 0.0), Point(20.0, 0.0)))
-    val link3 = (2l, 10.0, (Point(36.0, 0.0), Point(46.0, 0.0)))
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = OracleLinearAssetDao.createSpeedLimitSplit(15.0, (1, 0.0, 16.0), Seq(link1, link3, link2))
-
-    existingLinkMeasures shouldBe(0.0, 15.0)
-    createdLinkMeasures shouldBe(15.0, 16.0)
-    linksToMove.map(_._1) shouldBe Seq(0)
-  }
 }
