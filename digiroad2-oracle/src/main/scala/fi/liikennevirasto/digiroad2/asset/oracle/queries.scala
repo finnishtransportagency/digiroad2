@@ -16,6 +16,7 @@ import org.joda.time.{LocalDate, DateTime}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
 import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.Point
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -30,15 +31,27 @@ object Queries {
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
-  case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
+  case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate],
                       municipalityNumber: Int, created: Modification, modified: Modification, wgslon: Double, wgslat: Double, roadLinkType: RoadLinkType = UnknownRoad)
 
-  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int],
+  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
                       image: Image, roadLinkEndDate: Option[LocalDate],
                       municipalityNumber: Int)
+
+  def bytesToPoint(bytes: Array[Byte]): Point = {
+    val geometry = JGeometry.load(bytes)
+    val point = geometry.getPoint()
+    Point(point(0), point(1))
+  }
+
+  implicit val getPoint = new GetResult[Point] {
+    def apply(r: PositionedResult) = {
+      bytesToPoint(r.nextBytes)
+    }
+  }
 
   implicit val getAssetWithPosition = new GetResult[(AssetRow, LRMPosition)] {
     def apply(r: PositionedResult) = {
@@ -49,7 +62,7 @@ object Queries {
       val validityDirection = r.nextInt
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
-      val pos = r.nextBytes
+      val point = r.nextBytesOption.map(bytesToPoint)
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -67,13 +80,12 @@ object Queries {
       val municipalityNumber = r.nextInt
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val posGeom = JGeometry.load(pos)
       val posWsg84 = JGeometry.load(r.nextBytes)
       val roadLinkType = RoadLinkType(r.nextInt / 10)
-      (AssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
+      (AssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
         roadLinkEndDate, municipalityNumber, created, modified, wgslon = posWsg84.getJavaPoint.getX, wgslat = posWsg84.getJavaPoint.getY, roadLinkType),
-        LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
+        LRMPosition(lrmId, startMeasure, endMeasure, point))
     }
   }
 
@@ -81,12 +93,12 @@ object Queries {
     def apply(r: PositionedResult) = {
       val (id, externalId, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
       roadLinkId, image, roadLinkEndDate, municipalityNumber) =
-        (r.nextLong, r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextDateOption.map(new LocalDate(_)), r.nextDateOption.map(new LocalDate(_)), r.nextBytes, r.nextLong, r.nextInt, r.nextInt,
+        (r.nextLong, r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextDateOption.map(new LocalDate(_)), r.nextDateOption.map(new LocalDate(_)), r.nextBytesOption, r.nextLong, r.nextInt, r.nextInt,
           r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))), r.nextDateOption.map(new LocalDate(_)), r.nextInt)
-      val posGeom = JGeometry.load(pos)
-      (ListedAssetRow(id, externalId, assetTypeId, posGeom.getJavaPoint.getX, posGeom.getJavaPoint.getY, roadLinkId, bearing, validityDirection,
+      val point = pos.map(bytesToPoint)
+      (ListedAssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
         validFrom, validTo, image, roadLinkEndDate, municipalityNumber),
-        LRMPosition(lrmId, startMeasure, endMeasure, posGeom))
+        LRMPosition(lrmId, startMeasure, endMeasure, point))
     }
   }
 
@@ -139,8 +151,7 @@ object Queries {
   def allAssets =
     """
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to,
-    SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
     p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
     case
       when e.name_fi is not null then e.name_fi
@@ -166,8 +177,7 @@ object Queries {
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to,
-    SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) AS position,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
     rl.end_date, rl.municipality_number
     from asset_type t

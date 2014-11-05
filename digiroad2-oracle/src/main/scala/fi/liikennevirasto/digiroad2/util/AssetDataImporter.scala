@@ -395,6 +395,8 @@ class AssetDataImporter {
          values($assetId, ${busStop.lrmPositionId})
       """.execute
 
+      OracleSpatialAssetDao.updateAssetGeometry(assetId)
+
       val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
         case Some(a) =>
           OracleSpatialAssetDao.getRoadLinkById(a.roadLinkId) match {
@@ -412,8 +414,6 @@ class AssetDataImporter {
       busStop.busStopType.foreach { busStopType =>
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
-
-      OracleSpatialAssetDao.updateAssetGeometry(assetId)
 
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 2)
