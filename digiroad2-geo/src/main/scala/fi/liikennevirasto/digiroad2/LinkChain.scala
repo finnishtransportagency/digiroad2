@@ -122,10 +122,6 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
     }
   }
 
-  def geometryDirections(): Seq[GeometryDirection] = {
-    links.sortBy(_.linkIndex).map(_.geometryDirection)
-  }
-
   def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
     links.map(transformation)
   }
