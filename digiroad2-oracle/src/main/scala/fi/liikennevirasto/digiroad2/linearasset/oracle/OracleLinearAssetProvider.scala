@@ -90,7 +90,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
-      logger.info("Filling partially filled road links, link count: " + linkGeometries.size)
+      logger.info("Filling partially filled road links, road link count in bounding box: " + linkGeometries.size)
       OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
       logger.info("...done with filling.")
     }

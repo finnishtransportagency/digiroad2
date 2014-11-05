@@ -20,8 +20,11 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import collection.JavaConversions._
+import org.slf4j.LoggerFactory
 
 object OracleLinearAssetDao {
+  val logger = LoggerFactory.getLogger(getClass)
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
@@ -252,7 +255,7 @@ object OracleLinearAssetDao {
     if (speedLimits.nonEmpty) {
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
-      println("creating " + speedLimits.size + " speed limits")
+      logger.info("creating " + speedLimits.size + " speed limits")
 
       val enumeratedValues = sql"select value, id from enumerated_value where property_id = $propertyId".as[(Int, Long)].list.toMap
 
@@ -285,7 +288,7 @@ object OracleLinearAssetDao {
   private def timed[A](s: String, f: => A): A = {
     val start = System.currentTimeMillis()
     val retval = f
-    println(s + " finished in: " + (System.currentTimeMillis - start))
+    logger.info(s + " finished in: " + (System.currentTimeMillis - start) + "ms")
     retval
   }
 
