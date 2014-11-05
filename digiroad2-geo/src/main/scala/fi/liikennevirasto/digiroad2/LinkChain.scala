@@ -137,9 +137,5 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
   def length(linkLength: (T) => Double): Double = {
     links.foldLeft(0.0) { case (acc, link) => acc + linkLength(link.rawLink)}
   }
-
-  def rawLinks(): Seq[T] = {
-    links.map(_.rawLink)
-  }
 }
 
