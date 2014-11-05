@@ -128,10 +128,9 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).flatMap { case (k, v) =>
-      val row = v(0)
+    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).firstOption(externalId).flatMap { case (row, _) =>
       row.point
-    }.headOption
+    }
   }
 
   def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
