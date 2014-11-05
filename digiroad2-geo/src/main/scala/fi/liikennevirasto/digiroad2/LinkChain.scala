@@ -122,12 +122,8 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
     }
   }
 
-  def linkPositions(): Seq[LinkPosition] = {
-    links.sortBy(_.linkIndex).map(_.linkPosition)
-  }
-
-  def geometryDirections(): Seq[GeometryDirection] = {
-    links.sortBy(_.linkIndex).map(_.geometryDirection)
+  def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
+    links.map(transformation)
   }
 
   def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink[T], LinkChain[T]) = {
@@ -140,10 +136,6 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
 
   def length(linkLength: (T) => Double): Double = {
     links.foldLeft(0.0) { case (acc, link) => acc + linkLength(link.rawLink)}
-  }
-
-  def rawLinks(): Seq[T] = {
-    links.map(_.rawLink)
   }
 }
 

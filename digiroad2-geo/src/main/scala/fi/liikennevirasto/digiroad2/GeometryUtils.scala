@@ -132,6 +132,6 @@ object GeometryUtils {
     val (firstSplitLength, secondSplitLength) = splitLengths(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linkLength, linksBeforeSplit, linksAfterSplit)
 
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
-    (existingLinkMeasures, createdLinkMeasures, linksToMove.rawLinks())
+    (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
   }
 }
