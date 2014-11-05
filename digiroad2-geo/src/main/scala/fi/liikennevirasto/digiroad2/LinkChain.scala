@@ -130,6 +130,10 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
     links.sortBy(_.linkIndex).map(_.geometryDirection)
   }
 
+  def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
+    links.map(transformation)
+  }
+
   def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink[T], LinkChain[T]) = {
     val linksBeforeSplit: LinkChain[T] = new LinkChain[T](links.takeWhile { link => !isSplitLink(link.rawLink) })
     val linksAfterSplit: LinkChain[T] = new LinkChain[T](links.dropWhile { link => !isSplitLink(link.rawLink) }.tail)
