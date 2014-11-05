@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, As
 import fi.liikennevirasto.digiroad2.asset.Modification
 import scala.slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import fi.liikennevirasto.digiroad2.Point
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
@@ -56,7 +57,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {
-    AssetRow(1, 1, 1, 1, 1, 1, Some(180), 2, None, None, propertyRow, Image(None, None),
-      None, 1, Modification(None, None), Modification(None, None), 1, 1)
+    AssetRow(1, 1, 1, Some(Point(1, 1)), 1, Some(180), 2, None, None, propertyRow, Image(None, None),
+      None, 1, Modification(None, None), Modification(None, None), Some(Point(1, 1)))
   }
 }

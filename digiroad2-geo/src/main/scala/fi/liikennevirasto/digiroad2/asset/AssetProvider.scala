@@ -8,7 +8,7 @@ import org.joda.time.LocalDate
 trait AssetProvider {
   def getAssetById(assetId: Long): Option[AssetWithProperties]
   def getAssetByExternalId(assetId: Long): Option[AssetWithProperties]
-  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)]
+  def getAssetPositionByExternalId(externalId: Long): Option[Point]
   def getAssetsByMunicipality(municipality: Int): Iterable[AssetWithProperties]
   def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties]
   def getAssets(user: User, bounds: Option[BoundingRectangle] = None, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]

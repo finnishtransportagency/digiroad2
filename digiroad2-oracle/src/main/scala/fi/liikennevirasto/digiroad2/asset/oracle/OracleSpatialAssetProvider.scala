@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
+import fi.liikennevirasto.digiroad2.Point
 
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
@@ -49,7 +50,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
+  def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getAssetPositionByExternalId(externalId)
     }

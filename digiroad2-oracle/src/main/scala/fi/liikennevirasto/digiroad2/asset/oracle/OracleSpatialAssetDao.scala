@@ -8,6 +8,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Database.dynamicSession
 import Queries._
+import Queries.getPoint
 import Q.interpolation
 import PropertyTypes._
 import org.joda.time.format.ISODateTimeFormat
@@ -85,13 +86,15 @@ object OracleSpatialAssetDao {
 
   private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
     val row = param._2(0)
+    val point = row.point.get
+    val wgsPoint = row.wgsPoint.get
     AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = row.lon, lat = row.lat, roadLinkId = row.roadLinkId,
+        lon = point.x, lat = point.y, roadLinkId = row.roadLinkId,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
-        validityDirection = Some(row.validityDirection), wgslon = row.wgslon, wgslat = row.wgslat,
+        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = row.roadLinkType)
   }
 
@@ -125,11 +128,10 @@ object OracleSpatialAssetDao {
     Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
   }
 
-  def getAssetPositionByExternalId(externalId: Long): Option[(Double, Double)] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map { case (k, v) =>
-      val row = v(0)
-      (row.lon, row.lat)
-    }.headOption
+  def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
+    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).firstOption(externalId).flatMap { case (row, _) =>
+      row.point
+    }
   }
 
   def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
@@ -161,8 +163,9 @@ object OracleSpatialAssetDao {
     val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
     collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
-      Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = row.lon,
-        lat = row.lat, roadLinkId = row.roadLinkId,
+      val point = row.point.get
+      Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = point.x,
+        lat = point.y, roadLinkId = row.roadLinkId,
         imageIds = v.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
@@ -468,15 +471,6 @@ object OracleSpatialAssetDao {
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
       where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
-  }
-
-  implicit val getPoint = new GetResult[Point] {
-    def apply(r: PositionedResult) = {
-      val bytes = r.nextBytes
-      val geometry = JGeometry.load(bytes)
-      val point = geometry.getPoint()
-      Point(point(0), point(1))
-    }
   }
 
   def getAssetGeometryById(id: Long): Point = {
