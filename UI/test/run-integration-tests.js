@@ -10,6 +10,7 @@ require.config({
     EnumeratedPropertyValuesTestData: '../test_data/EnumeratedPropertyValuesTestData',
     AssetPropertyNamesTestData:       '../test_data/AssetPropertyNamesTestData',
     SpeedLimitsTestData:              '../test_data/SpeedLimitsTestData',
+    SpeedLimitSplitTestData:          '../test_data/SpeedLimitSplitTestData',
     AssetTypePropertiesTestData:      '../test_data/AssetTypePropertiesTestData'
   },
   shim: {
@@ -21,6 +22,7 @@ require.config({
     'EnumeratedPropertyValuesTestData': { exports: 'EnumeratedPropertyValuesTestData' },
     'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
     'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
+    'SpeedLimitSplitTestData': { exports: 'SpeedLimitSplitTestData' },
     'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
   },
   waitSeconds: 10

@@ -4,6 +4,7 @@ define(['AssetsTestData',
         'EnumeratedPropertyValuesTestData',
         'AssetPropertyNamesTestData',
         'SpeedLimitsTestData',
+        'SpeedLimitSplitTestData',
         'AssetTypePropertiesTestData'],
        function(AssetsTestData,
                 RoadLinkTestData,
@@ -11,6 +12,7 @@ define(['AssetsTestData',
                 EnumeratedPropertyValuesTestData,
                 AssetPropertyNamesTestData,
                 SpeedLimitsTestData,
+                SpeedLimitSplitTestData,
                 AssetTypePropertiesTestData) {
 
   var unbindEvents = function() {
