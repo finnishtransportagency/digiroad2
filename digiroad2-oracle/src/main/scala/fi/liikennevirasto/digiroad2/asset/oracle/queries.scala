@@ -160,7 +160,7 @@ object Queries {
     end as display_value,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
     rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by,
-    SDO_CS.TRANSFORM(SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))),4326) AS position_wgs84, rl.functional_class
+    SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, rl.functional_class
     from asset_type t
       join asset a on a.asset_type_id = t.id
         join asset_link al on a.id = al.asset_id
