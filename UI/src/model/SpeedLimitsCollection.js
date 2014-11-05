@@ -28,8 +28,8 @@
           return [key, { id: values[0].id, links: _.map(values, function(value) {
             return {
               roadLinkId: value.roadLinkId,
-                 position: value.position,
-                 points: value.points
+              position: value.position,
+              points: value.points
             };
           }), sideCode: values[0].sideCode, limit: values[0].limit }];
         })
@@ -100,9 +100,11 @@
     this.splitSpeedLimit = function(id, roadLinkId, split) {
       backend.getSpeedLimit(id, function(speedLimit) {
         var speedLimitLinks = speedLimit.speedLimitLinks;
-        var position = _.find(speedLimitLinks, function(link) {
+        var splitLink = _.find(speedLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
-        }).position;
+        });
+        var position = splitLink.position;
+        var towardsLinkChain = splitLink.towardsLinkChain;
 
         var left = _.cloneDeep(speedLimits[id]);
         var right = _.cloneDeep(speedLimits[id]);
@@ -115,11 +117,11 @@
           return it.position > position;
         });
 
-        left.links = leftLinks.concat([{points: split.firstSplitVertices,
+        left.links = leftLinks.concat([{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
                                         position: position,
                                         roadLinkId: roadLinkId}]);
 
-        right.links = [{points: split.secondSplitVertices,
+        right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
                         position: position,
                         roadLinkId: roadLinkId}].concat(rightLinks);
 
