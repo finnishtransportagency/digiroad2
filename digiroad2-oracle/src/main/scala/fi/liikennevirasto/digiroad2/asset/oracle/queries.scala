@@ -34,7 +34,7 @@ object Queries {
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate],
-                      municipalityNumber: Int, created: Modification, modified: Modification, wgslon: Double, wgslat: Double, roadLinkType: RoadLinkType = UnknownRoad)
+                      municipalityNumber: Int, created: Modification, modified: Modification, wgsPoint: Option[Point], roadLinkType: RoadLinkType = UnknownRoad)
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
@@ -80,11 +80,11 @@ object Queries {
       val municipalityNumber = r.nextInt
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val posWsg84 = JGeometry.load(r.nextBytes)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       val roadLinkType = RoadLinkType(r.nextInt / 10)
       (AssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        roadLinkEndDate, municipalityNumber, created, modified, wgslon = posWsg84.getJavaPoint.getX, wgslat = posWsg84.getJavaPoint.getY, roadLinkType),
+        roadLinkEndDate, municipalityNumber, created, modified, wgsPoint, roadLinkType),
         LRMPosition(lrmId, startMeasure, endMeasure, point))
     }
   }
