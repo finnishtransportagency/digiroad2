@@ -225,7 +225,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox" checked> V&auml;yl&auml;tyyppi',
+      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
       '      </label>',
       '    </div>',
       '  </div>',
@@ -258,7 +258,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox" checked> V&auml;yl&auml;tyyppi',
+      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
       '      </label>',
       '    </div>',
       '  </div>',
@@ -353,15 +353,21 @@
 
       var roadTypeSelected = function(e) {
         var checked = e.currentTarget.checked;
-        elements.expanded.find('.road-link-legend').toggle(checked);
-        elements.editMode.find('.road-link-legend').toggle(checked);
-        expandedRoadTypeCheckboxSelector.prop("checked", checked);
-        editModeRoadTypeCheckboxSelector.prop("checked", checked);
         applicationModel.setRoadTypeShown(checked);
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
       editModeRoadTypeCheckboxSelector.change(roadTypeSelected);
+    };
+
+    var toggleRoadType = function(bool) {
+      var expandedRoadTypeCheckboxSelector = elements.expanded.find('.road-type-checkbox').find('input[type=checkbox]');
+      var editModeRoadTypeCheckboxSelector = elements.editMode.find('.road-type-checkbox').find('input[type=checkbox]');
+
+      elements.expanded.find('.road-link-legend').toggle(bool);
+      elements.editMode.find('.road-link-legend').toggle(bool);
+      expandedRoadTypeCheckboxSelector.prop("checked", bool);
+      editModeRoadTypeCheckboxSelector.prop("checked", bool);
     };
 
     var bindExternalEventHandlers = function() {
@@ -395,11 +401,15 @@
           elements.editMode.find('.action-mode-btn').show();
         }
       });
+
+      eventbus.on('road-type:selected', toggleRoadType);
     };
 
     bindDOMEventHandlers();
 
     bindExternalEventHandlers();
+
+    toggleRoadType(applicationModel.isRoadTypeShown());
 
     this.element = $('<div class="panel-group"/>')
       .append(elements.collapsed)
@@ -407,3 +417,4 @@
       .append(elements.editMode);
   };
 })(window.ActionPanelBoxes = window.ActionPanelBoxes || {});
+
