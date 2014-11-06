@@ -19,10 +19,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
   var speedLimitConstructor = function(id) {
     return {
-      speedLimitLinks: [{
-        roadLinkId: 5540,
-        position: 0
-      }]
+      speedLimitLinks: _.filter(speedLimitTestData, function(limit){ return limit.id == id;})
     };
   };
 
@@ -52,6 +49,21 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         before(function () {
           var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat( 0.0, 58.0));
           openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+        });
+
+        it('the speed limit should be split into two features', function() {
+          var split1_points = testHelpers.getPointsOfSpeedLimitLineFeatures(openLayersMap, 1123812);
+          var split2_points = testHelpers.getPointsOfSpeedLimitLineFeatures(openLayersMap, null);
+
+          expect(split1_points[0].x).to.equal(0);
+          expect(split1_points[0].y).to.equal(0);
+          expect(split1_points[1].x).to.equal(0);
+          expect(split1_points[1].y).to.be.closeTo(58.0, 0.5);
+
+          expect(split2_points[0].x).to.equal(0);
+          expect(split2_points[0].y).to.be.closeTo(58.0, 0.5);
+          expect(split2_points[1].x).to.equal(0);
+          expect(split2_points[1].y).to.equal(100);
         });
 
         describe('and setting limit for new speed limit', function () {

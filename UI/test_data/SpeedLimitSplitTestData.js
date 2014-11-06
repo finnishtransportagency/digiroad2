@@ -7,6 +7,7 @@
         "limit": 40,
         "sideCode": 1,
         "position": 0,
+        "towardsLinkChain": true,
         "points": [
           {
             "x": 0.0,
