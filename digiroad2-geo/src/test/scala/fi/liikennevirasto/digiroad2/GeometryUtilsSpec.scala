@@ -151,4 +151,9 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     createdLinkMeasures shouldBe(15.0, 16.0)
     linksToMove.map(_._1) shouldBe Seq(0)
   }
+
+  test("subtract completely outlying interval from intervals") {
+    val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (1.0, 2.0))
+    result shouldBe Seq((3.0, 6.0))
+  }
 }

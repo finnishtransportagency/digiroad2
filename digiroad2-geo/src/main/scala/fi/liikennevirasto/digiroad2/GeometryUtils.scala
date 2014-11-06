@@ -74,6 +74,8 @@ object GeometryUtils {
   def subtractIntervalFromIntervals(intervals: Seq[(Double, Double)], interval: (Double, Double)): Seq[(Double, Double)] = {
     val (spanStart, spanEnd) = (math.min(interval._1, interval._2), math.max(interval._1, interval._2))
     intervals.flatMap {
+      case (start, end) if spanEnd <= start => List((start, end))
+      case (start, end) if spanStart >= end => List((start, end))
       case (start, end) if !liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((spanEnd, end))
       case (start, end) if !liesInBetween(spanEnd, (start, end)) && liesInBetween(spanStart, (start, end)) => List((start, spanStart))
       case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
