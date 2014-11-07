@@ -1,11 +1,6 @@
-define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils'],
-       function(chai, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils) {
+define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils'],
+       function(chai, testHelpers, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils) {
   var assert = chai.assert;
-  var lineStringFeatures = function(layer) {
-    return _.filter(layer.vectorLayer.features, function(feature) {
-      return feature.geometry instanceof OpenLayers.Geometry.LineString;
-    });
-  };
 
   describe('SpeedLimitLayer', function() {
     describe('when moving map', function() {
@@ -46,11 +41,11 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
           return feature.geometry.getVertices()[0];
         };
 
-        assert.equal(lineStringFeatures(layer).length, 2);
-        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[0]).x, 0);
-        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[0]).y, 0);
-        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[1]).x, 10);
-        assert.equal(getFirstPointOfFeature(lineStringFeatures(layer)[1]).y, 10);
+        assert.equal(testHelpers.getLineStringFeatures(layer.vectorLayer).length, 2);
+        assert.equal(getFirstPointOfFeature(testHelpers.getLineStringFeatures(layer.vectorLayer)[0]).x, 0);
+        assert.equal(getFirstPointOfFeature(testHelpers.getLineStringFeatures(layer.vectorLayer)[0]).y, 0);
+        assert.equal(getFirstPointOfFeature(testHelpers.getLineStringFeatures(layer.vectorLayer)[1]).x, 10);
+        assert.equal(getFirstPointOfFeature(testHelpers.getLineStringFeatures(layer.vectorLayer)[1]).y, 10);
       });
 
       describe('and zooming out', function() {
@@ -59,7 +54,7 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
         });
 
         it('hides features', function() {
-          assert.equal(lineStringFeatures(layer)[0].getVisibility(), false);
+          assert.equal(testHelpers.getLineStringFeatures(layer.vectorLayer)[0].getVisibility(), false);
         });
 
         describe('and zooming in', function() {
@@ -68,7 +63,7 @@ define(['chai', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit'
           });
 
           it('should contain speed limits', function() {
-            assert.equal(lineStringFeatures(layer).length, 2);
+            assert.equal(testHelpers.getLineStringFeatures(layer.vectorLayer).length, 2);
           });
         });
       });

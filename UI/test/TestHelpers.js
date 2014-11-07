@@ -107,23 +107,22 @@ define(['AssetsTestData',
     return map.getLayersByName('speedLimit')[0].features;
   };
 
-  var getSpeedLimitLineFeatures = function(openLayersMap) {
-    var speedLimitFeatures = getSpeedLimitFeatures(openLayersMap);
-    var lineFeatures = _.filter(speedLimitFeatures, function (f) {
-      return f.geometry instanceof OpenLayers.Geometry.LineString;
-    });
-    return lineFeatures;
-  };
+ var getSpeedLimitLayer = function(map) {
+   return map.getLayersByName('speedLimit')[0];
+ };
 
-  var getSpeedLimitVertices = function(openLayersMap, id) {
-    var points = _.chain(getSpeedLimitLineFeatures(openLayersMap, id))
-      .filter(function(feature) { return feature.attributes.id === id; })
-      .map(function(feature)  { return feature.geometry; })
-      .map(function(geometry) { return geometry.getVertices(); })
-      .flatten()
-      .value();
+ var getLineStringFeatures = function(layer) {
+   return _.filter(layer.features, function(feature) {
+    return feature.geometry instanceof OpenLayers.Geometry.LineString;
+   });
+ };
 
-    return points;
+ var getSpeedLimitVertices = function(openLayersMap, id) {
+  return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
+    .filter(function(feature) { return feature.attributes.id === id; })
+    .map(function(feature)  { return feature.geometry.getVertices(); })
+    .flatten()
+    .value();
   };
 
   return {
@@ -135,8 +134,8 @@ define(['AssetsTestData',
     moveMarker: moveMarker,
     clickMap: clickMap,
     getAssetMarkers: getAssetMarkers,
+    getLineStringFeatures: getLineStringFeatures,
     getSpeedLimitFeatures: getSpeedLimitFeatures,
-    getSpeedLimitLineFeatures: getSpeedLimitLineFeatures,
     getSpeedLimitVertices: getSpeedLimitVertices
   };
 });

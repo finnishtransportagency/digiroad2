@@ -13,7 +13,15 @@ require.config({
         'SelectedSpeedLimit':       '../src/model/SelectedSpeedLimit',
         'zoomlevels':               '../src/utils/zoom-levels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
-        'assetGrouping':            '../src/assetgrouping/asset-grouping'
+        'assetGrouping':            '../src/assetgrouping/asset-grouping',
+        'AssetsTestData':                   '../test_data/AssetsTestData',
+        'RoadLinkTestData':                 '../test_data/RoadLinkTestData',
+        'UserRolesTestData':                '../test_data/UserRolesTestData',
+        'EnumeratedPropertyValuesTestData': '../test_data/EnumeratedPropertyValuesTestData',
+        'AssetPropertyNamesTestData':       '../test_data/AssetPropertyNamesTestData',
+        'SpeedLimitsTestData':              '../test_data/SpeedLimitsTestData',
+        'SpeedLimitSplitTestData':          '../test_data/SpeedLimitSplitTestData',
+        'AssetTypePropertiesTestData':      '../test_data/AssetTypePropertiesTestData'
     },
     shim: {
         'jquery': { exports: '$' },
@@ -45,7 +53,15 @@ require.config({
         },
         'assetGrouping': {
             exports: 'AssetGrouping'
-        }
+        },
+        'AssetsTestData': { exports: 'AssetsTestData' },
+        'RoadLinkTestData': { exports: 'RoadLinkTestData' },
+        'UserRolesTestData': { exports: 'UserRolesTestData' },
+        'EnumeratedPropertyValuesTestData': { exports: 'EnumeratedPropertyValuesTestData' },
+        'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
+        'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
+        'SpeedLimitSplitTestData': { exports: 'SpeedLimitSplitTestData' },
+        'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
     },
     waitSeconds: 10
 });
