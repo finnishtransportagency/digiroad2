@@ -43,7 +43,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val operatorUser = user.copy(configuration = user.configuration.copy(authorizedMunicipalities = Set(1), roles = Set(Role.Operator)))
 
   implicit def Asset2ListedAsset(asset: AssetWithProperties) = new Asset(asset.id, asset.externalId, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
-    asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.status, asset.readOnly, asset.municipalityNumber)
+    asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.readOnly, asset.municipalityNumber)
 
   before {
     userProvider.setCurrentUser(user)
@@ -332,24 +332,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("validate date property values", Tag("db")) {
     val asset = provider.getAssetById(TestAssetId).get
     an[IllegalArgumentException] should be thrownBy provider.updateAsset(TestAssetId, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "INVALID DATE"))
-  }
-
-  test("asset on non-expired link is not marked as floating", Tag("db")) {
-    val assets = provider.getAssets(
-      user = espooKauniainenUser,
-      validFrom = Some(new LocalDate(2013, 6, 1)),
-      validTo = Some(new LocalDate(2013, 6, 1)))
-    assets should have length 1
-    assets.head.status should be(None)
-  }
-
-  test("asset on expired link is marked as floating", Tag("db")) {
-    val assets = provider.getAssets(
-      user = espooUser,
-      validFrom = Some(new LocalDate(2014, 6, 1)),
-      validTo = Some(new LocalDate(2014, 6, 1)))
-    assets should have length 1
-    assets.head.status should be(Some(Floating))
   }
 
   test("provide road link geometry by municipality", Tag("db")) {

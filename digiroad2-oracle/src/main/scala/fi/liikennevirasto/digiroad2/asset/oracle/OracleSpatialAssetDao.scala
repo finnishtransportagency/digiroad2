@@ -151,15 +151,6 @@ object OracleSpatialAssetDao {
       case (Some(from), None) => Some(andValidAfter, List(jodaToSqlDate(from)))
       case (None, None) => None
     }
-    def assetStatus(validFrom: Option[LocalDate], validTo: Option[LocalDate], roadLinkEndDate: Option[LocalDate]): Option[String] = {
-      def beforeTimePeriod(date: LocalDate, periodStartDate: LocalDate, periodEndDate: LocalDate): Boolean = {
-        (date.compareTo(periodStartDate) < 0) && (date.compareTo(periodEndDate) < 0)
-      }
-      (validFrom, validTo, roadLinkEndDate) match {
-        case (Some(from), Some(to), Some(end)) => if (beforeTimePeriod(end, from, to)) Some(Floating) else None
-        case _ => None
-      }
-    }
     val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
     collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
@@ -169,7 +160,6 @@ object OracleSpatialAssetDao {
         imageIds = v.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
-        status = assetStatus(validFrom, validTo, row.roadLinkEndDate),
         municipalityNumber = Option(row.municipalityNumber), validityPeriod = validityPeriod(row.validFrom, row.validTo))
     }.toSeq
   }
