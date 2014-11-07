@@ -174,8 +174,8 @@ object OracleSpatialAssetDao {
 
   private def isFloating(asset: {val id: Long; val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
     val roadLinkOption = RoadLinkService.getPointOnRoadLink(asset.roadLinkId, asset.lrmPosition.startMeasure)
-    roadLinkOption.flatMap { case (_, pointOnRoadLinkOpt) =>
-      pointOnRoadLinkOpt.map { pointOnRoadLink =>
+    roadLinkOption.flatMap { case (_, pointOnRoadLinkOption) =>
+      pointOnRoadLinkOption.map { pointOnRoadLink =>
         !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
       }
     }.getOrElse(true)
