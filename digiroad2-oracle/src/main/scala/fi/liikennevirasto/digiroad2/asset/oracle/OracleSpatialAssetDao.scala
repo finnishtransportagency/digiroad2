@@ -167,12 +167,12 @@ object OracleSpatialAssetDao {
 
   def roadLinkExists = true
 
-  def lrmPositionWithinLink = true
+  def lrmPositionWithinLink() = true
 
   def coordinatesWithinThreshold = true
 
   private def isFloating(asset: {val id: Long; val roadLinkId: Long; val point: Option[Point]}): Boolean = {
-    val roadLink = ???
+    val roadLink = null
     !(roadLinkExists && lrmPositionWithinLink && coordinatesWithinThreshold)
   }
 
