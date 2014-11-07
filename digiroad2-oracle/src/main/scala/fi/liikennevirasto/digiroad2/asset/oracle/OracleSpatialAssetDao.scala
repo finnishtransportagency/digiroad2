@@ -168,13 +168,17 @@ object OracleSpatialAssetDao {
 
   def roadLinkExists = true
 
-  def lrmPositionWithinLink() = true
+  def lrmPositionWithinLink(assetId: Long, roadLinkLength: Double): Boolean = {
+    val (_, lrm) = Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).first(assetId)
+    val position = lrm.startMeasure
+    position > roadLinkLength
+  }
 
   def coordinatesWithinThreshold = true
 
   private def isFloating(asset: {val id: Long; val roadLinkId: Long; val point: Option[Point]}): Boolean = {
-    val roadLink = RoadLinkService.getRoadLink(asset.id)
-    !(roadLinkExists && lrmPositionWithinLink && coordinatesWithinThreshold)
+    val roadLink = RoadLinkService.getRoadLink(asset.roadLinkId)
+    !(roadLinkExists && lrmPositionWithinLink(asset.id, 10) && coordinatesWithinThreshold)
   }
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
