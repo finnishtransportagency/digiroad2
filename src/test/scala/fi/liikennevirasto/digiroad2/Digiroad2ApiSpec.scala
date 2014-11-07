@@ -169,15 +169,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("mark asset on expired link as floating", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084&validityDate=2014-06-01&validityPeriod=current", "test49") {
-      status should equal(200)
-      val assets = parse(body).extract[List[Asset]]
-      assets should have length 1
-      assets.head.status should be(Some(Floating))
-     }
-  }
-
   test("load image by id", Tag("db")) {
     getWithUserAuth("/images/2") {
       status should equal(200)
