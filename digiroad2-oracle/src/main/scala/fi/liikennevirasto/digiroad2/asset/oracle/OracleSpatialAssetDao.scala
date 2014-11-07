@@ -53,7 +53,7 @@ object OracleSpatialAssetDao {
       Some(" AND rl.municipality_number = ?", List(municipality))
     }
     val q = QueryCollector(allAssets).add(withMunicipality)
-    collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
+    collectedQuery[AssetRow](q).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       assetRowToAssetWithProperties(row.id, v)
     }
@@ -117,20 +117,20 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).list(externalId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+    Q.query[Long, AssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
   }
 
   def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties] = {
     val q = QueryCollector(allAssets).add(Some(assetsByIds(ids), ids))
-    collectedQuery[(AssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).toList
+    collectedQuery[AssetRow](q).groupBy(_.id).map(assetRowToAssetWithProperties).toList
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).list(assetId).map(_._1).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+    Q.query[Long, AssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
   }
 
   def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Q.query[Long, (AssetRow, LRMPosition)](assetByExternalId).firstOption(externalId).flatMap { case (row, _) =>
+    Q.query[Long, AssetRow](assetByExternalId).firstOption(externalId).flatMap { case row =>
       row.point
     }
   }
@@ -153,7 +153,7 @@ object OracleSpatialAssetDao {
       case (None, None) => None
     }
     val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
-    collectedQuery[(ListedAssetRow, LRMPosition)](q).map(_._1).groupBy(_.id).map { case (k, v) =>
+    collectedQuery[ListedAssetRow](q).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       val point = row.point.get
       Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = point.x,
@@ -166,18 +166,12 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def lrmPositionWithinLink(assetId: Long, roadLinkLength: Double): Boolean = {
-    val (_, lrm) = Q.query[Long, (AssetRow, LRMPosition)](assetWithPositionById).first(assetId)
-    val position = lrm.startMeasure
-    position <= roadLinkLength
-  }
-
   def coordinatesWithinThreshold = true
 
-  private def isFloating(asset: {val id: Long; val roadLinkId: Long; val point: Option[Point]}): Boolean = {
-    val roadLinkOption = RoadLinkService.getRoadLink(asset.roadLinkId)
-    roadLinkOption.map { case (_, _, length) =>
-      !(lrmPositionWithinLink(asset.id, length) && coordinatesWithinThreshold)
+  private def isFloating(asset: {val id: Long; val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
+    val roadLinkOption = RoadLinkService.getPointOnRoadLink(asset.roadLinkId, asset.lrmPosition.startMeasure)
+    roadLinkOption.map { case (_, pointOnRoadLink) =>
+      !(pointOnRoadLink.isDefined && coordinatesWithinThreshold)
     }.getOrElse(true)
   }
 

@@ -29,19 +29,25 @@ object RoadLinkService {
 
   private def toPoints(bytes: Array[Byte]): Seq[Point] = {
     val geometry = JGeometry.load(bytes)
-    geometry.getOrdinatesArray.grouped(2).map { point =>
-      Point(point(0), point(1))
-    }.toList
+    if (geometry == null) Nil
+    else {
+      geometry.getOrdinatesArray.grouped(2).map { point ⇒
+        Point(point(0), point(1))
+      }.toList
+    }
   }
 
-  def getRoadLink(id: Long): Option[(Long, Seq[Point], Double)] = {
+  def getPointOnRoadLink(id: Long, measure: Double): Option[(Long, Option[Point])] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
-        select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape)
+        select dr1_id, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure))
           from tielinkki_ctas
           where dr1_id = $id
         """
-      query.as[(Long, Seq[Point], Double)].firstOption
+      query.as[(Long, Seq[Point])].firstOption.map {
+        case (roadLinkId, points) ⇒
+          (roadLinkId, points.headOption)
+      }
     }
   }
 
