@@ -95,7 +95,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = row.roadLinkType)
+        created = row.created, modified = row.modified, roadLinkType = row.roadLinkType, floating = isFloating(row))
   }
 
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
@@ -160,8 +160,13 @@ object OracleSpatialAssetDao {
         imageIds = v.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
-        municipalityNumber = Option(row.municipalityNumber), validityPeriod = validityPeriod(row.validFrom, row.validTo))
+        municipalityNumber = Option(row.municipalityNumber), validityPeriod = validityPeriod(row.validFrom, row.validTo),
+        floating = isFloating(row))
     }.toSeq
+  }
+
+  private def isFloating(asset: {val id: Long; val point: Option[Point]}): Boolean = {
+    false
   }
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
