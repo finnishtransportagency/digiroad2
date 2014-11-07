@@ -115,14 +115,15 @@ define(['AssetsTestData',
     return lineFeatures;
   };
 
-  var getPointsOfSpeedLimitLineFeatures = function(openLayersMap, id) {
-    var lineFeatures = getSpeedLimitLineFeatures(openLayersMap, id);
+  var getSpeedLimitVertices = function(openLayersMap, id) {
+    var points = _.chain(getSpeedLimitLineFeatures(openLayersMap, id))
+      .filter(function(feature) { return feature.attributes.id === id; })
+      .map(function(feature)  { return feature.geometry; })
+      .map(function(geometry) { return geometry.getVertices(); })
+      .flatten()
+      .value();
 
-    var features = _.filter(lineFeatures, function(f) { return f.attributes.id === id; });
-    var geoms = _.map(features, function(f) { return f.geometry; });
-    var points = _.flatten(_.map(geoms, function(g) { return g.getVertices(); }));
-
-    return _.map(points, function(p) { return {x: p.x, y: p.y}; });
+    return points;
   };
 
   return {
@@ -136,6 +137,6 @@ define(['AssetsTestData',
     getAssetMarkers: getAssetMarkers,
     getSpeedLimitFeatures: getSpeedLimitFeatures,
     getSpeedLimitLineFeatures: getSpeedLimitLineFeatures,
-    getPointsOfSpeedLimitLineFeatures: getPointsOfSpeedLimitLineFeatures
+    getSpeedLimitVertices: getSpeedLimitVertices
   };
 });
