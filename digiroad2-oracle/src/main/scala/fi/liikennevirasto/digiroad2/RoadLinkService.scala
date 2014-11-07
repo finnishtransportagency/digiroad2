@@ -34,6 +34,17 @@ object RoadLinkService {
     }.toList
   }
 
+  def getRoadLink(id: Long): Option[(Long, Seq[Point], Double)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape)
+          from tielinkki_ctas
+          where dr1_id = $id
+        """
+      query.as[(Long, Seq[Point], Double)].firstOption
+    }
+  }
+
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""

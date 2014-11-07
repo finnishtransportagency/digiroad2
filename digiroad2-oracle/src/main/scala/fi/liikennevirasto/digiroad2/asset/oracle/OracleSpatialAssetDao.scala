@@ -22,6 +22,7 @@ import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.RoadLinkService
+import scala.language.reflectiveCalls
 
 // TODO: trait + class?
 object OracleSpatialAssetDao {
@@ -172,7 +173,7 @@ object OracleSpatialAssetDao {
   def coordinatesWithinThreshold = true
 
   private def isFloating(asset: {val id: Long; val roadLinkId: Long; val point: Option[Point]}): Boolean = {
-    val roadLink = null
+    val roadLink = RoadLinkService.getRoadLink(asset.id)
     !(roadLinkExists && lrmPositionWithinLink && coordinatesWithinThreshold)
   }
 
