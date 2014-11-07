@@ -107,6 +107,24 @@ define(['AssetsTestData',
     return map.getLayersByName('speedLimit')[0].features;
   };
 
+ var getSpeedLimitLayer = function(map) {
+   return map.getLayersByName('speedLimit')[0];
+ };
+
+ var getLineStringFeatures = function(layer) {
+   return _.filter(layer.features, function(feature) {
+    return feature.geometry instanceof OpenLayers.Geometry.LineString;
+   });
+ };
+
+ var getSpeedLimitVertices = function(openLayersMap, id) {
+  return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
+    .filter(function(feature) { return feature.attributes.id === id; })
+    .map(function(feature)  { return feature.geometry.getVertices(); })
+    .flatten()
+    .value();
+  };
+
   return {
     restartApplication: restartApplication,
     defaultBackend: defaultBackend,
@@ -116,6 +134,8 @@ define(['AssetsTestData',
     moveMarker: moveMarker,
     clickMap: clickMap,
     getAssetMarkers: getAssetMarkers,
-    getSpeedLimitFeatures: getSpeedLimitFeatures
+    getLineStringFeatures: getLineStringFeatures,
+    getSpeedLimitFeatures: getSpeedLimitFeatures,
+    getSpeedLimitVertices: getSpeedLimitVertices
   };
 });
