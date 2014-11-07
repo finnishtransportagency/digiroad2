@@ -166,12 +166,18 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  def coordinatesWithinThreshold = true
+  private val FLOAT_THRESHOLD_IN_METERS = 5
+
+  def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
+    pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
+  }
 
   private def isFloating(asset: {val id: Long; val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
     val roadLinkOption = RoadLinkService.getPointOnRoadLink(asset.roadLinkId, asset.lrmPosition.startMeasure)
-    roadLinkOption.map { case (_, pointOnRoadLink) =>
-      !(pointOnRoadLink.isDefined && coordinatesWithinThreshold)
+    roadLinkOption.flatMap { case (_, pointOnRoadLinkOpt) =>
+      pointOnRoadLinkOpt.map { pointOnRoadLink =>
+        !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
+      }
     }.getOrElse(true)
   }
 
