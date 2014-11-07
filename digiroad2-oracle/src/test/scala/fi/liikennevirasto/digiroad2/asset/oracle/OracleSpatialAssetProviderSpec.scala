@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import org.scalatest._
 import scala.util.Random
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
-import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import org.joda.time.LocalDate
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import scala.language.implicitConversions

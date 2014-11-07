@@ -6,7 +6,6 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.asset.EnumeratedPropertyValue
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties

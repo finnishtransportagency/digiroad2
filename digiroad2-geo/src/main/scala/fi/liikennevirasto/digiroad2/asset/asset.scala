@@ -55,10 +55,6 @@ object PropertyTypes {
   val ReadOnly = "read-only"
 }
 
-object AssetStatus {
-  val Floating = "floating"
-}
-
 object ValidityPeriod {
   val Past = "past"
   val Current = "current"

@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import java.sql.SQLException
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.AssetStatus._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Database.dynamicSession
