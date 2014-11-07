@@ -22,6 +22,7 @@ import org.joda.time.Interval
 import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.RoadLinkService
 
 // TODO: trait + class?
 object OracleSpatialAssetDao {
@@ -165,8 +166,15 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  private def isFloating(asset: {val id: Long; val point: Option[Point]}): Boolean = {
-    false
+  def roadLinkExists = true
+
+  def lrmPositionWithinLink = true
+
+  def coordinatesWithinThreshold = true
+
+  private def isFloating(asset: {val id: Long; val roadLinkId: Long; val point: Option[Point]}): Boolean = {
+    val roadLink = ???
+    !(roadLinkExists && lrmPositionWithinLink && coordinatesWithinThreshold)
   }
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {
