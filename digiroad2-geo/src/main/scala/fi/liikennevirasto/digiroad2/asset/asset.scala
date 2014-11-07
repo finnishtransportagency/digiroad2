@@ -21,7 +21,8 @@ case object UnknownRoad extends RoadLinkType { def value = 99 }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
-                 readOnly: Boolean = true, municipalityNumber: Option[Int] = None, validityPeriod: Option[String] = None)
+                 readOnly: Boolean = true, municipalityNumber: Option[Int] = None, validityPeriod: Option[String] = None,
+                 floating: Boolean)
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
@@ -29,7 +30,8 @@ case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lo
                  readOnly: Boolean = true,
                  municipalityNumber: Option[Int] = None,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
-                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: RoadLinkType = UnknownRoad) {
+                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: RoadLinkType = UnknownRoad,
+                 floating: Boolean) {
   def getPropertyValue(propertyName: String): Option[String] = {
     propertyData.find(_.publicId.equals(propertyName))
       .flatMap(_.values.headOption.map(_.propertyValue))

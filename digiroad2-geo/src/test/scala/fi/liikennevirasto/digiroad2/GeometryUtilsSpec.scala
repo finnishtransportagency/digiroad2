@@ -7,7 +7,7 @@ import org.scalatest._
 class GeometryUtilsSpec extends FunSuite with Matchers {
   test("calculate bearing at asset position") {
     val asset = AssetWithProperties(0, 0, 0, 10.0, 10.0, 0, wgslon = 10.0, wgslat = 10.0,
-        created = Modification(None, None), modified = Modification(None, None))
+        created = Modification(None, None), modified = Modification(None, None), floating = false)
     val rlDegenerate = RoadLink(id = 0, lonLat = Seq(), municipalityNumber = 235)
     val rlQuadrant1 = RoadLink(id = 0, lonLat = Seq((1d, 1d), (2d, 2d)), municipalityNumber = 235)
     val rlQuadrant2 = RoadLink(id = 0, lonLat = Seq((-1d, 1d), (-2d, 2d)), municipalityNumber = 235)
