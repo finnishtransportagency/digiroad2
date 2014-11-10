@@ -55,17 +55,17 @@ object RoadLinkService {
     }
   }
 
-  def getMunicipalityAndPointOnRoadLinkByTestId(testId: Long, measure: Double): Option[(Long, Int, Option[Point])] = {
+  def getByTestId(testId: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
        val query = sql"""
-        select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure))
-          from tielinkki_ctas prod
-          join tielinkki test
-          on prod.mml_id = test.mml_id
-          where test.objectid = $testId
+         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.functionalroadclass
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where test.objectid = $testId
         """
-      query.as[(Long, Int, Seq[Point])].iterator().toList match {
-        case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption))
+      query.as[(Long, Int, Seq[Point], RoadLinkType)].list() match {
+        case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption, productionLink._4))
         case _ => None
       }
     }

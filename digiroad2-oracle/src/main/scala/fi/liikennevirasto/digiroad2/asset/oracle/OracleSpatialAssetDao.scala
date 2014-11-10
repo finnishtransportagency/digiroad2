@@ -65,7 +65,7 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private[oracle] def assetRowToProperty(assetRows: Iterable[AssetRow]): Seq[Property] = {
+  private[oracle] def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
       Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
@@ -78,7 +78,7 @@ object OracleSpatialAssetDao {
     }.toSeq
   }
 
-  private def propertyDisplayValueFromAssetRow(assetRow: AssetRow): Option[String] = {
+  private def propertyDisplayValueFromAssetRow(assetRow: IAssetRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
     else None
@@ -96,6 +96,24 @@ object OracleSpatialAssetDao {
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = row.roadLinkType, floating = isFloating(row))
+  }
+
+  private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): AssetWithProperties = {
+    val row = param._2(0)
+    val point = row.point.get
+    val wgsPoint = row.wgsPoint.get
+    val roadLinkOption = RoadLinkService.getByTestId(row.roadLinkId, row.lrmPosition.startMeasure)
+    val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
+    AssetWithProperties(
+        id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+        lon = point.x, lat = point.y, roadLinkId = row.roadLinkId,
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
+        bearing = row.bearing, municipalityNumber = roadLinkOption.map(_._2),
+        validityPeriod = validityPeriod(row.validFrom, row.validTo),
+        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
+        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
+        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(UnknownRoad),
+        floating = floating)
   }
 
   private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
@@ -116,7 +134,7 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, AssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+    Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
   }
 
   def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties] = {
@@ -125,11 +143,11 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, AssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(assetRowToAssetWithProperties).headOption
+    Q.query[Long, SingleAssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
   }
 
   def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Q.query[Long, AssetRow](assetByExternalId).firstOption(externalId).flatMap { case row =>
+    Q.query[Long, SingleAssetRow](assetByExternalId).firstOption(externalId).flatMap { case row =>
       row.point
     }
   }
@@ -178,6 +196,10 @@ object OracleSpatialAssetDao {
         !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
       }
     }.getOrElse(true)
+  }
+
+  def isFloating(storedPoint: Point, lrmPoint: Point): Boolean = {
+    !coordinatesWithinThreshold(storedPoint, lrmPoint)
   }
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {

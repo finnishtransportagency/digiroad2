@@ -31,11 +31,29 @@ object Queries {
   case class Image(imageId: Option[Long], lastModified: Option[DateTime])
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
+  trait IAssetRow {
+    val validFrom: Option[LocalDate]
+    val validTo: Option[LocalDate]
+    val created: Modification
+    val modified: Modification
+    val validityDirection: Int
+    val property: PropertyRow
+    val roadLinkType: RoadLinkType
+    val bearing: Option[Int]
+    val image: Image
+  }
+
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate], municipalityNumber: Int, created: Modification,
                       modified: Modification, wgsPoint: Option[Point], roadLinkType: RoadLinkType = UnknownRoad,
-                      lrmPosition: LRMPosition)
+                      lrmPosition: LRMPosition) extends IAssetRow
+
+  case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
+                           validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
+                           image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
+                           roadLinkType: RoadLinkType = UnknownRoad)
+                           extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
@@ -86,6 +104,38 @@ object Queries {
         validFrom, validTo, property, image,
         roadLinkEndDate, municipalityNumber, created, modified, wgsPoint, roadLinkType,
         lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
+    }
+  }
+
+  implicit val getSingleAssetWithPosition = new GetResult[SingleAssetRow] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong
+      val externalId = r.nextLong
+      val assetTypeId = r.nextLong
+      val bearing = r.nextIntOption
+      val validityDirection = r.nextInt
+      val validFrom = r.nextDateOption.map(new LocalDate(_))
+      val validTo = r.nextDateOption.map(new LocalDate(_))
+      val point = r.nextBytesOption.map(bytesToPoint)
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyUiIndex = r.nextInt
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
+      val lrmId = r.nextLong
+      val startMeasure = r.nextInt
+      val endMeasure = r.nextInt
+      val roadLinkId = r.nextLong
+      val image = new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_)))
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      SingleAssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
+                     validFrom, validTo, property, image, created, modified, wgsPoint,
+                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point))
     }
   }
 
@@ -174,6 +224,31 @@ object Queries {
           left join image i on e.image_id = i.id
     where a.asset_type_id = 10"""
 
+    // FIXME: Temporary solution for getting rid of `road_link` table
+    def singleAsset =
+      """
+      select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
+      a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
+      p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
+      case
+        when e.name_fi is not null then e.name_fi
+        when tp.value_fi is not null then tp.value_fi
+        else null
+      end as display_value,
+      lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
+      a.created_date, a.created_by, a.modified_date, a.modified_by, SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+      from asset_type t
+        join asset a on a.asset_type_id = t.id
+          join asset_link al on a.id = al.asset_id
+            join lrm_position lrm on al.position_id = lrm.id
+          join property p on t.id = p.asset_type_id
+            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+            left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+            left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+            left join image i on e.image_id = i.id
+      where a.asset_type_id = 10"""
+
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, t.id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
@@ -195,9 +270,9 @@ object Queries {
   def assetLrmPositionId =
     "select position_id from asset_link where asset_id = ?"
 
-  def assetWithPositionById = allAssets + " AND a.id = ?"
+  def assetWithPositionById = singleAsset + " AND a.id = ?"
 
-  def assetByExternalId = allAssets + " AND a.external_id = ?"
+  def assetByExternalId = singleAsset + " AND a.external_id = ?"
 
   def assetsByIds(ids: Seq[Long]) = " AND a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
 
