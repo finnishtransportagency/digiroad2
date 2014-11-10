@@ -16,12 +16,6 @@
       });
     }, 1000);
 
-    this.getRoadLinks2 = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
-        callback(data);
-      });
-    }, 1000);
-
     this.getAssets = function (boundingBox) {
       self.getAssetsWithCallback(boundingBox, function (assets) {
         eventbus.trigger('assets:fetched', assets);

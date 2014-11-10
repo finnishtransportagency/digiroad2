@@ -140,20 +140,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/roadlinks") {
-    val user = userProvider.getCurrentUser()
-    response.setHeader("Access-Control-Allow-Headers", "*")
-
-    val bboxOption = boundsFromParams
-
-    val rls = assetProvider.getRoadLinks(user, bboxOption)
-    rls.map { rl =>
-      Map("roadLinkId" -> rl.id, "type" -> rl.roadLinkType.toString, "points" -> rl.lonLat.map { ll =>
-        Map("x" -> ll._1, "y" -> ll._2)
-      })
-    }
-  }
-
-  get("/roadlinks2") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     params.get("bbox").map { bbox =>
@@ -164,7 +150,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
         Map("roadLinkId" -> id,
             "points" -> points,
             "length" -> length,
-            "type" -> roadLinkType)
+            "type" -> roadLinkType.toString)
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")

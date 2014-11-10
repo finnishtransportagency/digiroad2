@@ -18,8 +18,7 @@ trait AssetProvider {
   def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty] = Seq(), roadTypeLimitations: Set[RoadLinkType]): Either[RoadLinkType, AssetWithProperties]
   def removeAsset(assetId: Long): Unit
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
-  def getRoadLinks(user: User, bounds: Option[BoundingRectangle] = None): Seq[RoadLink]
-  def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
+  @deprecated def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
   def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
   def availableProperties(assetTypeId: Long): Seq[Property]

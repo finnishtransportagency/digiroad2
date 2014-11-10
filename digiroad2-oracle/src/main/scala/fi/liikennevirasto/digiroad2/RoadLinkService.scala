@@ -1,5 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.{DecimalFormat, NumberFormat}
+import java.util.Locale
+
+import org.joda.time.LocalDate
+
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.GetResult
@@ -10,8 +15,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import com.jolbox.bonecp.BoneCPConfig
 import com.jolbox.bonecp.BoneCPDataSource
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.RoadLinkType
+import fi.liikennevirasto.digiroad2.asset.{RoadLink, BoundingRectangle, RoadLinkType}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import _root_.oracle.spatial.geometry.JGeometry
@@ -78,7 +82,13 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true): Seq[(Long, Seq[Point], Double, Int, Int)] = {
+  implicit val getRoadLinkType = new GetResult[RoadLinkType] {
+    def apply(r: PositionedResult) = {
+      RoadLinkType(r.nextInt() / 10)
+    }
+  }
+
+  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true): Seq[(Long, Seq[Point], Double, RoadLinkType, Int)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
@@ -88,7 +98,7 @@ object RoadLinkService {
       val queryFilter = if (filterRoads) "mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and" else ""
       val query =
       s"""
-            select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, floor(functionalroadclass / 10) as roadLinkType, mod(functionalroadclass, 10)
+            select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10)
               from tielinkki_ctas
               where $queryFilter mdsys.sdo_filter(shape,
                                      sdo_cs.viewport_transform(
@@ -107,7 +117,7 @@ object RoadLinkService {
                                      'querytype=WINDOW'
                                     ) = 'TRUE'
       """
-      Q.queryNA[(Long, Seq[Point], Double, Int, Int)](query).iterator().toSeq
+      Q.queryNA[(Long, Seq[Point], Double, RoadLinkType, Int)](query).iterator().toSeq
     }
   }
 }

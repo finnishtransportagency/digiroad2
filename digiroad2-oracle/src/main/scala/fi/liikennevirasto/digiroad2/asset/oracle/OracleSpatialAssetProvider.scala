@@ -166,12 +166,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     parallerSeq.foreach(RoadlinkProvider.updateRoadLink(ds, _))
   }
 
-  def getRoadLinks(user: User, bounds: Option[BoundingRectangle]): Seq[RoadLink] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getRoadLinks(user, bounds)
-    }
-  }
-
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
     Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.getRoadLinkById(roadLinkId)
