@@ -51,6 +51,22 @@ object RoadLinkService {
     }
   }
 
+  def getMunicipalityAndPointOnRoadLinkByTestId(testId: Long, measure: Double): Option[(Long, Int, Option[Point])] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+       val query = sql"""
+        select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure))
+          from tielinkki_ctas prod
+          join tielinkki test
+          on prod.mml_id = test.mml_id
+          where test.objectid = $testId
+        """
+      query.as[(Long, Int, Seq[Point])].iterator().toList match {
+        case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption))
+        case _ => None
+      }
+    }
+  }
+
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
