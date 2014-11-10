@@ -12,6 +12,10 @@ case class User(id: Long, username: String, configuration: Configuration) {
   def hasWriteAccess() = {
     configuration.roles.map(_.toLowerCase).contains("viewer") == false
   }
+
+  def isOperator(): Boolean = {
+    configuration.roles(Role.Operator)
+  }
 }
 
 object Role {
