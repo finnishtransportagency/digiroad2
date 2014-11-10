@@ -142,10 +142,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      RoadLinkService.getRoadLinks(boundingRectangle).map { roadLink =>
+      RoadLinkService.getRoadLinks(
+          bounds = boundingRectangle,
+          municipalities = municipalities).map { roadLink =>
         val (id, points, length, roadLinkType, _) = roadLink
         Map("roadLinkId" -> id,
             "points" -> points,
