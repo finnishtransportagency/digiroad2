@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.LocalDate
 
@@ -20,7 +19,6 @@ trait AssetProvider {
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
   @deprecated def getRoadLinkById(roadLinkId: Long): Option[RoadLink]
   def getImage(imageId: Long): Array[Byte]
-  def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit
   def availableProperties(assetTypeId: Long): Seq[Property]
   def assetPropertyNames(language: String): Map[String, String]
 }

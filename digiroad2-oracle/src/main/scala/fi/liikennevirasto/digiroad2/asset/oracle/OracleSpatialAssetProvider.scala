@@ -7,7 +7,6 @@ import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.mtk.MtkRoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
@@ -157,13 +156,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       Database.forDataSource(ds).withDynTransaction {
         OracleSpatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
       }
-  }
-
-  def updateRoadLinks(roadlinks: Seq[MtkRoadLink]): Unit = {
-    // TODO: Verify write access?
-    val parallerSeq = roadlinks.par
-    parallerSeq.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(20))
-    parallerSeq.foreach(RoadlinkProvider.updateRoadLink(ds, _))
   }
 
   def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
