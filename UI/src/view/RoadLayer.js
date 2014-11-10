@@ -66,11 +66,7 @@ var RoadStyles = function() {
     };
 
     var fetchRoads = function(bbox) {
-      if (applicationModel.getSelectedLayer() === 'asset') {
-        roadCollection.fetch(bbox);
-      } else {
-        roadCollection.fetch2(bbox);
-      }
+      roadCollection.fetch(bbox);
     };
 
     var mapMovedHandler = function(mapState) {

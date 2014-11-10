@@ -333,20 +333,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     an[IllegalArgumentException] should be thrownBy provider.updateAsset(TestAssetId, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "INVALID DATE"))
   }
 
-  test("provide road link geometry by municipality", Tag("db")) {
-    provider.getRoadLinks(unauthorizedUser).size should be (0)
-    val rls = provider.getRoadLinks(user, Some(BoundingRectangle(Point(372794, 6679569), Point(376794, 6675569))))
-    rls.size should be (456)
-    rls.foreach { rl =>
-      rl.id should (be > 1l)
-      rl.lonLat.foreach { pt =>
-        pt._1 should (be > 60000.0 and be < 734000.0)
-        pt._2 should (be > 6600000.0 and be < 77800000.0)
-      }
-    }
-    provider.getRoadLinks(espooKauniainenUser, Some(BoundingRectangle(Point(373794, 6678569), Point(375794, 6676569)))).size should be (280)
-  }
-
   test("load image by id", Tag("db")) {
     val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val image = provider.getImage(2)
