@@ -24,7 +24,6 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.RoadLinkService
 import scala.language.reflectiveCalls
 
-// TODO: trait + class?
 object OracleSpatialAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
 
