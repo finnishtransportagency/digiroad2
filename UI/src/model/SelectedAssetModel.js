@@ -210,6 +210,7 @@
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
         backend.getAssetByExternalId(assetExternalId, function(asset) {
+          console.log('asset is floating: ' + asset.floating);
           eventbus.trigger('asset:fetched', asset);
         });
       }
