@@ -172,7 +172,7 @@ object OracleSpatialAssetDao {
     pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
   }
 
-  private def isFloating(asset: {val id: Long; val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
+  private def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
     val roadLinkOption = RoadLinkService.getPointOnRoadLink(asset.roadLinkId, asset.lrmPosition.startMeasure)
     roadLinkOption.flatMap { case (_, pointOnRoadLinkOption) =>
       pointOnRoadLinkOption.map { pointOnRoadLink =>
