@@ -64,7 +64,7 @@ object OracleLinearAssetDao {
 
 
 
-  private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, (Seq[Point], Double, Int)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Seq[(Long, Int, Seq[(Double, Double)])] = {
+  private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, (Seq[Point], Double, RoadLinkType)], speedLimitLinks: Seq[(Long, Long, Int, Int, Double, Double)]): Seq[(Long, RoadLinkType, Seq[(Double, Double)])] = {
     val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Int, Double, Double)]] = speedLimitLinks.groupBy(_._2)
     val partiallyCoveredLinks = roadLinkIds.map { roadLinkId =>
       val length = roadLinks(roadLinkId)._2
@@ -244,8 +244,12 @@ object OracleLinearAssetDao {
     roadLinks intersect speedLimitLinks.map(_._2).toSet
   }
 
-  private val limitValueLookup: Map[Int, Int] = Map(1 -> 80, 2 -> 50, 3 -> 80)
-  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: Int): (Long, Long, Int, Int, Double, Double) = {
+  private val limitValueLookup: Map[RoadLinkType, Int] = Map(
+      Road -> 80,
+      Street -> 50,
+      PrivateRoad -> 80)
+
+  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: RoadLinkType): (Long, Long, Int, Int, Double, Double) = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
@@ -292,7 +296,7 @@ object OracleLinearAssetDao {
     retval
   }
 
-  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
+  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType)]): Unit = {
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = timed("fetchAssetLinks", { OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn)) })
 
     val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
