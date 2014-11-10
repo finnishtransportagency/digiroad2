@@ -221,10 +221,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   get("/speedlimits") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle)
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }

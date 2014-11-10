@@ -76,8 +76,8 @@ object OracleLinearAssetDao {
     partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, (Seq[Point], Double, RoadLinkType)]) = {
-    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds, filterRoads = false)
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, (Seq[Point], Double, RoadLinkType)]) = {
+    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds = bounds, filterRoads = false, municipalities = municipalities)
 
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
