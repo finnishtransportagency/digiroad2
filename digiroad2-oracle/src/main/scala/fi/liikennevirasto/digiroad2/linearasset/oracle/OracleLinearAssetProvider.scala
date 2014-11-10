@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
-
 import fi.liikennevirasto.digiroad2.{GeometryUtils, LinkChain, DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
@@ -14,6 +13,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.asset.RoadLinkType
 
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
@@ -88,7 +88,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
-  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, Int)]): Unit = {
+  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       logger.info("Filling partially filled road links, road link count in bounding box: " + linkGeometries.size)
       OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
