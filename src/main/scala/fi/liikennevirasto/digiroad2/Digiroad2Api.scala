@@ -73,11 +73,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     !(user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber))
   }
 
-  get("/assets/municipality/:municipality") {
-    assetProvider.getAssetsByMunicipality(params("municipality").toInt)
-
-  }
-
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }
