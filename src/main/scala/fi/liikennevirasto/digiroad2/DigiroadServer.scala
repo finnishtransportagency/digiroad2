@@ -9,7 +9,6 @@ import org.eclipse.jetty.webapp.WebAppContext
 
 trait DigiroadServer {
   val contextPath : String
-  def commenceMtkFileImport()
 
   def startServer() {
     val server = new Server(8080)
@@ -25,7 +24,6 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     server.setHandler(context)
 
-    commenceMtkFileImport()
     server.start()
     server.join()
   }
