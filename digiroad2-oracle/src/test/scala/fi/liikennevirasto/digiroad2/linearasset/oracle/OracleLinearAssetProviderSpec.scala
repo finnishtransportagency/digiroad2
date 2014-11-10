@@ -14,7 +14,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val provider = new OracleLinearAssetProvider(new DummyEventBus)
 
   test("load speed limits with spatial bounds", Tag("db")) {
-    val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)))
+    val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)), municipalities = Set())
     speedLimits.size shouldBe 4
   }
 
