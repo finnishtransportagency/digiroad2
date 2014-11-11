@@ -11,13 +11,14 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.RoadLinkService
 
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getMunicipalityName(roadLinkId: Long): String = {
-    val municipalityId = OracleSpatialAssetDao.getRoadLinkById(roadLinkId).get.municipalityNumber
-    OracleSpatialAssetDao.getMunicipalityNameByCode(municipalityId)
+    val municipalityId = RoadLinkService.getMunicipalityCodeByTestId(roadLinkId)
+    municipalityId.map { OracleSpatialAssetDao.getMunicipalityNameByCode(_) }.get
   }
 
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
@@ -30,7 +31,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   private def userCanModifyAsset(asset: AssetWithProperties): Boolean = asset.municipalityNumber.exists(userCanModifyMunicipality)
 
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
-    getRoadLinkById(roadLinkId).map(rl => userCanModifyMunicipality(rl.municipalityNumber)).getOrElse(false)
+    RoadLinkService.getMunicipalityCodeByTestId(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
@@ -137,7 +138,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       optionalAsset match {
         case Some(asset) =>
           if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          val roadLinkType = OracleSpatialAssetDao.getRoadLinkById(asset.roadLinkId).map(_.roadLinkType).getOrElse(UnknownRoad)
+          val roadLinkType = RoadLinkService.getByTestId(asset.roadLinkId).map(_._3).getOrElse(UnknownRoad)
           if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
           else Left(roadLinkType)
         case None => throw new AssetNotFoundException(externalId)
@@ -156,12 +157,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       Database.forDataSource(ds).withDynTransaction {
         OracleSpatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
       }
-  }
-
-  def getRoadLinkById(roadLinkId: Long): Option[RoadLink] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getRoadLinkById(roadLinkId)
-    }
   }
 
   def getImage(imageId: Long): Array[Byte] = {

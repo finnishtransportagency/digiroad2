@@ -13,11 +13,12 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val rlQuadrant2 = RoadLink(id = 0, lonLat = Seq((-1d, 1d), (-2d, 2d)), municipalityNumber = 235)
     val rlQuadrant3 = RoadLink(id = 0, lonLat = Seq((-1d, -1d), (-2d, -2d)), municipalityNumber = 235)
     val rlQuadrant4 = RoadLink(id = 0, lonLat = Seq((1d, -1d), (2d, -2d)), municipalityNumber = 235)
-    calculateBearing(asset, rlDegenerate) should be (0)
-    calculateBearing(asset, rlQuadrant1) should be (45)
-    calculateBearing(asset, rlQuadrant2) should be (315)
-    calculateBearing(asset, rlQuadrant3) should be (225)
-    calculateBearing(asset, rlQuadrant4) should be (135)
+    val point = (asset.lon, asset.lat)
+    calculateBearing(point, rlDegenerate.lonLat) should be (0)
+    calculateBearing(point, rlQuadrant1.lonLat) should be (45)
+    calculateBearing(point, rlQuadrant2.lonLat) should be (315)
+    calculateBearing(point, rlQuadrant3.lonLat) should be (225)
+    calculateBearing(point, rlQuadrant4.lonLat) should be (135)
   }
 
   test("truncate empty geometry") {

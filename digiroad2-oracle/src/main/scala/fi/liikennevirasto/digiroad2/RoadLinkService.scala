@@ -55,7 +55,23 @@ object RoadLinkService {
     }
   }
 
-  def getByTestId(testId: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+  def getByTestId(testId: Long): Option[(Long, Int, RoadLinkType)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+       val query = sql"""
+         select prod.dr1_id, prod.kunta_nro, prod.functionalroadclass
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where test.objectid = $testId
+        """
+      query.as[(Long, Int, RoadLinkType)].list() match {
+        case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3))
+        case _ => None
+      }
+    }
+  }
+
+  def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
        val query = sql"""
          select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.functionalroadclass
@@ -71,6 +87,22 @@ object RoadLinkService {
     }
   }
 
+  def getMunicipalityCodeByTestId(testId: Long): Option[Int] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+       val query = sql"""
+         select prod.kunta_nro
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where test.objectid = $testId
+        """
+      query.as[Int].list() match {
+        case List(municipalityCode) => Some(municipalityCode)
+        case _ => None
+      }
+    }
+  }
+
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
@@ -79,6 +111,19 @@ object RoadLinkService {
           where dr1_id = $id
         """
       query.as[Seq[Point]].first
+    }
+  }
+
+  def getRoadLinkGeometryByTestId(testId: Long): Option[Seq[Point]] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select to_2d(prod.shape)
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where test.objectid = $testId
+        """
+      query.as[Seq[Point]].firstOption
     }
   }
 

@@ -4,7 +4,6 @@ import javax.sql.DataSource
 import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.{Locale, Properties}
 import fi.liikennevirasto.digiroad2.GeometryUtils
-
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
 import scala.slick.jdbc.{StaticQuery => Q, _}
 import Database.dynamicSession
@@ -28,6 +27,7 @@ import java.sql.Statement
 import java.text.{DecimalFormat, NumberFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrimaryKeySeqValue, nextLrmPositionPrimaryKeySeqValue}
+import fi.liikennevirasto.digiroad2.RoadLinkService
 
 object AssetDataImporter {
 
@@ -399,8 +399,8 @@ class AssetDataImporter {
 
       val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
         case Some(a) =>
-          OracleSpatialAssetDao.getRoadLinkById(a.roadLinkId) match {
-            case Some(rl) => GeometryUtils.calculateBearing(a, rl)
+          RoadLinkService.getRoadLinkGeometryByTestId(a.roadLinkId) match {
+            case Some(geometry) => GeometryUtils.calculateBearing((a.lon, a.lat), geometry.map { point => (point.x, point.y) })
             case None =>
               println(s"No road link found for Asset: $assetId")
               0.0
