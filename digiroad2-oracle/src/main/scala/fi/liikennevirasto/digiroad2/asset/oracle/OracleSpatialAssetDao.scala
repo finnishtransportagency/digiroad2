@@ -141,9 +141,9 @@ object OracleSpatialAssetDao {
       } else {
         Some(("AND rl.municipality_number IN (" + user.configuration.authorizedMunicipalities.toList.map(_ => "?").mkString(",") + ")", user.configuration.authorizedMunicipalities.toList))
       }
-    def andWithinBoundingBox = bounds map { b =>
+    def andAssetWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
-      (roadLinksAndWithinBoundingBox, List(storeGeometry(boundingBox, dynamicSession.conn)))
+      ("AND SDO_FILTER(geometry, ?) = 'TRUE'", List(storeGeometry(boundingBox, dynamicSession.conn)))
     }
     def andValidityInRange = (validFrom, validTo) match {
       case (Some(from), Some(to)) => Some(andByValidityTimeConstraint, List(jodaToSqlDate(from), jodaToSqlDate(to)))
@@ -151,7 +151,7 @@ object OracleSpatialAssetDao {
       case (Some(from), None) => Some(andValidAfter, List(jodaToSqlDate(from)))
       case (None, None) => None
     }
-    val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andWithinBoundingBox).add(andValidityInRange)
+    val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andValidityInRange).add(andAssetWithinBoundingBox)
     collectedQuery[ListedAssetRow](q).groupBy(_.id).map { case (k, v) =>
       val row = v(0)
       val point = row.point.get
