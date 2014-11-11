@@ -101,19 +101,25 @@ object RoadLinkService {
     }
   }
 
-  def getMunicipalityCodeByTestId(testId: Long): Option[Int] = {
+  def getMunicipalityCode(roadLinkId: Long): Option[Int] = {
     Database.forDataSource(dataSource).withDynTransaction {
        val query = sql"""
          select prod.kunta_nro
            from tielinkki_ctas prod
-           join tielinkki test
-           on prod.mml_id = test.mml_id
-           where test.objectid = $testId
+           where prod.dr1_id = $roadLinkId
         """
-      query.as[Int].list() match {
-        case List(municipalityCode) => Some(municipalityCode)
-        case _ => None
-      }
+      query.as[Int].firstOption
+    }
+  }
+
+  def getRoadLinkType(roadLinkId: Long): Option[RoadLinkType] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+       val query = sql"""
+         select prod.functionalroadclass
+           from tielinkki_ctas prod
+           where prod.dr1_id = $roadLinkId
+        """
+      query.as[RoadLinkType].firstOption
     }
   }
 
@@ -128,6 +134,17 @@ object RoadLinkService {
     }
   }
 
+  def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select to_2d(shape)
+          from tielinkki_ctas
+          where dr1_id = $id
+        """
+      query.as[Seq[Point]].firstOption
+    }
+  }
+
   def getRoadLinkGeometryByTestId(testId: Long): Option[Seq[Point]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
@@ -138,6 +155,43 @@ object RoadLinkService {
            where test.objectid = $testId
         """
       query.as[Seq[Point]].firstOption
+    }
+  }
+
+  def getTestId(id: Long): Option[Long] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select test.objectid
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where prod.dr1_id = $id
+        """
+      query.as[Long].firstOption
+    }
+  }
+
+  def getPointLRMeasure(roadLinkId: Long, point: Point): BigDecimal = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val x = point.x
+      val y = point.y
+      val query =
+        s"""
+          SELECT
+            SDO_LRS.GET_MEASURE(
+              SDO_LRS.PROJECT_PT(
+                tl.shape,
+                MDSYS.SDO_GEOMETRY(2001,
+                                   3067,
+                                   NULL,
+                                   MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                   MDSYS.SDO_ORDINATE_ARRAY($x, $y)
+                                  )
+                ))
+            FROM tielinkki_ctas tl
+            WHERE tl.dr1_id = $roadLinkId
+        """
+      Q.queryNA[BigDecimal](query).first
     }
   }
 

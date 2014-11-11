@@ -27,10 +27,18 @@ import java.text.{DecimalFormat, NumberFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrimaryKeySeqValue, nextLrmPositionPrimaryKeySeqValue}
 import fi.liikennevirasto.digiroad2.RoadLinkService
+import fi.liikennevirasto.digiroad2.Point
 
 object AssetDataImporter {
 
-  case class SimpleBusStop(shelterType: Int, assetId: Option[Long] = None, busStopId: Option[Long], busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
+  case class SimpleBusStop(shelterType: Int,
+                           assetId: Option[Long] = None,
+                           busStopId: Option[Long],
+                           busStopType: Seq[Int],
+                           lrmPositionId: Long,
+                           validFrom: LocalDate = LocalDate.now,
+                           validTo: Option[LocalDate] = None,
+                           point: Point)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -241,11 +249,11 @@ class AssetDataImporter {
          values($assetId, ${busStop.lrmPositionId})
       """.execute
 
-      OracleSpatialAssetDao.updateAssetGeometry(assetId)
+      OracleSpatialAssetDao.updateAssetGeometry(assetId, busStop.point)
 
       val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
         case Some(a) =>
-          RoadLinkService.getRoadLinkGeometryByTestId(a.roadLinkId) match {
+          RoadLinkService.getRoadLinkGeometry(a.roadLinkId) match {
             case Some(geometry) => GeometryUtils.calculateBearing((a.lon, a.lat), geometry.map { point => (point.x, point.y) })
             case None =>
               println(s"No road link found for Asset: $assetId")

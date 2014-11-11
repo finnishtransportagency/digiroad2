@@ -376,43 +376,25 @@ object Queries {
     join localized_string ls on ls.id = p.name_localized_string_id
     where p.property_type = 'single_choice' or p.property_type = 'multiple_choice' and a.id = ?"""
 
-  def getPointLRMeasure(latLonGeometry: JGeometry, roadLinkId: Long, conn: Connection): BigDecimal = {
-    val getLRMeasure = conn.prepareStatement("SELECT SDO_LRS.GET_MEASURE(SDO_LRS.PROJECT_PT(rl.geom, ?)), SDO_LRS.GEOM_SEGMENT_LENGTH(rl.geom) " +
-        "FROM road_link rl WHERE rl.id = ?")
-    val encodedGeometry: STRUCT = storeGeometry(latLonGeometry, conn)
-    getLRMeasure.setObject(1, encodedGeometry)
-    getLRMeasure.setLong(2, roadLinkId)
-    val rs = getLRMeasure.executeQuery()
-    if (rs.next()) {
-      val measure = rs.getBigDecimal(1)
-      val length = rs.getBigDecimal(2).setScale(0, RoundingMode.DOWN) // TODO: update rounding precision when LRM_POSITION table is updated, use GEOM_END_MEASURE
-      measure.min(length)
-    } else {
-      throw new RuntimeException("ROAD_LINK " + roadLinkId + " NOT FOUND")
-    }
-  }
-
-  def updateLRMeasure(lrmPosition: LRMPosition, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection) {
-    updateLRMeasure(lrmPosition.id, roadLinkId, lrMeasure, conn)
-  }
-
-  def updateLRMeasure(lrmPositionId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection) {
-    val updateMeasure = conn.prepareStatement("UPDATE lrm_position SET start_measure = ?, end_measure = ?, road_link_id = ? WHERE id = ?")
+  def updateLRMeasure(lrmPositionId: Long, testId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection) {
+    val updateMeasure = conn.prepareStatement("UPDATE lrm_position SET start_measure = ?, end_measure = ?, road_link_id = ?, prod_road_link_id = ? WHERE id = ?")
     updateMeasure.setBigDecimal(1, lrMeasure.bigDecimal)
     updateMeasure.setBigDecimal(2, lrMeasure.bigDecimal)
-    updateMeasure.setLong(3, roadLinkId)
-    updateMeasure.setLong(4, lrmPositionId)
+    updateMeasure.setLong(3, testId)
+    updateMeasure.setLong(4, roadLinkId)
+    updateMeasure.setLong(5, lrmPositionId)
     updateMeasure.executeUpdate()
   }
 
   def deleteLRMPosition(lrmPositionId: Long) = sqlu"""delete from lrm_position where id = $lrmPositionId"""
 
-  def insertLRMPosition(lrmPositionId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection): Long = {
-    val insertPosition = conn.prepareStatement("INSERT INTO lrm_position (id, start_measure, end_measure, road_link_id) values (?, ?, ?, ?)")
+  def insertLRMPosition(lrmPositionId: Long, testId: Long, roadLinkId: Long, lrMeasure: BigDecimal, conn: Connection): Long = {
+    val insertPosition = conn.prepareStatement("INSERT INTO lrm_position (id, start_measure, end_measure, road_link_id, prod_road_link_id) values (?, ?, ?, ?, ?)")
     insertPosition.setLong(1, lrmPositionId)
     insertPosition.setBigDecimal(2, lrMeasure.bigDecimal)
     insertPosition.setBigDecimal(3, lrMeasure.bigDecimal)
-    insertPosition.setLong(4, roadLinkId)
+    insertPosition.setLong(4, testId)
+    insertPosition.setLong(5, roadLinkId)
     insertPosition.executeUpdate()
   }
 

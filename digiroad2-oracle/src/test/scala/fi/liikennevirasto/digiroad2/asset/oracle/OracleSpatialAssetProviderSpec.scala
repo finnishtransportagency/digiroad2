@@ -186,7 +186,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("remove asset from database", Tag("db")) {
     val asset = provider.createAsset(
       TestAssetTypeId,
-      0, 0, 5771, 180,
+      0, 0, 7445, 180,
       AssetCreator,
       mandatoryBusStopProperties)
     val assetId = asset.id
