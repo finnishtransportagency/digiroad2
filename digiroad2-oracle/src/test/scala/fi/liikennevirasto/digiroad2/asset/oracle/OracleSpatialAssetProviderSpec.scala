@@ -55,7 +55,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("load assets with spatial bounds", Tag("db")) {
-    val assets = provider.getAssets(userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560))),
+    val assets = provider.getAssets(userProvider.getCurrentUser(), Some(BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246))),
         validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     assets.size shouldBe 1
   }
