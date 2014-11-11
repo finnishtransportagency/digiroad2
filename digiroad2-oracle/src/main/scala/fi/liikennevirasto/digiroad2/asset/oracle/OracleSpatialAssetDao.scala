@@ -6,8 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Database.dynamicSession
-import Queries._
-import Queries.getPoint
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import Q.interpolation
 import PropertyTypes._
 import org.joda.time.format.ISODateTimeFormat
@@ -153,12 +152,6 @@ object OracleSpatialAssetDao {
   }
 
   def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    def andMunicipality =
-      if (user.configuration.roles.contains(Role.Operator)) {
-        None
-      } else {
-        Some(("AND rl.municipality_number IN (" + user.configuration.authorizedMunicipalities.toList.map(_ => "?").mkString(",") + ")", user.configuration.authorizedMunicipalities.toList))
-      }
     def andAssetWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
       ("AND SDO_FILTER(geometry, ?) = 'TRUE'", List(storeGeometry(boundingBox, dynamicSession.conn)))
@@ -169,17 +162,35 @@ object OracleSpatialAssetDao {
       case (Some(from), None) => Some(andValidAfter, List(jodaToSqlDate(from)))
       case (None, None) => None
     }
-    val q = QueryCollector(allAssetsWithoutProperties).add(andMunicipality).add(andValidityInRange).add(andAssetWithinBoundingBox)
-    collectedQuery[ListedAssetRow](q).groupBy(_.id).map { case (k, v) =>
-      val row = v(0)
+    val query = QueryCollector(allAssetsWithoutProperties).add(andValidityInRange).add(andAssetWithinBoundingBox)
+    val allAssets = collectedQuery[ListedAssetRow](query).iterator
+    val assetsWithProperties: Map[Long, Seq[ListedAssetRow]] = allAssets.toSeq.groupBy(_.id)
+    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], RoadLinkType)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
+      val row = assetRows.head
+      val roadLinkOption = RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure)
+      (roadLinkOption, assetRows)
+    }
+    val authorizedAssets = user.configuration.roles.contains(Role.Operator) match {
+      case true => assetsWithRoadLinks
+      case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, _)) =>
+        roadLinkOption.exists(roadLink => user.configuration.authorizedMunicipalities.contains(roadLink._2))
+      }
+    }
+    authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
+      val row = assetRows.head
       val point = row.point.get
-      Asset(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId, lon = point.x,
-        lat = point.y, roadLinkId = row.roadLinkId,
-        imageIds = v.map(row => getImageId(row.image)).toSeq,
+      Asset(id = row.id,
+        externalId = row.externalId,
+        assetTypeId = row.assetTypeId,
+        lon = point.x,
+        lat = point.y,
+        roadLinkId = row.roadLinkId,
+        imageIds = assetRows.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
-        municipalityNumber = Option(row.municipalityNumber), validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row))
+        municipalityNumber = roadLinkOption.map(_._2),
+        validityPeriod = validityPeriod(row.validFrom, row.validTo),
+        floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true))
     }.toSeq
   }
 
