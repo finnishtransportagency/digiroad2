@@ -22,6 +22,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 
 object RoadLinkService {
 
+
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
     new BoneCPDataSource(cfg)
@@ -57,7 +58,7 @@ object RoadLinkService {
 
   def getByTestId(testId: Long): Option[(Long, Int, RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
-       val query = sql"""
+      val query = sql"""
          select prod.dr1_id, prod.kunta_nro, prod.functionalroadclass
            from tielinkki_ctas prod
            join tielinkki test
@@ -67,6 +68,19 @@ object RoadLinkService {
       query.as[(Long, Int, RoadLinkType)].list() match {
         case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3))
         case _ => None
+      }
+    }
+  }
+
+  def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), functionalroadclass
+           from tielinkki_ctas
+           where dr1_id = $id
+        """
+      query.as[(Long, Int, Seq[Point], RoadLinkType)].firstOption().map {
+        case (roadLinkId, municipalityNumber, geometry, roadLinkType) => (roadLinkId, municipalityNumber, geometry.headOption, roadLinkType)
       }
     }
   }

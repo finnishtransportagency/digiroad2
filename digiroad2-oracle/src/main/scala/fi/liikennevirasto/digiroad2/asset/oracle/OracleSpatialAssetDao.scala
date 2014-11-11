@@ -101,7 +101,10 @@ object OracleSpatialAssetDao {
     val row = param._2(0)
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
-    val roadLinkOption = RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure)
+    val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
+    val roadLinkOption = productionRoadLinkId.map { roadLinkId =>
+      RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
+    }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
     val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
     AssetWithProperties(
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
