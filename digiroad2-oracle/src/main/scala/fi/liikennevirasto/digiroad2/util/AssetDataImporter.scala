@@ -21,7 +21,6 @@ import scala.concurrent.forkjoin.ForkJoinPool
 import scala.Some
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleLRMPosition
 import org.joda.time.format.PeriodFormatterBuilder
 import java.sql.Statement
 import java.text.{DecimalFormat, NumberFormat}
@@ -32,7 +31,6 @@ import fi.liikennevirasto.digiroad2.RoadLinkService
 object AssetDataImporter {
 
   case class SimpleBusStop(shelterType: Int, assetId: Option[Long] = None, busStopId: Option[Long], busStopType: Seq[Int], lrmPositionId: Long, validFrom: LocalDate = LocalDate.now, validTo: Option[LocalDate] = None)
-  case class SimpleLRMPosition(id: Long, roadLinkId: Long, laneCode: Int, sideCode: Int, startMeasure: Double, endMeasure: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -41,8 +39,6 @@ object AssetDataImporter {
 
   sealed trait ImportDataSet {
     def database(): DatabaseDef
-    val roadLinkTable: String
-    val busStopTable: String
   }
 
   case object TemporaryTables extends ImportDataSet {
@@ -52,8 +48,6 @@ object AssetDataImporter {
     }
 
     def database() = Database.forDataSource(dataSource)
-    val roadLinkTable: String = "temp2_tielinkki"
-    val busStopTable: String = "temp2_lineaarilokaatio"
   }
 
   case object Conversion extends ImportDataSet {
@@ -72,16 +66,7 @@ class AssetDataImporter {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val ds: DataSource = initDataSource
 
-  val shelterTypes = Map[Int, Int](1 -> 1, 2 -> 2, 0 -> 99, 99 -> 99, 3 -> 99)
-  val busStopTypes = Map[Int, Seq[Int]](1 -> Seq(1), 2 -> Seq(2), 3 -> Seq(3), 4 -> Seq(2, 3), 5 -> Seq(3, 4), 6 -> Seq(2, 3, 4), 7 -> Seq(99), 99 -> Seq(99),  0 -> Seq(99))
   val Modifier = "dr1conversion"
-
-  implicit val getSimpleBusStop = GetResult[(SimpleBusStop, SimpleLRMPosition)] { r =>
-      val bs = SimpleBusStop(shelterTypes.getOrElse(r.<<, 99), None, r.<<, busStopTypes(r.<<), r.<<)
-      val lrm = SimpleLRMPosition(bs.lrmPositionId, r.<<, r.<<, r.<<, r.<<, r.<<)
-    (bs, lrm)
-  }
-  implicit val getSimpleRoadLink = GetResult[SimpleRoadLink](r => SimpleRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, r.nextObject().asInstanceOf[STRUCT]))
 
   implicit object SetStruct extends SetParameter[STRUCT] {
     def apply(v: STRUCT, pp: PositionedParameters) {
@@ -96,15 +81,6 @@ class AssetDataImporter {
     ret
   }
 
-  def importRoadlinks(dataSet: ImportDataSet, taskPool: ForkJoinPool) = roadLinksToImport(dataSet, taskPool)
-
-  private def getRoadlinkCount(dataSet: ImportDataSet) = {
-    val table = dataSet.roadLinkTable
-    dataSet.database().withDynSession {
-      sql"""select max(objectid) from #$table""".as[Int].first
-    }
-  }
-
   private def getBatchDrivers(size: Int): List[(Int, Int)] = {
     println(s"""creating batching for $size items""")
     getBatchDrivers(1, size, 500)
@@ -117,106 +93,6 @@ class AssetDataImporter {
       val x = ((n to m by step).sliding(2).map(x => (x(0), x(1) - 1))).toList
       x :+ (x.last._2 + 1, m)
     }
-  }
-
-  private def roadLinksToImport(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
-    val count = getRoadlinkCount(dataSet)
-    val parallerSeq = getBatchDrivers(count).par
-    println(s"""batching done.""")
-    Database.forDataSource(ds).withSession(targetDbSession => {
-      parallerSeq.tasksupport = new ForkJoinTaskSupport(taskPool)
-      val totalItems = count
-      val startTime = DateTime.now()
-      lastCheckpoint = DateTime.now()
-      parallerSeq.foreach(x => doConversion(dataSet, x, targetDbSession, totalItems, startTime))
-    })
-  }
-
-  var processedItems = 0
-  var counterForProcessed = 1
-  var lastCheckpoint: DateTime = null
-  private def updateStatus(size: Int, totalItems: Int, startTime: DateTime) = {
-    this.synchronized {
-      processedItems = processedItems + size
-      if(counterForProcessed % 20 == 0) {
-        val percentage = (processedItems / (totalItems * 1.0)) * 100
-        val currentTime = DateTime.now()
-        val formatter = getPeriodFormatter
-        val lastBatchExecTime = formatter.print(new Interval(lastCheckpoint, currentTime).toDuration.toPeriod)
-        val totalExecTime = formatter.print(new Interval(startTime, currentTime).toDuration.toPeriod)
-        println(f"""$processedItems / $totalItems  items ($percentage%1.2f %%) processed. Last batch took $lastBatchExecTime. Total execution time $totalExecTime""")
-        lastCheckpoint = currentTime
-      }
-      counterForProcessed = counterForProcessed + 1
-    }
-  }
-
-  private def getPeriodFormatter = {
-    new PeriodFormatterBuilder()
-      .appendHours()
-      .appendSuffix("h ")
-      .appendMinutes()
-      .appendSuffix("m ")
-      .appendSeconds()
-      .appendSuffix("s ")
-      .appendMillis()
-      .appendSuffix("ms ")
-      .toFormatter()
-  }
-
-  private def doConversion(dataSet: ImportDataSet, page: (Int, Int), targetDbSession: Session, totalItems: Int, startTime: DateTime) = {
-    val links = getOldRoadlinksByPage(dataSet, page)
-    insertRoadLink(links, targetDbSession)
-    updateStatus(links.size, totalItems, startTime)
-  }
-
-  private def getOldRoadlinksByPage(dataSet: ImportDataSet, page: (Int, Int)) = {
-     val start = page._1
-     val end = page._2
-     val s = dataSet.database().createSession()
-
-      val query = Q.query[(Int, Int), SimpleRoadLink]("""
-        select objectid, nvl(formofway,99), tienro, tieosanro, functionalroadclass, ens_talo_o, ens_talo_v,
-               viim_talo_o, viim_talo_v, kunta_nro, shape from tielinkki where objectid between ? and ?""")
-      val result = query.list(start, end)(s)
-      s.close()
-      result
-  }
-
-  private def insertRoadLink(roadlinks: List[SimpleRoadLink], targetDbSession: Session) {
-    val ps = targetDbSession.prepareStatement("insert into road_link (id, road_type, road_number, road_part_number, functional_class, r_start_hn, l_start_hn, r_end_hn, l_end_hn, municipality_number, geom) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-
-    def batch(rl: SimpleRoadLink) {
-      ps.setLong(1, rl.id)
-      ps.setInt(2, rl.roadType)
-      ps.setInt(3, rl.roadNumber)
-      ps.setInt(4, rl.roadPartNumber)
-      ps.setInt(5, rl.functionalClass)
-      ps.setInt(6, rl.rStartHn)
-      ps.setInt(7, rl.lStartHn)
-      ps.setInt(8, rl.rEndHn)
-      ps.setInt(9, rl.lEndHn)
-      ps.setInt(10, rl.municipalityNumber)
-      ps.setObject(11, rl.geom)
-      ps.addBatch
-    }
-
-    roadlinks foreach batch
-    ps.executeBatch
-    ps.close()
-  }
-
-  def importBusStops(dataSet: ImportDataSet, taskPool: ForkJoinPool) = {
-    val (busStops, lrmPositions) = busStopsToImport(dataSet).unzip
-    Database.forDataSource(ds).withSession(targetDbSession => {
-      val insertLrmPositionsSequence: ParSeq[List[SimpleLRMPosition]] = lrmPositions.grouped(250).toList.par
-      insertLrmPositionsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
-      insertLrmPositionsSequence.foreach(lrmPositions => insertLrmPositions(lrmPositions, targetDbSession))
-    })
-    val typeProps = getTypeProperties
-    val insertBusStopsSequence: ParSeq[SimpleBusStop] = busStops.toList.par
-    insertBusStopsSequence.tasksupport = new ForkJoinTaskSupport(taskPool)
-    insertBusStopsSequence.foreach(x => insertBusStops(x, typeProps))
   }
 
   var insertSpeedLimitsCount = 0;
@@ -337,36 +213,6 @@ class AssetDataImporter {
         }
       }
     }
-  }
-
-  private def busStopsToImport(dataSet: ImportDataSet) = {
-    val table = dataSet.busStopTable
-    dataSet.database().withDynSession {
-      sql"""
-        select katos, pysakki_id, pysakkityyppi, objectid, tielinkkitunnus, kaista, puoli, alkum, loppum from #$table where tielinkkitunnus is not null
-      """.as[(SimpleBusStop, SimpleLRMPosition)].list
-    }
-  }
-
-  def insertLrmPositions(lrmPositions: Seq[SimpleLRMPosition], targetDbSession: Session) {
-    var elementCount = 0
-      val ps = targetDbSession.prepareStatement("insert into lrm_position (id, road_link_id, event_type, lane_code, side_code, start_measure, end_measure) values (?, ?, 1, ?, ?, ?, ?)")
-    def batch(lrm: SimpleLRMPosition) {
-      ps.setLong(1, lrm.id)
-      ps.setLong(2, lrm.roadLinkId)
-      ps.setInt(3, lrm.laneCode)
-      ps.setInt(4, lrm.sideCode)
-      ps.setDouble(5, lrm.startMeasure)
-      ps.setDouble(6, lrm.endMeasure)
-      ps.addBatch
-      elementCount = elementCount + 1
-      println("Added LRM " + lrm.id + " to batch as element " + elementCount)
-    }
-
-    lrmPositions foreach batch
-    ps.executeBatch
-    println("Executed batch of " + lrmPositions.length + " LRM positions")
-    ps.close
   }
 
   def getTypeProperties = {

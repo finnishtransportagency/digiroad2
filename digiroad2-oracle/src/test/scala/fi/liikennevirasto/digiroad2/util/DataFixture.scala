@@ -55,29 +55,6 @@ object DataFixture {
       "rovaniemi_bus_stops.sql"))
   }
 
-  def setUpFull() {
-    migrateAll()
-    SqlScriptRunner.runScripts(List("insert_users.sql"))
-  }
-
-  def importRoadlinksFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
-    println("\nCommencing road link import from conversion at time: ")
-    println(DateTime.now())
-    dataImporter.importRoadlinks(Conversion, taskPool)
-    println("Road link import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
-  def importBusStopsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
-    println("\nCommencing bus stop import from conversion at time: ")
-    println(DateTime.now())
-    dataImporter.importBusStops(Conversion, taskPool)
-    println("Bus stop import complete at time: ")
-    println(DateTime.now())
-    println("\n")
-  }
-
   def importSpeedLimitsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
     print("\nCommencing speed limit import from conversion: ")
     println(DateTime.now())
@@ -122,60 +99,10 @@ object DataFixture {
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
         BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
-      case Some("full") =>
-        tearDown()
-        setUpFull()
-        val taskPool = new ForkJoinPool(1)
-        dataImporter.importRoadlinks(TemporaryTables, taskPool)
-        dataImporter.importBusStops(TemporaryTables, taskPool)
-        BusStopIconImageData.insertImages("fulltestdataimport")
-        importMunicipalityCodes()
-      case Some("conversion") =>
-        tearDown()
-        migrateAll()
-        val taskPool = new ForkJoinPool(8)
-        importRoadlinksFromConversion(dataImporter, taskPool)
-        importBusStopsFromConversion(dataImporter, taskPool)
-        BusStopIconImageData.insertImages("dr1conversion")
-        importMunicipalityCodes()
-      case Some("busstops") =>
-        val taskPool = new ForkJoinPool(8)
-        importBusStopsFromConversion(dataImporter, taskPool)
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
-      case Some("AdminIdUpdate") =>
-        Database.forDataSource(ds).withDynSession {
-          val adminCodeWriter = new PrintWriter(new File("admincode.sql"))
-          val adminWriter = new PrintWriter(new File("admins.sql"))
-          new AssetAdminImporter().getAssetIds(AssetAdminImporter.toAdminUpdateSql, AssetAdminImporter.getAdminCodesFromDr1).foreach(x => {
-            adminCodeWriter.write(x._1 + "\n")
-            adminWriter.write(x._2 + "\n")
-          })
-          adminWriter.close()
-          adminCodeWriter.close()
-       }
-      case Some("FunctionalClasses") =>
-        Database.forDataSource(ds).withDynSession {
-          val functionalClassWriter = new PrintWriter(new File("functional_classes.sql"))
-          new AssetAdminImporter()
-            .getFunctionalClasses(AssetAdminImporter.toFunctionalClassUpdate, AssetAdminImporter.getFunctionalClassesFromDr1)
-            .foreach(x => {
-              functionalClassWriter.write(x + "\n")
-            })
-          functionalClassWriter.close()
-        }
-      case Some("NameUpdate") =>
-        Database.forDataSource(ds).withDynSession {
-          val nameWriter = new PrintWriter(new File("names.sql"))
-          new AssetAdminImporter().getAssetIds(AssetAdminImporter.toNameUpdateSql, AssetAdminImporter.getNamesFromDr1)
-            .foreach(x => {
-            nameWriter.write(x._1)
-            nameWriter.write(x._2)
-          })
-          nameWriter.close()
-        }
-      case _ => println("Usage: DataFixture test | full | conversion | AdminIdUpdate | NameUpdate | speedlimits")
+      case _ => println("Usage: DataFixture test | speedlimits")
     }
   }
 }
