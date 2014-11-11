@@ -17,7 +17,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getMunicipalityName(roadLinkId: Long): String = {
-    val municipalityId = RoadLinkService.getMunicipalityCodeByTestId(roadLinkId)
+    val municipalityId = RoadLinkService.getMunicipalityCode(roadLinkId)
     municipalityId.map { OracleSpatialAssetDao.getMunicipalityNameByCode(_) }.get
   }
 
@@ -31,7 +31,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   private def userCanModifyAsset(asset: AssetWithProperties): Boolean = asset.municipalityNumber.exists(userCanModifyMunicipality)
 
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
-    RoadLinkService.getMunicipalityCodeByTestId(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
+    RoadLinkService.getMunicipalityCode(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
@@ -133,7 +133,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       optionalAsset match {
         case Some(asset) =>
           if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          val roadLinkType = RoadLinkService.getByTestId(asset.roadLinkId).map(_._3).getOrElse(UnknownRoad)
+          val roadLinkType = RoadLinkService.getRoadLinkType(asset.roadLinkId).getOrElse(UnknownRoad)
           if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
           else Left(roadLinkType)
         case None => throw new AssetNotFoundException(externalId)
@@ -175,12 +175,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   def assetPropertyNames(language: String): Map[String, String] = {
     AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.assetPropertyNames(language)
-    }
-  }
-
-  def getMunicipalityNameByCode(code: Int): String = {
-    Database.forDataSource(ds).withDynSession {
-      OracleSpatialAssetDao.getMunicipalityNameByCode(code)
     }
   }
 

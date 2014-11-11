@@ -122,7 +122,7 @@ object OracleSpatialAssetDao {
     val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
     AssetWithProperties(
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y, roadLinkId = row.roadLinkId,
+        lon = point.x, lat = point.y, roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary hack for possibly missing roadLinkId
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = roadLinkOption.map(_._2),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
@@ -196,7 +196,7 @@ object OracleSpatialAssetDao {
         assetTypeId = row.assetTypeId,
         lon = point.x,
         lat = point.y,
-        roadLinkId = row.roadLinkId,
+        roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary solution for possibly missing roadLinkId
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
@@ -242,14 +242,17 @@ object OracleSpatialAssetDao {
     Some(status)
   }
 
-  def updateAssetGeometry(id: Long): Unit = {
+  def updateAssetGeometry(id: Long, point: Point): Unit = {
+    val x = point.x
+    val y = point.y
     sqlu"""
       update asset
-        set geometry = (select SDO_LRS.LOCATE_PT(rl.geom, LEAST(lrm.start_measure, SDO_LRS.GEOM_SEGMENT_END_MEASURE(rl.geom))) from asset a
-                          join asset_link al on al.asset_id = a.id
-                          join lrm_position lrm on lrm.id = al.position_id
-                          join road_link rl on rl.id = lrm.road_link_id
-                          where a.id = $id)
+        set geometry = MDSYS.SDO_GEOMETRY(4401,
+                                          3067,
+                                          NULL,
+                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
+                                         )
         where id = $id
     """.execute
   }
@@ -258,12 +261,12 @@ object OracleSpatialAssetDao {
     val assetId = nextPrimaryKeySeqValue
     val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
     val externalId = getNationalBusStopId
-    val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
-    val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
-    insertLRMPosition(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
+    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
+    val testId = RoadLinkService.getTestId(roadLinkId).get
+    insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, bearing, creator).execute
     insertAssetPosition(assetId, lrmPositionId).execute
-    updateAssetGeometry(assetId)
+    updateAssetGeometry(assetId, Point(lon, lat))
     val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     updateAssetProperties(assetId, properties ++ defaultValues)
     getAssetById(assetId).get
@@ -294,7 +297,7 @@ object OracleSpatialAssetDao {
       case None => logger.debug("not updating position")
       case Some(pos) => {
         updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
-        updateAssetGeometry(assetId)
+        updateAssetGeometry(assetId, Point(pos.lon, pos.lat))
       }
     }
     getAssetById(assetId).get
@@ -339,10 +342,11 @@ object OracleSpatialAssetDao {
   }
 
   private def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
-    val latLonGeometry = JGeometry.createPoint(Array(lon, lat), 2, 3067)
-    val lrMeasure = getPointLRMeasure(latLonGeometry, roadLinkId, dynamicSession.conn)
+    val point = Point(lon, lat)
+    val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, point)
     val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
-    updateLRMeasure(lrmPositionId, roadLinkId, lrMeasure, dynamicSession.conn)
+    val testId = RoadLinkService.getTestId(roadLinkId).get
+    updateLRMeasure(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     bearing match {
       case Some(b) => updateAssetBearing(id, b).execute()
       case None => // do nothing
