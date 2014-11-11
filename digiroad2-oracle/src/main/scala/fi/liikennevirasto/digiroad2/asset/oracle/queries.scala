@@ -376,8 +376,6 @@ object Queries {
     else
       sqlu"update asset set #$propertyColumn = $value where id = $assetId"
 
-  def roadLinks = "SELECT id, geom, end_date, municipality_number, functional_class FROM road_link WHERE mod(functional_class, 10) IN (1, 2, 3, 4, 5, 6)"
-
   def roadLinksAndMunicipality(municipalityNumbers: Seq[Int]) =
     if (municipalityNumbers.isEmpty) "" else "AND municipality_number IN (" + municipalityNumbers.map(_ => "?").mkString(",") + ")"
 
