@@ -97,14 +97,18 @@ object OracleSpatialAssetDao {
         created = row.created, modified = row.modified, roadLinkType = row.roadLinkType, floating = isFloating(row))
   }
 
+  private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+    val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
+    productionRoadLinkId.map { roadLinkId =>
+      RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
+    }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
+  }
+
   private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): AssetWithProperties = {
     val row = param._2(0)
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
-    val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
-    val roadLinkOption = productionRoadLinkId.map { roadLinkId =>
-      RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
-    }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
+    val roadLinkOption = getOptionalProductionRoadLink(row)
     val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
     AssetWithProperties(
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
@@ -170,7 +174,7 @@ object OracleSpatialAssetDao {
     val assetsWithProperties: Map[Long, Seq[ListedAssetRow]] = allAssets.toSeq.groupBy(_.id)
     val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], RoadLinkType)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
       val row = assetRows.head
-      val roadLinkOption = RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure)
+      val roadLinkOption = getOptionalProductionRoadLink(row)
       (roadLinkOption, assetRows)
     }
     val authorizedAssets = user.configuration.roles.contains(Role.Operator) match {

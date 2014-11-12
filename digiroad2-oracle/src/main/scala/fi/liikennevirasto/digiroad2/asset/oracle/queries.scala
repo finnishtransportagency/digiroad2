@@ -55,7 +55,7 @@ object Queries {
                            roadLinkType: RoadLinkType = UnknownRoad)
                            extends IAssetRow
 
-  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
+  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
                       image: Image, lrmPosition: LRMPosition)
 
@@ -143,11 +143,11 @@ object Queries {
   implicit val getListedAssetWithPosition = new GetResult[ListedAssetRow] {
     def apply(r: PositionedResult) = {
       val (id, externalId, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
-      roadLinkId, image) =
+      productionRoadLinkId, roadLinkId, image) =
         (r.nextLong, r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextDateOption.map(new LocalDate(_)), r.nextDateOption.map(new LocalDate(_)), r.nextBytesOption, r.nextLong, r.nextInt, r.nextInt,
-          r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))))
+          r.nextLongOption(), r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))))
       val point = pos.map(bytesToPoint)
-      (ListedAssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
+      (ListedAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
     }
   }
@@ -253,7 +253,7 @@ object Queries {
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date
+    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date
     from asset a
       join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
