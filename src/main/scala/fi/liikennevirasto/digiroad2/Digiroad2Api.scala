@@ -65,8 +65,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
 
   def getAssetsBy(user: User, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    assetProvider.getAssets(
-      user, boundsFromParams, validFrom, validTo)
+    assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
   }
 
   private def isReadOnly(user: User)(municipalityNumber: Int): Boolean = {
