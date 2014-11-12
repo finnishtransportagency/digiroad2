@@ -61,7 +61,7 @@ object OracleSpatialAssetDao {
     }
 
     assetsForMunicipality.map { case (assetId, (roadLinkOption, assetRows)) =>
-      assetRowToAssetWithProperties(assetId, assetRows.toList)
+      assetRowToAssetWithProperties(assetId, assetRows.toList, roadLinkOption)
     }
   }
 
@@ -91,18 +91,20 @@ object OracleSpatialAssetDao {
     else None
   }
 
-  private[this] def assetRowToAssetWithProperties(param: (Long, List[AssetRow])): AssetWithProperties = {
-    val row = param._2(0)
+  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): AssetWithProperties = {
+    val row = assetRows.head
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
+    val municipalityNumber = optionalRoadLink.map(_._2)
+    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(UnknownRoad)
     AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y, roadLinkId = row.roadLinkId,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = Option(row.municipalityNumber),
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
+        bearing = row.bearing, municipalityNumber = municipalityNumber,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
+        imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = row.roadLinkType, floating = isFloating(row))
+        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row))
   }
 
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
@@ -149,11 +151,6 @@ object OracleSpatialAssetDao {
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
     Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
-  }
-
-  def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties] = {
-    val q = QueryCollector(allAssets).add(Some(assetsByIds(ids), ids))
-    collectedQuery[AssetRow](q).groupBy(_.id).map(assetRowToAssetWithProperties).toList
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {

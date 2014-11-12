@@ -44,11 +44,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       OracleSpatialAssetDao.getAssetByExternalId(externalId)
     }
   }
-  def getAssetsByIds(ids: List[Long]): Seq[AssetWithProperties] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getAssetsByIds(ids)
-    }
-  }
 
   def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
     Database.forDataSource(ds).withDynTransaction {
