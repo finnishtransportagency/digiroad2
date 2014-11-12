@@ -38,15 +38,13 @@ object Queries {
     val modified: Modification
     val validityDirection: Int
     val property: PropertyRow
-    val roadLinkType: RoadLinkType
     val bearing: Option[Int]
     val image: Image
   }
 
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                      image: Image, roadLinkEndDate: Option[LocalDate], municipalityNumber: Int, created: Modification,
-                      modified: Modification, wgsPoint: Option[Point], roadLinkType: RoadLinkType = UnknownRoad,
+                      image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point],
                       lrmPosition: LRMPosition) extends IAssetRow
 
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
@@ -95,16 +93,12 @@ object Queries {
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
       val image = new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_)))
-      val roadLinkEndDate = r.nextDateOption.map(new LocalDate(_))
-      val municipalityNumber = r.nextInt
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      val roadLinkType = RoadLinkType(r.nextInt / 10)
       (AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        roadLinkEndDate, municipalityNumber, created, modified, wgsPoint, roadLinkType,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
+        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
     }
   }
 
@@ -210,13 +204,12 @@ object Queries {
       else null
     end as display_value,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
-    rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by,
-    SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, rl.functional_class
+    a.created_date, a.created_by, a.modified_date, a.modified_by,
+    SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
     from asset_type t
       join asset a on a.asset_type_id = t.id
         join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-            join road_link rl on lrm.road_link_id = rl.id
         join property p on t.id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
@@ -271,8 +264,6 @@ object Queries {
   def assetWithPositionById = singleAsset + " AND a.id = ?"
 
   def assetByExternalId = singleAsset + " AND a.external_id = ?"
-
-  def assetsByIds(ids: Seq[Long]) = " AND a.id IN (" + ids.map(_ => "?").mkString(",") + ")"
 
   def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
 
