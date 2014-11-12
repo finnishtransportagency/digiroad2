@@ -43,7 +43,7 @@ object Queries {
     val image: Image
   }
 
-  case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], roadLinkId: Long, bearing: Option[Int],
+  case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, roadLinkEndDate: Option[LocalDate], municipalityNumber: Int, created: Modification,
                       modified: Modification, wgsPoint: Option[Point], roadLinkType: RoadLinkType = UnknownRoad,
@@ -92,6 +92,7 @@ object Queries {
       val lrmId = r.nextLong
       val startMeasure = r.nextInt
       val endMeasure = r.nextInt
+      val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
       val image = new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_)))
       val roadLinkEndDate = r.nextDateOption.map(new LocalDate(_))
@@ -100,7 +101,7 @@ object Queries {
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       val roadLinkType = RoadLinkType(r.nextInt / 10)
-      (AssetRow(id, externalId, assetTypeId, point, roadLinkId, bearing, validityDirection,
+      (AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
         roadLinkEndDate, municipalityNumber, created, modified, wgsPoint, roadLinkType,
         lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
@@ -208,7 +209,7 @@ object Queries {
       when tp.value_fi is not null then tp.value_fi
       else null
     end as display_value,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
+    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
     rl.end_date, rl.municipality_number, a.created_date, a.created_by, a.modified_date, a.modified_by,
     SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, rl.functional_class
     from asset_type t
