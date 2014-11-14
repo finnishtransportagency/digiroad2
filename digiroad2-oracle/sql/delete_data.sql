@@ -11,5 +11,3 @@ delete from enumerated_value;
 delete from property;
 
 delete from lrm_position;
-
-delete from road_link;

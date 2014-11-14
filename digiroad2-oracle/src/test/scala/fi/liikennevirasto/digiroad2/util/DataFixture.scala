@@ -47,11 +47,9 @@ object DataFixture {
   def setUpTest() {
     migrateAll()
     SqlScriptRunner.runScripts(List(
-      "kauniainen_road_links.sql",
       "insert_test_fixture.sql",
       "insert_users.sql",
       "kauniainen_production_speed_limits.sql",
-      "rovaniemi_road_links.sql",
       "rovaniemi_bus_stops.sql"))
   }
 
