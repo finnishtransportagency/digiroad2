@@ -288,6 +288,11 @@ object OracleSpatialAssetDao {
     }
   }
 
+  private def updateAssetMunicipality(id: Long, roadLinkId: Long): Unit = {
+    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
+    sqlu"update asset set municipality_code = $municipalityCode where id = $id".execute
+  }
+
   def updateAsset(assetId: Long, position: Option[Position], modifier: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     updateAssetLastModified(assetId, modifier)
     if (!properties.isEmpty) {
@@ -298,6 +303,7 @@ object OracleSpatialAssetDao {
       case Some(pos) => {
         updateAssetLocation(id = assetId, lon = pos.lon, lat = pos.lat, roadLinkId = pos.roadLinkId, bearing = pos.bearing)
         updateAssetGeometry(assetId, Point(pos.lon, pos.lat))
+        updateAssetMunicipality(assetId, pos.roadLinkId)
       }
     }
     getAssetById(assetId).get
