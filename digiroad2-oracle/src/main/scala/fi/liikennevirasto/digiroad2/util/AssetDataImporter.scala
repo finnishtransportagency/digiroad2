@@ -38,7 +38,8 @@ object AssetDataImporter {
                            lrmPositionId: Long,
                            validFrom: LocalDate = LocalDate.now,
                            validTo: Option[LocalDate] = None,
-                           point: Point)
+                           point: Point,
+                           roadLinkId: Long)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -253,7 +254,7 @@ class AssetDataImporter {
 
       val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
         case Some(a) =>
-          RoadLinkService.getRoadLinkGeometry(a.roadLinkId) match {
+          RoadLinkService.getRoadLinkGeometryByTestId(busStop.roadLinkId) match {
             case Some(geometry) => GeometryUtils.calculateBearing((a.lon, a.lat), geometry.map { point => (point.x, point.y) })
             case None =>
               println(s"No road link found for Asset: $assetId")

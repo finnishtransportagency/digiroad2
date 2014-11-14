@@ -73,7 +73,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvRows must have size 2
   }
 
-  val testasset = AssetWithProperties(1, 1, 1, 2.1, 2.2, 1, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
+  val testasset = AssetWithProperties(1, 1, 1, 2.1, 2.2, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
       created = Modification(None, None), modified = Modification(None, None), floating = false)
   it must "recalculate bearings in validity direction" in {
     AssetValluCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))

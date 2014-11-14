@@ -112,17 +112,6 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinkType(roadLinkId: Long): Option[RoadLinkType] = {
-    Database.forDataSource(dataSource).withDynTransaction {
-       val query = sql"""
-         select prod.functionalroadclass
-           from tielinkki_ctas prod
-           where prod.dr1_id = $roadLinkId
-        """
-      query.as[RoadLinkType].firstOption
-    }
-  }
-
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""

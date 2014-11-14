@@ -21,7 +21,6 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     validityDirection = Some(2),
     lon = 1,
     lat = 1,
-    roadLinkId = 1,
     wgslon = 1,
     wgslat = 1,
     bearing = Some(120),

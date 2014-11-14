@@ -109,7 +109,8 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
       val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      eventbus.publish("asset:saved", (getMunicipalityName(updatedAsset.roadLinkId), updatedAsset))
+      val municipalityName = updatedAsset.municipalityNumber.map(OracleSpatialAssetDao.getMunicipalityNameByCode).get
+      eventbus.publish("asset:saved", (municipalityName, updatedAsset))
       updatedAsset
     }
   }
@@ -133,7 +134,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       optionalAsset match {
         case Some(asset) =>
           if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          val roadLinkType = RoadLinkService.getRoadLinkType(asset.roadLinkId).getOrElse(UnknownRoad)
+          val roadLinkType = asset.roadLinkType
           if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
           else Left(roadLinkType)
         case None => throw new AssetNotFoundException(externalId)
