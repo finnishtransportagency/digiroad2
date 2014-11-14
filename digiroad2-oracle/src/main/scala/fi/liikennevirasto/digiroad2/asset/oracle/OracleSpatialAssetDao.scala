@@ -98,7 +98,7 @@ object OracleSpatialAssetDao {
     val municipalityNumber = optionalRoadLink.map(_._2)
     val roadLinkType = optionalRoadLink.map(_._4).getOrElse(UnknownRoad)
     AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y, roadLinkId = row.roadLinkId,
+        lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = municipalityNumber,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
@@ -122,7 +122,7 @@ object OracleSpatialAssetDao {
     val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
     AssetWithProperties(
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y, roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary hack for possibly missing roadLinkId
+        lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = roadLinkOption.map(_._2),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),

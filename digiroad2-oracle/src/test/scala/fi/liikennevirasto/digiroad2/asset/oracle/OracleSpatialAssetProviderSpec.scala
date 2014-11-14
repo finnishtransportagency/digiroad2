@@ -41,9 +41,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val creatingUser = user.copy(username = AssetCreator)
   val operatorUser = user.copy(configuration = user.configuration.copy(authorizedMunicipalities = Set(1), roles = Set(Role.Operator)))
 
-  implicit def Asset2ListedAsset(asset: AssetWithProperties) = Asset(asset.id, asset.externalId, asset.assetTypeId, asset.lon, asset.lat, asset.roadLinkId,
-    asset.propertyData.flatMap(prop => prop.values.map(value => value.imageId)), asset.bearing, None, asset.readOnly, asset.municipalityNumber, floating = asset.floating)
-
   before {
     userProvider.setCurrentUser(user)
   }
@@ -86,7 +83,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       TestAssetTypeId,
       existingAsset.lon,
       existingAsset.lat,
-      existingAsset.roadLinkId,
+      6928,
       180,
       AssetCreator,
       mandatoryBusStopProperties)
@@ -95,7 +92,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
       verify(eventBus).publish("asset:saved", ("Kauniainen", newAsset))
-      newAsset.roadLinkId shouldBe existingAsset.roadLinkId
       newAsset.externalId should (be >= 300000L)
     } finally {
       deleteCreatedTestAsset(newAsset.id)
@@ -111,7 +107,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       TestAssetTypeId,
       existingAsset.lon,
       existingAsset.lat,
-      existingAsset.roadLinkId,
+      6928,
       180,
       AssetCreator,
       mandatoryBusStopProperties)
@@ -129,7 +125,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       TestAssetTypeId,
       existingAsset.lon,
       existingAsset.lat,
-      existingAsset.roadLinkId,
+      6928,
       180,
       AssetCreator,
       mandatoryBusStopProperties ++ List(SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10")))))
@@ -137,7 +133,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       newAsset.id should (be > 100L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
-      newAsset.roadLinkId shouldBe existingAsset.roadLinkId
       newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, required = false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
     } finally {
       deleteCreatedTestAsset(newAsset.id)
@@ -156,7 +151,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
         TestAssetTypeId,
         existingAsset.lon,
         existingAsset.lat,
-        existingAsset.roadLinkId,
+        6928,
         180,
         assetCreator,
         mandatoryBusStopProperties ++
@@ -178,7 +173,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val existingAsset = provider.getAssetById(TestAssetId).get
     try {
       intercept[IllegalArgumentException] {
-        val asset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, existingAsset.roadLinkId, 180, AssetCreator, Nil)
+        val asset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, 6928, 180, AssetCreator, Nil)
       }
     }
   }
@@ -239,16 +234,16 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val lon2 = lon1 + 137.0
     val lat2 = lat1 + 7.0
     val b2 = Random.nextInt(360)
-    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = asset.roadLinkId, lon = lon2, lat = lat2, bearing = Some(b2))))
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = 6928, lon = lon2, lat = lat2, bearing = Some(b2))))
     val updated = providerWithMockedEventBus.getAssetById(asset.id).get
-    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = asset.roadLinkId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
+    providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = 6928, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
     verify(eventBus).publish("asset:saved", ("Kauniainen", updated))
     Math.abs(updated.lat - lat1) should (be > 3.0)
     Math.abs(updated.lon - lon1) should (be > 20.0)
     updated.bearing.get should be (b2)
   }
 
-  test("update the position of an asset, changing road links", Tag("db")) {
+  test("update the position of an asset", Tag("db")) {
     val assets = provider.getAssets(userProvider.getCurrentUser(),
       validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
     val origAsset = assets(0)
@@ -260,7 +255,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     provider.updateAsset(assetId = origAsset.id, position = Some(Position(roadLinkId = origAsset.roadLinkId, lon = origAsset.lon, lat = origAsset.lat, bearing = origAsset.bearing)))
     Math.abs(bsUpdated.lat - refAsset.lat) should (be < 0.05)
     Math.abs(bsUpdated.lon - refAsset.lon) should (be < 0.05)
-    bsUpdated.roadLinkId should be (refAsset.roadLinkId)
   }
 
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
