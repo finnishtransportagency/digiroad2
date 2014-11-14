@@ -2,7 +2,7 @@
 define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eventbus, testHelpers, assetsTestData) {
   var expect = chai.expect;
   var assetsData = assetsTestData.withValidityPeriods(['current', 'current']);
-  var assetData = _.merge({}, assetsData[0], {propertyData: []});
+  var assetData = _.merge({}, _.omit(assetsData[0], 'roadLinkId'), {propertyData: []});
 
   describe('when loading application with two bus stops', function() {
     var openLayersMap;
