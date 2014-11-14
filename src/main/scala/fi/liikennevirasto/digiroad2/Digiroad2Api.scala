@@ -68,10 +68,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
   }
 
-  private def isReadOnly(user: User)(municipalityNumber: Int): Boolean = {
-    !(user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber))
-  }
-
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }
@@ -84,10 +80,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
     getAssetById(params("assetId").toLong) match {
       case Some(a) => {
-        if (a.municipalityNumber.map(isReadOnly(userProvider.getCurrentUser())).getOrElse(true)) {
-          Unauthorized("Asset " + params("assetId") + " not authorized")
-        } else {
+        val user = userProvider.getCurrentUser()
+        if (user.isOperator() || a.municipalityNumber.map(user.configuration.authorizedMunicipalities.contains).getOrElse(true)) {
           a
+        } else {
+          Unauthorized("Asset " + params("assetId") + " not authorized")
         }
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
