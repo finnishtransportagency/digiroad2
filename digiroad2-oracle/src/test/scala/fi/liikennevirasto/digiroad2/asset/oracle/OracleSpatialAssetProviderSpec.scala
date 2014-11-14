@@ -243,20 +243,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     updated.bearing.get should be (b2)
   }
 
-  test("update the position of an asset", Tag("db")) {
-    val assets = provider.getAssets(userProvider.getCurrentUser(),
-      validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
-    val origAsset = assets(0)
-    val refAsset = assets(1)
-    origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
-    val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
-    provider.updateAsset(assetId = bsMoved.id, position = Some(Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
-    val bsUpdated = provider.getAssetById(bsMoved.id).get
-    provider.updateAsset(assetId = origAsset.id, position = Some(Position(roadLinkId = origAsset.roadLinkId, lon = origAsset.lon, lat = origAsset.lat, bearing = origAsset.bearing)))
-    Math.abs(bsUpdated.lat - refAsset.lat) should (be < 0.05)
-    Math.abs(bsUpdated.lon - refAsset.lon) should (be < 0.05)
-  }
-
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
     val assets = provider.getAssets(user,

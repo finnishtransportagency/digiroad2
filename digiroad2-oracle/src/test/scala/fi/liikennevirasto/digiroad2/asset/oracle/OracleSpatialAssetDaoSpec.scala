@@ -2,10 +2,11 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, AssetRow}
-import fi.liikennevirasto.digiroad2.asset.Modification
+import fi.liikennevirasto.digiroad2.asset.{Position, Modification}
 import scala.slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.Point
+import Database.dynamicSession
 
 class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
@@ -88,6 +89,17 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
       case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point])
       val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
       OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 9999999l, lrmPosition = lrmPosition, point = None)) must equal(true)
+    }
+  }
+
+  test("update the position of an asset to a new road link") {
+    Database.forDataSource(ds).withDynTransaction {
+      val assetId = 300000l
+      val newPosition = Some(Position(lon = 374675.043988335, lat = 6677274.14596169, roadLinkId = 8620946, bearing = None))
+      val asset = OracleSpatialAssetDao.updateAsset(assetId, newPosition, "OracleSpatialAssetDaoSpec", Nil)
+      Math.abs(asset.lon - 374675.043988335) must (be < 0.05)
+      Math.abs(asset.lat - 6677274.14596169) must (be < 0.05)
+      dynamicSession.rollback()
     }
   }
 
