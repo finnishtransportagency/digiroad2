@@ -81,7 +81,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     getAssetById(params("assetId").toLong) match {
       case Some(a) => {
         val user = userProvider.getCurrentUser()
-        if (user.isOperator() || a.municipalityNumber.map(user.configuration.authorizedMunicipalities.contains).getOrElse(true)) {
+        if (user.isOperator() || a.municipalityNumber.map(user.configuration.authorizedMunicipalities.contains).getOrElse(false)) {
           a
         } else {
           Unauthorized("Asset " + params("assetId") + " not authorized")
