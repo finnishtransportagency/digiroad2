@@ -272,10 +272,12 @@ object Queries {
 
   def updateAssetBearing(assetId: Long, bearing: Int) = sqlu"update asset set bearing = $bearing where id = $assetId"
 
-  def insertAsset(assetId: Long, externalId: Long, assetTypeId: Long, bearing: Int, creator: String) =
+  def insertAsset(assetId: Long, externalId: Long,
+                  assetTypeId: Long, bearing: Int,
+                  creator: String, municipalityCode: Int) =
     sqlu"""
-      insert into asset(id, external_id, asset_type_id, bearing, valid_from, created_by)
-      values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator)
+      insert into asset(id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
+      values ($assetId, $externalId, $assetTypeId, $bearing, ${new LocalDate()}, $creator, $municipalityCode)
     """
 
   def insertAssetPosition(assetId: Long, lrmPositionId: Long) =

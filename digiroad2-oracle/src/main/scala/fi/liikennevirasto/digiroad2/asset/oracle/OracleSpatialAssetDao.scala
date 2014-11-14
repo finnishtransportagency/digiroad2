@@ -263,8 +263,9 @@ object OracleSpatialAssetDao {
     val externalId = getNationalBusStopId
     val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
     val testId = RoadLinkService.getTestId(roadLinkId).get
+    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
     insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
-    insertAsset(assetId, externalId, assetTypeId, bearing, creator).execute
+    insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
     insertAssetPosition(assetId, lrmPositionId).execute
     updateAssetGeometry(assetId, Point(lon, lat))
     val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
