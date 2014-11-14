@@ -39,7 +39,8 @@ object AssetDataImporter {
                            validFrom: LocalDate = LocalDate.now,
                            validTo: Option[LocalDate] = None,
                            point: Point,
-                           roadLinkId: Long)
+                           roadLinkId: Long,
+                           municipalityCode: Int)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -241,8 +242,10 @@ class AssetDataImporter {
       val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
 
       sqlu"""
-        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to)
-        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId}, $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)})
+        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code)
+        values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId},
+               $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)},
+               ${busStop.municipalityCode})
       """.execute
 
       sqlu"""

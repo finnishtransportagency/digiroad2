@@ -49,8 +49,7 @@ object DataFixture {
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
-      "kauniainen_production_speed_limits.sql",
-      "rovaniemi_bus_stops.sql"))
+      "kauniainen_production_speed_limits.sql"))
   }
 
   def importSpeedLimitsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
