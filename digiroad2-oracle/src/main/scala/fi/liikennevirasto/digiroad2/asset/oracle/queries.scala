@@ -228,30 +228,6 @@ object Queries {
         left join image i on e.image_id = i.id
     where a.asset_type_id = 10"""
 
-    // FIXME: Temporary solution for getting rid of `road_link` table
-    def singleAsset =
-      """
-      select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id as asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-      a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
-      p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
-      case
-        when e.name_fi is not null then e.name_fi
-        when tp.value_fi is not null then tp.value_fi
-        else null
-      end as display_value,
-      lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
-      a.created_date, a.created_by, a.modified_date, a.modified_by, SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
-      from asset a
-        join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
-        join property p on a.asset_type_id = p.asset_type_id
-          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
-          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join image i on e.image_id = i.id
-      where a.asset_type_id = 10"""
-
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
@@ -270,9 +246,9 @@ object Queries {
   def assetLrmPositionId =
     "select position_id from asset_link where asset_id = ?"
 
-  def assetWithPositionById = singleAsset + " AND a.id = ?"
+  def assetWithPositionById = allAssets + " AND a.id = ?"
 
-  def assetByExternalId = singleAsset + " AND a.external_id = ?"
+  def assetByExternalId = allAssets + " AND a.external_id = ?"
 
   def andByValidityTimeConstraint = "AND (a.valid_from <= ? OR a.valid_from IS NULL) AND (a.valid_to >= ? OR a.valid_to IS NULL)"
 
