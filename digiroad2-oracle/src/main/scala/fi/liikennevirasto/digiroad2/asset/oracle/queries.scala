@@ -53,7 +53,7 @@ object Queries {
                            roadLinkType: RoadLinkType = UnknownRoad)
                            extends IAssetRow
 
-  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
+  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Option[Int], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
                       image: Image, lrmPosition: LRMPosition)
 
@@ -137,13 +137,24 @@ object Queries {
 
   implicit val getListedAssetWithPosition = new GetResult[ListedAssetRow] {
     def apply(r: PositionedResult) = {
-      val (id, externalId, assetTypeId, bearing, validityDirection, validFrom, validTo, pos, lrmId, startMeasure, endMeasure,
-      productionRoadLinkId, roadLinkId, image) =
-        (r.nextLong, r.nextLong, r.nextLong, r.nextIntOption, r.nextInt, r.nextDateOption.map(new LocalDate(_)), r.nextDateOption.map(new LocalDate(_)), r.nextBytesOption, r.nextLong, r.nextInt, r.nextInt,
-          r.nextLongOption(), r.nextLong, new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_))))
+      val id = r.nextLong()
+      val externalId = r.nextLong()
+      val assetTypeId = r.nextLong()
+      val bearing = r.nextIntOption()
+      val validityDirection = r.nextInt()
+      val validFrom = r.nextDateOption().map(new LocalDate(_))
+      val validTo = r.nextDateOption().map(new LocalDate(_))
+      val pos = r.nextBytesOption()
+      val municipalityCode = r.nextIntOption()
+      val lrmId = r.nextLong()
+      val startMeasure = r.nextInt()
+      val endMeasure = r.nextInt()
+      val productionRoadLinkId = r.nextLongOption()
+      val roadLinkId = r.nextLong()
+      val image = new Image(r.nextLongOption(), r.nextTimestampOption().map(new DateTime(_)))
       val point = pos.map(bytesToPoint)
-      (ListedAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
+      ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
+        validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point))
     }
   }
 
@@ -245,7 +256,7 @@ object Queries {
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date
     from asset a
       join asset_link al on a.id = al.asset_id
