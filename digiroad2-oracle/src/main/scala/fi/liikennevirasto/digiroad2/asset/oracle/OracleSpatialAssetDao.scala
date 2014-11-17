@@ -115,7 +115,7 @@ object OracleSpatialAssetDao {
   }
 
   private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): AssetWithProperties = {
-    val row = param._2(0)
+    val row = param._2.head
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
     val roadLinkOption = getOptionalProductionRoadLink(row)
@@ -124,7 +124,7 @@ object OracleSpatialAssetDao {
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = roadLinkOption.map(_._2),
+        bearing = row.bearing, municipalityNumber = Some(row.municipalityCode),
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
