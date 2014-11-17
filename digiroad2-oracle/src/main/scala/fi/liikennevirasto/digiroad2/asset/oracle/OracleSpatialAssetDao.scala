@@ -163,6 +163,10 @@ object OracleSpatialAssetDao {
     }
   }
 
+  private def getAssetMunicipalityCode(optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)], assetRow: ListedAssetRow): Option[Int] = {
+    optionalRoadLink.map(_._2).orElse(assetRow.municipalityCode)
+  }
+
   def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andAssetWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
@@ -184,8 +188,10 @@ object OracleSpatialAssetDao {
     }
     val authorizedAssets = user.configuration.roles.contains(Role.Operator) match {
       case true => assetsWithRoadLinks
-      case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, _)) =>
-        roadLinkOption.exists(roadLink => user.configuration.authorizedMunicipalities.contains(roadLink._2))
+      case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
+        val assetRow = assetRows.head
+        val municipalityCode: Option[Int] = getAssetMunicipalityCode(roadLinkOption, assetRow)
+        municipalityCode.exists(code => user.configuration.authorizedMunicipalities.contains(code))
       }
     }
     authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
