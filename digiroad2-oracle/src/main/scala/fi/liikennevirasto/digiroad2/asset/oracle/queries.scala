@@ -50,7 +50,7 @@ object Queries {
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                           roadLinkType: RoadLinkType = UnknownRoad)
+                           roadLinkType: RoadLinkType = UnknownRoad, municipalityCode: Int)
                            extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Option[Int], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
@@ -79,6 +79,7 @@ object Queries {
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
       val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -112,6 +113,7 @@ object Queries {
       val validFrom = r.nextDateOption.map(new LocalDate(_))
       val validTo = r.nextDateOption.map(new LocalDate(_))
       val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -131,7 +133,7 @@ object Queries {
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       SingleAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
                      validFrom, validTo, property, image, created, modified, wgsPoint,
-                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point))
+                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode)
     }
   }
 
@@ -207,7 +209,7 @@ object Queries {
   def allAssets =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code,
     p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
     case
       when e.name_fi is not null then e.name_fi
