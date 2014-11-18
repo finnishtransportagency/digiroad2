@@ -46,7 +46,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
   }
 
   post("/csv") {
-    if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
@@ -66,7 +66,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
   }
 
   post("/validationCsv") {
-    if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val roadTypeLimitations: Set[RoadLinkType] = Set(

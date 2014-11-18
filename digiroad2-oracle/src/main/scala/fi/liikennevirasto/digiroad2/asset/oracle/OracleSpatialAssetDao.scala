@@ -182,9 +182,11 @@ object OracleSpatialAssetDao {
       val roadLinkOption = getOptionalProductionRoadLink(row)
       (roadLinkOption, assetRows)
     }
-    val authorizedAssets = user.configuration.roles.contains(Role.Operator) match {
-      case true => assetsWithRoadLinks
-      case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
+    val authorizedAssets =
+      if (user.isOperator) {
+        assetsWithRoadLinks
+      } else {
+        assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
         val assetRow = assetRows.head
         user.isAuthorizedFor(assetRow.municipalityCode)
       }

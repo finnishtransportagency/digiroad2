@@ -220,7 +220,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    if (!user.configuration.roles.contains(Role.Operator)) { halt(Unauthorized("User not authorized")) }
+    if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val speedLimitId = params("speedLimitId").toLong
     (parsedBody \ "limit").extractOpt[Int] match {
       case Some(limit) =>
@@ -234,7 +234,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    if (!user.configuration.roles.contains(Role.Operator)) { halt(Unauthorized("User not authorized")) }
+    if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         (parsedBody \ "roadLinkId").extract[Long],
                                         (parsedBody \ "splitMeasure").extract[Double],

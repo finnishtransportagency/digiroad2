@@ -82,7 +82,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   }
 
   post("/newuser") {
-    if (!userProvider.getCurrentUser().configuration.roles.contains("operator")) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi lisätä käyttäjiä"))
     }
     val (username, elyNumber, municipalities, hasWriteAccess) =
