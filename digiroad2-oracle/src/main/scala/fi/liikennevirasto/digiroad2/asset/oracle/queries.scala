@@ -53,7 +53,7 @@ object Queries {
                            roadLinkType: RoadLinkType = UnknownRoad, municipalityCode: Int)
                            extends IAssetRow
 
-  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Option[Int], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
+  case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
                       image: Image, lrmPosition: LRMPosition)
 
@@ -147,7 +147,7 @@ object Queries {
       val validFrom = r.nextDateOption().map(new LocalDate(_))
       val validTo = r.nextDateOption().map(new LocalDate(_))
       val pos = r.nextBytesOption()
-      val municipalityCode = r.nextIntOption()
+      val municipalityCode = r.nextInt()
       val lrmId = r.nextLong()
       val startMeasure = r.nextInt()
       val endMeasure = r.nextInt()

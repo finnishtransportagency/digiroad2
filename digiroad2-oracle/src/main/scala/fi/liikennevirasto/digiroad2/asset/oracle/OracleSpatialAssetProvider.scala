@@ -28,7 +28,8 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)
 
-  private def userCanModifyAsset(asset: AssetWithProperties): Boolean = asset.municipalityNumber.exists(userCanModifyMunicipality)
+  private def userCanModifyAsset(asset: AssetWithProperties): Boolean =
+    userCanModifyMunicipality(asset.municipalityNumber)
 
   private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
     RoadLinkService.getMunicipalityCode(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
@@ -109,7 +110,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
       val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      val municipalityName = updatedAsset.municipalityNumber.map(OracleSpatialAssetDao.getMunicipalityNameByCode).get
+      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
       eventbus.publish("asset:saved", (municipalityName, updatedAsset))
       updatedAsset
     }

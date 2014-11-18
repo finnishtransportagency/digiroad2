@@ -51,7 +51,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
          else
           <ValidTo>{transformToISODate(extractPropertyValueOption(asset, "viimeinen_voimassaolopaiva"))}</ValidTo>}
         <AdministratorCode>{extractPropertyDisplayValue(asset, "tietojen_yllapitaja")}</AdministratorCode>
-        <MunicipalityCode>{asset.municipalityNumber.get}</MunicipalityCode>
+        <MunicipalityCode>{asset.municipalityNumber}</MunicipalityCode>
         <MunicipalityName>{municipalityName}</MunicipalityName>
         <Comments>{if (propertyIsDefined(asset, "lisatiedot")) extractPropertyValue(asset, "lisatiedot") }</Comments>
         <ContactEmails>

@@ -100,7 +100,7 @@ object OracleSpatialAssetDao {
     AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = Some(municipalityCode),
+        bearing = row.bearing, municipalityNumber = municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
@@ -124,7 +124,7 @@ object OracleSpatialAssetDao {
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = Some(row.municipalityCode),
+        bearing = row.bearing, municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
@@ -186,8 +186,7 @@ object OracleSpatialAssetDao {
       case true => assetsWithRoadLinks
       case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
         val assetRow = assetRows.head
-        val municipalityCode: Option[Int] = assetRow.municipalityCode
-        municipalityCode.exists(code => user.configuration.authorizedMunicipalities.contains(code))
+        user.configuration.authorizedMunicipalities.contains(assetRow.municipalityCode)
       }
     }
     authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>

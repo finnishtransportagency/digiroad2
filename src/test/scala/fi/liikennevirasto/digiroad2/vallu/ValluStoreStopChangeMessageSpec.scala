@@ -24,7 +24,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     wgslon = 1,
     wgslat = 1,
     bearing = Some(120),
-    municipalityNumber = Some(235),
+    municipalityNumber = 235,
     created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser")),
     propertyData = List(

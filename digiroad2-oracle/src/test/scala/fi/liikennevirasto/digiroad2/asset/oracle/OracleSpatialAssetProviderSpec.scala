@@ -48,7 +48,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   test("load assets by municipality number", Tag("db")) {
     val assets = provider.getAssets(userProvider.getCurrentUser())
     assets shouldBe 'nonEmpty
-    assets.foreach(asset => asset.municipalityNumber shouldBe Some(MunicipalityKauniainen))
+    assets.foreach(asset => asset.municipalityNumber shouldBe MunicipalityKauniainen)
   }
 
   test("load assets with spatial bounds", Tag("db")) {
@@ -318,7 +318,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val assets = provider.getAssetsByMunicipality(235)
     assets.size should (be > 0)
-    assets.map(_.municipalityNumber.get) should contain only (235)
+    assets.map(_.municipalityNumber) should contain only (235)
   }
 
   test("returns correct assets from test data", Tag("db")) {
