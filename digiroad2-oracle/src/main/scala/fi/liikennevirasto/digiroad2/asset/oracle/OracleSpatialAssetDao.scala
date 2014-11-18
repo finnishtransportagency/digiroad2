@@ -115,7 +115,7 @@ object OracleSpatialAssetDao {
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
     val roadLinkOption = getOptionalProductionRoadLink(row)
-    val floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true)
+    val floating = isFloating(row, roadLinkOption)
     AssetWithProperties(
         id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
@@ -201,26 +201,25 @@ object OracleSpatialAssetDao {
         validityDirection = Some(row.validityDirection),
         municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true))
+        floating = isFloating(row, roadLinkOption))
     }.toSeq
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 5
 
-  def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
+  private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
     pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
   }
 
-  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}, optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): Boolean = {
-    optionalRoadLink.flatMap { case (_, _, pointOnRoadLinkOption, _) =>
-      pointOnRoadLinkOption.map { pointOnRoadLink =>
+  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]; val municipalityCode: Int}, optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): Boolean = {
+    optionalRoadLink.flatMap { case (_, roadLinkMunicipalityCode, pointOnRoadLinkOption, _) =>
+      val optionalCoordinateMismatch: Option[Boolean] = pointOnRoadLinkOption.map { pointOnRoadLink =>
         !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
       }
+      optionalCoordinateMismatch.map { coordinateMismatch =>
+        coordinateMismatch || (asset.municipalityCode != roadLinkMunicipalityCode)
+      }
     }.getOrElse(true)
-  }
-
-  def isFloating(storedPoint: Point, lrmPoint: Point): Boolean = {
-    !coordinatesWithinThreshold(storedPoint, lrmPoint)
   }
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): Option[String] = {

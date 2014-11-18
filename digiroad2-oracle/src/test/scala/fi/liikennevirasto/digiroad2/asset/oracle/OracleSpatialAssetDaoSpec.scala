@@ -58,33 +58,41 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   }
 
   test("asset where lrm position and geometry match should not float") {
-    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point])
+    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
     val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
     val geometry = Some(Point(489607.0, 6787032.0))
-    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry), testRoadLink) must equal(false)
+    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(false)
   }
 
   test("asset where lrm position and geometry don't match should float") {
-    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point])
+    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
     val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
     val geometry = Some(Point(100.0, 100.0))
-    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry), testRoadLink) must equal(true)
+    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(true)
   }
 
   test("asset where lrm position doesn't fall on road link should float") {
-    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point])
+    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
     val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, None, Road)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 100, endMeasure = 100, point = None)
     val geometry = Some(Point(489607.0, 6787032.0))
-    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry), testRoadLink) must equal(true)
+    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(true)
   }
 
   test("asset on non-existing road link should float") {
-    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point])
+    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
-    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 9999999l, lrmPosition = lrmPosition, point = None), None) must equal(true)
+    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 9999999l, lrmPosition = lrmPosition, point = None, municipalityCode = 235), None) must equal(true)
+  }
+
+  test("asset where municipality code does not match road link municipality code should float") {
+    case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
+    val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
+    val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
+    val geometry = Some(Point(489607.0, 6787032.0))
+    OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 999), testRoadLink) must equal(true)
   }
 
   test("update the position of an asset to a new road link") {
