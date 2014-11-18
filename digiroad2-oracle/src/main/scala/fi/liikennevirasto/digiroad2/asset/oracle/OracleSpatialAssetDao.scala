@@ -100,7 +100,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink))
+        created = row.created, modified = row.modified, roadLinkType = roadLinkType, persistedFloating = row.persistedFloating, floating = isFloating(row, optionalRoadLink))
   }
 
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
@@ -125,6 +125,7 @@ object OracleSpatialAssetDao {
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(UnknownRoad),
+        persistedFloating = row.persistedFloating,
         floating = floating)
   }
 
@@ -145,8 +146,16 @@ object OracleSpatialAssetDao {
     }
   }
 
+  private def updateAssetFloatingStatus(asset: AssetWithProperties) = {
+    if (asset.persistedFloating != asset.floating) {
+      sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute()
+    }
+  }
+
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
+    val assetWithProperties: Option[AssetWithProperties] = Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
+    assetWithProperties.map(updateAssetFloatingStatus)
+    assetWithProperties
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {

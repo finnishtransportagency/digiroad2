@@ -45,12 +45,12 @@ object Queries {
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point],
-                      lrmPosition: LRMPosition, municipalityCode: Int) extends IAssetRow
+                      lrmPosition: LRMPosition, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                           roadLinkType: RoadLinkType = UnknownRoad, municipalityCode: Int)
+                           roadLinkType: RoadLinkType = UnknownRoad, municipalityCode: Int, persistedFloating: Boolean)
                            extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
@@ -80,6 +80,7 @@ object Queries {
       val validTo = r.nextDateOption.map(new LocalDate(_))
       val point = r.nextBytesOption.map(bytesToPoint)
       val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -97,9 +98,9 @@ object Queries {
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      (AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
+      AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode))
+        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode, persistedFloating)
     }
   }
 
@@ -114,6 +115,7 @@ object Queries {
       val validTo = r.nextDateOption.map(new LocalDate(_))
       val point = r.nextBytesOption.map(bytesToPoint)
       val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -133,7 +135,7 @@ object Queries {
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       SingleAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
                      validFrom, validTo, property, image, created, modified, wgsPoint,
-                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode)
+                     lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
   }
 
@@ -209,7 +211,7 @@ object Queries {
   def allAssets =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
     p.id as property_id, p.public_id as property_public_id, p.property_type, p.ui_position_index, p.required, e.value as value,
     case
       when e.name_fi is not null then e.name_fi
