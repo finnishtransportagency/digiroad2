@@ -100,7 +100,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row))
+        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink))
   }
 
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
@@ -211,9 +211,8 @@ object OracleSpatialAssetDao {
     pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
   }
 
-  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}): Boolean = {
-    val roadLinkOption = RoadLinkService.getPointOnRoadLink(asset.roadLinkId, asset.lrmPosition.startMeasure)
-    roadLinkOption.flatMap { case (_, pointOnRoadLinkOption) =>
+  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]}, optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): Boolean = {
+    optionalRoadLink.flatMap { case (_, _, pointOnRoadLinkOption, _) =>
       pointOnRoadLinkOption.map { pointOnRoadLink =>
         !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)
       }

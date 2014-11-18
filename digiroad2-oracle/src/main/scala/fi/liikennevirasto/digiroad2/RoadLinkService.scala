@@ -42,20 +42,6 @@ object RoadLinkService {
     }
   }
 
-  def getPointOnRoadLink(id: Long, measure: Double): Option[(Long, Option[Point])] = {
-    Database.forDataSource(dataSource).withDynTransaction {
-      val query = sql"""
-        select dr1_id, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure))
-          from tielinkki_ctas
-          where dr1_id = $id
-        """
-      query.as[(Long, Seq[Point])].firstOption.map {
-        case (roadLinkId, points) ⇒
-          (roadLinkId, points.headOption)
-      }
-    }
-  }
-
   def getByTestId(testId: Long): Option[(Long, Int, RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
