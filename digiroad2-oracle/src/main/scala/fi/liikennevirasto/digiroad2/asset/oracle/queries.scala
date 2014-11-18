@@ -45,7 +45,7 @@ object Queries {
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                       image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point],
-                      lrmPosition: LRMPosition) extends IAssetRow
+                      lrmPosition: LRMPosition, municipalityCode: Int) extends IAssetRow
 
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
@@ -99,7 +99,7 @@ object Queries {
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       (AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, property, image,
-        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point)))
+        created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode))
     }
   }
 
