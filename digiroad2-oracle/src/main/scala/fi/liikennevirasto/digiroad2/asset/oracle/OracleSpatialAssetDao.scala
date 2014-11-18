@@ -163,10 +163,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private def getAssetMunicipalityCode(optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)], assetRow: ListedAssetRow): Option[Int] = {
-    optionalRoadLink.map(_._2).orElse(assetRow.municipalityCode)
-  }
-
   def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     def andAssetWithinBoundingBox = bounds map { b =>
       val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
@@ -190,7 +186,7 @@ object OracleSpatialAssetDao {
       case true => assetsWithRoadLinks
       case false => assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
         val assetRow = assetRows.head
-        val municipalityCode: Option[Int] = getAssetMunicipalityCode(roadLinkOption, assetRow)
+        val municipalityCode: Option[Int] = assetRow.municipalityCode
         municipalityCode.exists(code => user.configuration.authorizedMunicipalities.contains(code))
       }
     }
@@ -206,7 +202,7 @@ object OracleSpatialAssetDao {
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
-        municipalityNumber = roadLinkOption.map(_._2),
+        municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         floating = roadLinkOption.flatMap(_._3.map(isFloating(point, _))).getOrElse(true))
     }.toSeq
