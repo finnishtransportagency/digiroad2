@@ -23,7 +23,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
     val user = userProvider.getCurrentUser()
-    user.configuration.roles.contains(Role.Operator) || user.configuration.authorizedMunicipalities.contains(municipalityNumber)
+    user.isOperator() || user.isAuthorizedFor(municipalityNumber)
   }
 
   private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)

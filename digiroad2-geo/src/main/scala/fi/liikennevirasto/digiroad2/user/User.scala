@@ -16,6 +16,9 @@ case class User(id: Long, username: String, configuration: Configuration) {
   def isOperator(): Boolean = {
     configuration.roles(Role.Operator)
   }
+
+  def isAuthorizedFor(municipalityCode: Int): Boolean =
+    configuration.authorizedMunicipalities.contains(municipalityCode)
 }
 
 object Role {
