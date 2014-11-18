@@ -47,7 +47,7 @@ object OracleSpatialAssetDao {
   }
 
   def getAssetsByMunicipality(municipality: Int) = {
-    val q = QueryCollector(allAssets)
+    val q = QueryCollector(allAssets + " and a.municipality_code = " + municipality)
     val assets = collectedQuery[AssetRow](q).groupBy(_.id)
 
     val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], RoadLinkType)], Seq[AssetRow])] = assets.mapValues { assetRows =>
@@ -56,11 +56,7 @@ object OracleSpatialAssetDao {
       (roadLinkOption, assetRows)
     }
 
-    val assetsForMunicipality = assetsWithRoadLinks.filter { case (_, (_, assetRows)) =>
-      assetRows.head.municipalityCode == municipality
-    }
-
-    assetsForMunicipality.map { case (assetId, (roadLinkOption, assetRows)) =>
+    assetsWithRoadLinks.map { case (assetId, (roadLinkOption, assetRows)) =>
       assetRowToAssetWithProperties(assetId, assetRows.toList, roadLinkOption)
     }
   }
