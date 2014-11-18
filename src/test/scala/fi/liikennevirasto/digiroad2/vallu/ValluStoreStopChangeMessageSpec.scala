@@ -31,7 +31,6 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
         Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa")))),
         Property(id = 1, publicId = "pysakin_tyyppi", propertyType = "text", values = List())
     ),
-    persistedFloating = false,
     floating = false
   )
 

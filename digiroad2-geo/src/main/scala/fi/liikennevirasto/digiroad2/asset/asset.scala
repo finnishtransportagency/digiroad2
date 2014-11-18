@@ -31,7 +31,6 @@ case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lo
                  municipalityNumber: Int,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
                  wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: RoadLinkType = UnknownRoad,
-                 persistedFloating: Boolean,
                  floating: Boolean) {
   def getPropertyValue(propertyName: String): Option[String] = {
     propertyData.find(_.publicId.equals(propertyName))
