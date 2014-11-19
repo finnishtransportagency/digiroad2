@@ -51,7 +51,9 @@
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
 
-      return $('<div class="expanded-bus-stop" />').addClass(groupIndex === 0 && 'root')
+      return $('<div class="expanded-bus-stop" />')
+        .addClass(groupIndex === 0 && 'root')
+        .addClass(data.floating ? 'floating' : '')
         .append($('<div class="images field" />').html(busStopImages))
         .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
         .append($('<div class="bus-stop-name field"/>').text(name))
@@ -116,6 +118,7 @@
       var filteredGroup = filterByValidityPeriod(data.group.assetGroup);
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var defaultMarker = $('<div class="bus-basic-marker" />')
+        .addClass(data.floating ? 'floating' : '')
         .append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)))
         .addClass(groupIndex === 0 && 'root');
       $(box.div).html(defaultMarker);
