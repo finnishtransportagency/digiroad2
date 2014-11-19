@@ -36,7 +36,13 @@ object BusStopTestData {
                     Some(LocalDate.now().minusYears(1)),
                     Point(374780.259160265,6677546.84962279),
                     5544,
-                    235) // in the past
+                    235), // in the past
+      SimpleBusStop(1, Some(300002), Some(6), Seq(2, 3, 4),
+                    38, LocalDate.now.minusYears(1),
+                    Some(LocalDate.now().plusYears(3)),
+                    Point(374360, 6677347),
+                    5544,
+                    235) // floating
     )
   }
 }

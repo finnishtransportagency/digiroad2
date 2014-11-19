@@ -245,14 +245,11 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
     userProvider.setCurrentUser(unauthorizedUser)
-    val assets = provider.getAssets(user,
-      validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
-    val origAsset = assets(0)
-    val refAsset = assets(1)
-    origAsset.roadLinkId shouldNot be (refAsset.roadLinkId)
-    val bsMoved = origAsset.copy(roadLinkId = refAsset.roadLinkId, lon = refAsset.lon, lat = refAsset.lat)
+    val origAsset = provider.getAssetById(300000).get
+    val refAsset = provider.getAssetById(300004).get
+    val bsMoved = origAsset.copy(lon = refAsset.lon, lat = refAsset.lat)
     intercept[IllegalArgumentException] {
-      provider.updateAsset(assetId = bsMoved.id, position = Some(Position(roadLinkId = bsMoved.roadLinkId, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
+      provider.updateAsset(assetId = bsMoved.id, position = Some(Position(roadLinkId = 2499861l, lon = bsMoved.lon, lat = bsMoved.lat, bearing = bsMoved.bearing)))
     }
   }
 
