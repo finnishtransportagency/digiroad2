@@ -53,6 +53,29 @@
     }
   }
 
+  .form-notification {
+    @form-notification-border: 2px;
+    padding: (@line-height-modifier * 2) - @form-notification-border;
+    border: @form-notification-border solid @warning;
+
+    p {
+      position: relative;
+      margin: 0;
+      padding-left: 30px;
+      color: @gray-lightest;
+
+      &:before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-family: @font-family-icons;
+        font-size: @font-icon-size-base;
+        color: @warning;
+        content: '\e805';
+      }      
+    }
+  }
+
   .form {
     width: 360px;
 
