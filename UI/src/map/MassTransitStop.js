@@ -4,15 +4,29 @@
     var cachedDirectionArrow = null;
     var cachedMassTransitMarker = null;
 
+    var defaultDirectionArrowGraphics = {
+      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
+      graphicWidth: 30,
+      graphicHeight: 16,
+      graphicXOffset: -15,
+      graphicYOffset: -8
+    };
+
+    var floatingDirectionArrowGraphics = {
+      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg',
+      graphicWidth: 34,
+      graphicHeight: 20,
+      graphicXOffset: -17,
+      graphicYOffset: -10
+    };
+
     var createDirectionArrow = function() {
-      var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+      var directionArrowGraphics = _.clone(data.floating ? floatingDirectionArrowGraphics : defaultDirectionArrowGraphics);
+      directionArrowGraphics.rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
       return new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(data.group ? data.group.lon : data.lon, data.group ? data.group.lat : data.lat),
         null,
-        {
-          externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg',
-          graphicHeight: 16, graphicWidth: 30, graphicXOffset: -15, graphicYOffset: -8, rotation: rotation
-        }
+        directionArrowGraphics
       );
     };
 
