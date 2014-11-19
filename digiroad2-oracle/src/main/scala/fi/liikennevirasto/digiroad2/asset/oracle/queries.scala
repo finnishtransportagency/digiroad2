@@ -55,7 +55,7 @@ object Queries {
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
-                      image: Image, lrmPosition: LRMPosition)
+                      image: Image, lrmPosition: LRMPosition, persistedFloating: Boolean)
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
@@ -150,6 +150,7 @@ object Queries {
       val validTo = r.nextDateOption().map(new LocalDate(_))
       val pos = r.nextBytesOption()
       val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
       val lrmId = r.nextLong()
       val startMeasure = r.nextInt()
       val endMeasure = r.nextInt()
@@ -158,7 +159,7 @@ object Queries {
       val image = new Image(r.nextLongOption(), r.nextTimestampOption().map(new DateTime(_)))
       val point = pos.map(bytesToPoint)
       ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point))
+        validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating)
     }
   }
 
@@ -235,7 +236,7 @@ object Queries {
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
-    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code,
+    a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
     lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date
     from asset a
       join asset_link al on a.id = al.asset_id

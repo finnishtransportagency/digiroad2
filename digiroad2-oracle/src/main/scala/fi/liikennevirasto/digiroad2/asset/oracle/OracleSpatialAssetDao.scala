@@ -147,7 +147,7 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private def updateAssetFloatingStatus(assetWithFloating: (AssetWithProperties, Boolean)) = {
+  private def updateAssetFloatingStatus(assetWithFloating: ({val id: Long; val floating: Boolean;}, Boolean)) = {
     val (asset, persistedFloating) = assetWithFloating
     if (persistedFloating != asset.floating) {
       sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute()
@@ -192,7 +192,7 @@ object OracleSpatialAssetDao {
       (roadLinkOption, assetRows)
     }
     val authorizedAssets =
-      if (user.isOperator) {
+      if (user.isOperator()) {
         assetsWithRoadLinks
       } else {
         assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
@@ -200,10 +200,10 @@ object OracleSpatialAssetDao {
         user.isAuthorizedFor(assetRow.municipalityCode)
       }
     }
-    authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
+    val assets = authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
       val row = assetRows.head
       val point = row.point.get
-      Asset(id = row.id,
+      (Asset(id = row.id,
         externalId = row.externalId,
         assetTypeId = row.assetTypeId,
         lon = point.x,
@@ -214,8 +214,10 @@ object OracleSpatialAssetDao {
         validityDirection = Some(row.validityDirection),
         municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row, roadLinkOption))
-    }.toSeq
+        floating = isFloating(row, roadLinkOption)), row.persistedFloating)
+    }
+    assets.foreach(updateAssetFloatingStatus)
+    assets.map(_._1).toSeq
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 5
