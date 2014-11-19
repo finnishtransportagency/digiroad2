@@ -56,9 +56,11 @@ object OracleSpatialAssetDao {
       (roadLinkOption, assetRows)
     }
 
-    assetsWithRoadLinks.map { case (assetId, (roadLinkOption, assetRows)) =>
+    val assetsWithProperties = assetsWithRoadLinks.map { case (assetId, (roadLinkOption, assetRows)) =>
       assetRowToAssetWithProperties(assetId, assetRows.toList, roadLinkOption)
     }
+    assetsWithProperties.foreach(updateAssetFloatingStatus)
+    assetsWithProperties.map(_._1)
   }
 
   private[oracle] def getImageId(image: Image) = {
@@ -87,20 +89,20 @@ object OracleSpatialAssetDao {
     else None
   }
 
-  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): AssetWithProperties = {
+  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]):  (AssetWithProperties, Boolean) = {
     val row = assetRows.head
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
     val municipalityCode = row.municipalityCode
     val roadLinkType = optionalRoadLink.map(_._4).getOrElse(UnknownRoad)
-    AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+    (AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink))
+        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
   }
 
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
