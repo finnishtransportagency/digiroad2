@@ -1,7 +1,14 @@
 (function(selectedAssetModel) {
   selectedAssetModel.initialize = function(backend) {
-    var usedKeysFromFetchedAsset = ['assetTypeId', 'bearing', 'lat', 'lon', 'roadLinkId', 'externalId',
-      'validityDirection'];
+    var usedKeysFromFetchedAsset = [
+      'assetTypeId',
+      'bearing',
+      'lat',
+      'lon',
+      'roadLinkId',
+      'externalId',
+      'validityDirection',
+      'floating'];
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
