@@ -230,10 +230,11 @@ object OracleSpatialAssetDao {
            where asset_type_id = 10 and floating = '1'
          """.as[(Long, Int)].list()
     } else {
-      sql"""
+      val sql = s"""
            select external_id, municipality_code from asset
            where asset_type_id = 10 and floating = '1' and municipality_code in ($municipalitiesOfUser)
-         """.as[(Long, Int)].list()
+         """
+      Q.queryNA[(Long, Int)](sql).list()
     }
 
     floatingAssets

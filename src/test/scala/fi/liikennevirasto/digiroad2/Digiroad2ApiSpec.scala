@@ -47,6 +47,18 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
+  test("get floating assets") {
+    getWithUserAuth("/floatingAssets") {
+      status should equal(200)
+      parse(body).extract[Map[String, Seq[Long]]].size should be(1)
+    }
+
+    getWithOperatorAuth("/floatingAssets") {
+      status should equal(200)
+      parse(body).extract[Map[String, Seq[Long]]].size should be(1)
+    }
+  }
+
   test("get assets with bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084") {
       status should equal(200)

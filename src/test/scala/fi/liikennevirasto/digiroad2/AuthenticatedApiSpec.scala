@@ -9,6 +9,8 @@ trait AuthenticatedApiSpec extends FunSuite with ScalatraSuite {
     get(uri, headers = authHeader)(f)
   }
 
+  def getWithOperatorAuth[A](uri: String)(f: => A): A = getWithUserAuth(uri, "test2")(f)
+
   def postJsonWithUserAuth[A](uri: String, body: Array[Byte], headers: Map[String, String] = Map(), username: String = "test")(f: => A): A = {
     post(uri, body, headers = authenticateAndGetHeader(username) + ("Content-type" -> "application/json") ++ headers)(f)
   }
