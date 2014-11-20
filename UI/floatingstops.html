@@ -17,12 +17,19 @@
     </div>
     <script type="application/javascript">
         var floatingStopsTableForMunicipality = function(municipalityName, externalIds) {
+            var url = window.location.href.split('/');
+            var host = url[0] + "//" + url[2];
+
             var tableHeaderRow = function(municipalityName) {
                 return $('<tr/>').append($('<th/>').html(municipalityName));
             };
+            var assetLink = function(externalId) {
+                var link =  host + '/index.html#/asset/' + externalId;
+                return $('<a/>').attr('href', link).html(link);
+            };
             var tableContentRows = function(externalIds) {
                 return _.map(externalIds, function(id) {
-                    return $('<tr/>').append($('<td/>').html(id));
+                    return $('<tr/>').append($('<td/>').append(assetLink(id)));
                 });
             };
             return $('<table/>').append(tableHeaderRow(municipalityName)).append(tableContentRows(externalIds));
