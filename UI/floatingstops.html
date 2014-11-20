@@ -3,14 +3,39 @@
 <head>
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+    <script type="text/javascript" src="bower_components/lodash/dist/lodash.min.js"></script>
+    <script type="text/javascript" src="src/utils/backend-utils.js"></script>
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 kelluvat pysäkit</title>
 </head>
-<body>
+<body onload="fetchFloatingStops()">
     <div class="page">
         <div class="content-box form-box">
             <header>Kelluvat pysäkit</header>
+            <div class="floatingStops"></div>
         </div>
     </div>
+    <script type="application/javascript">
+        var floatingStopsTableForMunicipality = function(municipalityName, externalIds) {
+            var tableHeaderRow = function(municipalityName) {
+                return $('<tr/>').append($('<th/>').html(municipalityName));
+            };
+            var tableContentRows = function(externalIds) {
+                return _.map(externalIds, function(id) {
+                    return $('<tr/>').append($('<td/>').html(id));
+                });
+            };
+            return $('<table/>').append(tableHeaderRow(municipalityName)).append(tableContentRows(externalIds));
+        };
+
+        var fetchFloatingStops = function() {
+            var backend = new Backend();
+            backend.getFloatingAssetsWithCallback(function(assets) {
+                _.map(assets, function(externalIds, municipalityName) {
+                    $('.floatingStops').append(floatingStopsTableForMunicipality(municipalityName, externalIds));
+                });
+            });
+        };
+    </script>
 </body>
 </html>

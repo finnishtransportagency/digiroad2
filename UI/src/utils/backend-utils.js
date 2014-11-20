@@ -96,6 +96,10 @@
       $.getJSON('api/assetPropertyNames/fi', callback);
     };
 
+    this.getFloatingAssetsWithCallback = function(callback) {
+      $.getJSON('api/floatingAssets', callback);
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
