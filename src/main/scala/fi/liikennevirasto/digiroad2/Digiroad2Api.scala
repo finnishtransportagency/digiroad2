@@ -68,6 +68,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
   }
 
+  get("/floatingAssets") {
+    val user = userProvider.getCurrentUser
+    assetProvider.getFloatingAssetsByUser(user)
+  }
+
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }

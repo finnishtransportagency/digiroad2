@@ -220,6 +220,28 @@ object OracleSpatialAssetDao {
     assets.map(_._1).toSeq
   }
 
+  def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
+    val municipalityNames = sql""" select id, name_fi from municipality""".as[(Int, String)].toMap
+    val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
+
+    val floatingAssets: List[(Long, Int)] = if (user.isOperator()) {
+      sql"""
+           select external_id, municipality_code from asset
+           where asset_type_id = 10 and floating = '1'
+         """.as[(Long, Int)].list()
+    } else {
+      sql"""
+           select external_id, municipality_code from asset
+           where asset_type_id = 10 and floating = '1' and municipality_code in ($municipalitiesOfUser)
+         """.as[(Long, Int)].list()
+    }
+
+    floatingAssets
+      .map { case (extId, code) => (extId, municipalityNames(code)) }
+      .groupBy(_._2)
+      .mapValues(_.map(_._1))
+  }
+
   private val FLOAT_THRESHOLD_IN_METERS = 5
 
   private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
