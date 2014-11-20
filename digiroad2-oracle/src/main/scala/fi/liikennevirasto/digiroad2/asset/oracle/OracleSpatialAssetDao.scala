@@ -297,7 +297,7 @@ object OracleSpatialAssetDao {
     val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
     val externalId = getNationalBusStopId
     val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
-    val testId = RoadLinkService.getTestId(roadLinkId).get
+    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId).get
     insertLRMPosition(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
@@ -387,7 +387,7 @@ object OracleSpatialAssetDao {
     val point = Point(lon, lat)
     val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, point)
     val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
-    val testId = RoadLinkService.getTestId(roadLinkId).get
+    val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
     updateLRMeasure(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     bearing match {
       case Some(b) => updateAssetBearing(id, b).execute()
