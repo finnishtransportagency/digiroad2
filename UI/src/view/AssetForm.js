@@ -364,7 +364,7 @@
         return [{
           propertyType: 'notification',
           enabled: selectedAssetModel.get('floating'),
-          text: 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti'
+          text: 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.'
         }];
       };
 
