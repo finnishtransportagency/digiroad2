@@ -157,6 +157,14 @@ Joukkoliikenteen pys&auml;kit n&auml;kyv&auml;t vain tarpeeksi tarkalla mittakaa
 
 _Joukkoliikenteen pys&auml;kkien valinta._
 
+####Kelluvat pys&auml;kit####
+
+Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla on muuttunut niin paljon, ettei j&auml;rjestelm&auml; pysty en&auml;&auml; p&auml;&auml;ttelem&auml;&auml;n sen sijaintia geometrialla. Kelluvat pys&auml;kit on korostettu karttan&auml;kym&auml;ss&auml; alla olevan kuvan tavoin, ja niiden ominaisuustieton&auml;kym&auml;ss&auml; on huomautus, että pys&auml;kki tulisi siirt&auml;&auml; tielinkille, jotta kelluvuus poistuu (kts. [Pys&auml;kin siirt&auml;minen](#5.1.2_Pys&auml;kin_siirt&auml;minen)). 
+
+![Kelluva pys&auml;kki](k29.JPG)
+
+_Kelluvat pys&auml;kit on visualisoitu eri tavoin._
+
 3.3.1 Joukkoliikenteen pys&auml;kkien haku
 -------------------------------------
 
