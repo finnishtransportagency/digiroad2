@@ -62,26 +62,15 @@
 
     eventbus.on('layer:selected', function(layer) {
       var assetLayer = layers.asset;
+      var speedLimitLayer = layers.speedLimit;
       if (layer === 'speedLimit') {
-        showSpeedLimitLayer();
+        speedLimitLayer.show(map);
         assetLayer.hide();
       } else if (layer === 'asset') {
         assetLayer.show();
-        hideSpeedLimitLayer();
+        speedLimitLayer.hide(map);
       }
     }, this);
-
-    var showSpeedLimitLayer = function() {
-      var speedLimitLayer = layers.speedLimit;
-      map.addLayer(speedLimitLayer.vectorLayer);
-      speedLimitLayer.vectorLayer.setVisibility(true);
-      speedLimitLayer.update(map.getZoom(), map.getExtent());
-    };
-
-    var hideSpeedLimitLayer = function() {
-      layers.speedLimit.reset();
-      map.removeLayer(layers.speedLimit.vectorLayer);
-    };
 
     map.events.register('moveend', this, function() {
       applicationModel.moveMap(map.getZoom(), map.getExtent());
@@ -98,7 +87,8 @@
     addCenterMarkerLayerToMap(map);
 
     if (applicationModel.getSelectedLayer() === 'speedLimit') {
-      showSpeedLimitLayer();
+      var speedLimitLayer = layers.speedLimit;
+      speedLimitLayer.show();
     }
 
     setCursor(applicationModel.getSelectedTool());

@@ -449,9 +449,21 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.styleMap = browseStyleMap;
   };
 
+  var show = function(map) {
+    map.addLayer(vectorLayer);
+    vectorLayer.setVisibility(true);
+    update(map.getZoom(), map.getExtent());
+  };
+
+  var hide = function(map) {
+    reset();
+    map.removeLayer(vectorLayer);
+  };
+
   return {
     update: update,
     vectorLayer: vectorLayer,
-    reset: reset
+    show: show,
+    hide: hide
   };
 };
