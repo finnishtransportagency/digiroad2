@@ -11,6 +11,9 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
+      var totalWeightLimitBox = new TotalWeightLimitBox();
+      $('.action-panels').append(totalWeightLimitBox.element);
+
       backend.getUserRoles();
 
       // FIXME: Message now appended to top bar, but should this code live somewhere else?

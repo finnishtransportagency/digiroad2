@@ -65,6 +65,11 @@
     };
   };
 
+  ActionPanelBoxes.selectToolIcon = selectToolIcon;
+  ActionPanelBoxes.cutToolIcon = cutToolIcon;
+  ActionPanelBoxes.Tool = Tool;
+  ActionPanelBoxes.ToolSelection = ToolSelection;
+
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var collapsedTemplate = [
       '<div class="panel speed-limits">',

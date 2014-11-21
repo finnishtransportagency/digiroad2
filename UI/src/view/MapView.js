@@ -65,7 +65,7 @@
       if (layer === 'speedLimit') {
         showSpeedLimitLayer();
         assetLayer.hide();
-      } else {
+      } else if (layer === 'asset') {
         assetLayer.show();
         hideSpeedLimitLayer();
       }
