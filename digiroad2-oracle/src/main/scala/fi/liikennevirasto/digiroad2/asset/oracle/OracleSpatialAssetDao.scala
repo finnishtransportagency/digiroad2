@@ -242,7 +242,7 @@ object OracleSpatialAssetDao {
       .mapValues(_.map(_._1))
   }
 
-  private val FLOAT_THRESHOLD_IN_METERS = 5
+  private val FLOAT_THRESHOLD_IN_METERS = 3
 
   private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
     pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
