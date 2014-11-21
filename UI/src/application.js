@@ -135,7 +135,11 @@ var RoadCollection = function(backend) {
         selectedSpeedLimit: models.selectedSpeedLimit,
         roadCollection: roadCollection,
         geometryUtils: geometryUtils
-      })
+      }),
+      totalWeightLimit: {
+        show: function() {},
+        hide: function() {}
+      }
     };
 
     var mapPluginsContainer = $('#map-plugins');

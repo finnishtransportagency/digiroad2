@@ -60,16 +60,12 @@
       drawCenterMarker(position);
     }, this);
 
-    eventbus.on('layer:selected', function(layer) {
-      var assetLayer = layers.asset;
-      var speedLimitLayer = layers.speedLimit;
-      if (layer === 'speedLimit') {
-        speedLimitLayer.show(map);
-        assetLayer.hide();
-      } else if (layer === 'asset') {
-        assetLayer.show();
-        speedLimitLayer.hide(map);
-      }
+    eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
+      var layerToBeHidden = layers[previouslySelectedLayer];
+      var layerToBeShown = layers[layer];
+
+      layerToBeShown.show(map);
+      layerToBeHidden.hide(map);
     }, this);
 
     map.events.register('moveend', this, function() {
