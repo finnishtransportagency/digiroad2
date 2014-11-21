@@ -227,7 +227,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       // FIXME: Speed limits used as mock data
       linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
         .filter { speedLimitLink =>
-          speedLimitLink.limit > 50
+          speedLimitLink.limit > 50 && speedLimitLink.sideCode == 1
         }
         .map { speedLimitLink =>
           val limit = speedLimitLink.limit

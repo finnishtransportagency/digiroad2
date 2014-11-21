@@ -136,10 +136,14 @@ var RoadCollection = function(backend) {
         roadCollection: roadCollection,
         geometryUtils: geometryUtils
       }),
-      totalWeightLimit: {
-        show: function() {},
-        hide: function() {}
-      }
+      totalWeightLimit: new TotalWeightLimitLayer({
+        map: map,
+        application: applicationModel,
+        collection: models.totalWeightLimitsCollection,
+        selectedTotalWeightLimit: {isDirty: function() {}},
+        roadCollection: roadCollection,
+        geometryUtils: geometryUtils
+      })
     };
 
     var mapPluginsContainer = $('#map-plugins');
@@ -169,9 +173,11 @@ var RoadCollection = function(backend) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    var totalWeightLimitsCollection = new TotalWeightLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var models = {
       speedLimitsCollection: speedLimitsCollection,
+      totalWeightLimitsCollection: totalWeightLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit
     };
     bindEvents();
