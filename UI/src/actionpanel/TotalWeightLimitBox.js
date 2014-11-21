@@ -103,7 +103,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group"/>')
+    this.element = $('<div class="panel-group total-weight-limits"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };

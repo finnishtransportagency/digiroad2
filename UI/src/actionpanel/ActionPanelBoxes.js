@@ -171,7 +171,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group"/>')
+    this.element = $('<div class="panel-group speed-limits"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
@@ -416,7 +416,7 @@
 
     toggleRoadType(applicationModel.isRoadTypeShown());
 
-    this.element = $('<div class="panel-group"/>')
+    this.element = $('<div class="panel-group mass-transit-stops"/>')
       .append(elements.collapsed)
       .append(elements.expanded)
       .append(elements.editMode);

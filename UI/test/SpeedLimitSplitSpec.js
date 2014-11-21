@@ -40,7 +40,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and selecting cut tool', function() {
       before(function () {
-        $('.action.cut').click();
+        $('.speed-limits .action.cut').click();
       });
 
       describe('and cutting a speed limit', function() {
