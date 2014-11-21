@@ -221,24 +221,23 @@ object OracleSpatialAssetDao {
   }
 
   def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
-    val municipalityNames = sql""" select id, name_fi from municipality""".as[(Int, String)].toMap
     val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
+    val allFloatingAssetsQuery =  s"""
+      select a.external_id, m.name_fi
+      from asset a
+        join municipality m on a.municipality_code = m.id
+      where asset_type_id = 10 and floating = '1'
+    """
 
-    val floatingAssets: List[(Long, Int)] = if (user.isOperator()) {
-      sql"""
-           select external_id, municipality_code from asset
-           where asset_type_id = 10 and floating = '1'
-         """.as[(Long, Int)].list()
+    val sql = if (user.isOperator()) {
+      allFloatingAssetsQuery
     } else {
-      val sql = s"""
-           select external_id, municipality_code from asset
-           where asset_type_id = 10 and floating = '1' and municipality_code in ($municipalitiesOfUser)
-         """
-      Q.queryNA[(Long, Int)](sql).list()
+      allFloatingAssetsQuery + s" and municipality_code in ($municipalitiesOfUser)"
     }
 
+    val floatingAssets = Q.queryNA[(Long, String)](sql).list()
+
     floatingAssets
-      .map { case (extId, code) => (extId, municipalityNames(code)) }
       .groupBy(_._2)
       .mapValues(_.map(_._1))
   }
