@@ -218,6 +218,26 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/totalweightlimits") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      // FIXME: Speed limits used as mock data
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
+        .filter { speedLimitLink =>
+          speedLimitLink.limit > 50
+        }
+        .map { speedLimitLink =>
+          val limit = speedLimitLink.limit
+          speedLimitLink.copy(limit = speedLimitLink.limit * 400)
+        }
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/speedlimits/:segmentId") {
     val segmentId = params("segmentId")
     linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
