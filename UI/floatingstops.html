@@ -18,13 +18,14 @@
     <script type="application/javascript">
         var floatingStopsTableForMunicipality = function(municipalityName, externalIds) {
             var url = window.location.href.split('/');
-            var host = url[0] + "//" + url[2];
+            var urlParts = _.initial(_.filter(url, function(urlPart) { return !_.isEmpty(urlPart); }));
+            var context = _.head(urlParts) + '//' + _.tail(urlParts).join('/');
 
             var tableHeaderRow = function(municipalityName) {
                 return $('<tr/>').append($('<th/>').html(municipalityName));
             };
             var assetLink = function(externalId) {
-                var link =  host + '/index.html#/asset/' + externalId;
+                var link =  context + '/#/asset/' + externalId;
                 return $('<a/>').attr('href', link).html(link);
             };
             var tableContentRows = function(externalIds) {
