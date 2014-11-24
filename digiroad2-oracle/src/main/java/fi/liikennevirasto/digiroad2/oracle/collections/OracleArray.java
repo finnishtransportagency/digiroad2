@@ -51,4 +51,38 @@ public class OracleArray {
             statement.close();
         }
     }
+
+    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchTotalWeightLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
+      OracleConnection oracleConnection = (OracleConnection) connection;
+      ARRAY oracleArray = oracleConnection.createARRAY("ROAD_LINK_VARRAY", ids.toArray());
+      String sql =
+        "select segm_id, tielinkki_id, puoli, arvo, alkum, loppum" +
+        "  from segments" +
+        "  where tyyppi = 22" +
+        "    and tielinkki_id in (SELECT COLUMN_VALUE FROM TABLE(?))";
+
+      PreparedStatement statement = oracleConnection.prepareStatement(sql);
+      try {
+          OraclePreparedStatement oraclePreparedStatement = (OraclePreparedStatement) statement;
+          oraclePreparedStatement.setArray(1, oracleArray);
+          ResultSet resultSet = oraclePreparedStatement.executeQuery();
+          try {
+              List<Tuple6<Long, Long, Int, Int, Double, Double>> totalWeightLimits = new ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>>();
+              while (resultSet.next()) {
+                  long id = resultSet.getLong(1);
+                  long roadLinkId = resultSet.getLong(2);
+                  int sideCode = resultSet.getInt(3);
+                  int limitValue = resultSet.getInt(4);
+                  double startMeasure = resultSet.getDouble(5);
+                  double endMeasure = resultSet.getDouble(6);
+                  totalWeightLimits.add(new Tuple6(id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure));
+              }
+              return totalWeightLimits;
+          } finally {
+              resultSet.close();
+          }
+      } finally {
+          statement.close();
+      }
+  }
 }

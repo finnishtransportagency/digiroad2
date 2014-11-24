@@ -224,15 +224,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      // FIXME: Speed limits used as mock data
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
-        .filter { speedLimitLink =>
-          speedLimitLink.limit > 50 && speedLimitLink.sideCode == 1
-        }
-        .map { speedLimitLink =>
-          val limit = speedLimitLink.limit
-          speedLimitLink.copy(limit = speedLimitLink.limit * 400)
-        }
+      TotalWeightLimitService.getByBoundingBox(boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
