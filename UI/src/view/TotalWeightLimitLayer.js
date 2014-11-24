@@ -138,14 +138,6 @@ window.TotalWeightLimitLayer = function(params) {
     });
   };
 
-  var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
-  var overlayStyleRules = [
-    overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
-    overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-    overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
-    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
-  ];
-
   var validityDirectionStyleRules = [
     createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
     createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
@@ -154,15 +146,14 @@ window.TotalWeightLimitLayer = function(params) {
   ];
 
   var totalWeightLimitFeatureSizeLookup = {
-    9: { strokeWidth: 3, pointRadius: 0 },
-    10: { strokeWidth: 5, pointRadius: 13 },
-    11: { strokeWidth: 9, pointRadius: 16 },
-    12: { strokeWidth: 16, pointRadius: 20 }
+    9: { strokeWidth: 3 },
+    10: { strokeWidth: 5 },
+    11: { strokeWidth: 9 },
+    12: { strokeWidth: 16 }
   };
 
   var typeSpecificStyleLookup = {
-    overlay: { strokeOpacity: 1.0 },
-    other: { strokeOpacity: 0.7 },
+    line: { strokeOpacity: 0.7 },
     cutter: { externalGraphic: 'images/total-weight-limits/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
@@ -170,16 +161,13 @@ window.TotalWeightLimitLayer = function(params) {
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
-  browseStyle.addRules(overlayStyleRules);
   browseStyle.addRules(validityDirectionStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.15,
-    graphicOpacity: 0.3
+    strokeOpacity: 0.15
   }));
   var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.7,
-    graphicOpacity: 1.0
+    strokeOpacity: 0.7
   }));
   var selectionStyle = new OpenLayers.StyleMap({
     default: selectionDefaultStyle,
@@ -187,7 +175,6 @@ window.TotalWeightLimitLayer = function(params) {
   });
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
-  selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('totalWeightLimit', { styleMap: browseStyleMap });
@@ -346,7 +333,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var drawTotalWeightLimits = function(totalWeightLimits) {
-    var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
+    var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) { return _.merge({}, limit, { type: 'line' }); });
     vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithType));
 
     if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {
