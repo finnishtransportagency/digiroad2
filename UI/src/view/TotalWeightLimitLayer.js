@@ -124,13 +124,6 @@ window.TotalWeightLimitLayer = function(params) {
     return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'sideCode', value: 1 });
   };
 
-  var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
-     return new OpenLayers.Rule({
-       filter: combineFilters([typeFilter(type), zoomLevelFilter(zoomLevel)]),
-       symbolizer: style
-     });
-  };
-
   var createZoomDependentOneWayRule = function(zoomLevel, style) {
     return new OpenLayers.Rule({
       filter: combineFilters([oneWayFilter(), zoomLevelFilter(zoomLevel)]),
@@ -145,6 +138,20 @@ window.TotalWeightLimitLayer = function(params) {
     createZoomDependentOneWayRule(12, { strokeWidth: 8 })
   ];
 
+  var createWeightLimitSizeStyleRule = function(style) {
+    var limitFilter = new OpenLayers.Filter.Comparison({
+      type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'limit', value: 0
+    });
+    return new OpenLayers.Rule({
+      filter: limitFilter,
+      symbolizer: style
+    });
+  };
+
+  var totalWeightLimitSizeStyleRule = [
+    createWeightLimitSizeStyleRule({ strokeColor: '#11bb00' })
+  ];
+
   var totalWeightLimitFeatureSizeLookup = {
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
@@ -153,7 +160,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var typeSpecificStyleLookup = {
-    line: { strokeOpacity: 0.7 },
+    line: { strokeOpacity: 0.7 , strokeColor: '#7f7f7c'},
     cutter: { externalGraphic: 'images/total-weight-limits/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
@@ -162,6 +169,7 @@ window.TotalWeightLimitLayer = function(params) {
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(validityDirectionStyleRules);
+  browseStyle.addRules(totalWeightLimitSizeStyleRule);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15
