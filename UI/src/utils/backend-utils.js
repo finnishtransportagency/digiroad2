@@ -45,6 +45,12 @@
       });
     }, 1000);
 
+    this.getTotalWeightLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/totalweightlimits/' + id, function(totalWeightLimit) {
+        callback(totalWeightLimit);
+      });
+    }, 1000);
+
     this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
       $.ajax({
         contentType: "application/json",

@@ -140,7 +140,7 @@ var RoadCollection = function(backend) {
         map: map,
         application: applicationModel,
         collection: models.totalWeightLimitsCollection,
-        selectedTotalWeightLimit: {isDirty: function() {}},
+        selectedTotalWeightLimit: models.selectedTotalWeightLimit,
         roadCollection: roadCollection,
         geometryUtils: geometryUtils
       })
@@ -175,10 +175,12 @@ var RoadCollection = function(backend) {
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var totalWeightLimitsCollection = new TotalWeightLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
+    var selectedTotalWeightLimit = new SelectedTotalWeightLimit(backend, totalWeightLimitsCollection);
     var models = {
       speedLimitsCollection: speedLimitsCollection,
       totalWeightLimitsCollection: totalWeightLimitsCollection,
-      selectedSpeedLimit: selectedSpeedLimit
+      selectedSpeedLimit: selectedSpeedLimit,
+      selectedTotalWeightLimit: selectedTotalWeightLimit
     };
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
