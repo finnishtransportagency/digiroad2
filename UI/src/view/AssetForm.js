@@ -85,8 +85,12 @@
         var cancelBtn = new CancelButton();
         var validationErrorLabel = new ValidationErrorLabel();
 
-        // TODO: cleaner html
-        featureAttributesElement.append($('<footer />').addClass('form-controls').append(validationErrorLabel.element).append(saveBtn.element).append(cancelBtn.element));
+        featureAttributesElement.append($('<footer />')
+            .addClass('mass-transit-stop')
+            .addClass('form-controls')
+            .append(validationErrorLabel.element)
+            .append(saveBtn.element)
+            .append(cancelBtn.element));
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -153,7 +157,6 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
-        // TODO: use cleaner html
         if (property.propertyType === 'read_only_text') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {

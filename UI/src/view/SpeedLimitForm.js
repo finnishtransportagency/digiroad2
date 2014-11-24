@@ -43,7 +43,7 @@
                formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
-           '<footer class="form-controls" style="display: none">' +
+           '<footer class="speed-limit form-controls" style="display: none">' +
              buttons +
            '</footer>';
   };
@@ -69,14 +69,14 @@
     eventbus.on('speedLimit:limitChanged', function(selectedSpeedLimit) {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
-    rootElement.on('click', 'button.save', function() {
+    rootElement.on('click', '.speed-limit button.save', function() {
       if (selectedSpeedLimit.isNew()) {
         selectedSpeedLimit.saveSplit();
       } else {
         selectedSpeedLimit.save();
       }
     });
-    rootElement.on('click', 'button.cancel', function() {
+    rootElement.on('click', '.speed-limit button.cancel', function() {
       if (selectedSpeedLimit.isNew()) {
         selectedSpeedLimit.cancelSplit();
       } else {

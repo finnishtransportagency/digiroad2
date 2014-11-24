@@ -69,7 +69,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
           describe('and saving split speed limit', function() {
             before(function() {
-              $('.save.btn').click();
+              $('.speed-limit .save.btn').click();
             });
 
             it('relays split speed limit to backend', function() {

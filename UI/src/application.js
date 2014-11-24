@@ -189,6 +189,7 @@ var RoadCollection = function(backend) {
     ActionPanel.initialize(backend, selectedSpeedLimit);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
+    TotalWeightLimitForm.initialize(selectedTotalWeightLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;

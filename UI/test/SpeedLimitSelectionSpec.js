@@ -133,7 +133,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and cancelling the change', function() {
         before(function() {
-          $('#feature-attributes button.cancel').click();
+          $('#feature-attributes .speed-limit button.cancel').click();
         });
         it('resets the update but maintains selection state', function() { assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 60); });
       });
