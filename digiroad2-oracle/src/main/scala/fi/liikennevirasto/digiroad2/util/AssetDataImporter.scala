@@ -144,7 +144,7 @@ class AssetDataImporter {
 
     queries.tasksupport = new ForkJoinTaskSupport(taskPool)
     queries.foreach { query =>
-      val selectStartTime = System.currentTimeMillis();
+      val selectStartTime = System.currentTimeMillis()
       val segments = dataSet.database().withDynSession {
         query.as[(Int, String)].list()
       }
