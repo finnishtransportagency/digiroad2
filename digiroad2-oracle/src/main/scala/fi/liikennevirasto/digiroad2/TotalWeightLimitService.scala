@@ -30,12 +30,10 @@ object TotalWeightLimitService {
   }
 
   case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
-
-  private def getLinkEndpoints(link: TotalWeightLimitLink): (Point, Point) = {
-    GeometryUtils.geometryEndpoints(link.points)
-  }
+  case class TotalWeightLimit(id: Long, limit: Int, endpoints: Set[Point])
 
   private def getLinksWithPositions(links: Seq[TotalWeightLimitLink]): Seq[TotalWeightLimitLink] = {
+    def getLinkEndpoints(link: TotalWeightLimitLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val rawLink = chainedLink.rawLink
@@ -47,6 +45,24 @@ object TotalWeightLimitService {
     }
   }
 
+  private def calculateEndPoints(links: List[(Point, Point)]): Set[Point] = {
+    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints(identity[(Point, Point)])
+    Set(endPoints._1, endPoints._2)
+  }
+
+  private def totalWeightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
+    val totalWeightLimits = sql"""
+        select segm_id, tielinkki_id, puoli, arvo, alkum, loppum
+          from segments
+          where tyyppi = 22
+          and segm_id = $id
+        """.as[(Long, Long, Int, Int, Double, Double)].list
+    totalWeightLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
+      (segmentId, roadLinkId, sideCode, value, points)
+    }
+  }
+
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[TotalWeightLimitLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, false, municipalities)
@@ -55,7 +71,7 @@ object TotalWeightLimitService {
       val totalWeightLimits = OracleArray.fetchTotalWeightLimitsByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
 
       val linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType, Int)] =
-        roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, roadLink) =>
+      roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, roadLink) =>
           acc + (roadLink._1 -> (roadLink._2, roadLink._3, roadLink._4, roadLink._5))
         }
 
@@ -66,6 +82,24 @@ object TotalWeightLimitService {
       }
 
       totalWeightLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+    }
+  }
+
+  def getById(id: Long): Option[TotalWeightLimit] = {
+    def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[Point])): (Point, Point) = {
+      val (_, _, _, _, points) = link
+      GeometryUtils.geometryEndpoints(points)
+    }
+
+    Database.forDataSource(dataSource).withDynTransaction {
+      val links = totalWeightLimitLinksById(id)
+      if (links.isEmpty) None
+      else {
+        val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
+        val limitEndpoints = calculateEndPoints(linkEndpoints)
+        val limit = links.head._4
+        Some(TotalWeightLimit(id, limit, limitEndpoints))
+      }
     }
   }
 }

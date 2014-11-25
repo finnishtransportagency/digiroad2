@@ -232,10 +232,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/totalweightlimits/:segmentId") {
     val segmentId = params("segmentId")
-    // FIXME: Speed limit used as mock data
-    linearAssetProvider.getSpeedLimit(segmentId.toLong).map { speedLimit =>
-      speedLimit.copy(limit = speedLimit.limit * 400)
-    }.getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
+    TotalWeightLimitService.getById(segmentId.toLong)
+      .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
   }
 
   get("/speedlimits/:segmentId") {
