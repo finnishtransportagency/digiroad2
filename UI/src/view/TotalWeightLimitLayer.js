@@ -184,6 +184,8 @@ window.TotalWeightLimitLayer = function(params) {
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
+  selectionDefaultStyle.addRules(totalWeightLimitSizeStyleRules);
+  selectionSelectStyle.addRules(totalWeightLimitSizeStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('totalWeightLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
