@@ -195,6 +195,11 @@ Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, e
 
 _Nopeusrajoitusten valinta._
 
+3.5 Kokonaispainorajoitusten valinta
+------------------------------------
+
+Kartalle voi valita kokonaispainorajoitukset valitsemalla tietolajit-paletista (1) Kokonaispainorajoitukset. kokonaispainorajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa kokonaispainorajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Kokonaispainorajoitukset on visualisoitu vihre&auml;ll&auml; v&auml;rill&auml; ja tielinkit, joilla rajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+
 4. Katselutila
 --------------
 
@@ -229,6 +234,11 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 ![Nopeusrajoitusten visualisointi](k27.JPG)
 
 _Nopeusrajoitusten visualisointi._
+
+4.3 Kokonaispainorajoitusten tietojen katselu
+---------------------------------------------
+
+Kokonaispainorajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen kokonaispainorajoituksen voi valita klikkaamalla kartalta sen geometriaa. Kokonaispainorajoituksen geometria tummentuu ja muut kokonaispainorajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu kokonaispainorajoituksen ominaisuustieton&auml;kym&auml;.
 
 5. Muokkaustila
 ---------------
