@@ -112,10 +112,6 @@ window.TotalWeightLimitLayer = function(params) {
     return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
   };
 
-  var typeFilter = function(type) {
-    return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
-  };
-
   var zoomLevelFilter = function(zoomLevel) {
     return new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } });
   };
@@ -148,7 +144,7 @@ window.TotalWeightLimitLayer = function(params) {
     });
   };
 
-  var totalWeightLimitSizeStyleRule = [
+  var totalWeightLimitSizeStyleRules = [
     createWeightLimitSizeStyleRule({ strokeColor: '#11bb00' })
   ];
 
@@ -169,7 +165,7 @@ window.TotalWeightLimitLayer = function(params) {
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(validityDirectionStyleRules);
-  browseStyle.addRules(totalWeightLimitSizeStyleRule);
+  browseStyle.addRules(totalWeightLimitSizeStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15
