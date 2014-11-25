@@ -4,7 +4,8 @@ window.SpeedLimitLayer = function(params) {
       collection = params.collection,
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadCollection = params.roadCollection,
-      geometryUtils = params.geometryUtils;
+      geometryUtils = params.geometryUtils,
+      linearAsset = params.linearAsset;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -376,22 +377,9 @@ window.SpeedLimitLayer = function(params) {
     drawSpeedLimits(speedLimits);
   };
 
-  var adjustSpeedLimitOffset = function(speedLimit) {
-    if (speedLimit.sideCode === 1) {
-      return speedLimit;
-    }
-    speedLimit.links = _.map(speedLimit.links, function(link) {
-      link.points = _.map(link.points, function(point, index, geometry) {
-        return geometryUtils.offsetPoint(point, index, geometry, speedLimit.sideCode);
-      });
-      return link;
-    });
-    return speedLimit;
-  };
-
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, adjustSpeedLimitOffset);
+    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, linearAsset.offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.limit >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];

@@ -1,10 +1,11 @@
 window.TotalWeightLimitLayer = function(params) {
   var map = params.map,
-      application = params.application,
-      collection = params.collection,
-      selectedTotalWeightLimit = params.selectedTotalWeightLimit,
-      roadCollection = params.roadCollection,
-      geometryUtils = params.geometryUtils;
+    application = params.application,
+    collection = params.collection,
+    selectedTotalWeightLimit = params.selectedTotalWeightLimit,
+    roadCollection = params.roadCollection,
+    geometryUtils = params.geometryUtils,
+    linearAsset = params.linearAsset;
 
   var TotalWeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -338,22 +339,9 @@ window.TotalWeightLimitLayer = function(params) {
     drawTotalWeightLimits(totalWeightLimits);
   };
 
-  var adjustTotalWeightLimitOffset = function(totalWeightLimit) {
-    if (totalWeightLimit.sideCode === 1) {
-      return totalWeightLimit;
-    }
-    totalWeightLimit.links = _.map(totalWeightLimit.links, function(link) {
-      link.points = _.map(link.points, function(point, index, geometry) {
-        return geometryUtils.offsetPoint(point, index, geometry, totalWeightLimit.sideCode);
-      });
-      return link;
-    });
-    return totalWeightLimit;
-  };
-
   var drawTotalWeightLimits = function(totalWeightLimits) {
     var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) { return _.merge({}, limit, { type: 'line' }); });
-    var totalWeightLimitsWithAdjustments = _.map(totalWeightLimitsWithType, adjustTotalWeightLimitOffset);
+    var totalWeightLimitsWithAdjustments = _.map(totalWeightLimitsWithType, linearAsset.offsetBySideCode);
     vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithAdjustments));
 
     if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {

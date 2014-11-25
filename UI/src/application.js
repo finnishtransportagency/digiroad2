@@ -125,6 +125,7 @@ var RoadCollection = function(backend) {
     if (withTileMaps) { new TileMapCollection(map); }
     var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
+    var linearAsset = new LinearAsset(geometryUtils);
     var layers = {
       road: new RoadLayer(map, roadCollection),
       asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
@@ -134,7 +135,8 @@ var RoadCollection = function(backend) {
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
         roadCollection: roadCollection,
-        geometryUtils: geometryUtils
+        geometryUtils: geometryUtils,
+        linearAsset: linearAsset
       }),
       totalWeightLimit: new TotalWeightLimitLayer({
         map: map,
@@ -142,7 +144,8 @@ var RoadCollection = function(backend) {
         collection: models.totalWeightLimitsCollection,
         selectedTotalWeightLimit: models.selectedTotalWeightLimit,
         roadCollection: roadCollection,
-        geometryUtils: geometryUtils
+        geometryUtils: geometryUtils,
+        linearAsset: linearAsset
       })
     };
 
