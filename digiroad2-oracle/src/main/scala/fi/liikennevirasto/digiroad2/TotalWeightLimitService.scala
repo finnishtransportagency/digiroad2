@@ -29,13 +29,13 @@ object TotalWeightLimitService {
     new BoneCPDataSource(cfg)
   }
 
-  case class TotalWeightLimit(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
+  case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
 
-  private def getLinkEndpoints(link: TotalWeightLimit): (Point, Point) = {
+  private def getLinkEndpoints(link: TotalWeightLimitLink): (Point, Point) = {
     GeometryUtils.geometryEndpoints(link.points)
   }
 
-  private def getLinksWithPositions(links: Seq[TotalWeightLimit]): Seq[TotalWeightLimit] = {
+  private def getLinksWithPositions(links: Seq[TotalWeightLimitLink]): Seq[TotalWeightLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val rawLink = chainedLink.rawLink
@@ -47,7 +47,7 @@ object TotalWeightLimitService {
     }
   }
 
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[TotalWeightLimit] = {
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[TotalWeightLimitLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, false, municipalities)
       val roadLinkIds = roadLinks.map(_._1).toList
@@ -59,10 +59,10 @@ object TotalWeightLimitService {
           acc + (roadLink._1 -> (roadLink._2, roadLink._3, roadLink._4, roadLink._5))
         }
 
-      val totalWeightLimitsWithGeometry: Seq[TotalWeightLimit] = totalWeightLimits.map { link =>
+      val totalWeightLimitsWithGeometry: Seq[TotalWeightLimitLink] = totalWeightLimits.map { link =>
         val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-        TotalWeightLimit(assetId, roadLinkId, sideCode, speedLimit, geometry)
+        TotalWeightLimitLink(assetId, roadLinkId, sideCode, speedLimit, geometry)
       }
 
       totalWeightLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
