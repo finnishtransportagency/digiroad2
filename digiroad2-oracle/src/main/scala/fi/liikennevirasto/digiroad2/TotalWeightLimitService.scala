@@ -1,28 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.{DecimalFormat, NumberFormat}
-import java.util.Locale
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.{AgainstLinkChain, TowardsLinkChain}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, RoadLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
-import org.joda.time.LocalDate
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+
+import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.GetResult
-import scala.slick.jdbc.PositionedResult
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
-import com.jolbox.bonecp.BoneCPConfig
-import com.jolbox.bonecp.BoneCPDataSource
-import fi.liikennevirasto.digiroad2.asset.{RoadLink, BoundingRectangle, RoadLinkType}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.user.User
-import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
-import _root_.oracle.jdbc.OracleConnection
-import collection.JavaConversions._
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
 
 object TotalWeightLimitService {
   lazy val dataSource = {
