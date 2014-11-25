@@ -19,12 +19,10 @@ public class OracleArray {
     private static List<Tuple6<Long, Long, Int, Int, Double, Double>> linearAssetsByRoadLinkIds(List ids, Connection connection, String query) throws SQLException {
         OracleConnection oracleConnection = (OracleConnection) connection;
         ARRAY oracleArray = oracleConnection.createARRAY("ROAD_LINK_VARRAY", ids.toArray());
-        PreparedStatement statement = oracleConnection.prepareStatement(query);
-        try {
+        try (PreparedStatement statement = oracleConnection.prepareStatement(query)) {
             OraclePreparedStatement oraclePreparedStatement = (OraclePreparedStatement) statement;
             oraclePreparedStatement.setArray(1, oracleArray);
-            ResultSet resultSet = oraclePreparedStatement.executeQuery();
-            try {
+            try (ResultSet resultSet = oraclePreparedStatement.executeQuery()) {
                 ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>> assetLinks = new ArrayList<Tuple6<Long, Long, Int, Int, Double, Double>>();
                 while (resultSet.next()) {
                     long id = resultSet.getLong(1);
@@ -36,11 +34,7 @@ public class OracleArray {
                     assetLinks.add(new Tuple6(id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure));
                 }
                 return assetLinks;
-            } finally {
-                resultSet.close();
             }
-        } finally {
-            statement.close();
         }
     }
 
