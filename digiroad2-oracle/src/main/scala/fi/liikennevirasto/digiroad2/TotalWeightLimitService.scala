@@ -29,20 +29,6 @@ object TotalWeightLimitService {
     new BoneCPDataSource(cfg)
   }
 
-  implicit object GetPointSeq extends GetResult[Seq[Point]] {
-    def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
-  }
-
-  private def toPoints(bytes: Array[Byte]): Seq[Point] = {
-    val geometry = JGeometry.load(bytes)
-    if (geometry == null) Nil
-    else {
-      geometry.getOrdinatesArray.grouped(2).map { point ⇒
-        Point(point(0), point(1))
-      }.toList
-    }
-  }
-
   case class TotalWeightLimit(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
 
   private def getLinkEndpoints(link: TotalWeightLimit): (Point, Point) = {
@@ -76,7 +62,6 @@ object TotalWeightLimitService {
       val totalWeightLimitsWithGeometry: Seq[TotalWeightLimit] = totalWeightLimits.map { link =>
         val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-        println(linkGeometries(roadLinkId)._1, startMeasure, endMeasure, geometry)
         TotalWeightLimit(assetId, roadLinkId, sideCode, speedLimit, geometry)
       }
 
