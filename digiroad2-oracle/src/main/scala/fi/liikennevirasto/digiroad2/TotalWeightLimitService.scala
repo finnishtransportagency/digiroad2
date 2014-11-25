@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
+import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
 import org.joda.time.LocalDate
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -43,11 +44,6 @@ object TotalWeightLimitService {
       }
       rawLink.copy(position = Some(chainedLink.linkPosition), towardsLinkChain = Some(towardsLinkChain))
     }
-  }
-
-  private def calculateEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints(identity[(Point, Point)])
-    Set(endPoints._1, endPoints._2)
   }
 
   private def totalWeightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
@@ -96,7 +92,7 @@ object TotalWeightLimitService {
       if (links.isEmpty) None
       else {
         val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
-        val limitEndpoints = calculateEndPoints(linkEndpoints)
+        val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
         val limit = links.head._4
         Some(TotalWeightLimit(id, limit, limitEndpoints))
       }

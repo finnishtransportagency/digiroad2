@@ -50,11 +50,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
-  def calculateSpeedLimitEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints(identity[(Point, Point)])
-    Set(endPoints._1, endPoints._2)
- }
-
   override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
       loadSpeedLimit(speedLimitId)
@@ -66,7 +61,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
-      val limitEndpoints = calculateSpeedLimitEndPoints(linkEndpoints)
+      val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(speedLimitId)
       Some(SpeedLimit(speedLimitId, limit, limitEndpoints,
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
