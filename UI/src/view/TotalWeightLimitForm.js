@@ -1,10 +1,5 @@
 (function (root) {
   var template = function(selectedTotalWeightLimit) {
-    var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
-    var totalWeightLimitOptionTags = _.map(SPEED_LIMITS, function(limit) {
-      var selected = limit === selectedTotalWeightLimit.getLimit() ? " selected" : "";
-      return '<option value="' + limit + '"' + selected + '>' + limit + '</option>';
-    });
     var formFieldTemplate = function(key, value) {
       return '<div class="form-group">' +
                '<label class="control-label">' + key + '</label>' +
@@ -35,7 +30,7 @@
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
                  '<p class="form-control-static">' + selectedTotalWeightLimit.getLimit() + '</p>' +
-                 '<select class="form-control total-weight-limit" style="display: none">' + totalWeightLimitOptionTags.join('') + '</select>' +
+                 '<select class="form-control total-weight-limit" style="display: none" />' +
                '</div>' +
                formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
