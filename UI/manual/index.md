@@ -165,6 +165,12 @@ Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla 
 
 _Kelluvat pys&auml;kit on visualisoitu eri tavoin._
 
+Kelluvista pys&auml;keist&auml; on lista [t&auml;&auml;ll&auml;.](https://testiextranet.liikennevirasto.fi/digiroad/floatingstops.html) Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle.
+
+![Kelluvien pys&auml;kkien lista](k30.JPG)
+
+_Kelluvien pys&auml;kkien lista._
+
 3.3.1 Joukkoliikenteen pys&auml;kkien haku
 -------------------------------------
 
