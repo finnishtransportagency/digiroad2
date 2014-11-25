@@ -86,13 +86,53 @@ Vienti luo FTP-palvelimelle pys&auml;kkitiedot zip-pakattuna .csv-tiedostona nim
 
 K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedoston k&auml;ytt&ouml;&ouml;nottoymp&auml;rist&ouml;n deployment-hakemistosta release-hakemistoon osana k&auml;ytt&ouml;&ouml;nottoa. N&auml;in ymp&auml;rist&ouml;kohtaista 'ftp.conf'-tiedostoa, joka sis&auml;lt&auml;&auml; kirjautumistietoja, voidaan yll&auml;pit&auml;&auml; tietoturvallisesti k&auml;ytt&ouml;&ouml;nottopalvelimella. 
 
-<!---
-###3.1.1 Pys&auml;kkimuutosten reaaliaikainen p&auml;ivitys Vallu-j&auml;rjestelm&auml;&auml;n###
+###Vallu CSV:n tietolajit###
 
-Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee reaaliaikaisesti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
+|DR2 tietolaji|Vallu CSV|Kuvaus|
+|-------------|---------|------|
+|Valtakunnallinen tunnus| STOP_ID|PAKOLLINEN TIETO. Valtakunnallinen tunnus. Jos puuttuu niin Digiroad tuottaa omasta numeroavaruudesta.|
+|Yll&auml;pit&auml;j&auml;n tunnus|ADMIN_STOP_ID| Yll&auml;pit&auml;j&auml;n tunnus|
+|Matkustajatunnus|STOP_CODE|Pys&auml;kin ID matkustajalle|
+|Nimi suomeksi| NAME_FI| Pys&auml;kin nimi suomeksi|
+|Nimi ruotsiksi|NAME_SV|Pys&auml;kin nimi ruotsiksi|
+|Maastokoordinaatti X|COORDINATE_X|Mitattu sijaintitieto: EUREF FIN ETRS89-TM35FIN|
+|Maastokoordinaatti Y|COORDINATE_Y|Mitattu sijaintitieto: EUREF FIN ETRS89-TM35FIN|
+|Pys&auml;kin osoite|ADRESS|Pys&auml;kin osoite|
+|Tienumero|ROAD_NUMBER|Pys&auml;kin tien numero|
+|Liikenn&ouml;intisuuntima|BEARING|Liikenn&ouml;intisuunta. Pohjoinen on nolla astetta, koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Lasketaan importin yhteydess&auml; tiegeometriasta.|
+|Liikenn&ouml;intisuuntiman kuvaus|BEARING_DESCRIPTION|Pohjoinen, koillinen, It&auml;, kaakko, etel&auml;, lounas, l&auml;nsi, luode|
+|Liikenn&ouml;intisuunta|DIRECTION|Suunnan vapaampi sanallinen kuvaus|
+|Tyyppi(kaukoliikenne)|EXPRESS_BUS|0 tai 1|
+|Tyyppi(paikallisliikenne)|LOCAL_BUS|0 tai 1|
+|Tyyppi(pikavuoro)|NON_STOP_EXPRESS_BUS|0 tai 1|
+|Tyyppi(Virtuaalipys&auml;kki)|VIRTUAL_STOP|0 tai 1|
+|Varusteet(Aikataulu)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(Katos)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(Mainoskatos)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(Penkki)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(Py&ouml;r&auml;teline)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Varusteet(Valaistus)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Saattomahdollisuus henkil&ouml;autolla|Concatenoidaan REACHABILITYyn|1 - Ei, 2 - On, 99 - Ei tietoa|
+|Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|Concatenoidaan REACHABILITYyn|Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|
+|Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|Concatenoidaan REACHABILITYyn|Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|
+|Esteett&ouml;myys liikuntarajoitteiselle|SPECIAL_NEEDS|P&auml;&auml;sy py&ouml;r&auml;tuolilla|
+|Muokattu viimeksi|MODIFIED_TIMESTAMP|Tiedon muokkaushetki|
+|Muokattu viimeksi|MODIFIED_BY|Muokkaajan k&auml;ytt&auml;j&auml;tunnus|
+|Ensimm&auml;inen voimassaolop&auml;iv&auml;|VALID_FROM|Pys&auml;kin ensimm&auml;inen voimassaolop&auml;iv&auml;|
+|Viimeinen voimassaolop&auml;iv&auml;|VALID_TO|Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;|
+|Tietojen yll&auml;pit&auml;j&auml;|ADMINISTRATOR_CODE|Yll&auml;pit&auml;v&auml; viranomainen: 1 - Kunta, 2 - ELY-keskus, 3 - Toimivaltainen viranomainen, 4 - Liikennevirasto|
+|Kuntanumero|MUNICIPALITY_CODE|Kuntanumero|
+|Kunta|MUNICIPALITY_NAME|Kunnan nimi|
+|Lis&auml;tiedot|COMMENTS|Julkiset kommentit|
+|Palauteosoite|CONTACT_EMAILS|Yhteystiedot vihje-/muutostietojen toimittamiseksi|
+
+###3.1.1 Pys&auml;kkimuutosten p&auml;ivitys Vallu-j&auml;rjestelm&auml;&auml;n###
+
+Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee joka y&ouml; Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
 
 Muuttuneita tietoja voi tarkastella lokista: https://devtest.liikennevirasto.fi/digiroad/vallu-server.log 
--->
+
 
 ### 3.1.2 XML- viestin l&auml;hetys VALLUun###
 
@@ -111,7 +151,7 @@ L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vall
 
 Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle.
 
-Tarvittavat tiedostot ovat bonecp.properties ja LMJ-import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; Taru Vainikaiselta tai kehitystiimilt&auml;. Bonecp.properties tallennetaan sijaintiin:
+Tarvittavat tiedostot ovat bonecp.properties ja LMJ-import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; digiroad2@reaktor.fi. Bonecp.properties tallennetaan sijaintiin:
 
 ```
 digi-road-2\digiroad2-oracle\conf\properties\
