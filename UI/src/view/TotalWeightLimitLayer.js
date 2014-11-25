@@ -338,9 +338,23 @@ window.TotalWeightLimitLayer = function(params) {
     drawTotalWeightLimits(totalWeightLimits);
   };
 
+  var adjustTotalWeightLimitOffset = function(totalWeightLimit) {
+    if (totalWeightLimit.sideCode === 1) {
+      return totalWeightLimit;
+    }
+    totalWeightLimit.links = _.map(totalWeightLimit.links, function(link) {
+      link.points = _.map(link.points, function(point, index, geometry) {
+        return geometryUtils.offsetPoint(point, index, geometry, totalWeightLimit.sideCode);
+      });
+      return link;
+    });
+    return totalWeightLimit;
+  };
+
   var drawTotalWeightLimits = function(totalWeightLimits) {
     var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) { return _.merge({}, limit, { type: 'line' }); });
-    vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithType));
+    var totalWeightLimitsWithAdjustments = _.map(totalWeightLimitsWithType, adjustTotalWeightLimitOffset);
+    vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithAdjustments));
 
     if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {
       selectControl.onSelect = function() {};
