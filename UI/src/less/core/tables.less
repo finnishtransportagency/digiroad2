@@ -1,0 +1,35 @@
+//== Tables
+
+caption {
+	padding-top: @table-cell-padding;
+  padding-bottom: @table-cell-padding;
+  font-size: @font-size-small;
+  font-weight: bold;
+  color: @gray-darker;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+th {
+  text-align: left;
+}
+
+.table {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: @line-height-modifier * 2;
+
+  > thead,
+  > tbody,
+  > tfoot {
+    > tr {
+      > th,
+      > td {
+        vertical-align: top;
+        padding: @table-cell-padding;
+        border-top: 1px solid @table-border-color;
+        line-height: @line-height-base;
+      }
+    }
+  }
+}
