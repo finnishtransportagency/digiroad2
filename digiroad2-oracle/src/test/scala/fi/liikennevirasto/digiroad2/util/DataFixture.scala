@@ -61,6 +61,15 @@ object DataFixture {
     println("\n")
   }
 
+  def importTotalWeightLimitsFromConversion(dataImporter: AssetDataImporter) {
+    print("\nCommencing total weight limit import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importTotalWeightLimits(Conversion.database())
+    print("Total weight limit import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -99,6 +108,8 @@ object DataFixture {
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
         importSpeedLimitsFromConversion(dataImporter, taskPool)
+      case Some("totalweightlimits") =>
+        importTotalWeightLimitsFromConversion(dataImporter)
       case _ => println("Usage: DataFixture test | speedlimits")
     }
   }

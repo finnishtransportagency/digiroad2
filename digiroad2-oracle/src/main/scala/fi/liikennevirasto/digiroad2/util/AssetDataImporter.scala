@@ -225,6 +225,61 @@ class AssetDataImporter {
     }
   }
 
+  def importTotalWeightLimits(database: DatabaseDef) = {
+    val query =
+      sql"""
+       select segm_id, tielinkki_id, puoli, alkum, loppum, arvo
+         from segments
+         where tyyppi = 22
+       """
+    val totalWeightLimitLinks: Seq[(Long, Long, Int, Double, Double, Int)] = database.withDynSession {
+      query.as[(Long, Long, Int, Double, Double, Int)].list()
+    }
+    val totalWeightLimits: Map[Long, Seq[(Long, Long, Int, Double, Double, Int)]] = totalWeightLimitLinks.groupBy(_._1)
+    Database.forDataSource(ds).withDynTransaction {
+      totalWeightLimits.foreach { weightLimit =>
+        val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 30, SYSDATE, 'dr1_conversion')")
+        val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
+        val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+        val totalWeightLimitPS = dynamicSession.prepareStatement("insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, ?, (select id from property where public_id = 'kokonaispainorajoitus'), ?)")
+
+        val (_, links) = weightLimit
+        val assetId = nextPrimaryKeySeqValue
+        assetPS.setLong(1, assetId)
+        assetPS.addBatch()
+
+        links.foreach { link =>
+          val (_, roadLinkId, sideCode, startMeasure, endMeasure, _) = link
+          val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setDouble(3, startMeasure)
+          lrmPositionPS.setDouble(4, endMeasure)
+          lrmPositionPS.setInt(5, sideCode)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+        }
+
+        val limit = links.head._6
+        totalWeightLimitPS.setLong(1, assetId)
+        totalWeightLimitPS.setInt(2, limit)
+        totalWeightLimitPS.addBatch()
+
+        assetPS.executeBatch()
+        lrmPositionPS.executeBatch()
+        assetLinkPS.executeBatch()
+        totalWeightLimitPS.executeBatch()
+        assetPS.close()
+        lrmPositionPS.close()
+        assetLinkPS.close()
+        totalWeightLimitPS.close()
+      }
+    }
+  }
+
   def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
