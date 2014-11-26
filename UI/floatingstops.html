@@ -10,9 +10,10 @@
 </head>
 <body onload="fetchFloatingStops()" style="overflow: auto;">
     <div class="page">
-        <div class="content-box form-box">
+        <div class="content-box">
             <header>Kelluvat pysäkit</header>
-            <div class="floatingStops"></div>
+            <div class="floating-stops">                         
+            </div>
         </div>
     </div>
     <script type="application/javascript">
@@ -22,7 +23,7 @@
             var context = _.head(urlParts) + '//' + _.tail(urlParts).join('/');
 
             var tableHeaderRow = function(municipalityName) {
-                return $('<tr/>').append($('<th/>').html(municipalityName));
+                return $('<caption/>').html(municipalityName);
             };
             var assetLink = function(externalId) {
                 var link =  context + '/#/asset/' + externalId;
@@ -33,14 +34,14 @@
                     return $('<tr/>').append($('<td/>').append(assetLink(id)));
                 });
             };
-            return $('<table/>').append(tableHeaderRow(municipalityName)).append(tableContentRows(externalIds));
+            return $('<table/>').addClass('table').append(tableHeaderRow(municipalityName)).append(tableContentRows(externalIds));
         };
 
         var fetchFloatingStops = function() {
             var backend = new Backend();
             backend.getFloatingAssetsWithCallback(function(assets) {
                 _.map(assets, function(externalIds, municipalityName) {
-                    $('.floatingStops').append(floatingStopsTableForMunicipality(municipalityName, externalIds));
+                    $('.floating-stops').append(floatingStopsTableForMunicipality(municipalityName, externalIds));
                 });
             });
         };
