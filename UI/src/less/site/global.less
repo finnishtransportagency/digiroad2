@@ -3,6 +3,17 @@ body {
   overflow: hidden;
 }
 
+a {
+  color: @link-color;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: @link-color-hover;
+    text-decoration: underline;
+  }
+}
+
 //== Header
 
 #header {
