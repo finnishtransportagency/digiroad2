@@ -146,7 +146,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var totalWeightLimitSizeStyleRules = [
-    createWeightLimitSizeStyleRule({ strokeColor: '#11bb00' })
+    createWeightLimitSizeStyleRule({ strokeColor: '#ff0000' })
   ];
 
   var totalWeightLimitFeatureSizeLookup = {
