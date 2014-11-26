@@ -7,6 +7,7 @@ require.config({
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
+        'LinearAsset':              '../src/utils/LinearAsset',
         'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
         'GeometryUtils':            '../src/utils/GeometryUtils',
         'SpeedLimitsCollection':    '../src/model/SpeedLimitsCollection',
@@ -36,8 +37,11 @@ require.config({
         'SelectedAssetModel': {
             deps: ['EventBus', 'lodash']
         },
+        'LinearAsset': {
+            exports: 'LinearAsset'
+        },
         'SpeedLimitLayer': {
-            exports: 'SpeedLimitLayer'
+          exports: 'SpeedLimitLayer'
         },
         'SpeedLimitsCollection': {
             exports: 'SpeedLimitsCollection'

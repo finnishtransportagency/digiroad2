@@ -1,5 +1,5 @@
-define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils'],
-       function(chai, testHelpers, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils) {
+define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils', 'LinearAsset'],
+       function(chai, testHelpers, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils, LinearAsset) {
   var assert = chai.assert;
 
   describe('SpeedLimitLayer', function() {
@@ -30,7 +30,8 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
           },
           collection: speedLimitsCollection,
           selectedSpeedLimit: selectedSpeedLimit,
-          geometryUtils: new GeometryUtils()
+          geometryUtils: new GeometryUtils(),
+          linearAsset: new LinearAsset()
         });
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
