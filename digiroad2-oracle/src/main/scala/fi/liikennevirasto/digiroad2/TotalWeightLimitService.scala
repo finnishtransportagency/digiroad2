@@ -15,6 +15,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 
 object TotalWeightLimitService {
   lazy val dataSource = {
@@ -90,6 +91,23 @@ object TotalWeightLimitService {
         val head = links.head
         val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt) = head
         Some(TotalWeightLimit(id, limit, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
+      }
+    }
+  }
+
+  private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
+
+  def updateTotalWeightLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
+      val assetsUpdated = Queries.updateAssetModified(id, username).first
+      val propertiesUpdated = updateNumberProperty(id, propertyId, value)
+      if (assetsUpdated == 1 && propertiesUpdated == 1) {
+        Some(id)
+      } else {
+        dynamicSession.rollback()
+        None
       }
     }
   }
