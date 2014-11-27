@@ -38,11 +38,15 @@ object TotalWeightLimitService {
 
   private def totalWeightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val totalWeightLimits = sql"""
-        select segm_id, tielinkki_id, puoli, arvo, alkum, loppum
-          from segments
-          where tyyppi = 22
-          and segm_id = $id
-        """.as[(Long, Long, Int, Int, Double, Double)].list
+      select a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
+      from asset a
+      join asset_link al on a.id = al.asset_id
+      join lrm_position pos on al.position_id = pos.id
+      join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kokonaispainorajoitus'
+      join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+      where a.asset_type_id = 30 and a.id = $id
+      """.as[(Long, Long, Int, Int, Double, Double)].list
+
     totalWeightLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
       (segmentId, roadLinkId, sideCode, value, points)
