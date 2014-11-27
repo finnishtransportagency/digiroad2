@@ -25,6 +25,39 @@
       '  </div>',
       '</div>'].join('');
 
+    var EditModeToggleButton = function(toolSelection) {
+      var button = $('<button class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
+      var element = $('<div class="panel-section panel-toggle-edit-mode">').append(button);
+      var toggleReadOnlyMode = function(mode) {
+        var readOnly = mode;
+        applicationModel.setReadOnly(readOnly);
+        if (readOnly) {
+          toolSelection.hide();
+        } else {
+          toolSelection.reset();
+          toolSelection.show();
+        }
+        button.toggleClass('edit-mode-btn');
+        button.toggleClass('read-only-btn');
+        button.toggleClass('btn-primary');
+        button.toggleClass('btn-secondary');
+        button.text(mode ? 'Siirry muokkaustilaan' : 'Siirry katselutilaan');
+      };
+      button.click(function() {
+        executeOrShowConfirmDialog(function() {
+          toggleReadOnlyMode(!applicationModel.isReadOnly());
+        });
+      });
+      var reset = function() {
+        toggleReadOnlyMode(true);
+      };
+
+      return {
+        element: element,
+        reset: reset
+      };
+    };
+
     var elements = {
       collapsed: $(collapsedTemplate),
       expanded: $(expandedTemplate).hide()
@@ -34,6 +67,7 @@
       null,
       [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, null),
        new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, null)]);
+    var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {
       elements.collapsed.click(function() {
@@ -48,6 +82,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== 'totalWeightLimit') {
+          editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
         }
@@ -56,6 +91,7 @@
         if (_.contains(roles, 'operator')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
         }
       });
       eventbus.on('application:readOnly', function(readOnly) {
