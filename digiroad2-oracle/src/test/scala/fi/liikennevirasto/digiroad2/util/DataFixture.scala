@@ -83,9 +83,9 @@ object DataFixture {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
     if (!username.startsWith("dr2dev")) {
-      println("***********************************************************************************")
-      println("YOU ARE RUNNING FIXTURE RESET AGAINST NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
-      println("***********************************************************************************")
+      println("*************************************************************************************")
+      println("YOU ARE RUNNING FIXTURE RESET AGAINST A NON-DEVELOPER DATABASE, TYPE 'YES' TO PROCEED")
+      println("*************************************************************************************")
       breakable {
         while (true) {
           val input = Console.readLine()
