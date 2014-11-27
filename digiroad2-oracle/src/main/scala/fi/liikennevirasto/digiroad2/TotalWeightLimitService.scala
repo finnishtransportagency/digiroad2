@@ -81,16 +81,11 @@ object TotalWeightLimitService {
   }
 
   def getById(id: Long): Option[TotalWeightLimit] = {
-    def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime])): (Point, Point) = {
-      val (_, _, _, _, points, _, _, _, _) = link
-      GeometryUtils.geometryEndpoints(points)
-    }
-
     Database.forDataSource(dataSource).withDynTransaction {
       val links = totalWeightLimitLinksById(id)
       if (links.isEmpty) None
       else {
-        val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
+        val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
         val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
         val head = links.head
         val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt) = head
