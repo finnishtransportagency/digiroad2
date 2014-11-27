@@ -30,7 +30,7 @@
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
                  '<p class="form-control-static">' + selectedTotalWeightLimit.getLimit() + ' kg</p>' +
-                 '<select class="form-control total-weight-limit" style="display: none" />' +
+                 '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
                '</div>' +
                formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
@@ -43,6 +43,13 @@
            '</footer>';
   };
 
+  var setupTotalWeightLimitInput = function(inputElement, selectedTotalWeightLimit) {
+    inputElement.val(selectedTotalWeightLimit.getLimit());
+    inputElement.change(function(event) {
+      selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+    });
+  };
+
   var bindEvents = function(selectedTotalWeightLimit) {
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
@@ -52,9 +59,7 @@
     };
     eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function(totalWeightLimit) {
       rootElement.html(template(selectedTotalWeightLimit));
-      rootElement.find('.total-weight-limit').change(function(event) {
-        selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
-      });
+      setupTotalWeightLimitInput(rootElement.find('.total-weight-limit'), selectedTotalWeightLimit);
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('totalWeightLimit:unselected', function() {
