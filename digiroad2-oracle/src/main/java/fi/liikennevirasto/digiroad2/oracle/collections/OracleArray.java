@@ -57,11 +57,13 @@ public class OracleArray {
     }
 
     public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchTotalWeightLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query =
-                "select segm_id, tielinkki_id, puoli, arvo, alkum, loppum" +
-                        "  from segments" +
-                        "  where tyyppi = 22" +
-                        "    and tielinkki_id in (SELECT COLUMN_VALUE FROM TABLE(?))";
+        String query = "SELECT a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure " +
+                "FROM ASSET a " +
+                "JOIN ASSET_LINK al ON a.id = al.asset_id " +
+                "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
+                "JOIN PROPERTY p ON a.asset_type_id = p.asset_type_id AND p.public_id = 'kokonaispainorajoitus' " +
+                "JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
+                "WHERE a.asset_type_id = 30 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return linearAssetsByRoadLinkIds(ids, connection, query);
     }
 }

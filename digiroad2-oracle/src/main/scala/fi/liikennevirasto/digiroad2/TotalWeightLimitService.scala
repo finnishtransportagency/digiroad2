@@ -16,7 +16,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 object TotalWeightLimitService {
   lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
+    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
 
