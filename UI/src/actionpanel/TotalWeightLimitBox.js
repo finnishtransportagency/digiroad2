@@ -25,18 +25,12 @@
       '  </div>',
       '</div>'].join('');
 
-    var EditModeToggleButton = function(toolSelection) {
+    var EditModeToggleButton = function() {
       var button = $('<button class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
       var element = $('<div class="panel-section panel-toggle-edit-mode">').append(button);
       var toggleReadOnlyMode = function(mode) {
         var readOnly = mode;
         applicationModel.setReadOnly(readOnly);
-        if (readOnly) {
-          toolSelection.hide();
-        } else {
-          toolSelection.reset();
-          toolSelection.show();
-        }
         button.toggleClass('edit-mode-btn');
         button.toggleClass('read-only-btn');
         button.toggleClass('btn-primary');
@@ -63,11 +57,7 @@
       expanded: $(expandedTemplate).hide()
     };
 
-    var toolSelection = new ActionPanelBoxes.ToolSelection(
-      null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, null),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, null)]);
-    var editModeToggle = new EditModeToggleButton(toolSelection);
+    var editModeToggle = new EditModeToggleButton();
 
     var bindDOMEventHandlers = function() {
       elements.collapsed.click(function() {
@@ -89,8 +79,6 @@
       }, this);
       eventbus.on('roles:fetched', function(roles) {
         if (_.contains(roles, 'operator')) {
-          toolSelection.reset();
-          elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
         }
       });
