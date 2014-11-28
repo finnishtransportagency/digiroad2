@@ -236,6 +236,20 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
   }
 
+  put("/totalweightlimits/:id") {
+    val user = userProvider.getCurrentUser()
+    if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
+    val id = params("id").toLong
+    (parsedBody \ "value").extractOpt[Int] match {
+      case Some(value) =>
+        TotalWeightLimitService.updateTotalWeightLimitValue(id, value, user.username) match {
+          case Some(id) => TotalWeightLimitService.getById(id)
+          case None => NotFound("Total weight limit " + id + " not found")
+        }
+      case None => throw new IllegalArgumentException("Total weight limit value not provided")
+    }
+  }
+
   get("/speedlimits/:segmentId") {
     val segmentId = params("segmentId")
     linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
