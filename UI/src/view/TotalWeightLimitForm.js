@@ -45,8 +45,8 @@
 
   var setupTotalWeightLimitInput = function(inputElement, selectedTotalWeightLimit) {
     inputElement.val(selectedTotalWeightLimit.getLimit());
-    inputElement.change(function(event) {
-      selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+    inputElement.on('input', function(event) {
+      selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).val(), 10));
     });
   };
 
