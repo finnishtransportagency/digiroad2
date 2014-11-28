@@ -57,7 +57,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
-    eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function(totalWeightLimit) {
+    eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
       rootElement.html(template(selectedTotalWeightLimit));
       setupTotalWeightLimitInput(rootElement.find('.total-weight-limit'), selectedTotalWeightLimit);
       toggleMode(applicationModel.isReadOnly());
@@ -66,7 +66,7 @@
       rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);
-    eventbus.on('totalWeightLimit:limitChanged', function(selectedTotalWeightLimit) {
+    eventbus.on('totalWeightLimit:limitChanged', function() {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
     rootElement.on('click', '.total-weight-limit button.save', function() {

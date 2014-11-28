@@ -39,18 +39,6 @@
       });
     }, 1000);
 
-    this.getTotalWeightLimits = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/totalweightlimits?bbox=' + boundingBox, function(totalWeightLimits) {
-        callback(totalWeightLimits);
-      });
-    }, 1000);
-
-    this.getTotalWeightLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/totalweightlimits/' + id, function(totalWeightLimit) {
-        callback(totalWeightLimit);
-      });
-    }, 1000);
-
     this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -74,6 +62,30 @@
         failure: failure
       });
     };
+
+    this.getTotalWeightLimits = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/totalweightlimits?bbox=' + boundingBox, function(totalWeightLimits) {
+        callback(totalWeightLimits);
+      });
+    }, 1000);
+
+    this.getTotalWeightLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/totalweightlimits/' + id, function(totalWeightLimit) {
+        callback(totalWeightLimit);
+      });
+    }, 1000);
+
+    this.updateTotalWeightLimit = _.throttle(function(id, limit, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/totalweightlimits/" + id,
+        data: JSON.stringify({value: limit}),
+        dataType: "json",
+        success: success,
+        failure: failure
+      });
+    }, 1000);
 
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
