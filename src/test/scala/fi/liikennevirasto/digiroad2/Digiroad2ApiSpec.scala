@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.TotalWeightLimitService.TotalWeightLimitLink
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
 import org.scalatest.Tag
 import org.json4s._
@@ -264,6 +265,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("split speed limits requires an operator role") {
     postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":7230, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
       status should equal(401)
+    }
+  }
+
+  test("get totalweightlimits", Tag("db")) {
+    getWithOperatorAuth("/totalweightlimits?bbox=381309,6677081,382343,6678419") {
+      status should equal(200)
+      parse(body).extract[List[TotalWeightLimitLink]].size should be(1)
     }
   }
 
