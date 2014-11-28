@@ -29,8 +29,9 @@
                '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static">' + selectedTotalWeightLimit.getLimit() + ' kg</p>' +
+                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + '</p>' +
                  '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
+                 '<span class="unit-of-measure total-weight-limit">kg</span>' +
                '</div>' +
                formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +

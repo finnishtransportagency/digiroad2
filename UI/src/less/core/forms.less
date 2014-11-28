@@ -292,7 +292,8 @@ input[type="checkbox"] {
   .checkbox,
   .select,
   .form-control-static,
-  .choice-group {
+  .choice-group,
+  .unit-of-measure {
     float: left;
   }
 
@@ -304,11 +305,12 @@ input[type="checkbox"] {
     }
   }
 
-  .form-control-static {
+  .form-control-static,
+  .unit-of-measure {
     padding-top: (@line-height-modifier  + 1);
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
-  }  
+  }
 }
 
 // Inverted colors
@@ -350,7 +352,8 @@ input[type="checkbox"] {
     color: @input-border-dark;
   }
 
-  .form-control-static {
+  .form-control-static,
+  .unit-of-measure {
     color: @input-color-dark;
   }
 
