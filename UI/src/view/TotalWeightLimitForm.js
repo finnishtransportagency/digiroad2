@@ -50,10 +50,14 @@
            '</footer>';
   };
 
-  var setupTotalWeightLimitInput = function(inputElement, selectedTotalWeightLimit) {
+  var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedTotalWeightLimit) {
     inputElement.val(selectedTotalWeightLimit.getLimit());
     inputElement.on('input', function(event) {
       selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).val(), 10));
+    });
+    toggleElement.change(function(event) {
+      var expired = $(event.currentTarget).val();
+      selectedTotalWeightLimit.setExpired(expired === 'disabled' ? true : false);
     });
   };
 
@@ -67,14 +71,16 @@
     };
     eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
       rootElement.html(template(selectedTotalWeightLimit));
-      setupTotalWeightLimitInput(rootElement.find('.total-weight-limit'), selectedTotalWeightLimit);
+      var toggleElement = rootElement.find(".radio input");
+      var inputElement = rootElement.find('.total-weight-limit');
+      setupTotalWeightLimitInput(toggleElement, inputElement, selectedTotalWeightLimit);
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('totalWeightLimit:unselected', function() {
       rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);
-    eventbus.on('totalWeightLimit:limitChanged', function() {
+    eventbus.on('totalWeightLimit:limitChanged totalWeightLimit:expirationChanged', function() {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
     rootElement.on('click', '.total-weight-limit button.save', function() {
