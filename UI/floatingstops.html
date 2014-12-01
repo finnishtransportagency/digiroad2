@@ -5,7 +5,16 @@
     <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
     <script type="text/javascript" src="bower_components/lodash/dist/lodash.min.js"></script>
     <script type="text/javascript" src="src/utils/backend-utils.js"></script>
+    <script type="text/javascript" src="src/utils/environment-utils.js"></script>
+    <script type="text/javascript" src="src/analytics.js"></script>
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
+    <!-- Google Analytics loaded asynchronously -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    </script>
     <title>Digiroad 2 kelluvat pysäkit</title>
 </head>
 <body onload="fetchFloatingStops()" style="overflow: auto;">
@@ -18,15 +27,11 @@
     </div>
     <script type="application/javascript">
         var floatingStopsTableForMunicipality = function(municipalityName, externalIds) {
-            var url = window.location.href.split('/');
-            var urlParts = _.initial(_.filter(url, function(urlPart) { return !_.isEmpty(urlPart); }));
-            var context = _.head(urlParts) + '//' + _.tail(urlParts).join('/');
-
             var tableHeaderRow = function(municipalityName) {
                 return $('<caption/>').html(municipalityName);
             };
             var assetLink = function(externalId) {
-                var link =  context + '/#/asset/' + externalId;
+                var link =  Environment.urlPath() + '/#/asset/' + externalId;
                 return $('<a/>').attr('href', link).html(link);
             };
             var tableContentRows = function(externalIds) {
@@ -45,6 +50,9 @@
                 });
             });
         };
+    </script>
+    <script type="application/javascript">
+        Analytics.start();
     </script>
 </body>
 </html>

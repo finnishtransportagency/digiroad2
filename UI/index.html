@@ -17,10 +17,17 @@
   <script type="text/javascript" src="src/utils/session.js"></script>
   <script type="text/javascript" src="src/utils/date-utils.js"></script>
   <script type="text/javascript" src="src/utils/backend-utils.js"></script>
+  <script type="text/javascript" src="src/utils/environment-utils.js"></script>
   <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
   <script type="text/javascript" src="src/utils/asset-utils.js"></script>
   <script type="text/javascript" src="src/utils/validity-directions.js"></script>
-
+  <!-- Google Analytics loaded asynchronously -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  </script>
   <title>Digiroad 2</title>
 </head>
 <body class="digiroad2">
@@ -77,6 +84,7 @@
 <script type="text/javascript" src="src/view/TotalWeightLimitForm.js"></script>
 <script type="text/javascript" src="src/utils/script-loader.js"></script>
 <script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
+<script type="text/javascript" src="src/analytics.js"></script>
 <script type="text/javascript" src="src/main.js"></script>
 </body>
 </html>
