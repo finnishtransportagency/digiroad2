@@ -3,6 +3,7 @@
 <head>
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
+    <script type="text/javascript" src="bower_components/lodash/dist/lodash.min.js"></script>
 
     <script type="text/javascript">
         function getParameterByName(name) {
@@ -19,6 +20,13 @@
                 window.location.search='';
             }
         }
+    </script>
+    <!-- Google Analytics loaded asynchronously -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
     </script>
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 uuden k&auml;ytt&auml;j&auml;n luominen</title>
@@ -55,5 +63,10 @@
             </form>
         </div>
     </div>
+<script type="text/javascript" src="src/utils/environment-utils.js"></script>
+<script type="text/javascript" src="src/analytics.js"></script>
+<script type="application/javascript">
+    Analytics.start();
+</script>
 </body>
 </html>
