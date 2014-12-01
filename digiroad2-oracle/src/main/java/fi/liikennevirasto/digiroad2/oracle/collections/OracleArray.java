@@ -63,7 +63,8 @@ public class OracleArray {
                 "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
                 "JOIN PROPERTY p ON a.asset_type_id = p.asset_type_id AND p.public_id = 'kokonaispainorajoitus' " +
                 "JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
-                "WHERE a.asset_type_id = 30 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+                "WHERE a.asset_type_id = 30 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
+                "AND (a.valid_to >= sysdate OR a.valid_to is null)";
         return linearAssetsByRoadLinkIds(ids, connection, query);
     }
 }

@@ -271,7 +271,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("get totalweightlimits", Tag("db")) {
     getWithUserAuth("/totalweightlimits?bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      parse(body).extract[List[TotalWeightLimitLink]].size should be(1)
+      parse(body).extract[List[TotalWeightLimitLink]].size should be(2)
     }
   }
 
