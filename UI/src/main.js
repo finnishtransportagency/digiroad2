@@ -15,6 +15,8 @@ $(function() {
   var parameters = parseQueryParameters(queryString);
   var fakeMode = parameters.withFakeData === 'true';
 
+  Analytics.start();
+
   if (fakeMode) {
     getScripts(['test_data/RoadLinkTestData.js', 'test_data/SpeedLimitsTestData.js'], function() {
       var speedLimitsData = SpeedLimitsTestData.generate();
