@@ -29,9 +29,15 @@
                '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + '</p>' +
-                 '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
-                 '<span class="unit-of-measure total-weight-limit">kg</span>' +
+                 '<div class="choice-group">' +
+                   '<div class="radio">' +
+                     '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled"/></label>' +
+                     '<label>Painorajoitus:<input type="radio" name="total-weight-limit" value="enabled" checked/></label>' +
+                   '</div>' +
+                   '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
+                   '<span class="unit-of-measure total-weight-limit">kg</span>' +
+                 '</div>' +
+                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + ' kg</p>' +
                '</div>' +
                formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
@@ -56,6 +62,7 @@
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
     eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
