@@ -24,7 +24,7 @@ object TotalWeightLimitService {
   }
 
   case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
-  case class TotalWeightLimit(id: Long, limit: Int, endpoints: Set[Point],
+  case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
                               modifiedBy: Option[String], modifiedDateTime: Option[String],
                               createdBy: Option[String], createdDateTime: Option[String])
 
@@ -41,21 +41,21 @@ object TotalWeightLimitService {
     }
   }
 
-  private def totalWeightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime])] = {
+  private def totalWeightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)] = {
     val totalWeightLimits = sql"""
       select a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
-             a.modified_by, a.modified_date, a.created_by, a.created_date
+             a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
       join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'kokonaispainorajoitus'
       join number_property_value s on s.asset_id = a.id and s.property_id = p.id
       where a.asset_type_id = 30 and a.id = $id
-      """.as[(Long, Long, Int, Int, Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
+      """.as[(Long, Long, Int, Int, Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
 
-    totalWeightLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt) =>
+    totalWeightLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (segmentId, roadLinkId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt)
+      (segmentId, roadLinkId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired)
     }
   }
 
@@ -89,8 +89,8 @@ object TotalWeightLimitService {
         val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
         val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
         val head = links.head
-        val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt) = head
-        Some(TotalWeightLimit(id, limit, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
+        val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
+        Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
       }
     }
   }
