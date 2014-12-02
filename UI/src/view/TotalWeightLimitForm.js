@@ -57,7 +57,9 @@
     });
     toggleElement.change(function(event) {
       var expired = $(event.currentTarget).val();
-      selectedTotalWeightLimit.setExpired(expired === 'disabled' ? true : false);
+      var disabled = expired === 'disabled';
+      selectedTotalWeightLimit.setExpired(disabled);
+      inputElement.prop('disabled', disabled);
     });
   };
 
