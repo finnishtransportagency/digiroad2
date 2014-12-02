@@ -76,16 +76,24 @@
     }, 1000);
 
     this.updateTotalWeightLimit = _.throttle(function(id, limit, success, failure) {
+      putUpdateTotalWeightLimitCall(id, {value: limit}, success, failure);
+    }, 1000);
+
+    this.expireTotalWeightLimit = _.throttle(function(id, success, failure) {
+      putUpdateTotalWeightLimitCall(id, {expired: true}, success, failure);
+    }, 1000);
+
+    var putUpdateTotalWeightLimitCall = function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/totalweightlimits/" + id,
-        data: JSON.stringify({value: limit}),
+        data: JSON.stringify(data),
         dataType: "json",
         success: success,
         error: failure
       });
-    }, 1000);
+    };
 
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {

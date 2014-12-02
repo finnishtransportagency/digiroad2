@@ -46,14 +46,29 @@
     };
 
     this.save = function() {
-      backend.updateTotalWeightLimit(current.id, current.limit, function(totalWeightLimit) {
+      var success = function(totalWeightLimit) {
         dirty = false;
         current = _.merge({}, current, totalWeightLimit);
         originalTotalWeightLimit = current.limit;
         eventbus.trigger('totalWeightLimit:saved', current);
-      }, function() {
+      };
+      var failure = function() {
         eventbus.trigger('asset:updateFailed');
-      });
+      };
+
+      if (current.expired) {
+        expire(success, failure);
+      } else {
+        update(success, failure);
+      }
+    };
+
+    var expire = function(success, failure) {
+      backend.expireTotalWeightLimit(current.id, success, failure);
+    };
+
+    var update = function(success, failure) {
+      backend.updateTotalWeightLimit(current.id, current.limit, success, failure);
     };
 
     this.cancel = function() {
