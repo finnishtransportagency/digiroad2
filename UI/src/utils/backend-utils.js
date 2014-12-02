@@ -59,7 +59,7 @@
         data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, limit: limit}),
         dataType: "json",
         success: success,
-        failure: failure
+        error: failure
       });
     };
 
@@ -83,7 +83,7 @@
         data: JSON.stringify({value: limit}),
         dataType: "json",
         success: success,
-        failure: failure
+        error: failure
       });
     }, 1000);
 
