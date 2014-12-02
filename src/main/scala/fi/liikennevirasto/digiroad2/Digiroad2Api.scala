@@ -236,13 +236,22 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
   }
 
+  private def validateTotalWeightLimitValue(value: BigInt): Unit = {
+    if (value > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Total weight limit value too big")
+    } else if (value < 0) {
+      throw new IllegalArgumentException("Total weight limit value cannot be negative")
+    }
+  }
+
   put("/totalweightlimits/:id") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val id = params("id").toLong
-    (parsedBody \ "value").extractOpt[Int] match {
+    (parsedBody \ "value").extractOpt[BigInt] match {
       case Some(value) =>
-        TotalWeightLimitService.updateTotalWeightLimitValue(id, value, user.username) match {
+        validateTotalWeightLimitValue(value)
+        TotalWeightLimitService.updateTotalWeightLimitValue(id, value.intValue, user.username) match {
           case Some(id) => TotalWeightLimitService.getById(id)
           case None => NotFound("Total weight limit " + id + " not found")
         }
