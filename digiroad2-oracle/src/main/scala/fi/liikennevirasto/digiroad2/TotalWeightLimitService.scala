@@ -98,17 +98,37 @@ object TotalWeightLimitService {
   private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
 
-  def updateTotalWeightLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  private def updateTotalWeightLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = updateNumberProperty(id, propertyId, value)
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  private def updateTotalWeightLimitExpiration(id: Long, expired: Boolean, username: String) = {
+    val assetsUpdated = Queries.updateAssetModified(id, username).first
+    val propertiesUpdated = expired match {
+      case true => sqlu"update asset set valid_to = sysdate where id = $id".first
+      case false => sqlu"update asset set valid_to = null where id = $id".first
+    }
+    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+      Some(id)
+    } else {
+      None
+    }
+  }
+
+  def updateTotalWeightLimit(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
     Database.forDataSource(dataSource).withDynTransaction {
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
-      val assetsUpdated = Queries.updateAssetModified(id, username).first
-      val propertiesUpdated = updateNumberProperty(id, propertyId, value)
-      if (assetsUpdated == 1 && propertiesUpdated == 1) {
-        Some(id)
-      } else {
-        dynamicSession.rollback()
-        None
-      }
+      val valueUpdate: Option[Long] = value.flatMap(updateTotalWeightLimitValue(id, _, username))
+      val expirationUpdate: Option[Long] = updateTotalWeightLimitExpiration(id, expired, username)
+      val updatedId = valueUpdate.orElse(expirationUpdate)
+      if (updatedId.isEmpty) dynamicSession.rollback()
+      updatedId
     }
   }
 }

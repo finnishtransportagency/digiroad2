@@ -248,14 +248,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val id = params("id").toLong
-    (parsedBody \ "value").extractOpt[BigInt] match {
-      case Some(value) =>
-        validateTotalWeightLimitValue(value)
-        TotalWeightLimitService.updateTotalWeightLimitValue(id, value.intValue, user.username) match {
-          case Some(id) => TotalWeightLimitService.getById(id)
+    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
+    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
+    (expiredOption, valueOption) match {
+      case (None, None) => throw new IllegalArgumentException("Total weight limit value or expiration not provided")
+      case (expired, value) =>
+        value.foreach(validateTotalWeightLimitValue)
+        TotalWeightLimitService.updateTotalWeightLimit(id, value.map(_.toInt), expired.getOrElse(false), user.username) match {
+          case Some(segmentId) => TotalWeightLimitService.getById(segmentId)
           case None => NotFound("Total weight limit " + id + " not found")
         }
-      case None => throw new IllegalArgumentException("Total weight limit value not provided")
     }
   }
 
