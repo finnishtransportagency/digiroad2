@@ -3,7 +3,7 @@
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
-      '    Kokonaispainorajoitukset',
+      '    Suurin sallittu massa',
       '  </header>',
       '</div>'].join('');
 
@@ -18,7 +18,7 @@
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Kokonaispainorajoitukset',
+      '    Suurin sallittu massa',
       '  </header>',
       '  <div class="panel-section panel-legend total-weight-limit-legend">',
             totalWeightLimitLegendTemplate,
