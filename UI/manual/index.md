@@ -198,7 +198,7 @@ _Nopeusrajoitusten valinta._
 3.5 Kokonaispainorajoitusten valinta
 ------------------------------------
 
-Kartalle voi valita kokonaispainorajoitukset valitsemalla tietolajit-paletista (1) Kokonaispainorajoitukset. kokonaispainorajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa kokonaispainorajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Kokonaispainorajoitukset on visualisoitu vihre&auml;ll&auml; v&auml;rill&auml; ja tielinkit, joilla rajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita kokonaispainorajoitukset valitsemalla tietolajit-paletista (1) Kokonaispainorajoitukset. kokonaispainorajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa kokonaispainorajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Kokonaispainorajoitukset on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla rajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
 
 4. Katselutila
 --------------
@@ -238,7 +238,11 @@ _Nopeusrajoitusten visualisointi._
 4.3 Kokonaispainorajoitusten tietojen katselu
 ---------------------------------------------
 
-Kokonaispainorajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen kokonaispainorajoituksen voi valita klikkaamalla kartalta sen geometriaa. Kokonaispainorajoituksen geometria tummentuu ja muut kokonaispainorajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu kokonaispainorajoituksen ominaisuustieton&auml;kym&auml;.
+Kokonaispainorajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen kokonaispainorajoituksen voi valita klikkaamalla kartalta sen geometriaa (4). Kokonaispainorajoituksen geometria tummentuu ja muut kokonaispainorajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu kokonaispainorajoituksen ominaisuustieton&auml;kym&auml;.
+
+![Kokonaispainorajoitusten tietojen katselu](k31.JPG)
+
+_Kokonaispainorajoitusten katsleutila._
 
 5. Muokkaustila
 ---------------
@@ -426,7 +430,7 @@ Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu 
 
 Toistaiseksi nopeusrajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole nopeusrajoitusten muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n. 
 
-Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisena, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 ![Nopeusrajoituksen muokkaus.](k26.png)
 
@@ -450,3 +454,19 @@ Katkaistun nopeusrajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;i
 Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lkeen nopeusrajoitukselle generoidaan taustaj&auml;rjestelm&auml;ss&auml; ID sek&auml; p&auml;&auml;tepisteet 1 ja 2.
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
+
+5.2 Kokonaispainorajoitukset
+----------------------------
+
+Tien kokonaispainorajoitus on suurin sallittu massa, jonka avoneuvo saa tiehen kohdistaa.
+
+5.2.1 Kokonaispainorajoituksen ominaisuustietojen muokkaus
+----------------------------------------------------------
+
+Toistaiseksi kokonaispainorajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
+
+Kokonaispainorajoitusta muokataan muokkaustilassa. Muokattava kokonaispainorajoitus valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kokonaispainorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+![Kokonaispainorajoitusten muokkaus](k32.JPG)
+
+_Kokonaispainorajoitusten muokkaus._
