@@ -195,10 +195,10 @@ Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, e
 
 _Nopeusrajoitusten valinta._
 
-3.5 Kokonaispainorajoitusten valinta
+3.5 Suurin sallittu massa -valinta
 ------------------------------------
 
-Kartalle voi valita kokonaispainorajoitukset valitsemalla tietolajit-paletista (1) Kokonaispainorajoitukset. kokonaispainorajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa kokonaispainorajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Kokonaispainorajoitukset on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla rajoitusta ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita tietolajit-paletista (1) Suurin sallittu massa -valinnan. Suurimmat sallitut massat n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua massaa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
 
 4. Katselutila
 --------------
@@ -235,14 +235,14 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 
 _Nopeusrajoitusten visualisointi._
 
-4.3 Kokonaispainorajoitusten tietojen katselu
+4.3 Suurimman sallitun massan tietojen katselu
 ---------------------------------------------
 
-Kokonaispainorajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen kokonaispainorajoituksen voi valita klikkaamalla kartalta sen geometriaa (4). Kokonaispainorajoituksen geometria tummentuu ja muut kokonaispainorajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu kokonaispainorajoituksen ominaisuustieton&auml;kym&auml;.
+Suurimmat sallitut massat tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen suurimman sallitun massan voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut suurimmat sallitut massat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu suurimman sallitun massan ominaisuustieton&auml;kym&auml;.
 
-![Kokonaispainorajoitusten tietojen katselu](k31.JPG)
+![Suurimman sallitun tietojen katselu](k31.JPG)
 
-_Kokonaispainorajoitusten katsleutila._
+_Suurin sallittu massa - katsleutila._
 
 5. Muokkaustila
 ---------------
@@ -455,18 +455,18 @@ Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lke
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
-5.2 Kokonaispainorajoitukset
+5.2 Suurin sallittu massa
 ----------------------------
 
-Tien kokonaispainorajoitus on suurin sallittu massa, jonka avoneuvo saa tiehen kohdistaa.
+Tien suurin sallittu massa on suurin sallittu massa, jonka avoneuvo saa tiehen kohdistaa.
 
-5.2.1 Kokonaispainorajoituksen ominaisuustietojen muokkaus
+5.2.1 Suurimman sallitun massan ominaisuustietojen muokkaus
 ----------------------------------------------------------
 
-Toistaiseksi kokonaispainorajoituksia voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
+Toistaiseksi suurinta sallittua massaa voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
 
-Kokonaispainorajoitusta muokataan muokkaustilassa. Muokattava kokonaispainorajoitus valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kokonaispainorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Suurinta sallittua massaa muokataan muokkaustilassa. Muokattava suurin sallittu massa valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kokonaispainorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-![Kokonaispainorajoitusten muokkaus](k32.JPG)
+![Suurimman sallitun massan muokkaus](k32.JPG)
 
-_Kokonaispainorajoitusten muokkaus._
+_Suurimman sallitun massan muokkaus._
