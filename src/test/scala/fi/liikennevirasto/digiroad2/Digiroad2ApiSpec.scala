@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.TotalWeightLimitService.TotalWeightLimitLink
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
 import org.scalatest.Tag
 import org.json4s._

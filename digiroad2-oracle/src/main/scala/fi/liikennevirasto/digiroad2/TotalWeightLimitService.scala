@@ -17,16 +17,18 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 
-object TotalWeightLimitService {
+case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
+case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
+                            modifiedBy: Option[String], modifiedDateTime: Option[String],
+                            createdBy: Option[String], createdDateTime: Option[String])
+
+trait TotalWeightLimitOperations {
+  def withDynTransaction[T](f: => T): T
+
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
-
-  case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None)
-  case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
-                              modifiedBy: Option[String], modifiedDateTime: Option[String],
-                              createdBy: Option[String], createdDateTime: Option[String])
 
   private def getLinksWithPositions(links: Seq[TotalWeightLimitLink]): Seq[TotalWeightLimitLink] = {
     def getLinkEndpoints(link: TotalWeightLimitLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
@@ -60,7 +62,7 @@ object TotalWeightLimitService {
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[TotalWeightLimitLink] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, false, municipalities)
       val roadLinkIds = roadLinks.map(_._1).toList
 
@@ -82,7 +84,7 @@ object TotalWeightLimitService {
   }
 
   def getById(id: Long): Option[TotalWeightLimit] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    withDynTransaction {
       val links = totalWeightLimitLinksById(id)
       if (links.isEmpty) None
       else {
@@ -123,7 +125,7 @@ object TotalWeightLimitService {
   }
 
   def updateTotalWeightLimit(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    withDynTransaction {
       val valueUpdate: Option[Long] = value.flatMap(updateTotalWeightLimitValue(id, _, username))
       val expirationUpdate: Option[Long] = updateTotalWeightLimitExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
@@ -131,4 +133,8 @@ object TotalWeightLimitService {
       updatedId
     }
   }
+}
+
+object TotalWeightLimitService extends TotalWeightLimitOperations {
+  def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
 }
