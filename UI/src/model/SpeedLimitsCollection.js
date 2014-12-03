@@ -47,7 +47,7 @@
           speedLimits[selected.id] = selected;
         } else if (selected) {
           var selectedInCollection = speedLimits[selected.id];
-          selectedInCollection.isSelected = selected.limit;
+          selectedInCollection.isSelected = selected.isSelected;
           selectedInCollection.limit = selected.limit;
         }
 

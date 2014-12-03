@@ -78,6 +78,7 @@
       current.limit = originalTotalWeightLimit;
       current.expired = originalExpired;
       collection.changeLimit(current.id, originalTotalWeightLimit);
+      collection.changeExpired(current.id, originalExpired);
       dirty = false;
       eventbus.trigger('totalWeightLimit:cancelled', self);
     };
@@ -133,6 +134,7 @@
 
     this.setExpired = function(expired) {
       if (expired != current.expired) {
+        collection.changeExpired(current.id, expired);
         current.expired = expired;
         dirty = true;
         eventbus.trigger('totalWeightLimit:expirationChanged', self);

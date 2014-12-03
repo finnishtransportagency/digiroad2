@@ -135,20 +135,6 @@ window.TotalWeightLimitLayer = function(params) {
     createZoomDependentOneWayRule(12, { strokeWidth: 8 })
   ];
 
-  var createWeightLimitSizeStyleRule = function(style) {
-    var limitFilter = new OpenLayers.Filter.Comparison({
-      type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'limit', value: 0
-    });
-    return new OpenLayers.Rule({
-      filter: limitFilter,
-      symbolizer: style
-    });
-  };
-
-  var totalWeightLimitSizeStyleRules = [
-    createWeightLimitSizeStyleRule({ strokeColor: '#ff0000' })
-  ];
-
   var totalWeightLimitFeatureSizeLookup = {
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
@@ -156,17 +142,22 @@ window.TotalWeightLimitLayer = function(params) {
     12: { strokeWidth: 16 }
   };
 
+  var styleLookup = {
+    false: {strokeColor: '#ff0000'},
+    true: {strokeColor: '#7f7f7c'}
+  };
+
   var typeSpecificStyleLookup = {
-    line: { strokeOpacity: 0.7 , strokeColor: '#7f7f7c'},
+    line: { strokeOpacity: 0.7 },
     cutter: { externalGraphic: 'images/total-weight-limits/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
+  browseStyleMap.addUniqueValueRules('default', 'expired', styleLookup);
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(validityDirectionStyleRules);
-  browseStyle.addRules(totalWeightLimitSizeStyleRules);
 
   var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
     strokeOpacity: 0.15
@@ -178,11 +169,10 @@ window.TotalWeightLimitLayer = function(params) {
     default: selectionDefaultStyle,
     select: selectionSelectStyle
   });
+  selectionStyle.addUniqueValueRules('default', 'expired', styleLookup);
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
-  selectionDefaultStyle.addRules(totalWeightLimitSizeStyleRules);
-  selectionSelectStyle.addRules(totalWeightLimitSizeStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('totalWeightLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
@@ -279,7 +269,9 @@ window.TotalWeightLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleTotalWeightLimitSelected);
     eventListener.listenTo(eventbus, 'totalWeightLimit:saved', handleTotalWeightLimitSaved);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:limitChanged', handleTotalWeightLimitChanged);
+    eventListener.listenTo(eventbus,
+        'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
+        handleTotalWeightLimitChanged);
     eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', handleTotalWeightLimitCancelled);
     eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleTotalWeightLimitUnSelected);
   };
@@ -340,7 +332,9 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var drawTotalWeightLimits = function(totalWeightLimits) {
-    var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) { return _.merge({}, limit, { type: 'line' }); });
+    var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) {
+      return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
+    });
     var totalWeightLimitsWithAdjustments = _.map(totalWeightLimitsWithType, linearAsset.offsetBySideCode);
     vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithAdjustments));
 
