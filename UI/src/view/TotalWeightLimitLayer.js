@@ -208,7 +208,14 @@ window.TotalWeightLimitLayer = function(params) {
     onSelect: totalWeightLimitOnSelect,
     onUnselect: function(feature) {
       if (selectedTotalWeightLimit.exists()) {
+        var id = selectedTotalWeightLimit.getId();
+        var expired = selectedTotalWeightLimit.expired();
         selectedTotalWeightLimit.close();
+        if (expired) {
+          vectorLayer.removeFeatures(_.filter(vectorLayer.features, function(feature) {
+            return feature.attributes.id === id;
+          }));
+        }
       }
     }
   });

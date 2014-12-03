@@ -94,6 +94,10 @@
       }
     };
 
+    this.remove = function(id) {
+      delete totalWeightLimits[id];
+    };
+
     var calculateMeasure = function(links) {
       var geometries = _.map(links, function(link) {
         var points = _.map(link.points, function(point) {

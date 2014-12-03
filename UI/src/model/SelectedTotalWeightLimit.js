@@ -28,8 +28,11 @@
 
     this.close = function() {
       if (current && !dirty) {
-        collection.markAsDeselected(current.id);
         var id = current.id;
+        collection.markAsDeselected(id);
+        if (current.expired) {
+          collection.remove(id);
+        }
         current = null;
         eventbus.trigger('totalWeightLimit:unselected', id);
       }
