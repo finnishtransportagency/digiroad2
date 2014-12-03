@@ -18,6 +18,8 @@
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
+    var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
+    var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -31,8 +33,8 @@
                  '<label class="control-label">Rajoitus</label>' +
                  '<div class="choice-group">' +
                    '<div class="radio">' +
-                     '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled"/></label>' +
-                     '<label>Painorajoitus:<input type="radio" name="total-weight-limit" value="enabled" checked/></label>' +
+                     '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled" ' + expiredChecked + '/></label>' +
+                     '<label>Painorajoitus:<input type="radio" name="total-weight-limit" value="enabled" ' + nonExpiredChecked + '/></label>' +
                    '</div>' +
                    '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
                    '<span class="unit-of-measure total-weight-limit">kg</span>' +
@@ -52,6 +54,7 @@
 
   var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedTotalWeightLimit) {
     inputElement.val(selectedTotalWeightLimit.getLimit());
+    inputElement.prop('disabled', selectedTotalWeightLimit.expired());
     inputElement.on('input', function(event) {
       selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).val(), 10));
     });
