@@ -26,9 +26,12 @@
       });
     };
 
-    this.create = function() {
+    this.create = function(roadLinkId) {
       self.close();
-      current = {};
+      current = {
+        isRoadLink: true,
+        roadLinkId: roadLinkId
+      };
     };
 
     this.close = function() {
@@ -97,8 +100,16 @@
       return current !== null;
     };
 
+    this.isRoadLink = function() {
+      return current.isRoadLink;
+    };
+
     this.getId = function() {
       return current.id;
+    };
+
+    this.getRoadLinkId = function() {
+      return current.roadLinkId;
     };
 
     this.getEndpoints = function() {
