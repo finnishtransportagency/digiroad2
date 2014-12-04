@@ -31,7 +31,7 @@
               position: value.position,
               points: value.points
             };
-          }), sideCode: values[0].sideCode, limit: values[0].limit }];
+          }), sideCode: values[0].sideCode, limit: values[0].limit, expired: values[0].expired }];
         })
         .object()
         .value();
@@ -47,8 +47,9 @@
           totalWeightLimits[selected.id] = selected;
         } else if (selected) {
           var selectedInCollection = totalWeightLimits[selected.id];
-          selectedInCollection.isSelected = selected.limit;
+          selectedInCollection.isSelected = selected.isSelected;
           selectedInCollection.limit = selected.limit;
+          selectedInCollection.expired = selected.expired;
         }
 
         if (splitTotalWeightLimits.existing) {
@@ -83,6 +84,18 @@
       } else {
         totalWeightLimits[id].limit = limit;
       }
+    };
+
+    this.changeExpired = function(id, expired) {
+      if (splitTotalWeightLimits.created) {
+        splitTotalWeightLimits.created.expired = expired;
+      } else {
+        totalWeightLimits[id].expired = expired;
+      }
+    };
+
+    this.remove = function(id) {
+      delete totalWeightLimits[id];
     };
 
     var calculateMeasure = function(links) {

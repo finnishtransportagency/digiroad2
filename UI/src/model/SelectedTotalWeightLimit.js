@@ -4,6 +4,7 @@
     var self = this;
     var dirty = false;
     var originalTotalWeightLimit = null;
+    var originalExpired = null;
 
     eventbus.on('totalWeightLimit:split', function() {
       collection.fetchTotalWeightLimit(null, function(totalWeightLimit) {
@@ -19,6 +20,7 @@
       collection.fetchTotalWeightLimit(id, function(totalWeightLimit) {
         current = totalWeightLimit;
         originalTotalWeightLimit = totalWeightLimit.limit;
+        originalExpired = totalWeightLimit.expired;
         collection.markAsSelected(totalWeightLimit.id);
         eventbus.trigger('totalWeightLimit:selected', self);
       });
@@ -26,8 +28,11 @@
 
     this.close = function() {
       if (current && !dirty) {
-        collection.markAsDeselected(current.id);
         var id = current.id;
+        collection.markAsDeselected(id);
+        if (current.expired) {
+          collection.remove(id);
+        }
         current = null;
         eventbus.trigger('totalWeightLimit:unselected', id);
       }
@@ -46,19 +51,37 @@
     };
 
     this.save = function() {
-      backend.updateTotalWeightLimit(current.id, current.limit, function(totalWeightLimit) {
+      var success = function(totalWeightLimit) {
         dirty = false;
         current = _.merge({}, current, totalWeightLimit);
         originalTotalWeightLimit = current.limit;
+        originalExpired = current.expired;
         eventbus.trigger('totalWeightLimit:saved', current);
-      }, function() {
+      };
+      var failure = function() {
         eventbus.trigger('asset:updateFailed');
-      });
+      };
+
+      if (current.expired) {
+        expire(success, failure);
+      } else {
+        update(success, failure);
+      }
+    };
+
+    var expire = function(success, failure) {
+      backend.expireTotalWeightLimit(current.id, success, failure);
+    };
+
+    var update = function(success, failure) {
+      backend.updateTotalWeightLimit(current.id, current.limit, success, failure);
     };
 
     this.cancel = function() {
       current.limit = originalTotalWeightLimit;
+      current.expired = originalExpired;
       collection.changeLimit(current.id, originalTotalWeightLimit);
+      collection.changeExpired(current.id, originalExpired);
       dirty = false;
       eventbus.trigger('totalWeightLimit:cancelled', self);
     };
@@ -77,6 +100,10 @@
 
     this.getLimit = function() {
       return current.limit;
+    };
+
+    this.expired = function() {
+      return current.expired;
     };
 
     this.getModifiedBy = function() {
@@ -108,6 +135,15 @@
       }
     };
 
+    this.setExpired = function(expired) {
+      if (expired != current.expired) {
+        collection.changeExpired(current.id, expired);
+        current.expired = expired;
+        dirty = true;
+        eventbus.trigger('totalWeightLimit:expirationChanged', self);
+      }
+    };
+
     this.isDirty = function() {
       return dirty;
     };
@@ -119,6 +155,7 @@
     eventbus.on('totalWeightLimit:saved', function(totalWeightLimit) {
       current = totalWeightLimit;
       originalTotalWeightLimit = totalWeightLimit.limit;
+      originalExpired = totalWeightLimit.expired;
       collection.markAsSelected(totalWeightLimit.id);
       dirty = false;
     });

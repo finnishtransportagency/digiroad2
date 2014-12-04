@@ -18,6 +18,8 @@
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
+    var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
+    var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -29,9 +31,15 @@
                '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + '</p>' +
-                 '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
-                 '<span class="unit-of-measure total-weight-limit">kg</span>' +
+                 '<div class="choice-group">' +
+                   '<div class="radio">' +
+                     '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled" ' + expiredChecked + '/></label>' +
+                     '<label>Painorajoitus:<input type="radio" name="total-weight-limit" value="enabled" ' + nonExpiredChecked + '/></label>' +
+                   '</div>' +
+                   '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
+                   '<span class="unit-of-measure total-weight-limit">kg</span>' +
+                 '</div>' +
+                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + ' kg</p>' +
                '</div>' +
                formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
@@ -44,10 +52,17 @@
            '</footer>';
   };
 
-  var setupTotalWeightLimitInput = function(inputElement, selectedTotalWeightLimit) {
+  var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedTotalWeightLimit) {
     inputElement.val(selectedTotalWeightLimit.getLimit());
+    inputElement.prop('disabled', selectedTotalWeightLimit.expired());
     inputElement.on('input', function(event) {
       selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).val(), 10));
+    });
+    toggleElement.change(function(event) {
+      var expired = $(event.currentTarget).val();
+      var disabled = expired === 'disabled';
+      selectedTotalWeightLimit.setExpired(disabled);
+      inputElement.prop('disabled', disabled);
     });
   };
 
@@ -56,18 +71,21 @@
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
       rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
     eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
       rootElement.html(template(selectedTotalWeightLimit));
-      setupTotalWeightLimitInput(rootElement.find('.total-weight-limit'), selectedTotalWeightLimit);
+      var toggleElement = rootElement.find(".radio input");
+      var inputElement = rootElement.find('.total-weight-limit');
+      setupTotalWeightLimitInput(toggleElement, inputElement, selectedTotalWeightLimit);
       toggleMode(applicationModel.isReadOnly());
     });
     eventbus.on('totalWeightLimit:unselected', function() {
       rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);
-    eventbus.on('totalWeightLimit:limitChanged', function() {
+    eventbus.on('totalWeightLimit:limitChanged totalWeightLimit:expirationChanged', function() {
       rootElement.find('.form-controls button').attr('disabled', false);
     });
     rootElement.on('click', '.total-weight-limit button.save', function() {
