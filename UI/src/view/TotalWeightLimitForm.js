@@ -52,11 +52,16 @@
            '</footer>';
   };
 
+  var removeWhitespace = function(s) {
+    return s.replace(/\s/g, '');
+  };
+
   var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedTotalWeightLimit) {
     inputElement.val(selectedTotalWeightLimit.getLimit());
     inputElement.prop('disabled', selectedTotalWeightLimit.expired());
     inputElement.on('input', function(event) {
-      selectedTotalWeightLimit.setLimit(parseInt($(event.currentTarget).val(), 10));
+      var value = parseInt(removeWhitespace($(event.currentTarget).val()), 10);
+      selectedTotalWeightLimit.setLimit(value);
     });
     toggleElement.change(function(event) {
       var expired = $(event.currentTarget).val();
