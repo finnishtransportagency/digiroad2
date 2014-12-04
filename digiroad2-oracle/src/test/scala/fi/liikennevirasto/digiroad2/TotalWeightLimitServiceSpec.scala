@@ -10,23 +10,28 @@ class TotalWeightLimitServiceSpec extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  test("Expire weight limit") {
+  def runWithCleanup(test: => Unit): Unit = {
     Database.forDataSource(PassThroughService.dataSource).withDynTransaction {
-      PassThroughService.updateTotalWeightLimit(11111, None, true, "lol")
-      val limit = PassThroughService.getById(11111)
-      limit.get.limit should be (4000)
-      limit.get.expired should be (true)
+      test
       dynamicSession.rollback()
     }
   }
 
+  test("Expire weight limit") {
+    runWithCleanup {
+      PassThroughService.updateTotalWeightLimit(11111, None, true, "lol")
+      val limit = PassThroughService.getById(11111)
+      limit.get.limit should be (4000)
+      limit.get.expired should be (true)
+    }
+  }
+
   test("Update weight limit") {
-    Database.forDataSource(PassThroughService.dataSource).withDynTransaction {
+    runWithCleanup {
       PassThroughService.updateTotalWeightLimit(11111, Some(2000), false, "lol")
       val limit = PassThroughService.getById(11111)
       limit.get.limit should be (2000)
       limit.get.expired should be (false)
-      dynamicSession.rollback()
     }
   }
 }
