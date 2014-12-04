@@ -26,27 +26,33 @@ var RoadStyles = function() {
     var layerStyleMaps = {};
 
     var enableColorsOnRoadLayer = function() {
-      var roadLinkTypeStyleLookup = {
-        PrivateRoad: { strokeColor: "#0011bb" },
-        Street: { strokeColor: "#11bb00" },
-        Road: { strokeColor: "#ff0000" }
-      };
-      vectorLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+        var roadLinkTypeStyleLookup = {
+          PrivateRoad: { strokeColor: "#0011bb" },
+          Street: { strokeColor: "#11bb00" },
+          Road: { strokeColor: "#ff0000" }
+        };
+        vectorLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+      }
     };
 
     var disableColorsOnRoadLayer = function() {
-      vectorLayer.styleMap.styles.default.rules = [];
+      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+        vectorLayer.styleMap.styles.default.rules = [];
+      }
     };
 
     var changeRoadsWidthByZoomLevel = function() {
-      var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
-      var roadWidth = widthBase * widthBase;
-      if (applicationModel.isRoadTypeShown()) {
-        vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
-        vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
-      } else {
-        vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-        vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+        var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
+        var roadWidth = widthBase * widthBase;
+        if (applicationModel.isRoadTypeShown()) {
+          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
+          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
+        } else {
+          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
+          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
+        }
       }
     };
 

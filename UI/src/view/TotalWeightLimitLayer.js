@@ -181,17 +181,16 @@ window.TotalWeightLimitLayer = function(params) {
   var totalWeightLimitCutter = new TotalWeightLimitCutter(vectorLayer, collection);
 
   var roadLayerStyleMap = new OpenLayers.StyleMap({
-    "select": new OpenLayers.Style({
-      strokeWidth: 6,
-      strokeOpacity: 1,
+    "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.85,
       strokeColor: "#7f7f7c"
-    }),
-    "default": new OpenLayers.Style({
-      strokeWidth: 5,
+    })),
+    "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeColor: "#a4a4a2",
-      strokeOpacity: 0.7
-    })
+      strokeOpacity: 0.3
+    }))
   });
+  roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
   roadLayer.setLayerSpecificStyleMap('totalWeightLimit', roadLayerStyleMap);
 
   var highlightTotalWeightLimitFeatures = function(feature) {
