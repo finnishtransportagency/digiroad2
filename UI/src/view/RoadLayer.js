@@ -23,6 +23,7 @@ var RoadStyles = function() {
   root.RoadLayer = function(map, roadCollection) {
     var vectorLayer;
     var selectControl;
+    var layerStyleMaps = {};
 
     var enableColorsOnRoadLayer = function() {
       var roadLinkTypeStyleLookup = {
@@ -90,6 +91,14 @@ var RoadStyles = function() {
       vectorLayer.addFeatures(features);
     };
 
+    var setLayerSpecificStyleMap = function(layer, styleMap) {
+      layerStyleMaps[layer] = styleMap;
+    };
+
+    var activateLayerStyleMap = function(layer) {
+      vectorLayer.styleMap = layerStyleMaps[layer] || new RoadStyles().roadStyles;
+    };
+
     eventbus.on('road:active', function(roadLinkId) {
       var nearestFeature = _.find(vectorLayer.features, function(feature) {
         return feature.attributes.roadLinkId == roadLinkId;
@@ -111,6 +120,7 @@ var RoadStyles = function() {
     }, this);
 
     eventbus.on('layer:selected', function(layer) {
+      activateLayerStyleMap(layer);
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         fetchRoads(map.getExtent());
       }
@@ -124,5 +134,10 @@ var RoadStyles = function() {
     selectControl = new OpenLayers.Control.SelectFeature(vectorLayer);
     map.addLayer(vectorLayer);
     toggleRoadType();
+
+    return {
+      layer: vectorLayer,
+      setLayerSpecificStyleMap: setLayerSpecificStyleMap
+    };
   };
 })(this);

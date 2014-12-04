@@ -126,8 +126,9 @@ var RoadCollection = function(backend) {
     var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
     var linearAsset = new LinearAsset(geometryUtils);
+    var roadLayer = new RoadLayer(map, roadCollection);
     var layers = {
-      road: new RoadLayer(map, roadCollection),
+      road: roadLayer,
       asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
       speedLimit: new SpeedLimitLayer({
         map: map,
@@ -145,7 +146,8 @@ var RoadCollection = function(backend) {
         selectedTotalWeightLimit: models.selectedTotalWeightLimit,
         roadCollection: roadCollection,
         geometryUtils: geometryUtils,
-        linearAsset: linearAsset
+        linearAsset: linearAsset,
+        roadLayer: roadLayer
       })
     };
 

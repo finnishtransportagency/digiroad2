@@ -5,7 +5,8 @@ window.TotalWeightLimitLayer = function(params) {
     selectedTotalWeightLimit = params.selectedTotalWeightLimit,
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
-    linearAsset = params.linearAsset;
+    linearAsset = params.linearAsset,
+    roadLayer = params.roadLayer;
 
   var TotalWeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -179,6 +180,20 @@ window.TotalWeightLimitLayer = function(params) {
 
   var totalWeightLimitCutter = new TotalWeightLimitCutter(vectorLayer, collection);
 
+  var roadLayerStyleMap = new OpenLayers.StyleMap({
+    "select": new OpenLayers.Style({
+      strokeWidth: 6,
+      strokeOpacity: 1,
+      strokeColor: "#7f7f7c"
+    }),
+    "default": new OpenLayers.Style({
+      strokeWidth: 5,
+      strokeColor: "#a4a4a2",
+      strokeOpacity: 0.7
+    })
+  });
+  roadLayer.setLayerSpecificStyleMap('totalWeightLimit', roadLayerStyleMap);
+
   var highlightTotalWeightLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
       if (x.attributes.id === feature.attributes.id) {
@@ -201,10 +216,14 @@ window.TotalWeightLimitLayer = function(params) {
 
   var totalWeightLimitOnSelect = function(feature) {
     setSelectionStyleAndHighlightFeature(feature);
-    selectedTotalWeightLimit.open(feature.attributes.id);
+    if (feature.attributes.id) {
+      selectedTotalWeightLimit.open(feature.attributes.id);
+    } else {
+      selectedTotalWeightLimit.create();
+    }
   };
 
-  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+  var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer, roadLayer.layer], {
     onSelect: totalWeightLimitOnSelect,
     onUnselect: function(feature) {
       if (selectedTotalWeightLimit.exists()) {

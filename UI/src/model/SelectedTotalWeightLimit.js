@@ -26,10 +26,17 @@
       });
     };
 
+    this.create = function() {
+      self.close();
+      current = {};
+    };
+
     this.close = function() {
       if (current && !dirty) {
         var id = current.id;
-        collection.markAsDeselected(id);
+        if (id) {
+          collection.markAsDeselected(id);
+        }
         if (current.expired) {
           collection.remove(id);
         }
