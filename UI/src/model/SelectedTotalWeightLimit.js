@@ -26,12 +26,20 @@
       });
     };
 
-    this.create = function(roadLinkId, endpoints) {
+    this.create = function(roadLinkId, points) {
       self.close();
+      var endpoints = [_.first(points), _.last(points)];
       current = {
         id: null,
         roadLinkId: roadLinkId,
-        endpoints: endpoints
+        endpoints: endpoints,
+        limit: 0,
+        expired: true,
+        sideCode: 1,
+        links: [{
+          roadLinkId: roadLinkId,
+          points: points
+        }]
       };
       eventbus.trigger('totalWeightLimit:selected', self);
     };
