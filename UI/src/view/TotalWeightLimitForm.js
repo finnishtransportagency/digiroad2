@@ -1,13 +1,5 @@
 (function (root) {
   var template = function(selectedTotalWeightLimit) {
-    var formFieldTemplate = function(key, value) {
-      return '<div class="form-group">' +
-               '<label class="control-label">' + key + '</label>' +
-               '<p class="form-control-static">' + value + '</p>' +
-             '</div>';
-    };
-    var firstPoint = _.first(selectedTotalWeightLimit.getEndpoints());
-    var lastPoint = _.last(selectedTotalWeightLimit.getEndpoints());
     var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
     var createdBy = selectedTotalWeightLimit.getCreatedBy() || '-';
@@ -42,10 +34,6 @@
                  '</div>' +
                  '<p class="form-control-static total-weight-limit">' + limit + '</p>' +
                '</div>' +
-               formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
-               formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
-               formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
-               formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
            '<footer class="total-weight-limit form-controls" style="display: none">' +
