@@ -92,14 +92,17 @@ window.SpeedLimitLayer = function(params) {
         return;
       }
 
-      var points = _.chain(roadCollection.getPointsOfRoadLink(nearest.feature.attributes.roadLinkId))
-                     .map(function(point) {
-                       return new OpenLayers.Geometry.Point(point.x, point.y);
-                     })
-                     .value();
-      var lineString = new OpenLayers.Geometry.LineString(points);
+      var pointsToLineString = function(points) {
+        return new OpenLayers.Geometry.LineString(
+          _.map(points, function(point) {
+                          return new OpenLayers.Geometry.Point(point.x, point.y);
+                        }));
+      };
+
+      var lineString = pointsToLineString(roadCollection.getPointsOfRoadLink(nearest.feature.attributes.roadLinkId));
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
-      _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
+      _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
+                                                mousePoint));
 
       collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
@@ -424,9 +427,10 @@ window.SpeedLimitLayer = function(params) {
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var speedLimitWithRoadLinkId = _.cloneDeep(speedLimit);
-        speedLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), speedLimitWithRoadLinkId);
+        var data = _.cloneDeep(speedLimit);
+        data.roadLinkId = link.roadLinkId;
+        data.points = link.originalPoints || points;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
       });
     }));
   };

@@ -5,6 +5,7 @@
         return asset;
       }
       asset.links = _.map(asset.links, function(link) {
+        link.originalPoints = _.cloneDeep(link.points);
         link.points = _.map(link.points, function(point, index, geometry) {
           return geometryUtils.offsetPoint(point, index, geometry, asset.sideCode);
         });
