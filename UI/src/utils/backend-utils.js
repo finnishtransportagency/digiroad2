@@ -47,7 +47,7 @@
         data: JSON.stringify({limit: limit}),
         dataType: "json",
         success: success,
-        failure: failure
+        error: failure
       });
     }, 1000);
 
