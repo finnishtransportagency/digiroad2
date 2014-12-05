@@ -218,7 +218,8 @@ window.TotalWeightLimitLayer = function(params) {
     if (feature.attributes.id) {
       selectedTotalWeightLimit.open(feature.attributes.id);
     } else {
-      selectedTotalWeightLimit.create(feature.attributes.roadLinkId);
+      var endpoints = [_.first(feature.attributes.points), _.last(feature.attributes.points)];
+      selectedTotalWeightLimit.create(feature.attributes.roadLinkId, endpoints);
     }
   };
 

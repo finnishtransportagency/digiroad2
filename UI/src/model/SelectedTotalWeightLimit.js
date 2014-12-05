@@ -26,12 +26,14 @@
       });
     };
 
-    this.create = function(roadLinkId) {
+    this.create = function(roadLinkId, endpoints) {
       self.close();
       current = {
         isRoadLink: true,
-        roadLinkId: roadLinkId
+        roadLinkId: roadLinkId,
+        endpoints: endpoints
       };
+      eventbus.trigger('totalWeightLimit:selected', self);
     };
 
     this.close = function() {
