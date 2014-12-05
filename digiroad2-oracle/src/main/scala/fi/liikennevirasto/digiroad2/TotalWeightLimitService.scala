@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 
 case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
@@ -83,17 +84,21 @@ trait TotalWeightLimitOperations {
     }
   }
 
+  private def getByIdWithoutTransaction(id: Long): Option[TotalWeightLimit] =  {
+    val links = totalWeightLimitLinksById(id)
+    if (links.isEmpty) None
+    else {
+      val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
+      val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
+      val head = links.head
+      val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
+      Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
+    }
+  }
+
   def getById(id: Long): Option[TotalWeightLimit] = {
     withDynTransaction {
-      val links = totalWeightLimitLinksById(id)
-      if (links.isEmpty) None
-      else {
-        val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
-        val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
-        val head = links.head
-        val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
-        Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
-      }
+      getByIdWithoutTransaction(id)
     }
   }
 
@@ -131,6 +136,35 @@ trait TotalWeightLimitOperations {
       val updatedId = valueUpdate.orElse(expirationUpdate)
       if (updatedId.isEmpty) dynamicSession.rollback()
       updatedId
+    }
+  }
+
+  def createTotalWeightLimit(roadLinkId: Long, value: Int, username: String): TotalWeightLimit = {
+    val sideCode = 1
+    val startMeasure = 0
+    val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId)
+
+    withDynTransaction {
+      val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+      val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
+      val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+      sqlu"""
+        insert all
+          into asset(id, asset_type_id, created_by, created_date, asset_type_id)
+          values ($id, 20, $username, sysdate, 30)
+
+          into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+          values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+
+          into asset_link(asset_id, position_id)
+          values ($id, $lrmPositionId)
+
+          into number_property_value(id, asset_id, property_id, value)
+          values ($numberPropertyValueId, $id, $propertyId, $value)
+        select * from dual
+      """.execute
+      getByIdWithoutTransaction(id).get
     }
   }
 }

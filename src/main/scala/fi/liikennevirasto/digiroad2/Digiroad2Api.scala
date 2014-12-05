@@ -261,6 +261,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  post("/totalweightlimits") {
+    val user = userProvider.getCurrentUser()
+    if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
+    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
+    val value = (parsedBody \ "value").extract[BigInt]
+    validateTotalWeightLimitValue(value)
+    val username = user.username
+    TotalWeightLimitService.createTotalWeightLimit(roadLinkId = roadLinkId,
+                                                   value = value.intValue,
+                                                   username = username)
+  }
+
   get("/speedlimits/:segmentId") {
     val segmentId = params("segmentId")
     linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))

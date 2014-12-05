@@ -176,6 +176,17 @@ object RoadLinkService {
     }
   }
 
+  def getRoadLinkLength(id: Long): Option[Double] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select sdo_lrs.geom_segment_length(shape) as length
+          from tielinkki_ctas
+          where dr1_id = $id
+        """
+      query.as[Double].firstOption
+    }
+  }
+
   def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[(Long, Seq[Point], Double, RoadLinkType, Int)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
