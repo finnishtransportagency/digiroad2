@@ -33,7 +33,7 @@
         id: null,
         roadLinkId: roadLinkId,
         endpoints: endpoints,
-        limit: 0,
+        limit: null,
         expired: true,
         sideCode: 1,
         links: [{
