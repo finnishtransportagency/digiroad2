@@ -144,7 +144,7 @@
 
     this.setLimit = function(limit) {
       if (limit != current.limit) {
-        collection.changeLimit(current.id, limit);
+        if (!isNew()) { collection.changeLimit(current.id, limit); }
         current.limit = limit;
         dirty = true;
         eventbus.trigger('totalWeightLimit:limitChanged', self);
@@ -153,7 +153,7 @@
 
     this.setExpired = function(expired) {
       if (expired != current.expired) {
-        collection.changeExpired(current.id, expired);
+        if (!isNew()) { collection.changeExpired(current.id, expired); }
         current.expired = expired;
         dirty = true;
         eventbus.trigger('totalWeightLimit:expirationChanged', self);
@@ -164,9 +164,11 @@
       return dirty;
     };
 
-    this.isNew = function() {
+    var isNew = function() {
       return current.id === null;
     };
+
+    this.isNew = isNew;
 
     eventbus.on('totalWeightLimit:saved', function(totalWeightLimit) {
       current = totalWeightLimit;
