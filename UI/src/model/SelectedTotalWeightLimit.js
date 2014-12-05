@@ -29,7 +29,7 @@
     this.create = function(roadLinkId, endpoints) {
       self.close();
       current = {
-        isRoadLink: true,
+        id: null,
         roadLinkId: roadLinkId,
         endpoints: endpoints
       };
@@ -100,10 +100,6 @@
 
     this.exists = function() {
       return current !== null;
-    };
-
-    this.isRoadLink = function() {
-      return current.isRoadLink;
     };
 
     this.getId = function() {

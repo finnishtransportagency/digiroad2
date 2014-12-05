@@ -12,14 +12,14 @@
     var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
     var createdBy = selectedTotalWeightLimit.getCreatedBy() || '-';
     var createdDateTime = selectedTotalWeightLimit.getCreatedDateTime() ? ' ' + selectedTotalWeightLimit.getCreatedDateTime() : '';
-    var header = selectedTotalWeightLimit.getId() ?
-                   '<header>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</header>' :
-                   '<header>Uusi kokonaispainorajoitus</header>';
+    var header = selectedTotalWeightLimit.isNew() ?
+      '<header>Uusi kokonaispainorajoitus</header>' :
+      '<header>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</header>';
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var expiredChecked = (selectedTotalWeightLimit.expired() || !selectedTotalWeightLimit.getId()) ? 'checked' : '';
-    var nonExpiredChecked = (selectedTotalWeightLimit.expired() || !selectedTotalWeightLimit.getId()) ? '' : 'checked';
+    var expiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? 'checked' : '';
+    var nonExpiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? '' : 'checked';
     var limit = selectedTotalWeightLimit.getLimit() ? selectedTotalWeightLimit.getLimit() + 'kg' : '-';
     return header +
            '<div class="wrapper read-only">' +

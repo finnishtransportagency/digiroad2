@@ -358,7 +358,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var getSelectedFeature = function(vectorLayer, roadLayer, selectedTotalWeightLimit) {
-    if (selectedTotalWeightLimit.isRoadLink()) {
+    if (selectedTotalWeightLimit.isNew()) {
       return _.find(roadLayer.features, function(feature) { return feature.attributes.roadLinkId === selectedTotalWeightLimit.getRoadLinkId(); });
     } else {
       return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedTotalWeightLimit.getId(); });
