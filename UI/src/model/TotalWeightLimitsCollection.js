@@ -76,7 +76,6 @@
     };
 
     this.markAsSelected = function(id) {
-      console.log('mark as selected: ', id);
       totalWeightLimits[id].isSelected = true;
     };
 
