@@ -37,7 +37,7 @@
         .value();
     };
 
-    this.fetch = function(boundingBox) {
+    this.fetch = function(boundingBox, selectedTotalWeightLimit) {
       backend.getTotalWeightLimits(boundingBox, function(fetchedTotalWeightLimits) {
         var selected = _.find(_.values(totalWeightLimits), function(totalWeightLimit) { return totalWeightLimit.isSelected; });
 
@@ -52,10 +52,15 @@
           selectedInCollection.expired = selected.expired;
         }
 
+        var newTotalWeightLimit = [];
+        if (selectedTotalWeightLimit.isNew() && selectedTotalWeightLimit.isDirty()) {
+          newTotalWeightLimit = [selectedTotalWeightLimit.get()];
+        }
+
         if (splitTotalWeightLimits.existing) {
           eventbus.trigger('totalWeightLimits:fetched', buildPayload(totalWeightLimits, splitTotalWeightLimits));
         } else {
-          eventbus.trigger('totalWeightLimits:fetched', _.values(totalWeightLimits));
+          eventbus.trigger('totalWeightLimits:fetched', _.values(totalWeightLimits).concat(newTotalWeightLimit));
         }
       });
     };
@@ -71,6 +76,7 @@
     };
 
     this.markAsSelected = function(id) {
+      console.log('mark as selected: ', id);
       totalWeightLimits[id].isSelected = true;
     };
 

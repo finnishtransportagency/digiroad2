@@ -263,7 +263,7 @@ window.TotalWeightLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox);
+      collection.fetch(boundingBox, selectedTotalWeightLimit);
     }
   };
 
@@ -339,7 +339,7 @@ window.TotalWeightLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox);
+      collection.fetch(state.bbox, selectedTotalWeightLimit);
     } else if (selectedTotalWeightLimit.isDirty()) {
       new Confirm();
     } else {

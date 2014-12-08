@@ -124,9 +124,11 @@
       eventbus.trigger('totalWeightLimit:cancelled', self);
     };
 
-    this.exists = function() {
+    var exists = function() {
       return current !== null;
     };
+
+    this.exists = exists;
 
     this.getId = function() {
       return current.id;
@@ -193,7 +195,7 @@
     };
 
     var isNew = function() {
-      return current.id === null;
+      return exists() && current.id === null;
     };
 
     this.isNew = isNew;
