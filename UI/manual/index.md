@@ -455,18 +455,29 @@ Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lke
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
-5.2 Suurin sallittu massa
+5.3 Suurin sallittu massa
 ----------------------------
 
 Tien suurin sallittu massa on suurin sallittu massa, jonka avoneuvo saa tiehen kohdistaa.
 
-5.2.1 Suurimman sallitun massan ominaisuustietojen muokkaus
+5.3.1 Suurimman sallitun massan ominaisuustietojen muokkaus
 ----------------------------------------------------------
 
 Toistaiseksi suurinta sallittua massaa voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
 
 Suurinta sallittua massaa muokataan muokkaustilassa. Muokattava suurin sallittu massa valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois kokonaispainorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
+Huom! Painorajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa painorajoituksissa.
+
 ![Suurimman sallitun massan muokkaus](k32.JPG)
 
 _Suurimman sallitun massan muokkaus._
+
+5.3.2 Suurimman sallitun massan poistaminen
+-------------------------------------------
+
+Tielinkin suurin sallittu massa poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei painorajoitusta".
+
+![Suurimman sallitun massan poistaminen](k33.JPG)
+
+_Suurimman sallitun massan poistaminen._
