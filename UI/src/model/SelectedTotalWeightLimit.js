@@ -10,6 +10,7 @@
       collection.fetchTotalWeightLimit(null, function(totalWeightLimit) {
         current = totalWeightLimit;
         originalTotalWeightLimit = totalWeightLimit.limit;
+        originalExpired = totalWeightLimit.expired;
         dirty = true;
         eventbus.trigger('totalWeightLimit:selected', self);
       });

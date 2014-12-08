@@ -21,7 +21,8 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
                             modifiedBy: Option[String], modifiedDateTime: Option[String],
-                            createdBy: Option[String], createdDateTime: Option[String])
+                            createdBy: Option[String], createdDateTime: Option[String],
+                            totalWeightLimitLinks: Seq[TotalWeightLimitLink])
 
 trait TotalWeightLimitOperations {
   def withDynTransaction[T](f: => T): T
@@ -92,7 +93,10 @@ trait TotalWeightLimitOperations {
       val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val head = links.head
       val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
-      Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print)))
+      val weightLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _) =>
+        TotalWeightLimitLink(id, roadLinkId, sideCode, limit, points, None, None, expired)
+      }
+      Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print), getLinksWithPositions(weightLimitLinks)))
     }
   }
 

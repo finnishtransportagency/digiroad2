@@ -297,11 +297,19 @@ window.TotalWeightLimitLayer = function(params) {
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawTotalWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
+    eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleTotalWeightLimitSelected);
     eventListener.listenTo(eventbus,
         'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
         handleTotalWeightLimitChanged);
     eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', concludeUpdate);
     eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleTotalWeightLimitUnSelected);
+  };
+
+  var handleTotalWeightLimitSelected = function(selectedWeightLimit) {
+    if (selectedWeightLimit.isNew()) {
+      var feature = findTotalWeightFeatureById(selectedWeightLimit.getId()) || findRoadLinkFeatureByRoadLinkId(selectedWeightLimit.getRoadLinkId());
+      setSelectionStyleAndHighlightFeature(feature);
+    }
   };
 
   var displayConfirmMessage = function() { new Confirm(); };

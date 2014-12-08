@@ -10,8 +10,8 @@
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var expiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? 'checked' : '';
-    var nonExpiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? '' : 'checked';
+    var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
+    var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
     var limit = selectedTotalWeightLimit.getLimit() ? selectedTotalWeightLimit.getLimit() + 'kg' : '-';
     return header +
            '<div class="wrapper read-only">' +

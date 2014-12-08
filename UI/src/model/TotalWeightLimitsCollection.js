@@ -31,7 +31,7 @@
               position: value.position,
               points: value.points
             };
-          }), sideCode: values[0].sideCode, limit: values[0].limit, expired: values[0].expired }];
+          }), sideCode: values[0].sideCode, limit: values[0].value, expired: values[0].expired }];
         })
         .object()
         .value();
