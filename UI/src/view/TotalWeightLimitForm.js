@@ -17,7 +17,7 @@
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
                '</div>' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +

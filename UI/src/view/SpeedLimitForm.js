@@ -27,7 +27,7 @@
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
                '</div>' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
@@ -37,9 +37,9 @@
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
-               formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
+               formFieldTemplate("P&auml;&auml;tepiste 1 X", firstPoint ? firstPoint.x : '') +
                formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
-               formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
+               formFieldTemplate("P&auml;&auml;tepiste 2 X", lastPoint ? lastPoint.x : '') +
                formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
