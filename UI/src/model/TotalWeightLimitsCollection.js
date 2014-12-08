@@ -98,6 +98,10 @@
       delete totalWeightLimits[id];
     };
 
+    this.add = function(weightLimit) {
+      totalWeightLimits[weightLimit.id] = weightLimit;
+    };
+
     var calculateMeasure = function(links) {
       var geometries = _.map(links, function(link) {
         var points = _.map(link.points, function(point) {

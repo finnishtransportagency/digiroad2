@@ -83,18 +83,10 @@
       rootElement.find('.form-controls button').attr('disabled', false);
     });
     rootElement.on('click', '.total-weight-limit button.save', function() {
-      if (selectedTotalWeightLimit.isNew()) {
-        selectedTotalWeightLimit.saveSplit();
-      } else {
-        selectedTotalWeightLimit.save();
-      }
+      selectedTotalWeightLimit.save();
     });
     rootElement.on('click', '.total-weight-limit button.cancel', function() {
-      if (selectedTotalWeightLimit.isNew()) {
-        selectedTotalWeightLimit.cancelSplit();
-      } else {
-        selectedTotalWeightLimit.cancel();
-      }
+      selectedTotalWeightLimit.cancel();
     });
   };
 

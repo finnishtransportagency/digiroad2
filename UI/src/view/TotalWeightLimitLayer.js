@@ -300,17 +300,11 @@ window.TotalWeightLimitLayer = function(params) {
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawTotalWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:saved', handleTotalWeightLimitSaved);
     eventListener.listenTo(eventbus,
         'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
         handleTotalWeightLimitChanged);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', handleTotalWeightLimitCancelled);
+    eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', concludeUpdate);
     eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleTotalWeightLimitUnSelected);
-  };
-
-  var handleTotalWeightLimitSaved = function(totalWeightLimit) {
-    var feature = findTotalWeightFeatureById(totalWeightLimit.id);
-    setSelectionStyleAndHighlightFeature(feature);
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
@@ -334,7 +328,7 @@ window.TotalWeightLimitLayer = function(params) {
     drawTotalWeightLimits([selectedTotalWeightLimit.get()]);
   };
 
-  var handleTotalWeightLimitCancelled = function() {
+  var concludeUpdate = function() {
     selectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawTotalWeightLimits(collection.getAll());

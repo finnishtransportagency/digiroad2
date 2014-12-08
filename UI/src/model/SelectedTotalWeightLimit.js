@@ -72,18 +72,24 @@
 
     this.save = function() {
       var success = function(totalWeightLimit) {
+        var wasNew = isNew();
         dirty = false;
         current = _.merge({}, current, totalWeightLimit);
         originalTotalWeightLimit = current.limit;
         originalExpired = current.expired;
+        if (wasNew) {
+          collection.add(current);
+        }
         eventbus.trigger('totalWeightLimit:saved', current);
       };
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
       };
 
-      if (current.expired) {
+      if (expired()) {
         expire(success, failure);
+      } else if (isNew()) {
+        createNew(success, failure);
       } else {
         update(success, failure);
       }
@@ -97,11 +103,17 @@
       backend.updateTotalWeightLimit(current.id, current.limit, success, failure);
     };
 
+    var createNew = function(success, failure) {
+      backend.createTotalWeightLimit(current.roadLinkId, current.limit, success, failure);
+    };
+
     this.cancel = function() {
       current.limit = originalTotalWeightLimit;
       current.expired = originalExpired;
-      collection.changeLimit(current.id, originalTotalWeightLimit);
-      collection.changeExpired(current.id, originalExpired);
+      if (!isNew()) {
+        collection.changeLimit(current.id, originalTotalWeightLimit);
+        collection.changeExpired(current.id, originalExpired);
+      }
       dirty = false;
       eventbus.trigger('totalWeightLimit:cancelled', self);
     };
@@ -126,9 +138,11 @@
       return current.limit;
     };
 
-    this.expired = function() {
+    var expired = function() {
       return current.expired;
     };
+
+    this.expired = expired;
 
     this.getModifiedBy = function() {
       return current.modifiedBy;
