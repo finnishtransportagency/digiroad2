@@ -26,10 +26,32 @@
       });
     };
 
+    this.create = function(roadLinkId, points) {
+      self.close();
+      var endpoints = [_.first(points), _.last(points)];
+      originalTotalWeightLimit = null;
+      originalExpired = true;
+      current = {
+        id: null,
+        roadLinkId: roadLinkId,
+        endpoints: endpoints,
+        limit: null,
+        expired: true,
+        sideCode: 1,
+        links: [{
+          roadLinkId: roadLinkId,
+          points: points
+        }]
+      };
+      eventbus.trigger('totalWeightLimit:selected', self);
+    };
+
     this.close = function() {
       if (current && !dirty) {
         var id = current.id;
-        collection.markAsDeselected(id);
+        if (id) {
+          collection.markAsDeselected(id);
+        }
         if (current.expired) {
           collection.remove(id);
         }
@@ -52,18 +74,28 @@
 
     this.save = function() {
       var success = function(totalWeightLimit) {
+        var wasNew = isNew();
         dirty = false;
         current = _.merge({}, current, totalWeightLimit);
         originalTotalWeightLimit = current.limit;
         originalExpired = current.expired;
+        if (wasNew) {
+          collection.add(current);
+        }
         eventbus.trigger('totalWeightLimit:saved', current);
       };
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
       };
 
-      if (current.expired) {
+      if (expired() && isNew()) {
+        return;
+      }
+
+      if (expired()) {
         expire(success, failure);
+      } else if (isNew()) {
+        createNew(success, failure);
       } else {
         update(success, failure);
       }
@@ -77,21 +109,33 @@
       backend.updateTotalWeightLimit(current.id, current.limit, success, failure);
     };
 
+    var createNew = function(success, failure) {
+      backend.createTotalWeightLimit(current.roadLinkId, current.limit, success, failure);
+    };
+
     this.cancel = function() {
       current.limit = originalTotalWeightLimit;
       current.expired = originalExpired;
-      collection.changeLimit(current.id, originalTotalWeightLimit);
-      collection.changeExpired(current.id, originalExpired);
+      if (!isNew()) {
+        collection.changeLimit(current.id, originalTotalWeightLimit);
+        collection.changeExpired(current.id, originalExpired);
+      }
       dirty = false;
       eventbus.trigger('totalWeightLimit:cancelled', self);
     };
 
-    this.exists = function() {
+    var exists = function() {
       return current !== null;
     };
 
+    this.exists = exists;
+
     this.getId = function() {
       return current.id;
+    };
+
+    this.getRoadLinkId = function() {
+      return current.roadLinkId;
     };
 
     this.getEndpoints = function() {
@@ -102,9 +146,11 @@
       return current.limit;
     };
 
-    this.expired = function() {
+    var expired = function() {
       return current.expired;
     };
+
+    this.expired = expired;
 
     this.getModifiedBy = function() {
       return current.modifiedBy;
@@ -128,7 +174,7 @@
 
     this.setLimit = function(limit) {
       if (limit != current.limit) {
-        collection.changeLimit(current.id, limit);
+        if (!isNew()) { collection.changeLimit(current.id, limit); }
         current.limit = limit;
         dirty = true;
         eventbus.trigger('totalWeightLimit:limitChanged', self);
@@ -137,7 +183,7 @@
 
     this.setExpired = function(expired) {
       if (expired != current.expired) {
-        collection.changeExpired(current.id, expired);
+        if (!isNew()) { collection.changeExpired(current.id, expired); }
         current.expired = expired;
         dirty = true;
         eventbus.trigger('totalWeightLimit:expirationChanged', self);
@@ -148,9 +194,11 @@
       return dirty;
     };
 
-    this.isNew = function() {
-      return current.id === null;
+    var isNew = function() {
+      return exists() && current.id === null;
     };
+
+    this.isNew = isNew;
 
     eventbus.on('totalWeightLimit:saved', function(totalWeightLimit) {
       current = totalWeightLimit;

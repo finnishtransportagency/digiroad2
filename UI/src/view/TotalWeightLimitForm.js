@@ -1,30 +1,23 @@
 (function (root) {
   var template = function(selectedTotalWeightLimit) {
-    var formFieldTemplate = function(key, value) {
-      return '<div class="form-group">' +
-               '<label class="control-label">' + key + '</label>' +
-               '<p class="form-control-static">' + value + '</p>' +
-             '</div>';
-    };
-    var firstPoint = _.first(selectedTotalWeightLimit.getEndpoints());
-    var lastPoint = _.last(selectedTotalWeightLimit.getEndpoints());
     var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
     var createdBy = selectedTotalWeightLimit.getCreatedBy() || '-';
     var createdDateTime = selectedTotalWeightLimit.getCreatedDateTime() ? ' ' + selectedTotalWeightLimit.getCreatedDateTime() : '';
-    var header = selectedTotalWeightLimit.getId() ?
-                   '<header>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</header>' :
-                   '<header>Uusi kokonaispainorajoitus</header>';
+    var header = selectedTotalWeightLimit.isNew() ?
+      '<header>Uusi kokonaispainorajoitus</header>' :
+      '<header>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</header>';
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
-    var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
+    var expiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? 'checked' : '';
+    var nonExpiredChecked = (selectedTotalWeightLimit.expired() || selectedTotalWeightLimit.isNew()) ? '' : 'checked';
+    var limit = selectedTotalWeightLimit.getLimit() ? selectedTotalWeightLimit.getLimit() + 'kg' : '-';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
                '</div>' +
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
@@ -39,12 +32,8 @@
                    '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
                    '<span class="unit-of-measure total-weight-limit">kg</span>' +
                  '</div>' +
-                 '<p class="form-control-static total-weight-limit">' + selectedTotalWeightLimit.getLimit() + ' kg</p>' +
+                 '<p class="form-control-static total-weight-limit">' + limit + '</p>' +
                '</div>' +
-               formFieldTemplate("Päätepiste 1 X", firstPoint ? firstPoint.x : '') +
-               formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
-               formFieldTemplate("Päätepiste 2 X", lastPoint ? lastPoint.x : '') +
-               formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
            '<footer class="total-weight-limit form-controls" style="display: none">' +
@@ -94,18 +83,10 @@
       rootElement.find('.form-controls button').attr('disabled', false);
     });
     rootElement.on('click', '.total-weight-limit button.save', function() {
-      if (selectedTotalWeightLimit.isNew()) {
-        selectedTotalWeightLimit.saveSplit();
-      } else {
-        selectedTotalWeightLimit.save();
-      }
+      selectedTotalWeightLimit.save();
     });
     rootElement.on('click', '.total-weight-limit button.cancel', function() {
-      if (selectedTotalWeightLimit.isNew()) {
-        selectedTotalWeightLimit.cancelSplit();
-      } else {
-        selectedTotalWeightLimit.cancel();
-      }
+      selectedTotalWeightLimit.cancel();
     });
   };
 

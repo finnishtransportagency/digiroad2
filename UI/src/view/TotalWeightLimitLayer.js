@@ -5,7 +5,8 @@ window.TotalWeightLimitLayer = function(params) {
     selectedTotalWeightLimit = params.selectedTotalWeightLimit,
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
-    linearAsset = params.linearAsset;
+    linearAsset = params.linearAsset,
+    roadLayer = params.roadLayer;
 
   var TotalWeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -179,6 +180,19 @@ window.TotalWeightLimitLayer = function(params) {
 
   var totalWeightLimitCutter = new TotalWeightLimitCutter(vectorLayer, collection);
 
+  var roadLayerStyleMap = new OpenLayers.StyleMap({
+    "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.85,
+      strokeColor: "#7f7f7c"
+    })),
+    "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeColor: "#a4a4a2",
+      strokeOpacity: 0.3
+    }))
+  });
+  roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
+  roadLayer.setLayerSpecificStyleMap('totalWeightLimit', roadLayerStyleMap);
+
   var highlightTotalWeightLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
       if (x.attributes.id === feature.attributes.id) {
@@ -195,16 +209,28 @@ window.TotalWeightLimitLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var findFeatureById = function(id) {
+  var findTotalWeightFeatureById = function(id) {
     return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
+  };
+
+  var findTotalWeightFeatureByRoadLinkId = function(id) {
+    return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === null && feature.attributes.roadLinkId === id; });
+  };
+
+  var findRoadLinkFeatureByRoadLinkId = function(id) {
+    return _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
   };
 
   var totalWeightLimitOnSelect = function(feature) {
     setSelectionStyleAndHighlightFeature(feature);
-    selectedTotalWeightLimit.open(feature.attributes.id);
+    if (feature.attributes.id) {
+      selectedTotalWeightLimit.open(feature.attributes.id);
+    } else {
+      selectedTotalWeightLimit.create(feature.attributes.roadLinkId, feature.attributes.points);
+    }
   };
 
-  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+  var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer, roadLayer.layer], {
     onSelect: totalWeightLimitOnSelect,
     onUnselect: function(feature) {
       if (selectedTotalWeightLimit.exists()) {
@@ -237,7 +263,7 @@ window.TotalWeightLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox);
+      collection.fetch(boundingBox, selectedTotalWeightLimit);
     }
   };
 
@@ -274,39 +300,35 @@ window.TotalWeightLimitLayer = function(params) {
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawTotalWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleTotalWeightLimitSelected);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:saved', handleTotalWeightLimitSaved);
     eventListener.listenTo(eventbus,
         'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
         handleTotalWeightLimitChanged);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', handleTotalWeightLimitCancelled);
+    eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', concludeUpdate);
     eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleTotalWeightLimitUnSelected);
   };
 
-  var handleTotalWeightLimitSelected = function(selectedTotalWeightLimit) {
-    if (selectedTotalWeightLimit.isNew()) {
-      var feature = findFeatureById(selectedTotalWeightLimit.getId());
-      setSelectionStyleAndHighlightFeature(feature);
+  var displayConfirmMessage = function() { new Confirm(); };
+
+  var totalWeightLimitFeatureExists = function(selectedTotalWeightLimit) {
+    if (selectedTotalWeightLimit.isNew() && selectedTotalWeightLimit.isDirty()) {
+      return !_.isUndefined(findTotalWeightFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId()));
+    } else {
+      return !_.isUndefined(findTotalWeightFeatureById(selectedTotalWeightLimit.getId()));
     }
   };
-
-  var handleTotalWeightLimitSaved = function(totalWeightLimit) {
-    var feature = findFeatureById(totalWeightLimit.id);
-    setSelectionStyleAndHighlightFeature(feature);
-  };
-
-  var displayConfirmMessage = function() { new Confirm(); };
 
   var handleTotalWeightLimitChanged = function(selectedTotalWeightLimit) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    var selectedTotalWeightLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedTotalWeightLimit.getId(); });
-    vectorLayer.removeFeatures(selectedTotalWeightLimitFeatures);
+    if (totalWeightLimitFeatureExists(selectedTotalWeightLimit)) {
+      var selectedTotalWeightLimitFeature = getSelectedFeature(selectedTotalWeightLimit);
+      vectorLayer.removeFeatures(selectedTotalWeightLimitFeature);
+    }
     drawTotalWeightLimits([selectedTotalWeightLimit.get()]);
   };
 
-  var handleTotalWeightLimitCancelled = function() {
+  var concludeUpdate = function() {
     selectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawTotalWeightLimits(collection.getAll());
@@ -317,7 +339,7 @@ window.TotalWeightLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox);
+      collection.fetch(state.bbox, selectedTotalWeightLimit);
     } else if (selectedTotalWeightLimit.isDirty()) {
       new Confirm();
     } else {
@@ -338,6 +360,18 @@ window.TotalWeightLimitLayer = function(params) {
     drawTotalWeightLimits(totalWeightLimits);
   };
 
+  var getSelectedFeature = function(selectedTotalWeightLimit) {
+    if (selectedTotalWeightLimit.isNew()) {
+      if (selectedTotalWeightLimit.isDirty()) {
+        return findTotalWeightFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
+      } else {
+        return findRoadLinkFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
+      }
+    } else {
+      return findTotalWeightFeatureById(selectedTotalWeightLimit.getId());
+    }
+  };
+
   var drawTotalWeightLimits = function(totalWeightLimits) {
     var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) {
       return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
@@ -347,7 +381,7 @@ window.TotalWeightLimitLayer = function(params) {
 
     if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedTotalWeightLimit.getId(); });
+      var feature = getSelectedFeature(selectedTotalWeightLimit);
       if (feature) {
         selectControl.select(feature);
         highlightTotalWeightLimitFeatures(feature);

@@ -95,6 +95,18 @@
       });
     };
 
+    this.createTotalWeightLimit = _.throttle(function(roadLinkId, value, success, error) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/totalweightlimits",
+        data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
+        dataType: "json",
+        success: success,
+        error: error
+      });
+    }, 1000);
+
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);
