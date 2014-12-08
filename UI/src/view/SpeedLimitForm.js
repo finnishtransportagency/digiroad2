@@ -5,14 +5,6 @@
       var selected = limit === selectedSpeedLimit.getLimit() ? " selected" : "";
       return '<option value="' + limit + '"' + selected + '>' + limit + '</option>';
     });
-    var formFieldTemplate = function(key, value) {
-      return '<div class="form-group">' +
-               '<label class="control-label">' + key + '</label>' +
-               '<p class="form-control-static">' + value + '</p>' +
-             '</div>';
-    };
-    var firstPoint = _.first(selectedSpeedLimit.getEndpoints());
-    var lastPoint = _.last(selectedSpeedLimit.getEndpoints());
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
@@ -37,10 +29,6 @@
                  '<p class="form-control-static">' + selectedSpeedLimit.getLimit() + '</p>' +
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
-               formFieldTemplate("P&auml;&auml;tepiste 1 X", firstPoint ? firstPoint.x : '') +
-               formFieldTemplate("Y", firstPoint ? firstPoint.y : '') +
-               formFieldTemplate("P&auml;&auml;tepiste 2 X", lastPoint ? lastPoint.x : '') +
-               formFieldTemplate("Y", lastPoint ? lastPoint.y : '') +
              '</div>' +
            '</div>' +
            '<footer class="speed-limit form-controls" style="display: none">' +
