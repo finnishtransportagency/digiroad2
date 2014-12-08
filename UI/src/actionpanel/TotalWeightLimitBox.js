@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitBox = function() {
+  root.TotalWeightLimitBox = function(selectedTotalWeightLimit) {
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
@@ -64,8 +64,8 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, null),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, null)]);
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedTotalWeightLimit),
+       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedTotalWeightLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {

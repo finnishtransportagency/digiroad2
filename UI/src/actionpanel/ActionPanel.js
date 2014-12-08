@@ -1,6 +1,6 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, selectedSpeedLimit) {
+    initialize: function(backend, selectedSpeedLimit, selectedTotalWeightLimit) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
@@ -11,7 +11,7 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
-      var totalWeightLimitBox = new TotalWeightLimitBox();
+      var totalWeightLimitBox = new TotalWeightLimitBox(selectedTotalWeightLimit);
       $('.action-panels').append(totalWeightLimitBox.element);
 
       backend.getUserRoles();

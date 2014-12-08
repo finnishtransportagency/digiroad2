@@ -247,12 +247,9 @@ window.TotalWeightLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  var handleTotalWeightLimitUnSelected = function(id) {
-    _.each(_.filter(vectorLayer.features, function(feature) {
-      return feature.attributes.id === id;
-    }), function(feature) {
-      selectControl.unhighlight(feature);
-    });
+  var handleTotalWeightLimitUnSelected = function(id, roadLinkId) {
+    var feature = findTotalWeightFeatureById(id) || findRoadLinkFeatureByRoadLinkId(roadLinkId);
+    if (feature) selectControl.unhighlight(feature);
 
     vectorLayer.styleMap = browseStyleMap;
     vectorLayer.redraw();

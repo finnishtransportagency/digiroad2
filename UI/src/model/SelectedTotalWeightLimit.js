@@ -49,6 +49,7 @@
     this.close = function() {
       if (current && !dirty) {
         var id = current.id;
+        var roadLinkId = current.roadLinkId;
         if (id) {
           collection.markAsDeselected(id);
         }
@@ -56,7 +57,7 @@
           collection.remove(id);
         }
         current = null;
-        eventbus.trigger('totalWeightLimit:unselected', id);
+        eventbus.trigger('totalWeightLimit:unselected', id, roadLinkId);
       }
     };
 
