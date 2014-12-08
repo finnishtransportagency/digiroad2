@@ -42,9 +42,9 @@ object OracleLinearAssetDao {
   }
 
   def transformLink(link: (Long, Long, Int, Int, Array[Byte])) = {
-    val (id, roadLinkId, sideCode, limit, pos) = link
+    val (id, roadLinkId, sideCode, value, pos) = link
     val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
-    (id, roadLinkId, sideCode, limit, points.map { pointArray =>
+    (id, roadLinkId, sideCode, value, points.map { pointArray =>
       Point(pointArray(0), pointArray(1))}.toSeq)
   }
 

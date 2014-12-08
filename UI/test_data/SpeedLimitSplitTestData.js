@@ -4,7 +4,7 @@
       {
         "id": 111,
         "roadLinkId": 555,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 0,
         "towardsLinkChain": false,
@@ -22,7 +22,7 @@
       {
         "id": 111,
         "roadLinkId": 666,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 1,
         "towardsLinkChain": false,
@@ -40,7 +40,7 @@
       {
         "id": 111,
         "roadLinkId": 777,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 2,
         "towardsLinkChain": true,

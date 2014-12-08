@@ -8,7 +8,7 @@
     eventbus.on('speedLimit:split', function() {
       collection.fetchSpeedLimit(null, function(speedLimit) {
         current = speedLimit;
-        originalSpeedLimit = speedLimit.limit;
+        originalSpeedLimit = speedLimit.value;
         dirty = true;
         eventbus.trigger('speedLimit:selected', self);
       });
@@ -18,7 +18,7 @@
       self.close();
       collection.fetchSpeedLimit(id, function(speedLimit) {
         current = speedLimit;
-        originalSpeedLimit = speedLimit.limit;
+        originalSpeedLimit = speedLimit.value;
         collection.markAsSelected(speedLimit.id);
         eventbus.trigger('speedLimit:selected', self);
       });
@@ -46,10 +46,10 @@
     };
 
     this.save = function() {
-      backend.updateSpeedLimit(current.id, current.limit, function(speedLimit) {
+      backend.updateSpeedLimit(current.id, current.value, function(speedLimit) {
         dirty = false;
         current = _.merge({}, current, speedLimit);
-        originalSpeedLimit = current.limit;
+        originalSpeedLimit = current.value;
         eventbus.trigger('speedLimit:saved', current);
       }, function() {
         eventbus.trigger('asset:updateFailed');
@@ -57,8 +57,8 @@
     };
 
     this.cancel = function() {
-      current.limit = originalSpeedLimit;
-      collection.changeLimit(current.id, originalSpeedLimit);
+      current.value = originalSpeedLimit;
+      collection.changeValue(current.id, originalSpeedLimit);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
@@ -75,8 +75,8 @@
       return current.endpoints;
     };
 
-    this.getLimit = function() {
-      return current.limit;
+    this.getValue = function() {
+      return current.value;
     };
 
     this.getModifiedBy = function() {
@@ -99,12 +99,12 @@
       return current;
     };
 
-    this.setLimit = function(limit) {
-      if (limit != current.limit) {
-        collection.changeLimit(current.id, limit);
-        current.limit = limit;
+    this.setValue = function(value) {
+      if (value != current.value) {
+        collection.changeValue(current.id, value);
+        current.value = value;
         dirty = true;
-        eventbus.trigger('speedLimit:limitChanged', self);
+        eventbus.trigger('speedLimit:valueChanged', self);
       }
     };
 
@@ -118,7 +118,7 @@
 
     eventbus.on('speedLimit:saved', function(speedLimit) {
       current = speedLimit;
-      originalSpeedLimit = speedLimit.limit;
+      originalSpeedLimit = speedLimit.value;
       collection.markAsSelected(speedLimit.id);
       dirty = false;
     });
