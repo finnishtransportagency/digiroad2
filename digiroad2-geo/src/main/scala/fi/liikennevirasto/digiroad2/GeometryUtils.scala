@@ -118,7 +118,7 @@ object GeometryUtils {
     }
   }
 
-  def createSpeedLimitSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+  def createSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link

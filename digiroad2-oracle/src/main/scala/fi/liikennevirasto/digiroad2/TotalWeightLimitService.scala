@@ -17,6 +17,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
 case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
@@ -139,32 +140,52 @@ trait TotalWeightLimitOperations {
     }
   }
 
+  private def createTotalWeightLimitWithoutTransaction(roadLinkId: Long, value: Int, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): TotalWeightLimit = {
+    val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
+    val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+    sqlu"""
+      insert all
+        into asset(id, asset_type_id, created_by, created_date, asset_type_id)
+        values ($id, 20, $username, sysdate, 30)
+
+        into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+
+        into asset_link(asset_id, position_id)
+        values ($id, $lrmPositionId)
+
+        into number_property_value(id, asset_id, property_id, value)
+        values ($numberPropertyValueId, $id, $propertyId, $value)
+      select * from dual
+    """.execute
+    getByIdWithoutTransaction(id).get
+  }
+
   def createTotalWeightLimit(roadLinkId: Long, value: Int, username: String): TotalWeightLimit = {
     val sideCode = 1
     val startMeasure = 0
-    val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId)
-
+    val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     withDynTransaction {
-      val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-      val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
-      val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
-      sqlu"""
-        insert all
-          into asset(id, asset_type_id, created_by, created_date, asset_type_id)
-          values ($id, 20, $username, sysdate, 30)
+      createTotalWeightLimitWithoutTransaction(roadLinkId, value, sideCode, startMeasure, endMeasure, username)
+    }
+  }
 
-          into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-          values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
+    withDynTransaction {
+      Queries.updateAssetModified(id, username).execute()
+      val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id, roadLinkId)
+      val links: Seq[(Long, Double, (Point, Point))] = OracleLinearAssetDao.getLinksWithLength(30, id).map { link =>
+        val (roadLinkId, length, geometry) = link
+        (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
+      }
+      val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
-          into asset_link(asset_id, position_id)
-          values ($id, $lrmPositionId)
-
-          into number_property_value(id, asset_id, property_id, value)
-          values ($numberPropertyValueId, $id, $propertyId, $value)
-        select * from dual
-      """.execute
-      getByIdWithoutTransaction(id).get
+      OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
+      val createdId = createTotalWeightLimitWithoutTransaction(roadLinkId, value, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
+      createdId
     }
   }
 }

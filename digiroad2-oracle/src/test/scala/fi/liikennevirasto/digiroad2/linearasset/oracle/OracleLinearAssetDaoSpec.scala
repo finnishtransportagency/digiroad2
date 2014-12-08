@@ -24,7 +24,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   def assertSpeedLimitEndPointsOnLink(speedLimitId: Long, roadLinkId: Long, startMeasure: Double, endMeasure: Double) = {
     val expectedEndPoints = GeometryUtils.geometryEndpoints(truncateLinkGeometry(roadLinkId, startMeasure, endMeasure).toList)
-    val limitEndPoints = GeometryUtils.geometryEndpoints(OracleLinearAssetDao.getSpeedLimitLinksWithLength(speedLimitId).find { link => link._1 == roadLinkId }.get._3)
+    val limitEndPoints = GeometryUtils.geometryEndpoints(OracleLinearAssetDao.getLinksWithLength(20, speedLimitId).find { link => link._1 == roadLinkId }.get._3)
     expectedEndPoints._1.distanceTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
@@ -70,7 +70,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "existing speed limit should cover only second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       OracleLinearAssetDao.splitSpeedLimit(200217, 6871, 10, 120, "test")
-      val existingLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(200217)
+      val existingLinks = OracleLinearAssetDao.getLinksWithLength(20, 200217)
 
       existingLinks.length shouldBe 2
       existingLinks.map(_._1) should contain only (6871, 7294)
@@ -83,7 +83,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "moves all linear references to newly created speed limit", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val createdId = OracleLinearAssetDao.splitSpeedLimit(200363, 7230, 148, 120, "test")
-      val createdLinks = OracleLinearAssetDao.getSpeedLimitLinksWithLength(createdId)
+      val createdLinks = OracleLinearAssetDao.getLinksWithLength(20, createdId)
 
       createdLinks.length shouldBe 3
       createdLinks.map(_._1) should contain only (6710, 6740, 7230)
