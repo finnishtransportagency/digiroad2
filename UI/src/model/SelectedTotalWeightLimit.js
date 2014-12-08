@@ -29,6 +29,8 @@
     this.create = function(roadLinkId, points) {
       self.close();
       var endpoints = [_.first(points), _.last(points)];
+      originalTotalWeightLimit = null;
+      originalExpired = true;
       current = {
         id: null,
         roadLinkId: roadLinkId,
