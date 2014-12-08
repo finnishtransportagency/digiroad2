@@ -86,6 +86,10 @@
         eventbus.trigger('asset:updateFailed');
       };
 
+      if (expired() && isNew()) {
+        return;
+      }
+
       if (expired()) {
         expire(success, failure);
       } else if (isNew()) {
