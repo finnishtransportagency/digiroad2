@@ -194,7 +194,7 @@ window.SpeedLimitLayer = function(params) {
   var typeSpecificStyleLookup = {
     overlay: { strokeOpacity: 1.0 },
     other: { strokeOpacity: 0.7 },
-    cutter: { externalGraphic: 'images/speed-limits/cursor-crosshair.svg', pointRadius: 11.5 }
+    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());

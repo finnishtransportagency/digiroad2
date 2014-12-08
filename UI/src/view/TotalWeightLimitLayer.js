@@ -150,7 +150,7 @@ window.TotalWeightLimitLayer = function(params) {
 
   var typeSpecificStyleLookup = {
     line: { strokeOpacity: 0.7 },
-    cutter: { externalGraphic: 'images/total-weight-limits/cursor-crosshair.svg', pointRadius: 11.5 }
+    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
