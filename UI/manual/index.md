@@ -481,3 +481,12 @@ Tielinkin suurin sallittu massa poistetaan ominaisuustieton&auml;kym&auml;ss&aum
 ![Suurimman sallitun massan poistaminen](k33.JPG)
 
 _Suurimman sallitun massan poistaminen._
+
+5.3.3 Uuden suurimman sallitun massan lis&auml;&auml;minen
+-----------------------------------------------------------
+
+Tielinkille voi lis&auml;t&auml; suurimman sallitun massan valitsemalla sen geometrian (4) Suurimman sallitun massan muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurimman sallitun massan tiedot. Valitaan "Painorajoitus" ja sy&ouml;tet&auml;&auml;n suurimman sallitun massan arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu massa tallennetaan painamalla Tallenna (8).
+
+![Suurimman sallitun massan lis&auml;ys](k34.JPG)
+
+_Suurimman sallitun massan lis&auml;&auml;minen._
