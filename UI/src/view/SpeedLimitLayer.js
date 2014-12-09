@@ -199,7 +199,7 @@ window.SpeedLimitLayer = function(params) {
 
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
-  browseStyleMap.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
+  browseStyleMap.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
   browseStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(overlayStyleRules);
@@ -218,7 +218,7 @@ window.SpeedLimitLayer = function(params) {
     default: selectionDefaultStyle,
     select: selectionSelectStyle
   });
-  selectionStyle.addUniqueValueRules('default', 'limit', speedLimitStyleLookup);
+  selectionStyle.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
   selectionStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(overlayStyleRules);
@@ -320,7 +320,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'speedLimit:selected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, 'speedLimit:limitChanged', handleSpeedLimitChanged);
+    eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselected', handleSpeedLimitUnSelected);
   };
@@ -383,7 +383,7 @@ window.SpeedLimitLayer = function(params) {
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, linearAsset.offsetBySideCode);
-    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.limit >= 70; });
+    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 

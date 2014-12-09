@@ -4,7 +4,7 @@
       {
         "id": 1123812,
         "roadLinkId": 5540,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -21,7 +21,7 @@
       {
         "id": 1123107,
         "roadLinkId": 1,
-        "limit": 60,
+        "value": 60,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -46,7 +46,7 @@
       {
         "id": 0,
         "roadLinkId": 1,
-        "limit": 20,
+        "value": 20,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -107,7 +107,7 @@
       {
         "id": 1,
         "roadLinkId": 1,
-        "limit": 30,
+        "value": 30,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -144,7 +144,7 @@
       {
         "id": 2,
         "roadLinkId": 1,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -177,7 +177,7 @@
       {
         "id": 3,
         "roadLinkId": 1,
-        "limit": 50,
+        "value": 50,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -210,7 +210,7 @@
       {
         "id": 4,
         "roadLinkId": 1,
-        "limit": 60,
+        "value": 60,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -247,7 +247,7 @@
       {
         "id": 5,
         "roadLinkId": 1,
-        "limit": 70,
+        "value": 70,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -276,7 +276,7 @@
       {
         "id": 6,
         "roadLinkId": 1,
-        "limit": 80,
+        "value": 80,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -313,7 +313,7 @@
       {
         "id": 7,
         "roadLinkId": 1,
-        "limit": 100,
+        "value": 100,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -378,7 +378,7 @@
       {
         "id": 8,
         "roadLinkId": 1,
-        "limit": 120,
+        "value": 120,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -411,7 +411,7 @@
       {
         "id": 9,
         "roadLinkId": 1,
-        "limit": 20,
+        "value": 20,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -452,7 +452,7 @@
       {
         "id": 10,
         "roadLinkId": 1,
-        "limit": 30,
+        "value": 30,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -485,7 +485,7 @@
       {
         "id": 11,
         "roadLinkId": 1,
-        "limit": 40,
+        "value": 40,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -526,7 +526,7 @@
       {
         "id": 120,
         "roadLinkId": 1,
-        "limit": 50,
+        "value": 50,
         "sideCode": 2,
         "position": 0,
         "points": [
@@ -583,7 +583,7 @@
       {
         "id": 121,
         "roadLinkId": 1,
-        "limit": 50,
+        "value": 50,
         "sideCode": 3,
         "position": 0,
         "points": [
@@ -640,7 +640,7 @@
       {
         "id": 13,
         "roadLinkId": 1,
-        "limit": 60,
+        "value": 60,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -685,7 +685,7 @@
       {
         "id": 13,
         "roadLinkId": 2,
-        "limit": 60,
+        "value": 60,
         "sideCode": 1,
         "position": 1,
         "points": [
@@ -742,7 +742,7 @@
       {
         "id": 15,
         "roadLinkId": 1,
-        "limit": 80,
+        "value": 80,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -767,7 +767,7 @@
       {
         "id": 16,
         "roadLinkId": 1,
-        "limit": 100,
+        "value": 100,
         "sideCode": 1,
         "position": 0,
         "points": [
@@ -800,7 +800,7 @@
       {
         "id": 17,
         "roadLinkId": 1,
-        "limit": 120,
+        "value": 120,
         "sideCode": 1,
         "position": 0,
         "points": [

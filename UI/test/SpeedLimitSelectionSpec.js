@@ -34,7 +34,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
-      expect(feature.attributes.limit).to.equal(limitValue);
+      expect(feature.attributes.value).to.equal(limitValue);
       expect(feature.attributes.isSelected).to.be.true;
     });
     expect($('#feature-attributes .speed-limit :selected')).to.have.text(limitValue.toString());
@@ -127,7 +127,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
         expect(features.length).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.attributes.limit).to.equal(100);
+          expect(feature.attributes.value).to.equal(100);
         });
       });
 

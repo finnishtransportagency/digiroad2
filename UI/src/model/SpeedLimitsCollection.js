@@ -31,7 +31,7 @@
               position: value.position,
               points: value.points
             };
-          }), sideCode: values[0].sideCode, limit: values[0].limit }];
+          }), sideCode: values[0].sideCode, value: values[0].value }];
         })
         .object()
         .value();
@@ -48,7 +48,7 @@
         } else if (selected) {
           var selectedInCollection = speedLimits[selected.id];
           selectedInCollection.isSelected = selected.isSelected;
-          selectedInCollection.limit = selected.limit;
+          selectedInCollection.value = selected.value;
         }
 
         if (splitSpeedLimits.existing) {
@@ -77,11 +77,11 @@
       speedLimits[id].isSelected = false;
     };
 
-    this.changeLimit = function(id, limit) {
+    this.changeValue = function(id, value) {
       if (splitSpeedLimits.created) {
-        splitSpeedLimits.created.limit = limit;
+        splitSpeedLimits.created.value = value;
       } else {
-        speedLimits[id].limit = limit;
+        speedLimits[id].value = value;
       }
     };
 
@@ -143,7 +143,7 @@
     };
 
     this.saveSplit = function() {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.limit, function(updatedSpeedLimits) {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
         dirty = false;
