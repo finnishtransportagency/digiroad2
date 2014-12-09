@@ -143,12 +143,12 @@ trait TotalWeightLimitOperations {
   private def createTotalWeightLimitWithoutTransaction(roadLinkId: Long, value: Int, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): TotalWeightLimit = {
     val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("kokonaispainorajoitus").get
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).first("kokonaispainorajoitus")
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, asset_type_id)
-        values ($id, 20, $username, sysdate, 30)
+        into asset(id, asset_type_id, created_by, created_date)
+        values ($id, 30, $username, sysdate)
 
         into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
         values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
