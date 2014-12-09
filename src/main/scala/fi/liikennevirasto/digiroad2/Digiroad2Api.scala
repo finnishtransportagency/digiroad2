@@ -278,6 +278,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val value = (parsedBody \ "value").extract[BigInt]
     validateTotalWeightLimitValue(value)
+    val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val username = user.username

@@ -176,7 +176,7 @@ trait TotalWeightLimitOperations {
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Seq[TotalWeightLimit] = {
     withDynTransaction {
       Queries.updateAssetModified(id, username).execute()
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id, roadLinkId)
@@ -189,7 +189,7 @@ trait TotalWeightLimitOperations {
       OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
       val createdId = createTotalWeightLimitWithoutTransaction(roadLinkId, value, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
       if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
-      createdId
+      Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
     }
   }
 }

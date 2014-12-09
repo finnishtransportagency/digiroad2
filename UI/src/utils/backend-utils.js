@@ -107,6 +107,18 @@
       });
     }, 1000);
 
+    this.splitTotalWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/totalweightlimits/" + id,
+        data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, value: value, expired: expired}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getAsset = function (assetId) {
       self.getAssetWithCallback(assetId, function (asset) {
         eventbus.trigger('asset:fetched', asset);
