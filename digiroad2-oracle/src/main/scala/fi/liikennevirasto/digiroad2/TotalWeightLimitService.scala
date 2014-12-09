@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
 case class TotalWeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
-case class TotalWeightLimit(id: Long, limit: Int, expired: Boolean, endpoints: Set[Point],
+case class TotalWeightLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
                             modifiedBy: Option[String], modifiedDateTime: Option[String],
                             createdBy: Option[String], createdDateTime: Option[String],
                             totalWeightLimitLinks: Seq[TotalWeightLimitLink])
@@ -77,9 +77,9 @@ trait TotalWeightLimitOperations {
         }
 
       val totalWeightLimitsWithGeometry: Seq[TotalWeightLimitLink] = totalWeightLimits.map { link =>
-        val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
+        val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-        TotalWeightLimitLink(assetId, roadLinkId, sideCode, speedLimit, geometry)
+        TotalWeightLimitLink(assetId, roadLinkId, sideCode, value, geometry)
       }
 
       totalWeightLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
@@ -93,11 +93,11 @@ trait TotalWeightLimitOperations {
       val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
       val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val head = links.head
-      val (_, _, _, limit, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
+      val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired) = head
       val weightLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _) =>
-        TotalWeightLimitLink(id, roadLinkId, sideCode, limit, points, None, None, expired)
+        TotalWeightLimitLink(id, roadLinkId, sideCode, value, points, None, None, expired)
       }
-      Some(TotalWeightLimit(id, limit, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print), getLinksWithPositions(weightLimitLinks)))
+      Some(TotalWeightLimit(id, value, expired, limitEndpoints, modifiedBy, modifiedAt.map(DateTimeFormat.print), createdBy, createdAt.map(DateTimeFormat.print), getLinksWithPositions(weightLimitLinks)))
     }
   }
 
