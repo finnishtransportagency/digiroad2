@@ -469,7 +469,7 @@ Suurinta sallittua massaa muokataan muokkaustilassa. Muokattava suurin sallittu 
 
 Huom! Painorajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa painorajoituksissa.
 
-![Suurimman sallitun massan muokkaus](k32.JPG)
+![Suurimman sallitun massan muokkaus](k34.JPG)
 
 _Suurimman sallitun massan muokkaus._
 
@@ -485,7 +485,7 @@ _Suurimman sallitun massan poistaminen._
 5.3.3 Uuden suurimman sallitun massan lis&auml;&auml;minen
 -----------------------------------------------------------
 
-Tielinkille voi lis&auml;t&auml; suurimman sallitun massan valitsemalla sen geometrian (4) Suurimman sallitun massan muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurimman sallitun massan tiedot. Valitaan "Painorajoitus" ja sy&ouml;tet&auml;&auml;n suurimman sallitun massan arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu massa tallennetaan painamalla Tallenna (8).
+Tielinkille voi lis&auml;t&auml; suurimman sallitun massan valitsemalla sen geometrian (4) Suurimman sallitun massan muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurimman sallitun massan tiedot. Valitaan "Painorajoitus" ja sy&ouml;tet&auml;&auml;n suurimman sallitun massan arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu massa tallennetaan painamalla Tallenna (8). Uuden suurimman sallitun massan lis&auml;&auml;misen voi perua Peruuta-painikkeella.
 
 ![Suurimman sallitun massan lis&auml;ys](k34.JPG)
 
