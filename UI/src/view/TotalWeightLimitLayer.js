@@ -248,8 +248,11 @@ window.TotalWeightLimitLayer = function(params) {
   map.addControl(selectControl);
 
   var handleTotalWeightLimitUnSelected = function(id, roadLinkId) {
-    var feature = _.first(findTotalWeightFeaturesById(id)) || _.first(findRoadLinkFeaturesByRoadLinkId(roadLinkId));
-    if (feature) selectControl.unhighlight(feature);
+    var features = findTotalWeightFeaturesById(id);
+    if (_.isEmpty(features)) { features = findRoadLinkFeaturesByRoadLinkId(roadLinkId); }
+    _.each(features, function(feature) {
+      selectControl.unhighlight(feature);
+    });
 
     vectorLayer.styleMap = browseStyleMap;
     vectorLayer.redraw();
