@@ -48,15 +48,15 @@ object OracleLinearAssetDao {
       Point(pointArray(0), pointArray(1))}.toSeq)
   }
 
-  def getSpeedLimitLinksWithLength(id: Long): Seq[(Long, Double, Seq[Point])] = {
-    val speedLimitLinks = sql"""
+  def getLinksWithLength(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point])] = {
+    val links = sql"""
       select pos.road_link_id, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
-        where a.asset_type_id = 20 and a.id = $id
+        where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
-    speedLimitLinks.map { case (roadLinkId, startMeasure, endMeasure) =>
+    links.map { case (roadLinkId, startMeasure, endMeasure) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
       (roadLinkId, endMeasure - startMeasure, points)
     }
@@ -137,7 +137,7 @@ object OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, name, speedLimitLinks)
   }
 
-  def getSpeedLimitLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
+  def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
     sql"""
       select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
         from asset a
@@ -178,19 +178,19 @@ object OracleLinearAssetDao {
     speedLimitId
   }
 
-  def moveLinksToSpeedLimit(sourceSpeedLimitId: Long, targetSpeedLimitId: Long, roadLinkIds: Seq[Long]) = {
+  def moveLinks(sourceId: Long, targetId: Long, roadLinkIds: Seq[Long]): List[Int] = {
     val roadLinks = roadLinkIds.map(_ => "?").mkString(",")
     val sql = s"""
       update ASSET_LINK
       set
-        asset_id = $targetSpeedLimitId
-      where asset_id = $sourceSpeedLimitId and position_id in (
+        asset_id = $targetId
+      where asset_id = $sourceId and position_id in (
         select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in ($roadLinks))
     """
     Q.update[Seq[Long]](sql).list(roadLinkIds)
   }
 
-  def updateLinkStartAndEndMeasures(speedLimitId: Long,
+  def updateLinkStartAndEndMeasures(id: Long,
                                     roadLinkId: Long,
                                     linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
@@ -205,22 +205,22 @@ object OracleLinearAssetDao {
           from asset a
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $speedLimitId and lrm.road_link_id = $roadLinkId)
+          where a.id = $id and lrm.road_link_id = $roadLinkId)
     """.execute()
   }
 
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
-    val (startMeasure, endMeasure, sideCode) = getSpeedLimitLinkGeometryData(id, roadLinkId)
-    val links: Seq[(Long, Double, (Point, Point))] = getSpeedLimitLinksWithLength(id).map { link =>
+    val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id, roadLinkId)
+    val links: Seq[(Long, Double, (Point, Point))] = getLinksWithLength(20, id).map { link =>
       val (roadLinkId, length, geometry) = link
       (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSpeedLimitSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
-    if (linksToMove.nonEmpty) moveLinksToSpeedLimit(id, createdId, linksToMove.map(_._1))
+    if (linksToMove.nonEmpty) moveLinks(id, createdId, linksToMove.map(_._1))
     createdId
   }
 
