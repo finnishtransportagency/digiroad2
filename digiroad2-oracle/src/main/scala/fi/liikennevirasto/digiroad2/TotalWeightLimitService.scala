@@ -144,15 +144,16 @@ trait TotalWeightLimitOperations {
     }
   }
 
-  private def createTotalWeightLimitWithoutTransaction(roadLinkId: Long, value: Int, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): TotalWeightLimit = {
+  private def createTotalWeightLimitWithoutTransaction(roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): TotalWeightLimit = {
     val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).first("kokonaispainorajoitus")
     val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+    val validTo = if(expired) "sysdate" else "null"
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date)
-        values ($id, 30, $username, sysdate)
+        into asset(id, asset_type_id, created_by, created_date, valid_to)
+        values ($id, 30, $username, sysdate, #$validTo)
 
         into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
         values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
@@ -172,11 +173,11 @@ trait TotalWeightLimitOperations {
     val startMeasure = 0
     val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     withDynTransaction {
-      createTotalWeightLimitWithoutTransaction(roadLinkId, value, sideCode, startMeasure, endMeasure, username)
+      createTotalWeightLimitWithoutTransaction(roadLinkId, value, false, sideCode, startMeasure, endMeasure, username)
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[TotalWeightLimit] = {
     withDynTransaction {
       Queries.updateAssetModified(id, username).execute()
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id, roadLinkId)
@@ -187,9 +188,9 @@ trait TotalWeightLimitOperations {
       val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
       OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-      val createdId = createTotalWeightLimitWithoutTransaction(roadLinkId, value, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      val createdId = createTotalWeightLimitWithoutTransaction(roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
       if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
-      createdId
+      Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
     }
   }
 }

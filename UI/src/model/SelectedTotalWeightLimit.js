@@ -9,6 +9,7 @@
     eventbus.on('totalWeightLimit:split', function() {
       collection.fetchTotalWeightLimit(null, function(totalWeightLimit) {
         current = totalWeightLimit;
+        current.isSplit = true;
         originalTotalWeightLimit = totalWeightLimit.limit;
         originalExpired = totalWeightLimit.expired;
         dirty = true;
@@ -62,10 +63,6 @@
       }
     };
 
-    this.saveSplit = function() {
-      collection.saveSplit();
-    };
-
     this.cancelSplit = function() {
       var id = current.id;
       current = null;
@@ -90,16 +87,20 @@
         eventbus.trigger('asset:updateFailed');
       };
 
-      if (expired() && isNew()) {
-        return;
-      }
-
-      if (expired()) {
-        expire(success, failure);
-      } else if (isNew()) {
-        createNew(success, failure);
+      if (current.isSplit) {
+        collection.saveSplit(current);
       } else {
-        update(success, failure);
+        if (expired() && isNew()) {
+          return;
+        }
+
+        if (expired()) {
+          expire(success, failure);
+        } else if (isNew()) {
+          createNew(success, failure);
+        } else {
+          update(success, failure);
+        }
       }
     };
 
@@ -116,6 +117,10 @@
     };
 
     this.cancel = function() {
+      if (current.isSplit) {
+        self.cancelSplit();
+        return;
+      }
       current.limit = originalTotalWeightLimit;
       current.expired = originalExpired;
       if (!isNew()) {

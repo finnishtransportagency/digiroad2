@@ -164,8 +164,8 @@
       });
     };
 
-    this.saveSplit = function() {
-      backend.splitTotalWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitTotalWeightLimits.created.limit, function(updatedTotalWeightLimits) {
+    this.saveSplit = function(splitLimit) {
+      backend.splitTotalWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.limit, splitLimit.expired, function(updatedTotalWeightLimits) {
         var existingId = splitTotalWeightLimits.existing.id;
         splitTotalWeightLimits = {};
         dirty = false;
