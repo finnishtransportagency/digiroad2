@@ -283,7 +283,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    TotalWeightLimitService.split(id, roadLinkId, measure, value.intValue, username)
+    TotalWeightLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
   get("/speedlimits/:segmentId") {
