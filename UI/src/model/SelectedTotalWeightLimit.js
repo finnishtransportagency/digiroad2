@@ -117,6 +117,10 @@
     };
 
     this.cancel = function() {
+      if (current.isSplit) {
+        self.cancelSplit();
+        return;
+      }
       current.limit = originalTotalWeightLimit;
       current.expired = originalExpired;
       if (!isNew()) {
