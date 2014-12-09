@@ -12,7 +12,7 @@
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
     var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
-    var limit = selectedTotalWeightLimit.getLimit() ? selectedTotalWeightLimit.getLimit() + 'kg' : '-';
+    var limit = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + 'kg' : '-';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -46,11 +46,11 @@
   };
 
   var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedTotalWeightLimit) {
-    inputElement.val(selectedTotalWeightLimit.getLimit());
+    inputElement.val(selectedTotalWeightLimit.getValue());
     inputElement.prop('disabled', selectedTotalWeightLimit.expired());
     inputElement.on('input', function(event) {
       var value = parseInt(removeWhitespace($(event.currentTarget).val()), 10);
-      selectedTotalWeightLimit.setLimit(value);
+      selectedTotalWeightLimit.setValue(value);
     });
     toggleElement.change(function(event) {
       var expired = $(event.currentTarget).val();

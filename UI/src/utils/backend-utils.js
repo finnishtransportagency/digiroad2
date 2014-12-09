@@ -75,8 +75,8 @@
       });
     }, 1000);
 
-    this.updateTotalWeightLimit = _.throttle(function(id, limit, success, failure) {
-      putUpdateTotalWeightLimitCall(id, {value: limit}, success, failure);
+    this.updateTotalWeightLimit = _.throttle(function(id, value, success, failure) {
+      putUpdateTotalWeightLimitCall(id, {value: value}, success, failure);
     }, 1000);
 
     this.expireTotalWeightLimit = _.throttle(function(id, success, failure) {

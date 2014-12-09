@@ -31,7 +31,7 @@
               position: value.position,
               points: value.points
             };
-          }), sideCode: values[0].sideCode, limit: values[0].value, expired: values[0].expired }];
+          }), sideCode: values[0].sideCode, value: values[0].value, expired: values[0].expired }];
         })
         .object()
         .value();
@@ -48,7 +48,7 @@
         } else if (selected) {
           var selectedInCollection = totalWeightLimits[selected.id];
           selectedInCollection.isSelected = selected.isSelected;
-          selectedInCollection.limit = selected.limit;
+          selectedInCollection.value = selected.value;
           selectedInCollection.expired = selected.expired;
         }
 
@@ -83,11 +83,11 @@
       totalWeightLimits[id].isSelected = false;
     };
 
-    this.changeLimit = function(id, limit) {
+    this.changeLimitValue = function(id, value) {
       if (splitTotalWeightLimits.created) {
-        splitTotalWeightLimits.created.limit = limit;
+        splitTotalWeightLimits.created.value = value;
       } else {
-        totalWeightLimits[id].limit = limit;
+        totalWeightLimits[id].value = value;
       }
     };
 
@@ -165,7 +165,7 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      backend.splitTotalWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.limit, splitLimit.expired, function(updatedTotalWeightLimits) {
+      backend.splitTotalWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
         var existingId = splitTotalWeightLimits.existing.id;
         splitTotalWeightLimits = {};
         dirty = false;
