@@ -209,16 +209,16 @@ window.TotalWeightLimitLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var findTotalWeightFeatureById = function(id) {
-    return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
+  var findUnpersistedTotalWeightFeatures = function() {
+    return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === null; });
   };
 
-  var findTotalWeightFeatureByRoadLinkId = function(id) {
-    return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === null && feature.attributes.roadLinkId === id; });
+  var findRoadLinkFeaturesByRoadLinkId = function(id) {
+    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
   };
 
-  var findRoadLinkFeatureByRoadLinkId = function(id) {
-    return _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
+  var findTotalWeightFeaturesById = function(id) {
+    return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
   };
 
   var totalWeightLimitOnSelect = function(feature) {
@@ -248,7 +248,7 @@ window.TotalWeightLimitLayer = function(params) {
   map.addControl(selectControl);
 
   var handleTotalWeightLimitUnSelected = function(id, roadLinkId) {
-    var feature = findTotalWeightFeatureById(id) || findRoadLinkFeatureByRoadLinkId(roadLinkId);
+    var feature = _.first(findTotalWeightFeaturesById(id)) || _.first(findRoadLinkFeaturesByRoadLinkId(roadLinkId));
     if (feature) selectControl.unhighlight(feature);
 
     vectorLayer.styleMap = browseStyleMap;
@@ -307,7 +307,7 @@ window.TotalWeightLimitLayer = function(params) {
 
   var handleTotalWeightLimitSelected = function(selectedWeightLimit) {
     if (selectedWeightLimit.isNew()) {
-      var feature = findTotalWeightFeatureById(selectedWeightLimit.getId()) || findRoadLinkFeatureByRoadLinkId(selectedWeightLimit.getRoadLinkId());
+      var feature = _.first(findTotalWeightFeaturesById(selectedWeightLimit.getId())) || _.first(findRoadLinkFeaturesByRoadLinkId(selectedWeightLimit.getRoadLinkId()));
       setSelectionStyleAndHighlightFeature(feature);
     }
   };
@@ -316,9 +316,9 @@ window.TotalWeightLimitLayer = function(params) {
 
   var totalWeightLimitFeatureExists = function(selectedTotalWeightLimit) {
     if (selectedTotalWeightLimit.isNew() && selectedTotalWeightLimit.isDirty()) {
-      return !_.isUndefined(findTotalWeightFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId()));
+      return !_.isEmpty(findUnpersistedTotalWeightFeatures());
     } else {
-      return !_.isUndefined(findTotalWeightFeatureById(selectedTotalWeightLimit.getId()));
+      return !_.isEmpty(findTotalWeightFeaturesById(selectedTotalWeightLimit.getId()));
     }
   };
 
@@ -327,8 +327,8 @@ window.TotalWeightLimitLayer = function(params) {
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     if (totalWeightLimitFeatureExists(selectedTotalWeightLimit)) {
-      var selectedTotalWeightLimitFeature = getSelectedFeature(selectedTotalWeightLimit);
-      vectorLayer.removeFeatures(selectedTotalWeightLimitFeature);
+      var selectedTotalWeightLimitFeatures = getSelectedFeatures(selectedTotalWeightLimit);
+      vectorLayer.removeFeatures(selectedTotalWeightLimitFeatures);
     }
     drawTotalWeightLimits([selectedTotalWeightLimit.get()]);
   };
@@ -365,15 +365,15 @@ window.TotalWeightLimitLayer = function(params) {
     drawTotalWeightLimits(totalWeightLimits);
   };
 
-  var getSelectedFeature = function(selectedTotalWeightLimit) {
+  var getSelectedFeatures = function(selectedTotalWeightLimit) {
     if (selectedTotalWeightLimit.isNew()) {
       if (selectedTotalWeightLimit.isDirty()) {
-        return findTotalWeightFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
+        return findUnpersistedTotalWeightFeatures();
       } else {
-        return findRoadLinkFeatureByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
+        return findRoadLinkFeaturesByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
       }
     } else {
-      return findTotalWeightFeatureById(selectedTotalWeightLimit.getId());
+      return findTotalWeightFeaturesById(selectedTotalWeightLimit.getId());
     }
   };
 
@@ -386,7 +386,7 @@ window.TotalWeightLimitLayer = function(params) {
 
     if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = getSelectedFeature(selectedTotalWeightLimit);
+      var feature = _.first(getSelectedFeatures(selectedTotalWeightLimit));
       if (feature) {
         selectControl.select(feature);
         highlightTotalWeightLimitFeatures(feature);
