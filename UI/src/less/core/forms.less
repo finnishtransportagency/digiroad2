@@ -293,7 +293,7 @@ input[type="checkbox"] {
   .select,
   .form-control-static,
   .choice-group,
-  .unit-of-measure {
+  .input-group {
     float: left;
   }
 
@@ -314,8 +314,13 @@ input[type="checkbox"] {
     float: left;
   }
 
-  .form-control-static,
-  .unit-of-measure {
+  .input-group {
+    .form-control {
+      float: none;
+    }
+  }
+
+  .form-control-static {
     padding-top: (@line-height-modifier  + 1);
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
