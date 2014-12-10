@@ -55,7 +55,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         selectSpeedLimit(openLayersMap, speedLimit.id);
       });
       it('it displays speed limit segment ID in asset form', function() {
-        expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
+        expect($('#feature-attributes header span')).to.have.text('Segmentin ID: 1123812');
       });
       it('it displays speed limit creator and modifier', function() {
         expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
@@ -67,7 +67,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           $('.pzbDiv-plus').click();
         });
         it('maintains speed limit selection', function() {
-          expect($('#feature-attributes header')).to.have.text('Segmentin ID: 1123812');
+          expect($('#feature-attributes header span')).to.have.text('Segmentin ID: 1123812');
         });
       });
 
