@@ -22,6 +22,17 @@
   var start = function() {
     ga('create', environmentProperty(), environmentConfiguration());
     ga('send', 'pageview');
+    if(window.eventbus) {
+      eventbus.on('all', function(eventName) {
+        var excludedEvents = ['map:mouseMoved', 'map:moved', 'map:clicked', 'asset:saving', 'road:active', 'asset:moved'];
+        if (!_.contains(excludedEvents, eventName)) {
+          var splitName = eventName.split(':');
+          var category = splitName[0];
+          var action = splitName[1];
+          ga('send', 'event', category, action);
+        }
+      });
+    }
   };
 
   root.Analytics = {
