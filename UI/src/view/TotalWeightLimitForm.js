@@ -4,15 +4,16 @@
     var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
     var createdBy = selectedTotalWeightLimit.getCreatedBy() || '-';
     var createdDateTime = selectedTotalWeightLimit.getCreatedDateTime() ? ' ' + selectedTotalWeightLimit.getCreatedDateTime() : '';
-    var header = selectedTotalWeightLimit.isNew() ?
-      '<header>Uusi kokonaispainorajoitus</header>' :
-      '<header>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</header>';
     var disabled = selectedTotalWeightLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
     var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
     var limit = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + ' kg' : '-';
+    var title = selectedTotalWeightLimit.isNew() ?
+                  '<span>Uusi suurin sallittu massa</span>' :
+                  '<span>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</span>';
+    var header = '<header>' + title + '<div class="total-weight-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
