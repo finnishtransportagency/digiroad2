@@ -73,12 +73,12 @@
           return;
         }
         var container = $("#feature-attributes").empty();
-
-        var element = $('<header />').html(busStopHeader());
+        var header = busStopHeader();
         var wrapper = $('<div />').addClass('wrapper edit-mode');
         streetViewHandler = getStreetView();
-        wrapper.append(streetViewHandler.render()).append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
-        var featureAttributesElement = container.append(element).append(wrapper);
+        wrapper.append(streetViewHandler.render())
+          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
+        var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
         var saveBtn = new SaveButton();
@@ -99,10 +99,20 @@
         }
 
         function busStopHeader(asset) {
+          var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
+            .append(new ValidationErrorLabel().element)
+            .append(new SaveButton().element)
+            .append(new CancelButton().element);
+
+          var header = $('<header/>');
+
           if (_.isNumber(selectedAssetModel.get('externalId'))) {
-            return 'Valtakunnallinen ID: ' + selectedAssetModel.get('externalId');
+            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('externalId') + '</span>');
+          } else {
+            header.append('<span>Uusi pys&auml;kki</span>');
           }
-          else return 'Uusi pys&auml;kki';
+          header.append(buttons);
+          return header;
         }
       };
 

@@ -9,12 +9,14 @@
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
     var createdDateTime = selectedSpeedLimit.getCreatedDateTime() ? ' ' + selectedSpeedLimit.getCreatedDateTime() : '';
-    var header = selectedSpeedLimit.getId() ?
-                   '<header>Segmentin ID: ' + selectedSpeedLimit.getId() + '</header>' :
-                   '<header>Uusi nopeusrajoitus</header>';
     var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
+    var title = selectedSpeedLimit.getId() ?
+                  '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>' :
+                  '<span>Uusi nopeusrajoitus</span>';
+
+    var header = '<header>' + title + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -55,7 +57,7 @@
     });
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
-      rootElement.find('.form-controls button').attr('disabled', false);
+      rootElement.find('.speed-limit button').attr('disabled', false);
     });
     rootElement.on('click', '.speed-limit button.save', function() {
       if (selectedSpeedLimit.isNew()) {
