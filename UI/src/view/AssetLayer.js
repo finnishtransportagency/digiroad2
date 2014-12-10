@@ -28,13 +28,13 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
     clickTimestamp = null;
     unregisterMouseUpHandler(asset);
     if (assetIsMoving) {
-      selectedAssetModel.move(
-        {
+      selectedAssetModel.move({
         lon: selectedAssetModel.get('lon'),
         lat: selectedAssetModel.get('lat'),
         bearing: selectedAssetModel.get('bearing'),
         roadLinkId: selectedAssetModel.get('roadLinkId')
       });
+      eventbus.trigger('asset:moveCompleted');
       assetIsMoving = false;
     }
   };
