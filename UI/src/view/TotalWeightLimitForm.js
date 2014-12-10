@@ -12,7 +12,7 @@
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
     var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
-    var limit = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + 'kg' : '-';
+    var limit = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + ' kg' : '-';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
@@ -24,15 +24,22 @@
                '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
+                 '<p class="form-control-static total-weight-limit">' + limit + '</p>' +
                  '<div class="choice-group">' +
                    '<div class="radio">' +
                      '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled" ' + expiredChecked + '/></label>' +
-                     '<label>Painorajoitus:<input type="radio" name="total-weight-limit" value="enabled" ' + nonExpiredChecked + '/></label>' +
                    '</div>' +
-                   '<input type="text" class="form-control total-weight-limit" style="display: none" />' +
-                   '<span class="unit-of-measure total-weight-limit">kg</span>' +
+                   '<div class="radio">' +
+                     '<label>Painorajoitus<input type="radio" name="total-weight-limit" value="enabled" ' + nonExpiredChecked + '/></label>' +
+                   '</div>' +
                  '</div>' +
-                 '<p class="form-control-static total-weight-limit">' + limit + '</p>' +
+               '</div>' +
+               '<div class="form-group editable">' +
+                 '<label class="control-label"></label>' +
+                 '<div class="input-group" style="display: none">' +
+                   '<input type="text" class="form-control total-weight-limit">' +
+                   '<span class="input-group-addon">kg</span>' +
+                 '</div>' +
                '</div>' +
              '</div>' +
            '</div>' +
@@ -64,7 +71,7 @@
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
       rootElement.find('.editable .form-control-static').toggle(readOnly);
-      rootElement.find('.editable .form-control').toggle(!readOnly);
+      rootElement.find('.editable .input-group').toggle(!readOnly);
       rootElement.find('.editable .choice-group').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
