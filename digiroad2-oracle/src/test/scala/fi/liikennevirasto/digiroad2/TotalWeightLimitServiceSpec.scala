@@ -6,8 +6,10 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class TotalWeightLimitServiceSpec extends FunSuite with Matchers {
 
-  object PassThroughService extends TotalWeightLimitOperations {
+  object PassThroughService extends WeightLimitOperations {
     override def withDynTransaction[T](f: => T): T = f
+    val assetTypeId = 30
+    val valuePropertyId = "kokonaispainorajoitus"
   }
 
   def runWithCleanup(test: => Unit): Unit = {
@@ -19,7 +21,7 @@ class TotalWeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Expire weight limit") {
     runWithCleanup {
-      PassThroughService.updateTotalWeightLimit(11111, None, true, "lol")
+      PassThroughService.updateWeightLimit(11111, None, true, "lol")
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (4000)
       limit.get.expired should be (true)
@@ -28,7 +30,7 @@ class TotalWeightLimitServiceSpec extends FunSuite with Matchers {
 
   test("Update weight limit") {
     runWithCleanup {
-      PassThroughService.updateTotalWeightLimit(11111, Some(2000), false, "lol")
+      PassThroughService.updateWeightLimit(11111, Some(2000), false, "lol")
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (2000)
       limit.get.expired should be (false)
