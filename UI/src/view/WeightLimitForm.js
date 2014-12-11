@@ -1,5 +1,5 @@
 (function (root) {
-  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle, className, eventCategory) {
+  root.WeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle, className, eventCategory) {
     var template = function(selectedTotalWeightLimit) {
       var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
