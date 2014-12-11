@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitsCollection = function(backend, multiElementEventCategory) {
+  root.TotalWeightLimitsCollection = function(backend, singleElementEventCategory, multiElementEventCategory) {
     var totalWeightLimits = {};
     var dirty = false;
     var splitTotalWeightLimits = {};
@@ -34,6 +34,10 @@
         })
         .object()
         .value();
+    };
+
+    var singleElementEvent = function(eventName) {
+      return singleElementEventCategory + ':' + eventName;
     };
 
     var multiElementEvent = function(eventName) {
@@ -163,7 +167,7 @@
         splitTotalWeightLimits.splitRoadLinkId = roadLinkId;
         dirty = true;
         eventbus.trigger(multiElementEvent('fetched'), buildPayload(totalWeightLimits, splitTotalWeightLimits));
-        eventbus.trigger('totalWeightLimit:split');
+        eventbus.trigger(singleElementEvent('split'));
       });
     };
 
@@ -182,7 +186,7 @@
         });
 
         eventbus.trigger(multiElementEvent('fetched'), _.values(totalWeightLimits));
-        eventbus.trigger('totalWeightLimit:saved', (_.find(updatedTotalWeightLimits, function(totalWeightLimit) {
+        eventbus.trigger(singleElementEvent('saved'), (_.find(updatedTotalWeightLimits, function(totalWeightLimit) {
           return existingId !== totalWeightLimit.id;
         })));
         applicationModel.setSelectedTool('Select');
