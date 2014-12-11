@@ -10,7 +10,7 @@
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
       var expiredChecked = selectedTotalWeightLimit.expired() ? 'checked' : '';
       var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
-      var limit = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + ' kg' : '-';
+      var value = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + ' kg' : '-';
       var title = selectedTotalWeightLimit.isNew() ?
         '<span>Uusi suurin sallittu massa</span>' :
         '<span>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</span>';
@@ -26,7 +26,7 @@
         '</div>' +
         '<div class="form-group editable">' +
         '<label class="control-label">Rajoitus</label>' +
-        '<p class="form-control-static total-weight-limit">' + limit + '</p>' +
+        '<p class="form-control-static total-weight-limit">' + value + '</p>' +
         '<div class="choice-group">' +
         '<div class="radio">' +
         '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled" ' + expiredChecked + '/></label>' +
