@@ -1,5 +1,5 @@
 (function (root) {
-  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle) {
+  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle, className) {
     var template = function(selectedTotalWeightLimit) {
       var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
@@ -14,7 +14,7 @@
       var title = selectedTotalWeightLimit.isNew() ?
         '<span>' + newWeightLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</span>';
-      var header = '<header>' + title + '<div class="total-weight-limit form-controls">' + buttons + '</div></header>';
+      var header = '<header>' + title + '<div class="' + className + ' form-controls">' + buttons + '</div></header>';
       return header +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -26,26 +26,26 @@
         '</div>' +
         '<div class="form-group editable">' +
         '<label class="control-label">Rajoitus</label>' +
-        '<p class="form-control-static total-weight-limit">' + value + '</p>' +
+        '<p class="form-control-static ' + className + '">' + value + '</p>' +
         '<div class="choice-group">' +
         '<div class="radio">' +
-        '<label>Ei painorajoitusta<input type="radio" name="total-weight-limit" value="disabled" ' + expiredChecked + '/></label>' +
+        '<label>Ei painorajoitusta<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
         '</div>' +
         '<div class="radio">' +
-        '<label>Painorajoitus<input type="radio" name="total-weight-limit" value="enabled" ' + nonExpiredChecked + '/></label>' +
+        '<label>Painorajoitus<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
         '</div>' +
         '</div>' +
         '</div>' +
         '<div class="form-group editable">' +
         '<label class="control-label"></label>' +
         '<div class="input-group" style="display: none">' +
-        '<input type="text" class="form-control total-weight-limit">' +
+        '<input type="text" class="form-control ' + className + '">' +
         '<span class="input-group-addon">kg</span>' +
         '</div>' +
         '</div>' +
         '</div>' +
         '</div>' +
-        '<footer class="total-weight-limit form-controls" style="display: none">' +
+        '<footer class="' + className + ' form-controls" style="display: none">' +
         buttons +
         '</footer>';
     };
@@ -69,7 +69,7 @@
       });
     };
 
-    var bindEvents = function(selectedTotalWeightLimit) {
+    var bindEvents = function(selectedTotalWeightLimit, className) {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -80,7 +80,7 @@
       eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
         rootElement.html(template(selectedTotalWeightLimit));
         var toggleElement = rootElement.find(".radio input");
-        var inputElement = rootElement.find('.total-weight-limit');
+        var inputElement = rootElement.find('.' + className);
         setupTotalWeightLimitInput(toggleElement, inputElement, selectedTotalWeightLimit);
         toggleMode(applicationModel.isReadOnly());
       });
@@ -91,14 +91,14 @@
       eventbus.on('totalWeightLimit:limitChanged totalWeightLimit:expirationChanged', function() {
         rootElement.find('.form-controls button').attr('disabled', false);
       });
-      rootElement.on('click', '.total-weight-limit button.save', function() {
+      rootElement.on('click', '.' + className + ' button.save', function() {
         selectedTotalWeightLimit.save();
       });
-      rootElement.on('click', '.total-weight-limit button.cancel', function() {
+      rootElement.on('click', '.' + className + ' button.cancel', function() {
         selectedTotalWeightLimit.cancel();
       });
     };
 
-    bindEvents(selectedTotalWeightLimit);
+    bindEvents(selectedTotalWeightLimit, className);
   };
 })(this);
