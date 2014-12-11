@@ -8,8 +8,6 @@ class TotalWeightLimitServiceSpec extends FunSuite with Matchers {
 
   object PassThroughService extends WeightLimitOperations {
     override def withDynTransaction[T](f: => T): T = f
-    val assetTypeId = 30
-    val valuePropertyId = "kokonaispainorajoitus"
   }
 
   def runWithCleanup(test: => Unit): Unit = {

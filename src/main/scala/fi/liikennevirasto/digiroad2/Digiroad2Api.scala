@@ -223,7 +223,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      TotalWeightLimitService.getByBoundingBox(boundingRectangle, municipalities)
+      WeightLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -231,7 +231,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   get("/weightlimits/:segmentId") {
     val segmentId = params("segmentId")
-    TotalWeightLimitService.getById(segmentId.toLong)
+    WeightLimitService.getById(segmentId.toLong)
       .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
   }
 
@@ -253,8 +253,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case (None, None) => BadRequest("Total weight limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateTotalWeightLimitValue)
-        TotalWeightLimitService.updateWeightLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => TotalWeightLimitService.getById(segmentId)
+        WeightLimitService.updateWeightLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+          case Some(segmentId) => WeightLimitService.getById(segmentId)
           case None => NotFound("Total weight limit " + id + " not found")
         }
     }
@@ -268,9 +268,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val value = (parsedBody \ "value").extract[BigInt]
     validateTotalWeightLimitValue(value)
     val username = user.username
-    TotalWeightLimitService.createWeightLimit(roadLinkId = roadLinkId,
-                                                   value = value.intValue,
-                                                   username = username)
+    WeightLimitService.createWeightLimit(typeId = typeId,
+                                         roadLinkId = roadLinkId,
+                                         value = value.intValue,
+                                         username = username)
   }
 
   post("/weightlimits/:id") {
@@ -283,7 +284,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    TotalWeightLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
+    WeightLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
   get("/speedlimits/:segmentId") {
