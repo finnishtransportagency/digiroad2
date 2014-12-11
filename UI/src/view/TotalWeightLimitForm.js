@@ -1,5 +1,5 @@
 (function (root) {
-  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle, className) {
+  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle, className, eventCategory) {
     var template = function(selectedTotalWeightLimit) {
       var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
@@ -69,7 +69,7 @@
       });
     };
 
-    var bindEvents = function(selectedTotalWeightLimit, className) {
+    var bindEvents = function(selectedTotalWeightLimit, className, eventCategory) {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -77,18 +77,21 @@
         rootElement.find('.editable .choice-group').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
       };
-      eventbus.on('totalWeightLimit:selected totalWeightLimit:cancelled totalWeightLimit:saved', function() {
+      var events = function() {
+        return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
+      };
+      eventbus.on(events('selected', 'cancelled', 'saved'), function() {
         rootElement.html(template(selectedTotalWeightLimit));
         var toggleElement = rootElement.find(".radio input");
         var inputElement = rootElement.find('.' + className);
         setupTotalWeightLimitInput(toggleElement, inputElement, selectedTotalWeightLimit);
         toggleMode(applicationModel.isReadOnly());
       });
-      eventbus.on('totalWeightLimit:unselected', function() {
+      eventbus.on(events('unselected'), function() {
         rootElement.empty();
       });
       eventbus.on('application:readOnly', toggleMode);
-      eventbus.on('totalWeightLimit:limitChanged totalWeightLimit:expirationChanged', function() {
+      eventbus.on(events('limitChanged', 'expirationChanged'), function() {
         rootElement.find('.form-controls button').attr('disabled', false);
       });
       rootElement.on('click', '.' + className + ' button.save', function() {
@@ -99,6 +102,6 @@
       });
     };
 
-    bindEvents(selectedTotalWeightLimit, className);
+    bindEvents(selectedTotalWeightLimit, className, eventCategory);
   };
 })(this);

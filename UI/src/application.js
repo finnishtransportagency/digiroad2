@@ -194,7 +194,7 @@ var RoadCollection = function(backend) {
     ActionPanel.initialize(backend, selectedSpeedLimit, selectedTotalWeightLimit);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    new TotalWeightLimitForm(selectedTotalWeightLimit, 'Uusi suurin sallittu massa', 'total-weight-limit');
+    new TotalWeightLimitForm(selectedTotalWeightLimit, 'Uusi suurin sallittu massa', 'total-weight-limit', 'totalWeightLimit');
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
