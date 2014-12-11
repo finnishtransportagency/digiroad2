@@ -7,7 +7,7 @@
     var originalExpired = null;
 
     eventbus.on('totalWeightLimit:split', function() {
-      collection.fetchTotalWeightLimit(null, function(totalWeightLimit) {
+      collection.fetchWeightLimit(null, function(totalWeightLimit) {
         current = totalWeightLimit;
         current.isSplit = true;
         originalTotalWeightLimit = totalWeightLimit.value;
@@ -19,7 +19,7 @@
 
     this.open = function(id) {
       self.close();
-      collection.fetchTotalWeightLimit(id, function(totalWeightLimit) {
+      collection.fetchWeightLimit(id, function(totalWeightLimit) {
         current = totalWeightLimit;
         originalTotalWeightLimit = totalWeightLimit.value;
         originalExpired = totalWeightLimit.expired;
