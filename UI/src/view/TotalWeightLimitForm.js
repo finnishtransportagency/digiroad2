@@ -1,5 +1,5 @@
 (function (root) {
-  root.TotalWeightLimitForm = function(selectedTotalWeightLimit) {
+  root.TotalWeightLimitForm = function(selectedTotalWeightLimit, newWeightLimitTitle) {
     var template = function(selectedTotalWeightLimit) {
       var modifiedBy = selectedTotalWeightLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedTotalWeightLimit.getModifiedDateTime() ? ' ' + selectedTotalWeightLimit.getModifiedDateTime() : '';
@@ -12,7 +12,7 @@
       var nonExpiredChecked = selectedTotalWeightLimit.expired() ? '' : 'checked';
       var value = selectedTotalWeightLimit.getValue() ? selectedTotalWeightLimit.getValue() + ' kg' : '-';
       var title = selectedTotalWeightLimit.isNew() ?
-        '<span>Uusi suurin sallittu massa</span>' :
+        '<span>' + newWeightLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedTotalWeightLimit.getId() + '</span>';
       var header = '<header>' + title + '<div class="total-weight-limit form-controls">' + buttons + '</div></header>';
       return header +
