@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
+  root.WeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
     var splitWeightLimits = {};

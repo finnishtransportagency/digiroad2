@@ -178,7 +178,7 @@ var RoadCollection = function(backend) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
-    var totalWeightLimitsCollection = new TotalWeightLimitsCollection(
+    var totalWeightLimitsCollection = new WeightLimitsCollection(
       backend.getTotalWeightLimit,
       backend.getTotalWeightLimits,
       backend.splitTotalWeightLimit,
