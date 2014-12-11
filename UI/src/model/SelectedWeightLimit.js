@@ -1,37 +1,41 @@
 (function(root) {
-  root.SelectedTotalWeightLimit = function(backend, collection) {
+  root.SelectedWeightLimit = function(expireWeightLimit, updateWeightLimit, createWeightLimit, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
-    var originalTotalWeightLimit = null;
+    var originalValue = null;
     var originalExpired = null;
 
-    eventbus.on('totalWeightLimit:split', function() {
-      collection.fetchWeightLimit(null, function(totalWeightLimit) {
-        current = totalWeightLimit;
+    var singleElementEvent = function(eventName) {
+      return singleElementEventCategory + ':' + eventName;
+    };
+
+    eventbus.on(singleElementEvent('split'), function() {
+      collection.fetchWeightLimit(null, function(weightLimit) {
+        current = weightLimit;
         current.isSplit = true;
-        originalTotalWeightLimit = totalWeightLimit.value;
-        originalExpired = totalWeightLimit.expired;
+        originalValue = weightLimit.value;
+        originalExpired = weightLimit.expired;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:selected', self);
+        eventbus.trigger(singleElementEvent('selected'), self);
       });
     });
 
     this.open = function(id) {
       self.close();
-      collection.fetchWeightLimit(id, function(totalWeightLimit) {
-        current = totalWeightLimit;
-        originalTotalWeightLimit = totalWeightLimit.value;
-        originalExpired = totalWeightLimit.expired;
-        collection.markAsSelected(totalWeightLimit.id);
-        eventbus.trigger('totalWeightLimit:selected', self);
+      collection.fetchWeightLimit(id, function(weightLimit) {
+        current = weightLimit;
+        originalValue = weightLimit.value;
+        originalExpired = weightLimit.expired;
+        collection.markAsSelected(weightLimit.id);
+        eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
 
     this.create = function(roadLinkId, points) {
       self.close();
       var endpoints = [_.first(points), _.last(points)];
-      originalTotalWeightLimit = null;
+      originalValue = null;
       originalExpired = true;
       current = {
         id: null,
@@ -45,7 +49,7 @@
           points: points
         }]
       };
-      eventbus.trigger('totalWeightLimit:selected', self);
+      eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.close = function() {
@@ -59,7 +63,7 @@
           collection.remove(id);
         }
         current = null;
-        eventbus.trigger('totalWeightLimit:unselected', id, roadLinkId);
+        eventbus.trigger(singleElementEvent('unselected'), id, roadLinkId);
       }
     };
 
@@ -68,20 +72,20 @@
       current = null;
       dirty = false;
       collection.cancelSplit();
-      eventbus.trigger('totalWeightLimit:unselected', id);
+      eventbus.trigger(singleElementEvent('unselected'), id);
     };
 
     this.save = function() {
-      var success = function(totalWeightLimit) {
+      var success = function(weightLimit) {
         var wasNew = isNew();
         dirty = false;
-        current = _.merge({}, current, totalWeightLimit);
-        originalTotalWeightLimit = current.value;
+        current = _.merge({}, current, weightLimit);
+        originalValue = current.value;
         originalExpired = current.expired;
         if (wasNew) {
           collection.add(current);
         }
-        eventbus.trigger('totalWeightLimit:saved', current);
+        eventbus.trigger(singleElementEvent('saved'), current);
       };
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
@@ -105,15 +109,15 @@
     };
 
     var expire = function(success, failure) {
-      backend.expireTotalWeightLimit(current.id, success, failure);
+      expireWeightLimit(current.id, success, failure);
     };
 
     var update = function(success, failure) {
-      backend.updateTotalWeightLimit(current.id, current.value, success, failure);
+      updateWeightLimit(current.id, current.value, success, failure);
     };
 
     var createNew = function(success, failure) {
-      backend.createTotalWeightLimit(current.roadLinkId, current.value, success, failure);
+      createWeightLimit(current.roadLinkId, current.value, success, failure);
     };
 
     this.cancel = function() {
@@ -121,14 +125,14 @@
         self.cancelSplit();
         return;
       }
-      current.value = originalTotalWeightLimit;
+      current.value = originalValue;
       current.expired = originalExpired;
       if (!isNew()) {
-        collection.changeLimitValue(current.id, originalTotalWeightLimit);
+        collection.changeLimitValue(current.id, originalValue);
         collection.changeExpired(current.id, originalExpired);
       }
       dirty = false;
-      eventbus.trigger('totalWeightLimit:cancelled', self);
+      eventbus.trigger(singleElementEvent('cancelled'), self);
     };
 
     var exists = function() {
@@ -184,7 +188,7 @@
         if (!isNew()) { collection.changeLimitValue(current.id, value); }
         current.value = value;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:limitChanged', self);
+        eventbus.trigger(singleElementEvent('limitChanged'), self);
       }
     };
 
@@ -193,7 +197,7 @@
         if (!isNew()) { collection.changeExpired(current.id, expired); }
         current.expired = expired;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:expirationChanged', self);
+        eventbus.trigger(singleElementEvent('expirationChanged'), self);
       }
     };
 
@@ -207,11 +211,11 @@
 
     this.isNew = isNew;
 
-    eventbus.on('totalWeightLimit:saved', function(totalWeightLimit) {
-      current = totalWeightLimit;
-      originalTotalWeightLimit = totalWeightLimit.value;
-      originalExpired = totalWeightLimit.expired;
-      collection.markAsSelected(totalWeightLimit.id);
+    eventbus.on(singleElementEvent('saved'), function(weightLimit) {
+      current = weightLimit;
+      originalValue = weightLimit.value;
+      originalExpired = weightLimit.expired;
+      collection.markAsSelected(weightLimit.id);
       dirty = false;
     });
   };
