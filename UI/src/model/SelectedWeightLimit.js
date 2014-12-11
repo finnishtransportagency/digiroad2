@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedTotalWeightLimit = function(expireWeightLimit, updateWeightLimit, createWeightLimit, collection, singleElementEventCategory) {
+  root.SelectedWeightLimit = function(expireWeightLimit, updateWeightLimit, createWeightLimit, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
