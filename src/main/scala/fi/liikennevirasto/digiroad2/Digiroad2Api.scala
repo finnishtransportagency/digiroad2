@@ -185,7 +185,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val bboxOption = params.get("bbox").map(constructBoundingRectangle)
     bboxOption.foreach(validateBoundingBox)
     if (bboxOption.isEmpty) {
-      throw new IllegalArgumentException("Bounding box was missing")
+      halt(BadRequest("Bounding box was missing"))
     }
     bboxOption
   }
@@ -196,7 +196,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val width = Math.abs(rightTop.x - leftBottom.x).toLong
     val height = Math.abs(rightTop.y - leftBottom.y).toLong
     if ((width * height) > MAX_BOUNDING_BOX) {
-      throw new IllegalArgumentException("Bounding box was too big: " + bbox)
+      halt(BadRequest("Bounding box was too big: " + bbox))
     }
   }
 
@@ -239,9 +239,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   private def validateTotalWeightLimitValue(value: BigInt): Unit = {
     if (value > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("Total weight limit value too big")
+      halt(BadRequest("Total weight limit value too big"))
     } else if (value < 0) {
-      throw new IllegalArgumentException("Total weight limit value cannot be negative")
+      halt(BadRequest("Total weight limit value cannot be negative"))
     }
   }
 
@@ -252,7 +252,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     (expiredOption, valueOption) match {
-      case (None, None) => throw new IllegalArgumentException("Total weight limit value or expiration not provided")
+      case (None, None) => BadRequest("Total weight limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateTotalWeightLimitValue)
         TotalWeightLimitService.updateWeightLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
@@ -303,7 +303,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
           case Some(id) => linearAssetProvider.getSpeedLimit(id)
           case _ => NotFound("Speed limit " + speedLimitId + " not found")
         }
-      case _ => throw new IllegalArgumentException("Speed limit value not provided")
+      case _ => BadRequest("Speed limit value not provided")
     }
   }
 
