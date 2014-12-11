@@ -64,13 +64,13 @@
     };
 
     this.getTotalWeightLimits = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/totalweightlimits?bbox=' + boundingBox, function(totalWeightLimits) {
+      $.getJSON('api/weightlimits?typeId=30&bbox=' + boundingBox, function(totalWeightLimits) {
         callback(totalWeightLimits);
       });
     }, 1000);
 
     this.getTotalWeightLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/totalweightlimits/' + id, function(totalWeightLimit) {
+      $.getJSON('api/weightlimits/' + id, function(totalWeightLimit) {
         callback(totalWeightLimit);
       });
     }, 1000);
@@ -87,7 +87,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/totalweightlimits/" + id,
+        url: "api/weightlimits/" + id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -99,7 +99,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/totalweightlimits",
+        url: "api/weightlimits?typeId=30",
         data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
         dataType: "json",
         success: success,
@@ -111,7 +111,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/totalweightlimits/" + id,
+        url: "api/weightlimits/" + id,
         data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, value: value, expired: expired}),
         dataType: "json",
         success: success,
