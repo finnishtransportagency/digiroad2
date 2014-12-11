@@ -218,9 +218,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/totalweightlimits") {
+  get("/weightlimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
@@ -230,7 +231,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/totalweightlimits/:segmentId") {
+  get("/weightlimits/:segmentId") {
     val segmentId = params("segmentId")
     TotalWeightLimitService.getById(segmentId.toLong)
       .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
@@ -244,7 +245,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  put("/totalweightlimits/:id") {
+  put("/weightlimits/:id") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val id = params("id").toLong
@@ -261,9 +262,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  post("/totalweightlimits") {
+  post("/weightlimits") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val value = (parsedBody \ "value").extract[BigInt]
     validateTotalWeightLimitValue(value)
@@ -273,7 +275,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
                                                    username = username)
   }
 
-  post("/totalweightlimits/:id") {
+  post("/weightlimits/:id") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val value = (parsedBody \ "value").extract[BigInt]

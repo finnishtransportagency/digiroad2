@@ -268,14 +268,20 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get total weight limits", Tag("db")) {
-    getWithUserAuth("/totalweightlimits?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/weightlimits?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
       parse(body).extract[List[WeightLimitLink]].size should be(2)
     }
   }
 
+  test("get total weight limits should return bad request if typeId missing", Tag("db")) {
+    getWithUserAuth("/weightlimits?bbox=374037,6677013,374540,6677675") {
+      status should equal(400)
+    }
+  }
+
   test("updating total weight limits requires an operator role") {
-    putJsonWithUserAuth("/totalweightlimits/11112", """{"value":6000}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/weightlimits/11112", """{"value":6000}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
