@@ -21,6 +21,8 @@ object DataFixture {
     props
   }
 
+  val dataImporter = new AssetDataImporter
+
   def flyway: Flyway = {
     val flyway = new Flyway()
     flyway.setDataSource(ds)
@@ -53,7 +55,7 @@ object DataFixture {
       "kauniainen_total_weight_limits.sql"))
   }
 
-  def importSpeedLimitsFromConversion(dataImporter: AssetDataImporter, taskPool: ForkJoinPool) {
+  def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
     print("\nCommencing speed limit import from conversion: ")
     println(DateTime.now())
     dataImporter.importSpeedLimits(Conversion, taskPool)
@@ -62,11 +64,22 @@ object DataFixture {
     println("\n")
   }
 
-  def importTotalWeightLimitsFromConversion(dataImporter: AssetDataImporter) {
+  def importTotalWeightLimitsFromConversion() {
     print("\nCommencing total weight limit import from conversion: ")
     println(DateTime.now())
     dataImporter.importTotalWeightLimits(Conversion.database())
     print("Total weight limit import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importWeightLimitsFromConversion() {
+    print("\nCommencing weight limit import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importWeightLimits(Conversion.database(), 20, 40)
+    dataImporter.importWeightLimits(Conversion.database(), 23, 50)
+    dataImporter.importWeightLimits(Conversion.database(), 24, 60)
+    print("Weight limit import complete: ")
     println(DateTime.now())
     println("\n")
   }
@@ -97,7 +110,6 @@ object DataFixture {
       }
     }
 
-    val dataImporter = new AssetDataImporter
     args.headOption match {
       case Some("test") =>
         tearDown()
@@ -108,9 +120,11 @@ object DataFixture {
         importMunicipalityCodes()
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)
-        importSpeedLimitsFromConversion(dataImporter, taskPool)
+        importSpeedLimitsFromConversion(taskPool)
       case Some("totalweightlimits") =>
-        importTotalWeightLimitsFromConversion(dataImporter)
+        importTotalWeightLimitsFromConversion()
+      case Some("weightlimits") =>
+        importWeightLimitsFromConversion()
       case _ => println("Usage: DataFixture test | speedlimits")
     }
   }
