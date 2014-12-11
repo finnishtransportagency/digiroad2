@@ -4,20 +4,20 @@
     var dirty = false;
     var splitWeightLimits = {};
 
-    var buildPayload = function(totalWeightLimits, splitTotalWeightLimits) {
-      var payload = _.chain(totalWeightLimits)
+    var buildPayload = function(weightLimits, splitWeightLimits) {
+      var payload = _.chain(weightLimits)
                      .reject(function(totalWeightLimit, id) {
-                       return id === splitTotalWeightLimits.existing.id.toString();
+                       return id === splitWeightLimits.existing.id.toString();
                      })
                      .values()
                      .value();
-      payload.push(splitTotalWeightLimits.existing);
-      payload.push(splitTotalWeightLimits.created);
+      payload.push(splitWeightLimits.existing);
+      payload.push(splitWeightLimits.created);
       return payload;
     };
 
-    var transformTotalWeightLimits = function(totalWeightLimits) {
-      return _.chain(totalWeightLimits)
+    var transformWeightLimits = function(weightLimits) {
+      return _.chain(weightLimits)
         .groupBy('id')
         .map(function(values, key) {
           return [key, { id: values[0].id, links: _.map(values, function(value) {
@@ -44,11 +44,11 @@
       return _.values(weightLimits);
     };
 
-    this.fetch = function(boundingBox, selectedTotalWeightLimit) {
-      getWeightLimits(boundingBox, function(fetchedTotalWeightLimits) {
-        var selected = _.find(_.values(weightLimits), function(totalWeightLimit) { return totalWeightLimit.isSelected; });
+    this.fetch = function(boundingBox, selectedWeightLimit) {
+      getWeightLimits(boundingBox, function(fetchedWeightLimits) {
+        var selected = _.find(_.values(weightLimits), function(weightLimit) { return weightLimit.isSelected; });
 
-        weightLimits = transformTotalWeightLimits(fetchedTotalWeightLimits);
+        weightLimits = transformWeightLimits(fetchedWeightLimits);
 
         if (selected && !weightLimits[selected.id]) {
           weightLimits[selected.id] = selected;
@@ -59,23 +59,23 @@
           selectedInCollection.expired = selected.expired;
         }
 
-        var newTotalWeightLimit = [];
-        if (selectedTotalWeightLimit.isNew() && selectedTotalWeightLimit.isDirty()) {
-          newTotalWeightLimit = [selectedTotalWeightLimit.get()];
+        var newWeightLimit = [];
+        if (selectedWeightLimit.isNew() && selectedWeightLimit.isDirty()) {
+          newWeightLimit = [selectedWeightLimit.get()];
         }
 
         if (splitWeightLimits.existing) {
           eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitWeightLimits));
         } else {
-          eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits).concat(newTotalWeightLimit));
+          eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits).concat(newWeightLimit));
         }
       });
     };
 
     this.fetchTotalWeightLimit = function(id, callback) {
       if (id) {
-        getWeightLimit(id, function(totalWeightLimit) {
-          callback(_.merge({}, weightLimits[id], totalWeightLimit));
+        getWeightLimit(id, function(weightLimit) {
+          callback(_.merge({}, weightLimits[id], weightLimit));
         });
       } else {
         callback(_.merge({}, splitWeightLimits.created));
@@ -127,9 +127,9 @@
     };
 
     this.splitTotalWeightLimit = function(id, roadLinkId, split) {
-      getWeightLimit(id, function(totalWeightLimit) {
-        var totalWeightLimitLinks = totalWeightLimit.weightLimitLinks;
-        var splitLink = _.find(totalWeightLimitLinks, function(link) {
+      getWeightLimit(id, function(weightLimit) {
+        var weightLimitLinks = weightLimit.weightLimitLinks;
+        var splitLink = _.find(weightLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
         });
         var position = splitLink.position;
@@ -138,11 +138,11 @@
         var left = _.cloneDeep(weightLimits[id]);
         var right = _.cloneDeep(weightLimits[id]);
 
-        var leftLinks = _.filter(_.cloneDeep(totalWeightLimitLinks), function(it) {
+        var leftLinks = _.filter(_.cloneDeep(weightLimitLinks), function(it) {
           return it.position < position;
         });
 
-        var rightLinks = _.filter(_.cloneDeep(totalWeightLimitLinks), function(it) {
+        var rightLinks = _.filter(_.cloneDeep(weightLimitLinks), function(it) {
           return it.position > position;
         });
 
@@ -172,22 +172,22 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
+      splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedWeightLimits) {
         var existingId = splitWeightLimits.existing.id;
         splitWeightLimits = {};
         dirty = false;
         delete weightLimits[existingId];
 
-        _.each(updatedTotalWeightLimits, function(totalWeightLimit) {
-          totalWeightLimit.links = totalWeightLimit.weightLimitLinks;
-          delete totalWeightLimit.weightLimitLinks;
-          totalWeightLimit.sideCode = totalWeightLimit.links[0].sideCode;
-          weightLimits[totalWeightLimit.id] = totalWeightLimit;
+        _.each(updatedWeightLimits, function(weightLimit) {
+          weightLimit.links = weightLimit.weightLimitLinks;
+          delete weightLimit.weightLimitLinks;
+          weightLimit.sideCode = weightLimit.links[0].sideCode;
+          weightLimits[weightLimit.id] = weightLimit;
         });
 
         eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits));
-        eventbus.trigger(singleElementEvent('saved'), (_.find(updatedTotalWeightLimits, function(totalWeightLimit) {
-          return existingId !== totalWeightLimit.id;
+        eventbus.trigger(singleElementEvent('saved'), (_.find(updatedWeightLimits, function(weightLimit) {
+          return existingId !== weightLimit.id;
         })));
         applicationModel.setSelectedTool('Select');
       });
@@ -202,6 +202,5 @@
     this.isDirty = function() {
       return dirty;
     };
-
   };
 })(this);
