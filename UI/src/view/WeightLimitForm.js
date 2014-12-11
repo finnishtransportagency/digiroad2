@@ -54,7 +54,7 @@
       return s.replace(/\s/g, '');
     };
 
-    var setupTotalWeightLimitInput = function(toggleElement, inputElement, selectedWeightLimit) {
+    var setupWeightLimitInput = function(toggleElement, inputElement, selectedWeightLimit) {
       inputElement.val(selectedWeightLimit.getValue());
       inputElement.prop('disabled', selectedWeightLimit.expired());
       inputElement.on('input', function(event) {
@@ -84,7 +84,7 @@
         rootElement.html(template(selectedWeightLimit));
         var toggleElement = rootElement.find(".radio input");
         var inputElement = rootElement.find('.' + className);
-        setupTotalWeightLimitInput(toggleElement, inputElement, selectedWeightLimit);
+        setupWeightLimitInput(toggleElement, inputElement, selectedWeightLimit);
         toggleMode(applicationModel.isReadOnly());
       });
       eventbus.on(events('unselected'), function() {
