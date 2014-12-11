@@ -1,19 +1,23 @@
 (function(root) {
-  root.SelectedTotalWeightLimit = function(backend, collection) {
+  root.SelectedTotalWeightLimit = function(backend, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
     var originalTotalWeightLimit = null;
     var originalExpired = null;
 
-    eventbus.on('totalWeightLimit:split', function() {
+    var singleElementEvent = function(eventName) {
+      return singleElementEventCategory + ':' + eventName;
+    };
+
+    eventbus.on(singleElementEvent('split'), function() {
       collection.fetchWeightLimit(null, function(totalWeightLimit) {
         current = totalWeightLimit;
         current.isSplit = true;
         originalTotalWeightLimit = totalWeightLimit.value;
         originalExpired = totalWeightLimit.expired;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:selected', self);
+        eventbus.trigger(singleElementEvent('selected'), self);
       });
     });
 
@@ -24,7 +28,7 @@
         originalTotalWeightLimit = totalWeightLimit.value;
         originalExpired = totalWeightLimit.expired;
         collection.markAsSelected(totalWeightLimit.id);
-        eventbus.trigger('totalWeightLimit:selected', self);
+        eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
 
@@ -45,7 +49,7 @@
           points: points
         }]
       };
-      eventbus.trigger('totalWeightLimit:selected', self);
+      eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.close = function() {
@@ -59,7 +63,7 @@
           collection.remove(id);
         }
         current = null;
-        eventbus.trigger('totalWeightLimit:unselected', id, roadLinkId);
+        eventbus.trigger(singleElementEvent('unselected'), id, roadLinkId);
       }
     };
 
@@ -68,7 +72,7 @@
       current = null;
       dirty = false;
       collection.cancelSplit();
-      eventbus.trigger('totalWeightLimit:unselected', id);
+      eventbus.trigger(singleElementEvent('unselected'), id);
     };
 
     this.save = function() {
@@ -81,7 +85,7 @@
         if (wasNew) {
           collection.add(current);
         }
-        eventbus.trigger('totalWeightLimit:saved', current);
+        eventbus.trigger(singleElementEvent('saved'), current);
       };
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
@@ -128,7 +132,7 @@
         collection.changeExpired(current.id, originalExpired);
       }
       dirty = false;
-      eventbus.trigger('totalWeightLimit:cancelled', self);
+      eventbus.trigger(singleElementEvent('cancelled'), self);
     };
 
     var exists = function() {
@@ -184,7 +188,7 @@
         if (!isNew()) { collection.changeLimitValue(current.id, value); }
         current.value = value;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:limitChanged', self);
+        eventbus.trigger(singleElementEvent('limitChanged'), self);
       }
     };
 
@@ -193,7 +197,7 @@
         if (!isNew()) { collection.changeExpired(current.id, expired); }
         current.expired = expired;
         dirty = true;
-        eventbus.trigger('totalWeightLimit:expirationChanged', self);
+        eventbus.trigger(singleElementEvent('expirationChanged'), self);
       }
     };
 
@@ -207,7 +211,7 @@
 
     this.isNew = isNew;
 
-    eventbus.on('totalWeightLimit:saved', function(totalWeightLimit) {
+    eventbus.on(singleElementEvent('saved'), function(totalWeightLimit) {
       current = totalWeightLimit;
       originalTotalWeightLimit = totalWeightLimit.value;
       originalExpired = totalWeightLimit.expired;
