@@ -102,7 +102,7 @@ window.TotalWeightLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
 
-      collection.splitTotalWeightLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
+      collection.splitWeightLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
     };
   };

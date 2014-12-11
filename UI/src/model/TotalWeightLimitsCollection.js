@@ -72,7 +72,7 @@
       });
     };
 
-    this.fetchTotalWeightLimit = function(id, callback) {
+    this.fetchWeightLimit = function(id, callback) {
       if (id) {
         getWeightLimit(id, function(weightLimit) {
           callback(_.merge({}, weightLimits[id], weightLimit));
@@ -126,7 +126,7 @@
       }, 0);
     };
 
-    this.splitTotalWeightLimit = function(id, roadLinkId, split) {
+    this.splitWeightLimit = function(id, roadLinkId, split) {
       getWeightLimit(id, function(weightLimit) {
         var weightLimitLinks = weightLimit.weightLimitLinks;
         var splitLink = _.find(weightLimitLinks, function(link) {
