@@ -27,10 +27,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     contentType = formats("json")
     try {
       authenticateForApi(request)(userProvider)
-      // oskari makes POSTs to /layers, allow those to pass
       if(request.isWrite
-            && request.getPathInfo.equalsIgnoreCase("/layers") == false
-            && userProvider.getCurrentUser().hasWriteAccess() == false){
+        && userProvider.getCurrentUser().hasWriteAccess() == false){
         halt(Unauthorized("No write permissions"))
       }
     } catch {
