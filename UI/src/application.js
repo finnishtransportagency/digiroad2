@@ -178,7 +178,12 @@ var RoadCollection = function(backend) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
-    var totalWeightLimitsCollection = new TotalWeightLimitsCollection(backend, 'totalWeightLimit', 'totalWeightLimits');
+    var totalWeightLimitsCollection = new TotalWeightLimitsCollection(
+      backend.getTotalWeightLimit,
+      backend.getTotalWeightLimits,
+      backend.splitTotalWeightLimit,
+      'totalWeightLimit',
+      'totalWeightLimits');
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedTotalWeightLimit = new SelectedTotalWeightLimit(backend, totalWeightLimitsCollection);
     var models = {

@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitsCollection = function(backend, singleElementEventCategory, multiElementEventCategory) {
+  root.TotalWeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
     var totalWeightLimits = {};
     var dirty = false;
     var splitTotalWeightLimits = {};
@@ -45,7 +45,7 @@
     };
 
     this.fetch = function(boundingBox, selectedTotalWeightLimit) {
-      backend.getTotalWeightLimits(boundingBox, function(fetchedTotalWeightLimits) {
+      getWeightLimits(boundingBox, function(fetchedTotalWeightLimits) {
         var selected = _.find(_.values(totalWeightLimits), function(totalWeightLimit) { return totalWeightLimit.isSelected; });
 
         totalWeightLimits = transformTotalWeightLimits(fetchedTotalWeightLimits);
@@ -74,7 +74,7 @@
 
     this.fetchTotalWeightLimit = function(id, callback) {
       if (id) {
-        backend.getTotalWeightLimit(id, function(totalWeightLimit) {
+        getWeightLimit(id, function(totalWeightLimit) {
           callback(_.merge({}, totalWeightLimits[id], totalWeightLimit));
         });
       } else {
@@ -127,7 +127,7 @@
     };
 
     this.splitTotalWeightLimit = function(id, roadLinkId, split) {
-      backend.getTotalWeightLimit(id, function(totalWeightLimit) {
+      getWeightLimit(id, function(totalWeightLimit) {
         var totalWeightLimitLinks = totalWeightLimit.weightLimitLinks;
         var splitLink = _.find(totalWeightLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
@@ -172,7 +172,7 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      backend.splitTotalWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
+      splitWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
         var existingId = splitTotalWeightLimits.existing.id;
         splitTotalWeightLimits = {};
         dirty = false;
