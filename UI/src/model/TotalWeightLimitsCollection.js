@@ -4,10 +4,6 @@
     var dirty = false;
     var splitTotalWeightLimits = {};
 
-    this.getAll = function() {
-      return _.values(totalWeightLimits);
-    };
-
     var buildPayload = function(totalWeightLimits, splitTotalWeightLimits) {
       var payload = _.chain(totalWeightLimits)
                      .reject(function(totalWeightLimit, id) {
@@ -42,6 +38,10 @@
 
     var multiElementEvent = function(eventName) {
       return multiElementEventCategory + ':' + eventName;
+    };
+
+    this.getAll = function() {
+      return _.values(totalWeightLimits);
     };
 
     this.fetch = function(boundingBox, selectedTotalWeightLimit) {
