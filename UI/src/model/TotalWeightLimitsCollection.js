@@ -2,7 +2,7 @@
   root.TotalWeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
-    var splitTotalWeightLimits = {};
+    var splitWeightLimits = {};
 
     var buildPayload = function(totalWeightLimits, splitTotalWeightLimits) {
       var payload = _.chain(totalWeightLimits)
@@ -64,8 +64,8 @@
           newTotalWeightLimit = [selectedTotalWeightLimit.get()];
         }
 
-        if (splitTotalWeightLimits.existing) {
-          eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitTotalWeightLimits));
+        if (splitWeightLimits.existing) {
+          eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitWeightLimits));
         } else {
           eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits).concat(newTotalWeightLimit));
         }
@@ -78,7 +78,7 @@
           callback(_.merge({}, weightLimits[id], totalWeightLimit));
         });
       } else {
-        callback(_.merge({}, splitTotalWeightLimits.created));
+        callback(_.merge({}, splitWeightLimits.created));
       }
     };
 
@@ -91,16 +91,16 @@
     };
 
     this.changeLimitValue = function(id, value) {
-      if (splitTotalWeightLimits.created) {
-        splitTotalWeightLimits.created.value = value;
+      if (splitWeightLimits.created) {
+        splitWeightLimits.created.value = value;
       } else {
         weightLimits[id].value = value;
       }
     };
 
     this.changeExpired = function(id, expired) {
-      if (splitTotalWeightLimits.created) {
-        splitTotalWeightLimits.created.expired = expired;
+      if (splitWeightLimits.created) {
+        splitWeightLimits.created.expired = expired;
       } else {
         weightLimits[id].expired = expired;
       }
@@ -155,26 +155,26 @@
                         roadLinkId: roadLinkId}].concat(rightLinks);
 
         if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
-          splitTotalWeightLimits.created = left;
-          splitTotalWeightLimits.existing = right;
+          splitWeightLimits.created = left;
+          splitWeightLimits.existing = right;
         } else {
-          splitTotalWeightLimits.created = right;
-          splitTotalWeightLimits.existing = left;
+          splitWeightLimits.created = right;
+          splitWeightLimits.existing = left;
         }
 
-        splitTotalWeightLimits.created.id = null;
-        splitTotalWeightLimits.splitMeasure = split.splitMeasure;
-        splitTotalWeightLimits.splitRoadLinkId = roadLinkId;
+        splitWeightLimits.created.id = null;
+        splitWeightLimits.splitMeasure = split.splitMeasure;
+        splitWeightLimits.splitRoadLinkId = roadLinkId;
         dirty = true;
-        eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitTotalWeightLimits));
+        eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitWeightLimits));
         eventbus.trigger(singleElementEvent('split'));
       });
     };
 
     this.saveSplit = function(splitLimit) {
-      splitWeightLimit(splitTotalWeightLimits.existing.id, splitTotalWeightLimits.splitRoadLinkId, splitTotalWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
-        var existingId = splitTotalWeightLimits.existing.id;
-        splitTotalWeightLimits = {};
+      splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedTotalWeightLimits) {
+        var existingId = splitWeightLimits.existing.id;
+        splitWeightLimits = {};
         dirty = false;
         delete weightLimits[existingId];
 
@@ -195,7 +195,7 @@
 
     this.cancelSplit = function() {
       dirty = false;
-      splitTotalWeightLimits = {};
+      splitWeightLimits = {};
       eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits));
     };
 
