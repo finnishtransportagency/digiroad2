@@ -150,13 +150,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
 
   test("assets cannot be retrieved without bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10") {
-      status should equal(500)
+      status should equal(400)
     }
   }
 
   test("assets cannot be retrieved with massive bounding box", Tag("db")) {
     getWithUserAuth("/assets?assetTypeId=10&bbox=324702,6677462,374870,6697780") {
-      status should equal(500)
+      status should equal(400)
     }
   }
 
