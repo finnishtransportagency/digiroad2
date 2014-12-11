@@ -1,6 +1,6 @@
 (function(root) {
   root.TotalWeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
-    var totalWeightLimits = {};
+    var weightLimits = {};
     var dirty = false;
     var splitTotalWeightLimits = {};
 
@@ -41,19 +41,19 @@
     };
 
     this.getAll = function() {
-      return _.values(totalWeightLimits);
+      return _.values(weightLimits);
     };
 
     this.fetch = function(boundingBox, selectedTotalWeightLimit) {
       getWeightLimits(boundingBox, function(fetchedTotalWeightLimits) {
-        var selected = _.find(_.values(totalWeightLimits), function(totalWeightLimit) { return totalWeightLimit.isSelected; });
+        var selected = _.find(_.values(weightLimits), function(totalWeightLimit) { return totalWeightLimit.isSelected; });
 
-        totalWeightLimits = transformTotalWeightLimits(fetchedTotalWeightLimits);
+        weightLimits = transformTotalWeightLimits(fetchedTotalWeightLimits);
 
-        if (selected && !totalWeightLimits[selected.id]) {
-          totalWeightLimits[selected.id] = selected;
+        if (selected && !weightLimits[selected.id]) {
+          weightLimits[selected.id] = selected;
         } else if (selected) {
-          var selectedInCollection = totalWeightLimits[selected.id];
+          var selectedInCollection = weightLimits[selected.id];
           selectedInCollection.isSelected = selected.isSelected;
           selectedInCollection.value = selected.value;
           selectedInCollection.expired = selected.expired;
@@ -65,9 +65,9 @@
         }
 
         if (splitTotalWeightLimits.existing) {
-          eventbus.trigger(multiElementEvent('fetched'), buildPayload(totalWeightLimits, splitTotalWeightLimits));
+          eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitTotalWeightLimits));
         } else {
-          eventbus.trigger(multiElementEvent('fetched'), _.values(totalWeightLimits).concat(newTotalWeightLimit));
+          eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits).concat(newTotalWeightLimit));
         }
       });
     };
@@ -75,7 +75,7 @@
     this.fetchTotalWeightLimit = function(id, callback) {
       if (id) {
         getWeightLimit(id, function(totalWeightLimit) {
-          callback(_.merge({}, totalWeightLimits[id], totalWeightLimit));
+          callback(_.merge({}, weightLimits[id], totalWeightLimit));
         });
       } else {
         callback(_.merge({}, splitTotalWeightLimits.created));
@@ -83,18 +83,18 @@
     };
 
     this.markAsSelected = function(id) {
-      totalWeightLimits[id].isSelected = true;
+      weightLimits[id].isSelected = true;
     };
 
     this.markAsDeselected = function(id) {
-      totalWeightLimits[id].isSelected = false;
+      weightLimits[id].isSelected = false;
     };
 
     this.changeLimitValue = function(id, value) {
       if (splitTotalWeightLimits.created) {
         splitTotalWeightLimits.created.value = value;
       } else {
-        totalWeightLimits[id].value = value;
+        weightLimits[id].value = value;
       }
     };
 
@@ -102,16 +102,16 @@
       if (splitTotalWeightLimits.created) {
         splitTotalWeightLimits.created.expired = expired;
       } else {
-        totalWeightLimits[id].expired = expired;
+        weightLimits[id].expired = expired;
       }
     };
 
     this.remove = function(id) {
-      delete totalWeightLimits[id];
+      delete weightLimits[id];
     };
 
     this.add = function(weightLimit) {
-      totalWeightLimits[weightLimit.id] = weightLimit;
+      weightLimits[weightLimit.id] = weightLimit;
     };
 
     var calculateMeasure = function(links) {
@@ -135,8 +135,8 @@
         var position = splitLink.position;
         var towardsLinkChain = splitLink.towardsLinkChain;
 
-        var left = _.cloneDeep(totalWeightLimits[id]);
-        var right = _.cloneDeep(totalWeightLimits[id]);
+        var left = _.cloneDeep(weightLimits[id]);
+        var right = _.cloneDeep(weightLimits[id]);
 
         var leftLinks = _.filter(_.cloneDeep(totalWeightLimitLinks), function(it) {
           return it.position < position;
@@ -166,7 +166,7 @@
         splitTotalWeightLimits.splitMeasure = split.splitMeasure;
         splitTotalWeightLimits.splitRoadLinkId = roadLinkId;
         dirty = true;
-        eventbus.trigger(multiElementEvent('fetched'), buildPayload(totalWeightLimits, splitTotalWeightLimits));
+        eventbus.trigger(multiElementEvent('fetched'), buildPayload(weightLimits, splitTotalWeightLimits));
         eventbus.trigger(singleElementEvent('split'));
       });
     };
@@ -176,16 +176,16 @@
         var existingId = splitTotalWeightLimits.existing.id;
         splitTotalWeightLimits = {};
         dirty = false;
-        delete totalWeightLimits[existingId];
+        delete weightLimits[existingId];
 
         _.each(updatedTotalWeightLimits, function(totalWeightLimit) {
           totalWeightLimit.links = totalWeightLimit.weightLimitLinks;
           delete totalWeightLimit.weightLimitLinks;
           totalWeightLimit.sideCode = totalWeightLimit.links[0].sideCode;
-          totalWeightLimits[totalWeightLimit.id] = totalWeightLimit;
+          weightLimits[totalWeightLimit.id] = totalWeightLimit;
         });
 
-        eventbus.trigger(multiElementEvent('fetched'), _.values(totalWeightLimits));
+        eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits));
         eventbus.trigger(singleElementEvent('saved'), (_.find(updatedTotalWeightLimits, function(totalWeightLimit) {
           return existingId !== totalWeightLimit.id;
         })));
@@ -196,7 +196,7 @@
     this.cancelSplit = function() {
       dirty = false;
       splitTotalWeightLimits = {};
-      eventbus.trigger(multiElementEvent('fetched'), _.values(totalWeightLimits));
+      eventbus.trigger(multiElementEvent('fetched'), _.values(weightLimits));
     };
 
     this.isDirty = function() {
