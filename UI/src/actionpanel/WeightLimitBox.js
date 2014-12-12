@@ -1,7 +1,7 @@
 (function(root) {
-  root.WeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle) {
+  root.WeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle, className) {
     var collapsedTemplate = [
-      '<div class="panel total-weight-limit">',
+      '<div class="panel ' + className + '">',
       '  <header class="panel-header">',
       '    ' + weightLimitTitle,
       '  </header>',
@@ -11,7 +11,7 @@
     var weightLimitLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
-               '<div class="symbol linear total-weight-limit-' + idx + '" />' +
+               '<div class="symbol linear ' + className + '-' + idx + '" />' +
              '</div>';
     }).join('');
 
@@ -20,7 +20,7 @@
       '  <header class="panel-header expanded">',
       '    ' + weightLimitTitle,
       '  </header>',
-      '  <div class="panel-section panel-legend total-weight-limit-legend">',
+      '  <div class="panel-section panel-legend ' + className + '-legend">',
             weightLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');
@@ -102,7 +102,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group total-weight-limits"/>')
+    this.element = $('<div class="panel-group ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
