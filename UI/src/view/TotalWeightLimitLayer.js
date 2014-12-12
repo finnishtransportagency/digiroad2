@@ -8,7 +8,8 @@ window.TotalWeightLimitLayer = function(params) {
     linearAsset = params.linearAsset,
     roadLayer = params.roadLayer,
     layerName = params.layerName,
-    multiElementEventCategory = params.multiElementEventCategory;
+    multiElementEventCategory = params.multiElementEventCategory,
+    singleElementEventCategory = params.singleElementEventCategory;
 
   var WeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -107,6 +108,10 @@ window.TotalWeightLimitLayer = function(params) {
       collection.splitWeightLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
     };
+  };
+
+  var singleElementEvents = function() {
+    return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
   };
 
   var multiElementEvent = function(eventName) {
@@ -306,12 +311,12 @@ window.TotalWeightLimitLayer = function(params) {
   var bindEvents = function() {
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleWeightLimitSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected'), handleWeightLimitSelected);
     eventListener.listenTo(eventbus,
-        'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
+        singleElementEvents('limitChanged', 'expirationChanged'),
         handleWeightLimitChanged);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', concludeUpdate);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleWeightLimitUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), concludeUpdate);
+    eventListener.listenTo(eventbus, singleElementEvents('unselected'), handleWeightLimitUnSelected);
   };
 
   var handleWeightLimitSelected = function(selectedWeightLimit) {
