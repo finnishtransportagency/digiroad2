@@ -15,7 +15,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   };
 
   var selectSpeedLimit = function(map, speedLimitId) {
-    var control = _.first(map.getControlsBy('displayClass', 'olControlSelectFeature'));
+    var control = _.find(map.controls, function(control) { return control.layer ? control.layer.name === 'speedLimit' : false; });
     var feature = _.find(testHelpers.getSpeedLimitFeatures(map), function(feature) {
       return feature.attributes.id === speedLimitId;
     });
