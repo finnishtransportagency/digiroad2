@@ -223,7 +223,7 @@ _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
 Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
-Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID, arvo (km/h) sek&auml; p&auml;&auml;tepisteen 1 ja p&auml;&auml;tepisteen 2 koordinaatit ETRS89-TM35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;.
+Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID ja arvo (km/h).
 
 ![Nopeusrajoituksen tietojen katselu](k24.JPG)
 
@@ -451,7 +451,7 @@ _Nopeusrajoituksen katkaiseminen._
 
 Katkaistun nopeusrajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;isen rajoituksen ID ja arvo. Lyhyempi osa tulee valituksi kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n. Rajoitus-pudotusvalikosta voi valita nopeusrajoitukselle uuden arvon. Oletusarvona on sama nopeusrajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. 
 
-Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lkeen nopeusrajoitukselle generoidaan taustaj&auml;rjestelm&auml;ss&auml; ID sek&auml; p&auml;&auml;tepisteet 1 ja 2.
+Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lkeen nopeusrajoitukselle generoidaan taustaj&auml;rjestelm&auml;ss&auml; ID.
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
