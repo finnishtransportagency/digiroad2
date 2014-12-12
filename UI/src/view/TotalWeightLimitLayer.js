@@ -2,13 +2,13 @@ window.TotalWeightLimitLayer = function(params) {
   var map = params.map,
     application = params.application,
     collection = params.collection,
-    selectedTotalWeightLimit = params.selectedTotalWeightLimit,
+    selectedWeightLimit = params.selectedTotalWeightLimit,
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
     linearAsset = params.linearAsset,
     roadLayer = params.roadLayer;
 
-  var TotalWeightLimitCutter = function(vectorLayer, collection) {
+  var WeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
@@ -50,11 +50,11 @@ window.TotalWeightLimitLayer = function(params) {
       });
     };
 
-    var isWithinCutThreshold = function(totalWeightLimitLink) {
-      return totalWeightLimitLink && totalWeightLimitLink.distance < CUT_THRESHOLD;
+    var isWithinCutThreshold = function(weightLimitLink) {
+      return weightLimitLink && weightLimitLink.distance < CUT_THRESHOLD;
     };
 
-    var findNearestTotalWeightLimitLink = function(point) {
+    var findNearestWeightLimitLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
         .map(function(feature) {
@@ -71,11 +71,11 @@ window.TotalWeightLimitLayer = function(params) {
     this.updateByPosition = function(position) {
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var closestTotalWeightLimitLink = findNearestTotalWeightLimitLink(mousePoint);
-      if (!closestTotalWeightLimitLink) {
+      var nearestWeightLimitLink = findNearestWeightLimitLink(mousePoint);
+      if (!nearestWeightLimitLink) {
         return;
       }
-      var distanceObject = closestTotalWeightLimitLink.distanceObject;
+      var distanceObject = nearestWeightLimitLink.distanceObject;
       if (isWithinCutThreshold(distanceObject)) {
         moveTo(distanceObject.x0, distanceObject.y0);
       } else {
@@ -87,7 +87,7 @@ window.TotalWeightLimitLayer = function(params) {
       var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestTotalWeightLimitLink(mousePoint);
+      var nearest = findNearestWeightLimitLink(mousePoint);
 
       if (!isWithinCutThreshold(nearest.distanceObject)) {
         return;
@@ -136,7 +136,7 @@ window.TotalWeightLimitLayer = function(params) {
     createZoomDependentOneWayRule(12, { strokeWidth: 8 })
   ];
 
-  var totalWeightLimitFeatureSizeLookup = {
+  var weightLimitFeatureSizeLookup = {
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
     11: { strokeWidth: 9 },
@@ -156,7 +156,7 @@ window.TotalWeightLimitLayer = function(params) {
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
   browseStyleMap.addUniqueValueRules('default', 'expired', styleLookup);
-  browseStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
+  browseStyleMap.addUniqueValueRules('default', 'zoomLevel', weightLimitFeatureSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(validityDirectionStyleRules);
 
@@ -171,14 +171,14 @@ window.TotalWeightLimitLayer = function(params) {
     select: selectionSelectStyle
   });
   selectionStyle.addUniqueValueRules('default', 'expired', styleLookup);
-  selectionStyle.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
+  selectionStyle.addUniqueValueRules('default', 'zoomLevel', weightLimitFeatureSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
 
   var vectorLayer = new OpenLayers.Layer.Vector('totalWeightLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
-  var totalWeightLimitCutter = new TotalWeightLimitCutter(vectorLayer, collection);
+  var weightLimitCutter = new WeightLimitCutter(vectorLayer, collection);
 
   var roadLayerStyleMap = new OpenLayers.StyleMap({
     "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -190,10 +190,10 @@ window.TotalWeightLimitLayer = function(params) {
       strokeOpacity: 0.3
     }))
   });
-  roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', totalWeightLimitFeatureSizeLookup, uiState);
+  roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', weightLimitFeatureSizeLookup, uiState);
   roadLayer.setLayerSpecificStyleMap('totalWeightLimit', roadLayerStyleMap);
 
-  var highlightTotalWeightLimitFeatures = function(feature) {
+  var highlightWeightLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
       if (x.attributes.id === feature.attributes.id) {
         selectControl.highlight(x);
@@ -205,11 +205,11 @@ window.TotalWeightLimitLayer = function(params) {
 
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
-    highlightTotalWeightLimitFeatures(feature);
+    highlightWeightLimitFeatures(feature);
     vectorLayer.redraw();
   };
 
-  var findUnpersistedTotalWeightFeatures = function() {
+  var findUnpersistedWeightFeatures = function() {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === null; });
   };
 
@@ -217,26 +217,26 @@ window.TotalWeightLimitLayer = function(params) {
     return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
   };
 
-  var findTotalWeightFeaturesById = function(id) {
+  var findWeightFeaturesById = function(id) {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
   };
 
-  var totalWeightLimitOnSelect = function(feature) {
+  var weightLimitOnSelect = function(feature) {
     setSelectionStyleAndHighlightFeature(feature);
     if (feature.attributes.id) {
-      selectedTotalWeightLimit.open(feature.attributes.id);
+      selectedWeightLimit.open(feature.attributes.id);
     } else {
-      selectedTotalWeightLimit.create(feature.attributes.roadLinkId, feature.attributes.points);
+      selectedWeightLimit.create(feature.attributes.roadLinkId, feature.attributes.points);
     }
   };
 
   var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer, roadLayer.layer], {
-    onSelect: totalWeightLimitOnSelect,
+    onSelect: weightLimitOnSelect,
     onUnselect: function(feature) {
-      if (selectedTotalWeightLimit.exists()) {
-        var id = selectedTotalWeightLimit.getId();
-        var expired = selectedTotalWeightLimit.expired();
-        selectedTotalWeightLimit.close();
+      if (selectedWeightLimit.exists()) {
+        var id = selectedWeightLimit.getId();
+        var expired = selectedWeightLimit.expired();
+        selectedWeightLimit.close();
         if (expired) {
           vectorLayer.removeFeatures(_.filter(vectorLayer.features, function(feature) {
             return feature.attributes.id === id;
@@ -247,8 +247,8 @@ window.TotalWeightLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  var handleTotalWeightLimitUnSelected = function(id, roadLinkId) {
-    var features = findTotalWeightFeaturesById(id);
+  var handleWeightLimitUnSelected = function(id, roadLinkId) {
+    var features = findWeightFeaturesById(id);
     if (_.isEmpty(features)) { features = findRoadLinkFeaturesByRoadLinkId(roadLinkId); }
     _.each(features, function(feature) {
       selectControl.unhighlight(feature);
@@ -263,7 +263,7 @@ window.TotalWeightLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox, selectedTotalWeightLimit);
+      collection.fetch(boundingBox, selectedWeightLimit);
     }
   };
 
@@ -275,9 +275,9 @@ window.TotalWeightLimitLayer = function(params) {
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       selectControl.deactivate();
-      totalWeightLimitCutter.activate();
+      weightLimitCutter.activate();
     } else if (tool === 'Select') {
-      totalWeightLimitCutter.deactivate();
+      weightLimitCutter.deactivate();
       selectControl.activate();
     }
   };
@@ -292,54 +292,54 @@ window.TotalWeightLimitLayer = function(params) {
 
   var stop = function() {
     selectControl.deactivate();
-    totalWeightLimitCutter.deactivate();
+    weightLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
   };
 
   var bindEvents = function() {
-    eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawTotalWeightLimits);
+    eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleTotalWeightLimitSelected);
+    eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleWeightLimitSelected);
     eventListener.listenTo(eventbus,
         'totalWeightLimit:limitChanged totalWeightLimit:expirationChanged',
-        handleTotalWeightLimitChanged);
+        handleWeightLimitChanged);
     eventListener.listenTo(eventbus, 'totalWeightLimit:cancelled totalWeightLimit:saved', concludeUpdate);
-    eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleTotalWeightLimitUnSelected);
+    eventListener.listenTo(eventbus, 'totalWeightLimit:unselected', handleWeightLimitUnSelected);
   };
 
-  var handleTotalWeightLimitSelected = function(selectedWeightLimit) {
+  var handleWeightLimitSelected = function(selectedWeightLimit) {
     if (selectedWeightLimit.isNew()) {
-      var feature = _.first(findTotalWeightFeaturesById(selectedWeightLimit.getId())) || _.first(findRoadLinkFeaturesByRoadLinkId(selectedWeightLimit.getRoadLinkId()));
+      var feature = _.first(findWeightFeaturesById(selectedWeightLimit.getId())) || _.first(findRoadLinkFeaturesByRoadLinkId(selectedWeightLimit.getRoadLinkId()));
       setSelectionStyleAndHighlightFeature(feature);
     }
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  var totalWeightLimitFeatureExists = function(selectedTotalWeightLimit) {
-    if (selectedTotalWeightLimit.isNew() && selectedTotalWeightLimit.isDirty()) {
-      return !_.isEmpty(findUnpersistedTotalWeightFeatures());
+  var weightLimitFeatureExists = function(selectedWeightLimit) {
+    if (selectedWeightLimit.isNew() && selectedWeightLimit.isDirty()) {
+      return !_.isEmpty(findUnpersistedWeightFeatures());
     } else {
-      return !_.isEmpty(findTotalWeightFeaturesById(selectedTotalWeightLimit.getId()));
+      return !_.isEmpty(findWeightFeaturesById(selectedWeightLimit.getId()));
     }
   };
 
-  var handleTotalWeightLimitChanged = function(selectedTotalWeightLimit) {
+  var handleWeightLimitChanged = function(selectedWeightLimit) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    if (totalWeightLimitFeatureExists(selectedTotalWeightLimit)) {
-      var selectedTotalWeightLimitFeatures = getSelectedFeatures(selectedTotalWeightLimit);
-      vectorLayer.removeFeatures(selectedTotalWeightLimitFeatures);
+    if (weightLimitFeatureExists(selectedWeightLimit)) {
+      var selectedWeightLimitFeatures = getSelectedFeatures(selectedWeightLimit);
+      vectorLayer.removeFeatures(selectedWeightLimitFeatures);
     }
-    drawTotalWeightLimits([selectedTotalWeightLimit.get()]);
+    drawWeightLimits([selectedWeightLimit.get()]);
   };
 
   var concludeUpdate = function() {
     selectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    redrawTotalWeightLimits(collection.getAll());
+    redrawWeightLimits(collection.getAll());
   };
 
   var handleMapMoved = function(state) {
@@ -347,8 +347,8 @@ window.TotalWeightLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox, selectedTotalWeightLimit);
-    } else if (selectedTotalWeightLimit.isDirty()) {
+      collection.fetch(state.bbox, selectedWeightLimit);
+    } else if (selectedWeightLimit.isDirty()) {
       new Confirm();
     } else {
       vectorLayer.setVisibility(false);
@@ -358,55 +358,55 @@ window.TotalWeightLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
-  var redrawTotalWeightLimits = function(totalWeightLimits) {
+  var redrawWeightLimits = function(weightLimits) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
-    if (!selectedTotalWeightLimit.isDirty() && application.getSelectedTool() === 'Select') {
+    if (!selectedWeightLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectControl.activate();
     }
 
-    drawTotalWeightLimits(totalWeightLimits);
+    drawWeightLimits(weightLimits);
   };
 
-  var getSelectedFeatures = function(selectedTotalWeightLimit) {
-    if (selectedTotalWeightLimit.isNew()) {
-      if (selectedTotalWeightLimit.isDirty()) {
-        return findUnpersistedTotalWeightFeatures();
+  var getSelectedFeatures = function(selectedWeightLimit) {
+    if (selectedWeightLimit.isNew()) {
+      if (selectedWeightLimit.isDirty()) {
+        return findUnpersistedWeightFeatures();
       } else {
-        return findRoadLinkFeaturesByRoadLinkId(selectedTotalWeightLimit.getRoadLinkId());
+        return findRoadLinkFeaturesByRoadLinkId(selectedWeightLimit.getRoadLinkId());
       }
     } else {
-      return findTotalWeightFeaturesById(selectedTotalWeightLimit.getId());
+      return findWeightFeaturesById(selectedWeightLimit.getId());
     }
   };
 
-  var drawTotalWeightLimits = function(totalWeightLimits) {
-    var totalWeightLimitsWithType = _.map(totalWeightLimits, function(limit) {
+  var drawWeightLimits = function(weightLimits) {
+    var weightLimitsWithType = _.map(weightLimits, function(limit) {
       return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
     });
-    var totalWeightLimitsWithAdjustments = _.map(totalWeightLimitsWithType, linearAsset.offsetBySideCode);
-    vectorLayer.addFeatures(lineFeatures(totalWeightLimitsWithAdjustments));
+    var weightLimitsWithAdjustments = _.map(weightLimitsWithType, linearAsset.offsetBySideCode);
+    vectorLayer.addFeatures(lineFeatures(weightLimitsWithAdjustments));
 
-    if (selectedTotalWeightLimit.exists && selectedTotalWeightLimit.exists()) {
+    if (selectedWeightLimit.exists && selectedWeightLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.first(getSelectedFeatures(selectedTotalWeightLimit));
+      var feature = _.first(getSelectedFeatures(selectedWeightLimit));
       if (feature) {
         selectControl.select(feature);
-        highlightTotalWeightLimitFeatures(feature);
+        highlightWeightLimitFeatures(feature);
       }
-      selectControl.onSelect = totalWeightLimitOnSelect;
+      selectControl.onSelect = weightLimitOnSelect;
     }
   };
 
-  var lineFeatures = function(totalWeightLimits) {
-    return _.flatten(_.map(totalWeightLimits, function(totalWeightLimit) {
-      return _.map(totalWeightLimit.links, function(link) {
+  var lineFeatures = function(weightLimits) {
+    return _.flatten(_.map(weightLimits, function(weightLimit) {
+      return _.map(weightLimit.links, function(link) {
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var totalWeightLimitWithRoadLinkId = _.cloneDeep(totalWeightLimit);
-        totalWeightLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), totalWeightLimitWithRoadLinkId);
+        var weightLimitWithRoadLinkId = _.cloneDeep(weightLimit);
+        weightLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), weightLimitWithRoadLinkId);
       });
     }));
   };
