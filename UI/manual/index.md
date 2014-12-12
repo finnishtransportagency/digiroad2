@@ -490,3 +490,18 @@ Tielinkille voi lis&auml;t&auml; suurimman sallitun massan valitsemalla sen geom
 ![Suurimman sallitun massan lis&auml;ys](k34.JPG)
 
 _Suurimman sallitun massan lis&auml;&auml;minen._
+
+5.3.4 Suurimman sallitun massan katkaisu
+----------------------------------------
+
+Painorajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; painorajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; painorajoituksia. Leikkausty&ouml;kalulla klikataan painorajoituksen geometriasta kohtaa, josta painorajoitus halutaan katkaista. Painorajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
+
+![Suurimman sallitun massan katkaisu](k35.JPG)
+
+_Suurimman sallitun massan katkaisu._
+
+Katkaistun painorajoituksen osista pidemm&auml;lle jää alkuper&auml;isen painorajoituksen ID ja arvo. Lyhyempi osa tulee valituksi kartalla (3) ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (4). Arvokentt&auml;&auml;n voi kirjata painorajoitukselle uuden arvon, sen voi j&auml;tt&auml;&auml; ennalleen tai poistaa voimasta valitsemalla ”Ei painorajoitusta”. Oletusarvona on sama painorajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. Uusi painorajoitus tallennetaan Tallenna-painikkeesta (5). Tallentamisen j&auml;lkeen painorajoitukselle generoidaan taustajärjestelm&auml;ss&auml; ID. Ennen tallennusta painorajoituksen katkaisemisen voi perua Peruuta-painikkeesta, joka palauttaa alkuper&auml;isen painorajoituksen voimaan (6).
+
+![Suurimman sallitun massan katkaisu](k36.JPG)
+
+_Suurimman sallitun massan katkaisu._
