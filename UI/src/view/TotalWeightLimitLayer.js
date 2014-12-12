@@ -6,7 +6,8 @@ window.TotalWeightLimitLayer = function(params) {
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
     linearAsset = params.linearAsset,
-    roadLayer = params.roadLayer;
+    roadLayer = params.roadLayer,
+    layerName = params.layerName;
 
   var WeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -175,7 +176,7 @@ window.TotalWeightLimitLayer = function(params) {
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
 
-  var vectorLayer = new OpenLayers.Layer.Vector('totalWeightLimit', { styleMap: browseStyleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
   var weightLimitCutter = new WeightLimitCutter(vectorLayer, collection);
@@ -191,7 +192,7 @@ window.TotalWeightLimitLayer = function(params) {
     }))
   });
   roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', weightLimitFeatureSizeLookup, uiState);
-  roadLayer.setLayerSpecificStyleMap('totalWeightLimit', roadLayerStyleMap);
+  roadLayer.setLayerSpecificStyleMap(layerName, roadLayerStyleMap);
 
   var highlightWeightLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
@@ -343,7 +344,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'totalWeightLimit') {
+    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
