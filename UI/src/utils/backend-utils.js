@@ -95,11 +95,11 @@
       });
     };
 
-    this.createTotalWeightLimit = _.throttle(function(roadLinkId, value, success, error) {
+    this.createWeightLimit = _.throttle(function(typeId, roadLinkId, value, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/weightlimits?typeId=30",
+        url: "api/weightlimits?typeId=" + typeId,
         data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
         dataType: "json",
         success: success,

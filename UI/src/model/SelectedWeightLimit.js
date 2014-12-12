@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedWeightLimit = function(backend, createWeightLimit, collection, singleElementEventCategory) {
+  root.SelectedWeightLimit = function(backend, typeId, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
@@ -117,7 +117,7 @@
     };
 
     var createNew = function(success, failure) {
-      createWeightLimit(current.roadLinkId, current.value, success, failure);
+      backend.createWeightLimit(typeId, current.roadLinkId, current.value, success, failure);
     };
 
     this.cancel = function() {
