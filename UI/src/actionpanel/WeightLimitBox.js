@@ -1,27 +1,27 @@
 (function(root) {
-  root.TotalWeightLimitBox = function(selectedTotalWeightLimit) {
+  root.WeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle, className) {
     var collapsedTemplate = [
-      '<div class="panel total-weight-limit">',
+      '<div class="panel ' + className + '">',
       '  <header class="panel-header">',
-      '    Suurin sallittu massa',
+      '    ' + weightLimitTitle,
       '  </header>',
       '</div>'].join('');
 
     var values = ['Ei rajoitusta', 'Rajoitus'];
-    var totalWeightLimitLegendTemplate = _.map(values, function(value, idx) {
+    var weightLimitLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
-               '<div class="symbol linear total-weight-limit-' + idx + '" />' +
+               '<div class="symbol linear ' + className + '-' + idx + '" />' +
              '</div>';
     }).join('');
 
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Suurin sallittu massa',
+      '    ' + weightLimitTitle,
       '  </header>',
-      '  <div class="panel-section panel-legend total-weight-limit-legend">',
-            totalWeightLimitLegendTemplate,
+      '  <div class="panel-section panel-legend ' + className + '-legend">',
+            weightLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');
 
@@ -64,8 +64,8 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedTotalWeightLimit),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedTotalWeightLimit)]);
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedWeightLimit),
+       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedWeightLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {
@@ -73,14 +73,14 @@
         executeOrShowConfirmDialog(function() {
           elements.collapsed.hide();
           elements.expanded.show();
-          applicationModel.selectLayer('totalWeightLimit');
+          applicationModel.selectLayer(layerName);
         });
       });
     };
 
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'totalWeightLimit') {
+        if (selectedLayer !== layerName) {
           editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
@@ -102,7 +102,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group total-weight-limits"/>')
+    this.element = $('<div class="panel-group ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
