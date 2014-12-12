@@ -143,7 +143,7 @@ var RoadCollection = function(backend) {
         map: map,
         application: applicationModel,
         collection: models.totalWeightLimitsCollection,
-        selectedTotalWeightLimit: models.selectedTotalWeightLimit,
+        selectedWeightLimit: models.selectedTotalWeightLimit,
         roadCollection: roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
