@@ -1,6 +1,6 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, selectedSpeedLimit, selectedTotalWeightLimit) {
+    initialize: function(backend, selectedSpeedLimit, weightLimits) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
@@ -11,8 +11,10 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
-      var totalWeightLimitBox = new WeightLimitBox(selectedTotalWeightLimit, 'totalWeightLimit', 'Suurin sallittu massa', 'total-weight-limit');
-      $('.action-panels').append(totalWeightLimitBox.element);
+      _.forEach(weightLimits, function(weightLimit) {
+        var weightLimitBox = new WeightLimitBox(weightLimit.selectedWeightLimit, weightLimit.layerName, weightLimit.weightLimitTitle, weightLimit.className);
+        $('.action-panels').append(weightLimitBox.element);
+      });
 
       backend.getUserRoles();
 
