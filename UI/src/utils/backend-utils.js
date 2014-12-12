@@ -69,9 +69,9 @@
       });
     }, 1000);
 
-    this.getTotalWeightLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/weightlimits/' + id, function(totalWeightLimit) {
-        callback(totalWeightLimit);
+    this.getWeightLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/weightlimits/' + id, function(weightLimit) {
+        callback(weightLimit);
       });
     }, 1000);
 

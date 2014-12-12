@@ -1,5 +1,5 @@
 (function(root) {
-  root.WeightLimitsCollection = function(backend, getWeightLimit, splitWeightLimit, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.WeightLimitsCollection = function(backend, splitWeightLimit, typeId, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
     var splitWeightLimits = {};
@@ -74,7 +74,7 @@
 
     this.fetchWeightLimit = function(id, callback) {
       if (id) {
-        getWeightLimit(id, function(weightLimit) {
+        backend.getWeightLimit(id, function(weightLimit) {
           callback(_.merge({}, weightLimits[id], weightLimit));
         });
       } else {
@@ -127,7 +127,7 @@
     };
 
     this.splitWeightLimit = function(id, roadLinkId, split) {
-      getWeightLimit(id, function(weightLimit) {
+      backend.getWeightLimit(id, function(weightLimit) {
         var weightLimitLinks = weightLimit.weightLimitLinks;
         var splitLink = _.find(weightLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
