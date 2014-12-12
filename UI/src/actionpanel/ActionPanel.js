@@ -11,7 +11,7 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
-      var totalWeightLimitBox = new TotalWeightLimitBox(selectedTotalWeightLimit, "Suurin sallittu massa");
+      var totalWeightLimitBox = new TotalWeightLimitBox(selectedTotalWeightLimit, 'totalWeightLimit', "Suurin sallittu massa");
       $('.action-panels').append(totalWeightLimitBox.element);
 
       backend.getUserRoles();

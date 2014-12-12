@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitBox = function(selectedWeightLimit, weightLimitTitle) {
+  root.TotalWeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle) {
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
@@ -73,14 +73,14 @@
         executeOrShowConfirmDialog(function() {
           elements.collapsed.hide();
           elements.expanded.show();
-          applicationModel.selectLayer('totalWeightLimit');
+          applicationModel.selectLayer(layerName);
         });
       });
     };
 
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'totalWeightLimit') {
+        if (selectedLayer !== layerName) {
           editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
