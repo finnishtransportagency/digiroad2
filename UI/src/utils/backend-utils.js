@@ -63,9 +63,9 @@
       });
     };
 
-    this.getTotalWeightLimits = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/weightlimits?typeId=30&bbox=' + boundingBox, function(totalWeightLimits) {
-        callback(totalWeightLimits);
+    this.getWeightLimits = _.throttle(function(boundingBox, typeId, callback) {
+      $.getJSON('api/weightlimits?typeId=' + typeId + '&bbox=' + boundingBox, function(weightLimits) {
+        callback(weightLimits);
       });
     }, 1000);
 

@@ -182,9 +182,10 @@ var RoadCollection = function(backend) {
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var totalWeightLimitsCollection = new WeightLimitsCollection(
+      backend,
       backend.getTotalWeightLimit,
-      backend.getTotalWeightLimits,
       backend.splitTotalWeightLimit,
+      30,
       'totalWeightLimit',
       'totalWeightLimits');
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);

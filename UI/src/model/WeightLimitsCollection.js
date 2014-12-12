@@ -1,5 +1,5 @@
 (function(root) {
-  root.WeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
+  root.WeightLimitsCollection = function(backend, getWeightLimit, splitWeightLimit, typeId, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
     var splitWeightLimits = {};
@@ -45,7 +45,7 @@
     };
 
     this.fetch = function(boundingBox, selectedWeightLimit) {
-      getWeightLimits(boundingBox, function(fetchedWeightLimits) {
+      backend.getWeightLimits(boundingBox, typeId, function(fetchedWeightLimits) {
         var selected = _.find(_.values(weightLimits), function(weightLimit) { return weightLimit.isSelected; });
 
         weightLimits = transformWeightLimits(fetchedWeightLimits);
