@@ -1,9 +1,9 @@
 (function(root) {
-  root.TotalWeightLimitBox = function(selectedWeightLimit) {
+  root.TotalWeightLimitBox = function(selectedWeightLimit, weightLimitTitle) {
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
-      '    Suurin sallittu massa',
+      '    ' + weightLimitTitle,
       '  </header>',
       '</div>'].join('');
 
@@ -18,7 +18,7 @@
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    Suurin sallittu massa',
+      '    ' + weightLimitTitle,
       '  </header>',
       '  <div class="panel-section panel-legend total-weight-limit-legend">',
             weightLimitLegendTemplate,
