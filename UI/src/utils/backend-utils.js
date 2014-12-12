@@ -75,15 +75,15 @@
       });
     }, 1000);
 
-    this.updateTotalWeightLimit = _.throttle(function(id, value, success, failure) {
-      putUpdateTotalWeightLimitCall(id, {value: value}, success, failure);
+    this.updateWeightLimit = _.throttle(function(id, value, success, failure) {
+      putUpdateWeightLimitCall(id, {value: value}, success, failure);
     }, 1000);
 
-    this.expireTotalWeightLimit = _.throttle(function(id, success, failure) {
-      putUpdateTotalWeightLimitCall(id, {expired: true}, success, failure);
+    this.expireWeightLimit = _.throttle(function(id, success, failure) {
+      putUpdateWeightLimitCall(id, {expired: true}, success, failure);
     }, 1000);
 
-    var putUpdateTotalWeightLimitCall = function(id, data, success, failure) {
+    var putUpdateWeightLimitCall = function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",

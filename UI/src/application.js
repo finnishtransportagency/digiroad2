@@ -189,8 +189,7 @@ var RoadCollection = function(backend) {
       'totalWeightLimits');
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedTotalWeightLimit = new SelectedWeightLimit(
-      backend.expireTotalWeightLimit,
-      backend.updateTotalWeightLimit,
+      backend,
       backend.createTotalWeightLimit,
       totalWeightLimitsCollection,
       'totalWeightLimit');
