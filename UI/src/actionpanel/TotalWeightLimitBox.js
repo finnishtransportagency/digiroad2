@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitBox = function(selectedTotalWeightLimit) {
+  root.TotalWeightLimitBox = function(selectedWeightLimit) {
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
@@ -8,7 +8,7 @@
       '</div>'].join('');
 
     var values = ['Ei rajoitusta', 'Rajoitus'];
-    var totalWeightLimitLegendTemplate = _.map(values, function(value, idx) {
+    var weightLimitLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear total-weight-limit-' + idx + '" />' +
@@ -21,7 +21,7 @@
       '    Suurin sallittu massa',
       '  </header>',
       '  <div class="panel-section panel-legend total-weight-limit-legend">',
-            totalWeightLimitLegendTemplate,
+            weightLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');
 
@@ -64,8 +64,8 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedTotalWeightLimit),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedTotalWeightLimit)]);
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedWeightLimit),
+       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedWeightLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {
