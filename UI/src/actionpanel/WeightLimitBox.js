@@ -1,5 +1,5 @@
 (function(root) {
-  root.TotalWeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle) {
+  root.WeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle) {
     var collapsedTemplate = [
       '<div class="panel total-weight-limit">',
       '  <header class="panel-header">',
