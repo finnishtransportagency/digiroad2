@@ -7,7 +7,8 @@ window.TotalWeightLimitLayer = function(params) {
     geometryUtils = params.geometryUtils,
     linearAsset = params.linearAsset,
     roadLayer = params.roadLayer,
-    layerName = params.layerName;
+    layerName = params.layerName,
+    multiElementEventCategory = params.multiElementEventCategory;
 
   var WeightLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -106,6 +107,10 @@ window.TotalWeightLimitLayer = function(params) {
       collection.splitWeightLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
       remove();
     };
+  };
+
+  var multiElementEvent = function(eventName) {
+    return multiElementEventCategory + ':' + eventName;
   };
 
   var eventListener = _.extend({running: false}, eventbus);
@@ -299,7 +304,7 @@ window.TotalWeightLimitLayer = function(params) {
   };
 
   var bindEvents = function() {
-    eventListener.listenTo(eventbus, 'totalWeightLimits:fetched', redrawWeightLimits);
+    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawWeightLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'totalWeightLimit:selected', handleWeightLimitSelected);
     eventListener.listenTo(eventbus,

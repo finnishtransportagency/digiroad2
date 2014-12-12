@@ -148,7 +148,8 @@ var RoadCollection = function(backend) {
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
         roadLayer: roadLayer,
-        layerName: 'totalWeightLimit'
+        layerName: 'totalWeightLimit',
+        multiElementEventCategory: 'totalWeightLimits'
       })
     };
 
