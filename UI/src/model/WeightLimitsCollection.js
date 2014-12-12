@@ -1,5 +1,5 @@
 (function(root) {
-  root.WeightLimitsCollection = function(backend, splitWeightLimit, typeId, singleElementEventCategory, multiElementEventCategory) {
+  root.WeightLimitsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
     var splitWeightLimits = {};
@@ -172,7 +172,7 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedWeightLimits) {
+      backend.splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedWeightLimits) {
         var existingId = splitWeightLimits.existing.id;
         splitWeightLimits = {};
         dirty = false;

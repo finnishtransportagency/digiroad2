@@ -183,7 +183,6 @@ var RoadCollection = function(backend) {
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var totalWeightLimitsCollection = new WeightLimitsCollection(
       backend,
-      backend.splitTotalWeightLimit,
       30,
       'totalWeightLimit',
       'totalWeightLimits');

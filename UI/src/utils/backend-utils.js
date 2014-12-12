@@ -107,7 +107,7 @@
       });
     }, 1000);
 
-    this.splitTotalWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
+    this.splitWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
