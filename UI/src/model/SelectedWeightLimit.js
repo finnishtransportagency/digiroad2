@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedWeightLimit = function(expireWeightLimit, updateWeightLimit, createWeightLimit, collection, singleElementEventCategory) {
+  root.SelectedWeightLimit = function(backend, typeId, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
@@ -109,15 +109,15 @@
     };
 
     var expire = function(success, failure) {
-      expireWeightLimit(current.id, success, failure);
+      backend.expireWeightLimit(current.id, success, failure);
     };
 
     var update = function(success, failure) {
-      updateWeightLimit(current.id, current.value, success, failure);
+      backend.updateWeightLimit(current.id, current.value, success, failure);
     };
 
     var createNew = function(success, failure) {
-      createWeightLimit(current.roadLinkId, current.value, success, failure);
+      backend.createWeightLimit(typeId, current.roadLinkId, current.value, success, failure);
     };
 
     this.cancel = function() {

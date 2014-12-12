@@ -63,27 +63,27 @@
       });
     };
 
-    this.getTotalWeightLimits = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/weightlimits?typeId=30&bbox=' + boundingBox, function(totalWeightLimits) {
-        callback(totalWeightLimits);
+    this.getWeightLimits = _.throttle(function(boundingBox, typeId, callback) {
+      $.getJSON('api/weightlimits?typeId=' + typeId + '&bbox=' + boundingBox, function(weightLimits) {
+        callback(weightLimits);
       });
     }, 1000);
 
-    this.getTotalWeightLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/weightlimits/' + id, function(totalWeightLimit) {
-        callback(totalWeightLimit);
+    this.getWeightLimit = _.throttle(function(id, callback) {
+      $.getJSON('api/weightlimits/' + id, function(weightLimit) {
+        callback(weightLimit);
       });
     }, 1000);
 
-    this.updateTotalWeightLimit = _.throttle(function(id, value, success, failure) {
-      putUpdateTotalWeightLimitCall(id, {value: value}, success, failure);
+    this.updateWeightLimit = _.throttle(function(id, value, success, failure) {
+      putUpdateWeightLimitCall(id, {value: value}, success, failure);
     }, 1000);
 
-    this.expireTotalWeightLimit = _.throttle(function(id, success, failure) {
-      putUpdateTotalWeightLimitCall(id, {expired: true}, success, failure);
+    this.expireWeightLimit = _.throttle(function(id, success, failure) {
+      putUpdateWeightLimitCall(id, {expired: true}, success, failure);
     }, 1000);
 
-    var putUpdateTotalWeightLimitCall = function(id, data, success, failure) {
+    var putUpdateWeightLimitCall = function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -95,11 +95,11 @@
       });
     };
 
-    this.createTotalWeightLimit = _.throttle(function(roadLinkId, value, success, error) {
+    this.createWeightLimit = _.throttle(function(typeId, roadLinkId, value, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/weightlimits?typeId=30",
+        url: "api/weightlimits?typeId=" + typeId,
         data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
         dataType: "json",
         success: success,
@@ -107,7 +107,7 @@
       });
     }, 1000);
 
-    this.splitTotalWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
+    this.splitWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",

@@ -1,5 +1,5 @@
 (function(root) {
-  root.WeightLimitsCollection = function(getWeightLimit, getWeightLimits, splitWeightLimit, singleElementEventCategory, multiElementEventCategory) {
+  root.WeightLimitsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
     var weightLimits = {};
     var dirty = false;
     var splitWeightLimits = {};
@@ -45,7 +45,7 @@
     };
 
     this.fetch = function(boundingBox, selectedWeightLimit) {
-      getWeightLimits(boundingBox, function(fetchedWeightLimits) {
+      backend.getWeightLimits(boundingBox, typeId, function(fetchedWeightLimits) {
         var selected = _.find(_.values(weightLimits), function(weightLimit) { return weightLimit.isSelected; });
 
         weightLimits = transformWeightLimits(fetchedWeightLimits);
@@ -74,7 +74,7 @@
 
     this.fetchWeightLimit = function(id, callback) {
       if (id) {
-        getWeightLimit(id, function(weightLimit) {
+        backend.getWeightLimit(id, function(weightLimit) {
           callback(_.merge({}, weightLimits[id], weightLimit));
         });
       } else {
@@ -127,7 +127,7 @@
     };
 
     this.splitWeightLimit = function(id, roadLinkId, split) {
-      getWeightLimit(id, function(weightLimit) {
+      backend.getWeightLimit(id, function(weightLimit) {
         var weightLimitLinks = weightLimit.weightLimitLinks;
         var splitLink = _.find(weightLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
@@ -172,7 +172,7 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedWeightLimits) {
+      backend.splitWeightLimit(splitWeightLimits.existing.id, splitWeightLimits.splitRoadLinkId, splitWeightLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedWeightLimits) {
         var existingId = splitWeightLimits.existing.id;
         splitWeightLimits = {};
         dirty = false;
