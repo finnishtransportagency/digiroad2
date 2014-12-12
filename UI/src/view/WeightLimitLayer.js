@@ -1,4 +1,4 @@
-window.TotalWeightLimitLayer = function(params) {
+window.WeightLimitLayer = function(params) {
   var map = params.map,
     application = params.application,
     collection = params.collection,
