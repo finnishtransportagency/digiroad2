@@ -129,7 +129,12 @@ var RoadCollection = function(backend) {
     var roadLayer = new RoadLayer(map, roadCollection);
 
     _.forEach(numericalLimits, function(numericalLimit) {
-      new NumericalLimitForm(numericalLimit.selectedNumericalLimit, numericalLimit.newNumericalLimitTitle, numericalLimit.className, numericalLimit.singleElementEventCategory);
+      new NumericalLimitForm(
+          numericalLimit.selectedNumericalLimit,
+          numericalLimit.newNumericalLimitTitle,
+          numericalLimit.className,
+          numericalLimit.singleElementEventCategory,
+          numericalLimit.unit);
     });
 
     var numericalLimitLayers = _.reduce(numericalLimits, function(acc, numericalLimit) {
@@ -195,7 +200,8 @@ var RoadCollection = function(backend) {
         layerName: 'totalWeightLimit',
         numericalLimitTitle: 'Suurin sallittu massa',
         newNumericalLimitTitle: 'Uusi suurin sallittu massa',
-        className: 'total-weight-limit'
+        className: 'total-weight-limit',
+        unit: 'kg'
       },
       {
         typeId: 40,
@@ -204,7 +210,8 @@ var RoadCollection = function(backend) {
         layerName: 'trailerTruckWeightLimit',
         numericalLimitTitle: 'Yhdistelmän suurin sallittu massa',
         newNumericalLimitTitle: 'Uusi yhdistelmän suurin sallittu massa',
-        className: 'trailer-truck-weight-limit'
+        className: 'trailer-truck-weight-limit',
+        unit: 'kg'
       },
       {
         typeId: 50,
@@ -213,7 +220,8 @@ var RoadCollection = function(backend) {
         layerName: 'axleWeightLimit',
         numericalLimitTitle: 'Suurin sallittu akselimassa',
         newNumericalLimitTitle: 'Uusi suurin sallittu akselimassa',
-        className: 'axle-weight-limit'
+        className: 'axle-weight-limit',
+        unit: 'kg'
       },
       {
         typeId: 60,
@@ -222,7 +230,8 @@ var RoadCollection = function(backend) {
         layerName: 'bogieWeightLimit',
         numericalLimitTitle: 'Suurin sallittu telimassa',
         newNumericalLimitTitle: 'Uusi suurin sallittu telimassa',
-        className: 'bogie-weight-limit'
+        className: 'bogie-weight-limit',
+        unit: 'kg'
       },
       {
         typeId: 70,
@@ -231,7 +240,8 @@ var RoadCollection = function(backend) {
         layerName: 'heightLimit',
         numericalLimitTitle: 'Suurin sallittu korkeus',
         newNumericalLimitTitle: 'Uusi suurin sallittu korkeus',
-        className: 'height-limit'
+        className: 'height-limit',
+        unit: 'cm'
       },
       {
         typeId: 80,
@@ -240,7 +250,8 @@ var RoadCollection = function(backend) {
         layerName: 'lengthLimit',
         numericalLimitTitle: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
         newNumericalLimitTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-        className: 'length-limit'
+        className: 'length-limit',
+        unit: 'cm'
       },
       {
         typeId: 90,
@@ -249,7 +260,8 @@ var RoadCollection = function(backend) {
         layerName: 'widthLimit',
         numericalLimitTitle: 'Suurin sallittu leveys',
         newNumericalLimitTitle: 'Uusi suurin sallittu leveys',
-        className: 'width-limit'
+        className: 'width-limit',
+        unit: 'cm'
       }
     ];
     var backend = customBackend || new Backend();

@@ -1,5 +1,5 @@
 (function (root) {
-  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory) {
+  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory, unit) {
     var template = function(selectedNumericalLimit) {
       var modifiedBy = selectedNumericalLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedNumericalLimit.getModifiedDateTime() ? ' ' + selectedNumericalLimit.getModifiedDateTime() : '';
@@ -10,7 +10,7 @@
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
       var expiredChecked = selectedNumericalLimit.expired() ? 'checked' : '';
       var nonExpiredChecked = selectedNumericalLimit.expired() ? '' : 'checked';
-      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' kg' : '-';
+      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + unit : '-';
       var title = selectedNumericalLimit.isNew() ?
         '<span>' + newNumericalLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
@@ -29,10 +29,10 @@
         '<p class="form-control-static ' + className + '">' + value + '</p>' +
         '<div class="choice-group">' +
         '<div class="radio">' +
-        '<label>Ei painorajoitusta<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+        '<label>Ei rajoitusta<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
         '</div>' +
         '<div class="radio">' +
-        '<label>Painorajoitus<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
+        '<label>Rajoitus<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
         '</div>' +
         '</div>' +
         '</div>' +
@@ -40,7 +40,7 @@
         '<label class="control-label"></label>' +
         '<div class="input-group" style="display: none">' +
         '<input type="text" class="form-control ' + className + '">' +
-        '<span class="input-group-addon">kg</span>' +
+        '<span class="input-group-addon">' + unit + '</span>' +
         '</div>' +
         '</div>' +
         '</div>' +
