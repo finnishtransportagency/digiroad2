@@ -216,75 +216,75 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/weightlimits") {
+  get("/numericallimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      WeightLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      NumericalLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
 
-  get("/weightlimits/:segmentId") {
+  get("/numericallimits/:segmentId") {
     val segmentId = params("segmentId")
-    WeightLimitService.getById(segmentId.toLong)
-      .getOrElse(NotFound("Total weight limit " + segmentId + " not found"))
+    NumericalLimitService.getById(segmentId.toLong)
+      .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
   }
 
-  private def validateTotalWeightLimitValue(value: BigInt): Unit = {
+  private def validateNumericalLimitValue(value: BigInt): Unit = {
     if (value > Integer.MAX_VALUE) {
-      halt(BadRequest("Total weight limit value too big"))
+      halt(BadRequest("Numerical limit value too big"))
     } else if (value < 0) {
-      halt(BadRequest("Total weight limit value cannot be negative"))
+      halt(BadRequest("Numerical limit value cannot be negative"))
     }
   }
 
-  put("/weightlimits/:id") {
+  put("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val id = params("id").toLong
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     (expiredOption, valueOption) match {
-      case (None, None) => BadRequest("Total weight limit value or expiration not provided")
+      case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
-        value.foreach(validateTotalWeightLimitValue)
-        WeightLimitService.updateWeightLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => WeightLimitService.getById(segmentId)
-          case None => NotFound("Total weight limit " + id + " not found")
+        value.foreach(validateNumericalLimitValue)
+        NumericalLimitService.updateNumericalLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+          case Some(segmentId) => NumericalLimitService.getById(segmentId)
+          case None => NotFound("Numerical limit " + id + " not found")
         }
     }
   }
 
-  post("/weightlimits") {
+  post("/numericallimits") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val value = (parsedBody \ "value").extract[BigInt]
-    validateTotalWeightLimitValue(value)
+    validateNumericalLimitValue(value)
     val username = user.username
-    WeightLimitService.createWeightLimit(typeId = typeId,
+    NumericalLimitService.createNumericalLimit(typeId = typeId,
                                          roadLinkId = roadLinkId,
                                          value = value.intValue,
                                          username = username)
   }
 
-  post("/weightlimits/:id") {
+  post("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
     if (!user.isOperator()) { halt(Unauthorized("User not authorized")) }
     val value = (parsedBody \ "value").extract[BigInt]
-    validateTotalWeightLimitValue(value)
+    validateNumericalLimitValue(value)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    WeightLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
+    NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
   get("/speedlimits/:segmentId") {

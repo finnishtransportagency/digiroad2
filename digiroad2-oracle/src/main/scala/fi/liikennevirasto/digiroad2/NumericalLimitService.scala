@@ -19,13 +19,13 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
-case class WeightLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
-case class WeightLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
+case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
-                       weightLimitLinks: Seq[WeightLimitLink], typeId: Int)
+                       numericalLimitLinks: Seq[NumericalLimitLink], typeId: Int)
 
-trait WeightLimitOperations {
+trait NumericalLimitOperations {
   val valuePropertyId: String = "kokonaispainorajoitus"
 
   def withDynTransaction[T](f: => T): T
@@ -35,8 +35,8 @@ trait WeightLimitOperations {
     new BoneCPDataSource(cfg)
   }
 
-  private def getLinksWithPositions(links: Seq[WeightLimitLink]): Seq[WeightLimitLink] = {
-    def getLinkEndpoints(link: WeightLimitLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
+  private def getLinksWithPositions(links: Seq[NumericalLimitLink]): Seq[NumericalLimitLink] = {
+    def getLinkEndpoints(link: NumericalLimitLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val rawLink = chainedLink.rawLink
@@ -48,9 +48,9 @@ trait WeightLimitOperations {
     }
   }
 
-  private def weightLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
-    val weightLimits = sql"""
-      select a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
+  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+    val numericalLimits = sql"""
+      select a.id, pos.road_link_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
              a.asset_type_id
         from asset a
@@ -61,54 +61,54 @@ trait WeightLimitOperations {
         where a.id = $id
       """.as[(Long, Long, Int, Int, Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
 
-    weightLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
+    numericalLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
       (segmentId, roadLinkId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
     }
   }
 
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[WeightLimitLink] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
     withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, false, municipalities)
       val roadLinkIds = roadLinks.map(_._1).toList
 
-      val weightLimits = OracleArray.fetchWeightLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+      val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
 
       val linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType, Int)] =
       roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, roadLink) =>
           acc + (roadLink._1 -> (roadLink._2, roadLink._3, roadLink._4, roadLink._5))
         }
 
-      val weightLimitsWithGeometry: Seq[WeightLimitLink] = weightLimits.map { link =>
+      val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
         val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-        WeightLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+        NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
       }
 
-      weightLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+      numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
-  private def getByIdWithoutTransaction(id: Long): Option[WeightLimit] =  {
-    val links = weightLimitLinksById(id)
+  private def getByIdWithoutTransaction(id: Long): Option[NumericalLimit] =  {
+    val links = numericalLimitLinksById(id)
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
       val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val head = links.head
       val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
-      val weightLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _, typeId) =>
-        WeightLimitLink(id, roadLinkId, sideCode, value, points, None, None, expired)
+      val numericalLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _, typeId) =>
+        NumericalLimitLink(id, roadLinkId, sideCode, value, points, None, None, expired)
       }
-      Some(WeightLimit(
+      Some(NumericalLimit(
             id, value, expired, limitEndpoints,
             modifiedBy, modifiedAt.map(DateTimeFormat.print),
             createdBy, createdAt.map(DateTimeFormat.print),
-            getLinksWithPositions(weightLimitLinks), typeId))
+            getLinksWithPositions(numericalLimitLinks), typeId))
     }
   }
 
-  def getById(id: Long): Option[WeightLimit] = {
+  def getById(id: Long): Option[NumericalLimit] = {
     withDynTransaction {
       getByIdWithoutTransaction(id)
     }
@@ -117,7 +117,7 @@ trait WeightLimitOperations {
   private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
 
-  private def updateWeightLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  private def updateNumericalLimitValue(id: Long, value: Int, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption(valuePropertyId).get
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = updateNumberProperty(id, propertyId, value)
@@ -128,7 +128,7 @@ trait WeightLimitOperations {
     }
   }
 
-  private def updateWeightLimitExpiration(id: Long, expired: Boolean, username: String) = {
+  private def updateNumericalLimitExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
       sqlu"update asset set valid_to = sysdate where id = $id".first
@@ -142,17 +142,17 @@ trait WeightLimitOperations {
     }
   }
 
-  def updateWeightLimit(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
+  def updateNumericalLimit(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
     withDynTransaction {
-      val valueUpdate: Option[Long] = value.flatMap(updateWeightLimitValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateWeightLimitExpiration(id, expired, username)
+      val valueUpdate: Option[Long] = value.flatMap(updateNumericalLimitValue(id, _, username))
+      val expirationUpdate: Option[Long] = updateNumericalLimitExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       if (updatedId.isEmpty) dynamicSession.rollback()
       updatedId
     }
   }
 
-  private def createWeightLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): WeightLimit = {
+  private def createNumericalLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
     val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).first(valuePropertyId)
@@ -176,16 +176,16 @@ trait WeightLimitOperations {
     getByIdWithoutTransaction(id).get
   }
 
-  def createWeightLimit(typeId: Int, roadLinkId: Long, value: Int, username: String): WeightLimit = {
+  def createNumericalLimit(typeId: Int, roadLinkId: Long, value: Int, username: String): NumericalLimit = {
     val sideCode = 1
     val startMeasure = 0
     val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     withDynTransaction {
-      createWeightLimitWithoutTransaction(typeId, roadLinkId, value, false, sideCode, startMeasure, endMeasure, username)
+      createNumericalLimitWithoutTransaction(typeId, roadLinkId, value, false, sideCode, startMeasure, endMeasure, username)
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[WeightLimit] = {
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[NumericalLimit] = {
     withDynTransaction {
       val typeId = getByIdWithoutTransaction(id).get.typeId
       Queries.updateAssetModified(id, username).execute()
@@ -197,13 +197,13 @@ trait WeightLimitOperations {
       val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
       OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-      val createdId = createWeightLimitWithoutTransaction(typeId, roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      val createdId = createNumericalLimitWithoutTransaction(typeId, roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
       if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
       Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
     }
   }
 }
 
-object WeightLimitService extends WeightLimitOperations {
+object NumericalLimitService extends NumericalLimitOperations {
   def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
 }

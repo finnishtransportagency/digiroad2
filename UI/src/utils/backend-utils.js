@@ -64,14 +64,14 @@
     };
 
     this.getWeightLimits = _.throttle(function(boundingBox, typeId, callback) {
-      $.getJSON('api/weightlimits?typeId=' + typeId + '&bbox=' + boundingBox, function(weightLimits) {
-        callback(weightLimits);
+      $.getJSON('api/numericallimits?typeId=' + typeId + '&bbox=' + boundingBox, function(numericalLimits) {
+        callback(numericalLimits);
       });
     }, 1000);
 
     this.getWeightLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/weightlimits/' + id, function(weightLimit) {
-        callback(weightLimit);
+      $.getJSON('api/numericallimits/' + id, function(numericalLimit) {
+        callback(numericalLimit);
       });
     }, 1000);
 
@@ -87,7 +87,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/weightlimits/" + id,
+        url: "api/numericallimits/" + id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -99,7 +99,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/weightlimits?typeId=" + typeId,
+        url: "api/numericallimits?typeId=" + typeId,
         data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
         dataType: "json",
         success: success,
@@ -111,7 +111,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/weightlimits/" + id,
+        url: "api/numericallimits/" + id,
         data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, value: value, expired: expired}),
         dataType: "json",
         success: success,

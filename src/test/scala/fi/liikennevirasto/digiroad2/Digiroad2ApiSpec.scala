@@ -267,21 +267,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("get total weight limits", Tag("db")) {
-    getWithUserAuth("/weightlimits?typeId=30&bbox=374037,6677013,374540,6677675") {
+  test("get total numerical limits", Tag("db")) {
+    getWithUserAuth("/numericallimits?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      parse(body).extract[List[WeightLimitLink]].size should be(2)
+      parse(body).extract[List[NumericalLimitLink]].size should be(2)
     }
   }
 
-  test("get total weight limits should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/weightlimits?bbox=374037,6677013,374540,6677675") {
+  test("get total numerical limits should return bad request if typeId missing", Tag("db")) {
+    getWithUserAuth("/numericallimits?bbox=374037,6677013,374540,6677675") {
       status should equal(400)
     }
   }
 
-  test("updating total weight limits requires an operator role") {
-    putJsonWithUserAuth("/weightlimits/11112", """{"value":6000}""".getBytes, username = "test") {
+  test("updating total numerical limits requires an operator role") {
+    putJsonWithUserAuth("/numericallimits/11112", """{"value":6000}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

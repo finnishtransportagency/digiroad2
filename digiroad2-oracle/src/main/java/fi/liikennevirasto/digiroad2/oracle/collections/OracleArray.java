@@ -56,7 +56,7 @@ public class OracleArray {
         return linearAssetsByRoadLinkIds(ids, connection, query);
     }
 
-    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchWeightLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
+    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
         String query = "SELECT a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +

@@ -128,7 +128,7 @@
 
     this.splitWeightLimit = function(id, roadLinkId, split) {
       backend.getWeightLimit(id, function(weightLimit) {
-        var weightLimitLinks = weightLimit.weightLimitLinks;
+        var weightLimitLinks = weightLimit.numericalLimitLinks;
         var splitLink = _.find(weightLimitLinks, function(link) {
           return link.roadLinkId === roadLinkId;
         });
@@ -179,8 +179,8 @@
         delete weightLimits[existingId];
 
         _.each(updatedWeightLimits, function(weightLimit) {
-          weightLimit.links = weightLimit.weightLimitLinks;
-          delete weightLimit.weightLimitLinks;
+          weightLimit.links = weightLimit.numericalLimitLinks;
+          delete weightLimit.numericalLimitLinks;
           weightLimit.sideCode = weightLimit.links[0].sideCode;
           weightLimits[weightLimit.id] = weightLimit;
         });
