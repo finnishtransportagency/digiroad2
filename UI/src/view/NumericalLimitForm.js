@@ -10,7 +10,7 @@
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
       var expiredChecked = selectedNumericalLimit.expired() ? 'checked' : '';
       var nonExpiredChecked = selectedNumericalLimit.expired() ? '' : 'checked';
-      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + unit : '-';
+      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' ' + unit : '-';
       var title = selectedNumericalLimit.isNew() ?
         '<span>' + newNumericalLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
