@@ -89,13 +89,13 @@
       return _.pick(split, 'firstSplitVertices', 'secondSplitVertices');
     };
 
-    this.offsetPoint = function(point, index, geometry, sideCode) {
-       var previousPoint = index > 0 ? geometry[index - 1] : point;
+    this.offsetPoint = function(point, index, geometry, sideCode, baseOffset) {
+      var previousPoint = index > 0 ? geometry[index - 1] : point;
       var nextPoint = geometry[index + 1] || point;
 
       var directionVector = scaleVector(sumVectors(subtractVector(point, previousPoint), subtractVector(nextPoint, point)), 0.5);
       var normal = normalVector(directionVector);
-      var sideCodeScalar = (2 * sideCode - 5) * -4;
+      var sideCodeScalar = (2 * sideCode - 5) * baseOffset;
       var offset = scaleVector(unitVector(normal), sideCodeScalar);
       return sumVectors(point, offset);
     };

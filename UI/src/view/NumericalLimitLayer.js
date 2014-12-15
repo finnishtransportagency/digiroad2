@@ -144,14 +144,20 @@ window.NumericalLimitLayer = function(params) {
     createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
     createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
     createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(12, { strokeWidth: 8 })
+    createZoomDependentOneWayRule(12, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(13, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 8 })
   ];
 
   var numericalLimitFeatureSizeLookup = {
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
     11: { strokeWidth: 9 },
-    12: { strokeWidth: 16 }
+    12: { strokeWidth: 16 },
+    13: { strokeWidth: 16 },
+    14: { strokeWidth: 16 },
+    15: { strokeWidth: 16 }
   };
 
   var styleLookup = {
@@ -395,7 +401,10 @@ window.NumericalLimitLayer = function(params) {
     var numericalLimitsWithType = _.map(numericalLimits, function(limit) {
       return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
     });
-    var numericalLimitsWithAdjustments = _.map(numericalLimitsWithType, linearAsset.offsetBySideCode);
+    var offsetBySideCode = function(numericalLimit) {
+      return linearAsset.offsetBySideCode(map.getZoom(), numericalLimit);
+    };
+    var numericalLimitsWithAdjustments = _.map(numericalLimitsWithType, offsetBySideCode);
     vectorLayer.addFeatures(lineFeatures(numericalLimitsWithAdjustments));
 
     if (selectedNumericalLimit.exists && selectedNumericalLimit.exists()) {

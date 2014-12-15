@@ -23,6 +23,9 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
             events: {
               register: function() {},
               unregister: function() {}
+            },
+            getZoom: function() {
+              return 10;
             }
           },
           application: {
