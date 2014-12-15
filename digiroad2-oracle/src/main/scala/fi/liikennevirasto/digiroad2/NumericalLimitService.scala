@@ -26,7 +26,7 @@ case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set
                        numericalLimitLinks: Seq[NumericalLimitLink], typeId: Int)
 
 trait NumericalLimitOperations {
-  val valuePropertyId: String = "kokonaispainorajoitus"
+  val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T
 
