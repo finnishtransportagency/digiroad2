@@ -76,10 +76,21 @@ object DataFixture {
   def importWeightLimitsFromConversion() {
     print("\nCommencing weight limit import from conversion: ")
     println(DateTime.now())
-    dataImporter.importWeightLimits(Conversion.database(), 20, 40)
-    dataImporter.importWeightLimits(Conversion.database(), 23, 50)
-    dataImporter.importWeightLimits(Conversion.database(), 24, 60)
+    dataImporter.importNumericalLimits(Conversion.database(), 20, 40)
+    dataImporter.importNumericalLimits(Conversion.database(), 21, 50)
+    dataImporter.importNumericalLimits(Conversion.database(), 24, 60)
     print("Weight limit import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importDimensionLimitsFromConversion() {
+    print("\nCommencing dimension limit import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importNumericalLimits(Conversion.database(), 18, 70)
+    dataImporter.importNumericalLimits(Conversion.database(), 19, 80)
+    dataImporter.importNumericalLimits(Conversion.database(), 23, 90)
+    print("Dimension limit import complete: ")
     println(DateTime.now())
     println("\n")
   }
@@ -125,6 +136,8 @@ object DataFixture {
         importTotalWeightLimitsFromConversion()
       case Some("weightlimits") =>
         importWeightLimitsFromConversion()
+      case Some("dimensionlimits") =>
+        importDimensionLimitsFromConversion()
       case _ => println("Usage: DataFixture test | speedlimits")
     }
   }

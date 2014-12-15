@@ -226,28 +226,28 @@ class AssetDataImporter {
   }
 
   def importTotalWeightLimits(database: DatabaseDef) = {
-    importWeightLimits(database, 22, 30)
+    importNumericalLimits(database, 22, 30)
   }
 
-  def importWeightLimits(database: DatabaseDef, sourceTypeId: Int, targetTypeId: Int): Unit = {
+  def importNumericalLimits(database: DatabaseDef, sourceTypeId: Int, targetTypeId: Int): Unit = {
     val query =
       sql"""
        select segm_id, tielinkki_id, puoli, alkum, loppum, arvo
          from segments
          where tyyppi = $sourceTypeId
        """
-    val weightLimitLinks: Seq[(Long, Long, Int, Double, Double, Int)] = database.withDynSession {
+    val numericalLimitLinks: Seq[(Long, Long, Int, Double, Double, Int)] = database.withDynSession {
       query.as[(Long, Long, Int, Double, Double, Int)].list()
     }
-    val weightLimits: Map[Long, Seq[(Long, Long, Int, Double, Double, Int)]] = weightLimitLinks.groupBy(_._1)
+    val numericalLimits: Map[Long, Seq[(Long, Long, Int, Double, Double, Int)]] = numericalLimitLinks.groupBy(_._1)
     Database.forDataSource(ds).withDynTransaction {
-      weightLimits.foreach { weightLimit ⇒
+      numericalLimits.foreach { numericalLimit ⇒
         val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
         val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
         val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
-        val weightLimitPS = dynamicSession.prepareStatement("insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, ?, (select id from property where public_id = 'kokonaispainorajoitus'), ?)")
+        val numericalLimitPS = dynamicSession.prepareStatement("insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, ?, (select id from property where public_id = 'kokonaispainorajoitus'), ?)")
 
-        val (_, links) = weightLimit
+        val (_, links) = numericalLimit
         val assetId = nextPrimaryKeySeqValue
         assetPS.setLong(1, assetId)
         assetPS.setInt(2, targetTypeId)
@@ -269,18 +269,18 @@ class AssetDataImporter {
         }
 
         val limit = links.head._6
-        weightLimitPS.setLong(1, assetId)
-        weightLimitPS.setInt(2, limit)
-        weightLimitPS.addBatch()
+        numericalLimitPS.setLong(1, assetId)
+        numericalLimitPS.setInt(2, limit)
+        numericalLimitPS.addBatch()
 
         assetPS.executeBatch()
         lrmPositionPS.executeBatch()
         assetLinkPS.executeBatch()
-        weightLimitPS.executeBatch()
+        numericalLimitPS.executeBatch()
         assetPS.close()
         lrmPositionPS.close()
         assetLinkPS.close()
-        weightLimitPS.close()
+        numericalLimitPS.close()
       }
     }
   }
