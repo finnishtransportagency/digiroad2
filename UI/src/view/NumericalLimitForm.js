@@ -1,19 +1,19 @@
 (function (root) {
-  root.WeightLimitForm = function(selectedWeightLimit, newWeightLimitTitle, className, eventCategory) {
-    var template = function(selectedWeightLimit) {
-      var modifiedBy = selectedWeightLimit.getModifiedBy() || '-';
-      var modifiedDateTime = selectedWeightLimit.getModifiedDateTime() ? ' ' + selectedWeightLimit.getModifiedDateTime() : '';
-      var createdBy = selectedWeightLimit.getCreatedBy() || '-';
-      var createdDateTime = selectedWeightLimit.getCreatedDateTime() ? ' ' + selectedWeightLimit.getCreatedDateTime() : '';
-      var disabled = selectedWeightLimit.isDirty() ? '' : 'disabled';
+  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory) {
+    var template = function(selectedNumericalLimit) {
+      var modifiedBy = selectedNumericalLimit.getModifiedBy() || '-';
+      var modifiedDateTime = selectedNumericalLimit.getModifiedDateTime() ? ' ' + selectedNumericalLimit.getModifiedDateTime() : '';
+      var createdBy = selectedNumericalLimit.getCreatedBy() || '-';
+      var createdDateTime = selectedNumericalLimit.getCreatedDateTime() ? ' ' + selectedNumericalLimit.getCreatedDateTime() : '';
+      var disabled = selectedNumericalLimit.isDirty() ? '' : 'disabled';
       var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-      var expiredChecked = selectedWeightLimit.expired() ? 'checked' : '';
-      var nonExpiredChecked = selectedWeightLimit.expired() ? '' : 'checked';
-      var value = selectedWeightLimit.getValue() ? selectedWeightLimit.getValue() + ' kg' : '-';
-      var title = selectedWeightLimit.isNew() ?
-        '<span>' + newWeightLimitTitle + '</span>' :
-        '<span>Segmentin ID: ' + selectedWeightLimit.getId() + '</span>';
+      var expiredChecked = selectedNumericalLimit.expired() ? 'checked' : '';
+      var nonExpiredChecked = selectedNumericalLimit.expired() ? '' : 'checked';
+      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' kg' : '-';
+      var title = selectedNumericalLimit.isNew() ?
+        '<span>' + newNumericalLimitTitle + '</span>' :
+        '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
       var header = '<header>' + title + '<div class="' + className + ' form-controls">' + buttons + '</div></header>';
       return header +
         '<div class="wrapper read-only">' +
@@ -54,22 +54,22 @@
       return s.replace(/\s/g, '');
     };
 
-    var setupWeightLimitInput = function(toggleElement, inputElement, selectedWeightLimit) {
-      inputElement.val(selectedWeightLimit.getValue());
-      inputElement.prop('disabled', selectedWeightLimit.expired());
+    var setupNumericalLimitInput = function(toggleElement, inputElement, selectedNumericalLimit) {
+      inputElement.val(selectedNumericalLimit.getValue());
+      inputElement.prop('disabled', selectedNumericalLimit.expired());
       inputElement.on('input', function(event) {
         var value = parseInt(removeWhitespace($(event.currentTarget).val()), 10);
-        selectedWeightLimit.setValue(value);
+        selectedNumericalLimit.setValue(value);
       });
       toggleElement.change(function(event) {
         var expired = $(event.currentTarget).val();
         var disabled = expired === 'disabled';
-        selectedWeightLimit.setExpired(disabled);
+        selectedNumericalLimit.setExpired(disabled);
         inputElement.prop('disabled', disabled);
       });
     };
 
-    var bindEvents = function(selectedWeightLimit, className, eventCategory) {
+    var bindEvents = function(selectedNumericalLimit, className, eventCategory) {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -81,10 +81,10 @@
         return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
       };
       eventbus.on(events('selected', 'cancelled', 'saved'), function() {
-        rootElement.html(template(selectedWeightLimit));
+        rootElement.html(template(selectedNumericalLimit));
         var toggleElement = rootElement.find(".radio input");
         var inputElement = rootElement.find('.' + className);
-        setupWeightLimitInput(toggleElement, inputElement, selectedWeightLimit);
+        setupNumericalLimitInput(toggleElement, inputElement, selectedNumericalLimit);
         toggleMode(applicationModel.isReadOnly());
       });
       eventbus.on(events('unselected'), function() {
@@ -95,13 +95,13 @@
         rootElement.find('.form-controls button').attr('disabled', false);
       });
       rootElement.on('click', '.' + className + ' button.save', function() {
-        selectedWeightLimit.save();
+        selectedNumericalLimit.save();
       });
       rootElement.on('click', '.' + className + ' button.cancel', function() {
-        selectedWeightLimit.cancel();
+        selectedNumericalLimit.cancel();
       });
     };
 
-    bindEvents(selectedWeightLimit, className, eventCategory);
+    bindEvents(selectedNumericalLimit, className, eventCategory);
   };
 })(this);

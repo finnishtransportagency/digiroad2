@@ -1,14 +1,14 @@
 (function(root) {
-  root.WeightLimitBox = function(selectedWeightLimit, layerName, weightLimitTitle, className) {
+  root.NumericalLimitBox = function(selectedNumericalLimit, layerName, numericalLimitTitle, className) {
     var collapsedTemplate = [
       '<div class="panel ' + className + '">',
       '  <header class="panel-header">',
-      '    ' + weightLimitTitle,
+      '    ' + numericalLimitTitle,
       '  </header>',
       '</div>'].join('');
 
     var values = ['Ei rajoitusta', 'Rajoitus'];
-    var weightLimitLegendTemplate = _.map(values, function(value, idx) {
+    var numericalLimitLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear ' + className + '-' + idx + '" />' +
@@ -18,10 +18,10 @@
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    ' + weightLimitTitle,
+      '    ' + numericalLimitTitle,
       '  </header>',
       '  <div class="panel-section panel-legend ' + className + '-legend">',
-            weightLimitLegendTemplate,
+            numericalLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');
 
@@ -64,8 +64,8 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedWeightLimit),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedWeightLimit)]);
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedNumericalLimit),
+       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedNumericalLimit)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {

@@ -1,5 +1,5 @@
 (function(root) {
-  root.ApplicationModel = function(selectedAssetModel, selectedSpeedLimit, weightLimits) {
+  root.ApplicationModel = function(selectedAssetModel, selectedSpeedLimit, numericalLimits) {
     var zoomLevel;
     var selectedLayer = 'asset';
     var selectedTool = 'Select';
@@ -44,7 +44,7 @@
         return readOnly;
       },
       isDirty: function() {
-        return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty() || _.any(weightLimits, function(weightLimit) { return weightLimit.selectedWeightLimit.isDirty(); });
+        return selectedSpeedLimit.isDirty() || selectedAssetModel.isDirty() || _.any(numericalLimits, function(numericalLimit) { return numericalLimit.selectedNumericalLimit.isDirty(); });
       },
       assetDragDelay: 100,
       assetGroupingDistance: 36,

@@ -63,27 +63,27 @@
       });
     };
 
-    this.getWeightLimits = _.throttle(function(boundingBox, typeId, callback) {
+    this.getNumericalLimits = _.throttle(function(boundingBox, typeId, callback) {
       $.getJSON('api/numericallimits?typeId=' + typeId + '&bbox=' + boundingBox, function(numericalLimits) {
         callback(numericalLimits);
       });
     }, 1000);
 
-    this.getWeightLimit = _.throttle(function(id, callback) {
+    this.getNumericalLimit = _.throttle(function(id, callback) {
       $.getJSON('api/numericallimits/' + id, function(numericalLimit) {
         callback(numericalLimit);
       });
     }, 1000);
 
-    this.updateWeightLimit = _.throttle(function(id, value, success, failure) {
-      putUpdateWeightLimitCall(id, {value: value}, success, failure);
+    this.updateNumericalLimit = _.throttle(function(id, value, success, failure) {
+      putUpdateNumericalLimitCall(id, {value: value}, success, failure);
     }, 1000);
 
-    this.expireWeightLimit = _.throttle(function(id, success, failure) {
-      putUpdateWeightLimitCall(id, {expired: true}, success, failure);
+    this.expireNumericalLimit = _.throttle(function(id, success, failure) {
+      putUpdateNumericalLimitCall(id, {expired: true}, success, failure);
     }, 1000);
 
-    var putUpdateWeightLimitCall = function(id, data, success, failure) {
+    var putUpdateNumericalLimitCall = function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -95,7 +95,7 @@
       });
     };
 
-    this.createWeightLimit = _.throttle(function(typeId, roadLinkId, value, success, error) {
+    this.createNumericalLimit = _.throttle(function(typeId, roadLinkId, value, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
@@ -107,7 +107,7 @@
       });
     }, 1000);
 
-    this.splitWeightLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
+    this.splitNumericalLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",

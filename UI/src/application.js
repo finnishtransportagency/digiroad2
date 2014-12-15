@@ -116,7 +116,7 @@ var RoadCollection = function(backend) {
     return map;
   };
 
-  var setupMap = function(backend, models, weightLimits, withTileMaps, startupParameters) {
+  var setupMap = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
     map.addControl(new OpenLayers.Control.Navigation());
 
@@ -128,23 +128,23 @@ var RoadCollection = function(backend) {
     var linearAsset = new LinearAsset(geometryUtils);
     var roadLayer = new RoadLayer(map, roadCollection);
 
-    _.forEach(weightLimits, function(weightLimit) {
-      new WeightLimitForm(weightLimit.selectedWeightLimit, weightLimit.newWeightLimitTitle, weightLimit.className, weightLimit.singleElementEventCategory);
+    _.forEach(numericalLimits, function(numericalLimit) {
+      new NumericalLimitForm(numericalLimit.selectedNumericalLimit, numericalLimit.newNumericalLimitTitle, numericalLimit.className, numericalLimit.singleElementEventCategory);
     });
 
-    var weightLimitLayers = _.reduce(weightLimits, function(acc, weightLimit) {
-      acc[weightLimit.layerName] = new WeightLimitLayer({
+    var numericalLimitLayers = _.reduce(numericalLimits, function(acc, numericalLimit) {
+      acc[numericalLimit.layerName] = new NumericalLimitLayer({
         map: map,
         application: applicationModel,
-        collection: weightLimit.collection,
-        selectedWeightLimit: weightLimit.selectedWeightLimit,
+        collection: numericalLimit.collection,
+        selectedNumericalLimit: numericalLimit.selectedNumericalLimit,
         roadCollection: roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
         roadLayer: roadLayer,
-        layerName: weightLimit.layerName,
-        multiElementEventCategory: weightLimit.multiElementEventCategory,
-        singleElementEventCategory: weightLimit.singleElementEventCategory
+        layerName: numericalLimit.layerName,
+        multiElementEventCategory: numericalLimit.multiElementEventCategory,
+        singleElementEventCategory: numericalLimit.singleElementEventCategory
       });
       return acc;
     }, {});
@@ -161,7 +161,7 @@ var RoadCollection = function(backend) {
         geometryUtils: geometryUtils,
         linearAsset: linearAsset
       })
-    }, weightLimitLayers);
+    }, numericalLimitLayers);
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -178,50 +178,50 @@ var RoadCollection = function(backend) {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
-  var startApplication = function(backend, models, weightLimits, withTileMaps, startupParameters) {
+  var startApplication = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      setupMap(backend, models, weightLimits, withTileMaps, startupParameters);
+      setupMap(backend, models, numericalLimits, withTileMaps, startupParameters);
       eventbus.trigger('application:initialized');
     }
   };
 
   application.start = function(customBackend, withTileMaps) {
-    var weightLimitSpecs = [
+    var numericalLimitSpecs = [
       {
         typeId: 30,
-        singleElementEventCategory: 'totalWeightLimit',
-        multiElementEventCategory: 'totalWeightLimits',
-        layerName: 'totalWeightLimit',
-        weightLimitTitle: 'Suurin sallittu massa',
-        newWeightLimitTitle: 'Uusi suurin sallittu massa',
+        singleElementEventCategory: 'totalNumericalLimit',
+        multiElementEventCategory: 'totalNumericalLimits',
+        layerName: 'totalNumericalLimit',
+        numericalLimitTitle: 'Suurin sallittu massa',
+        newNumericalLimitTitle: 'Uusi suurin sallittu massa',
         className: 'total-weight-limit'
       },
       {
         typeId: 40,
-        singleElementEventCategory: 'trailerTruckWeightLimit',
-        multiElementEventCategory: 'trailerTruckWeightLimits',
-        layerName: 'trailerTruckWeightLimit',
-        weightLimitTitle: 'Yhdistelmän suurin sallittu massa',
-        newWeightLimitTitle: 'Uusi yhdistelmän suurin sallittu massa',
+        singleElementEventCategory: 'trailerTruckNumericalLimit',
+        multiElementEventCategory: 'trailerTruckNumericalLimits',
+        layerName: 'trailerTruckNumericalLimit',
+        numericalLimitTitle: 'Yhdistelmän suurin sallittu massa',
+        newNumericalLimitTitle: 'Uusi yhdistelmän suurin sallittu massa',
         className: 'trailer-truck-weight-limit'
       },
       {
         typeId: 50,
-        singleElementEventCategory: 'axleWeightLimit',
-        multiElementEventCategory: 'axleWeightLimits',
-        layerName: 'axleWeightLimit',
-        weightLimitTitle: 'Suurin sallittu akselimassa',
-        newWeightLimitTitle: 'Uusi suurin sallittu akselimassa',
+        singleElementEventCategory: 'axleNumericalLimit',
+        multiElementEventCategory: 'axleNumericalLimits',
+        layerName: 'axleNumericalLimit',
+        numericalLimitTitle: 'Suurin sallittu akselimassa',
+        newNumericalLimitTitle: 'Uusi suurin sallittu akselimassa',
         className: 'axle-weight-limit'
       },
       {
         typeId: 60,
-        singleElementEventCategory: 'bogieWeightLimit',
-        multiElementEventCategory: 'bogieWeightLimits',
-        layerName: 'bogieWeightLimit',
-        weightLimitTitle: 'Suurin sallittu telimassa',
-        newWeightLimitTitle: 'Uusi suurin sallittu telimassa',
+        singleElementEventCategory: 'bogieNumericalLimit',
+        multiElementEventCategory: 'bogieNumericalLimits',
+        layerName: 'bogieNumericalLimit',
+        numericalLimitTitle: 'Suurin sallittu telimassa',
+        newNumericalLimitTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit'
       }
     ];
@@ -230,12 +230,12 @@ var RoadCollection = function(backend) {
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
 
-    var weightLimits = _.map(weightLimitSpecs, function(spec) {
-      var collection = new WeightLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedWeightLimit = new SelectedWeightLimit(backend, spec.typeId, collection, spec.singleElementEventCategory);
+    var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
+      var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var selectedNumericalLimit = new SelectedNumericalLimit(backend, spec.typeId, collection, spec.singleElementEventCategory);
       return _.merge({}, spec, {
         collection: collection,
-        selectedWeightLimit: selectedWeightLimit
+        selectedNumericalLimit: selectedNumericalLimit
       });
     });
 
@@ -247,15 +247,15 @@ var RoadCollection = function(backend) {
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
-    window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit, weightLimits);
-    ActionPanel.initialize(backend, selectedSpeedLimit, weightLimits);
+    window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit, numericalLimits);
+    ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, weightLimits, tileMaps, startupParameters);
+        startApplication(backend, models, numericalLimits, tileMaps, startupParameters);
       });
     });
   };

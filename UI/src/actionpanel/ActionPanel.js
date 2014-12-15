@@ -1,6 +1,6 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, selectedSpeedLimit, weightLimits) {
+    initialize: function(backend, selectedSpeedLimit, numericalLimits) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
@@ -11,9 +11,9 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
-      _.forEach(weightLimits, function(weightLimit) {
-        var weightLimitBox = new WeightLimitBox(weightLimit.selectedWeightLimit, weightLimit.layerName, weightLimit.weightLimitTitle, weightLimit.className);
-        $('.action-panels').append(weightLimitBox.element);
+      _.forEach(numericalLimits, function(numericalLimit) {
+        var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className);
+        $('.action-panels').append(numericalLimitBox.element);
       });
 
       backend.getUserRoles();

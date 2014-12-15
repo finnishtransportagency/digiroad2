@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedWeightLimit = function(backend, typeId, collection, singleElementEventCategory) {
+  root.SelectedNumericalLimit = function(backend, typeId, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
@@ -11,11 +11,11 @@
     };
 
     eventbus.on(singleElementEvent('split'), function() {
-      collection.fetchWeightLimit(null, function(weightLimit) {
-        current = weightLimit;
+      collection.fetchNumericalLimit(null, function(numericalLimit) {
+        current = numericalLimit;
         current.isSplit = true;
-        originalValue = weightLimit.value;
-        originalExpired = weightLimit.expired;
+        originalValue = numericalLimit.value;
+        originalExpired = numericalLimit.expired;
         dirty = true;
         eventbus.trigger(singleElementEvent('selected'), self);
       });
@@ -23,11 +23,11 @@
 
     this.open = function(id) {
       self.close();
-      collection.fetchWeightLimit(id, function(weightLimit) {
-        current = weightLimit;
-        originalValue = weightLimit.value;
-        originalExpired = weightLimit.expired;
-        collection.markAsSelected(weightLimit.id);
+      collection.fetchNumericalLimit(id, function(numericalLimit) {
+        current = numericalLimit;
+        originalValue = numericalLimit.value;
+        originalExpired = numericalLimit.expired;
+        collection.markAsSelected(numericalLimit.id);
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
@@ -76,10 +76,10 @@
     };
 
     this.save = function() {
-      var success = function(weightLimit) {
+      var success = function(numericalLimit) {
         var wasNew = isNew();
         dirty = false;
-        current = _.merge({}, current, weightLimit);
+        current = _.merge({}, current, numericalLimit);
         originalValue = current.value;
         originalExpired = current.expired;
         if (wasNew) {
@@ -109,15 +109,15 @@
     };
 
     var expire = function(success, failure) {
-      backend.expireWeightLimit(current.id, success, failure);
+      backend.expireNumericalLimit(current.id, success, failure);
     };
 
     var update = function(success, failure) {
-      backend.updateWeightLimit(current.id, current.value, success, failure);
+      backend.updateNumericalLimit(current.id, current.value, success, failure);
     };
 
     var createNew = function(success, failure) {
-      backend.createWeightLimit(typeId, current.roadLinkId, current.value, success, failure);
+      backend.createNumericalLimit(typeId, current.roadLinkId, current.value, success, failure);
     };
 
     this.cancel = function() {
@@ -211,11 +211,11 @@
 
     this.isNew = isNew;
 
-    eventbus.on(singleElementEvent('saved'), function(weightLimit) {
-      current = weightLimit;
-      originalValue = weightLimit.value;
-      originalExpired = weightLimit.expired;
-      collection.markAsSelected(weightLimit.id);
+    eventbus.on(singleElementEvent('saved'), function(numericalLimit) {
+      current = numericalLimit;
+      originalValue = numericalLimit.value;
+      originalExpired = numericalLimit.expired;
+      collection.markAsSelected(numericalLimit.id);
       dirty = false;
     });
   };
