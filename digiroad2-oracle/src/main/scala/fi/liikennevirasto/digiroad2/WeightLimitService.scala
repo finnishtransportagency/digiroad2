@@ -56,7 +56,7 @@ trait WeightLimitOperations {
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
-        join property p on a.asset_type_id = p.asset_type_id and p.public_id = $valuePropertyId
+        join property p on p.public_id = $valuePropertyId
         join number_property_value s on s.asset_id = a.id and s.property_id = p.id
         where a.id = $id
       """.as[(Long, Long, Int, Int, Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
