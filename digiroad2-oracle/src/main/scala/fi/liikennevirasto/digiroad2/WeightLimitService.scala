@@ -130,9 +130,10 @@ trait WeightLimitOperations {
 
   private def updateWeightLimitExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
-    val propertiesUpdated = expired match {
-      case true => sqlu"update asset set valid_to = sysdate where id = $id".first
-      case false => sqlu"update asset set valid_to = null where id = $id".first
+    val propertiesUpdated = if (expired) {
+      sqlu"update asset set valid_to = sysdate where id = $id".first
+    } else {
+      sqlu"update asset set valid_to = null where id = $id".first
     }
     if (assetsUpdated == 1 && propertiesUpdated == 1) {
       Some(id)
