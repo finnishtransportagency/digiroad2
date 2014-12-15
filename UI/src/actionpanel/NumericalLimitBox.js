@@ -11,7 +11,7 @@
     var numericalLimitLegendTemplate = _.map(values, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
-               '<div class="symbol linear ' + className + '-' + idx + '" />' +
+               '<div class="symbol linear limit-' + idx + '" />' +
              '</div>';
     }).join('');
 
@@ -20,7 +20,7 @@
       '  <header class="panel-header expanded">',
       '    ' + numericalLimitTitle,
       '  </header>',
-      '  <div class="panel-section panel-legend ' + className + '-legend">',
+      '  <div class="panel-section panel-legend limit-legend">',
             numericalLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');
@@ -102,7 +102,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group ' + className + 's"/>')
+    this.element = $('<div class="panel-group simple-limit ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };
