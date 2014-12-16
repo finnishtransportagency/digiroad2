@@ -46,7 +46,7 @@
 
     this.fetch = function(boundingBox, selectedNumericalLimit) {
       backend.getNumericalLimits(boundingBox, typeId, function(fetchedNumericalLimits) {
-        var selected = _.find(_.values(numericalLimits), function(numericalLimit) { return numericalLimit.isSelected; });
+        var selected = selectedNumericalLimit.exists() ? numericalLimits[selectedNumericalLimit.getId()] : undefined;
 
         numericalLimits = transformNumericalLimits(fetchedNumericalLimits);
 
@@ -54,7 +54,6 @@
           numericalLimits[selected.id] = selected;
         } else if (selected) {
           var selectedInCollection = numericalLimits[selected.id];
-          selectedInCollection.isSelected = selected.isSelected;
           selectedInCollection.value = selected.value;
           selectedInCollection.expired = selected.expired;
         }
@@ -80,14 +79,6 @@
       } else {
         callback(_.merge({}, splitNumericalLimits.created));
       }
-    };
-
-    this.markAsSelected = function(id) {
-      numericalLimits[id].isSelected = true;
-    };
-
-    this.markAsDeselected = function(id) {
-      numericalLimits[id].isSelected = false;
     };
 
     this.changeLimitValue = function(id, value) {

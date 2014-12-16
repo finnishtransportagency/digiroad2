@@ -27,7 +27,6 @@
         current = numericalLimit;
         originalValue = numericalLimit.value;
         originalExpired = numericalLimit.expired;
-        collection.markAsSelected(numericalLimit.id);
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
@@ -56,9 +55,6 @@
       if (current && !dirty) {
         var id = current.id;
         var roadLinkId = current.roadLinkId;
-        if (id) {
-          collection.markAsDeselected(id);
-        }
         if (current.expired) {
           collection.remove(id);
         }
@@ -215,7 +211,6 @@
       current = numericalLimit;
       originalValue = numericalLimit.value;
       originalExpired = numericalLimit.expired;
-      collection.markAsSelected(numericalLimit.id);
       dirty = false;
     });
   };
