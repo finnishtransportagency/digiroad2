@@ -267,20 +267,20 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("get total numerical limits", Tag("db")) {
+  test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/numericallimits?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
       parse(body).extract[List[NumericalLimitLink]].size should be(2)
     }
   }
 
-  test("get total numerical limits should return bad request if typeId missing", Tag("db")) {
+  test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
     getWithUserAuth("/numericallimits?bbox=374037,6677013,374540,6677675") {
       status should equal(400)
     }
   }
 
-  test("updating total numerical limits requires an operator role") {
+  test("updating numerical limits should require an operator role") {
     putJsonWithUserAuth("/numericallimits/11112", """{"value":6000}""".getBytes, username = "test") {
       status should equal(401)
     }
