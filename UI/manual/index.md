@@ -195,10 +195,24 @@ Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, e
 
 _Nopeusrajoitusten valinta._
 
-3.5 Suurin sallittu massa -valinta
+3.5 Suurin sallittu -valinta
 ------------------------------------
 
-Kartalle voi valita tietolajit-paletista (1) Suurin sallittu massa -valinnan. Suurimmat sallitut massat n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua massaa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Suurin sallittu -valinta n&auml;kyy, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+
+Suurin sallittu -valintoja ovat:
+
+__Suurin sallittu massa__
+__Yhdistelm&auml;n suurin sallittu massa__
+__Suurin sallittu akselimassa__
+__Suurin sallittu telimassa__
+__Suurin sallittu korkeus__
+__Ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus__
+__Suurin sallittu leveys__
+
+![Suurin sallittu -valinta](k37.JPG)
+
+_Suurin sallittu -valinta._
 
 4. Katselutila
 --------------
@@ -235,14 +249,14 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 
 _Nopeusrajoitusten visualisointi._
 
-4.3 Suurimman sallitun massan tietojen katselu
+4.3 Suurin sallittu -valinnan tietojen katselu
 ---------------------------------------------
 
-Suurimmat sallitut massat tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen suurimman sallitun massan voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut suurimmat sallitut massat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu suurimman sallitun massan ominaisuustieton&auml;kym&auml;.
+Suurin sallittu -valinta tulee n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml;.
 
 ![Suurimman sallitun tietojen katselu](k31.JPG)
 
-_Suurin sallittu massa - katsleutila._
+_Suurin sallittu -katsleutila._
 
 5. Muokkaustila
 ---------------
@@ -455,53 +469,53 @@ Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lke
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
-5.3 Suurin sallittu massa
+5.3 Suurin sallittu -valinta
 ----------------------------
 
-Tien suurin sallittu massa on suurin sallittu massa, jonka avoneuvo saa tiehen kohdistaa.
+Suurin sallittu -valintoja ovat: suurin sallittu massa, yhdistelm&auml;n suurin sallittu massa, suurin sallittu akselimassa, suurin sallittu telimassa, suurin sallittu korkeus, ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus ja suurin sallittu leveys.
 
-5.3.1 Suurimman sallitun massan ominaisuustietojen muokkaus
+5.3.1 Suurin sallittu -valinnan ominaisuustietojen muokkaus
 ----------------------------------------------------------
 
-Toistaiseksi suurinta sallittua massaa voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
+Toistaiseksi suurin sallittu -valintoja voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
 
-Suurinta sallittua massaa muokataan muokkaustilassa. Muokattava suurin sallittu massa valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-Huom! Painorajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa painorajoituksissa.
+Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen aiheuttaa virhetilanteita tallentuvissa rajoituksissa.
 
-![Suurimman sallitun massan muokkaus](k34.JPG)
+![Suurin sallittu -valinnan muokkaus](k34.JPG)
 
-_Suurimman sallitun massan muokkaus._
+_Suurin sallittu -valinnan muokkaus._
 
-5.3.2 Suurimman sallitun massan poistaminen
+5.3.2 Suurin sallittu -kohteen poistaminen
 -------------------------------------------
 
-Tielinkin suurin sallittu massa poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei painorajoitusta".
+Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei rajoitusta".
 
-![Suurimman sallitun massan poistaminen](k33.JPG)
+![Suurin sallittu -kohteen poistaminen](k33.JPG)
 
-_Suurimman sallitun massan poistaminen._
+_Suurin sallittu -kohteen poistaminen._
 
-5.3.3 Uuden suurimman sallitun massan lis&auml;&auml;minen
+5.3.3 Uuden suurin sallittu -kohteen lis&auml;&auml;minen
 -----------------------------------------------------------
 
-Tielinkille voi lis&auml;t&auml; suurimman sallitun massan valitsemalla sen geometrian (4) Suurimman sallitun massan muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurimman sallitun massan tiedot. Valitaan "Painorajoitus" ja sy&ouml;tet&auml;&auml;n suurimman sallitun massan arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu massa tallennetaan painamalla Tallenna (8). Uuden suurimman sallitun massan lis&auml;&auml;misen voi perua Peruuta-painikkeella.
+Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella.
 
-![Suurimman sallitun massan lis&auml;ys](k34.JPG)
+![Suurin sallittu -kohteen lis&auml;ys](k34.JPG)
 
-_Suurimman sallitun massan lis&auml;&auml;minen._
+_Suurin sallittu -kohteen lis&auml;&auml;minen._
 
-5.3.4 Suurimman sallitun massan katkaisu
+5.3.4 Suurin sallittu -kohteen katkaisu
 ----------------------------------------
 
-Painorajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; painorajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; painorajoituksia. Leikkausty&ouml;kalulla klikataan painorajoituksen geometriasta kohtaa, josta painorajoitus halutaan katkaista. Painorajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
+Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
 
-![Suurimman sallitun massan katkaisu](k35.JPG)
+![Suurin sallittu -kohteen katkaisu](k35.JPG)
 
-_Suurimman sallitun massan katkaisu._
+_Suurin sallittu -kohteen katkaisu._
 
-Katkaistun painorajoituksen osista pidemm&auml;lle jää alkuper&auml;isen painorajoituksen ID ja arvo. Lyhyempi osa tulee valituksi kartalla (3) ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (4). Arvokentt&auml;&auml;n voi kirjata painorajoitukselle uuden arvon, sen voi j&auml;tt&auml;&auml; ennalleen tai poistaa voimasta valitsemalla ”Ei painorajoitusta”. Oletusarvona on sama painorajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. Uusi painorajoitus tallennetaan Tallenna-painikkeesta (5). Tallentamisen j&auml;lkeen painorajoitukselle generoidaan taustajärjestelm&auml;ss&auml; ID. Ennen tallennusta painorajoituksen katkaisemisen voi perua Peruuta-painikkeesta, joka palauttaa alkuper&auml;isen painorajoituksen voimaan (6).
+Katkaistun rajoituksen osista pidemm&auml;lle jää alkuper&auml;isen rajoituksen ID ja arvo. Lyhyempi osa tulee valituksi kartalla (4) ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Arvokentt&auml;&auml;n voi kirjata rajoitukselle uuden arvon, sen voi j&auml;tt&auml;&auml; ennalleen tai poistaa voimasta valitsemalla ”Ei rajoitusta”. Oletusarvona on sama rajoituksen arvo kuin alkuper&auml;isell&auml; rajoituksella. Uusi rajoitus tallennetaan Tallenna-painikkeesta (8). Tallentamisen j&auml;lkeen rajoitukselle generoidaan taustajärjestelm&auml;ss&auml; ID. Ennen tallennusta rajoituksen katkaisemisen voi perua Peruuta-painikkeesta, joka palauttaa alkuper&auml;isen rajoituksen voimaan (9).
 
-![Suurimman sallitun massan katkaisu](k36.JPG)
+![Suurin sallittu -kohteen katkaisu](k36.JPG)
 
-_Suurimman sallitun massan katkaisu._
+_Suurin sallittu -kohteen katkaisu._
