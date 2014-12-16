@@ -5,6 +5,9 @@
 
       $('#map-tools').append(panelControl);
 
+      var roadLinkBox = new RoadLinkBox();
+      $('.action-panels').append(roadLinkBox.element);
+
       var assetBox = new ActionPanelBoxes.AssetBox();
       $('.action-panels').append(assetBox.element);
 
