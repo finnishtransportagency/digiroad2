@@ -154,7 +154,10 @@ window.SpeedLimitLayer = function(params) {
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
     overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
     overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
-    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
+    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+    overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+    overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+    overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
   ];
 
   var oneWayOverlayStyleRule = _.partial(createZoomAndTypeDependentOneWayRule, 'overlay');
@@ -162,14 +165,20 @@ window.SpeedLimitLayer = function(params) {
     oneWayOverlayStyleRule(9, { strokeDashstyle: '1 6' }),
     oneWayOverlayStyleRule(10, { strokeDashstyle: '1 10' }),
     oneWayOverlayStyleRule(11, { strokeDashstyle: '1 10' }),
-    oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' })
+    oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' }),
+    oneWayOverlayStyleRule(13, { strokeDashstyle: '1 16' }),
+    oneWayOverlayStyleRule(14, { strokeDashstyle: '1 16' }),
+    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' }),
   ];
 
   var validityDirectionStyleRules = [
     createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
     createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
     createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(12, { strokeWidth: 8 })
+    createZoomDependentOneWayRule(12, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(13, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 8 }),
   ];
 
   var speedLimitStyleLookup = {
@@ -188,7 +197,10 @@ window.SpeedLimitLayer = function(params) {
     9: { strokeWidth: 3, pointRadius: 0 },
     10: { strokeWidth: 5, pointRadius: 13 },
     11: { strokeWidth: 9, pointRadius: 16 },
-    12: { strokeWidth: 16, pointRadius: 20 }
+    12: { strokeWidth: 16, pointRadius: 20 },
+    13: { strokeWidth: 16, pointRadius: 20 },
+    14: { strokeWidth: 16, pointRadius: 20 },
+    15: { strokeWidth: 16, pointRadius: 20 }
   };
 
   var typeSpecificStyleLookup = {
@@ -382,7 +394,10 @@ window.SpeedLimitLayer = function(params) {
 
   var drawSpeedLimits = function(speedLimits) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, linearAsset.offsetBySideCode);
+    var offsetBySideCode = function(speedLimit) {
+      return linearAsset.offsetBySideCode(map.getZoom(), speedLimit);
+    };
+    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
