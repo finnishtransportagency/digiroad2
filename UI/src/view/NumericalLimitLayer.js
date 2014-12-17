@@ -197,18 +197,7 @@ window.NumericalLimitLayer = function(params) {
 
   var numericalLimitCutter = new NumericalLimitCutter(vectorLayer, collection);
 
-  var roadLayerStyleMap = new OpenLayers.StyleMap({
-    "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeOpacity: 0.85,
-      strokeColor: "#7f7f7c"
-    })),
-    "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeColor: "#a4a4a2",
-      strokeOpacity: 0.3
-    }))
-  });
-  roadLayer.addUIStateDependentLookupToStyleMap(roadLayerStyleMap, 'default', 'zoomLevel', numericalLimitFeatureSizeLookup);
-  roadLayer.setLayerSpecificStyleMap(layerName, roadLayerStyleMap);
+  RoadLayerSelectionStyle.add(roadLayer, layerName);
 
   var highlightNumericalLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
