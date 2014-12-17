@@ -18,6 +18,22 @@ case object Street extends RoadLinkType { def value = 2}
 case object PrivateRoad extends RoadLinkType { def value = 3}
 case object UnknownRoad extends RoadLinkType { def value = 99 }
 
+sealed trait TrafficDirection {
+  def value: Int
+}
+object TrafficDirection {
+  val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, NeitherDirections, UnknownDirection)
+
+  def apply(optionalValue: Option[Int]): TrafficDirection = {
+    optionalValue.map { value => values.find(_.value == value).getOrElse(UnknownDirection) }.getOrElse(UnknownDirection)
+  }
+}
+case object BothDirections extends TrafficDirection { def value = 2 }
+case object AgainstDigitizing extends TrafficDirection { def value = 3 }
+case object TowardsDigitizing extends TrafficDirection { def value = 4 }
+case object NeitherDirections extends TrafficDirection { def value = 5 }
+case object UnknownDirection extends TrafficDirection { def value = 99 }
+
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,

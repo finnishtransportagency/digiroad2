@@ -134,12 +134,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       RoadLinkService.getRoadLinks(
           bounds = boundingRectangle,
           municipalities = municipalities).map { roadLink =>
-        val (id, points, length, roadLinkType, functionalClass) = roadLink
+        val (id, points, length, roadLinkType, functionalClass, trafficDirection) = roadLink
         Map("roadLinkId" -> id,
             "points" -> points,
             "length" -> length,
             "type" -> roadLinkType.toString,
-            "functionalClass" -> functionalClass)
+            "functionalClass" -> functionalClass,
+            "trafficDirection" -> trafficDirection.toString)
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
