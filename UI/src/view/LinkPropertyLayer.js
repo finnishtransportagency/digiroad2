@@ -58,6 +58,7 @@
 
     var hide = function() {
       stop();
+      selectedRoadLinkId = null;
     };
 
     return {
