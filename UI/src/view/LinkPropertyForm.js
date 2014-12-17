@@ -15,6 +15,8 @@
           '<div class="form-group">' +
             '<label class="control-label">Väylätyyppi</label>' +
             '<p class="form-control-static"><%- localizedType %></p>' +
+            '<label class="control-label">Toiminnallinen luokka</label>' +
+            '<p class="form-control-static"><%- functionalClass %></p>' +
           '</div>' +
         '</div>' +
       '</div>');
