@@ -6,6 +6,14 @@
       Road: 'Maantie'
     };
 
+    var localizedTrafficDirections = {
+      BothDirections: 'Molempiin suuntiin',
+      AgainstDigitizing: 'Digitointisuuntaa vastaan',
+      TowardsDigitizing: 'Digitointisuuntaan',
+      NeitherDirections: 'Ei kumpaankaan suuntaan',
+      UnknownDirection: 'Tuntematon'
+    };
+
     var template = _.template('' +
       '<header>' +
         '<span>Linkin ID: <%- roadLinkId %></span>' +
@@ -17,6 +25,8 @@
             '<p class="form-control-static"><%- localizedType %></p>' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
             '<p class="form-control-static"><%- functionalClass %></p>' +
+            '<label class="control-label">Liikennevirran suunta</label>' +
+            '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
           '</div>' +
         '</div>' +
       '</div>');
@@ -25,6 +35,7 @@
       var rootElement = $('#feature-attributes');
       eventbus.on('linkProperties:selected', function(linkProperties) {
         linkProperties.localizedType = localizedTypes[linkProperties.type];
+        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         rootElement.html(template(linkProperties));
       });
       eventbus.on('linkProperties:unselected', function() {
