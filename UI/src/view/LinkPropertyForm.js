@@ -1,9 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function() {
-    var template = function(linkProperties) {
-      var title = '<span>Linkin ID: ' + linkProperties.roadLinkId + '</span>';
-      return '<header>' + title + '</header>';
-    };
+    var template = _.template('<header><span>Linkin ID: <%- roadLinkId %></span></header>');
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
