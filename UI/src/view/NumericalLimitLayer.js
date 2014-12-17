@@ -207,7 +207,7 @@ window.NumericalLimitLayer = function(params) {
       strokeOpacity: 0.3
     }))
   });
-  roadLayerStyleMap.addUniqueValueRules('default', 'zoomLevel', numericalLimitFeatureSizeLookup, uiState);
+  roadLayer.addUIStateDependentLookupToStyleMap(roadLayerStyleMap, 'default', 'zoomLevel', numericalLimitFeatureSizeLookup);
   roadLayer.setLayerSpecificStyleMap(layerName, roadLayerStyleMap);
 
   var highlightNumericalLimitFeatures = function(feature) {
