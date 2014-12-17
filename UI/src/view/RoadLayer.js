@@ -141,17 +141,9 @@ var RoadStyles = function() {
     map.addLayer(vectorLayer);
     toggleRoadType();
 
-    var show = function(map) {
-    };
-
-    var hide = function(map) {
-    };
-
     return {
       layer: vectorLayer,
-      setLayerSpecificStyleMap: setLayerSpecificStyleMap,
-      show: show,
-      hide: hide
+      setLayerSpecificStyleMap: setLayerSpecificStyleMap
     };
   };
 })(this);

@@ -2,7 +2,7 @@
   root.RoadLinkBox = function() {
     var className = 'road-link';
     var title = 'Tielinkit';
-    var layerName = 'road';
+    var layerName = 'linkProperties';
 
     var collapsedTemplate = [
         '<div class="panel ' + className + '">',

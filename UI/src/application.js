@@ -156,6 +156,7 @@ var RoadCollection = function(backend) {
 
     var layers = _.merge({
       road: roadLayer,
+      linkProperties: new LinkPropertyLayer(map, roadLayer),
       asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
       speedLimit: new SpeedLimitLayer({
         map: map,
