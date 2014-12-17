@@ -128,6 +128,8 @@ var RoadCollection = function(backend) {
     var linearAsset = new LinearAsset(geometryUtils);
     var roadLayer = new RoadLayer(map, roadCollection);
 
+    new LinkPropertyForm();
+
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
           numericalLimit.selectedNumericalLimit,
