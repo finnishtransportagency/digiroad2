@@ -1,7 +1,14 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer) {
 
-    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer);
+    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
+      onSelect: function(feature) {
+        eventbus.trigger('linkProperties:selected', feature.attributes);
+      },
+      onUnselect: function() {
+        eventbus.trigger('linkProperties:unselected');
+      }
+    });
     map.addControl(selectControl);
 
     var handleMapMoved = function(state) {
