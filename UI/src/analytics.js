@@ -24,7 +24,14 @@
     ga('send', 'pageview');
     if(window.eventbus) {
       eventbus.on('all', function(eventName) {
-        var excludedEvents = ['map:mouseMoved', 'map:moved', 'map:clicked', 'asset:saving', 'road:active', 'asset:moved'];
+        var excludedEvents = [
+          'map:mouseMoved',
+          'map:moved',
+          'map:clicked',
+          'asset:saving',
+          'road:active',
+          'asset:moved',
+          'roadLinks:drawn'];
         if (!_.contains(excludedEvents, eventName)) {
           var splitName = eventName.split(':');
           var category = splitName[0];
