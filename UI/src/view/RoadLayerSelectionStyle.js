@@ -1,16 +1,17 @@
 (function(root) {
-  root.RoadLayerSelectionStyle = {
-    add: function(roadLayer, layerName) {
-      var linkSizeLookup = {
-        9: { strokeWidth: 3 },
-        10: { strokeWidth: 5 },
-        11: { strokeWidth: 9 },
-        12: { strokeWidth: 16 },
-        13: { strokeWidth: 16 },
-        14: { strokeWidth: 16 },
-        15: { strokeWidth: 16 }
-      };
+  var linkSizeLookup = {
+    9: { strokeWidth: 3 },
+    10: { strokeWidth: 5 },
+    11: { strokeWidth: 9 },
+    12: { strokeWidth: 16 },
+    13: { strokeWidth: 16 },
+    14: { strokeWidth: 16 },
+    15: { strokeWidth: 16 }
+  };
 
+  root.RoadLayerSelectionStyle = {
+    linkSizeLookup: linkSizeLookup,
+    add: function(roadLayer, layerName) {
       var roadLayerStyleMap = new OpenLayers.StyleMap({
         "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
           strokeOpacity: 0.85,

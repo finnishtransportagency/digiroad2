@@ -150,16 +150,6 @@ window.NumericalLimitLayer = function(params) {
     createZoomDependentOneWayRule(15, { strokeWidth: 8 })
   ];
 
-  var numericalLimitFeatureSizeLookup = {
-    9: { strokeWidth: 3 },
-    10: { strokeWidth: 5 },
-    11: { strokeWidth: 9 },
-    12: { strokeWidth: 16 },
-    13: { strokeWidth: 16 },
-    14: { strokeWidth: 16 },
-    15: { strokeWidth: 16 }
-  };
-
   var styleLookup = {
     false: {strokeColor: '#ff0000'},
     true: {strokeColor: '#7f7f7c'}
@@ -173,7 +163,7 @@ window.NumericalLimitLayer = function(params) {
   var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
   var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
   browseStyleMap.addUniqueValueRules('default', 'expired', styleLookup);
-  browseStyleMap.addUniqueValueRules('default', 'zoomLevel', numericalLimitFeatureSizeLookup, uiState);
+  browseStyleMap.addUniqueValueRules('default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup, uiState);
   browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
   browseStyle.addRules(validityDirectionStyleRules);
 
@@ -188,7 +178,7 @@ window.NumericalLimitLayer = function(params) {
     select: selectionSelectStyle
   });
   selectionStyle.addUniqueValueRules('default', 'expired', styleLookup);
-  selectionStyle.addUniqueValueRules('default', 'zoomLevel', numericalLimitFeatureSizeLookup, uiState);
+  selectionStyle.addUniqueValueRules('default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup, uiState);
   selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
 
