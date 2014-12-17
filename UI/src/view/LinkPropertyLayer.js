@@ -22,7 +22,7 @@
       }
     };
 
-    var reSelectRoadLink = function(state) {
+    var reSelectRoadLink = function() {
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
