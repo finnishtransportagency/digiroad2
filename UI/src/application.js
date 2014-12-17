@@ -1,10 +1,10 @@
 var RoadCollection = function(backend) {
   var roadLinks = [];
 
-  this.fetch = function(boundingBox) {
+  this.fetch = function(boundingBox, zoom) {
     backend.getRoadLinks(boundingBox, function(data) {
       roadLinks = data;
-      eventbus.trigger('roadLinks:fetched', roadLinks);
+      eventbus.trigger('roadLinks:fetched', roadLinks, zoom);
     });
   };
 

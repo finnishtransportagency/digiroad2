@@ -24,6 +24,7 @@ var RoadStyles = function() {
     var vectorLayer;
     var selectControl;
     var layerStyleMaps = {};
+    var uiState = { zoomLevel: 9 };
 
     var enableColorsOnRoadLayer = function() {
       if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
@@ -72,13 +73,13 @@ var RoadStyles = function() {
       }
     };
 
-    var fetchRoads = function(bbox) {
-      roadCollection.fetch(bbox);
+    var fetchRoads = function(bbox, zoom) {
+      roadCollection.fetch(bbox, zoom);
     };
 
     var mapMovedHandler = function(mapState) {
       if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
-        fetchRoads(mapState.bbox);
+        fetchRoads(mapState.bbox, mapState.zoom);
         changeRoadsWidthByZoomLevel();
       } else {
         vectorLayer.removeAllFeatures();
@@ -86,7 +87,8 @@ var RoadStyles = function() {
       handleRoadsVisibility();
     };
 
-    var drawRoadLinks = function(roadLinks) {
+    var drawRoadLinks = function(roadLinks, zoom) {
+      uiState.zoomLevel = zoom;
       vectorLayer.removeAllFeatures();
       var features = _.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
@@ -100,6 +102,10 @@ var RoadStyles = function() {
 
     var setLayerSpecificStyleMap = function(layer, styleMap) {
       layerStyleMaps[layer] = styleMap;
+    };
+
+    var addUIStateDependentLookupToStyleMap = function(styleMap, renderingIntent, uiAttribute, lookup) {
+      styleMap.addUniqueValueRules(renderingIntent, uiAttribute, lookup, uiState);
     };
 
     var activateLayerStyleMap = function(layer) {
@@ -122,14 +128,14 @@ var RoadStyles = function() {
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    eventbus.on('roadLinks:fetched', function(roadLinks) {
-      drawRoadLinks(roadLinks);
+    eventbus.on('roadLinks:fetched', function(roadLinks, zoom) {
+      drawRoadLinks(roadLinks, zoom);
     }, this);
 
     eventbus.on('layer:selected', function(layer) {
       activateLayerStyleMap(layer);
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        fetchRoads(map.getExtent());
+        fetchRoads(map.getExtent(), map.getZoom());
       }
       toggleRoadType();
     }, this);
@@ -144,7 +150,8 @@ var RoadStyles = function() {
 
     return {
       layer: vectorLayer,
-      setLayerSpecificStyleMap: setLayerSpecificStyleMap
+      setLayerSpecificStyleMap: setLayerSpecificStyleMap,
+      addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap
     };
   };
 })(this);
