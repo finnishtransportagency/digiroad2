@@ -23,15 +23,13 @@
     };
 
     var reSelectRoadLink = function(state) {
-      if (selectedRoadLinkId) {
-        var originalOnSelectHandler = selectControl.onSelect;
-        selectControl.onSelect = function() {};
-        var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
-        if (feature) {
-          selectControl.select(feature);
-        }
-        selectControl.onSelect = originalOnSelectHandler;
+      var originalOnSelectHandler = selectControl.onSelect;
+      selectControl.onSelect = function() {};
+      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
+      if (feature) {
+        selectControl.select(feature);
       }
+      selectControl.onSelect = originalOnSelectHandler;
     };
 
     eventbus.on('map:moved', handleMapMoved);
