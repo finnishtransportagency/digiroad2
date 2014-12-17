@@ -1,11 +1,14 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer) {
+    var selectedRoadLinkId = null;
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect: function(feature) {
+      onSelect:  function(feature) {
+        selectedRoadLinkId = feature.attributes.roadLinkId;
         eventbus.trigger('linkProperties:selected', feature.attributes);
       },
       onUnselect: function() {
+        selectedRoadLinkId = null;
         eventbus.trigger('linkProperties:unselected');
       }
     });
@@ -18,7 +21,21 @@
         stop();
       }
     };
+
+    var reSelectRoadLink = function(state) {
+      if (selectedRoadLinkId) {
+        var originalOnSelectHandler = selectControl.onSelect;
+        selectControl.onSelect = function() {};
+        var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
+        if (feature) {
+          selectControl.select(feature);
+        }
+        selectControl.onSelect = originalOnSelectHandler;
+      }
+    };
+
     eventbus.on('map:moved', handleMapMoved);
+    eventbus.on('roadLinks:drawn', reSelectRoadLink);
 
     var start = function() {
       selectControl.activate();
