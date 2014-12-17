@@ -14,6 +14,8 @@
     });
     map.addControl(selectControl);
 
+    var eventListener = _.extend({running: false}, eventbus);
+
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
         start();
@@ -33,14 +35,19 @@
     };
 
     eventbus.on('map:moved', handleMapMoved);
-    eventbus.on('roadLinks:drawn', reSelectRoadLink);
 
     var start = function() {
-      selectControl.activate();
+      if (!eventListener.running) {
+        eventListener.running = true;
+        eventListener.listenTo(eventbus, 'roadLinks:drawn', reSelectRoadLink);
+        selectControl.activate();
+      }
     };
 
     var stop = function() {
       selectControl.deactivate();
+      eventListener.stopListening(eventbus);
+      eventListener.running = false;
     };
 
     var show = function(map) {
