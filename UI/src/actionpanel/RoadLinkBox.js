@@ -12,6 +12,24 @@
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
+        '<div class="panel-section panel-legend road-link-legend">' +
+          '<div class="legend-entry">' +
+            '<div class="label">Maantie</div>' +
+            '<div class="symbol linear road"/>' +
+          '</div>' +
+          '<div class="legend-entry">' +
+            '<div class="label">Katu</div>' +
+            '<div class="symbol linear street"/>' +
+          '</div>' +
+          '<div class="legend-entry">' +
+            '<div class="label">Yksityistie</div>' +
+            '<div class="symbol linear private-road"/>' +
+          '</div>' +
+          '<div class="legend-entry">' +
+            '<div class="label">Ei tiedossa</div>' +
+            '<div class="symbol linear unknown"/>' +
+          '</div>' +
+        '</div>' +
       '</div>');
 
     var templateAttributes = {
