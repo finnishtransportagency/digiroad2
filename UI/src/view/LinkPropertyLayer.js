@@ -26,7 +26,7 @@
       }
     };
 
-    var reSelectRoadLink = function() {
+    var reselectRoadLink = function() {
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
@@ -41,7 +41,7 @@
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
-        eventListener.listenTo(eventbus, 'roadLinks:drawn', reSelectRoadLink);
+        eventListener.listenTo(eventbus, 'roadLinks:drawn', reselectRoadLink);
         selectControl.activate();
       }
     };
