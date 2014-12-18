@@ -1,5 +1,15 @@
 (function (root) {
   root.LinkPropertyForm = function() {
+    var localizedFunctionalClasses = {
+      1: 'Seudullinen pääkatu / valtatie',
+      2: 'Seudullinen pääkatu / kantatie',
+      3: 'Alueellinen pääkatu / seututie',
+      4: 'Kokoojakatu / yhdystie',
+      5: 'Liityntäkatu / tärkeä yksityistie',
+      6: 'Muu yksityistie',
+      0: 'Kevyen liikenteen väylä'
+    };
+
     var localizedTypes = {
       PrivateRoad: 'Yksityistie',
       Street: 'Katu',
@@ -24,7 +34,7 @@
             '<label class="control-label">Väylätyyppi</label>' +
             '<p class="form-control-static"><%- localizedType %></p>' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
-            '<p class="form-control-static"><%- functionalClass %></p>' +
+            '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
             '<label class="control-label">Liikennevirran suunta</label>' +
             '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
           '</div>' +
@@ -34,6 +44,7 @@
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       eventbus.on('linkProperties:selected', function(linkProperties) {
+        linkProperties.localizedFunctionalClass = localizedFunctionalClasses[linkProperties.functionalClass] || 'Tuntematon';
         linkProperties.localizedType = localizedTypes[linkProperties.type];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         rootElement.html(template(linkProperties));
