@@ -16,7 +16,14 @@
 
     var eventListener = _.extend({running: false}, eventbus);
 
-    RoadLayerSelectionStyle.add(roadLayer, 'linkProperties');
+    var styleMap = RoadLayerSelectionStyle.create(roadLayer);
+    var roadLinkTypeStyleLookup = {
+      PrivateRoad: { strokeColor: '#0011bb' },
+      Street: { strokeColor: '#11bb00' },
+      Road: { strokeColor: '#ff0000' }
+    };
+    styleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
+    roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
 
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
