@@ -4,23 +4,24 @@
     var title = 'Tielinkit';
     var layerName = 'linkProperties';
 
-    var collapsedTemplate = [
-        '<div class="panel ' + className + '">',
-      '  <header class="panel-header">',
-        '    ' + title,
-      '  </header>',
-      '</div>'].join('');
+    var collapsedTemplate = _.template('' +
+      '<div class="panel <%= className %>">' +
+        '<header class="panel-header"><%- title %></header>' +
+      '</div>');
 
-    var expandedTemplate = [
-      '<div class="panel">',
-      '  <header class="panel-header expanded">',
-        '    ' + title,
-      '  </header>',
-      '</div>'].join('');
+    var expandedTemplate = _.template('' +
+      '<div class="panel <%= className %>">' +
+        '<header class="panel-header expanded"><%- title %></header>' +
+      '</div>');
+
+    var templateAttributes = {
+      className: className,
+      title: title
+    };
 
     var elements = {
-      collapsed: $(collapsedTemplate),
-      expanded: $(expandedTemplate).hide()
+      collapsed: $(collapsedTemplate(templateAttributes)),
+      expanded: $(expandedTemplate(templateAttributes)).hide()
     };
 
     var bindDOMEventHandlers = function() {
