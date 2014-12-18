@@ -10,7 +10,7 @@
       BothDirections: 'Molempiin suuntiin',
       AgainstDigitizing: 'Digitointisuuntaa vastaan',
       TowardsDigitizing: 'Digitointisuuntaan',
-      NeitherDirections: 'Ei kumpaankaan suuntaan',
+      NeitherDirection: 'Ei kumpaankaan suuntaan',
       UnknownDirection: 'Tuntematon'
     };
 

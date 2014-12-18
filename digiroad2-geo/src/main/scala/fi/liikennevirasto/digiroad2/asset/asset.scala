@@ -22,7 +22,7 @@ sealed trait TrafficDirection {
   def value: Int
 }
 object TrafficDirection {
-  val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, NeitherDirections, UnknownDirection)
+  val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, NeitherDirection, UnknownDirection)
 
   def apply(optionalValue: Option[Int]): TrafficDirection = {
     optionalValue.map { value => values.find(_.value == value).getOrElse(UnknownDirection) }.getOrElse(UnknownDirection)
@@ -31,7 +31,7 @@ object TrafficDirection {
 case object BothDirections extends TrafficDirection { def value = 2 }
 case object AgainstDigitizing extends TrafficDirection { def value = 3 }
 case object TowardsDigitizing extends TrafficDirection { def value = 4 }
-case object NeitherDirections extends TrafficDirection { def value = 5 }
+case object NeitherDirection extends TrafficDirection { def value = 5 }
 case object UnknownDirection extends TrafficDirection { def value = 99 }
 
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
