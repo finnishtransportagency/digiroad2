@@ -11,20 +11,6 @@
 
   root.RoadLayerSelectionStyle = {
     linkSizeLookup: linkSizeLookup,
-    add: function(roadLayer, layerName) {
-      var roadLayerStyleMap = new OpenLayers.StyleMap({
-        "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-          strokeOpacity: 0.85,
-          strokeColor: "#7f7f7c"
-        })),
-        "default": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-          strokeColor: "#a4a4a2",
-          strokeOpacity: 0.3
-        }))
-      });
-      roadLayer.addUIStateDependentLookupToStyleMap(roadLayerStyleMap, 'default', 'zoomLevel', linkSizeLookup);
-      roadLayer.setLayerSpecificStyleMap(layerName, roadLayerStyleMap);
-    },
     create: function(roadLayer) {
       var roadLayerStyleMap = new OpenLayers.StyleMap({
         "select": new OpenLayers.Style(OpenLayers.Util.applyDefaults({
