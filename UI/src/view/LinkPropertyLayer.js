@@ -8,14 +8,14 @@
       Road: { strokeColor: '#ff0000' }
     };
 
-    var styleMap = new OpenLayers.StyleMap({
+    var defaultStyleMap = new OpenLayers.StyleMap({
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.7
       }))
     });
-    roadLayer.addUIStateDependentLookupToStyleMap(styleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    styleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
-    roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
+    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    defaultStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
+    roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -68,7 +68,7 @@
 
     var deselectRoadLink = function() {
       selectedRoadLinkId = null;
-      roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
+      roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
     };
 
     var prepareRoadLinkDraw = function() {
