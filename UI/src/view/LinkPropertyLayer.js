@@ -16,7 +16,7 @@
 
     var eventListener = _.extend({running: false}, eventbus);
 
-    var styleMap = RoadLayerSelectionStyle.create(roadLayer);
+    var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.7);
     var roadLinkTypeStyleLookup = {
       PrivateRoad: { strokeColor: '#0011bb' },
       Street: { strokeColor: '#11bb00' },
