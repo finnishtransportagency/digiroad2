@@ -97,6 +97,7 @@
     var hide = function() {
       stop();
       selectedRoadLinkId = null;
+      roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
     };
 
     return {
