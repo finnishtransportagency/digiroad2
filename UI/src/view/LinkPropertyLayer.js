@@ -27,6 +27,7 @@
     };
 
     var reselectRoadLink = function() {
+      selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
@@ -36,11 +37,16 @@
       selectControl.onSelect = originalOnSelectHandler;
     };
 
+    var prepareRoadLinkDraw = function() {
+      selectControl.deactivate();
+    };
+
     eventbus.on('map:moved', handleMapMoved);
 
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
+        eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
         eventListener.listenTo(eventbus, 'roadLinks:drawn', reselectRoadLink);
         selectControl.activate();
       }

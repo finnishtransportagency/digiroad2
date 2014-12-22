@@ -89,6 +89,7 @@ var RoadStyles = function() {
 
     var drawRoadLinks = function(roadLinks, zoom) {
       uiState.zoomLevel = zoom;
+      eventbus.trigger('roadLinks:beforeDraw');
       vectorLayer.removeAllFeatures();
       var features = _.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
