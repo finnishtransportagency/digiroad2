@@ -38,9 +38,8 @@
         roadLayer.layer.redraw();
       },
       onUnselect: function() {
-        selectedRoadLinkId = null;
+        deselectRoadLink();
         eventbus.trigger('linkProperties:unselected');
-        roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
         roadLayer.layer.redraw();
       }
     });
@@ -65,6 +64,11 @@
         selectControl.select(feature);
       }
       selectControl.onSelect = originalOnSelectHandler;
+    };
+
+    var deselectRoadLink = function() {
+      selectedRoadLinkId = null;
+      roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
     };
 
     var prepareRoadLinkDraw = function() {
@@ -96,8 +100,7 @@
 
     var hide = function() {
       stop();
-      selectedRoadLinkId = null;
-      roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
+      deselectRoadLink();
     };
 
     return {
