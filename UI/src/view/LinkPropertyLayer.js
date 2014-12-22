@@ -2,17 +2,33 @@
   root.LinkPropertyLayer = function(map, roadLayer) {
     var selectedRoadLinkId = null;
 
-    var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.7);
     var roadLinkTypeStyleLookup = {
       PrivateRoad: { strokeColor: '#0011bb' },
       Street: { strokeColor: '#11bb00' },
       Road: { strokeColor: '#ff0000' }
     };
+
+    var styleMap = new OpenLayers.StyleMap({
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7
+      }))
+    });
+    roadLayer.addUIStateDependentLookupToStyleMap(styleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     styleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
     roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
 
-    var selectionStyleMap = RoadLayerSelectionStyle.create(roadLayer, 0.3);
+    var selectionStyleMap = new OpenLayers.StyleMap({
+      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7
+      })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.3
+      }))
+    });
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     selectionStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
+    selectionStyleMap.addUniqueValueRules('select', 'type', roadLinkTypeStyleLookup);
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
