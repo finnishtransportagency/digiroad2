@@ -32,7 +32,7 @@
           'road:active',
           'asset:moved',
           'roadLinks:beforeDraw',
-          'roadLinks:drawn'];
+          'roadLinks:afterDraw'];
         if (!_.contains(excludedEvents, eventName)) {
           var splitName = eventName.split(':');
           var category = splitName[0];

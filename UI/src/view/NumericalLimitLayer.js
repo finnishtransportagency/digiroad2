@@ -187,7 +187,8 @@ window.NumericalLimitLayer = function(params) {
 
   var numericalLimitCutter = new NumericalLimitCutter(vectorLayer, collection);
 
-  RoadLayerSelectionStyle.add(roadLayer, layerName);
+  var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.3);
+  roadLayer.setLayerSpecificStyleMap(layerName, styleMap);
 
   var highlightNumericalLimitFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
