@@ -103,6 +103,9 @@ var RoadStyles = function() {
 
     var setLayerSpecificStyleMap = function(layer, styleMap) {
       layerStyleMaps[layer] = styleMap;
+      if (applicationModel.getSelectedLayer() === layer) {
+        activateLayerStyleMap(layer);
+      }
     };
 
     var addUIStateDependentLookupToStyleMap = function(styleMap, renderingIntent, uiAttribute, lookup) {

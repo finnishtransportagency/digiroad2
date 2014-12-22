@@ -2,20 +2,6 @@
   root.LinkPropertyLayer = function(map, roadLayer) {
     var selectedRoadLinkId = null;
 
-    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect:  function(feature) {
-        selectedRoadLinkId = feature.attributes.roadLinkId;
-        eventbus.trigger('linkProperties:selected', feature.attributes);
-      },
-      onUnselect: function() {
-        selectedRoadLinkId = null;
-        eventbus.trigger('linkProperties:unselected');
-      }
-    });
-    map.addControl(selectControl);
-
-    var eventListener = _.extend({running: false}, eventbus);
-
     var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.7);
     var roadLinkTypeStyleLookup = {
       PrivateRoad: { strokeColor: '#0011bb' },
@@ -24,6 +10,27 @@
     };
     styleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
     roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
+
+    var selectionStyleMap = RoadLayerSelectionStyle.create(roadLayer, 0.3);
+    selectionStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
+
+    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
+      onSelect:  function(feature) {
+        selectedRoadLinkId = feature.attributes.roadLinkId;
+        eventbus.trigger('linkProperties:selected', feature.attributes);
+        roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
+        roadLayer.layer.redraw();
+      },
+      onUnselect: function() {
+        selectedRoadLinkId = null;
+        eventbus.trigger('linkProperties:unselected');
+        roadLayer.setLayerSpecificStyleMap('linkProperties', styleMap);
+        roadLayer.layer.redraw();
+      }
+    });
+    map.addControl(selectControl);
+
+    var eventListener = _.extend({running: false}, eventbus);
 
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
