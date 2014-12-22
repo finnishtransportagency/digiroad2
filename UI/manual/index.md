@@ -99,6 +99,8 @@ Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&au
 
 Muokkaustilan saa aktivoitua klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
+Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
+
 ![Katselutila](k3.jpg)
 
 _Katselutila._
@@ -138,22 +140,22 @@ _Karttan&auml;kym&auml;n muokkaus._
 3.2 Tielinkit
 -------------
 
-Tielinkeill&auml; on oletuksena v&auml;rill&auml; korostettu v&auml;yl&auml;tyyppivalinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta V&auml;yl&auml;tyyppi-valinnan pois. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
+Karttan&auml;kym&auml;&auml;n voi valita tielinkit valitsemalla tietolajit-paletista (1) Tielinkit. 
 
-V&auml;yl&auml;tyyppi kertoo tielinkin omistajasta. Maantiet omistaa valtio. Kadut omistaa kunta, jonka alueella katu on. Yksityistiet omistaa yksityiset tahot: tiekunta, yksityishenkil&ouml;, yritys tms.
+![Tielinkit](k38.JPG)
 
-![V&auml;yl&auml;tyyppi](k22.JPG)
-
-_V&auml;yl&auml;tyypit._
+_Tielinkit._
 
 3.3 Joukkoliikenteen pys&auml;kkien valinta
 --------------------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
-Joukkoliikenteen pys&auml;kit n&auml;kyv&auml;t vain tarpeeksi tarkalla mittakaavatasolla, joka on 1:20 000 tai tarkempi (9). Sovellus ilmoittaa, kun mittakaavataso on liian ep&auml;tarkka pys&auml;kkien n&auml;kymiselle. Mittakaavataso pys&auml;kkien n&auml;kymiselle on sama sek&auml; katselu- ett&auml; muokkaustilassa.
+Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu v&auml;yl&auml;tyyppivalinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta V&auml;yl&auml;tyyppi-valinnan pois. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
 
-![Pys&auml;kkien valinta](k7.jpg)
+V&auml;yl&auml;tyyppi kertoo tielinkin omistajasta. Maantiet omistaa valtio. Kadut omistaa kunta, jonka alueella katu on. Yksityistiet omistaa yksityiset tahot: tiekunta, yksityishenkil&ouml;, yritys tms.
+
+![V&auml;yl&auml;tyyppi](k22.JPG)
 
 _Joukkoliikenteen pys&auml;kkien valinta._
 
@@ -187,7 +189,7 @@ _Joukkoliikenteen pys&auml;kkien haku._
 3.4 Nopeusrajoitusten valinta
 -----------------------------
 
-Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Nopeusrajoitukset n&auml;kyv&auml;t, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
+Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
 
 Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, ett&auml; katujen nopeusrajoitus on 50km/h ja maanteiden sek&auml; yksityisteiden 80km/h. Nopeusrajoitus tulee n&auml;kyviin, kun sovellus on generoinut sen.
 
@@ -198,7 +200,7 @@ _Nopeusrajoitusten valinta._
 3.5 Suurin sallittu -valinta
 ------------------------------------
 
-Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Suurin sallittu -valinta n&auml;kyy, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
+Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
 
 Suurin sallittu -valintoja ovat:
 
@@ -219,10 +221,19 @@ _Suurin sallittu -valinta._
 
 Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei voi muokata tietolajeja.
 
-4.1 Pys&auml;kin tietojen katselu
+4.1 Tielinkin tietojen katselu
+------------------------------
+
+Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, v&auml;yl&auml;tyyppi, toiminnallinen luokka ja liikennevirran suunta.
+
+![Tielinkit](k7.jpg)
+
+_Tielinkit._
+
+4.2 Pys&auml;kin tietojen katselu
 ----------------------------
 
-Pys&auml;kit tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto-n&auml;kym&auml; (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
+Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto-n&auml;kym&auml; (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
 
 Jos kaksi tai useampi pys&auml;kki ovat alle kuuden metrin p&auml;&auml;ss&auml; toisistaan, esitet&auml;&auml;n pys&auml;kit k&auml;ytt&ouml;liittym&auml;ss&auml; p&auml;&auml;llekk&auml;in ryhmiteltyn&auml;. P&auml;&auml;llekk&auml;in asettelu mahdollistaa pys&auml;kin tarkastelun ilman, ett&auml; samassa sijainnissa olevia pys&auml;kkej&auml; tarvitsee siirt&auml;&auml;. 
 
@@ -232,10 +243,10 @@ Ominaisuustieto-n&auml;kym&auml;ss&auml; kaikki kent&auml;t ovat disabloituja el
 
 _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
-4.2 Nopeusrajoituksen tietojen katselu
+4.3 Nopeusrajoituksen tietojen katselu
 --------------------------------------
 
-Nopeusrajoitukset tulevat n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
 Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID ja arvo (km/h).
 
@@ -249,10 +260,10 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 
 _Nopeusrajoitusten visualisointi._
 
-4.3 Suurin sallittu -valinnan tietojen katselu
+4.4 Suurin sallittu -valinnan tietojen katselu
 ---------------------------------------------
 
-Suurin sallittu -valinta tulee n&auml;kyviin, kun kartan mittakaavataso on 1:20 000 tai tarkempi (9). Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml;.
+Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml;.
 
 ![Suurimman sallitun tietojen katselu](k31.JPG)
 
