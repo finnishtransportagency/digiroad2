@@ -257,6 +257,24 @@ __Linux:__
 ./sbt '~;container:start /'
 ```
 
+5. Radiator
+-----------
+
+[Radiatorista](https://livi-ci.reaktor.fi/user/liikenne/my-views/view/Radiator/) voi seurata sovelluksen buildit, uuden version viennit eri ymp&auml;rist&ouml;ihin, ovatko ymp&auml;rist&ouml;t pystyss&auml; ja Vallu CSV-exportin onnistumisen sek&auml; siihen k&auml;ytetyn ajan.
+
+Buildeja p&auml;&auml;see katsomaan DR2-build -laatikosta. Deploy to "stagu" -laatikko kertoo uuden version viennist&auml; testiymp&auml;rist&ouml;&ouml;n, Deploy to production -laatikko tuotantoymp&auml;rist&ouml;&ouml;n viennist&auml; ja Deploy to training -laatikko koulutusymp&auml;rist&ouml;&ouml;n viennist&auml;. Vallu export -laatikosta p&auml;&auml;see katsomaan Vallu CSV-exportin onnistumista sek&auml; siihen kulunutta aikaa.
+
+Deploy to "stagu"-, Deploy to production- ja Deploy to training -laatikot ovat vihrein&auml;, mik&auml;li ko. laatikon ymp&auml;rist&ouml; on pystyss&auml;. DR2-build- ja Vallu export -laatikot ovat vihrein&auml;, mik&auml;li buildi tai export on onnistunut. Laatikoiden oikeassa alakulmassa oleva aika kertoo viimeisimm&auml;n suorituksen keston. Kun suoritus on kesken, laatikossa n&auml;kyy vaalean vihre&auml; palkki, joka kuvaa suoritusta.
+ 
+Radiaattoriin tarvitsee k&auml;ytt&auml;j&auml;tunnuksen. K&auml;ytt&auml;j&auml;tunnusta voi kysy&auml; kehitystiimilt&auml;: digiroad2@reaktor.fi.
+
+6. DR2:n Google-tili
+--------------------
+
+Digiroad 2:lla on oma Google-tili: Digiroad2@gmail.com. Tili on edellytys, jotta Google Streetview:ll&auml; on mahdollista ladata muutama tuhat kuvaa p&auml;iv&auml;ss&auml;. My&ouml;s Digiroad 2:den Google Driven omistajuus on ko. tilill&auml;.
+
+Tunnuksia Google-tiliin voi kysy&auml; kehitystiimilt&auml;: digiroad2@reaktor.fi.
+
 Linkit:
 ------
 
