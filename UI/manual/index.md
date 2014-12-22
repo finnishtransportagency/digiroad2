@@ -97,7 +97,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman tietolajit-paletista (1).
 
-Muokkaustilan saa aktivoitua klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
+Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
@@ -105,7 +105,7 @@ Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa
 
 _Katselutila._
 
-![Muokkaustila](k4.jpg)
+![Muokkaustila](k1.jpg)
 
 _Muokkaustila._
 
@@ -263,7 +263,7 @@ _Nopeusrajoitusten visualisointi._
 4.4 Suurin sallittu -valinnan tietojen katselu
 ---------------------------------------------
 
-Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml;.
+Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml; (6).
 
 ![Suurimman sallitun tietojen katselu](k31.JPG)
 
@@ -287,10 +287,6 @@ _Muokkaustilasta p&auml;&auml;see pois klikkaamalla "Siirry katselutilaan" -pain
 Muokkaustilassa tietolajeihin tehdyt muutokset tallentuvat painamalla ominaisuustieton&auml;kym&auml;ss&auml; olevaa Tallenna-nappia (15). Muutosten tallentamisen j&auml;lkeen tietolajille tallentuu Muokattu viimeksi -kohtaan muokkaajan k&auml;ytt&auml;j&auml;tunnus, p&auml;iv&auml;m&auml;&auml;r&auml; ja kellonaika. Tehdyt muutokset peruuntuvat painamalla Peruuta-nappia (16). Tallenna- ja Peruuta -napit ovat disabloituja, kun muutoksia ei ole tehty. Jos muutoksia on tehnyt eik&auml; niit&auml; peru tai tallenna ja siirtyy muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa. 
 
 Jotta tietolajeja voi muokata, t&auml;ytyy kartan mittakaavan olla 1:20 000 tai tarkempi (9). Ep&auml;tarkemmilla zoomitasoilla sovellus antaa ilmoituksen:"Zoomaa l&auml;hemm&auml;ksi, jos haluat n&auml;hd&auml; kohteita."
-
-![Tietolajin ominaisuustietojen muokkaus.](k25.JPG)
-
-_Tietolajin ominaisuustietojen muokkaus._
 
 ![Muutos-dialogi.](k21.JPG)
 
