@@ -81,7 +81,7 @@
       if (!eventListener.running) {
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
-        eventListener.listenTo(eventbus, 'roadLinks:drawn', reselectRoadLink);
+        eventListener.listenTo(eventbus, 'roadLinks:afterDraw', reselectRoadLink);
         selectControl.activate();
       }
     };
