@@ -104,6 +104,17 @@
       return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
     };
 
+    var radiansToDegrees = function(radians) {
+      return radians * (180 / Math.PI);
+    };
+
+    var calculateAngleFromNorth = function(vector) {
+      var v = unitVector(vector);
+      var rad = ((Math.PI * 2) - (Math.atan2(v.y, v.x) + Math.PI)) + (Math.PI / 2);
+      var ret = rad > (Math.PI * 2) ? rad - (Math.PI * 2) : rad;
+      return radiansToDegrees(ret);
+    };
+
     this.calculateMidpointOfLineString = function(lineString) {
       var length = lineString.getLength();
       var vertices = lineString.getVertices();
@@ -118,7 +129,8 @@
           return {
             midpoint: {
               x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
-              y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed))
+              y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed)),
+              angleFromNorth: calculateAngleFromNorth(subtractVector(vertex, acc.previousVertex))
             }
           };
         }

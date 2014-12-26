@@ -21,7 +21,8 @@
     var defaultStyleMap = new OpenLayers.StyleMap({
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.7,
-        externalGraphic: 'images/link-properties/road.svg'
+        externalGraphic: 'images/link-properties/road.svg',
+        rotation: '${rotation}'
       }))
     });
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
@@ -74,7 +75,7 @@
         });
         var lineString = new OpenLayers.Geometry.LineString(points);
         var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y));
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), { rotation: signPosition.angleFromNorth });
       });
 
       roadLayer.layer.addFeatures(oneWaySigns);
