@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils) {
     var selectedRoadLinkId = null;
 
     var roadLinkTypeStyleLookup = {
@@ -8,12 +8,24 @@
       Road: { strokeColor: '#ff0000' }
     };
 
+    var oneWaySignSizeLookup = {
+      9: { pointRadius: 0 },
+      10: { pointRadius: 13 },
+      11: { pointRadius: 16 },
+      12: { pointRadius: 20 },
+      13: { pointRadius: 25 },
+      14: { pointRadius: 30 },
+      15: { pointRadius: 35 }
+    };
+
     var defaultStyleMap = new OpenLayers.StyleMap({
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7
+        strokeOpacity: 0.7,
+        externalGraphic: 'images/link-properties/road.svg'
       }))
     });
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
     roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
 
@@ -55,6 +67,19 @@
       }
     };
 
+    var drawOneWaySigns = function(roadLinks) {
+      var oneWaySigns = _.map(roadLinks, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var lineString = new OpenLayers.Geometry.LineString(points);
+        var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y));
+      });
+
+      roadLayer.layer.addFeatures(oneWaySigns);
+    };
+
     var reselectRoadLink = function() {
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
@@ -81,7 +106,10 @@
       if (!eventListener.running) {
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
-        eventListener.listenTo(eventbus, 'roadLinks:afterDraw', reselectRoadLink);
+        eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
+          drawOneWaySigns(roadLinks);
+          reselectRoadLink();
+        });
         selectControl.activate();
       }
     };

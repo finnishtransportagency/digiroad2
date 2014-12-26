@@ -98,7 +98,7 @@ var RoadStyles = function() {
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
       });
       vectorLayer.addFeatures(features);
-      eventbus.trigger('roadLinks:afterDraw');
+      eventbus.trigger('roadLinks:afterDraw', roadLinks);
     };
 
     var setLayerSpecificStyleMap = function(layer, styleMap) {
