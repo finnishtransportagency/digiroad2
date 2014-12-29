@@ -68,18 +68,23 @@
     };
 
     var drawOneWaySigns = function(roadLinks) {
-      var oneWaySigns = _.map(roadLinks, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var lineString = new OpenLayers.Geometry.LineString(points);
-        var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
-        var rotation = link.trafficDirection === 'AgainstDigitizing' ? signPosition.angleFromNorth + 180.0 : signPosition.angleFromNorth;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
-          rotation: rotation,
-          type: link.type
-        });
-      });
+      var oneWaySigns = _.chain(roadLinks)
+        .filter(function(link) {
+          return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+        })
+        .map(function(link) {
+          var points = _.map(link.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          var lineString = new OpenLayers.Geometry.LineString(points);
+          var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
+          var rotation = link.trafficDirection === 'AgainstDigitizing' ? signPosition.angleFromNorth + 180.0 : signPosition.angleFromNorth;
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
+            rotation: rotation,
+            type: link.type
+          });
+        })
+        .value();
 
       roadLayer.layer.addFeatures(oneWaySigns);
     };
