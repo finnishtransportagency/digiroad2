@@ -76,7 +76,7 @@ trait NumericalLimitOperations {
 
       val linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType, Int)] =
       roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, roadLink) =>
-          acc + (roadLink._1 -> (roadLink._2, roadLink._3, roadLink._4, roadLink._5))
+          acc + (roadLink._1 -> (roadLink._3, roadLink._4, roadLink._5, roadLink._6))
         }
 
       val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>

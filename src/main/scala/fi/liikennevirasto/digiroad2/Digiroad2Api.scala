@@ -134,8 +134,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       RoadLinkService.getRoadLinks(
           bounds = boundingRectangle,
           municipalities = municipalities).map { roadLink =>
-        val (id, points, length, roadLinkType, functionalClass, trafficDirection) = roadLink
+        val (id, mmlId, points, length, roadLinkType, functionalClass, trafficDirection) = roadLink
         Map("roadLinkId" -> id,
+            "mmlId" -> mmlId,
             "points" -> points,
             "length" -> length,
             "type" -> roadLinkType.toString,

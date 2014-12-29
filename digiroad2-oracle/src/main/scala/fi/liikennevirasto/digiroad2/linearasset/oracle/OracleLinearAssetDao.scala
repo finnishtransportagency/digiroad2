@@ -83,7 +83,7 @@ object OracleLinearAssetDao {
 
     val linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType, Int)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry._1 -> (linkWithGeometry._2, linkWithGeometry._3, linkWithGeometry._4, linkWithGeometry._5))
+        acc + (linkWithGeometry._1 -> (linkWithGeometry._3, linkWithGeometry._4, linkWithGeometry._5, linkWithGeometry._6))
       }
 
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>

@@ -193,7 +193,7 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[(Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)] = {
+  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
@@ -204,7 +204,7 @@ object RoadLinkService {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
-            select dr1_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10), liikennevirran_suunta
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10), liikennevirran_suunta
               from tielinkki_ctas
               where $roadFilter $municipalityFilter
                     mdsys.sdo_filter(shape,
@@ -224,7 +224,7 @@ object RoadLinkService {
                                      'querytype=WINDOW'
                                     ) = 'TRUE'
       """
-      Q.queryNA[(Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)](query).iterator().toSeq
+      Q.queryNA[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)](query).iterator().toSeq
     }
   }
 }
