@@ -31,6 +31,8 @@
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
           '<div class="form-group">' +
+            '<label class="control-label">MML ID</label>' +
+            '<p class="form-control-static"><%- mmlId %></p>' +
             '<label class="control-label">Väylätyyppi</label>' +
             '<p class="form-control-static"><%- localizedType %></p>' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
