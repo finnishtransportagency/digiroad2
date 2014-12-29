@@ -3,9 +3,9 @@
     var selectedRoadLinkId = null;
 
     var roadLinkTypeStyleLookup = {
-      PrivateRoad: { strokeColor: '#0011bb' },
-      Street: { strokeColor: '#11bb00' },
-      Road: { strokeColor: '#ff0000' }
+      PrivateRoad: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
+      Street: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
+      Road: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
     };
 
     var oneWaySignSizeLookup = {
@@ -21,7 +21,6 @@
     var defaultStyleMap = new OpenLayers.StyleMap({
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.7,
-        externalGraphic: 'images/link-properties/road.svg',
         rotation: '${rotation}'
       }))
     });
@@ -75,7 +74,10 @@
         });
         var lineString = new OpenLayers.Geometry.LineString(points);
         var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), { rotation: signPosition.angleFromNorth });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
+          rotation: signPosition.angleFromNorth,
+          type: link.type
+        });
       });
 
       roadLayer.layer.addFeatures(oneWaySigns);
