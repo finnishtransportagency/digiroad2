@@ -31,14 +31,18 @@
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7
+        strokeOpacity: 0.7,
+        rotation: '${rotation}'
       })),
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.3
+        strokeOpacity: 0.3,
+        rotation: '${rotation}'
       }))
     });
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     selectionStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', roadLinkTypeStyleLookup);
 
