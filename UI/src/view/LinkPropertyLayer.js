@@ -74,8 +74,9 @@
         });
         var lineString = new OpenLayers.Geometry.LineString(points);
         var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? signPosition.angleFromNorth + 180.0 : signPosition.angleFromNorth;
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
-          rotation: signPosition.angleFromNorth,
+          rotation: rotation,
           type: link.type
         });
       });

@@ -110,7 +110,7 @@
 
     var calculateAngleFromNorth = function(vector) {
       var v = unitVector(vector);
-      var rad = ((Math.PI * 2) - (Math.atan2(v.y, v.x) + Math.PI)) + (Math.PI / 2);
+      var rad = ((Math.PI * 2) - (Math.atan2(v.y, v.x) + Math.PI)) + (3 * Math.PI / 2);
       var ret = rad > (Math.PI * 2) ? rad - (Math.PI * 2) : rad;
       return radiansToDegrees(ret);
     };
