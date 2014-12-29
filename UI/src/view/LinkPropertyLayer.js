@@ -32,10 +32,12 @@
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.7,
+        graphicOpacity: 1.0,
         rotation: '${rotation}'
       })),
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.3,
+        graphicOpacity: 0.3,
         rotation: '${rotation}'
       }))
     });
@@ -52,16 +54,28 @@
         eventbus.trigger('linkProperties:selected', feature.attributes);
         roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
         roadLayer.layer.redraw();
+        highlightFeatures(feature);
       },
       onUnselect: function() {
         deselectRoadLink();
         eventbus.trigger('linkProperties:unselected');
         roadLayer.layer.redraw();
+        highlightFeatures(null);
       }
     });
     map.addControl(selectControl);
 
     var eventListener = _.extend({running: false}, eventbus);
+
+    var highlightFeatures = function(feature) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (feature && (x.attributes.roadLinkId === feature.attributes.roadLinkId)) {
+          selectControl.highlight(x);
+        } else {
+          selectControl.unhighlight(x);
+        }
+      });
+    };
 
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
@@ -85,7 +99,8 @@
           var rotation = link.trafficDirection === 'AgainstDigitizing' ? signPosition.angleFromNorth + 180.0 : signPosition.angleFromNorth;
           return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
             rotation: rotation,
-            type: link.type
+            type: link.type,
+            roadLinkId: link.roadLinkId
           });
         })
         .value();
@@ -100,6 +115,7 @@
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
       if (feature) {
         selectControl.select(feature);
+        highlightFeatures(feature);
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
