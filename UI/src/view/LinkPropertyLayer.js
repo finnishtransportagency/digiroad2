@@ -100,7 +100,9 @@
           return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), {
             rotation: rotation,
             type: link.type,
-            roadLinkId: link.roadLinkId
+            roadLinkId: link.roadLinkId,
+            functionalClass: link.functionalClass,
+            trafficDirection: link.trafficDirection
           });
         })
         .value();
