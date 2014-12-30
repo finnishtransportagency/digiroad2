@@ -24,7 +24,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import collection.JavaConversions._
 
 object RoadLinkService {
-
+  type RoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -196,12 +196,12 @@ object RoadLinkService {
     }
   }
 
-  private def adjustedRoadLinks(roadLinks: Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)]): Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)] = {
+  private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val adjustments: Iterator[(Long, Int)] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).sortBy(_._1).iterator
       val firstAdjustment: Option[(Long, Int)] = if (adjustments.hasNext) Some(adjustments.next()) else None
-      roadLinks.sortBy(_._2).foldLeft((firstAdjustment, Seq.empty[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)])) { case (acc, roadLink) =>
-        val (currentAdjustment: Option[(Long, Int)], adjustedRoadLinks: Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)]) = acc
+      roadLinks.sortBy(_._2).foldLeft((firstAdjustment, Seq.empty[RoadLink])) { case (acc, roadLink) =>
+        val (currentAdjustment: Option[(Long, Int)], adjustedRoadLinks: Seq[RoadLink]) = acc
         currentAdjustment match {
           case Some((mmlId: Long, trafficDirection: Int)) if mmlId == roadLink._2 =>
             val nextAdjustment = if (adjustments.hasNext) Some(adjustments.next()) else None
@@ -213,7 +213,7 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)] = {
+  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
     val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
@@ -244,7 +244,7 @@ object RoadLinkService {
                                      'querytype=WINDOW'
                                     ) = 'TRUE'
       """
-      Q.queryNA[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)](query).iterator().toSeq
+      Q.queryNA[RoadLink](query).iterator().toSeq
     }
     adjustedRoadLinks(roadLinks)
   }
