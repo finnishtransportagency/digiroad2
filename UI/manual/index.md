@@ -224,9 +224,9 @@ Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei vo
 4.1 Tielinkin tietojen katselu
 ------------------------------
 
-Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, v&auml;yl&auml;tyyppi, toiminnallinen luokka ja liikennevirran suunta.
+Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), v&auml;yl&auml;tyyppi, toiminnallinen luokka ja liikennevirran suunta.
 
-Tielinkit on visualisoitu v&auml;yl&auml;tyypin mukaan siten, ett&auml; maantiet ovat punaisia, kadut vihreit&auml; ja yksityistiet sinisi&auml;. Ne tielinkit, joilla ei ole v&auml;yl&auml;tyyppi&auml;, on visualisoitu harmaaksi.
+Tielinkit on visualisoitu v&auml;yl&auml;tyypin mukaan siten, ett&auml; maantiet ovat punaisia, kadut vihreit&auml; ja yksityistiet sinisi&auml;. Ne tielinkit, joilla ei ole v&auml;yl&auml;tyyppi&auml;, on visualisoitu harmaaksi. Niill&auml; tielinkeill&auml;, joiden liikennevirran suunta on yhteen suuntaan, on visualisoitu suuntanuoli osoittamaan liikennevirran suuntaan.
 
 ![Tielinkit](k7.jpg)
 
