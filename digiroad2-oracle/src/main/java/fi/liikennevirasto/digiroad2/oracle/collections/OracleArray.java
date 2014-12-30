@@ -3,10 +3,9 @@ package fi.liikennevirasto.digiroad2.oracle.collections;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OraclePreparedStatement;
 import oracle.sql.ARRAY;
-import scala.Int;
-import scala.Long;
 import scala.Double;
-import scala.Tuple6;
+import scala.*;
+import scala.Long;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,6 +43,30 @@ public class OracleArray {
         }
     }
 
+    private static List<Tuple2<Long, Int>> trafficDirectionAdjustmentsByIds(List ids, Connection connection, String query) throws SQLException {
+        OracleConnection oracleConnection = (OracleConnection) connection;
+        ARRAY oracleArray = oracleConnection.createARRAY("ROAD_LINK_VARRAY", ids.toArray());
+        PreparedStatement statement = oracleConnection.prepareStatement(query);
+        try {
+            OraclePreparedStatement oraclePreparedStatement = (OraclePreparedStatement) statement;
+            oraclePreparedStatement.setArray(1, oracleArray);
+            ResultSet resultSet = oraclePreparedStatement.executeQuery();
+            try {
+                ArrayList<Tuple2<Long, Int>> results = new ArrayList<Tuple2<Long, Int>>();
+                while (resultSet.next()) {
+                    long mmlId = resultSet.getLong(1);
+                    int trafficDirection = resultSet.getInt(2);
+                    results.add(new Tuple2(mmlId, trafficDirection));
+                }
+                return results;
+            } finally {
+                resultSet.close();
+            }
+        } finally {
+            statement.close();
+        }
+    }
+
     public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchAssetLinksByRoadLinkIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
@@ -66,5 +89,10 @@ public class OracleArray {
                 "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
                 "AND (a.valid_to >= sysdate OR a.valid_to is null)";
         return linearAssetsByRoadLinkIds(ids, connection, query);
+    }
+
+    public static List<Tuple2<Long, Int>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, traffic_direction FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return trafficDirectionAdjustmentsByIds(ids, connection, query);
     }
 }
