@@ -32,6 +32,38 @@
         '</div>' +
       '</div>');
 
+    // FIXME: horrible copy-paste
+    var EditModeToggleButton = function() {
+      var button = $('<button class="action-mode-btn btn btn-block edit-mode-btn btn-primary">').text('Siirry muokkaustilaan');
+      var element = $('<div class="panel-section panel-toggle-edit-mode">').append(button);
+      var toggleReadOnlyMode = function(mode) {
+        applicationModel.setReadOnly(mode);
+        if (mode) {
+          button.removeClass('read-only-btn').addClass('edit-mode-btn');
+          button.removeClass('btn-secondary').addClass('btn-primary');
+        } else {
+          button.removeClass('edit-mode-btn').addClass('read-only-btn');
+          button.removeClass('btn-primary').addClass('btn-secondary');
+        }
+        button.text(mode ? 'Siirry muokkaustilaan' : 'Siirry katselutilaan');
+      };
+      button.click(function() {
+        executeOrShowConfirmDialog(function() {
+          toggleReadOnlyMode(!applicationModel.isReadOnly());
+        });
+      });
+      var reset = function() {
+        toggleReadOnlyMode(true);
+      };
+
+      return {
+        element: element,
+        reset: reset
+      };
+    };
+
+    var editModeToggle = new EditModeToggleButton();
+
     var templateAttributes = {
       className: className,
       title: title
@@ -59,6 +91,11 @@
           elements.collapsed.show();
         }
       }, this);
+      eventbus.on('roles:fetched', function(roles) {
+        if (_.contains(roles, 'operator')) {
+          elements.expanded.append(editModeToggle.element);
+        }
+      });
     };
 
     bindDOMEventHandlers();
