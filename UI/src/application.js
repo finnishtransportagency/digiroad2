@@ -12,6 +12,12 @@ var RoadCollection = function(backend) {
     return roadLinks;
   };
 
+  this.get = function(id) {
+    return _.find(roadLinks, function(road) {
+      return road.roadLinkId === id;
+    });
+  };
+
   this.activate = function(road) {
     eventbus.trigger('road:active', road.roadLinkId);
   };
@@ -123,10 +129,9 @@ var RoadCollection = function(backend) {
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
     var linearAsset = new LinearAsset(geometryUtils);
-    var roadLayer = new RoadLayer(map, roadCollection);
+    var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm();
 
@@ -145,7 +150,7 @@ var RoadCollection = function(backend) {
         application: applicationModel,
         collection: numericalLimit.collection,
         selectedNumericalLimit: numericalLimit.selectedNumericalLimit,
-        roadCollection: roadCollection,
+        roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
         roadLayer: roadLayer,
@@ -158,14 +163,14 @@ var RoadCollection = function(backend) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils),
-      asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
+      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty),
+      asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
-        roadCollection: roadCollection,
+        roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset
       })
@@ -271,6 +276,8 @@ var RoadCollection = function(backend) {
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
+    var roadCollection = new RoadCollection(backend);
+    var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -282,8 +289,10 @@ var RoadCollection = function(backend) {
     });
 
     var models = {
+      roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
-      selectedSpeedLimit: selectedSpeedLimit
+      selectedSpeedLimit: selectedSpeedLimit,
+      selectedLinkProperty: selectedLinkProperty
     };
 
     bindEvents();

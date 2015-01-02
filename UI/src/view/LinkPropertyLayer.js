@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
     var selectedRoadLinkId = null;
 
     var roadLinkTypeStyleLookup = {
@@ -51,14 +51,14 @@
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
         selectedRoadLinkId = feature.attributes.roadLinkId;
-        eventbus.trigger('linkProperties:selected', feature.attributes);
+        selectedLinkProperty.open(selectedRoadLinkId);
         roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
         roadLayer.layer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
         deselectRoadLink();
-        eventbus.trigger('linkProperties:unselected');
+        selectedLinkProperty.close();
         roadLayer.layer.redraw();
         highlightFeatures(null);
       }
