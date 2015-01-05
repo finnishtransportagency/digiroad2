@@ -29,11 +29,21 @@
       }
     };
 
+    var getId = function() {
+      return current && current.roadLinkId;
+    };
+
+    var get = function() {
+      return current;
+    };
+
     return {
       close: close,
       open: open,
       setTrafficDirection: setTrafficDirection,
-      isDirty: isDirty
+      isDirty: isDirty,
+      getId: getId,
+      get: get
     };
   };
 })(this);

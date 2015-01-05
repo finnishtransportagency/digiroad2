@@ -68,7 +68,7 @@
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
-          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags }}));
         rootElement.find('.traffic-direction').change(function(event) {

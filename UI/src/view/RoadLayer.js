@@ -101,6 +101,14 @@ var RoadStyles = function() {
       eventbus.trigger('roadLinks:afterDraw', roadLinks);
     };
 
+    var drawRoadLink = function(roadLink) {
+      var points = _.map(roadLink.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
+      });
+      var feature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
+      vectorLayer.addFeatures([feature]);
+    };
+
     var setLayerSpecificStyleMap = function(layer, styleMap) {
       layerStyleMaps[layer] = styleMap;
       if (applicationModel.getSelectedLayer() === layer) {
@@ -155,7 +163,8 @@ var RoadStyles = function() {
     return {
       layer: vectorLayer,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
-      addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap
+      addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
+      drawRoadLink: drawRoadLink
     };
   };
 })(this);

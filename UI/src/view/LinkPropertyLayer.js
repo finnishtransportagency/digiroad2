@@ -109,7 +109,7 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
+      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
       if (feature) {
         selectControl.select(feature);
         highlightFeatures(feature);
@@ -149,6 +149,11 @@
       selectControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
+      roadLayer.layer.removeFeatures(selectedFeatures);
+      roadLayer.drawRoadLink(selectedLinkProperty.get());
+      drawOneWaySigns([selectedLinkProperty.get()]);
+      reselectRoadLink();
     };
 
     var handleLinkPropertyCancelled = function() {
