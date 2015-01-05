@@ -133,7 +133,7 @@ var RoadCollection = function(backend) {
     var linearAsset = new LinearAsset(geometryUtils);
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm();
+    new LinkPropertyForm(models.selectedLinkProperty);
 
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
@@ -299,7 +299,7 @@ var RoadCollection = function(backend) {
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
-    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit].concat(selectedNumericalLimitModels));
+    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);

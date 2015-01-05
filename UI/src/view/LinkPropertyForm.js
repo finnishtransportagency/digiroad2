@@ -1,5 +1,5 @@
 (function (root) {
-  root.LinkPropertyForm = function() {
+  root.LinkPropertyForm = function(selectedLinkProperty) {
     var localizedFunctionalClasses = {
       1: 'Seudullinen pääkatu / valtatie',
       2: 'Seudullinen pääkatu / kantatie',
@@ -28,7 +28,7 @@
     var template = '' +
       '<header>' +
         '<span>Linkin ID: <%- roadLinkId %></span>' +
-        '<div class="road form-controls">' +
+        '<div class="link-properties form-controls">' +
           '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
         '</div>' +
@@ -50,7 +50,7 @@
           '</div>' +
         '</div>' +
       '</div>' +
-      '<footer class="road form-controls" style="display: none">' +
+      '<footer class="link-properties form-controls" style="display: none">' +
         '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
       '</footer>';
@@ -71,7 +71,13 @@
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags }}));
+        rootElement.find('.traffic-direction').change(function(event) {
+          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+        });
         toggleMode(applicationModel.isReadOnly());
+      });
+      eventbus.on('linkProperties:changed', function() {
+        rootElement.find('.link-properties button').attr('disabled', false);
       });
       eventbus.on('linkProperties:unselected', function() {
         rootElement.empty();

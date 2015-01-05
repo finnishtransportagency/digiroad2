@@ -136,8 +136,24 @@
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
+        eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
+        eventListener.listenTo(eventbus, 'linkProperties:cancelled', handleLinkPropertyCancelled);
         selectControl.activate();
       }
+    };
+
+
+    var displayConfirmMessage = function() { new Confirm(); };
+
+    var handleLinkPropertyChanged = function() {
+      selectControl.deactivate();
+      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+      eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+    };
+
+    var handleLinkPropertyCancelled = function() {
+      selectControl.activate();
+      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     };
 
     var stop = function() {
