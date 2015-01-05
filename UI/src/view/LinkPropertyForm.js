@@ -46,7 +46,7 @@
           '<div class="form-group editable">' +
             '<label class="control-label">Liikennevirran suunta</label>' +
             '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
-            '<select class="form-control speed-limit" style="display: none"><%= trafficDirectionOptionTags %></select>' +
+            '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
           '</div>' +
         '</div>' +
       '</div>' +
