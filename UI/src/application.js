@@ -298,7 +298,8 @@ var RoadCollection = function(backend) {
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
-    window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit, numericalLimits);
+    var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
+    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
