@@ -4,15 +4,15 @@
 
     var close = function() {
       if (current && !current.isDirty()) {
+        current.unselect();
         current = null;
-        eventbus.trigger('linkProperties:unselected');
       }
     };
 
     var open = function(id) {
       close();
       current = collection.get(id);
-      eventbus.trigger('linkProperties:selected', current.getData());
+      current.select();
     };
 
     var isDirty = function() {
