@@ -96,7 +96,7 @@ window.NumericalLimitLayer = function(params) {
         return;
       }
 
-      var points = _.chain(roadCollection.getPointsOfRoadLink(nearest.feature.attributes.roadLinkId))
+      var points = _.chain(roadCollection.get(nearest.feature.attributes.roadLinkId).getPoints())
                      .map(function(point) {
                        return new OpenLayers.Geometry.Point(point.x, point.y);
                      })

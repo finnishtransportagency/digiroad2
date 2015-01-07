@@ -1,10 +1,9 @@
 (function(root) {
   root.SelectedLinkProperty = function(backend, collection) {
-    var dirty = false;
     var current = null;
 
     var close = function() {
-      if (current && !dirty) {
+      if (current && !current.isDirty()) {
         current = null;
         eventbus.trigger('linkProperties:unselected');
       }
@@ -12,25 +11,20 @@
 
     var open = function(id) {
       close();
-      var roadLink = collection.get(id);
-      current = roadLink;
-      eventbus.trigger('linkProperties:selected', roadLink);
+      current = collection.get(id);
+      eventbus.trigger('linkProperties:selected', current.getData());
     };
 
     var isDirty = function() {
-      return dirty;
+      return current && current.isDirty();
     };
 
     var setTrafficDirection = function(trafficDirection) {
-      if (trafficDirection != current.trafficDirection) {
-        current.trafficDirection = trafficDirection;
-        dirty = true;
-        eventbus.trigger('linkProperties:changed');
-      }
+      current.setTrafficDirection(trafficDirection);
     };
 
     var getId = function() {
-      return current && current.roadLinkId;
+      return current && current.getId();
     };
 
     var get = function() {

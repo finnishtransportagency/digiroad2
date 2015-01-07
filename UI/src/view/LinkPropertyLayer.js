@@ -151,8 +151,9 @@
       eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
       var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
       roadLayer.layer.removeFeatures(selectedFeatures);
-      roadLayer.drawRoadLink(selectedLinkProperty.get());
-      drawOneWaySigns([selectedLinkProperty.get()]);
+      var data = selectedLinkProperty.get().getData();
+      roadLayer.drawRoadLink(data);
+      drawOneWaySigns([data]);
       reselectRoadLink();
     };
 
