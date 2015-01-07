@@ -1,7 +1,5 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
-    var selectedRoadLinkId = null;
-
     var roadLinkTypeStyleLookup = {
       PrivateRoad: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
       Street: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
@@ -50,8 +48,7 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
-        selectedRoadLinkId = feature.attributes.roadLinkId;
-        selectedLinkProperty.open(selectedRoadLinkId);
+        selectedLinkProperty.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
         roadLayer.layer.redraw();
         highlightFeatures(feature);
@@ -118,7 +115,6 @@
     };
 
     var deselectRoadLink = function() {
-      selectedRoadLinkId = null;
       roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
     };
 
