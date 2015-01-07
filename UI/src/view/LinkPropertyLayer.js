@@ -142,20 +142,27 @@
     var displayConfirmMessage = function() { new Confirm(); };
 
     var handleLinkPropertyChanged = function() {
+      redrawSelected();
       selectControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
-      roadLayer.layer.removeFeatures(selectedFeatures);
-      var data = selectedLinkProperty.get().getData();
-      roadLayer.drawRoadLink(data);
-      drawOneWaySigns([data]);
-      reselectRoadLink();
     };
 
     var handleLinkPropertyCancelled = function() {
       selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+      redrawSelected();
+    };
+
+    var redrawSelected = function() {
+      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
+        return feature.attributes.roadLinkId === selectedLinkProperty.getId();
+      });
+      roadLayer.layer.removeFeatures(selectedFeatures);
+      var data = selectedLinkProperty.get().getData();
+      roadLayer.drawRoadLink(data);
+      drawOneWaySigns([data]);
+      reselectRoadLink();
     };
 
     var stop = function() {

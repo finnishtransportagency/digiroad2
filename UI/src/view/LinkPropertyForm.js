@@ -62,7 +62,7 @@
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
       };
-      eventbus.on('linkProperties:selected', function(linkProperties) {
+      eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         linkProperties.localizedFunctionalClass = localizedFunctionalClasses[linkProperties.functionalClass] || 'Tuntematon';
         linkProperties.localizedType = localizedTypes[linkProperties.type];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
@@ -83,6 +83,9 @@
         rootElement.empty();
       });
       eventbus.on('application:readOnly', toggleMode);
+      rootElement.on('click', '.link-properties button.cancel', function() {
+        selectedLinkProperty.cancel();
+      });
     };
 
     bindEvents();

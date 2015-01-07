@@ -2,6 +2,7 @@
   var RoadLinkModel = function(data) {
     var dirty = false;
     var selected = false;
+    var original = _.clone(data);
 
     var getId = function() {
       return data.roadLinkId;
@@ -41,6 +42,11 @@
       return selected;
     };
 
+    var cancel = function() {
+      data.trafficDirection = original.trafficDirection;
+      eventbus.trigger('linkProperties:cancelled', data);
+    };
+
     return {
       getId: getId,
       getData: getData,
@@ -49,7 +55,8 @@
       isDirty: isDirty,
       isSelected: isSelected,
       select: select,
-      unselect: unselect
+      unselect: unselect,
+      cancel: cancel
     };
   };
 

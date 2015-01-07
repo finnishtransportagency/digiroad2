@@ -31,13 +31,18 @@
       return current;
     };
 
+    var cancel = function() {
+      current.cancel();
+    };
+
     return {
       close: close,
       open: open,
       setTrafficDirection: setTrafficDirection,
       isDirty: isDirty,
       getId: getId,
-      get: get
+      get: get,
+      cancel: cancel
     };
   };
 })(this);
