@@ -10,7 +10,7 @@
 
     var oneWaySignSizeLookup = {
       9: { pointRadius: 0 },
-      10: { pointRadius: 13 },
+      10: { pointRadius: 12 },
       11: { pointRadius: 16 },
       12: { pointRadius: 20 },
       13: { pointRadius: 25 },
