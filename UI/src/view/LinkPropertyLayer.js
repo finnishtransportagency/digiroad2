@@ -11,11 +11,11 @@
     var oneWaySignSizeLookup = {
       9: { pointRadius: 0 },
       10: { pointRadius: 12 },
-      11: { pointRadius: 16 },
-      12: { pointRadius: 20 },
-      13: { pointRadius: 25 },
-      14: { pointRadius: 30 },
-      15: { pointRadius: 35 }
+      11: { pointRadius: 14 },
+      12: { pointRadius: 16 },
+      13: { pointRadius: 20 },
+      14: { pointRadius: 24 },
+      15: { pointRadius: 24 }
     };
 
     var defaultStyleMap = new OpenLayers.StyleMap({

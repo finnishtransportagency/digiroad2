@@ -195,12 +195,12 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitFeatureSizeLookup = {
     9: { strokeWidth: 3, pointRadius: 0 },
-    10: { strokeWidth: 5, pointRadius: 13 },
-    11: { strokeWidth: 9, pointRadius: 16 },
-    12: { strokeWidth: 16, pointRadius: 20 },
+    10: { strokeWidth: 5, pointRadius: 12 },
+    11: { strokeWidth: 9, pointRadius: 14 },
+    12: { strokeWidth: 16, pointRadius: 16 },
     13: { strokeWidth: 16, pointRadius: 20 },
-    14: { strokeWidth: 16, pointRadius: 20 },
-    15: { strokeWidth: 16, pointRadius: 20 }
+    14: { strokeWidth: 16, pointRadius: 24 },
+    15: { strokeWidth: 16, pointRadius: 24 }
   };
 
   var typeSpecificStyleLookup = {
