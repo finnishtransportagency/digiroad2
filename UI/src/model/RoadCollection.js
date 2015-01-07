@@ -47,6 +47,16 @@
       eventbus.trigger('linkProperties:cancelled', data);
     };
 
+    var save = function(backend) {
+      backend.updateLinkProperties(data.roadLinkId, data, function(linkProperties) {
+        dirty = false;
+        data = _.merge({}, data, linkProperties);
+        eventbus.trigger('linkProperties:saved', data);
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
     return {
       getId: getId,
       getData: getData,
@@ -56,7 +66,8 @@
       isSelected: isSelected,
       select: select,
       unselect: unselect,
-      cancel: cancel
+      cancel: cancel,
+      save: save
     };
   };
 

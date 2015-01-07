@@ -31,6 +31,10 @@
       return current;
     };
 
+    var save = function() {
+      current.save(backend);
+    };
+
     var cancel = function() {
       current.cancel();
     };
@@ -42,6 +46,7 @@
       isDirty: isDirty,
       getId: getId,
       get: get,
+      save: save,
       cancel: cancel
     };
   };

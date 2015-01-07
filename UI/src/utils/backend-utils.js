@@ -51,6 +51,18 @@
       });
     }, 1000);
 
+    this.updateLinkProperties = _.throttle(function(id, data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/linkproperties/" + id,
+        data: JSON.stringify({trafficDirection: data.trafficDirection}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.splitSpeedLimit = function(id, roadLinkId, splitMeasure, limit, success, failure) {
       $.ajax({
         contentType: "application/json",
