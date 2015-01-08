@@ -146,7 +146,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
-
   }
 
   get("/images/:imageId") {
