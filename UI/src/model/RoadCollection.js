@@ -44,6 +44,7 @@
 
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
+      dirty = false;
       eventbus.trigger('linkProperties:cancelled', data);
     };
 
