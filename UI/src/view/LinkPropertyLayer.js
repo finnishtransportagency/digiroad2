@@ -136,7 +136,7 @@
           reselectRoadLink();
         });
         eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
-        eventListener.listenTo(eventbus, 'linkProperties:cancelled', handleLinkPropertyCancelled);
+        eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
         selectControl.activate();
       }
     };
@@ -151,7 +151,7 @@
       eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     };
 
-    var handleLinkPropertyCancelled = function() {
+    var concludeLinkPropertyEdit = function() {
       selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
       redrawSelected();
