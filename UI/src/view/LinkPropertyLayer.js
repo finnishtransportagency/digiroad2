@@ -112,6 +112,9 @@
         highlightFeatures(feature);
       }
       selectControl.onSelect = originalOnSelectHandler;
+      if (selectedLinkProperty.get() && selectedLinkProperty.isDirty()) {
+        selectControl.deactivate();
+      }
     };
 
     var deselectRoadLink = function() {
