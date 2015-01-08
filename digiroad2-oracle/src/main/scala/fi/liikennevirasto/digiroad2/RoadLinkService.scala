@@ -208,11 +208,12 @@ object RoadLinkService {
       val trafficDirectionValue = trafficDirection.value
       val optionalTrafficDirection: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
       optionalTrafficDirection match {
-        case Some(direction) if direction != trafficDirectionValue =>
-          sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
+        case Some(direction) =>
+          if (direction != trafficDirectionValue) {
+            sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
+          }
         case None =>
           sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
-        case _ => ()
       }
     }
   }
