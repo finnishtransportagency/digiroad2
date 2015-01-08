@@ -1,29 +1,3 @@
-var RoadCollection = function(backend) {
-  var roadLinks = [];
-
-  this.fetch = function(boundingBox, zoom) {
-    backend.getRoadLinks(boundingBox, function(data) {
-      roadLinks = data;
-      eventbus.trigger('roadLinks:fetched', roadLinks, zoom);
-    });
-  };
-
-  this.getAll = function() {
-    return roadLinks;
-  };
-
-  this.activate = function(road) {
-    eventbus.trigger('road:active', road.roadLinkId);
-  };
-
-  this.getPointsOfRoadLink = function(id) {
-    var road = _.find(roadLinks, function(road) {
-      return road.roadLinkId === id;
-    });
-    return _.cloneDeep(road.points);
-  };
-};
-
 (function(application) {
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
@@ -82,7 +56,7 @@ var RoadCollection = function(backend) {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:updateFailed asset:creationFailed', function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
@@ -123,12 +97,11 @@ var RoadCollection = function(backend) {
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    var roadCollection = new RoadCollection(backend);
     var geometryUtils = new GeometryUtils();
     var linearAsset = new LinearAsset(geometryUtils);
-    var roadLayer = new RoadLayer(map, roadCollection);
+    var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new LinkPropertyForm();
+    new LinkPropertyForm(models.selectedLinkProperty);
 
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
@@ -145,7 +118,7 @@ var RoadCollection = function(backend) {
         application: applicationModel,
         collection: numericalLimit.collection,
         selectedNumericalLimit: numericalLimit.selectedNumericalLimit,
-        roadCollection: roadCollection,
+        roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
         roadLayer: roadLayer,
@@ -158,14 +131,14 @@ var RoadCollection = function(backend) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils),
-      asset: new AssetLayer(map, roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
+      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty),
+      asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
-        roadCollection: roadCollection,
+        roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset
       })
@@ -271,6 +244,8 @@ var RoadCollection = function(backend) {
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
+    var roadCollection = new RoadCollection(backend);
+    var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -282,14 +257,17 @@ var RoadCollection = function(backend) {
     });
 
     var models = {
+      roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
-      selectedSpeedLimit: selectedSpeedLimit
+      selectedSpeedLimit: selectedSpeedLimit,
+      selectedLinkProperty: selectedLinkProperty
     };
 
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
-    window.applicationModel = new ApplicationModel(selectedAssetModel, selectedSpeedLimit, numericalLimits);
+    var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
+    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);

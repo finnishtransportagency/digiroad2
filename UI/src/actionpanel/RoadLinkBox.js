@@ -32,6 +32,12 @@
         '</div>' +
       '</div>');
 
+    var editModeToggle = new EditModeToggleButton({
+      hide: function() {},
+      reset: function() {},
+      show: function() {}
+    });
+
     var templateAttributes = {
       className: className,
       title: title
@@ -55,10 +61,16 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== layerName) {
+          editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
         }
       }, this);
+      eventbus.on('roles:fetched', function(roles) {
+        if (_.contains(roles, 'operator')) {
+          elements.expanded.append(editModeToggle.element);
+        }
+      });
     };
 
     bindDOMEventHandlers();

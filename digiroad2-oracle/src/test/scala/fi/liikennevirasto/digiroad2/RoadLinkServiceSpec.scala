@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.{AgainstDigitizing, TowardsDigitizing, BoundingRectangle}
 import org.scalatest.{FunSuite, Matchers}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers {
@@ -14,5 +15,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers {
 
   test("Get production road link with test id that maps to several links in production") {
     RoadLinkService.getByTestIdAndMeasure(147298l, 50.0) should be (None)
+  }
+
+  test("Override road link traffic direction with adjusted value") {
+    val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
+    val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
+    roadLinks.find { case(id, _, _, _, _, _, _) => id == 7886262 }.map(_._7) should be (Some(TowardsDigitizing))
+    roadLinks.find { case(_, mmlId, _, _, _, _, _) => mmlId == 391203482 }.map(_._7) should be (Some(AgainstDigitizing))
   }
 }

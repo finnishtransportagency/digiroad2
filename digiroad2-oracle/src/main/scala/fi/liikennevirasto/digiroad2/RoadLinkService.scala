@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
 
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.LocalDate
 
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -19,9 +21,10 @@ import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, RoadLink, BoundingR
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import _root_.oracle.spatial.geometry.JGeometry
+import collection.JavaConversions._
 
 object RoadLinkService {
-
+  type RoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -193,8 +196,52 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+  private def getRoadLinkProperties(id: Long): RoadLink = {
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10), liikennevirran_suunta
+            from tielinkki_ctas where dr1_id = $id"""
+      .as[RoadLink].first()
+  }
+
+  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
+    val mmlId = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }._2
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val trafficDirectionValue = trafficDirection.value
+      val optionalTrafficDirection: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
+      optionalTrafficDirection match {
+        case Some(direction) =>
+          if (direction != trafficDirectionValue) {
+            sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
+          }
+        case None =>
+          sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+      }
+    }
+  }
+
+  private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val adjustments: Iterator[(Long, Int)] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).sortBy(_._1).iterator
+      val firstAdjustment: Option[(Long, Int)] = if (adjustments.hasNext) Some(adjustments.next()) else None
+      roadLinks.sortBy(_._2).foldLeft((firstAdjustment, Seq.empty[RoadLink])) { case (acc, roadLink) =>
+        val (currentAdjustment: Option[(Long, Int)], adjustedRoadLinks: Seq[RoadLink]) = acc
+        currentAdjustment match {
+          case Some((mmlId: Long, trafficDirection: Int)) if mmlId == roadLink._2 =>
+            val nextAdjustment = if (adjustments.hasNext) Some(adjustments.next()) else None
+            val adjustedRoadLink = roadLink.copy(_7 = TrafficDirection(Some(trafficDirection)))
+            (nextAdjustment, adjustedRoadLink +: adjustedRoadLinks)
+          case _ => (currentAdjustment, roadLink +: adjustedRoadLinks)
+        }
+      }._2
+    }
+  }
+
+  def getRoadLink(id: Long): RoadLink = {
+    val roadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    adjustedRoadLinks(Seq(roadLink)).head
+  }
+
+  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+    val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
       val rightTopX = bounds.rightTop.x
@@ -224,7 +271,8 @@ object RoadLinkService {
                                      'querytype=WINDOW'
                                     ) = 'TRUE'
       """
-      Q.queryNA[(Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)](query).iterator().toSeq
+      Q.queryNA[RoadLink](query).iterator().toSeq
     }
+    adjustedRoadLinks(roadLinks)
   }
 }

@@ -1,7 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils) {
-    var selectedRoadLinkId = null;
-
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
     var roadLinkTypeStyleLookup = {
       PrivateRoad: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
       Street: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
@@ -50,15 +48,13 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
-        selectedRoadLinkId = feature.attributes.roadLinkId;
-        eventbus.trigger('linkProperties:selected', feature.attributes);
+        selectedLinkProperty.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
         roadLayer.layer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
         deselectRoadLink();
-        eventbus.trigger('linkProperties:unselected');
         roadLayer.layer.redraw();
         highlightFeatures(null);
       }
@@ -109,17 +105,20 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedRoadLinkId; });
+      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
       if (feature) {
         selectControl.select(feature);
         highlightFeatures(feature);
       }
       selectControl.onSelect = originalOnSelectHandler;
+      if (selectedLinkProperty.get() && selectedLinkProperty.isDirty()) {
+        selectControl.deactivate();
+      }
     };
 
     var deselectRoadLink = function() {
-      selectedRoadLinkId = null;
       roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+      selectedLinkProperty.close();
     };
 
     var prepareRoadLinkDraw = function() {
@@ -136,8 +135,37 @@
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
+        eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
+        eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
         selectControl.activate();
       }
+    };
+
+
+    var displayConfirmMessage = function() { new Confirm(); };
+
+    var handleLinkPropertyChanged = function() {
+      redrawSelected();
+      selectControl.deactivate();
+      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+      eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+    };
+
+    var concludeLinkPropertyEdit = function() {
+      selectControl.activate();
+      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+      redrawSelected();
+    };
+
+    var redrawSelected = function() {
+      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
+        return feature.attributes.roadLinkId === selectedLinkProperty.getId();
+      });
+      roadLayer.layer.removeFeatures(selectedFeatures);
+      var data = selectedLinkProperty.get().getData();
+      roadLayer.drawRoadLink(data);
+      drawOneWaySigns([data]);
+      reselectRoadLink();
     };
 
     var stop = function() {

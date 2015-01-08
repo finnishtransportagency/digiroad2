@@ -110,7 +110,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
       val roadLinksJson = parse(body)
       roadLinksJson.children.size should be (21)
       val rl = roadLinksJson.children.head
-      (rl \ "type").extract[String] should be ("PrivateRoad")
+      (rl \ "type").extract[String] should be ("Street")
     }
   }
 

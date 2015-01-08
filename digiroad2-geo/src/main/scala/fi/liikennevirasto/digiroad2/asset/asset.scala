@@ -27,6 +27,10 @@ object TrafficDirection {
   def apply(optionalValue: Option[Int]): TrafficDirection = {
     optionalValue.map { value => values.find(_.value == value).getOrElse(UnknownDirection) }.getOrElse(UnknownDirection)
   }
+
+  def apply(stringValue: String): TrafficDirection = {
+    values.find(_.toString == stringValue).getOrElse(UnknownDirection)
+  }
 }
 case object BothDirections extends TrafficDirection { def value = 2 }
 case object AgainstDigitizing extends TrafficDirection { def value = 3 }
