@@ -50,7 +50,7 @@
           '</div>' +
         '</div>' +
       '</div>' +
-      '<footer class="link-properties form-controls" style="display: none">' +
+      '<footer class="link-properties form-controls">' +
         '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
       '</footer>';
