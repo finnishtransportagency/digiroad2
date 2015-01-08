@@ -20,6 +20,7 @@ case object UnknownRoad extends RoadLinkType { def value = 99 }
 
 sealed trait TrafficDirection {
   def value: Int
+  def stringValue: String
 }
 object TrafficDirection {
   val values = Set(BothDirections, AgainstDigitizing, TowardsDigitizing, NeitherDirection, UnknownDirection)
@@ -27,12 +28,31 @@ object TrafficDirection {
   def apply(optionalValue: Option[Int]): TrafficDirection = {
     optionalValue.map { value => values.find(_.value == value).getOrElse(UnknownDirection) }.getOrElse(UnknownDirection)
   }
+
+  def apply(stringValue: String): TrafficDirection = {
+    values.find(_.stringValue == stringValue).getOrElse(UnknownDirection)
+  }
 }
-case object BothDirections extends TrafficDirection { def value = 2 }
-case object AgainstDigitizing extends TrafficDirection { def value = 3 }
-case object TowardsDigitizing extends TrafficDirection { def value = 4 }
-case object NeitherDirection extends TrafficDirection { def value = 5 }
-case object UnknownDirection extends TrafficDirection { def value = 99 }
+case object BothDirections extends TrafficDirection {
+  def value = 2
+  def stringValue = "BothDirections"
+}
+case object AgainstDigitizing extends TrafficDirection {
+  def value = 3
+  def stringValue = "AgainstDigitizing"
+}
+case object TowardsDigitizing extends TrafficDirection {
+  def value = 4
+  def stringValue = "TowardsDigitizing"
+}
+case object NeitherDirection extends TrafficDirection {
+  def value = 5
+  def stringValue = "NeitherDirection"
+}
+case object UnknownDirection extends TrafficDirection {
+  def value = 99
+  def stringValue = "UnknownDirection"
+}
 
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,

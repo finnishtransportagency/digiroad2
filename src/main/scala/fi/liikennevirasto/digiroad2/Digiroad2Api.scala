@@ -148,6 +148,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  put("/linkproperties/:id") {
+    val id = params("id").toLong
+    val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
+    println("***** Updating traffic direction to " + trafficDirection + " on link " + id)
+  }
+
   get("/images/:imageId") {
     val id = params("imageId").split("_").head // last modified date is appended with an underscore to image id in order to cache image when it has not been altered
     val bytes = assetProvider.getImage(id.toLong)
