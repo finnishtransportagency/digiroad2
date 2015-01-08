@@ -56,7 +56,7 @@
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:updateFailed asset:creationFailed', function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });

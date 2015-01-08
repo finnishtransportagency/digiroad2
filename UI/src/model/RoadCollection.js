@@ -53,7 +53,7 @@
         data = _.merge({}, data, linkProperties);
         eventbus.trigger('linkProperties:saved', data);
       }, function() {
-        eventbus.trigger('asset:updateFailed');
+        eventbus.trigger('linkProperties:updateFailed');
       });
     };
 
