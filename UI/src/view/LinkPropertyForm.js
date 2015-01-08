@@ -25,13 +25,14 @@
     };
 
     var disabled = 'disabled';
+    var buttons =
+      '<div class="link-properties form-controls">' +
+        '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
+        '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
+      '</div>';
     var template = '' +
       '<header>' +
-        '<span>Linkin ID: <%- roadLinkId %></span>' +
-        '<div class="link-properties form-controls">' +
-          '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
-          '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
-        '</div>' +
+        '<span>Linkin ID: <%- roadLinkId %></span>' + buttons +
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -50,12 +51,7 @@
           '</div>' +
         '</div>' +
       '</div>' +
-      '<footer>' +
-        '<div class="link-properties form-controls">' +
-          '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
-          '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
-        '</div>' +
-      '</footer>';
+      '<footer>' + buttons + '</footer>';
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
