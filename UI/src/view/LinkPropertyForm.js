@@ -50,9 +50,11 @@
           '</div>' +
         '</div>' +
       '</div>' +
-      '<footer class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
+      '<footer>' +
+        '<div class="link-properties form-controls">' +
+          '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
+          '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
+        '</div>' +
       '</footer>';
 
     var bindEvents = function() {
