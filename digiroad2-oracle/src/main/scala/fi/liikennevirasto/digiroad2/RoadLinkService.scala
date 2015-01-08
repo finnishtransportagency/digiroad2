@@ -212,6 +212,7 @@ object RoadLinkService {
           sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
         case None =>
           sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+        case _ => ()
       }
     }
   }
