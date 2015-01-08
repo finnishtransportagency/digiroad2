@@ -19,10 +19,6 @@
       return current && current.isDirty();
     };
 
-    var setTrafficDirection = function(trafficDirection) {
-      current.setTrafficDirection(trafficDirection);
-    };
-
     var getId = function() {
       return current && current.getId();
     };
@@ -42,7 +38,6 @@
     return {
       close: close,
       open: open,
-      setTrafficDirection: setTrafficDirection,
       isDirty: isDirty,
       getId: getId,
       get: get,
