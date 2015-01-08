@@ -55,7 +55,6 @@
       },
       onUnselect: function() {
         deselectRoadLink();
-        selectedLinkProperty.close();
         roadLayer.layer.redraw();
         highlightFeatures(null);
       }
@@ -119,6 +118,7 @@
 
     var deselectRoadLink = function() {
       roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+      selectedLinkProperty.close();
     };
 
     var prepareRoadLinkDraw = function() {
