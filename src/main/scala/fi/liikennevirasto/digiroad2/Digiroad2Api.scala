@@ -152,6 +152,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val id = params("id").toLong
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     println("***** Updating traffic direction to " + trafficDirection + " on link " + id)
+    RoadLinkService.adjustTrafficDirection(id, trafficDirection)
+    val (_, mmlId, points, length, roadLinkType, functionalClass, updatedTrafficDirection) = RoadLinkService.getRoadLink(id)
+    Map("roadLinkId" -> id,
+      "mmlId" -> mmlId,
+      "points" -> points,
+      "length" -> length,
+      "type" -> roadLinkType.toString,
+      "functionalClass" -> functionalClass,
+      "trafficDirection" -> updatedTrafficDirection.toString)
   }
 
   get("/images/:imageId") {

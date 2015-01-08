@@ -196,6 +196,26 @@ object RoadLinkService {
     }
   }
 
+  private def getRoadLinkProperties(id: Long): RoadLink = {
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10), liikennevirran_suunta
+            from tielinkki_ctas where dr1_id = $id"""
+      .as[RoadLink].first()
+  }
+
+  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
+    val mmlId = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }._2
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val trafficDirectionValue = trafficDirection.value
+      val optionalTrafficDirection: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
+      optionalTrafficDirection match {
+        case Some(direction) if direction != trafficDirectionValue =>
+          sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
+        case None =>
+          sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+      }
+    }
+  }
+
   private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val adjustments: Iterator[(Long, Int)] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).sortBy(_._1).iterator
@@ -211,6 +231,11 @@ object RoadLinkService {
         }
       }._2
     }
+  }
+
+  def getRoadLink(id: Long): RoadLink = {
+    val roadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    adjustedRoadLinks(Seq(roadLink)).head
   }
 
   def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
