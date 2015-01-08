@@ -61,6 +61,7 @@
     var bindExternalEventHandlers = function() {
       eventbus.on('layer:selected', function(selectedLayer) {
         if (selectedLayer !== layerName) {
+          editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
         }
