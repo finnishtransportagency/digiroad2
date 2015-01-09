@@ -69,7 +69,7 @@
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
         var functionalClassOptionTags = _.map(localizedFunctionalClasses, function(value, key) {
-          var selected = key === linkProperties.localizedFunctionalClass ? " selected" : "";
+          var selected = key == linkProperties.functionalClass ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
