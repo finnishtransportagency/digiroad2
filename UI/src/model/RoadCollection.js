@@ -25,7 +25,7 @@
     };
 
     var setFunctionalClass = function(functionalClass) {
-      if (functionalClass != data.trafficDirection) {
+      if (functionalClass != data.functionalClass) {
         data.functionalClass = functionalClass;
         dirty = true;
         eventbus.trigger('linkProperties:changed');
