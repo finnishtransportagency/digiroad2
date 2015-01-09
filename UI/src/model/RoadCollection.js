@@ -24,6 +24,14 @@
       }
     };
 
+    var setFunctionalClass = function(functionalClass) {
+      if (functionalClass != data.functionalClass) {
+        data.functionalClass = functionalClass;
+        dirty = true;
+        eventbus.trigger('linkProperties:changed');
+      }
+    };
+
     var isDirty = function() {
       return dirty;
     };
@@ -44,6 +52,7 @@
 
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
+      data.functionalClass = original.functionalClass;
       dirty = false;
       eventbus.trigger('linkProperties:cancelled', data);
     };
@@ -63,6 +72,7 @@
       getData: getData,
       getPoints: getPoints,
       setTrafficDirection: setTrafficDirection,
+      setFunctionalClass: setFunctionalClass,
       isDirty: isDirty,
       isSelected: isSelected,
       select: select,

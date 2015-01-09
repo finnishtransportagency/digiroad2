@@ -202,36 +202,44 @@ object RoadLinkService {
       .as[RoadLink].first()
   }
 
-  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
-    val mmlId = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }._2
+  private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val trafficDirectionValue = trafficDirection.value
-      val optionalTrafficDirection: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
-      optionalTrafficDirection match {
-        case Some(direction) =>
-          if (direction != trafficDirectionValue) {
-            sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
+      val optionalAdjustment: Option[Int] = sql"""select #$adjustmentColumn from #$adjustmentTable where mml_id = $mmlId""".as[Int].firstOption
+      optionalAdjustment match {
+        case Some(existingAdjustment) =>
+          if (existingAdjustment != adjustment) {
+            sqlu"""update #$adjustmentTable set #$adjustmentColumn = $adjustment where mml_id = $mmlId""".execute()
           }
         case None =>
-          sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+          if (unadjustedValue != adjustment) {
+            sqlu"""insert into #$adjustmentTable (mml_id, #$adjustmentColumn) values ($mmlId, $adjustment)""".execute()
+          }
       }
     }
   }
 
+  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
+    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink._2, unadjustedRoadLink._7)
+    addAdjustment("adjusted_traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId)
+  }
+
+  def adjustFunctionalClass(id: Long, functionalClass: Int) = {
+    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedFunctionalClass) = (unadjustedRoadLink._2, unadjustedRoadLink._6)
+    addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId)
+  }
+
   private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val adjustments: Iterator[(Long, Int)] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).sortBy(_._1).iterator
-      val firstAdjustment: Option[(Long, Int)] = if (adjustments.hasNext) Some(adjustments.next()) else None
-      roadLinks.sortBy(_._2).foldLeft((firstAdjustment, Seq.empty[RoadLink])) { case (acc, roadLink) =>
-        val (currentAdjustment: Option[(Long, Int)], adjustedRoadLinks: Seq[RoadLink]) = acc
-        currentAdjustment match {
-          case Some((mmlId: Long, trafficDirection: Int)) if mmlId == roadLink._2 =>
-            val nextAdjustment = if (adjustments.hasNext) Some(adjustments.next()) else None
-            val adjustedRoadLink = roadLink.copy(_7 = TrafficDirection(Some(trafficDirection)))
-            (nextAdjustment, adjustedRoadLink +: adjustedRoadLinks)
-          case _ => (currentAdjustment, roadLink +: adjustedRoadLinks)
-        }
-      }._2
+      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+
+      roadLinks.map { roadLink =>
+        val functionalClass = if (adjustedFunctionalClasses.contains(roadLink._2)) adjustedFunctionalClasses(roadLink._2).head._2 else roadLink._6
+        val trafficDirection = if (adjustedTrafficDirections.contains(roadLink._2)) TrafficDirection(Some(adjustedTrafficDirections(roadLink._2).head._2)) else roadLink._7
+        roadLink.copy(_6 = functionalClass, _7 = trafficDirection)
+      }
     }
   }
 

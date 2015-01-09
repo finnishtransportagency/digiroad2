@@ -40,10 +40,11 @@
             '<p class="form-control-static"><%- mmlId %></p>' +
             '<label class="control-label">Väylätyyppi</label>' +
             '<p class="form-control-static"><%- localizedType %></p>' +
-            '<label class="control-label">Toiminnallinen luokka</label>' +
-            '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
           '</div>' +
           '<div class="form-group editable">' +
+            '<label class="control-label">Toiminnallinen luokka</label>' +
+            '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
+            '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
             '<label class="control-label">Liikennevirran suunta</label>' +
             '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
             '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
@@ -67,9 +68,17 @@
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
-        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags }}));
+        var functionalClassOptionTags = _.map(localizedFunctionalClasses, function(value, key) {
+          var selected = key == linkProperties.functionalClass ? " selected" : "";
+          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+        }).join('');
+        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
+                                                                           functionalClassOptionTags: functionalClassOptionTags }}));
         rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+        });
+        rootElement.find('.functional-class').change(function(event) {
+          selectedLinkProperty.get().setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
       });

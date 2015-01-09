@@ -104,16 +104,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
     }
   }
 
-  test("get road links", Tag("db")) {
-    getWithUserAuth("/roadlinks?bbox=374662,6677430,374890,6677800") {
-      status should equal(200)
-      val roadLinksJson = parse(body)
-      roadLinksJson.children.size should be (21)
-      val rl = roadLinksJson.children.head
-      (rl \ "type").extract[String] should be ("Street")
-    }
-  }
-
   test("update asset property", Tag("db")) {
     val body1 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
     val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
