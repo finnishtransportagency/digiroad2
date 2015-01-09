@@ -78,7 +78,7 @@
           selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
         rootElement.find('.functional-class').change(function(event) {
-          selectedLinkProperty.get().setFunctionalClass($(event.currentTarget).find(':selected').attr('value'));
+          selectedLinkProperty.get().setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
       });
