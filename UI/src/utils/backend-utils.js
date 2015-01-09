@@ -56,7 +56,7 @@
         contentType: "application/json",
         type: "PUT",
         url: "api/linkproperties/" + id,
-        data: JSON.stringify({trafficDirection: data.trafficDirection}),
+        data: JSON.stringify({trafficDirection: data.trafficDirection, functionalClass: data.functionalClass}),
         dataType: "json",
         success: success,
         error: failure
