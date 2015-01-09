@@ -53,11 +53,11 @@ public class OracleArray {
         }
     }
 
-    private static class ResultSetToAdjustedTrafficDirection implements ResultSetToElement<Tuple2<Long, Int>> {
+    private static class ResultSetToIDIntTuple implements ResultSetToElement<Tuple2<Long, Int>> {
         public Tuple2<Long, Int> convert(ResultSet resultSet) throws SQLException {
             long mmlId = resultSet.getLong(1);
-            int trafficDirection = resultSet.getInt(2);
-            return new Tuple2(mmlId, trafficDirection);
+            int value = resultSet.getInt(2);
+            return new Tuple2(mmlId, value);
         }
     }
 
@@ -87,6 +87,11 @@ public class OracleArray {
 
     public static List<Tuple2<Long, Int>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
         String query = "SELECT mml_id, traffic_direction FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToAdjustedTrafficDirection());
+        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntTuple());
+    }
+
+    public static List<Tuple2<Long, Int>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, functional_class FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntTuple());
     }
 }

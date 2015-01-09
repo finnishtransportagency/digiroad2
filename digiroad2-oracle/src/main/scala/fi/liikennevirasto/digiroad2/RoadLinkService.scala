@@ -220,18 +220,14 @@ object RoadLinkService {
 
   private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val adjustments: Iterator[(Long, Int)] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).sortBy(_._1).iterator
-      val firstAdjustment: Option[(Long, Int)] = if (adjustments.hasNext) Some(adjustments.next()) else None
-      roadLinks.sortBy(_._2).foldLeft((firstAdjustment, Seq.empty[RoadLink])) { case (acc, roadLink) =>
-        val (currentAdjustment: Option[(Long, Int)], adjustedRoadLinks: Seq[RoadLink]) = acc
-        currentAdjustment match {
-          case Some((mmlId: Long, trafficDirection: Int)) if mmlId == roadLink._2 =>
-            val nextAdjustment = if (adjustments.hasNext) Some(adjustments.next()) else None
-            val adjustedRoadLink = roadLink.copy(_7 = TrafficDirection(Some(trafficDirection)))
-            (nextAdjustment, adjustedRoadLink +: adjustedRoadLinks)
-          case _ => (currentAdjustment, roadLink +: adjustedRoadLinks)
-        }
-      }._2
+      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+
+      roadLinks.map { roadLink =>
+        val functionalClass = if (adjustedFunctionalClasses.contains(roadLink._2)) adjustedFunctionalClasses(roadLink._2).head._2 else roadLink._6
+        val trafficDirection = if (adjustedTrafficDirections.contains(roadLink._2)) TrafficDirection(Some(adjustedTrafficDirections(roadLink._2).head._2)) else roadLink._7
+        roadLink.copy(_6 = functionalClass, _7 = trafficDirection)
+      }
     }
   }
 
