@@ -203,17 +203,38 @@ object RoadLinkService {
   }
 
   def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
-    val mmlId = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }._2
+    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink._2, unadjustedRoadLink._7)
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val trafficDirectionValue = trafficDirection.value
-      val optionalTrafficDirection: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
-      optionalTrafficDirection match {
-        case Some(direction) =>
-          if (direction != trafficDirectionValue) {
+      val optionalTrafficDirectionAdjustment: Option[Int] = sql"""select traffic_direction from adjusted_traffic_direction where mml_id = $mmlId""".as[Int].firstOption
+      optionalTrafficDirectionAdjustment match {
+        case Some(trafficDirectionAdjustment) =>
+          if (trafficDirectionAdjustment != trafficDirectionValue) {
             sqlu"""update adjusted_traffic_direction set traffic_direction = $trafficDirectionValue where mml_id = $mmlId""".execute()
           }
         case None =>
-          sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+          if (unadjustedTrafficDirection.value != trafficDirectionValue) {
+            sqlu"""insert into adjusted_traffic_direction (mml_id, traffic_direction) values ($mmlId, $trafficDirectionValue)""".execute()
+          }
+      }
+    }
+  }
+
+  def adjustFunctionalClass(id: Long, functionalClass: Int) = {
+    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedFunctionalClass) = (unadjustedRoadLink._2, unadjustedRoadLink._6)
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val optionalFunctionalClassAdjustment: Option[Int] = sql"""select functional_class from adjusted_functional_class where mml_id = $mmlId""".as[Int].firstOption
+      optionalFunctionalClassAdjustment match {
+        case Some(functionalClassAdjustment) =>
+          if (functionalClassAdjustment != functionalClass) {
+            sqlu"""update adjusted_functional_class set functional_class = $functionalClass where mml_id = $mmlId""".execute()
+          }
+        case None =>
+          if (unadjustedFunctionalClass != functionalClass) {
+            sqlu"""insert into adjusted_functional_class (mml_id, functional_class) values ($mmlId, $functionalClass)""".execute()
+          }
       }
     }
   }
