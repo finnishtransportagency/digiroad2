@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.oracle.collections;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OraclePreparedStatement;
 import oracle.sql.ARRAY;
+import org.joda.time.DateTime;
 import scala.Double;
 import scala.*;
 import scala.Long;
@@ -42,6 +43,7 @@ public class OracleArray {
     }
 
     private static class ResultSetToLinearAsset implements ResultSetToElement<Tuple6<Long,Long,Int,Int,Double,Double>> {
+        @Override
         public Tuple6<Long, Long, Int, Int, Double, Double> convert(ResultSet resultSet) throws SQLException {
             long id = resultSet.getLong(1);
             long roadLinkId = resultSet.getLong(2);
@@ -53,11 +55,13 @@ public class OracleArray {
         }
     }
 
-    private static class ResultSetToIDIntTuple implements ResultSetToElement<Tuple2<Long, Int>> {
-        public Tuple2<Long, Int> convert(ResultSet resultSet) throws SQLException {
+    private static class ResultSetToIDIntModifiedAtTuple implements ResultSetToElement<Tuple3<Long, Int, DateTime>> {
+        @Override
+        public Tuple3<Long, Int, DateTime> convert(ResultSet resultSet) throws SQLException {
             long mmlId = resultSet.getLong(1);
             int value = resultSet.getInt(2);
-            return new Tuple2(mmlId, value);
+            DateTime modifiedAt = DateTime.parse(resultSet.getString(3));
+            return new Tuple3(mmlId, value, modifiedAt);
         }
     }
 
@@ -85,13 +89,13 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new ResultSetToLinearAsset());
     }
 
-    public static List<Tuple2<Long, Int>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, traffic_direction FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntTuple());
+    public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, traffic_direction, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntModifiedAtTuple());
     }
 
-    public static List<Tuple2<Long, Int>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntTuple());
+    public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, functional_class, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntModifiedAtTuple());
     }
 }

@@ -3,9 +3,11 @@ package fi.liikennevirasto.digiroad2
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
 
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import org.joda.time.LocalDate
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.{DateTime, LocalDate}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -24,7 +26,8 @@ import _root_.oracle.spatial.geometry.JGeometry
 import collection.JavaConversions._
 
 object RoadLinkService {
-  type RoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
+  type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
+  type RoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String])
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -196,10 +199,10 @@ object RoadLinkService {
     }
   }
 
-  private def getRoadLinkProperties(id: Long): RoadLink = {
+  private def getRoadLinkProperties(id: Long): BasicRoadLink = {
     sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, mod(functionalroadclass, 10), liikennevirran_suunta
             from tielinkki_ctas where dr1_id = $id"""
-      .as[RoadLink].first()
+      .as[BasicRoadLink].first()
   }
 
   private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long) = {
@@ -218,27 +221,45 @@ object RoadLinkService {
     }
   }
 
-  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection) = {
-    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection): Unit = {
+    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink._2, unadjustedRoadLink._7)
     addAdjustment("adjusted_traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId)
   }
 
-  def adjustFunctionalClass(id: Long, functionalClass: Int) = {
-    val unadjustedRoadLink: RoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+  def adjustFunctionalClass(id: Long, functionalClass: Int): Unit = {
+    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedFunctionalClass) = (unadjustedRoadLink._2, unadjustedRoadLink._6)
     addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId)
   }
 
-  private def adjustedRoadLinks(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
-      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(roadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+  private def basicToAdjusted(basic: BasicRoadLink, modifiedAt: Option[DateTime]): RoadLink = {
+    (basic._1, basic._2, basic._3, basic._4,
+     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print))
+  }
 
-      roadLinks.map { roadLink =>
-        val functionalClass = if (adjustedFunctionalClasses.contains(roadLink._2)) adjustedFunctionalClasses(roadLink._2).head._2 else roadLink._6
-        val trafficDirection = if (adjustedTrafficDirections.contains(roadLink._2)) TrafficDirection(Some(adjustedTrafficDirections(roadLink._2).head._2)) else roadLink._7
-        roadLink.copy(_6 = functionalClass, _7 = trafficDirection)
+  private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[RoadLink] = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+
+      basicRoadLinks.map { basicRoadLink =>
+        val mmlId = basicRoadLink._2
+        val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
+        val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
+        val functionalClassValue = functionalClass.map(_._2).getOrElse(basicRoadLink._6)
+        val trafficDirectionValue = trafficDirection.map( trafficDirection =>
+          TrafficDirection(trafficDirection._2)
+        ).getOrElse(basicRoadLink._7)
+
+        val modifiedAt = (functionalClass.map(_._3), trafficDirection.map(_._3)) match {
+          case (Some(fcModifiedAt), Some(tdModifiedAt)) => if (fcModifiedAt.isAfter(tdModifiedAt)) Some(fcModifiedAt) else Some(tdModifiedAt)
+          case (Some(fcModifiedAt), None) => Some(fcModifiedAt)
+          case (None, Some(tdModifiedAt)) => Some(tdModifiedAt)
+          case (None, None) => None
+        }
+
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue), modifiedAt)
       }
     }
   }
@@ -279,7 +300,7 @@ object RoadLinkService {
                                      'querytype=WINDOW'
                                     ) = 'TRUE'
       """
-      Q.queryNA[RoadLink](query).iterator().toSeq
+      Q.queryNA[BasicRoadLink](query).iterator().toSeq
     }
     adjustedRoadLinks(roadLinks)
   }
