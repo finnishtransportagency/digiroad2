@@ -187,7 +187,8 @@
 
     return {
       show: show,
-      hide: hide
+      hide: hide,
+      minZoomForContent: zoomlevels.minZoomForRoadLinks
     };
   };
 })(this);

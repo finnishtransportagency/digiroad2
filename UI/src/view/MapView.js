@@ -8,7 +8,8 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      if (!zoomlevels.isInAssetZoomLevel(mapState.zoom)) {
+      var minZoomForContent = layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
+      if (mapState.zoom < minZoomForContent) {
         if (isInitialized && mapState.hasZoomLevelChanged) {
           showAssetZoomDialog();
         }

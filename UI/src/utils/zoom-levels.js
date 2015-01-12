@@ -4,11 +4,12 @@
       return zoom >= this.minZoomForRoadLinks;
     },
     isInAssetZoomLevel: function(zoom) {
-      return zoom >= 9;
+      return zoom >= this.minZoomForAssets;
     },
     getAssetZoomLevelIfNotCloser: function(zoom) {
       return zoom < 10 ? 10 : zoom;
     },
+    minZoomForAssets: 9,
     minZoomForRoadLinks: 10,
     maxZoomLevel: 12
   };
