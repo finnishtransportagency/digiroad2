@@ -22,7 +22,7 @@ case class User(id: Long, username: String, configuration: Configuration) {
   }
 
   def isAuthorizedFor(municipalityCode: Int): Boolean =
-    configuration.authorizedMunicipalities.contains(municipalityCode)
+    isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 }
 
 object Role {
