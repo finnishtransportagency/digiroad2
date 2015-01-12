@@ -13,6 +13,9 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.RoadLinkService
 
+// FIXME:
+// - rename to mass transit stop service
+// - move common asset functionality to asset service
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 

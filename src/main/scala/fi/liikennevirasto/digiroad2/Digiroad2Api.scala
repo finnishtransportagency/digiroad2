@@ -4,15 +4,12 @@ import org.scalatra._
 import org.json4s._
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import scala.Some
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.user.{Role, User}
+import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
@@ -150,6 +147,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/linkproperties/:id") {
     val id = params("id").toLong
+    val municipalityCode = RoadLinkService.getMunicipalityCode(id)
+    val user = userProvider.getCurrentUser()
+    if (!user.hasEarlyAccess() || !user.isAuthorizedFor(municipalityCode.get)) {
+      halt(Unauthorized("User not authorized"))
+    }
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     RoadLinkService.adjustTrafficDirection(id, trafficDirection)
@@ -261,12 +263,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+
   put("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val id = params("id").toLong
+    if (!user.hasEarlyAccess() || !AssetService.getMunicipalityCodes(id).forall(user.isAuthorizedFor(_))) {
       halt(Unauthorized("User not authorized"))
     }
-    val id = params("id").toLong
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     (expiredOption, valueOption) match {
@@ -282,11 +285,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   post("/numericallimits") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
+    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
+    if (!user.hasEarlyAccess() || !user.isAuthorizedFor(municipalityCode.get)) {
       halt(Unauthorized("User not authorized"))
     }
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val username = user.username
@@ -298,14 +302,15 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   post("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
+    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
+    if (!user.hasEarlyAccess() || !user.isAuthorizedFor(municipalityCode.get)) {
       halt(Unauthorized("User not authorized"))
     }
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
     NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
@@ -318,10 +323,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val speedLimitId = params("speedLimitId").toLong
+    if (!user.hasEarlyAccess() || !AssetService.getMunicipalityCodes(speedLimitId).forall(user.isAuthorizedFor(_))) {
       halt(Unauthorized("User not authorized"))
     }
-    val speedLimitId = params("speedLimitId").toLong
     (parsedBody \ "limit").extractOpt[Int] match {
       case Some(limit) =>
         linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username) match {
@@ -334,11 +339,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
+    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
+    if (!user.hasEarlyAccess() || !user.isAuthorizedFor(municipalityCode.get)) {
       halt(Unauthorized("User not authorized"))
     }
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
-                                        (parsedBody \ "roadLinkId").extract[Long],
+                                        roadLinkId,
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "limit").extract[Int],
                                         userProvider.getCurrentUser().username)
