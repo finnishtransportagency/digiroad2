@@ -15,6 +15,9 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.RoadLinkType
 
+// FIXME:
+// - rename to speed limit service
+// - move common asset functionality to asset service
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
