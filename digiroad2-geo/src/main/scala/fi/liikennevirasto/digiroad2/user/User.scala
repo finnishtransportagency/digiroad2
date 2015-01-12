@@ -17,6 +17,10 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Operator)
   }
 
+  def hasEarlyAccess(): Boolean = {
+    configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
+  }
+
   def isAuthorizedFor(municipalityCode: Int): Boolean =
     configuration.authorizedMunicipalities.contains(municipalityCode)
 }
@@ -24,4 +28,5 @@ case class User(id: Long, username: String, configuration: Configuration) {
 object Role {
   val Operator = "operator"
   val Administrator = "administrator"
+  val Premium = "premium"
 }
