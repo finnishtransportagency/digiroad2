@@ -1,19 +1,21 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.scalatra._
 import org.json4s._
 import org.scalatra.json._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import org.json4s.JsonDSL._
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.{LocalDate, DateTime}
 import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, RequestHeaderAuthentication, UnauthenticatedException}
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import scala.Some
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.user.{Role, User}
+import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
+import scala.slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import scala.slick.jdbc.{StaticQuery => Q}
+import Q.interpolation
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -266,12 +268,25 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  private def getMunicipalityCodes(assetId: Long): Set[Int] = {
+    val roadLinkIds = Database.forDataSource(ds).withDynTransaction {
+      sql"""
+      select lrm.road_link_id
+        from asset a
+        join asset_link al on a.ID = al.ASSET_ID
+        join lrm_position lrm on lrm.id = al.POSITION_ID
+        where a.id = $assetId
+    """.as[Long].list
+    }
+    roadLinkIds.flatMap(RoadLinkService.getMunicipalityCode(_)).toSet
+  }
+
   put("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val id = params("id").toLong
+    if (!user.hasEarlyAccess() || !getMunicipalityCodes(id).forall(user.isAuthorizedFor(_))) {
       halt(Unauthorized("User not authorized"))
     }
-    val id = params("id").toLong
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     (expiredOption, valueOption) match {
@@ -325,10 +340,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess()) {
+    val speedLimitId = params("speedLimitId").toLong
+    if (!user.hasEarlyAccess() || !getMunicipalityCodes(speedLimitId).forall(user.isAuthorizedFor(_))) {
       halt(Unauthorized("User not authorized"))
     }
-    val speedLimitId = params("speedLimitId").toLong
     (parsedBody \ "limit").extractOpt[Int] match {
       case Some(limit) =>
         linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username) match {
