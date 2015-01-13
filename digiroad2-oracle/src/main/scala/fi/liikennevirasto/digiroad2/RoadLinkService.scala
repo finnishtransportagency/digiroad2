@@ -195,32 +195,36 @@ object RoadLinkService {
       .as[BasicRoadLink].first()
   }
 
-  private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long) = {
+  private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long, username: String) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val optionalAdjustment: Option[Int] = sql"""select #$adjustmentColumn from #$adjustmentTable where mml_id = $mmlId""".as[Int].firstOption
       optionalAdjustment match {
         case Some(existingAdjustment) =>
           if (existingAdjustment != adjustment) {
-            sqlu"""update #$adjustmentTable set #$adjustmentColumn = $adjustment, modified_date = current_timestamp where mml_id = $mmlId""".execute()
+            sqlu"""update #$adjustmentTable
+                     set #$adjustmentColumn = $adjustment,
+                         modified_date = current_timestamp,
+                         modified_by = $username
+                     where mml_id = $mmlId""".execute()
           }
         case None =>
           if (unadjustedValue != adjustment) {
-            sqlu"""insert into #$adjustmentTable (mml_id, #$adjustmentColumn) values ($mmlId, $adjustment)""".execute()
+            sqlu"""insert into #$adjustmentTable (mml_id, #$adjustmentColumn, modified_by) values ($mmlId, $adjustment, $username)""".execute()
           }
       }
     }
   }
 
-  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection): Unit = {
+  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink._2, unadjustedRoadLink._7)
-    addAdjustment("adjusted_traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId)
+    addAdjustment("adjusted_traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId, username)
   }
 
-  def adjustFunctionalClass(id: Long, functionalClass: Int): Unit = {
+  def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedFunctionalClass) = (unadjustedRoadLink._2, unadjustedRoadLink._6)
-    addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId)
+    addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId, username)
   }
 
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
