@@ -1,29 +1,19 @@
 package fi.liikennevirasto.digiroad2
 
-import java.text.{DecimalFormat, NumberFormat}
-import java.util.Locale
-
+import _root_.oracle.spatial.geometry.JGeometry
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, RoadLinkType, TrafficDirection}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.DateTime
 
+import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.GetResult
-import scala.slick.jdbc.PositionedResult
 import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{StaticQuery => Q}
-
-import com.jolbox.bonecp.BoneCPConfig
-import com.jolbox.bonecp.BoneCPDataSource
-
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, RoadLink, BoundingRectangle, RoadLinkType}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.user.User
-import _root_.oracle.spatial.geometry.JGeometry
-import collection.JavaConversions._
+import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
