@@ -27,7 +27,7 @@ import collection.JavaConversions._
 
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
-  type RoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String])
+  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String])
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -233,12 +233,12 @@ object RoadLinkService {
     addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId)
   }
 
-  private def basicToAdjusted(basic: BasicRoadLink, modifiedAt: Option[DateTime]): RoadLink = {
+  private def basicToAdjusted(basic: BasicRoadLink, modifiedAt: Option[DateTime]): AdjustedRoadLink = {
     (basic._1, basic._2, basic._3, basic._4,
      basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print))
   }
 
-  private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[RoadLink] = {
+  private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
@@ -264,12 +264,12 @@ object RoadLinkService {
     }
   }
 
-  def getRoadLink(id: Long): RoadLink = {
+  def getRoadLink(id: Long): AdjustedRoadLink = {
     val roadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     adjustedRoadLinks(Seq(roadLink)).head
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
     val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
