@@ -132,7 +132,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
           bounds = boundingRectangle,
           municipalities = municipalities).map { roadLink =>
         val (id, mmlId, points, length, roadLinkType, functionalClass,
-             trafficDirection, modifiedAt) = roadLink
+             trafficDirection, modifiedAt, modifiedBy) = roadLink
         Map("roadLinkId" -> id,
             "mmlId" -> mmlId,
             "points" -> points,
@@ -140,7 +140,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
             "type" -> roadLinkType.toString,
             "functionalClass" -> functionalClass,
             "trafficDirection" -> trafficDirection.toString,
-            "modifiedAt" -> modifiedAt)
+            "modifiedAt" -> modifiedAt,
+            "modifiedBy" -> modifiedBy)
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -160,7 +161,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     RoadLinkService.adjustFunctionalClass(id, functionalClass)
     val (_, mmlId, points, length, roadLinkType,
          updatedFunctionalClass, updatedTrafficDirection,
-         modifiedAt) = RoadLinkService.getRoadLink(id)
+         modifiedAt, modifiedBy) = RoadLinkService.getRoadLink(id)
     Map("roadLinkId" -> id,
       "mmlId" -> mmlId,
       "points" -> points,
@@ -168,7 +169,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       "type" -> roadLinkType.toString,
       "functionalClass" -> updatedFunctionalClass,
       "trafficDirection" -> updatedTrafficDirection.toString,
-      "modifiedAt" -> modifiedAt)
+      "modifiedAt" -> modifiedAt,
+      "modifiedBy" -> modifiedBy)
   }
 
   get("/images/:imageId") {

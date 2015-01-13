@@ -17,7 +17,7 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
-  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String])
+  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String], Option[String])
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -223,15 +223,16 @@ object RoadLinkService {
     addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId)
   }
 
-  private def basicToAdjusted(basic: BasicRoadLink, modifiedAt: Option[DateTime]): AdjustedRoadLink = {
+  private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
+    val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic._1, basic._2, basic._3, basic._4,
-     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print))
+     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy)
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
-      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
 
       basicRoadLinks.map { basicRoadLink =>
         val mmlId = basicRoadLink._2
@@ -242,14 +243,18 @@ object RoadLinkService {
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
 
-        val modifiedAt = (functionalClass.map(_._3), trafficDirection.map(_._3)) match {
-          case (Some(fcModifiedAt), Some(tdModifiedAt)) => if (fcModifiedAt.isAfter(tdModifiedAt)) Some(fcModifiedAt) else Some(tdModifiedAt)
-          case (Some(fcModifiedAt), None) => Some(fcModifiedAt)
-          case (None, Some(tdModifiedAt)) => Some(tdModifiedAt)
+        val modification = (functionalClass, trafficDirection) match {
+          case (Some((_, _, fcModifiedAt, fcModifiedBy)), Some((_, _, tdModifiedAt, tdModifiedBy))) =>
+            if (fcModifiedAt.isAfter(tdModifiedAt))
+              Some((fcModifiedAt, fcModifiedBy))
+            else
+              Some((tdModifiedAt, tdModifiedBy))
+          case (Some((_, _, fcModifiedAt, fcModifiedBy)), None) => Some((fcModifiedAt, fcModifiedBy))
+          case (None, Some((_, _, tdModifiedAt, tdModifiedBy))) => Some((tdModifiedAt, tdModifiedBy))
           case (None, None) => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue), modifiedAt)
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue), modification)
       }
     }
   }

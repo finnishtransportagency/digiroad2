@@ -55,13 +55,14 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkAdjustment implements RowToElement<Tuple3<Long, Int, DateTime>> {
+    private static class RowToRoadLinkAdjustment implements RowToElement<Tuple4<Long, Int, DateTime, String>> {
         @Override
-        public Tuple3<Long, Int, DateTime> convert(ResultSet row) throws SQLException {
+        public Tuple4<Long, Int, DateTime, String> convert(ResultSet row) throws SQLException {
             long mmlId = row.getLong(1);
             int value = row.getInt(2);
             DateTime modifiedAt = DateTime.parse(row.getString(3));
-            return new Tuple3(mmlId, value, modifiedAt);
+            String modifiedBy = row.getString(4);
+            return new Tuple4(mmlId, value, modifiedAt, modifiedBy);
         }
     }
 
@@ -89,13 +90,13 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
     }
 
-    public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 }
