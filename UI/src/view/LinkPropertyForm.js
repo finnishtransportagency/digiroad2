@@ -36,7 +36,7 @@
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
           '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedAt %></p>' +
+            '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
           '<div class="form-group">' +
             '<label class="control-label">MML ID</label>' +
@@ -64,7 +64,8 @@
         rootElement.find('.form-controls').toggle(!readOnly);
       };
       eventbus.on('linkProperties:selected linkProperties:cancelled linkProperties:saved', function(linkProperties) {
-        linkProperties.modifiedAt = linkProperties.modifiedAt || '-';
+        linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
+        linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = localizedFunctionalClasses[linkProperties.functionalClass] || 'Tuntematon';
         linkProperties.localizedType = localizedTypes[linkProperties.type];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
