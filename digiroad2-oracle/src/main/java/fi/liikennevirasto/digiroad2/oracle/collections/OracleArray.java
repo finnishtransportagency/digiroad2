@@ -90,12 +90,12 @@ public class OracleArray {
     }
 
     public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, traffic_direction, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
     public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 }
