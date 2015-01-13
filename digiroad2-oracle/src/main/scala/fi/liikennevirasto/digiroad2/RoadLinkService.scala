@@ -201,7 +201,7 @@ object RoadLinkService {
       optionalAdjustment match {
         case Some(existingAdjustment) =>
           if (existingAdjustment != adjustment) {
-            sqlu"""update #$adjustmentTable set #$adjustmentColumn = $adjustment where mml_id = $mmlId""".execute()
+            sqlu"""update #$adjustmentTable set #$adjustmentColumn = $adjustment, modified_date = current_timestamp where mml_id = $mmlId""".execute()
           }
         case None =>
           if (unadjustedValue != adjustment) {
