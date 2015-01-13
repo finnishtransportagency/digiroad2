@@ -16,11 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OracleArray {
-    private static interface ResultSetToElement<T> {
-        T convert(ResultSet resultSet) throws SQLException;
+    private static interface RowToElement<T> {
+        T convert(ResultSet row) throws SQLException;
     }
 
-    private static <T> List<T> queryWithIdArray(List ids, Connection connection, String query, ResultSetToElement<T> resultSetToElement) throws SQLException {
+    private static <T> List<T> queryWithIdArray(List ids, Connection connection, String query, RowToElement<T> rowToElement) throws SQLException {
         OracleConnection oracleConnection = (OracleConnection) connection;
         ARRAY oracleArray = oracleConnection.createARRAY("ROAD_LINK_VARRAY", ids.toArray());
         PreparedStatement statement = oracleConnection.prepareStatement(query);
@@ -31,7 +31,7 @@ public class OracleArray {
             try {
                 ArrayList<T> assetLinks = new ArrayList<T>();
                 while (resultSet.next()) {
-                   assetLinks.add(resultSetToElement.convert(resultSet));
+                   assetLinks.add(rowToElement.convert(resultSet));
                 }
                 return assetLinks;
             } finally {
@@ -42,25 +42,25 @@ public class OracleArray {
         }
     }
 
-    private static class ResultSetToLinearAsset implements ResultSetToElement<Tuple6<Long,Long,Int,Int,Double,Double>> {
+    private static class RowToLinearAsset implements RowToElement<Tuple6<Long,Long,Int,Int,Double,Double>> {
         @Override
-        public Tuple6<Long, Long, Int, Int, Double, Double> convert(ResultSet resultSet) throws SQLException {
-            long id = resultSet.getLong(1);
-            long roadLinkId = resultSet.getLong(2);
-            int sideCode = resultSet.getInt(3);
-            int limitValue = resultSet.getInt(4);
-            double startMeasure = resultSet.getDouble(5);
-            double endMeasure = resultSet.getDouble(6);
+        public Tuple6<Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
+            long id = row.getLong(1);
+            long roadLinkId = row.getLong(2);
+            int sideCode = row.getInt(3);
+            int limitValue = row.getInt(4);
+            double startMeasure = row.getDouble(5);
+            double endMeasure = row.getDouble(6);
             return new Tuple6(id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure);
         }
     }
 
-    private static class ResultSetToIDIntModifiedAtTuple implements ResultSetToElement<Tuple3<Long, Int, DateTime>> {
+    private static class RowToRoadLinkAdjustment implements RowToElement<Tuple3<Long, Int, DateTime>> {
         @Override
-        public Tuple3<Long, Int, DateTime> convert(ResultSet resultSet) throws SQLException {
-            long mmlId = resultSet.getLong(1);
-            int value = resultSet.getInt(2);
-            DateTime modifiedAt = DateTime.parse(resultSet.getString(3));
+        public Tuple3<Long, Int, DateTime> convert(ResultSet row) throws SQLException {
+            long mmlId = row.getLong(1);
+            int value = row.getInt(2);
+            DateTime modifiedAt = DateTime.parse(row.getString(3));
             return new Tuple3(mmlId, value, modifiedAt);
         }
     }
@@ -74,7 +74,7 @@ public class OracleArray {
                 "JOIN SINGLE_CHOICE_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "JOIN ENUMERATED_VALUE e ON s.enumerated_value_id = e.id " +
                 "WHERE a.asset_type_id = 20 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToLinearAsset());
+        return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
     }
 
     public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
@@ -86,16 +86,16 @@ public class OracleArray {
                 "JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
                 "AND (a.valid_to >= sysdate OR a.valid_to is null)";
-        return queryWithIdArray(ids, connection, query, new ResultSetToLinearAsset());
+        return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
     }
 
     public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
         String query = "SELECT mml_id, traffic_direction, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntModifiedAtTuple());
+        return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
     public static List<Tuple3<Long, Int, DateTime>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
         String query = "SELECT mml_id, functional_class, to_char(created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS') FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new ResultSetToIDIntModifiedAtTuple());
+        return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 }
