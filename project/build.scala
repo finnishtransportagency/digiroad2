@@ -86,6 +86,7 @@ object Digiroad2Build extends Build {
         "org.json4s"   %% "json4s-jackson" % "3.2.4",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
+        "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
         "commons-io" % "commons-io" % "2.4",
