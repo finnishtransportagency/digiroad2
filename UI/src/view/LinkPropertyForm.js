@@ -1,13 +1,19 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
     var localizedFunctionalClasses = {
-      1: 'Seudullinen pääkatu / valtatie',
-      2: 'Seudullinen pääkatu / kantatie',
-      3: 'Alueellinen pääkatu / seututie',
-      4: 'Kokoojakatu / yhdystie',
-      5: 'Liityntäkatu / tärkeä yksityistie',
-      6: 'Muu yksityistie',
-      0: 'Kevyen liikenteen väylä'
+      11: 'Valtatie',
+      12: 'Kantatie',
+      13: 'Seututie',
+      14: 'Yhdystie',
+      21: 'Seudullinen pääkatu 1',
+      22: 'Seudullinen pääkatu 2',
+      23: 'Alueellinen pääkatu',
+      24: 'Kokoojakatu',
+      25: 'Liityntäkatu',
+      35: 'Tärkeä yksityistie',
+      36: 'Muu yksityistie',
+      40: 'Kevyenliikenteen väylä',
+      60: 'Lautta / lossi'
     };
 
     var localizedTypes = {

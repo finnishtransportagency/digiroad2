@@ -27,8 +27,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers {
   test("Override road link functional class with adjusted value") {
     val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
     val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { case (id, _, _, _, _, _, _, _, _) => id == 7886262}.map(_._6) should be(Some(5))
-    roadLinks.find { case (_, mmlId, _, _, _, _, _, _, _) => mmlId == 391203482}.map(_._6) should be(Some(4))
+    roadLinks.find { case (id, _, _, _, _, _, _, _, _) => id == 7886262}.map(_._6) should be(Some(25))
+    roadLinks.find { case (_, mmlId, _, _, _, _, _, _, _) => mmlId == 391203482}.map(_._6) should be(Some(24))
   }
 
   test("Overriden road link adjustments return latest modification") {
