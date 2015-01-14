@@ -131,14 +131,17 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       RoadLinkService.getRoadLinks(
           bounds = boundingRectangle,
           municipalities = municipalities).map { roadLink =>
-        val (id, mmlId, points, length, roadLinkType, functionalClass, trafficDirection) = roadLink
+        val (id, mmlId, points, length, roadLinkType, functionalClass,
+             trafficDirection, modifiedAt, modifiedBy) = roadLink
         Map("roadLinkId" -> id,
             "mmlId" -> mmlId,
             "points" -> points,
             "length" -> length,
             "type" -> roadLinkType.toString,
             "functionalClass" -> functionalClass,
-            "trafficDirection" -> trafficDirection.toString)
+            "trafficDirection" -> trafficDirection.toString,
+            "modifiedAt" -> modifiedAt,
+            "modifiedBy" -> modifiedBy)
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -154,16 +157,20 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    RoadLinkService.adjustTrafficDirection(id, trafficDirection)
-    RoadLinkService.adjustFunctionalClass(id, functionalClass)
-    val (_, mmlId, points, length, roadLinkType, updatedFunctionalClass, updatedTrafficDirection) = RoadLinkService.getRoadLink(id)
+    RoadLinkService.adjustTrafficDirection(id, trafficDirection, user.username)
+    RoadLinkService.adjustFunctionalClass(id, functionalClass, user.username)
+    val (_, mmlId, points, length, roadLinkType,
+         updatedFunctionalClass, updatedTrafficDirection,
+         modifiedAt, modifiedBy) = RoadLinkService.getRoadLink(id)
     Map("roadLinkId" -> id,
       "mmlId" -> mmlId,
       "points" -> points,
       "length" -> length,
       "type" -> roadLinkType.toString,
       "functionalClass" -> updatedFunctionalClass,
-      "trafficDirection" -> updatedTrafficDirection.toString)
+      "trafficDirection" -> updatedTrafficDirection.toString,
+      "modifiedAt" -> modifiedAt,
+      "modifiedBy" -> modifiedBy)
   }
 
   get("/images/:imageId") {
