@@ -49,9 +49,9 @@ _Muokkaustila._
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
-- Kuntak&auml;ytt&auml;j&auml;ll&auml; on oikeudet oman kunnan maantieteellisen kuntarajan sis&auml;puolella oleviin aineistoihin.
-- ELY-k&auml;ytt&auml;j&auml;ll&auml; on oikeudet oman ELY-alueensa maantieteellisen rajan sis&auml;puolella oleviin aineistoihin.
-- DR-operaattorilla on oikeudet koko Suomen aineistoihin.
+- Perusk&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarojen sis&auml;puolella oleviin pys&auml;kkiaineistoihin.
+- Premium-k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarojen sis&auml;puolella oleviin kaikkiin aineistoihin.
+- DR-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
 
 Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kirjautuneelle henkil&ouml;lle ole luotu Digiroad-oikeuksia. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
 
