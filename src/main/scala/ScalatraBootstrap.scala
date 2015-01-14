@@ -12,5 +12,6 @@ class ScalatraBootstrap extends LifeCycle {
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new DataImportApi, "/api/import/*")
+    context.mount(new IntegrationApi, "/api/integration/*")
   }
 }
