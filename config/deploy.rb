@@ -52,6 +52,7 @@ namespace :deploy do
       execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
       execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp conversion.bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
+      execute "cd #{deploy_path} && cp authentication.properties #{release_path}/digiroad2/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp ftp.conf #{release_path}/."
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} assembly"
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/"

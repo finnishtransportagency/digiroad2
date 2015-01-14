@@ -10,14 +10,30 @@ import org.scalatra.auth.{ScentrySupport, ScentryConfig}
 import org.scalatra.{ScalatraBase}
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.util.Properties
 
 case class BasicAuthUser(username: String)
 
 class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String)
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
 
-  def validate(userName: String, password: String)(implicit request: HttpServletRequest, response: HttpServletResponse): Option[BasicAuthUser] = {
-    if (userName == "test" && password == "test") Some(BasicAuthUser("test"))
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/authentication.properties"))
+    props
+  }
+
+  private def getProperty(name: String): String = {
+    val property = properties.getProperty(name)
+    if (property != null) {
+      property
+    } else {
+      throw new RuntimeException(s"cannot find property $name")
+    }
+  }
+
+  def validate(username: String, password: String)(implicit request: HttpServletRequest, response: HttpServletResponse): Option[BasicAuthUser] = {
+    if (username == getProperty("authentication.basic.username") && password == getProperty("authentication.basic.password")) Some(BasicAuthUser(username))
     else None
   }
 
