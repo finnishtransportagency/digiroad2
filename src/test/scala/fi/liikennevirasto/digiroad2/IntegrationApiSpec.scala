@@ -29,4 +29,13 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
     }
   }
 
+  test("Get assets requires municipality number") {
+    getWithBasicUserAuth("/assets", "kalpa", "kalpa") {
+      status should equal(400)
+    }
+    getWithBasicUserAuth("/assets?municipality=235", "kalpa", "kalpa") {
+      status should equal(200)
+    }
+  }
+
 }
