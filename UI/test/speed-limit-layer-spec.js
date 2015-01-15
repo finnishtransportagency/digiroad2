@@ -15,19 +15,23 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
           }
         });
         var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);
-        layer = new SpeedLimitLayer({
-          map: {
-            addControl: function(control) {
-              control.handlers.feature.activate = function() {};
-            },
-            events: {
-              register: function() {},
-              unregister: function() {}
-            },
-            getZoom: function() {
-              return 10;
-            }
+        var map = {
+          addControl: function(control) {
+            if (control.handlers) control.handlers.feature.activate = function() {};
+            control.map = map;
           },
+          events: {
+            register: function() {},
+            unregister: function() {},
+            registerPriority: function() {}
+          },
+          getZoom: function() {
+            return 10;
+          },
+          viewPortDiv: ""
+        };
+        layer = new SpeedLimitLayer({
+          map: map,
           application: {
             getSelectedTool: function() { return 'Select'; }
           },

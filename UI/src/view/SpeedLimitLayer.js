@@ -277,6 +277,11 @@ window.SpeedLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
+  var logBounds = function(bounds) { console.log(bounds); };
+  var boxControl = new OpenLayers.Control();
+  map.addControl(boxControl);
+  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logBounds }, { keyMask: OpenLayers.Handler.MOD_CTRL });
+
   var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
       return feature.attributes.id === id;
@@ -305,10 +310,12 @@ window.SpeedLimitLayer = function(params) {
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       selectControl.deactivate();
+      boxHandler.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
       selectControl.activate();
+      boxHandler.activate();
     }
   };
 
@@ -322,6 +329,7 @@ window.SpeedLimitLayer = function(params) {
 
   var stop = function() {
     selectControl.deactivate();
+    boxHandler.deactivate();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
