@@ -277,10 +277,39 @@ window.SpeedLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  var logBounds = function(bounds) { console.log(bounds); };
+  var pixelBoundsToCoordinateBounds = function(bounds) {
+    var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
+    var topRight = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
+    var coordinateBounds = new OpenLayers.Bounds();
+    coordinateBounds.extend(bottomLeft);
+    coordinateBounds.extend(topRight);
+    return coordinateBounds;
+  };
+
+  var getSpeedLimitFeaturesInsideBounds = function(bounds) {
+    return _.filter(vectorLayer.features, function(feature) {
+      return _.find(feature.attributes.points, function(point) {
+        var lonLat = new OpenLayers.LonLat(point.x, point.y);
+        return bounds.containsLonLat(lonLat);
+      });
+    });
+  };
+
+  var logSelectedSpeedLimits = function(bounds) {
+    var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
+    var selectedSpeedLimitFeatures = getSpeedLimitFeaturesInsideBounds(coordinateBounds);
+    var selectedIds = _.chain(selectedSpeedLimitFeatures)
+      .map(function(feature) {
+        return feature.attributes.id;
+      })
+      .unique()
+      .value();
+    console.log('selected speed limits:', selectedIds);
+  };
+
   var boxControl = new OpenLayers.Control();
   map.addControl(boxControl);
-  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logBounds }, { keyMask: OpenLayers.Handler.MOD_CTRL });
+  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logSelectedSpeedLimits }, { keyMask: OpenLayers.Handler.MOD_CTRL });
 
   var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
