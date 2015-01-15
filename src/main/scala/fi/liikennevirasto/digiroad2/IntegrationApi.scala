@@ -1,16 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.DefaultFormats
 import org.json4s.Formats
-import org.scalatra.ScalatraServlet
+import org.scalatra.{BadRequest, ScalatraServlet, ScalatraBase}
 import org.scalatra.json.JacksonJsonSupport
 import org.slf4j.LoggerFactory
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentrySupport, ScentryConfig}
-import org.scalatra.{ScalatraBase}
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.Properties
+import scala.slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
 
@@ -71,5 +73,17 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   get("/data") {
     "Hello, world!\n"
+  }
+
+  get("/assets") {
+    contentType = formats("json")
+    params.get("municipality").map { municipality =>
+      val municipalityNumber = municipality.toInt
+      Database.forDataSource(ds).withDynSession {
+        OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
+      }
+    } getOrElse {
+      BadRequest("Missing mandatory 'municipality' parameter")
+    }
   }
 }
