@@ -307,9 +307,17 @@ window.SpeedLimitLayer = function(params) {
     console.log('selected speed limits:', selectedIds);
   };
 
+  var getModifierKey = function() {
+    if (navigator.platform.toLowerCase().indexOf('mac') === 0) {
+      return OpenLayers.Handler.MOD_META;
+    } else {
+      return OpenLayers.Handler.MOD_CTRL;
+    }
+  };
+
   var boxControl = new OpenLayers.Control();
   map.addControl(boxControl);
-  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logSelectedSpeedLimits }, { keyMask: OpenLayers.Handler.MOD_CTRL });
+  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logSelectedSpeedLimits }, { keyMask: getModifierKey() });
 
   var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
