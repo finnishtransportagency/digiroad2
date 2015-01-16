@@ -339,12 +339,19 @@ window.SpeedLimitLayer = function(params) {
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       selectControl.deactivate();
-      boxHandler.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
       selectControl.activate();
+    }
+    updateMultiSelectBoxHandlerState();
+  };
+
+  var updateMultiSelectBoxHandlerState = function() {
+    if (!application.isReadOnly() && application.getSelectedTool() === 'Select') {
       boxHandler.activate();
+    } else {
+      boxHandler.deactivate();
     }
   };
 
@@ -372,6 +379,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselected', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {

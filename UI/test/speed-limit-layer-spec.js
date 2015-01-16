@@ -33,7 +33,8 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
         layer = new SpeedLimitLayer({
           map: map,
           application: {
-            getSelectedTool: function() { return 'Select'; }
+            getSelectedTool: function() { return 'Select'; },
+            isReadOnly: function() { return true; }
           },
           collection: speedLimitsCollection,
           selectedSpeedLimit: selectedSpeedLimit,
