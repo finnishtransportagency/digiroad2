@@ -280,25 +280,15 @@ window.SpeedLimitLayer = function(params) {
   var pixelBoundsToCoordinateBounds = function(bounds) {
     var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
     var topRight = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
-    var coordinateBounds = new OpenLayers.Bounds();
-    coordinateBounds.extend(bottomLeft);
-    coordinateBounds.extend(topRight);
-    return coordinateBounds;
-  };
-
-  var getSpeedLimitFeaturesInsideBounds = function(bounds) {
-    return _.filter(vectorLayer.features, function(feature) {
-      return _.find(feature.attributes.points, function(point) {
-        var lonLat = new OpenLayers.LonLat(point.x, point.y);
-        return bounds.containsLonLat(lonLat);
-      });
-    });
+    return new OpenLayers.Bounds(bottomLeft.lon, bottomLeft.lat, topRight.lon, topRight.lat);
   };
 
   var logSelectedSpeedLimits = function(bounds) {
     var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
-    var selectedSpeedLimitFeatures = getSpeedLimitFeaturesInsideBounds(coordinateBounds);
-    var selectedIds = _.chain(selectedSpeedLimitFeatures)
+    var selectedIds = _.chain(vectorLayer.features)
+      .filter(function(feature) {
+        return coordinateBounds.toGeometry().intersects(feature.geometry);
+      })
       .map(function(feature) {
         return feature.attributes.id;
       })
