@@ -344,6 +344,23 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  put("/speedlimits") {
+    val user = userProvider.getCurrentUser()
+    val optionalValue = (parsedBody \ "value").extractOpt[Int]
+    val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
+    val authorizedForMunicipalities: Boolean = optionalIds
+      .map(_.forall(AssetService.getMunicipalityCodes(_).forall(user.isAuthorizedFor)))
+      .getOrElse(halt(BadRequest("Speed limit id list not provided")))
+
+    if (!user.hasEarlyAccess() || !authorizedForMunicipalities) {
+      halt(Unauthorized("User not authorized"))
+    }
+    optionalValue match {
+      case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get, value, user.username)
+      case _ => BadRequest("Speed limit value not provided")
+    }
+  }
+
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]

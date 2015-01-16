@@ -79,6 +79,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
+  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String): Seq[Long] = {
+    Database.forDataSource(ds).withDynTransaction {
+      ids.map(OracleLinearAssetDao.updateSpeedLimitValue(_, value, username)).flatten
+    }
+  }
+
   override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, limit: Int, username: String): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
       val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, limit, username)
@@ -93,4 +99,5 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
       logger.info("...done with filling.")
     }
   }
+
 }
