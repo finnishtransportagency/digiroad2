@@ -310,6 +310,9 @@ window.SpeedLimitLayer = function(params) {
   var boxControl = new OpenLayers.Control();
   map.addControl(boxControl);
   var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logSelectedSpeedLimits }, { keyMask: OpenLayers.Handler.MOD_CTRL });
+  boxHandler.dragHandler.checkModifiers = function(evt) {
+    return evt.ctrlKey || evt.metaKey;
+  };
 
   var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
