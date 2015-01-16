@@ -98,10 +98,10 @@ object OracleLinearAssetDao {
 
     val linksOnRoads = linkGeometries.filter { link =>
       val (_, _, _, functionalClass) = link._2
-      Set(1, 2, 3, 4, 5, 6).contains(functionalClass)
+      Set(1, 2, 3, 4, 5, 6).contains(functionalClass % 10)
     }.map { link =>
       val (geometry, length, roadLinkType, _) = link._2
-      link._1 ->(geometry, length, roadLinkType)
+      link._1 -> (geometry, length, roadLinkType)
     }
 
     (filteredSpeedLimits, linksOnRoads)
