@@ -76,6 +76,8 @@
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
         start();
+      } else if (selectedLinkProperty.isDirty()) {
+        displayConfirmMessage();
       } else {
         stop();
       }
