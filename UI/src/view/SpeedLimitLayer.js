@@ -109,6 +109,43 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
+  var showMultiSelectDialog = function(selectedIds) {
+    var confirmDiv =
+      '<div class="modal-overlay confirm-modal">' +
+        '<div class="modal-dialog">' +
+          '<div class="content">' +
+            'Olet valinnut ' + selectedIds.length + ' nopeusrajoitusta' +
+          '</div>' +
+          '<div class="actions">' +
+            '<button class="btn btn-secondary close">Peruuta</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var renderConfirmDialog = function() {
+      $('.container').append(confirmDiv);
+      var modal = $('.modal-dialog');
+      modal.css('margin-top', (modal.outerHeight() / 2) * -1);
+    };
+
+    var bindEvents = function() {
+      $('.confirm-modal .close').on('click', function() {
+        purge();
+      });
+    };
+
+    var show = function() {
+      purge();
+      renderConfirmDialog();
+      bindEvents();
+    };
+
+    var purge = function() {
+      $('.confirm-modal').remove();
+    };
+    show();
+  };
+
   var eventListener = _.extend({running: false}, eventbus);
   var uiState = { zoomLevel: 9 };
 
@@ -299,8 +336,8 @@ window.SpeedLimitLayer = function(params) {
         .value();
       if (selectedIds.length > 0) {
         selectedSpeedLimit.close();
+        showMultiSelectDialog(selectedIds);
       }
-      console.log('selected speed limits:', selectedIds);
     }
   };
 
