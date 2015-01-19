@@ -133,7 +133,7 @@ window.SpeedLimitLayer = function(params) {
         '</div>' +
       '</div>';
 
-    var renderConfirmDialog = function() {
+    var renderDialog = function() {
       $('.container').append(_.template(confirmDiv, {
         selectedIds: selectedIds
       }));
@@ -162,7 +162,7 @@ window.SpeedLimitLayer = function(params) {
 
     var show = function() {
       purge();
-      renderConfirmDialog();
+      renderDialog();
       bindEvents();
     };
 
