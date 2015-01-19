@@ -151,11 +151,9 @@ window.SpeedLimitLayer = function(params) {
         var value = parseInt($('.confirm-modal select').val(), 10);
         backend.updateSpeedLimits(selectedIds, value, function() {
           collection.fetch(map.getExtent());
-          console.log('Speed limit mass update succeeded.');
           eventbus.trigger('speedLimits:massUpdateSucceeded', selectedIds.length);
           purge();
         }, function() {
-          console.log('Speed limit mass update failed.');
           eventbus.trigger('speedLimits:massUpdateFailed', selectedIds.length);
           purge();
         });
