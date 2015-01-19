@@ -284,17 +284,21 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var logSelectedSpeedLimits = function(bounds) {
-    var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
-    var selectedIds = _.chain(vectorLayer.features)
-      .filter(function(feature) {
-        return coordinateBounds.toGeometry().intersects(feature.geometry);
-      })
-      .map(function(feature) {
-        return feature.attributes.id;
-      })
-      .unique()
-      .value();
-    console.log('selected speed limits:', selectedIds);
+    if (selectedSpeedLimit.isDirty()) {
+      displayConfirmMessage()
+    } else {
+      var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
+      var selectedIds = _.chain(vectorLayer.features)
+        .filter(function(feature) {
+          return coordinateBounds.toGeometry().intersects(feature.geometry);
+        })
+        .map(function(feature) {
+          return feature.attributes.id;
+        })
+        .unique()
+        .value();
+      console.log('selected speed limits:', selectedIds);
+    }
   };
 
   var getModifierKey = function() {
