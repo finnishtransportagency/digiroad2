@@ -124,7 +124,7 @@ window.SpeedLimitLayer = function(params) {
           '</div>' +
           '<div class="form-group editable">' +
             '<label class="control-label">Rajoitus</label>' +
-            '<select class="form-control speed-limit">' + speedLimitOptionTags.join('') + '</select>' +
+            '<select class="form-control">' + speedLimitOptionTags.join('') + '</select>' +
           '</div>' +
           '<div class="actions">' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
@@ -146,7 +146,8 @@ window.SpeedLimitLayer = function(params) {
         purge();
       });
       $('.confirm-modal .save').on('click', function() {
-        backend.updateSpeedLimits(selectedIds, 20, function() {
+        var value = parseInt($('.confirm-modal select').val(), 10);
+        backend.updateSpeedLimits(selectedIds, value, function() {
           console.log('Speed limit mass update succeeded.')
         }, function() {
           console.log('Speed limit mass update failed.')
