@@ -297,6 +297,9 @@ window.SpeedLimitLayer = function(params) {
         })
         .unique()
         .value();
+      if (selectedIds.length > 0) {
+        selectedSpeedLimit.close();
+      }
       console.log('selected speed limits:', selectedIds);
     }
   };
