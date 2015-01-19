@@ -110,7 +110,7 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var showMultiSelectDialog = function(selectedIds) {
+  var showMassUpdateDialog = function(selectedIds) {
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
       var selected = value === 50 ? " selected" : "";
@@ -362,7 +362,7 @@ window.SpeedLimitLayer = function(params) {
         .value();
       if (selectedIds.length > 0) {
         selectedSpeedLimit.close();
-        showMultiSelectDialog(selectedIds);
+        showMassUpdateDialog(selectedIds);
       }
     }
   };
