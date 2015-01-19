@@ -111,11 +111,20 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var showMultiSelectDialog = function(selectedIds) {
+    var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
+    var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
+      var selected = value === 50 ? " selected" : "";
+      return '<option value="' + value + '"' + selected + '>' + value + '</option>';
+    });
     var confirmDiv =
       '<div class="modal-overlay confirm-modal">' +
         '<div class="modal-dialog">' +
           '<div class="content">' +
             'Olet valinnut <%- selectedIds.length %> nopeusrajoitusta' +
+          '</div>' +
+          '<div class="form-group editable">' +
+            '<label class="control-label">Rajoitus</label>' +
+            '<select class="form-control speed-limit">' + speedLimitOptionTags.join('') + '</select>' +
           '</div>' +
           '<div class="actions">' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
