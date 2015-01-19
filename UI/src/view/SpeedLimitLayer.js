@@ -148,9 +148,9 @@ window.SpeedLimitLayer = function(params) {
       $('.confirm-modal .save').on('click', function() {
         var value = parseInt($('.confirm-modal select').val(), 10);
         backend.updateSpeedLimits(selectedIds, value, function() {
-          console.log('Speed limit mass update succeeded.')
+          console.log('Speed limit mass update succeeded.');
         }, function() {
-          console.log('Speed limit mass update failed.')
+          console.log('Speed limit mass update failed.');
         });
         purge();
       });
