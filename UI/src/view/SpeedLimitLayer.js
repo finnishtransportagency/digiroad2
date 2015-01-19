@@ -153,6 +153,7 @@ window.SpeedLimitLayer = function(params) {
           eventbus.trigger('speedLimits:massUpdateSucceeded', selectedIds.length);
         }, function() {
           console.log('Speed limit mass update failed.');
+          eventbus.trigger('speedLimits:massUpdateFailed', selectedIds.length);
         });
         purge();
       });
