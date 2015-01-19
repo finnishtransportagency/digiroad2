@@ -19,11 +19,6 @@
 
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
-        _.each(backendAssets, function(asset) {
-          if (asset.floating) {
-            console.log('mass transit stop with external id: ' + asset.externalId + ' is floating');
-          }
-        });
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated', backendAssets);
         } else {
