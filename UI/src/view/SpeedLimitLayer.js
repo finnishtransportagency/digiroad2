@@ -286,6 +286,7 @@ window.SpeedLimitLayer = function(params) {
   var logSelectedSpeedLimits = function(bounds) {
     if (selectedSpeedLimit.isDirty()) {
       displayConfirmMessage()
+      displayConfirmMessage();
     } else {
       var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
       var selectedIds = _.chain(vectorLayer.features)
