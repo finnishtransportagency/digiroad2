@@ -5,6 +5,7 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadCollection = params.roadCollection,
       geometryUtils = params.geometryUtils,
+      backend = params.backend,
       linearAsset = params.linearAsset;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
@@ -118,6 +119,7 @@ window.SpeedLimitLayer = function(params) {
           '</div>' +
           '<div class="actions">' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
+            '<button class="btn btn-primary save">Tallenna</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -132,6 +134,14 @@ window.SpeedLimitLayer = function(params) {
 
     var bindEvents = function() {
       $('.confirm-modal .close').on('click', function() {
+        purge();
+      });
+      $('.confirm-modal .save').on('click', function() {
+        backend.updateSpeedLimits(selectedIds, 20, function() {
+          console.log('Speed limit mass update succeeded.')
+        }, function() {
+          console.log('Speed limit mass update failed.')
+        });
         purge();
       });
     };

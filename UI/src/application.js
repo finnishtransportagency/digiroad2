@@ -140,7 +140,8 @@
         selectedSpeedLimit: models.selectedSpeedLimit,
         roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
-        linearAsset: linearAsset
+        linearAsset: linearAsset,
+        backend: backend
       })
     }, numericalLimitLayers);
 

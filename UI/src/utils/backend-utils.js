@@ -51,6 +51,18 @@
       });
     }, 1000);
 
+     this.updateSpeedLimits = _.throttle(function(ids, value, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/speedlimits",
+        data: JSON.stringify({value: value, ids: ids}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.updateLinkProperties = _.throttle(function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
