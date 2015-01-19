@@ -141,14 +141,30 @@ window.SpeedLimitLayer = function(params) {
       modal.css('margin-top', (modal.outerHeight() / 2) * -1);
     };
 
+    var activateBrowseStyle = function() {
+      _.each(vectorLayer.features, function(feature) {
+        selectControl.unhighlight(feature);
+      });
+      vectorLayer.styleMap = browseStyleMap;
+      vectorLayer.redraw();
+    };
+
+    var activateSelectionStyle = function() {
+      vectorLayer.styleMap = selectionStyle;
+      highlightMultipleSpeedLimitFeatures(selectedIds);
+      vectorLayer.redraw();
+    };
+
     var bindEvents = function() {
       $('.confirm-modal .close').on('click', function() {
+        activateBrowseStyle();
         purge();
       });
       $('.confirm-modal .save').on('click', function() {
         var modal = $('.modal-dialog');
         modal.find('.actions button').attr('disabled', true);
         var value = parseInt($('.confirm-modal select').val(), 10);
+        activateBrowseStyle();
         backend.updateSpeedLimits(selectedIds, value, function() {
           collection.fetch(map.getExtent());
           eventbus.trigger('speedLimits:massUpdateSucceeded', selectedIds.length);
@@ -162,6 +178,7 @@ window.SpeedLimitLayer = function(params) {
 
     var show = function() {
       purge();
+      activateSelectionStyle();
       renderDialog();
       bindEvents();
     };
@@ -305,14 +322,18 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
 
-  var highlightSpeedLimitFeatures = function(feature) {
+  var highlightMultipleSpeedLimitFeatures = function(ids) {
     _.each(vectorLayer.features, function(x) {
-      if (x.attributes.id === feature.attributes.id) {
+      if (_.contains(ids, x.attributes.id)) {
         selectControl.highlight(x);
       } else {
         selectControl.unhighlight(x);
       }
     });
+  };
+
+  var highlightSpeedLimitFeatures = function(feature) {
+    highlightMultipleSpeedLimitFeatures([feature.attributes.id]);
   };
 
   var setSelectionStyleAndHighlightFeature = function(feature) {
