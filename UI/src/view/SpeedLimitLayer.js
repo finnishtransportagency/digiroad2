@@ -150,6 +150,7 @@ window.SpeedLimitLayer = function(params) {
         backend.updateSpeedLimits(selectedIds, value, function() {
           collection.fetch(map.getExtent());
           console.log('Speed limit mass update succeeded.');
+          eventbus.trigger('speedLimits:massUpdateSucceeded', selectedIds.length);
         }, function() {
           console.log('Speed limit mass update failed.');
         });
