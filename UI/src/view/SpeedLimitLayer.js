@@ -346,7 +346,7 @@ window.SpeedLimitLayer = function(params) {
     return new OpenLayers.Bounds(bottomLeft.lon, bottomLeft.lat, topRight.lon, topRight.lat);
   };
 
-  var logSelectedSpeedLimits = function(bounds) {
+  var massUpdateSpeedLimits = function(bounds) {
     if (selectedSpeedLimit.isDirty()) {
       displayConfirmMessage();
     } else {
@@ -377,7 +377,7 @@ window.SpeedLimitLayer = function(params) {
 
   var boxControl = new OpenLayers.Control();
   map.addControl(boxControl);
-  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: logSelectedSpeedLimits }, { keyMask: getModifierKey() });
+  var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: massUpdateSpeedLimits }, { keyMask: getModifierKey() });
 
   var handleSpeedLimitUnSelected = function(id) {
     _.each(_.filter(vectorLayer.features, function(feature) {
