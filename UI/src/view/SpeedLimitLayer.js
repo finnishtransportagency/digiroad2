@@ -114,7 +114,7 @@ window.SpeedLimitLayer = function(params) {
       '<div class="modal-overlay confirm-modal">' +
         '<div class="modal-dialog">' +
           '<div class="content">' +
-            'Olet valinnut ' + selectedIds.length + ' nopeusrajoitusta' +
+            'Olet valinnut <%- selectedIds.length %> nopeusrajoitusta' +
           '</div>' +
           '<div class="actions">' +
             '<button class="btn btn-secondary close">Peruuta</button>' +
@@ -123,7 +123,9 @@ window.SpeedLimitLayer = function(params) {
       '</div>';
 
     var renderConfirmDialog = function() {
-      $('.container').append(confirmDiv);
+      $('.container').append(_.template(confirmDiv, {
+        selectedIds: selectedIds
+      }));
       var modal = $('.modal-dialog');
       modal.css('margin-top', (modal.outerHeight() / 2) * -1);
     };
