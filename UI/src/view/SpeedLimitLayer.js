@@ -117,7 +117,7 @@ window.SpeedLimitLayer = function(params) {
       return '<option value="' + value + '"' + selected + '>' + value + '</option>';
     });
     var confirmDiv =
-      '<div class="modal-overlay confirm-modal">' +
+      '<div class="modal-overlay mass-update-modal">' +
         '<div class="modal-dialog">' +
           '<div class="content">' +
             'Olet valinnut <%- selectedIds.length %> nopeusrajoitusta' +
@@ -156,14 +156,14 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var bindEvents = function() {
-      $('.confirm-modal .close').on('click', function() {
+      $('.mass-update-modal .close').on('click', function() {
         activateBrowseStyle();
         purge();
       });
-      $('.confirm-modal .save').on('click', function() {
+      $('.mass-update-modal .save').on('click', function() {
         var modal = $('.modal-dialog');
         modal.find('.actions button').attr('disabled', true);
-        var value = parseInt($('.confirm-modal select').val(), 10);
+        var value = parseInt($('.mass-update-modal select').val(), 10);
         activateBrowseStyle();
         backend.updateSpeedLimits(selectedIds, value, function() {
           collection.fetch(map.getExtent());
@@ -184,7 +184,7 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var purge = function() {
-      $('.confirm-modal').remove();
+      $('.mass-update-modal').remove();
     };
     show();
   };
