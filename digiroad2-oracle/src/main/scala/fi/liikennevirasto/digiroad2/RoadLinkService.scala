@@ -16,8 +16,8 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
-  type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
-  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String], Option[String])
+  type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Int)
+  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Int, Option[String], Option[String])
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -126,6 +126,19 @@ object RoadLinkService {
     }
   }
 
+  def getProdId(id: Long): Option[Long] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select prod.dr1_id
+           from tielinkki_ctas prod
+           join tielinkki test
+           on prod.mml_id = test.mml_id
+           where test.objectid = $id
+        """
+      query.as[Long].firstOption
+    }
+  }
+
   def getPointLRMeasure(roadLinkId: Long, point: Point): BigDecimal = {
     Database.forDataSource(dataSource).withDynTransaction {
       val x = point.x
@@ -174,7 +187,7 @@ object RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta, kunta_nro
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -214,7 +227,7 @@ object RoadLinkService {
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic._1, basic._2, basic._3, basic._4,
-     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy)
+     basic._5, basic._6, basic._7, basic._8, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy)
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
@@ -263,7 +276,7 @@ object RoadLinkService {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta, kunta_nro
               from tielinkki_ctas
               where $roadFilter $municipalityFilter
                     mdsys.sdo_filter(shape,

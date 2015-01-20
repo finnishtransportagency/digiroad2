@@ -559,4 +559,13 @@ object OracleSpatialAssetDao {
       select geometry from asset where id = $id
     """.as[Point].first
   }
+
+  def getRoadLinkId(id: Long): Long = {
+    val (testId, prodId) = sql"""select lrm.road_link_id, lrm.prod_road_link_id
+                                   from asset a
+                                   join asset_link al on al.asset_id = a.id
+                                   join lrm_position lrm on al.position_id = lrm.id
+                                   where a.id = $id""".as[(Option[Long], Option[Long])].first
+    prodId.getOrElse(testId.flatMap(RoadLinkService.getProdId).getOrElse(throw new IllegalStateException("No road link for asset found")))
+  }
 }

@@ -21,6 +21,10 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
   }
 
+  def isPremium(): Boolean = {
+    configuration.roles(Role.Premium)
+  }
+
   def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 }

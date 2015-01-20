@@ -24,18 +24,18 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     municipalityId.map { OracleSpatialAssetDao.getMunicipalityNameByCode(_) }.get
   }
 
-  private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
+  private def withModification[A](id: Long)(f: => A): A = {
+    val (roadLinkId, _, _, _, roadLinkType, _, _, municipalityNumber, _, _) = RoadLinkService.getRoadLink(id)
     val user = userProvider.getCurrentUser()
-    user.isOperator() || user.isAuthorizedFor(municipalityNumber)
+    if (user.isOperator()
+        || (user.isPremium() && user.isAuthorizedFor(municipalityNumber))
+        // XXX: Welcome to Scala, where contains doesn't compile
+        || (user.isAuthorizedFor(municipalityNumber) && (roadLinkType == PrivateRoad || roadLinkType == Street))) {
+      f
+    } else {
+      throw new IllegalArgumentException("User does not have write access")
+    }
   }
-
-  private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)
-
-  private def userCanModifyAsset(asset: AssetWithProperties): Boolean =
-    userCanModifyMunicipality(asset.municipalityNumber)
-
-  private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
-    RoadLinkService.getMunicipalityCode(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
@@ -100,28 +100,29 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
-    Database.forDataSource(ds).withDynTransaction {
-      val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
-      validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
-      validateRequiredPropertyValues(requiredProperties, properties)
-      if (!userCanModifyRoadLink(roadLinkId)) {
-        throw new IllegalArgumentException("User does not have write access to municipality")
+    withModification(roadLinkId) {
+      val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
+      Database.forDataSource(ds).withDynTransaction {
+        val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
+        validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
+        validateRequiredPropertyValues(requiredProperties, properties)
+        val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, definedProperties)
+        eventbus.publish("asset:saved", (getMunicipalityName(roadLinkId), asset))
+        asset
       }
-      val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, definedProperties)
-      eventbus.publish("asset:saved", (getMunicipalityName(roadLinkId), asset))
-      asset
     }
   }
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
+    // FIXME: Validate access to position.roadLinkId
     Database.forDataSource(ds).withDynTransaction {
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
-      if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-      val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
-      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
-      eventbus.publish("asset:saved", (municipalityName, updatedAsset))
-      updatedAsset
+      withModification(OracleSpatialAssetDao.getRoadLinkId(asset.id)) {
+        val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
+        val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
+        eventbus.publish("asset:saved", (municipalityName, updatedAsset))
+        updatedAsset
+      }
     }
   }
 
@@ -130,8 +131,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
         case Some(asset) =>
-          if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties)
+          withModification(OracleSpatialAssetDao.getRoadLinkId(asset.id)) {
+            OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties)
+          }
         case None => throw new AssetNotFoundException(externalId)
       }
     }
@@ -143,10 +145,11 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
         case Some(asset) =>
-          if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          val roadLinkType = asset.roadLinkType
-          if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
-          else Left(roadLinkType)
+          withModification(OracleSpatialAssetDao.getRoadLinkId(asset.id)) {
+            val roadLinkType = asset.roadLinkType
+            if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
+            else Left(roadLinkType)
+          }
         case None => throw new AssetNotFoundException(externalId)
       }
     }
