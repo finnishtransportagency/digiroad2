@@ -270,7 +270,7 @@
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
-    AssetForm.initialize(backend);
+    AssetForm.initialize(backend, applicationModel);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {

@@ -44,13 +44,13 @@ case object UnknownDirection extends TrafficDirection { def value = 99 }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
-                 readOnly: Boolean = true, municipalityNumber: Int, validityPeriod: Option[String] = None,
+                 readOnly: Boolean = false, municipalityNumber: Int, validityPeriod: Option[String] = None,
                  floating: Boolean)
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
-                 readOnly: Boolean = true,
+                 readOnly: Boolean = false,
                  municipalityNumber: Int,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
                  wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: RoadLinkType = UnknownRoad,

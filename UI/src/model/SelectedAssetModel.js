@@ -8,7 +8,8 @@
       'roadLinkId',
       'externalId',
       'validityDirection',
-      'floating'];
+      'floating',
+      'readOnly'];
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
@@ -240,6 +241,10 @@
       }
     };
 
+    var isReadOnly = function() {
+      return currentAsset.payload.readOnly;
+    };
+
     return {
       close: close,
       save: save,
@@ -257,7 +262,8 @@
       switchDirection: switchDirection,
       move: move,
       requiredPropertiesMissing: requiredPropertiesMissing,
-      place: place
+      place: place,
+      isReadOnly: isReadOnly
     };
   };
 

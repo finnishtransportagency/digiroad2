@@ -62,11 +62,14 @@
   };
 
   root.AssetForm = {
-    initialize: function(backend) {
+    initialize: function(backend, applicationModel) {
       var enumeratedPropertyValues = null;
-      var readOnly = true;
       var streetViewHandler;
       var activeLayer = 'asset';
+
+      var isReadOnly = function() {
+        return applicationModel.isReadOnly() || (selectedAssetModel.exists() && selectedAssetModel.isReadOnly());
+      };
 
       var renderAssetForm = function() {
         if (activeLayer !== 'asset') {
@@ -92,7 +95,7 @@
             .append(saveBtn.element)
             .append(cancelBtn.element));
 
-        if (readOnly) {
+        if (isReadOnly()) {
           $('#feature-attributes .form-controls').hide();
           wrapper.addClass('read-only');
           wrapper.removeClass('edit-mode');
@@ -177,7 +180,7 @@
       };
 
       var textHandler = function(property){
-        return createWrapper(property).append(createTextElement(readOnly, property));
+        return createWrapper(property).append(createTextElement(isReadOnly(), property));
       };
 
       var createTextElement = function(readOnly, property) {
@@ -209,7 +212,7 @@
       };
 
       var singleChoiceHandler = function(property, choices){
-        return createWrapper(property).append(createSingleChoiceElement(readOnly, property, choices));
+        return createWrapper(property).append(createSingleChoiceElement(isReadOnly(), property, choices));
       };
 
       var createSingleChoiceElement = function(readOnly, property, choices) {
@@ -247,27 +250,21 @@
         return element;
       };
 
-      var directionChoiceHandler = function(property){
-        if (!readOnly) {
-          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+      var directionChoiceHandler = function(property) {
+        if (!isReadOnly()) {
+          return createWrapper(property).append(createDirectionChoiceElement());
         }
       };
 
-      var createDirectionChoiceElement = function(property) {
-        var element = $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function(){
+      var createDirectionChoiceElement = function() {
+        return $('<button />').addClass('btn btn-secondary btn-block').text('Vaihda suuntaa').click(function() {
           selectedAssetModel.switchDirection();
           streetViewHandler.update();
         });
-
-        if(property.values && property.values[0]) {
-          validityDirection = property.values[0].propertyValue;
-        }
-
-        return element;
       };
 
       var dateHandler = function(property){
-        return createWrapper(property).append(createDateElement(readOnly, property));
+        return createWrapper(property).append(createDateElement(isReadOnly(), property));
       };
 
       var notificationHandler = function(property) {
@@ -310,7 +307,7 @@
       };
 
       var multiChoiceHandler = function(property, choices){
-        return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices));
+        return createWrapper(property).append(createMultiChoiceElement(isReadOnly(), property, choices));
       };
 
       var createMultiChoiceElement = function(readOnly, property, choices) {
@@ -435,10 +432,6 @@
       eventbus.on('layer:selected', function(layer) {
         activeLayer = layer;
         closeAsset();
-      });
-
-      eventbus.on('application:readOnly', function(data) {
-        readOnly = data;
       });
 
       eventbus.on('asset:closed', closeAsset);
