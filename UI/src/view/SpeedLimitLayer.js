@@ -127,8 +127,8 @@ window.SpeedLimitLayer = function(params) {
             '<select class="form-control">' + speedLimitOptionTags.join('') + '</select>' +
           '</div>' +
           '<div class="actions">' +
-            '<button class="btn btn-secondary close">Peruuta</button>' +
             '<button class="btn btn-primary save">Tallenna</button>' +
+            '<button class="btn btn-secondary close">Peruuta</button>' +
           '</div>' +
         '</div>' +
       '</div>';
