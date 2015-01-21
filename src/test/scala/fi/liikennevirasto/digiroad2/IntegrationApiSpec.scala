@@ -18,22 +18,19 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
   }
 
   test("Should require correct authentication", Tag("db")) {
-    get("/data") {
+    get("/mass_transit_stops") {
       status should equal(401)
     }
-    getWithBasicUserAuth("/data", "nonexisting", "incorrect") {
+    getWithBasicUserAuth("/mass_transit_stops", "nonexisting", "incorrect") {
       status should equal(401)
-    }
-    getWithBasicUserAuth("/data", "kalpa", "kalpa") {
-      status should equal(200)
     }
   }
 
   test("Get assets requires municipality number") {
-    getWithBasicUserAuth("/assets", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/mass_transit_stops", "kalpa", "kalpa") {
       status should equal(400)
     }
-    getWithBasicUserAuth("/assets?municipality=235", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/mass_transit_stops?municipality=235", "kalpa", "kalpa") {
       status should equal(200)
     }
   }
