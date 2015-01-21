@@ -107,6 +107,25 @@ object OracleLinearAssetDao {
     (filteredSpeedLimits, linksOnRoads)
   }
 
+  def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
+    val linksWithGeometries = RoadLinkService.getByMunicipality(municipality)
+
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+
+    val linkGeometries: Map[Long, Seq[Point]] =
+      linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
+        acc + (linkWithGeometry._1 -> linkWithGeometry._2)
+      }
+
+    val speedLimits: Seq[Map[String, Any]] = assetLinks.map { link =>
+      val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
+      Map ("id" -> assetId, "sideCode" -> sideCode, "points" -> geometry, "value" -> speedLimit)
+    }
+
+    speedLimits
+  }
+
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val speedLimits = sql"""
       select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure

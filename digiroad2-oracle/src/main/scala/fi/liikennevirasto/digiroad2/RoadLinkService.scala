@@ -287,4 +287,11 @@ object RoadLinkService {
     }
     adjustedRoadLinks(roadLinks)
   }
+
+  def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = s"""select dr1_id, to_2d(shape) from tielinkki_ctas where kunta_nro = $municipality"""
+      Q.queryNA[(Long, Seq[Point])](query).iterator().toSeq
+    }
+  }
 }

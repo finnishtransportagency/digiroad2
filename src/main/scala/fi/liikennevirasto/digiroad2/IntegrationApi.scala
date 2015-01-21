@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.DefaultFormats
 import org.json4s.Formats
@@ -79,7 +80,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         val assetType = params("assetType")
         assetType match {
           case "mass_transit_stops" => OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
-          case "speed_limits" => println("implement me!")
+          case "speed_limits" => OracleLinearAssetDao.getByMunicipality(municipalityNumber)
           case _ => BadRequest("Invalid asset type")
         }
       }
