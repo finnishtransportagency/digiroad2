@@ -19,6 +19,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
+  val MunicipalityPukkila = 616
   val MunicipalityEspoo = 49
   val TestAssetTypeId = 10
   val AssetCreator = "integration_test_add_asset"
@@ -27,7 +28,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val user = User(
     id = 1,
     username = "Hannu",
-    configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen)))
+    configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen, MunicipalityPukkila)))
   val espooUser = User(
     id = 2,
     username = "Hannu",
