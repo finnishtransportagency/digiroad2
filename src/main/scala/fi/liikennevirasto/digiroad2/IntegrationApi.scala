@@ -71,16 +71,17 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
-  get("/data") {
-    "Hello, world!\n"
-  }
-
-  get("/assets") {
+  get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
       val municipalityNumber = municipality.toInt
       Database.forDataSource(ds).withDynSession {
-        OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
+        val assetType = params("assetType")
+        assetType match {
+          case "mass_transit_stops" => OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
+          case "speed_limits" => println("implement me!")
+          case _ => BadRequest("Invalid asset type")
+        }
       }
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
