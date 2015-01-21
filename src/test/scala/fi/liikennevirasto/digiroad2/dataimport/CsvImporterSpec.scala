@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.user.{Configuration, User, Role}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, AuthenticatedApiSpec}
 import java.io.{InputStream, ByteArrayInputStream}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
@@ -17,7 +17,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mandatoryBusStopProperties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName", "pysakin_tyyppi" -> "2")
 
   before {
-    userProvider.setCurrentUser(User(id = 1, username = "CsvImportApiSpec", configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen))))
+    userProvider.setCurrentUser(User(id = 1, username = "CsvImportApiSpec", configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen), roles = Set(Role.Operator))))
   }
 
   test("rowToString works correctly for few basic fields") {
