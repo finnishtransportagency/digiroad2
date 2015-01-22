@@ -1,20 +1,6 @@
 (function (root) {
   root.LinkPropertyForm = function(selectedLinkProperty) {
-    var localizedFunctionalClasses = {
-      11: 'Valtatie',
-      12: 'Kantatie',
-      13: 'Seututie',
-      14: 'Yhdystie',
-      21: 'Seudullinen pääkatu 1',
-      22: 'Seudullinen pääkatu 2',
-      23: 'Alueellinen pääkatu',
-      24: 'Kokoojakatu',
-      25: 'Liityntäkatu',
-      35: 'Tärkeä yksityistie',
-      36: 'Muu yksityistie',
-      40: 'Kevyenliikenteen väylä',
-      60: 'Lautta / lossi'
-    };
+    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -71,16 +57,16 @@
       eventbus.on('linkProperties:selected linkProperties:cancelled linkProperties:saved', function(linkProperties) {
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-        linkProperties.localizedFunctionalClass = localizedFunctionalClasses[linkProperties.functionalClass] || 'Tuntematon';
+        linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
         }).join('');
-        var functionalClassOptionTags = _.map(localizedFunctionalClasses, function(value, key) {
-          var selected = key == linkProperties.functionalClass ? " selected" : "";
-          return '<option value="' + key + '"' + selected + '>' + value + '</option>';
+        var functionalClassOptionTags = _.map(functionalClasses, function(value) {
+          var selected = value == linkProperties.functionalClass ? " selected" : "";
+          return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
                                                                            functionalClassOptionTags: functionalClassOptionTags }}));
