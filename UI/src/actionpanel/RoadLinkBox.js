@@ -14,15 +14,15 @@
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
           '<div class="legend-entry">' +
-            '<div class="label">Maantie</div>' +
+            '<div class="label">Valtion omistama</div>' +
             '<div class="symbol linear road"/>' +
           '</div>' +
           '<div class="legend-entry">' +
-            '<div class="label">Katu</div>' +
+            '<div class="label">Kunnan omistama</div>' +
             '<div class="symbol linear street"/>' +
           '</div>' +
           '<div class="legend-entry">' +
-            '<div class="label">Yksityistie</div>' +
+            '<div class="label">Yksityisen omistama</div>' +
             '<div class="symbol linear private-road"/>' +
           '</div>' +
           '<div class="legend-entry">' +
