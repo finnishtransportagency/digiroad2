@@ -1,6 +1,6 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, selectedSpeedLimit, numericalLimits) {
+    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
@@ -22,7 +22,7 @@
       backend.getUserRoles();
 
       // FIXME: Message now appended to top bar, but should this code live somewhere else?
-      var editMessage = $('<div class="action-state">Olet muokkaustilassa</div>');
+      var editMessage = $('<div class="action-state">Olet muokkaustilassa. Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle.</div>');
       $('#header').append(editMessage.hide());
 
       var handleEditMessage = function(readOnly) {
@@ -33,11 +33,19 @@
         }
       };
 
+      var showEditInstructionsPopup = function(readOnly) {
+        if(!readOnly) {
+          instructionsPopup.show('Kuntakäyttäjien tulee kohdistaa muutokset katuverkolle, ELY-käyttäjien maantieverkolle.', 4000);
+        }
+      };
+
       eventbus.on('application:readOnly', function() {
         applicationModel.setSelectedTool('Select');
       });
 
       eventbus.on('application:readOnly', handleEditMessage);
+
+      eventbus.on('application:readOnly', showEditInstructionsPopup);
     }
   };
 }(this));

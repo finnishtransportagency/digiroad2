@@ -269,7 +269,7 @@
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
-    ActionPanel.initialize(backend, selectedSpeedLimit, numericalLimits);
+    ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
