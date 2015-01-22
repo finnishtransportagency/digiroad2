@@ -17,9 +17,9 @@
     };
 
     var localizedTypes = {
-      PrivateRoad: 'Yksityistie',
-      Street: 'Katu',
-      Road: 'Maantie'
+      PrivateRoad: 'Yksityisen omistama',
+      Street: 'Kunnan omistama',
+      Road: 'Valtion omistama'
     };
 
     var localizedTrafficDirections = {
@@ -47,7 +47,7 @@
           '<div class="form-group">' +
             '<label class="control-label">MML ID</label>' +
             '<p class="form-control-static"><%- mmlId %></p>' +
-            '<label class="control-label">Väylätyyppi</label>' +
+            '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedType %></p>' +
           '</div>' +
           '<div class="form-group editable">' +
