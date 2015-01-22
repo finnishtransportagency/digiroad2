@@ -13,7 +13,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.RoadLinkType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 // FIXME:
 // - rename to speed limit service
@@ -92,7 +92,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     }
   }
 
-  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType)]): Unit = {
+  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass)]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       logger.info("Filling partially filled road links, road link count in bounding box: " + linkGeometries.size)
       OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)

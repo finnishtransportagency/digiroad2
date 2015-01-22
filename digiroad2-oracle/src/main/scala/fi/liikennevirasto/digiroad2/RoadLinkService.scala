@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, RoadLinkType, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
@@ -16,8 +16,8 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
-  type BasicRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection)
-  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, RoadLinkType, Int, TrafficDirection, Option[String], Option[String])
+  type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection)
+  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String])
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
@@ -38,29 +38,29 @@ object RoadLinkService {
     }
   }
 
-  def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+  def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
-         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), functionalroadclass
+         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), omistaja
            from tielinkki_ctas
            where dr1_id = $id
         """
-      query.as[(Long, Int, Seq[Point], RoadLinkType)].firstOption().map {
+      query.as[(Long, Int, Seq[Point], AdministrativeClass)].firstOption().map {
         case (roadLinkId, municipalityNumber, geometry, roadLinkType) => (roadLinkId, municipalityNumber, geometry.headOption, roadLinkType)
       }
     }
   }
 
-  def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+  def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
        val query = sql"""
-         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.functionalroadclass
+         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.omistaja
            from tielinkki_ctas prod
            join tielinkki test
            on prod.mml_id = test.mml_id
            where test.objectid = $testId
         """
-      query.as[(Long, Int, Seq[Point], RoadLinkType)].list() match {
+      query.as[(Long, Int, Seq[Point], AdministrativeClass)].list() match {
         case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption, productionLink._4))
         case _ => None
       }
@@ -150,9 +150,9 @@ object RoadLinkService {
     }
   }
 
-  implicit val getRoadLinkType = new GetResult[RoadLinkType] {
+  implicit val getAdministrativeClass = new GetResult[AdministrativeClass] {
     def apply(r: PositionedResult) = {
-      RoadLinkType(r.nextInt() / 10)
+      AdministrativeClass(r.nextInt())
     }
   }
 
@@ -174,7 +174,7 @@ object RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, functionalroadclass, liikennevirran_suunta
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -263,7 +263,7 @@ object RoadLinkService {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, functionalroadclass, liikennevirran_suunta
               from tielinkki_ctas
               where $roadFilter $municipalityFilter
                     mdsys.sdo_filter(shape,

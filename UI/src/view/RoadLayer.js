@@ -28,12 +28,12 @@ var RoadStyles = function() {
 
     var enableColorsOnRoadLayer = function() {
       if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
-        var roadLinkTypeStyleLookup = {
-          PrivateRoad: { strokeColor: "#0011bb" },
-          Street: { strokeColor: "#11bb00" },
-          Road: { strokeColor: "#ff0000" }
+        var administrativeClassStyleLookup = {
+          Private: { strokeColor: "#0011bb" },
+          Municipality: { strokeColor: "#11bb00" },
+          State: { strokeColor: "#ff0000" }
         };
-        vectorLayer.styleMap.addUniqueValueRules("default", "type", roadLinkTypeStyleLookup);
+        vectorLayer.styleMap.addUniqueValueRules("default", "administrativeClass", administrativeClassStyleLookup);
       }
     };
 

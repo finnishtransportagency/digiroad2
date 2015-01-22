@@ -3,7 +3,7 @@
         return [
                 {
                   "roadLinkId": 5543,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374573.844,
@@ -61,7 +61,7 @@
               },
               {
                   "roadLinkId": 5612,
-                  "type": "Street",
+                  "administrativeClass": "Municipality",
                   "points": [
                       {
                           "x": 374695.469,
@@ -95,7 +95,7 @@
               },
               {
                   "roadLinkId": 5672,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374862.933,
@@ -154,7 +154,7 @@
               },
               {
                   "roadLinkId": 2148026,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374809.404,
@@ -188,7 +188,7 @@
               },
               {
                   "roadLinkId": 5679,
-                  "type": "Street",
+                  "administrativeClass": "Municipality",
                   "points": [
                       {
                           "x": 374783.504,
@@ -214,7 +214,7 @@
               },
               {
                   "roadLinkId": 5654,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374783.504,
@@ -248,7 +248,7 @@
               },
               {
                   "roadLinkId": 5578,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374512.858,
@@ -310,7 +310,7 @@
               },
               {
                   "roadLinkId": 2148015,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374728.64,
@@ -340,7 +340,7 @@
               },
               {
                   "roadLinkId": 5579,
-                  "type": "Street",
+                  "administrativeClass": "Municipality",
                   "points": [
                       {
                           "x": 374662.801,
@@ -378,7 +378,7 @@
               },
               {
                   "roadLinkId": 5576,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374662.801,
@@ -408,7 +408,7 @@
               },
               {
                   "roadLinkId": 5535,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374640.964,
@@ -446,7 +446,7 @@
               },
               {
                   "roadLinkId": 5921,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374704.813,
@@ -500,7 +500,7 @@
               },
               {
                   "roadLinkId": 5809,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374699.369,
@@ -542,7 +542,7 @@
               },
               {
                   "roadLinkId": 5544,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374748.721,
@@ -609,7 +609,7 @@
               },
               {
                   "roadLinkId": 2499866,
-                  "type": "PrivateRoad",
+                  "administrativeClass": "Private",
                   "points": [
                       {
                           "x": 374945.976,
@@ -631,7 +631,7 @@
               },
               {
                   "roadLinkId": 6002,
-                  "type": "Street",
+                  "administrativeClass": "Municipality",
                   "points": [
                       {
                           "x": 374695.469,
@@ -653,7 +653,7 @@
               },
               {
                   "roadLinkId": 2148024,
-                  "type": "Road",
+                  "administrativeClass": "State",
                   "points": [
                       {
                           "x": 374817.814,

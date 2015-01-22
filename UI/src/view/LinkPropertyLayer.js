@@ -1,9 +1,9 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
-    var roadLinkTypeStyleLookup = {
-      PrivateRoad: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
-      Street: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
-      Road: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
+    var administrativeClassStyleLookup = {
+      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
+      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
+      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
     };
 
     var oneWaySignSizeLookup = {
@@ -24,7 +24,7 @@
     });
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    defaultStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
+    defaultStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
@@ -43,8 +43,8 @@
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
-    selectionStyleMap.addUniqueValueRules('default', 'type', roadLinkTypeStyleLookup);
-    selectionStyleMap.addUniqueValueRules('select', 'type', roadLinkTypeStyleLookup);
+    selectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+    selectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {

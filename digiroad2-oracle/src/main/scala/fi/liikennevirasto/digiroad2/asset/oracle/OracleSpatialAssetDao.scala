@@ -50,7 +50,7 @@ object OracleSpatialAssetDao {
     val q = QueryCollector(allAssets + " and a.municipality_code = " + municipality)
     val assets = collectedQuery[AssetRow](q).groupBy(_.id)
 
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], RoadLinkType)], Seq[AssetRow])] = assets.mapValues { assetRows =>
+    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[AssetRow])] = assets.mapValues { assetRows =>
       val row = assetRows.head
       val roadLinkOption = getOptionalProductionRoadLink(row)
       (roadLinkOption, assetRows)
@@ -89,12 +89,12 @@ object OracleSpatialAssetDao {
     else None
   }
 
-  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]):  (AssetWithProperties, Boolean) = {
+  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)]):  (AssetWithProperties, Boolean) = {
     val row = assetRows.head
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
     val municipalityCode = row.municipalityCode
-    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(UnknownRoad)
+    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
     (AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
@@ -105,7 +105,7 @@ object OracleSpatialAssetDao {
         created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
   }
 
-  private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], RoadLinkType)] = {
+  private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
     productionRoadLinkId.map { roadLinkId =>
       RoadLinkService.getByIdAndMeasure(roadLinkId, row.lrmPosition.startMeasure)
@@ -126,7 +126,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(UnknownRoad),
+        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
         floating = floating), row.persistedFloating)
   }
 
@@ -186,7 +186,7 @@ object OracleSpatialAssetDao {
     val query = QueryCollector(allAssetsWithoutProperties).add(andValidityInRange).add(andAssetWithinBoundingBox)
     val allAssets = collectedQuery[ListedAssetRow](query).iterator
     val assetsWithProperties: Map[Long, Seq[ListedAssetRow]] = allAssets.toSeq.groupBy(_.id)
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], RoadLinkType)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
+    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
       val row = assetRows.head
       val roadLinkOption = getOptionalProductionRoadLink(row)
       (roadLinkOption, assetRows)
@@ -248,7 +248,7 @@ object OracleSpatialAssetDao {
     pt1.distanceTo(pt2) <= FLOAT_THRESHOLD_IN_METERS
   }
 
-  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]; val municipalityCode: Int}, optionalRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)]): Boolean = {
+  def isFloating(asset: {val roadLinkId: Long; val lrmPosition: LRMPosition; val point: Option[Point]; val municipalityCode: Int}, optionalRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)]): Boolean = {
     optionalRoadLink.flatMap { case (_, roadLinkMunicipalityCode, pointOnRoadLinkOption, _) =>
       val optionalCoordinateMismatch: Option[Boolean] = pointOnRoadLinkOption.map { pointOnRoadLink =>
         !coordinatesWithinThreshold(asset.point.get, pointOnRoadLink)

@@ -16,10 +16,10 @@
       60: 'Lautta / lossi'
     };
 
-    var localizedTypes = {
-      PrivateRoad: 'Yksityistie',
-      Street: 'Katu',
-      Road: 'Maantie'
+    var localizedAdministrativeClasses = {
+      Private: 'Yksityisen omistama',
+      Municipality: 'Kunnan omistama',
+      State: 'Valtion omistama'
     };
 
     var localizedTrafficDirections = {
@@ -46,8 +46,8 @@
           '<div class="form-group">' +
             '<label class="control-label">MML ID</label>' +
             '<p class="form-control-static"><%- mmlId %></p>' +
-            '<label class="control-label">Väylätyyppi</label>' +
-            '<p class="form-control-static"><%- localizedType %></p>' +
+            '<label class="control-label">Hallinnollinen luokka</label>' +
+            '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
           '<div class="form-group editable">' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
@@ -72,7 +72,7 @@
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = localizedFunctionalClasses[linkProperties.functionalClass] || 'Tuntematon';
-        linkProperties.localizedType = localizedTypes[linkProperties.type];
+        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";

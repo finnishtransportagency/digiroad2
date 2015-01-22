@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, AssetRow}
-import fi.liikennevirasto.digiroad2.asset.{Road, RoadLinkType, Position, Modification}
+import fi.liikennevirasto.digiroad2.asset.{State, AdministrativeClass, Position, Modification}
 import scala.slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.Point
@@ -59,7 +59,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
   test("asset where lrm position and geometry match should not float") {
     case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
-    val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
+    val testRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), State)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
     val geometry = Some(Point(489607.0, 6787032.0))
     OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(false)
@@ -67,7 +67,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
   test("asset where lrm position and geometry don't match should float") {
     case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
-    val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
+    val testRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), State)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
     val geometry = Some(Point(100.0, 100.0))
     OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(true)
@@ -75,7 +75,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
   test("asset where lrm position doesn't fall on road link should float") {
     case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
-    val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, None, Road)
+    val testRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)] = Some(762335l, 235, None, State)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 100, endMeasure = 100, point = None)
     val geometry = Some(Point(489607.0, 6787032.0))
     OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 235), testRoadLink) must equal(true)
@@ -89,7 +89,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
 
   test("asset where municipality code does not match road link municipality code should float") {
     case class TestAsset(roadLinkId: Long, lrmPosition: LRMPosition, point: Option[Point], municipalityCode: Int)
-    val testRoadLink: Option[(Long, Int, Option[Point], RoadLinkType)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), Road)
+    val testRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)] = Some(762335l, 235, Some(Point(489607.0, 6787032.0)), State)
     val lrmPosition = LRMPosition(id = 0l, startMeasure = 50, endMeasure = 50, point = None)
     val geometry = Some(Point(489607.0, 6787032.0))
     OracleSpatialAssetDao.isFloating(TestAsset(roadLinkId = 762335l, lrmPosition = lrmPosition, point = geometry, municipalityCode = 999), testRoadLink) must equal(true)

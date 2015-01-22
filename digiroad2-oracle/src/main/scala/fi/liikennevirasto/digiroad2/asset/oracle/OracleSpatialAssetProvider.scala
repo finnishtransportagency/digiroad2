@@ -138,7 +138,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
 
-  def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[RoadLinkType]): Either[RoadLinkType, AssetWithProperties] = {
+  def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, AssetWithProperties] = {
     Database.forDataSource(ds).withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
