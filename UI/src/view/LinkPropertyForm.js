@@ -57,7 +57,7 @@
       eventbus.on('linkProperties:selected linkProperties:cancelled linkProperties:saved', function(linkProperties) {
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
-        linkProperties.localizedFunctionalClass = linkProperties.functionalClass || 'Tuntematon';
+        linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
