@@ -25,8 +25,7 @@
     var localizedTrafficDirections = {
       BothDirections: 'Molempiin suuntiin',
       AgainstDigitizing: 'Digitointisuuntaa vastaan',
-      TowardsDigitizing: 'Digitointisuuntaan',
-      UnknownDirection: 'Tuntematon'
+      TowardsDigitizing: 'Digitointisuuntaan'
     };
 
     var disabled = 'disabled';
