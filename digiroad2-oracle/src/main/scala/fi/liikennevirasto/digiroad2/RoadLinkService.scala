@@ -41,7 +41,7 @@ object RoadLinkService {
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
-         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), functionalroadclass
+         select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), omistaja
            from tielinkki_ctas
            where dr1_id = $id
         """
@@ -54,7 +54,7 @@ object RoadLinkService {
   def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], RoadLinkType)] = {
     Database.forDataSource(dataSource).withDynTransaction {
        val query = sql"""
-         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.functionalroadclass
+         select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.omistaja
            from tielinkki_ctas prod
            join tielinkki test
            on prod.mml_id = test.mml_id
@@ -152,7 +152,7 @@ object RoadLinkService {
 
   implicit val getRoadLinkType = new GetResult[RoadLinkType] {
     def apply(r: PositionedResult) = {
-      RoadLinkType(r.nextInt() / 10)
+      RoadLinkType(r.nextInt())
     }
   }
 
@@ -174,7 +174,7 @@ object RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, functionalroadclass, liikennevirran_suunta
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -263,7 +263,7 @@ object RoadLinkService {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, functionalroadclass as roadLinkType, functionalroadclass, liikennevirran_suunta
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, functionalroadclass, liikennevirran_suunta
               from tielinkki_ctas
               where $roadFilter $municipalityFilter
                     mdsys.sdo_filter(shape,
