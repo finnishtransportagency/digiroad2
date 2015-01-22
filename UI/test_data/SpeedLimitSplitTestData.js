@@ -63,7 +63,7 @@
     return [
       {
         "roadLinkId": 555,
-        "type": "PrivateRoad",
+        "type": "Private",
         "points": [
           {
             "x": 0.0,
@@ -77,7 +77,7 @@
       },
       {
         "roadLinkId": 666,
-        "type": "PrivateRoad",
+        "type": "Private",
         "points": [
           {
             "x": 0.0,
@@ -91,7 +91,7 @@
       },
       {
         "roadLinkId": 777,
-        "type": "PrivateRoad",
+        "type": "Private",
         "points": [
           {
             "x": 0.0,

@@ -137,7 +137,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
             "mmlId" -> mmlId,
             "points" -> points,
             "length" -> length,
-            "type" -> roadLinkType.toString,
+            "administrativeClass" -> roadLinkType.toString,
             "functionalClass" -> functionalClass,
             "trafficDirection" -> trafficDirection.toString,
             "modifiedAt" -> modifiedAt,

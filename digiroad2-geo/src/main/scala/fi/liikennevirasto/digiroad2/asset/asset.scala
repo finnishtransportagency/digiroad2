@@ -7,16 +7,16 @@ sealed trait AdministrativeClass {
   def value: Int
 }
 object AdministrativeClass {
-  val values = Set(Road, Street, PrivateRoad, UnknownRoad)
+  val values = Set(State, Municipality, Private, Unknown)
 
   def apply(value: Int): AdministrativeClass = {
-    values.find(_.value == value).getOrElse(UnknownRoad)
+    values.find(_.value == value).getOrElse(Unknown)
   }
 }
-case object Road extends AdministrativeClass { def value = 1 }
-case object Street extends AdministrativeClass { def value = 2}
-case object PrivateRoad extends AdministrativeClass { def value = 3}
-case object UnknownRoad extends AdministrativeClass { def value = 99 }
+case object State extends AdministrativeClass { def value = 1 }
+case object Municipality extends AdministrativeClass { def value = 2}
+case object Private extends AdministrativeClass { def value = 3}
+case object Unknown extends AdministrativeClass { def value = 99 }
 
 sealed trait TrafficDirection {
   def value: Int
@@ -53,7 +53,7 @@ case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lo
                  readOnly: Boolean = true,
                  municipalityNumber: Int,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
-                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: AdministrativeClass = UnknownRoad,
+                 wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: AdministrativeClass = Unknown,
                  floating: Boolean) {
   def getPropertyValue(propertyName: String): Option[String] = {
     propertyData.find(_.publicId.equals(propertyName))
@@ -65,7 +65,7 @@ case class SimpleProperty(publicId: String, values: Seq[PropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, propertyUiIndex: Int = 9999, required: Boolean = false, values: Seq[PropertyValue])
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, imageId: String = null)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue])
-case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None, municipalityNumber: Int, roadLinkType: AdministrativeClass = UnknownRoad)
+case class RoadLink(id: Long, lonLat: Seq[(Double, Double)], endDate: Option[LocalDate] = None, municipalityNumber: Int, roadLinkType: AdministrativeClass = Unknown)
 case class Position(lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int])
 
 object PropertyTypes {

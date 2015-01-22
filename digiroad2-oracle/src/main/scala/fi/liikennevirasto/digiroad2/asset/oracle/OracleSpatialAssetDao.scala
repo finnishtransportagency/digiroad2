@@ -94,7 +94,7 @@ object OracleSpatialAssetDao {
     val point = row.point.get
     val wgsPoint = row.wgsPoint.get
     val municipalityCode = row.municipalityCode
-    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(UnknownRoad)
+    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
     (AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
@@ -126,7 +126,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(UnknownRoad),
+        created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
         floating = floating), row.persistedFloating)
   }
 

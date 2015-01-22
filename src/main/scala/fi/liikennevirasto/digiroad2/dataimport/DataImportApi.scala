@@ -17,7 +17,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.BufferedWriter
 import java.io.FileWriter
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PrivateRoad, Street, Road}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Private, Municipality, State}
 import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.asset.oracle.ImportLogService
 
@@ -70,9 +70,9 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val administrativeClassLimitations: Set[AdministrativeClass] = Set(
-      params.get("limit-import-to-roads").map(_ => Road),
-      params.get("limit-import-to-streets").map(_ => Street),
-      params.get("limit-import-to-private-roads").map(_ => PrivateRoad)
+      params.get("limit-import-to-roads").map(_ => State),
+      params.get("limit-import-to-streets").map(_ => Municipality),
+      params.get("limit-import-to-private-roads").map(_ => Private)
     ).flatten
     val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
     val user = userProvider.getCurrentUser()

@@ -50,7 +50,7 @@ object Queries {
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                           roadLinkType: AdministrativeClass = UnknownRoad, municipalityCode: Int, persistedFloating: Boolean)
+                           roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
                            extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],

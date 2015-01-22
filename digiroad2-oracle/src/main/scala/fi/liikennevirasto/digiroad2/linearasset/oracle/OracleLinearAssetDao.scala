@@ -264,9 +264,9 @@ object OracleLinearAssetDao {
   }
 
   private val limitValueLookup: Map[AdministrativeClass, Int] = Map(
-      Road -> 80,
-      Street -> 50,
-      PrivateRoad -> 80)
+      State -> 80,
+      Municipality -> 50,
+      Private -> 80)
 
   private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass): (Long, Long, Int, Int, Double, Double) = {
     val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
