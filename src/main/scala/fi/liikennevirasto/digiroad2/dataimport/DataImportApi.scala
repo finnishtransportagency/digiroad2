@@ -17,7 +17,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.BufferedWriter
 import java.io.FileWriter
-import fi.liikennevirasto.digiroad2.asset.{RoadLinkType, PrivateRoad, Street, Road}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PrivateRoad, Street, Road}
 import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.asset.oracle.ImportLogService
 
@@ -69,7 +69,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    val roadTypeLimitations: Set[RoadLinkType] = Set(
+    val administrativeClassLimitations: Set[AdministrativeClass] = Set(
       params.get("limit-import-to-roads").map(_ => Road),
       params.get("limit-import-to-streets").map(_ => Street),
       params.get("limit-import-to-private-roads").map(_ => PrivateRoad)
@@ -81,7 +81,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       // Current user is stored in a thread-local variable (feel free to provide better solution)
       userProvider.setCurrentUser(user)
       try {
-        val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, roadTypeLimitations)
+        val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, administrativeClassLimitations)
         val response = result match {
           case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
           case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))

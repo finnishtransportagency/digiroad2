@@ -19,7 +19,7 @@ object CsvImporter {
   type MalformedParameters = List[String]
   type ParsedProperties = List[SimpleProperty]
   type ParsedAssetRow = (MalformedParameters, ParsedProperties)
-  type ExcludedRoadLinkTypes = List[RoadLinkType]
+  type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
   private def maybeInt(string: String): Option[Int] = {
     try {
@@ -129,9 +129,9 @@ object CsvImporter {
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[RoadLinkType], assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
+  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass], assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
     if(roadTypeLimitations.nonEmpty) {
-      val result: Either[RoadLinkType, AssetWithProperties] = assetProvider.updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
+      val result: Either[AdministrativeClass, AssetWithProperties] = assetProvider.updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
@@ -142,7 +142,7 @@ object CsvImporter {
     }
   }
 
-  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[RoadLinkType] = Set()): ImportResult = {
+  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.RoadLinkType
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
 import _root_.oracle.spatial.geometry.JGeometry
 import java.sql.{Timestamp, Connection}
@@ -50,7 +50,7 @@ object Queries {
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
-                           roadLinkType: RoadLinkType = UnknownRoad, municipalityCode: Int, persistedFloating: Boolean)
+                           roadLinkType: AdministrativeClass = UnknownRoad, municipalityCode: Int, persistedFloating: Boolean)
                            extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
@@ -175,12 +175,12 @@ object Queries {
         (newFormat.format(points(geom.getDimensions * i)).toDouble,
          newFormat.format(points(geom.getDimensions * i + 1)).toDouble)
       }
-      val roadLinkType = RoadLinkType(linkType / 10)
+      val administrativeClass = AdministrativeClass(linkType / 10)
       RoadLink(id = id,
                lonLat = coords,
                endDate = endDate.map(new LocalDate(_)),
                municipalityNumber = municipalityNumber,
-               roadLinkType = roadLinkType)
+               roadLinkType = administrativeClass)
     }
   }
 

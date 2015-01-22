@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.{AgainstLinkChain, TowardsLinkChain}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, RoadLinkType}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
@@ -74,8 +74,8 @@ trait NumericalLimitOperations {
 
       val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
 
-      val linkGeometries: Map[Long, (Seq[Point], Double, RoadLinkType, Int)] =
-      roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, RoadLinkType, Int)]) { (acc, roadLink) =>
+      val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
+      roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
           acc + (roadLink._1 -> (roadLink._3, roadLink._4, roadLink._5, roadLink._6))
         }
 
