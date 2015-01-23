@@ -30,6 +30,8 @@
             '<div class="symbol linear unknown"/>' +
           '</div>' +
         '</div>' +
+        '<div class="panel-section panel-legend functional-class-legend">' +
+        '</div>' +
       '</div>');
 
     var editModeToggle = new EditModeToggleButton({
