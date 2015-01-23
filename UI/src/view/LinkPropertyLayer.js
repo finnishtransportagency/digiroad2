@@ -80,6 +80,8 @@
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     selectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     selectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
+    selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
+    selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
