@@ -120,6 +120,10 @@ var RoadStyles = function() {
       styleMap.addUniqueValueRules(renderingIntent, uiAttribute, lookup, uiState);
     };
 
+    var createZoomLevelFilter = function(zoomLevel) {
+      return new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } });
+    };
+
     var activateLayerStyleMap = function(layer) {
       vectorLayer.styleMap = layerStyleMaps[layer] || new RoadStyles().roadStyles;
     };
@@ -164,7 +168,8 @@ var RoadStyles = function() {
       layer: vectorLayer,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
       addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
-      drawRoadLink: drawRoadLink
+      drawRoadLink: drawRoadLink,
+      createZoomLevelFilter: createZoomLevelFilter
     };
   };
 })(this);
