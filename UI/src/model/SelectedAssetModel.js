@@ -20,8 +20,10 @@
       eventbus.trigger('asset:closed');
     };
 
-    eventbus.on('tool:changed', function() {
-      if (currentAsset.id) {
+    eventbus.on('tool:changed', function(tool) {
+      if (tool === 'Add') {
+        close();
+      } else if (currentAsset.id) {
         backend.getAsset(currentAsset.id);
       }
     });
