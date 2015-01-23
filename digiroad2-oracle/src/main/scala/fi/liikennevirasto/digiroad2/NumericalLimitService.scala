@@ -89,6 +89,38 @@ trait NumericalLimitOperations {
     }
   }
 
+  def getByMunicipality(typeId: Int, municipality: Int): Seq[Map[String, Any]] = {
+    withDynTransaction {
+      val roadLinks = RoadLinkService.getByMunicipality(municipality)
+      val roadLinkIds = roadLinks.map(_._1).toList
+
+      val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+
+      val linkGeometries: Map[Long, Seq[Point]] =
+      roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
+          acc + (roadLink._1 -> roadLink._2)
+        }
+
+      val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
+        val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = link
+        val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
+        NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+      }
+
+      numericalLimitsWithGeometry
+        .groupBy(_.id)
+        .mapValues(getLinksWithPositions)
+        .values
+        .flatten
+        .map { numericalLimit =>
+          Map("id" -> numericalLimit.id,
+              "points" -> numericalLimit.points,
+              "value" -> numericalLimit.value)
+        }
+        .toSeq
+    }
+  }
+
   private def getByIdWithoutTransaction(id: Long): Option[NumericalLimit] =  {
     val links = numericalLimitLinksById(id)
     if (links.isEmpty) None
