@@ -39,9 +39,23 @@
       background-color: @gray-darker-2;      
     }
 
+    .form-group {
+      margin-bottom: 0;
+      padding: @line-height-modifier * 2;
+      border-bottom: 1px solid @gray-light-2;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }    
+
     .actions {
       padding: @line-height-modifier * 2;
-      text-align: right;      
+      text-align: right;
+
+      .btn {
+        margin-left: 5px;
+      }
     }
   }
 }
