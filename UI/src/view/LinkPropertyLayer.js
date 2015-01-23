@@ -74,9 +74,7 @@
         rotation: '${rotation}'
       }))
     });
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     selectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     selectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
