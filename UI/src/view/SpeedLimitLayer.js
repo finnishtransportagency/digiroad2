@@ -138,7 +138,6 @@ window.SpeedLimitLayer = function(params) {
         selectedIds: selectedIds
       }));
       var modal = $('.modal-dialog');
-      modal.css('margin-top', (modal.outerHeight() / 2) * -1);
     };
 
     var activateBrowseStyle = function() {

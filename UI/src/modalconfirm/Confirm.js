@@ -16,7 +16,6 @@ window.Confirm = function() {
     var renderConfirmDialog = function() {
         jQuery('.container').append(confirmDiv);
         var modal = $('.modal-dialog');
-        modal.css('margin-top', (modal.outerHeight() / 2) * -1);
     };
 
     var bindEvents = function() {
