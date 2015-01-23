@@ -475,9 +475,17 @@ Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12)
 
 _Nopeusrajoituksen ominaisuustietojen muokkaus._
 
-####Nopeusrajoituksen arvon muokkaus####
+####Yhden nopeusrajoituksen arvon muokkaus####
 
 Uusi nopeusrajoituksen arvo valitaan Rajoitus-pudotusvalikosta. Valinnan yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa.
+
+####Useamman nopeusrajoituksen arvon muokkaus kerralla####
+
+Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeusrajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiirell&auml; laatikko nopeusrajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki nopeusrajoitukset laatikon sisällä ja nopeusrajoitukset, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan nopeusrajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi peruuttaa muutoksen.
+
+![Useamman nopeusrajoituksen arvon muokkaus.](k40.JPG)
+
+_Useamman nopeusrajoituksen arvon muokkaus kerralla._
 
 5.3.2 Nopeusrajoituksen katkaiseminen
 -------------------------------------
