@@ -108,10 +108,6 @@ trait NumericalLimitOperations {
       }
 
       numericalLimitsWithGeometry
-        .groupBy(_.id)
-        .mapValues(getLinksWithPositions)
-        .values
-        .flatten
         .map { numericalLimit =>
           Map("id" -> numericalLimit.id,
               "points" -> numericalLimit.points,
