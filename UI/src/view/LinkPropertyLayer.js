@@ -16,15 +16,50 @@
       15: { pointRadius: 24 }
     };
 
-    var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        rotation: '${rotation}'
-      }))
-    });
-    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}'
+    }));
+
+    var defaultStyleMap = new OpenLayers.StyleMap({ 'default': defaultStyle });
+
+    var combineFilters = function(filters) {
+      return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
+    };
+
+    var functionalClassFilter = function(functionalClass) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'functionalClass', value: functionalClass });
+    };
+
+    var strokeWidthStyle = function(zoomLevel, functionalClass, symbolizer) {
+      return new OpenLayers.Rule({
+        filter: combineFilters([functionalClassFilter(functionalClass), roadLayer.createZoomLevelFilter(zoomLevel)]),
+        symbolizer: symbolizer
+      });
+    };
+
+    var createStrokeWidthStyles = function() {
+      var strokeWidthsByZoomLevelAndFunctionalClass = {
+        9: [ 10, 9, 8, 7, 6, 5, 4, 3 ],
+        10: [ 20, 15, 10, 9, 8, 3, 2, 1 ],
+        11: [ 9, 9, 9, 9, 9, 9, 9, 9 ],
+        12: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
+        13: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
+        14: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
+        15: [ 16, 16, 16, 16, 16, 16, 16, 16 ]
+      };
+
+      return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
+        return _.map(widthsByZoomLevel, function(width, index) {
+          var functionalClass = index + 1;
+          return strokeWidthStyle(parseInt(zoomLevel, 10), functionalClass, { strokeWidth: width });
+        });
+      }).flatten().value();
+    };
+
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+    defaultStyle.addRules(createStrokeWidthStyles());
     roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
