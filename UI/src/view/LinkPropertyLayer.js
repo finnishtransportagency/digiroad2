@@ -41,12 +41,12 @@
     var createStrokeWidthStyles = function() {
       var strokeWidthsByZoomLevelAndFunctionalClass = {
         9: [ 10, 9, 8, 7, 6, 5, 4, 3 ],
-        10: [ 20, 15, 10, 9, 8, 3, 2, 1 ],
-        11: [ 9, 9, 9, 9, 9, 9, 9, 9 ],
-        12: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
-        13: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
-        14: [ 16, 16, 16, 16, 16, 16, 16, 16 ],
-        15: [ 16, 16, 16, 16, 16, 16, 16, 16 ]
+        10: [ 18, 15, 12, 9, 7, 4, 2, 1 ],
+        11: [ 20, 16, 12, 9, 7, 4, 2, 1 ],
+        12: [ 25, 21, 17, 13, 9, 5, 2, 1 ],
+        13: [ 32, 26, 20, 14, 9, 5, 2, 1 ],
+        14: [ 32, 26, 20, 14, 9, 5, 2, 1 ],
+        15: [ 32, 26, 20, 14, 9, 5, 2, 1 ]
       };
 
       return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
