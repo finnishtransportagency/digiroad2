@@ -37,7 +37,7 @@
 
     var moveTo = function(mmlId) {
       backend.getRoadLinkByMMLId(mmlId, function(response) {
-        eventbus.trigger('coordinates:selected', {lon: response.x, lat: response.y});
+        eventbus.trigger('coordinates:selected', {lon: response.middlePoint.x, lat: response.middlePoint.y});
         eventbus.once('roadLinks:afterDraw', function() {
           open(response.id);
         });
