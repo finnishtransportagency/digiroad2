@@ -72,24 +72,24 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
+  private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
       val municipalityNumber = municipality.toInt
-      Database.forDataSource(ds).withDynSession {
-        val assetType = params("assetType")
-        assetType match {
-          case "mass_transit_stops" => OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
-          case "speed_limits" => OracleLinearAssetDao.getByMunicipality(municipalityNumber)
-          case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
-          case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
-          case "axle_weight_limits" => NumericalLimitService.getByMunicipality(50, municipalityNumber)
-          case "bogie_weight_limits" => NumericalLimitService.getByMunicipality(60, municipalityNumber)
-          case "height_limits" => NumericalLimitService.getByMunicipality(70, municipalityNumber)
-          case "length_limits" => NumericalLimitService.getByMunicipality(80, municipalityNumber)
-          case "width_limits" => NumericalLimitService.getByMunicipality(90, municipalityNumber)
-          case _ => BadRequest("Invalid asset type")
-        }
+      val assetType = params("assetType")
+      assetType match {
+        case "mass_transit_stops" => withDynSession { OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber) }
+        case "speed_limits" => withDynSession { OracleLinearAssetDao.getByMunicipality(municipalityNumber) }
+        case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
+        case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
+        case "axle_weight_limits" => NumericalLimitService.getByMunicipality(50, municipalityNumber)
+        case "bogie_weight_limits" => NumericalLimitService.getByMunicipality(60, municipalityNumber)
+        case "height_limits" => NumericalLimitService.getByMunicipality(70, municipalityNumber)
+        case "length_limits" => NumericalLimitService.getByMunicipality(80, municipalityNumber)
+        case "width_limits" => NumericalLimitService.getByMunicipality(90, municipalityNumber)
+        case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
