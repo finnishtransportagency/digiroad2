@@ -35,6 +35,14 @@
       current.cancel();
     };
 
+    var moveTo = function(mmlId) {
+      eventbus.once('roadLinks:afterDraw', function() {
+        open(7116);
+      });
+    };
+
+    window.moveToLinkProperty = moveTo;
+
     return {
       close: close,
       open: open,
