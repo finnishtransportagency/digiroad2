@@ -36,8 +36,11 @@
     };
 
     var moveTo = function(mmlId) {
-      eventbus.once('roadLinks:afterDraw', function() {
-        open(7116);
+      backend.getRoadLinkByMMLId(mmlId, function(response) {
+        eventbus.trigger('coordinates:selected', {lon: response.x, lat: response.y});
+        eventbus.once('roadLinks:afterDraw', function() {
+          open(response.id);
+        });
       });
     };
 
