@@ -174,6 +174,13 @@
         });
         eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
         eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
+        eventListener.listenTo(eventbus, 'ĺinkProperties:selectedAfterMove', function(id) {
+          selectControl.unselectAll();
+          var feature = _.find(roadLayer.layer.features, function(feature) {
+            return feature.attributes.roadLinkId === id;
+          });
+          selectControl.select(feature);
+        });
         selectControl.activate();
       }
     };
