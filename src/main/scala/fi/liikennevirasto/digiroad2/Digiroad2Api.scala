@@ -148,6 +148,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/roadlinks/:id") {
+    val withMMLId = params.get("mmlId").getOrElse("false")
+    if (withMMLId == "true") {
+      val mmlId = params("id").toLong
+      RoadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
+        case(id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
+      }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
+    } else {
+      BadRequest("Roadlinks can be fetched with MML ID only")
+    }
+  }
+
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val municipalityCode = RoadLinkService.getMunicipalityCode(id)

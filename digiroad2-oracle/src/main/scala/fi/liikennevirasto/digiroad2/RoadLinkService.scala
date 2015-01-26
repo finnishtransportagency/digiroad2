@@ -144,6 +144,19 @@ object RoadLinkService {
     }
   }
 
+  def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+        select dr1_id, to_2d(sdo_lrs.dynamic_segment(shape, sdo_lrs.geom_segment_length(shape) / 2, sdo_lrs.geom_segment_length(shape) / 2))
+          from tielinkki_ctas
+          where mml_id = $mmlId
+        """
+      query.as[(Long, Seq[Point])].firstOption.map {
+        case(id, geometry) => (id, geometry.head)
+      }
+    }
+  }
+
   def getRoadLinkLength(id: Long): Option[Double] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""
