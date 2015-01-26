@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.Date
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
@@ -18,25 +19,6 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String])
-
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/conversion.bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
-
-  implicit object GetPointSeq extends GetResult[Seq[Point]] {
-    def apply(rs: PositionedResult) = toPoints(rs.nextBytes())
-  }
-
-  private def toPoints(bytes: Array[Byte]): Seq[Point] = {
-    val geometry = JGeometry.load(bytes)
-    if (geometry == null) Nil
-    else {
-      geometry.getOrdinatesArray.grouped(2).map { point ⇒
-        Point(point(0), point(1))
-      }.toList
-    }
-  }
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
