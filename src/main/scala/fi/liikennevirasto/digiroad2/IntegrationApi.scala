@@ -73,13 +73,23 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
-  private def extractStopTypes(input: Seq[Property]): String = {
-    val values: Seq[String] = input.filter { property => property.publicId == "pysakin_tyyppi" }.map { property =>
+  private def extractStopTypes(input: Seq[Property]): (String, String) = {
+    val key: String = "pysakin_tyyppi"
+    val values: Seq[String] = input.filter { property => property.publicId == key }.map { property =>
       property.values.map { value =>
         value.propertyValue
       }
     }.flatten
-    values.mkString(",")
+    key -> values.mkString(",")
+  }
+
+  private def extractPropertyValue(key: String, properties: Seq[Property]): (String, String) = {
+     val values: Seq[String] = properties.filter { property => property.publicId == key }.map { property =>
+      property.values.map { value =>
+        value.propertyValue
+      }
+    }.flatten
+    key -> values.mkString(",")
   }
 
   private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
@@ -90,7 +100,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "type" -> "Feature",
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
-          "properties" -> Map("tyypit" -> extractStopTypes(asset.propertyData))
+          "properties" -> Map(extractStopTypes(asset.propertyData), extractPropertyValue("nimi_suomeksi", asset.propertyData))
         )
       })
   }
