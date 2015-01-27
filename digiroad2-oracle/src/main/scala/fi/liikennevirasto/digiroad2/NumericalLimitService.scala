@@ -109,7 +109,7 @@ trait NumericalLimitOperations {
 
       numericalLimitsWithGeometry
         .map { numericalLimit =>
-          Map("id" -> numericalLimit.id,
+          Map("id" -> (numericalLimit.id + "-" + numericalLimit.roadLinkId),
               "points" -> numericalLimit.points,
               "value" -> numericalLimit.value)
         }
