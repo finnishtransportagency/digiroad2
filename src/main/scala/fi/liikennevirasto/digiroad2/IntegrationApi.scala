@@ -82,10 +82,16 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     values.mkString(",")
   }
 
-  private def toGeoJSON(input: Iterable[AssetWithProperties]): Iterable[Map[String, Any]] = {
-    input.map {
-      case(asset) => Map("id" -> asset.id, "properties" -> Map("tyypit" -> extractStopTypes(asset.propertyData)))
-    }
+  private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
+    Map(
+      "type" -> "FeatureCollection",
+      "features" -> input.map {
+        case (asset) => Map(
+          "id" -> asset.id,
+          "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
+          "properties" -> Map("tyypit" -> extractStopTypes(asset.propertyData))
+        )
+      })
   }
 
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
