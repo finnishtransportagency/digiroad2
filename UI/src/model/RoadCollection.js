@@ -123,5 +123,9 @@
     this.activate = function(road) {
       eventbus.trigger('road:active', road.roadLinkId);
     };
+
+    this.reset = function(){
+      roadLinks = [];
+    };
   };
 })(this);

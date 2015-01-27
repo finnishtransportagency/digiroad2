@@ -83,6 +83,7 @@ var RoadStyles = function() {
         changeRoadsWidthByZoomLevel();
       } else {
         vectorLayer.removeAllFeatures();
+        roadCollection.reset();
       }
       handleRoadsVisibility();
     };
