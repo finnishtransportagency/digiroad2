@@ -94,7 +94,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "type" -> "Feature",
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
-          "properties" -> extractPropertyValues(List("pysakin_tyyppi", "nimi_suomeksi", "nimi_ruotsiksi"), asset.propertyData).toMap
+          "properties" -> extractPropertyValues(List("pysakin_tyyppi", "nimi_suomeksi", "nimi_ruotsiksi", "katos"), asset.propertyData).toMap
         )
       })
   }
