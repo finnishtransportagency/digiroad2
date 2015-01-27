@@ -82,6 +82,10 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     key -> values.mkString(",")
   }
 
+  private def extractPropertyValues(keys: Seq[String], properties: Seq[Property]): Seq[(String, String)] = {
+    keys.map(extractPropertyValue(_, properties))
+  }
+
   private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
@@ -90,7 +94,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "type" -> "Feature",
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
-          "properties" -> Map(extractPropertyValue("pysakin_tyyppi", asset.propertyData), extractPropertyValue("nimi_suomeksi", asset.propertyData))
+          "properties" -> extractPropertyValues(List("pysakin_tyyppi", "nimi_suomeksi", "nimi_ruotsiksi"), asset.propertyData).toMap
         )
       })
   }
