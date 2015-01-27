@@ -87,6 +87,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       "type" -> "FeatureCollection",
       "features" -> input.map {
         case (asset) => Map(
+          "type" -> "Feature",
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
           "properties" -> Map("tyypit" -> extractStopTypes(asset.propertyData))
