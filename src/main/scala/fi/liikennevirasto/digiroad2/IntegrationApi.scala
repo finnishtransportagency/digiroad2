@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
@@ -72,6 +73,21 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
+  private def extractStopTypes(input: Seq[Property]): String = {
+    val values: Seq[String] = input.filter { property => property.publicId == "pysakin_tyyppi" }.map { property =>
+      property.values.map { value =>
+        value.propertyValue
+      }
+    }.flatten
+    values.mkString(",")
+  }
+
+  private def toGeoJSON(input: Iterable[AssetWithProperties]): Iterable[Map[String, Any]] = {
+    input.map {
+      case(asset) => Map("id" -> asset.id, "properties" -> Map("tyypit" -> extractStopTypes(asset.propertyData)))
+    }
+  }
+
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
 
   get("/:assetType") {
@@ -81,6 +97,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val assetType = params("assetType")
       assetType match {
         case "mass_transit_stops" => withDynSession { OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber) }
+        case "mass_transit_stops_2" => withDynSession { toGeoJSON(OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)) }
         case "speed_limits" => withDynSession { OracleLinearAssetDao.getByMunicipality(municipalityNumber) }
         case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
         case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
