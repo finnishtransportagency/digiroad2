@@ -289,4 +289,18 @@ object RoadLinkService {
       Q.queryNA[(Long, Seq[Point])](query).iterator().toSeq
     }
   }
+
+  def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
+    val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+      sql"""
+        select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta
+          from tielinkki_ctas
+          where kunta_nro = $municipality
+        """.as[BasicRoadLink].iterator().toSeq
+    }
+    adjustedRoadLinks(roadLinks).map { roadLink =>
+      Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
+          "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value)
+    }
+  }
 }
