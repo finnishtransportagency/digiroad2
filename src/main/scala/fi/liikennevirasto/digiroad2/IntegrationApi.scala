@@ -117,6 +117,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
             extractPropertyValue("maastokoordinaatti_z", asset.propertyData, propertyValuesToString),
             extractPropertyValue("liikennointisuunta", asset.propertyData, propertyValuesToString),
             extractPropertyValue("vaikutussuunta", asset.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("ensimmainen_voimassaolopaiva", asset.propertyData, propertyValuesToString),
+            extractPropertyValue("viimeinen_voimassaolopaiva", asset.propertyData, propertyValuesToString),
             extractPropertyValue("katos", asset.propertyData, firstPropertyValueToInt),
             extractPropertyValue("pyorateline", asset.propertyData, firstPropertyValueToInt))
        )
