@@ -74,7 +74,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   }
 
   private def extractPropertyValue(key: String, properties: Seq[Property]): (String, String) = {
-     val values: Seq[String] = properties.filter { property => property.publicId == key }.map { property =>
+    val values: Seq[String] = properties.filter { property => property.publicId == key}.map { property =>
       property.values.map { value =>
         value.propertyValue
       }
