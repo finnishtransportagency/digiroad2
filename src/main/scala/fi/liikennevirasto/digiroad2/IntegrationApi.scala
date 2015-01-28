@@ -127,6 +127,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
             extractPropertyValue("valaistus", asset.propertyData, firstPropertyValueToInt),
             extractPropertyValue("esteettomyys_liikuntarajoitteiselle", asset.propertyData, propertyValuesToString),
             extractPropertyValue("saattomahdollisuus_henkiloautolla", asset.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("liityntapysakointipaikkojen_maara", asset.propertyData, propertyValuesToString),
+            extractPropertyValue("liityntapysakoinnin_lisatiedot", asset.propertyData, propertyValuesToString),
             extractPropertyValue("pyorateline", asset.propertyData, firstPropertyValueToInt))
        )
       })
