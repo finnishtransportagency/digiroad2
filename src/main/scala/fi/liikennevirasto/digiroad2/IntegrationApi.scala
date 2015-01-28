@@ -97,6 +97,10 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   def extractBearing(asset: AssetWithProperties): (String, Option[Int]) = { "suuntima" -> asset.bearing }
 
+  def extractExternalId(asset: AssetWithProperties): (String, Long) = { "valtakunnallinen_id" -> asset.externalId }
+
+  def extractFloating(asset: AssetWithProperties): (String, Boolean) = { "kelluvuus" -> asset.floating }
+
   private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
@@ -108,6 +112,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "properties" -> Map(
             extractModificationTime(asset),
             extractBearing(asset),
+            extractExternalId(asset),
+            extractFloating(asset),
             extractPropertyValue("pysakin_tyyppi", asset.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", asset.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", asset.propertyData, propertyValuesToString),
