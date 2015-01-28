@@ -97,7 +97,7 @@ Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&a
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman tietolajit-paletista (1).
 
-Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
+Muokkaustilan saa aktivoitua tietolajikohtaisesti klikkaamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustilassa kartan yl&auml;osassa on teksti "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle.S" (14). Muokkaustilassa tehdyt muutokset tallentuvat painamalla "Tallenna"-painiketta (15) ja peruuntuvat painamalla "Peruuta"-painiketta (16). Takaisin katselutilaan p&auml;&auml;see klikkaamalla "Siirry katselutilaan"-painiketta (11).
 
 Kaikki tietolajit n&auml;kyv&auml;t sek&auml; katselu- ett&auml; muokkaustilassa vain, kun kartan mittakaava on 1:20 000 tai tarkempi. Sovellus ilmoittaa, kun kartan mittakaava on liian ep&auml;tarkka tietolajin n&auml;kymiselle.
 
@@ -151,11 +151,9 @@ _Tielinkit._
 
 Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
 
-Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu v&auml;yl&auml;tyyppivalinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta V&auml;yl&auml;tyyppi-valinnan pois. Sininen v&auml;ri tarkoittaa yksityistiet&auml;, vihre&auml; katua ja punainen maantiet&auml;. Harmaalla korostettujen tielinkkien v&auml;yl&auml;tyyppi ei ole tiedossa. 
+Tielinkeill&auml; on pys&auml;kkin&auml;kym&auml;ss&auml; oletuksena v&auml;rill&auml; korostettu Hallinnollinen luokka -valinta p&auml;&auml;ll&auml;. Valinnan saa pois klikkamalla tietolajit-valikon (1) "Joukkoliikenteen pys&auml;kit" kohdasta Hallinnollinen luokka-valinnan pois. Sininen v&auml;ri tarkoittaa yksityisen omistamaa tielinkki&auml;, vihre&auml; kunnan omistamaa ja punainen valtion omistamaa. Harmaalla korostettujen tielinkkien omistaja ei ole tiedossa. 
 
-V&auml;yl&auml;tyyppi kertoo tielinkin omistajasta. Maantiet omistaa valtio. Kadut omistaa kunta, jonka alueella katu on. Yksityistiet omistaa yksityiset tahot: tiekunta, yksityishenkil&ouml;, yritys tms.
-
-![V&auml;yl&auml;tyyppi](k22.JPG)
+![Hallinnollinen luokka](k22.JPG)
 
 _Joukkoliikenteen pys&auml;kkien valinta._
 
@@ -224,9 +222,9 @@ Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei vo
 4.1 Tielinkin tietojen katselu
 ------------------------------
 
-Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), v&auml;yl&auml;tyyppi, toiminnallinen luokka ja liikennevirran suunta.
+Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka ja liikennevirran suunta.
 
-Tielinkit on visualisoitu v&auml;yl&auml;tyypin mukaan siten, ett&auml; maantiet ovat punaisia, kadut vihreit&auml; ja yksityistiet sinisi&auml;. Ne tielinkit, joilla ei ole v&auml;yl&auml;tyyppi&auml;, on visualisoitu harmaaksi. Niill&auml; tielinkeill&auml;, joiden liikennevirran suunta on yhteen suuntaan, on visualisoitu suuntanuoli osoittamaan liikennevirran suuntaan.
+Tielinkit on visualisoitu hallinnollisen luokan ja toiminnallisen luokan mukaan siten, ett&auml; valtion omistamat tielinkit ovat punaisia, kunnan omistamat vihreit&auml; ja yksityisten omistamat sinisi&auml;. Ne tielinkit, joilla ei ole omistajaa tiedossa, on visualisoitu harmaaksi. Toiminnallinen luokka on visualisoitu tielinkin paksuutena (luokat 1-8). Niill&auml; tielinkeill&auml;, joiden liikennevirran suunta on yhteen suuntaan, on visualisoitu suuntanuoli osoittamaan liikennevirran suuntaan.
 
 ![Tielinkit](k7.jpg)
 
@@ -274,7 +272,7 @@ _Suurin sallittu -katsleutila._
 5. Muokkaustila
 ---------------
 
-Muokkaustila aktivoidaan painamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yl&auml;osassa on teksti: "Olet muokkaustilassa".
+Muokkaustila aktivoidaan painamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yl&auml;osassa on teksti: "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle."
 
 Muokkaustilasta p&auml;&auml;see takaisin katselutilaan klikkaamalla "Siirry katselutilaan" -painiketta (11).
 
