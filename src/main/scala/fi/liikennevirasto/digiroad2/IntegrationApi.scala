@@ -73,17 +73,19 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
-  private def extractPropertyValue(key: String, properties: Seq[Property]): (String, String) = {
+  private def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
+
+  private def propertyValuesToString(values: Seq[String]): String = { values.mkString }
+
+  private def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
+
+  private def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
     val values: Seq[String] = properties.filter { property => property.publicId == key}.map { property =>
       property.values.map { value =>
         value.propertyValue
       }
     }.flatten
-    key -> values.mkString(",")
-  }
-
-  private def extractPropertyValues(keys: Seq[String], properties: Seq[Property]): Seq[(String, String)] = {
-    keys.map(extractPropertyValue(_, properties))
+    key -> transformation(values)
   }
 
   private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
@@ -94,12 +96,13 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "type" -> "Feature",
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
-          "properties" -> extractPropertyValues(List("pysakin_tyyppi",
-                                                     "nimi_suomeksi",
-                                                     "nimi_ruotsiksi",
-                                                     "katos",
-                                                     "pyorateline"), asset.propertyData).toMap
-        )
+          "properties" -> Map(
+            extractPropertyValue("pysakin_tyyppi", asset.propertyData, propertyValuesToIntList),
+            extractPropertyValue("nimi_suomeksi", asset.propertyData, propertyValuesToString),
+            extractPropertyValue("nimi_ruotsiksi", asset.propertyData, propertyValuesToString),
+            extractPropertyValue("katos", asset.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("pyorateline", asset.propertyData, firstPropertyValueToInt))
+       )
       })
   }
 
