@@ -154,8 +154,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
       assetType match {
-        case "mass_transit_stops" => withDynSession { OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber) }
-        case "mass_transit_stops_2" => withDynSession { toGeoJSON(OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)) }
+        case "mass_transit_stops" => withDynSession { toGeoJSON(OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)) }
         case "speed_limits" => withDynSession { OracleLinearAssetDao.getByMunicipality(municipalityNumber) }
         case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
         case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
