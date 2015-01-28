@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, CommonAssetProperty, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.DefaultFormats
@@ -88,6 +88,13 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     key -> transformation(values)
   }
 
+  def extractModificationTime(asset: AssetWithProperties): (String, String) = {
+    "muokattu_viimeksi" ->
+      asset.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+        .getOrElse(asset.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+        .getOrElse(""))
+  }
+
   private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
@@ -97,6 +104,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "id" -> asset.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
           "properties" -> Map(
+            extractModificationTime(asset),
             extractPropertyValue("pysakin_tyyppi", asset.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", asset.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", asset.propertyData, propertyValuesToString),
