@@ -122,6 +122,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
             extractPropertyValue("aikataulu", asset.propertyData, firstPropertyValueToInt),
             extractPropertyValue("katos", asset.propertyData, firstPropertyValueToInt),
             extractPropertyValue("mainoskatos", asset.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("penkki", asset.propertyData, firstPropertyValueToInt),
             extractPropertyValue("pyorateline", asset.propertyData, firstPropertyValueToInt))
        )
       })
