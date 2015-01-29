@@ -167,6 +167,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         case "barrier_gates" => PointAssetService.getByMunicipality(3, municipalityNumber)
         case "traffic_lights" => PointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => PointAssetService.getByMunicipality(17, municipalityNumber)
+        case "directional_traffic_signs" => PointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
         case "vehicle_allowed" => LinearAssetService.getByMunicipality(1, municipalityNumber)
         case "vehicle_not_allowed" => LinearAssetService.getByMunicipality(29, municipalityNumber)
         case "number_of_lanes" ⇒ LinearAssetService.getByMunicipality(5, municipalityNumber)
