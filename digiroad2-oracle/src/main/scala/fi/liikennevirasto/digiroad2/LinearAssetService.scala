@@ -6,7 +6,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 
-object VehiclePermissionService {
+object LinearAssetService {
   def getByMunicipality(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = sql"""

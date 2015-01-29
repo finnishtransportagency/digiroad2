@@ -167,8 +167,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         case "barrier_gates" => PointAssetService.getByMunicipality(3, municipalityNumber)
         case "traffic_lights" => PointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => PointAssetService.getByMunicipality(17, municipalityNumber)
-        case "vehicle_allowed" => VehiclePermissionService.getByMunicipality(1, municipalityNumber)
-        case "vehicle_not_allowed" => VehiclePermissionService.getByMunicipality(29, municipalityNumber)
+        case "vehicle_allowed" => LinearAssetService.getByMunicipality(1, municipalityNumber)
+        case "vehicle_not_allowed" => LinearAssetService.getByMunicipality(29, municipalityNumber)
         case "road_link_properties" => RoadLinkService.getByMunicipalityWithProperties(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
