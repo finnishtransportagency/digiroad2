@@ -46,4 +46,25 @@ object LinearAssetService {
       }.toSeq
     }
   }
+
+  def getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val query = sql"""
+         select s.objectid, s.tielinkki_id, s.puoli, to_2d(sdo_lrs.dynamic_segment(t.shape, s.alkum, s.loppum)), s.tyyppi, s.name_fi, s.name_sv
+           from silta_alik_tunn s
+           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+           where t.kunta_nro = $municipalityNumber
+        """
+      query.as[(Long, Long, Int, Seq[Point], Int, String, String)].iterator().map {
+        case (id, roadLinkId, sideCode, geometry, typeId, nameFi, nameSv) =>
+          Map(
+            "id" -> (id.toString + "-" + roadLinkId.toString),
+            "sideCode" -> sideCode,
+            "points" -> geometry,
+            "type" -> typeId,
+            "nameFi" -> nameFi,
+            "nameSv" -> nameSv)
+      }.toSeq
+    }
+  }
 }
