@@ -21,7 +21,7 @@ object VehiclePermittedService {
             "id" -> (id.toString + "-" + roadLinkId.toString),
             "sideCode" -> sideCode,
             "value" -> value,
-            "geometry" -> geometry)
+            "points" -> geometry)
       }.toSeq
     }
   }
