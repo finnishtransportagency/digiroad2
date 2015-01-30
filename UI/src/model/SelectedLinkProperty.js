@@ -50,8 +50,6 @@
       });
     };
 
-    window.moveToLinkProperty = moveTo;
-
     return {
       close: close,
       open: open,
@@ -59,7 +57,8 @@
       getId: getId,
       get: get,
       save: save,
-      cancel: cancel
+      cancel: cancel,
+      moveTo: moveTo
     };
   };
 })(this);

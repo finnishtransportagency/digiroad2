@@ -31,7 +31,7 @@
       if (data.layer === 'asset') {
         selectedAssetModel.changeByExternalId(data.externalId);
       } else if (data.layer === 'roadlinks')    {
-        console.log('Not yet implemented');
+        selectedLinkProperty.moveTo(data.externalId);
       }
     }
   };
@@ -283,6 +283,7 @@
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = SelectedAssetModel.initialize(backend);
+    window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits);
