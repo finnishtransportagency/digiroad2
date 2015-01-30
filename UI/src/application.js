@@ -3,10 +3,22 @@
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var assetIdFromURL = function() {
-    var matches = window.location.hash.match(/(\d+)(.*)/);
-    if (matches) {
-      return {externalId: parseInt(matches[1], 10), keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
+    var hash = window.location.hash;
+    var matches = hash.substring(1, hash.length).split("/");
+    var id = null;
+    var layer = null;
+
+    if (matches && matches.length == 1 && matches[0] !== '') {
+      layer = 'asset';
+      id = parseInt(matches[0], 10);
+    } else if (matches && matches.length == 3) {
+      layer = matches[1];
+      id = parseInt(matches[2], 10);
+    } else {
+      return null;
     }
+
+    return {layer: layer, externalId: id, keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
   };
 
   var indicatorOverlay = function() {
@@ -15,8 +27,12 @@
 
   var selectAssetFromAddressBar = function() {
     var data = assetIdFromURL();
-    if (data && data.externalId) {
-      selectedAssetModel.changeByExternalId(data.externalId);
+    if (data && data.externalId && data.layer) {
+      if (data.layer === 'asset') {
+        selectedAssetModel.changeByExternalId(data.externalId);
+      } else if (data.layer === 'roadlinks')    {
+        console.log('Not yet implemented');
+      }
     }
   };
 
