@@ -22,7 +22,7 @@ var URLRouter = function(map, backend, models) {
     router.navigate('massTransitStop');
   });
 
-  eventbus.on('asset:fetched', function(asset) {
+  eventbus.on('asset:fetched asset:created', function(asset) {
     router.navigate('massTransitStop/' + asset.externalId);
   });
 };
