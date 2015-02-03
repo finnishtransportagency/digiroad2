@@ -237,7 +237,7 @@
     };
 
     this.withStartupParameters = function(startupParameters) {
-      self.getStartupParametersWithCallback = function(assetId, callback) { callback(startupParameters); };
+      self.getStartupParametersWithCallback = function(callback) { callback(startupParameters); };
       return self;
     };
 
