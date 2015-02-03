@@ -31,10 +31,12 @@
         zoomLevel = level;
       },
       selectLayer: function(layer) {
-        var previouslySelectedLayer = selectedLayer;
-        selectedLayer = layer;
-        eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-        setReadOnly(true);
+        if (layer !== selectedLayer) {
+          var previouslySelectedLayer = selectedLayer;
+          selectedLayer = layer;
+          eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
+          setReadOnly(true);
+        }
       },
       getSelectedLayer: function() {
         return selectedLayer;
