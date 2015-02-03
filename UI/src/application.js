@@ -2,7 +2,9 @@ var URLRouter = function(map, backend, models) {
   var Router = Backbone.Router.extend({
     routes: {
       'massTransitStop/:id': 'massTransitStop',
-      'asset/:id': 'massTransitStop'
+      'asset/:id': 'massTransitStop',
+
+      'linkProperties/:mmlId': 'linkProperty'
     },
 
     massTransitStop: function(id) {
@@ -11,6 +13,16 @@ var URLRouter = function(map, backend, models) {
           models.selectedMassTransitStopModel.changeByExternalId(id);
         });
         map.setCenter(new OpenLayers.LonLat(massTransitStop.lon, massTransitStop.lat), 12);
+      });
+    },
+
+    linkProperty: function(mmlId) {
+      applicationModel.selectLayer('linkProperties');
+      backend.getRoadLinkByMMLId(mmlId, function(response) {
+        eventbus.once('roadLinks:fetched', function() {
+          models.selectedLinkProperty.open(response.id);
+        });
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
       });
     }
   });
