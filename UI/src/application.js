@@ -42,7 +42,9 @@ var URLRouter = function(map, backend, models) {
     router.navigate('linkProperties');
   });
 
-
+  eventbus.on('linkProperties:selected', function(linkProperty) {
+    router.navigate('linkProperties/' + linkProperty.mmlId);
+  });
 };
 
 (function(application) {
