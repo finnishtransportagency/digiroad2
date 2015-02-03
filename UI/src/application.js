@@ -8,6 +8,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     massTransitStop: function(id) {
+      applicationModel.selectLayer('asset');
       backend.getAssetByExternalId(id, function(massTransitStop) {
         eventbus.once('massTransitStops:available', function() {
           models.selectedMassTransitStopModel.changeByExternalId(id);
