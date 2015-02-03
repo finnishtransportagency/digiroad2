@@ -5,6 +5,10 @@ var URLRouter = function(map, backend, models) {
       this.route(/^(\d+)$/, function(externalId) {
         this.massTransitStop(externalId);
       });
+
+      this.route(/^(\w+)$/, function(layer) {
+        applicationModel.selectLayer(layer);
+      });
     },
 
     routes: {
@@ -54,6 +58,10 @@ var URLRouter = function(map, backend, models) {
 
   eventbus.on('linkProperties:selected', function(linkProperty) {
     router.navigate('linkProperties/' + linkProperty.mmlId);
+  });
+
+  eventbus.on('layer:selected', function(layer) {
+    router.navigate(layer);
   });
 };
 
