@@ -37,6 +37,12 @@ var URLRouter = function(map, backend, models) {
   eventbus.on('asset:fetched asset:created', function(asset) {
     router.navigate('massTransitStop/' + asset.externalId);
   });
+
+  eventbus.on('linkProperties:unselected', function() {
+    router.navigate('linkProperties');
+  });
+
+
 };
 
 (function(application) {
