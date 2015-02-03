@@ -1,9 +1,15 @@
 var URLRouter = function(map, backend, models) {
   var Router = Backbone.Router.extend({
+    initialize: function() {
+      // Support legacy format for opening mass transit stop via ...#300289
+      this.route(/^(\d+)$/, function(externalId) {
+        this.massTransitStop(externalId);
+      });
+    },
+
     routes: {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
-
       'linkProperties/:mmlId': 'linkProperty'
     },
 
