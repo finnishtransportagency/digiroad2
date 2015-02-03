@@ -35,7 +35,10 @@ var URLRouter = function(map, backend, models) {
   });
 
   var router = new Router();
-  Backbone.history.start();
+  // Tests seem to start Backbone.History multiple times
+  if (!Backbone.History.started) {
+    Backbone.history.start();
+  }
 
   eventbus.on('asset:closed', function() {
     router.navigate('massTransitStop');
