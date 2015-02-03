@@ -362,6 +362,9 @@
           elements.expanded.hide();
           elements.editMode.hide();
           elements.collapsed.show();
+        } else {
+          elements.collapsed.hide();
+          elements.expanded.show();
         }
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');
