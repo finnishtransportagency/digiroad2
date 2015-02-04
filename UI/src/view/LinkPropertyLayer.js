@@ -1,6 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
     var currentDataset = 'administrative-class';
+    var selectionStyle = false;
 
     var functionalClassColorLookup = {
       1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
@@ -64,18 +65,26 @@
       }).flatten().value();
     };
 
-    var setStyleMap = function() {
+    var setDatasetSpecificStyleMap = function() {
       if (currentDataset === 'functional-class') {
-        roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+        if (selectionStyle) {
+          roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
+        } else {
+          roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+        }
       } else if (currentDataset === 'administrative-class') {
-        roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
+        if (selectionStyle) {
+          roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
+        } else {
+          roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
+        }
       }
     };
 
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
-    setStyleMap();
+    setDatasetSpecificStyleMap();
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -99,11 +108,13 @@
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
         selectedLinkProperty.open(feature.attributes.roadLinkId);
+        selectionStyle = true;
         roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
         roadLayer.layer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
+        selectionStyle = false;
         deselectRoadLink();
         roadLayer.layer.redraw();
         highlightFeatures(null);
@@ -169,7 +180,7 @@
     };
 
     var deselectRoadLink = function() {
-      roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+      setDatasetSpecificStyleMap();
       selectedLinkProperty.close();
     };
 
@@ -198,7 +209,7 @@
         eventListener.listenTo(eventbus, 'linkProperty:dataset:changed', function(dataset) {
           if (dataset !== currentDataset) {
             currentDataset = dataset;
-            setStyleMap();
+            setDatasetSpecificStyleMap();
             roadLayer.layer.redraw();
           }
         });
