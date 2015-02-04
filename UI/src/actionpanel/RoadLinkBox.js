@@ -48,7 +48,7 @@
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var functionalClassLegendTemplate = _.map(functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
-        '<div class="label">' + functionalClass + '</div>' +
+        '<div class="label">Luokka ' + functionalClass + '</div>' +
         '<div class="symbol linear linear-asset-' + functionalClass + '" />' +
         '</div>';
     }).join('');
