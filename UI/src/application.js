@@ -1,71 +1,85 @@
+var URLRouter = function(map, backend, models) {
+  var Router = Backbone.Router.extend({
+    initialize: function() {
+      // Support legacy format for opening mass transit stop via ...#300289
+      this.route(/^(\d+)$/, function(externalId) {
+        this.massTransitStop(externalId);
+      });
+
+      this.route(/^([A-Za-z]+)$/, function(layer) {
+        applicationModel.selectLayer(layer);
+      });
+    },
+
+    routes: {
+      'massTransitStop/:id': 'massTransitStop',
+      'asset/:id': 'massTransitStop',
+      'linkProperties/:mmlId': 'linkProperty'
+    },
+
+    massTransitStop: function(id) {
+      applicationModel.selectLayer('asset');
+      backend.getAssetByExternalId(id, function(massTransitStop) {
+        eventbus.once('massTransitStops:available', function() {
+          models.selectedMassTransitStopModel.changeByExternalId(id);
+        });
+        map.setCenter(new OpenLayers.LonLat(massTransitStop.lon, massTransitStop.lat), 12);
+      });
+    },
+
+    linkProperty: function(mmlId) {
+      applicationModel.selectLayer('linkProperties');
+      backend.getRoadLinkByMMLId(mmlId, function(response) {
+        eventbus.once('roadLinks:fetched', function() {
+          models.selectedLinkProperty.open(response.id);
+        });
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+      });
+    }
+  });
+
+  var router = new Router();
+  // Tests seem to start Backbone.History multiple times
+  if (!Backbone.History.started) {
+    Backbone.history.start();
+  }
+
+  eventbus.on('asset:closed', function() {
+    router.navigate('massTransitStop');
+  });
+
+  eventbus.on('asset:fetched asset:created', function(asset) {
+    router.navigate('massTransitStop/' + asset.externalId);
+  });
+
+  eventbus.on('linkProperties:unselected', function() {
+    router.navigate('linkProperties');
+  });
+
+  eventbus.on('linkProperties:selected', function(linkProperty) {
+    router.navigate('linkProperties/' + linkProperty.mmlId);
+  });
+
+  eventbus.on('layer:selected', function(layer) {
+    router.navigate(layer);
+  });
+};
+
 (function(application) {
   var localizedStrings;
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
-
-  var assetIdFromURL = function() {
-    var hash = window.location.hash;
-    var matches = hash.substring(1, hash.length).split("/");
-    var id = null;
-    var layer = null;
-
-    if (matches && matches.length == 1 && matches[0] !== '') {
-      layer = 'asset';
-      id = parseInt(matches[0], 10);
-    } else if (matches && matches.length == 3) {
-      layer = matches[1];
-      id = parseInt(matches[2], 10);
-    } else {
-      return null;
-    }
-
-    return {layer: layer, externalId: id, keepPosition: _.contains(window.location.hash, 'keepPosition=true')};
-  };
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
   };
 
-  var selectAssetFromAddressBar = function() {
-    var data = assetIdFromURL();
-    if (data && data.externalId && data.layer) {
-      if (data.layer === 'asset') {
-        selectedAssetModel.changeByExternalId(data.externalId);
-      } else if (data.layer === 'roadlinks')    {
-        selectedLinkProperty.moveTo(data.externalId);
-      }
-    }
-  };
-
-  var hashChangeHandler = function() {
-    $(window).off('hashchange', hashChangeHandler);
-    var oldHash = window.location.hash;
-
-    selectAssetFromAddressBar(); // Empties the hash, so we need to set it back to original state.
-
-    window.location.hash = oldHash;
-    $(window).on('hashchange', hashChangeHandler);
-  };
-
   var bindEvents = function() {
-    eventbus.on('application:readOnly tool:changed asset:closed asset:placed', function() {
-      window.location.hash = '';
-    });
-
-    $(window).on('hashchange', hashChangeHandler);
-
     eventbus.on('asset:saving asset:creating', function() {
       indicatorOverlay();
     });
 
     eventbus.on('asset:fetched asset:created', function(asset) {
       jQuery('.spinner-overlay').remove();
-      var keepPosition = 'true';
-      var data = assetIdFromURL();
-      if (data && !data.keepPosition) {
-        eventbus.trigger('coordinates:selected', { lat: asset.lat, lon: asset.lon });
-        keepPosition = 'false';
-      }
-      window.location.hash = '#/asset/' + asset.externalId + '?keepPosition=' + keepPosition;
     });
 
     eventbus.on('asset:saved', function() {
@@ -78,8 +92,6 @@
     });
 
     eventbus.on('confirm:show', function() { new Confirm(); });
-
-    eventbus.once('assets:all-updated', selectAssetFromAddressBar);
   };
 
   var createOpenLayersMap = function(startupParameters) {
@@ -170,6 +182,8 @@
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(map.getZoom(), map.getExtent());
+
+    return map;
   };
 
   var setupProjections = function() {
@@ -179,7 +193,8 @@
   var startApplication = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      setupMap(backend, models, numericalLimits, withTileMaps, startupParameters);
+      var map = setupMap(backend, models, numericalLimits, withTileMaps, startupParameters);
+      new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     }
   };
@@ -273,23 +288,26 @@
       });
     });
 
+    var selectedMassTransitStopModel = SelectedAssetModel.initialize(backend);
+
     var models = {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
-      selectedLinkProperty: selectedLinkProperty
+      selectedLinkProperty: selectedLinkProperty,
+      selectedMassTransitStopModel: selectedMassTransitStopModel
     };
 
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
-    window.selectedAssetModel = SelectedAssetModel.initialize(backend);
+    window.selectedAssetModel = selectedMassTransitStopModel;
     window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
-    backend.getStartupParametersWithCallback(assetIdFromURL(), function(startupParameters) {
+    backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;

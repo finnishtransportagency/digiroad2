@@ -20,9 +20,9 @@
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
         if (mapMoveEvent.hasZoomLevelChanged) {
-          eventbus.trigger('assets:all-updated', backendAssets);
+          eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
-          eventbus.trigger('assets:new-fetched', filterNonExistingAssets(backendAssets, assets));
+          eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
         }
       });
     };

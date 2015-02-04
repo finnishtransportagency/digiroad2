@@ -34,35 +34,35 @@
           '<div class="legend-entry">' +
             '<div class="label">Luokka 1</div>' +
             '<div class="symbol linear class-1"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 2</div>' +
             '<div class="symbol linear class-2"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 3</div>' +
             '<div class="symbol linear class-3"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 4</div>' +
             '<div class="symbol linear class-4"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 5</div>' +
             '<div class="symbol linear class-5"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 6</div>' +
             '<div class="symbol linear class-6"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 7</div>' +
             '<div class="symbol linear class-7"/>' +
-          '</div>' +        
+          '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Luokka 8</div>' +
             '<div class="symbol linear class-8"/>' +
-          '</div>' +        
+          '</div>' +
         '</div>' +
       '</div>');
 
@@ -98,6 +98,9 @@
           editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
+        } else {
+          elements.collapsed.hide();
+          elements.expanded.show();
         }
       }, this);
       eventbus.on('roles:fetched', function(roles) {

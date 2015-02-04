@@ -529,7 +529,6 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
         new Confirm();
       } else {
         selectedAssetModel.close();
-        window.location.hash = '';
       }
     }
   };

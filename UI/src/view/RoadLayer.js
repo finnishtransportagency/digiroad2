@@ -151,9 +151,6 @@ var RoadStyles = function() {
 
     eventbus.on('layer:selected', function(layer) {
       activateLayerStyleMap(layer);
-      if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        fetchRoads(map.getExtent(), map.getZoom());
-      }
       toggleRoadType();
     }, this);
 

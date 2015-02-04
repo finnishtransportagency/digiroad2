@@ -173,8 +173,8 @@
       });
     };
 
-    this.getStartupParametersWithCallback = function(selectedAsset, callback) {
-      var url = 'api/startupParameters' + (selectedAsset && selectedAsset.externalId ? '?externalAssetId=' + selectedAsset.externalId : '');
+    this.getStartupParametersWithCallback = function(callback) {
+      var url = 'api/startupParameters';
       $.getJSON(url, callback);
     };
 
@@ -237,7 +237,7 @@
     };
 
     this.withStartupParameters = function(startupParameters) {
-      self.getStartupParametersWithCallback = function(assetId, callback) { callback(startupParameters); };
+      self.getStartupParametersWithCallback = function(callback) { callback(startupParameters); };
       return self;
     };
 

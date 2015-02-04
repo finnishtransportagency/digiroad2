@@ -120,6 +120,9 @@
           editModeToggle.reset();
           elements.expanded.hide();
           elements.collapsed.show();
+        } else {
+          elements.collapsed.hide();
+          elements.expanded.show();
         }
       }, this);
       eventbus.on('roles:fetched', function(roles) {
@@ -362,6 +365,9 @@
           elements.expanded.hide();
           elements.editMode.hide();
           elements.collapsed.show();
+        } else {
+          elements.collapsed.hide();
+          elements.expanded.show();
         }
         actionButtons.removeClass('active');
         actionButtons.filter('.select').addClass('active');
