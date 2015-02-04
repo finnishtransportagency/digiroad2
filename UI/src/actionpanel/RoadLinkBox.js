@@ -13,6 +13,14 @@
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="visualization" value="administrative-class" checked>Hallinnollinen luokka</input></label>' +
+          '</div>' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="visualization" value="functional-class">Toiminnallinen luokka</input></label>' +
+          '</div>' +
+        '</div>' +
+        '<div class="panel-section panel-legend road-link-legend">' +
           '<div class="legend-entry">' +
             '<div class="label">Valtion omistama</div>' +
             '<div class="symbol linear road"/>' +
