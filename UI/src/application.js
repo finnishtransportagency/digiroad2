@@ -6,7 +6,7 @@ var URLRouter = function(map, backend, models) {
         this.massTransitStop(externalId);
       });
 
-      this.route(/^(\w+)$/, function(layer) {
+      this.route(/^([A-Za-z]+)$/, function(layer) {
         applicationModel.selectLayer(layer);
       });
     },
