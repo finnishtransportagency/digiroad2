@@ -20,9 +20,13 @@
             '<label><input type="radio" name="visualization" value="functional-class">Toiminnallinen luokka</input></label>' +
           '</div>' +
         '</div>' +
-        '<div class="panel-section panel-legend road-link-legend">' +
-          '<div class="legend-entry">' +
-            '<div class="label">Valtion omistama</div>' +
+        '<div class="legend-container"></div>' +
+      '</div>');
+
+    var administrativeClassLegend = $('' +
+      '<div class="panel-section panel-legend road-link-legend">' +
+        '<div class="legend-entry">' +
+          '<div class="label">Valtion omistama</div>' +
             '<div class="symbol linear road"/>' +
           '</div>' +
           '<div class="legend-entry">' +
@@ -35,44 +39,26 @@
           '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Ei tiedossa</div>' +
-            '<div class="symbol linear unknown"/>' +
-          '</div>' +
-        '</div>' +
-        '<div class="panel-section panel-legend functional-class-legend">' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 1</div>' +
-            '<div class="symbol linear class-1"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 2</div>' +
-            '<div class="symbol linear class-2"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 3</div>' +
-            '<div class="symbol linear class-3"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 4</div>' +
-            '<div class="symbol linear class-4"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 5</div>' +
-            '<div class="symbol linear class-5"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 6</div>' +
-            '<div class="symbol linear class-6"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 7</div>' +
-            '<div class="symbol linear class-7"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 8</div>' +
-            '<div class="symbol linear class-8"/>' +
-          '</div>' +
+          '<div class="symbol linear unknown"/>' +
         '</div>' +
       '</div>');
+
+    var functionalClassLegend = $('<div class="panel-section panel-legend functional-class-legend"></div>');
+
+    var functionalClasses = [1,2,3,4,5,6];
+    var functionalClassLegendTemplate = _.map(functionalClasses, function(functionalClass) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + functionalClass + '</div>' +
+        '<div class="symbol linear linear-asset-' + functionalClass + '" />' +
+        '</div>';
+    }).join('');
+
+    functionalClassLegend.append(functionalClassLegendTemplate);
+
+    var legends = {
+      'administrative-class': administrativeClassLegend,
+      'functional-class': functionalClassLegend
+    };
 
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
@@ -100,7 +86,11 @@
       });
 
       elements.expanded.find('input[name="visualization"]').change(function(event) {
-        eventbus.trigger('linkProperty:dataset:changed', $(event.target).val());
+        var datasetName = $(event.target).val();
+        var legendContainer = $(elements.expanded.find('.legend-container'));
+        legendContainer.empty();
+        legendContainer.append(legends[datasetName]);
+        eventbus.trigger('linkProperty:dataset:changed', datasetName);
       });
     };
 
@@ -126,6 +116,7 @@
 
     bindExternalEventHandlers();
 
+    elements.expanded.find('.legend-container').append(administrativeClassLegend);
     this.element = $('<div class="panel-group ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
