@@ -91,7 +91,7 @@
       '  <header class="panel-header expanded">',
       '    Nopeusrajoitukset',
       '  </header>',
-      '  <div class="panel-section panel-legend speed-limit-legend">',
+      '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
       '  </div>',
       '</div>'].join('');

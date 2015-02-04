@@ -152,6 +152,18 @@
   &:after { right: -1px; }
 }
 
+.linear-asset-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .linear {
+      position: relative;
+      display: inline-block;
+      width: calc(~"100% - @{labelWidth}");
+      margin-bottom: 0;
+    }
+  }
+}
+
 .speed-limit-legend {
   .legend-entry {
     @labelWidth: 25px;
@@ -159,12 +171,6 @@
       display: inline-block;
       width: @labelWidth;
       line-height: 16px;
-    }
-    .linear {
-      position: relative;
-      display: inline-block;
-      width: calc(~"100% - @{labelWidth}");
-      margin-bottom: 0;
     }
     .speed-limit-120, .speed-limit-100, .speed-limit-80, .speed-limit-70 {
       &:extend(.dotted-linear-asset);
@@ -188,12 +194,6 @@
       display: block;
       font-size: @font-size-xs;
       line-height: @line-height-base;
-    }
-    .linear {
-      position: relative;
-      display: inline-block;
-      width: calc(~"100% - @{labelWidth}");
-      margin-bottom: 0;
     }
     .linear-asset-2, .linear-asset-4, .linear-asset-6, .linear-asset-8 {
       &:extend(.dotted-linear-asset);
