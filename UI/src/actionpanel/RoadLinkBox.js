@@ -98,6 +98,10 @@
           applicationModel.selectLayer(layerName);
         });
       });
+
+      elements.expanded.find('input[name="visualization"]').change(function(event) {
+        eventbus.trigger('linkProperty:dataset:changed', $(event.target).val());
+      });
     };
 
     var bindExternalEventHandlers = function() {
