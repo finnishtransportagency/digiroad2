@@ -1,9 +1,14 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
-    var administrativeClassStyleLookup = {
-      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
-      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
-      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
+    var functionalClassColorLookup = {
+      1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
+      2: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
+      3: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/street.svg' },
+      4: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/street.svg' },
+      5: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/street.svg' },
+      6: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/street.svg' },
+      7: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/street.svg' },
+      8: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/street.svg' }
     };
 
     var oneWaySignSizeLookup = {
@@ -58,7 +63,7 @@
     };
 
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    defaultStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+    defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
     roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
 
@@ -76,8 +81,8 @@
     });
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
-    selectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-    selectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
+    selectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
+    selectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
     selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
     selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
 
