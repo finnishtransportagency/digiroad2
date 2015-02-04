@@ -1,5 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
+    var currentDataset = 'administrative-class';
+
     var functionalClassColorLookup = {
       1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
       2: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
@@ -62,10 +64,18 @@
       }).flatten().value();
     };
 
+    var setStyleMap = function() {
+      if (currentDataset === 'functional-class') {
+        roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+      } else if (currentDataset === 'administrative-class') {
+        roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
+      }
+    };
+
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
-    roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+    setStyleMap();
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -184,6 +194,13 @@
             return feature.attributes.roadLinkId === link.roadLinkId;
           });
           selectControl.select(feature);
+        });
+        eventListener.listenTo(eventbus, 'linkProperty:dataset:changed', function(dataset) {
+          if (dataset !== currentDataset) {
+            currentDataset = dataset;
+            setStyleMap();
+            roadLayer.layer.redraw();
+          }
         });
         selectControl.activate();
       }
