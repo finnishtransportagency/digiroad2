@@ -195,7 +195,7 @@
       width: calc(~"100% - @{labelWidth}");
       margin-bottom: 0;
     }
-    .linear-asset-2, .linear-asset-4, .linear-asset-6 {
+    .linear-asset-2, .linear-asset-4, .linear-asset-6, .linear-asset-8 {
       &:extend(.dotted-linear-asset);
     }
     .linear-asset-1 { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
@@ -204,6 +204,8 @@
     .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
     .linear-asset-5  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
     .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
+    .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
+    .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
   }
 }
 

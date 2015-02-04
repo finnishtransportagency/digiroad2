@@ -45,7 +45,7 @@
 
     var functionalClassLegend = $('<div class="panel-section panel-legend functional-class-legend"></div>');
 
-    var functionalClasses = [1,2,3,4,5,6];
+    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var functionalClassLegendTemplate = _.map(functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
         '<div class="label">' + functionalClass + '</div>' +
