@@ -158,7 +158,6 @@
     .linear {
       position: relative;
       display: inline-block;
-      width: calc(~"100% - @{labelWidth}");
       margin-bottom: 0;
     }
   }
@@ -171,6 +170,9 @@
       display: inline-block;
       width: @labelWidth;
       line-height: 16px;
+    }
+    .linear {
+      width: calc(~"100% - @{labelWidth}");
     }
     .speed-limit-120, .speed-limit-100, .speed-limit-80, .speed-limit-70 {
       &:extend(.dotted-linear-asset);
