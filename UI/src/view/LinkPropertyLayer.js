@@ -4,14 +4,14 @@
     var currentRenderIntent;
 
     var functionalClassColorLookup = {
-      1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
-      2: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
-      3: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/street.svg' },
-      4: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/street.svg' },
-      5: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/street.svg' },
-      6: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/street.svg' },
-      7: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/street.svg' },
-      8: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/street.svg' }
+      1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-1.svg' },
+      2: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-2.svg' },
+      3: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-3.svg' },
+      4: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-4.svg' },
+      5: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-5.svg' },
+      6: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-6.svg' },
+      7: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-7.svg' },
+      8: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-8.svg' }
     };
 
     var oneWaySignSizeLookup = {
