@@ -39,6 +39,14 @@
       return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'functionalClass', value: functionalClass });
     };
 
+    var dashedStrokeWidthStyle = function(zoomLevel, functionalClass, symbolizer) {
+      var overlayTypeFilter = new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' });
+      return new OpenLayers.Rule({
+        filter: combineFilters([overlayTypeFilter, functionalClassFilter(functionalClass), roadLayer.createZoomLevelFilter(zoomLevel)]),
+        symbolizer: symbolizer
+      });
+    };
+
     var strokeWidthStyle = function(zoomLevel, functionalClass, symbolizer) {
       return new OpenLayers.Rule({
         filter: combineFilters([functionalClassFilter(functionalClass), roadLayer.createZoomLevelFilter(zoomLevel)]),
@@ -46,17 +54,17 @@
       });
     };
 
-    var createStrokeWidthStyles = function() {
-      var strokeWidthsByZoomLevelAndFunctionalClass = {
-        9:  [ 10, 10,  8,  8, 6, 6, 4, 4 ],
-        10: [ 18, 18, 12, 12, 7, 7, 4, 4 ],
-        11: [ 20, 20, 12, 12, 7, 7, 4, 4 ],
-        12: [ 25, 25, 17, 17, 9, 9, 4, 4 ],
-        13: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
-        14: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
-        15: [ 32, 32, 20, 20, 9, 9, 4, 4 ]
-      };
+    var strokeWidthsByZoomLevelAndFunctionalClass = {
+      9: [ 10, 10, 8, 8, 6, 6, 4, 4 ],
+      10: [ 18, 18, 12, 12, 7, 7, 4, 4 ],
+      11: [ 20, 20, 12, 12, 7, 7, 4, 4 ],
+      12: [ 25, 25, 17, 17, 9, 9, 4, 4 ],
+      13: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
+      14: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
+      15: [ 32, 32, 20, 20, 9, 9, 4, 4 ]
+    };
 
+    var createStrokeWidthStyles = function() {
       return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
         return _.map(widthsByZoomLevel, function(width, index) {
           var functionalClass = index + 1;
@@ -66,15 +74,18 @@
     };
 
     var createStrokeDashStyles = function() {
-      return [new OpenLayers.Rule({
-        filter: new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' }),
-        symbolizer: {
-          strokeColor: '#ffffff',
-          strokeLinecap: 'square',
-          strokeDashstyle: '1 32',
-          strokeOpacity: 1
-        }
-      })];
+      return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
+        return _.map(widthsByZoomLevel, function(width, index) {
+          var functionalClass = index + 1;
+          return dashedStrokeWidthStyle(parseInt(zoomLevel, 10), functionalClass, {
+            strokeWidth: width - 2,
+            strokeColor: '#ffffff',
+            strokeLinecap: 'square',
+            strokeDashstyle: '1 32',
+            strokeOpacity: 1
+          });
+        });
+      }).flatten().value();
     };
 
     var setDatasetSpecificStyleMap = function(dataset, renderIntent) {
