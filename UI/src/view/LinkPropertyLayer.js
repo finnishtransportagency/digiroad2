@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection) {
     var currentDataset;
     var currentRenderIntent;
 
@@ -287,6 +287,9 @@
         eventListener.listenTo(eventbus, 'linkProperty:dataset:changed', function(dataset) {
           if (dataset !== currentDataset) {
             setDatasetSpecificStyleMap(dataset, currentRenderIntent);
+            if (currentDataset === 'functional-class') {
+              drawDashedLineFeatures(roadCollection.getAll());
+            }
             roadLayer.layer.redraw();
           }
         });
