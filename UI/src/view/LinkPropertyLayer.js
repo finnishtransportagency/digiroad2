@@ -284,18 +284,6 @@
 
     eventbus.on('map:moved', handleMapMoved);
 
-    eventbus.on('linkProperties:dataset:changed', function (dataset) {
-      setDatasetSpecificStyleMap(dataset, currentRenderIntent);
-      if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        if (currentDataset === 'functional-class') {
-          drawDashedLineFeatures(roadCollection.getAll());
-        } else {
-          roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-        }
-        roadLayer.layer.redraw();
-      }
-    });
-
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
@@ -315,7 +303,17 @@
           });
           selectControl.select(feature);
         });
+        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function (dataset) {
+          setDatasetSpecificStyleMap(dataset, currentRenderIntent);
+          if (currentDataset === 'functional-class') {
+            drawDashedLineFeatures(roadCollection.getAll());
+          } else {
+            roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+          }
+          roadLayer.layer.redraw();
+        });
         selectControl.activate();
+        setDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
       }
     };
 
