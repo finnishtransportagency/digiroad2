@@ -74,6 +74,15 @@
     };
 
     var createStrokeDashStyles = function() {
+      var strokeDashStyles = {
+        9: '1 6',
+        10: '1 6',
+        11: '1 10',
+        12: '1 18',
+        13: '1 32',
+        14: '1 32',
+        15: '1 32'
+      };
       return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
         return _.map(widthsByZoomLevel, function(width, index) {
           var functionalClass = index + 1;
@@ -81,7 +90,7 @@
             strokeWidth: width - 2,
             strokeColor: '#ffffff',
             strokeLinecap: 'square',
-            strokeDashstyle: '1 32',
+            strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
             strokeOpacity: 1
           });
         });
