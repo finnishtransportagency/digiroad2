@@ -65,6 +65,18 @@
       }).flatten().value();
     };
 
+    var createStrokeDashStyles = function() {
+      return [new OpenLayers.Rule({
+        filter: new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' }),
+        symbolizer: {
+          strokeColor: '#ffffff',
+          strokeLinecap: 'square',
+          strokeDashstyle: '1 32',
+          strokeOpacity: 1
+        }
+      })];
+    };
+
     var setDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var getStyleMap = function(dataset, renderIntent) {
         var styleMaps = {
@@ -90,6 +102,8 @@
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
+    defaultStyle.addRules(createStrokeDashStyles());
+    setDatasetSpecificStyleMap('administrative-class', 'default');
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -204,6 +218,27 @@
       roadLayer.layer.addFeatures(oneWaySigns);
     };
 
+    var drawDashedLineFeatures = function(roadLinks) {
+      var lineFeatures = function(roadLinks) {
+        return _.flatten(_.map(roadLinks, function(roadLink) {
+          var points = _.map(roadLink.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          var attributes = {
+            functionalClass: roadLink.functionalClass,
+            type: 'overlay'
+          };
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        }));
+      };
+
+      var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+      });
+      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+    };
+
     var reselectRoadLink = function() {
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
@@ -235,6 +270,9 @@
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
         eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
+          if (currentDataset === 'functional-class') {
+            drawDashedLineFeatures(roadLinks);
+          }
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
