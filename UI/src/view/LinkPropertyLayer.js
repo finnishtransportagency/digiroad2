@@ -245,6 +245,7 @@
           });
           var attributes = {
             functionalClass: roadLink.functionalClass,
+            roadLinkId: roadLink.roadLinkId,
             type: 'overlay'
           };
           return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
