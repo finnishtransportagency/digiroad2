@@ -141,6 +141,7 @@
     selectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     selectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
     selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
+    selectionStyleMap.styles.select.addRules(createStrokeDashStyles());
     selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
 
     var administrativeClassStyleLookup = {
