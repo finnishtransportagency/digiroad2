@@ -1,7 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
-    var currentDataset = 'administrative-class';
-    var selectionStyle = false;
+    var currentDataset;
+    var currentRenderIntent;
 
     var functionalClassColorLookup = {
       1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/street.svg' },
@@ -65,26 +65,33 @@
       }).flatten().value();
     };
 
-    var setDatasetSpecificStyleMap = function() {
-      if (currentDataset === 'functional-class') {
-        if (selectionStyle) {
-          roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
-        } else {
-          roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
-        }
-      } else if (currentDataset === 'administrative-class') {
-        if (selectionStyle) {
-          roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
-        } else {
-          roadLayer.setLayerSpecificStyleMap('linkProperties', new OpenLayers.StyleMap());
-        }
+    var emptyStyleMap = new OpenLayers.StyleMap();
+    var setDatasetSpecificStyleMap = function(dataset, renderIntent) {
+      var getStyleMap = function(dataset, renderIntent) {
+        var styleMaps = {
+          'functional-class': {
+            'default': defaultStyleMap,
+            'select': selectionStyleMap
+          },
+          'administrative-class': {
+            'default': emptyStyleMap,
+            'select': emptyStyleMap
+          }
+        };
+        return styleMaps[dataset][renderIntent];
+      };
+
+      if (dataset !== currentDataset || renderIntent !== currentRenderIntent) {
+        roadLayer.setLayerSpecificStyleMap('linkProperties', getStyleMap(dataset, renderIntent));
+        currentDataset = dataset;
+        currentRenderIntent = renderIntent;
       }
     };
 
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
-    setDatasetSpecificStyleMap();
+    setDatasetSpecificStyleMap('administrative-class', 'default');
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -108,13 +115,11 @@
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
         selectedLinkProperty.open(feature.attributes.roadLinkId);
-        selectionStyle = true;
-        roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
+        setDatasetSpecificStyleMap(currentDataset, 'select');
         roadLayer.layer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
-        selectionStyle = false;
         deselectRoadLink();
         roadLayer.layer.redraw();
         highlightFeatures(null);
@@ -180,7 +185,7 @@
     };
 
     var deselectRoadLink = function() {
-      setDatasetSpecificStyleMap();
+      setDatasetSpecificStyleMap(currentDataset, 'default');
       selectedLinkProperty.close();
     };
 
@@ -208,8 +213,7 @@
         });
         eventListener.listenTo(eventbus, 'linkProperty:dataset:changed', function(dataset) {
           if (dataset !== currentDataset) {
-            currentDataset = dataset;
-            setDatasetSpecificStyleMap();
+            setDatasetSpecificStyleMap(dataset, currentRenderIntent);
             roadLayer.layer.redraw();
           }
         });
