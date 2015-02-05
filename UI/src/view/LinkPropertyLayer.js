@@ -65,7 +65,6 @@
       }).flatten().value();
     };
 
-    var emptyStyleMap = new OpenLayers.StyleMap();
     var setDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var getStyleMap = function(dataset, renderIntent) {
         var styleMaps = {
@@ -74,8 +73,8 @@
             'select': selectionStyleMap
           },
           'administrative-class': {
-            'default': emptyStyleMap,
-            'select': emptyStyleMap
+            'default': administrativeClassDefaultStyleMap,
+            'select': administrativeClassSelectionStyleMap
           }
         };
         return styleMaps[dataset][renderIntent];
@@ -91,7 +90,6 @@
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
-    setDatasetSpecificStyleMap('administrative-class', 'default');
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -111,6 +109,43 @@
     selectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
     selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
     selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
+
+    var administrativeClassStyleLookup = {
+      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
+      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
+      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
+    };
+
+    var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7,
+        rotation: '${rotation}'
+      }))
+    });
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    administrativeClassDefaultStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+
+    var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
+      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7,
+        graphicOpacity: 1.0,
+        rotation: '${rotation}'
+      })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.3,
+        graphicOpacity: 0.3,
+        rotation: '${rotation}'
+      }))
+    });
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    administrativeClassSelectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
+    administrativeClassSelectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
+
+    setDatasetSpecificStyleMap('administrative-class', 'default');
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
