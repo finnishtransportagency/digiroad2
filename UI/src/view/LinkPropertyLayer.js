@@ -103,7 +103,6 @@
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
     defaultStyle.addRules(createStrokeDashStyles());
-    setDatasetSpecificStyleMap('administrative-class', 'default');
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
