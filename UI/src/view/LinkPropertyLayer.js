@@ -283,7 +283,7 @@
           });
           selectControl.select(feature);
         });
-        eventListener.listenTo(eventbus, 'linkProperty:dataset:changed', function(dataset) {
+        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
           if (dataset !== currentDataset) {
             setDatasetSpecificStyleMap(dataset, currentRenderIntent);
             if (currentDataset === 'functional-class') {

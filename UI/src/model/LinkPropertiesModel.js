@@ -4,7 +4,7 @@
 
     var setDataset = function(dataset) {
       currentDataset = dataset;
-      eventbus.trigger('linkProperty:dataset:changed', dataset);
+      eventbus.trigger('linkProperties:dataset:changed', dataset);
     };
 
     return {
