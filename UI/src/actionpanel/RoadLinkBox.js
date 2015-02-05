@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLinkBox = function() {
+  root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
     var title = 'Tielinkit';
     var layerName = 'linkProperties';
@@ -90,7 +90,7 @@
         var legendContainer = $(elements.expanded.find('.legend-container'));
         legendContainer.empty();
         legendContainer.append(legends[datasetName]);
-        eventbus.trigger('linkProperty:dataset:changed', datasetName);
+        linkPropertiesModel.setDataset(datasetName);
       });
     };
 
