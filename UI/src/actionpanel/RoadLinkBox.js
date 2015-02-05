@@ -14,10 +14,10 @@
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
           '<div class="radio">' +
-            '<label><input type="radio" name="visualization" value="administrative-class" checked>Hallinnollinen luokka</input></label>' +
+            '<label><input type="radio" name="dataset" value="administrative-class" checked>Hallinnollinen luokka</input></label>' +
           '</div>' +
           '<div class="radio">' +
-            '<label><input type="radio" name="visualization" value="functional-class">Toiminnallinen luokka</input></label>' +
+            '<label><input type="radio" name="dataset" value="functional-class">Toiminnallinen luokka</input></label>' +
           '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
@@ -46,14 +46,14 @@
     var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
 
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
-    var functionalClassLegendTemplate = _.map(functionalClasses, function(functionalClass) {
+    var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
         '<div class="label">Luokka ' + functionalClass + '</div>' +
         '<div class="symbol linear linear-asset-' + functionalClass + '" />' +
         '</div>';
     }).join('');
 
-    functionalClassLegend.append(functionalClassLegendTemplate);
+    functionalClassLegend.append(functionalClassLegendEntries);
 
     var legends = {
       'administrative-class': administrativeClassLegend,
@@ -85,7 +85,7 @@
         });
       });
 
-      elements.expanded.find('input[name="visualization"]').change(function(event) {
+      elements.expanded.find('input[name="dataset"]').change(function(event) {
         var datasetName = $(event.target).val();
         var legendContainer = $(elements.expanded.find('.legend-container'));
         legendContainer.empty();
