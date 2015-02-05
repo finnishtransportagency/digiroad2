@@ -289,6 +289,8 @@
             setDatasetSpecificStyleMap(dataset, currentRenderIntent);
             if (currentDataset === 'functional-class') {
               drawDashedLineFeatures(roadCollection.getAll());
+            } else {
+              roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
             }
             roadLayer.layer.redraw();
           }
