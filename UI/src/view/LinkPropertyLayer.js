@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
     var currentDataset;
     var currentRenderIntent;
 
@@ -283,7 +283,7 @@
           });
           selectControl.select(feature);
         });
-        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function (dataset) {
           if (dataset !== currentDataset) {
             setDatasetSpecificStyleMap(dataset, currentRenderIntent);
             if (currentDataset === 'functional-class') {
@@ -295,6 +295,7 @@
           }
         });
         selectControl.activate();
+        setDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
       }
     };
 
