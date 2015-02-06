@@ -17,8 +17,8 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
-  type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection)
-  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String])
+  type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
+  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -169,7 +169,7 @@ object RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -209,7 +209,7 @@ object RoadLinkService {
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic._1, basic._2, basic._3, basic._4,
-     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy)
+     basic._5, basic._6, basic._7, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, basic._8)
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
@@ -258,7 +258,7 @@ object RoadLinkService {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
               from tielinkki_ctas
               where $roadFilter $municipalityFilter
                     mdsys.sdo_filter(shape,
@@ -293,14 +293,14 @@ object RoadLinkService {
   def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
     val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta
+        select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
           from tielinkki_ctas
           where kunta_nro = $municipality
         """.as[BasicRoadLink].iterator().toSeq
     }
     adjustedRoadLinks(roadLinks).map { roadLink =>
       Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
-          "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value)
+          "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._8)
     }
   }
 }
