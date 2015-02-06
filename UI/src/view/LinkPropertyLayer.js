@@ -334,6 +334,9 @@
       roadLayer.layer.removeFeatures(selectedFeatures);
       var data = selectedLinkProperty.get().getData();
       roadLayer.drawRoadLink(data);
+      if (linkPropertiesModel.getDataset() === 'functional-class') {
+        drawDashedLineFeatures([data]);
+      }
       drawOneWaySigns([data]);
       reselectRoadLink();
     };
