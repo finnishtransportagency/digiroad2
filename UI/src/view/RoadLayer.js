@@ -24,10 +24,16 @@ var RoadStyles = function() {
     var vectorLayer;
     var selectControl;
     var layerStyleMaps = {};
+    var layerStyleMapProviders = {};
     var uiState = { zoomLevel: 9 };
 
+    function stylesUndefined() {
+      return _.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
+        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()]);
+    }
+
     var enableColorsOnRoadLayer = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         var administrativeClassStyleLookup = {
           Private: { strokeColor: "#0011bb" },
           Municipality: { strokeColor: "#11bb00" },
@@ -38,13 +44,13 @@ var RoadStyles = function() {
     };
 
     var disableColorsOnRoadLayer = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         vectorLayer.styleMap.styles.default.rules = [];
       }
     };
 
     var changeRoadsWidthByZoomLevel = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
         var roadWidth = widthBase * widthBase;
         if (applicationModel.isRoadTypeShown()) {
@@ -57,6 +63,13 @@ var RoadStyles = function() {
       }
     };
 
+    var usingLayerSpecificStyleProvider = function(action) {
+      if (!_.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()])) {
+        vectorLayer.styleMap = layerStyleMapProviders[applicationModel.getSelectedLayer()]();
+      }
+      action();
+    };
+
     var toggleRoadType = function() {
       if (applicationModel.isRoadTypeShown()) {
         enableColorsOnRoadLayer();
@@ -64,7 +77,7 @@ var RoadStyles = function() {
         disableColorsOnRoadLayer();
       }
       changeRoadsWidthByZoomLevel();
-      vectorLayer.redraw();
+      usingLayerSpecificStyleProvider(function() { vectorLayer.redraw(); });
     };
 
     var handleRoadsVisibility = function() {
@@ -98,7 +111,9 @@ var RoadStyles = function() {
         });
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
       });
-      vectorLayer.addFeatures(features);
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.addFeatures(features);
+      });
       eventbus.trigger('roadLinks:afterDraw', roadLinks);
     };
 
@@ -107,7 +122,9 @@ var RoadStyles = function() {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
       var feature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-      vectorLayer.addFeatures([feature]);
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.addFeatures([feature]);
+      });
     };
 
     var setLayerSpecificStyleMap = function(layer, styleMap) {
@@ -127,6 +144,16 @@ var RoadStyles = function() {
 
     var activateLayerStyleMap = function(layer) {
       vectorLayer.styleMap = layerStyleMaps[layer] || new RoadStyles().roadStyles;
+    };
+
+    var setLayerSpecificStyleMapProvider = function(layer, provider) {
+      layerStyleMapProviders[layer] = provider;
+    };
+
+    var redraw = function() {
+      usingLayerSpecificStyleProvider(function() {
+        vectorLayer.redraw();
+      });
     };
 
     eventbus.on('road:active', function(roadLinkId) {
@@ -164,6 +191,8 @@ var RoadStyles = function() {
 
     return {
       layer: vectorLayer,
+      redraw: redraw,
+      setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
       addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
       drawRoadLink: drawRoadLink,

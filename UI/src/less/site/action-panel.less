@@ -129,14 +129,14 @@
   }
 }
 
-.dotted-speed-limit {
+.dotted-linear-asset {
   background-image: linear-gradient(to right, @gray-lighter 50%, transparent 0%);
   background-position: -5px top;
   background-size: 14px 14px;
   background-repeat: repeat-x;
 }
 
-.speed-limit-legend-entry(@color, @endpoint-color) {
+.linear-asset-legend-entry(@color, @endpoint-color) {
   border-color: @color;
   background-color: rgba(red(@color), green(@color), blue(@color), .7);
   &:before, &:after {
@@ -152,6 +152,17 @@
   &:after { right: -1px; }
 }
 
+.linear-asset-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .linear {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+  }
+}
+
 .speed-limit-legend {
   .legend-entry {
     @labelWidth: 25px;
@@ -161,23 +172,42 @@
       line-height: 16px;
     }
     .linear {
-      position: relative;
-      display: inline-block;
       width: calc(~"100% - @{labelWidth}");
-      margin-bottom: 0;
     }
     .speed-limit-120, .speed-limit-100, .speed-limit-80, .speed-limit-70 {
-      &:extend(.dotted-speed-limit);
+      &:extend(.dotted-linear-asset);
     }
-    .speed-limit-120 { .speed-limit-legend-entry(@speed-limit-5, @speed-limit-node-5); }
-    .speed-limit-100 { .speed-limit-legend-entry(@speed-limit-3, @speed-limit-node-3); }
-    .speed-limit-80  { .speed-limit-legend-entry(@speed-limit-4, @speed-limit-node-4); }
-    .speed-limit-70  { .speed-limit-legend-entry(@speed-limit-1, @speed-limit-node-1); }
-    .speed-limit-60  { .speed-limit-legend-entry(@speed-limit-5, @speed-limit-node-5); }
-    .speed-limit-50  { .speed-limit-legend-entry(@speed-limit-4, @speed-limit-node-4); }
-    .speed-limit-40  { .speed-limit-legend-entry(@speed-limit-3, @speed-limit-node-3); }
-    .speed-limit-30  { .speed-limit-legend-entry(@speed-limit-2, @speed-limit-node-2); }
-    .speed-limit-20  { .speed-limit-legend-entry(@speed-limit-1, @speed-limit-node-1); }
+    .speed-limit-120 { .linear-asset-legend-entry(@speed-limit-5, @linear-asset-node-5); }
+    .speed-limit-100 { .linear-asset-legend-entry(@speed-limit-3, @linear-asset-node-3); }
+    .speed-limit-80  { .linear-asset-legend-entry(@speed-limit-4, @linear-asset-node-4); }
+    .speed-limit-70  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
+    .speed-limit-60  { .linear-asset-legend-entry(@speed-limit-5, @linear-asset-node-5); }
+    .speed-limit-50  { .linear-asset-legend-entry(@speed-limit-4, @linear-asset-node-4); }
+    .speed-limit-40  { .linear-asset-legend-entry(@speed-limit-3, @linear-asset-node-3); }
+    .speed-limit-30  { .linear-asset-legend-entry(@speed-limit-2, @linear-asset-node-2); }
+    .speed-limit-20  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
+  }
+}
+
+.functional-class-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      display: block;
+      font-size: @font-size-xs;
+      line-height: @line-height-base;
+    }
+    .linear-asset-2, .linear-asset-4, .linear-asset-6, .linear-asset-8 {
+      &:extend(.dotted-linear-asset);
+    }
+    .linear-asset-1 { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
+    .linear-asset-2 { .linear-asset-legend-entry(@linear-asset-4, @linear-asset-node-4); }
+    .linear-asset-3  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
+    .linear-asset-4  { .linear-asset-legend-entry(@linear-asset-2, @linear-asset-node-2); }
+    .linear-asset-5  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
+    .linear-asset-6  { .linear-asset-legend-entry(@linear-asset-5, @linear-asset-node-5); }
+    .linear-asset-7  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
+    .linear-asset-8  { .linear-asset-legend-entry(@linear-asset-6, @linear-asset-node-6); }
   }
 }
 

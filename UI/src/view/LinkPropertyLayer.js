@@ -1,96 +1,23 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty) {
-    var administrativeClassStyleLookup = {
-      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
-      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
-      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
-    };
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
 
-    var oneWaySignSizeLookup = {
-      9: { pointRadius: 0 },
-      10: { pointRadius: 12 },
-      11: { pointRadius: 14 },
-      12: { pointRadius: 16 },
-      13: { pointRadius: 20 },
-      14: { pointRadius: 24 },
-      15: { pointRadius: 24 }
-    };
+    var currentRenderIntent = 'default';
+    var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
 
-    var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-      strokeOpacity: 0.7,
-      rotation: '${rotation}'
-    }));
-
-    var defaultStyleMap = new OpenLayers.StyleMap({ 'default': defaultStyle });
-
-    var combineFilters = function(filters) {
-      return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
-    };
-
-    var functionalClassFilter = function(functionalClass) {
-      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'functionalClass', value: functionalClass });
-    };
-
-    var strokeWidthStyle = function(zoomLevel, functionalClass, symbolizer) {
-      return new OpenLayers.Rule({
-        filter: combineFilters([functionalClassFilter(functionalClass), roadLayer.createZoomLevelFilter(zoomLevel)]),
-        symbolizer: symbolizer
-      });
-    };
-
-    var createStrokeWidthStyles = function() {
-      var strokeWidthsByZoomLevelAndFunctionalClass = {
-        9: [ 10, 9, 8, 7, 6, 5, 4, 3 ],
-        10: [ 18, 15, 12, 9, 7, 4, 2, 1 ],
-        11: [ 20, 16, 12, 9, 7, 4, 2, 1 ],
-        12: [ 25, 21, 17, 13, 9, 5, 2, 1 ],
-        13: [ 32, 26, 20, 14, 9, 5, 2, 1 ],
-        14: [ 32, 26, 20, 14, 9, 5, 2, 1 ],
-        15: [ 32, 26, 20, 14, 9, 5, 2, 1 ]
-      };
-
-      return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
-        return _.map(widthsByZoomLevel, function(width, index) {
-          var functionalClass = index + 1;
-          return strokeWidthStyle(parseInt(zoomLevel, 10), functionalClass, { strokeWidth: width });
-        });
-      }).flatten().value();
-    };
-
-    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    defaultStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-    defaultStyle.addRules(createStrokeWidthStyles());
-    roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
-
-    var selectionStyleMap = new OpenLayers.StyleMap({
-      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        graphicOpacity: 1.0,
-        rotation: '${rotation}'
-      })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.3,
-        graphicOpacity: 0.3,
-        rotation: '${rotation}'
-      }))
+    roadLayer.setLayerSpecificStyleMapProvider('linkProperties', function() {
+      return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
-    selectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-    selectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
-    selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
-    selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
         selectedLinkProperty.open(feature.attributes.roadLinkId);
-        roadLayer.setLayerSpecificStyleMap('linkProperties', selectionStyleMap);
-        roadLayer.layer.redraw();
+        currentRenderIntent = 'select';
+        roadLayer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
         deselectRoadLink();
-        roadLayer.layer.redraw();
+        roadLayer.redraw();
         highlightFeatures(null);
       }
     });
@@ -138,6 +65,28 @@
       roadLayer.layer.addFeatures(oneWaySigns);
     };
 
+    var drawDashedLineFeatures = function(roadLinks) {
+      var lineFeatures = function(roadLinks) {
+        return _.flatten(_.map(roadLinks, function(roadLink) {
+          var points = _.map(roadLink.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          var attributes = {
+            functionalClass: roadLink.functionalClass,
+            roadLinkId: roadLink.roadLinkId,
+            type: 'overlay'
+          };
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        }));
+      };
+
+      var dashedFunctionalClasses = [2, 4, 6, 8];
+      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
+      });
+      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+    };
+
     var reselectRoadLink = function() {
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
@@ -154,7 +103,7 @@
     };
 
     var deselectRoadLink = function() {
-      roadLayer.setLayerSpecificStyleMap('linkProperties', defaultStyleMap);
+      currentRenderIntent = 'default';
       selectedLinkProperty.close();
     };
 
@@ -169,6 +118,9 @@
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
         eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
+          if (linkPropertiesModel.getDataset() === 'functional-class') {
+            drawDashedLineFeatures(roadLinks);
+          }
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
@@ -179,6 +131,14 @@
             return feature.attributes.roadLinkId === link.roadLinkId;
           });
           selectControl.select(feature);
+        });
+        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+          roadLayer.redraw();
+          if (dataset === 'functional-class') {
+            drawDashedLineFeatures(roadCollection.getAll());
+          } else {
+            roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+          }
         });
         selectControl.activate();
       }
@@ -207,6 +167,9 @@
       roadLayer.layer.removeFeatures(selectedFeatures);
       var data = selectedLinkProperty.get().getData();
       roadLayer.drawRoadLink(data);
+      if (linkPropertiesModel.getDataset() === 'functional-class') {
+        drawDashedLineFeatures([data]);
+      }
       drawOneWaySigns([data]);
       reselectRoadLink();
     };

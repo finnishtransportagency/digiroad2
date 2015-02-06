@@ -159,7 +159,7 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty),
+      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
       asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
       speedLimit: new SpeedLimitLayer({
         map: map,
@@ -278,6 +278,7 @@ var URLRouter = function(map, backend, models) {
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var roadCollection = new RoadCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+    var linkPropertiesModel = new LinkPropertiesModel();
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -295,7 +296,8 @@ var URLRouter = function(map, backend, models) {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
       selectedLinkProperty: selectedLinkProperty,
-      selectedMassTransitStopModel: selectedMassTransitStopModel
+      selectedMassTransitStopModel: selectedMassTransitStopModel,
+      linkPropertiesModel: linkPropertiesModel
     };
 
     bindEvents();
@@ -304,7 +306,7 @@ var URLRouter = function(map, backend, models) {
     window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
-    ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits);
+    ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     backend.getStartupParametersWithCallback(function(startupParameters) {

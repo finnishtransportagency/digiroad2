@@ -131,7 +131,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'mocha:unit', 'mocha:integration', 'less:development', 'configureProxies'],
+      tasks: ['jshint', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
       options: {
         livereload: true
       }

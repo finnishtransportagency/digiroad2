@@ -1,11 +1,11 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits) {
+    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits, linkPropertiesModel) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
 
-      var roadLinkBox = new RoadLinkBox();
+      var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
       $('.action-panels').append(roadLinkBox.element);
 
       var assetBox = new ActionPanelBoxes.AssetBox();

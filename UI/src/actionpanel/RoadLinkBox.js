@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLinkBox = function() {
+  root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
     var title = 'Tielinkit';
     var layerName = 'linkProperties';
@@ -13,8 +13,20 @@
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
-          '<div class="legend-entry">' +
-            '<div class="label">Valtion omistama</div>' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="dataset" value="administrative-class" checked>Hallinnollinen luokka</input></label>' +
+          '</div>' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="dataset" value="functional-class">Toiminnallinen luokka</input></label>' +
+          '</div>' +
+        '</div>' +
+        '<div class="legend-container"></div>' +
+      '</div>');
+
+    var administrativeClassLegend = $('' +
+      '<div class="panel-section panel-legend road-link-legend">' +
+        '<div class="legend-entry">' +
+          '<div class="label">Valtion omistama</div>' +
             '<div class="symbol linear road"/>' +
           '</div>' +
           '<div class="legend-entry">' +
@@ -27,44 +39,26 @@
           '</div>' +
           '<div class="legend-entry">' +
             '<div class="label">Ei tiedossa</div>' +
-            '<div class="symbol linear unknown"/>' +
-          '</div>' +
-        '</div>' +
-        '<div class="panel-section panel-legend functional-class-legend">' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 1</div>' +
-            '<div class="symbol linear class-1"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 2</div>' +
-            '<div class="symbol linear class-2"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 3</div>' +
-            '<div class="symbol linear class-3"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 4</div>' +
-            '<div class="symbol linear class-4"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 5</div>' +
-            '<div class="symbol linear class-5"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 6</div>' +
-            '<div class="symbol linear class-6"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 7</div>' +
-            '<div class="symbol linear class-7"/>' +
-          '</div>' +
-          '<div class="legend-entry">' +
-            '<div class="label">Luokka 8</div>' +
-            '<div class="symbol linear class-8"/>' +
-          '</div>' +
+          '<div class="symbol linear unknown"/>' +
         '</div>' +
       '</div>');
+
+    var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
+
+    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
+      return '<div class="legend-entry">' +
+        '<div class="label">Luokka ' + functionalClass + '</div>' +
+        '<div class="symbol linear linear-asset-' + functionalClass + '" />' +
+        '</div>';
+    }).join('');
+
+    functionalClassLegend.append(functionalClassLegendEntries);
+
+    var legends = {
+      'administrative-class': administrativeClassLegend,
+      'functional-class': functionalClassLegend
+    };
 
     var editModeToggle = new EditModeToggleButton({
       hide: function() {},
@@ -90,6 +84,14 @@
           applicationModel.selectLayer(layerName);
         });
       });
+
+      elements.expanded.find('input[name="dataset"]').change(function(event) {
+        var datasetName = $(event.target).val();
+        var legendContainer = $(elements.expanded.find('.legend-container'));
+        legendContainer.empty();
+        legendContainer.append(legends[datasetName]);
+        linkPropertiesModel.setDataset(datasetName);
+      });
     };
 
     var bindExternalEventHandlers = function() {
@@ -114,6 +116,7 @@
 
     bindExternalEventHandlers();
 
+    elements.expanded.find('.legend-container').append(administrativeClassLegend);
     this.element = $('<div class="panel-group ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
