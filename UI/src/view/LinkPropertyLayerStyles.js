@@ -172,8 +172,9 @@
     functionalClassSelectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     functionalClassSelectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
     functionalClassSelectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
+    functionalClassSelectionStyleMap.styles.select.addRules(createStrokeDashStyles());
     functionalClassSelectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
-
+    functionalClassSelectionStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     // --- Administrative class style maps ---
 
