@@ -1,7 +1,6 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
-    var currentDataset;
-    var currentRenderIntent;
+    var currentRenderIntent = 'default';
 
     var functionalClassColorLookup = {
       1: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-1.svg' },
@@ -97,28 +96,6 @@
       }).flatten().value();
     };
 
-    var setDatasetSpecificStyleMap = function(dataset, renderIntent) {
-      var getStyleMap = function(dataset, renderIntent) {
-        var styleMaps = {
-          'functional-class': {
-            'default': defaultStyleMap,
-            'select': selectionStyleMap
-          },
-          'administrative-class': {
-            'default': administrativeClassDefaultStyleMap,
-            'select': administrativeClassSelectionStyleMap
-          }
-        };
-        return styleMaps[dataset][renderIntent];
-      };
-
-      if (dataset !== currentDataset || renderIntent !== currentRenderIntent) {
-        roadLayer.setLayerSpecificStyleMap('linkProperties', getStyleMap(dataset, renderIntent));
-        currentDataset = dataset;
-        currentRenderIntent = renderIntent;
-      }
-    };
-
     roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     defaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     defaultStyle.addRules(createStrokeWidthStyles());
@@ -180,18 +157,34 @@
     administrativeClassSelectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     administrativeClassSelectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
 
-    setDatasetSpecificStyleMap('administrative-class', 'default');
+    var provideStyleMap = function() {
+      var getStyleMap = function(dataset, renderIntent) {
+        var styleMaps = {
+          'functional-class': {
+            'default': defaultStyleMap,
+            'select': selectionStyleMap
+          },
+          'administrative-class': {
+            'default': administrativeClassDefaultStyleMap,
+            'select': administrativeClassSelectionStyleMap
+          }
+        };
+        return styleMaps[dataset][renderIntent];
+      };
+      return getStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
+    };
+    roadLayer.setLayerSpecificStyleMapProvider('linkProperties', provideStyleMap);
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect:  function(feature) {
         selectedLinkProperty.open(feature.attributes.roadLinkId);
-        setDatasetSpecificStyleMap(currentDataset, 'select');
-        roadLayer.layer.redraw();
+        currentRenderIntent = 'select';
+        roadLayer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
         deselectRoadLink();
-        roadLayer.layer.redraw();
+        roadLayer.redraw();
         highlightFeatures(null);
       }
     });
@@ -277,7 +270,7 @@
     };
 
     var deselectRoadLink = function() {
-      setDatasetSpecificStyleMap(currentDataset, 'default');
+      currentRenderIntent = 'default';
       selectedLinkProperty.close();
     };
 
@@ -292,7 +285,7 @@
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
         eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
-          if (currentDataset === 'functional-class') {
+          if (linkPropertiesModel.getDataset() === 'functional-class') {
             drawDashedLineFeatures(roadLinks);
           }
           drawOneWaySigns(roadLinks);
@@ -306,17 +299,15 @@
           });
           selectControl.select(feature);
         });
-        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function (dataset) {
-          setDatasetSpecificStyleMap(dataset, currentRenderIntent);
-          if (currentDataset === 'functional-class') {
+        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+          roadLayer.redraw();
+          if (dataset === 'functional-class') {
             drawDashedLineFeatures(roadCollection.getAll());
           } else {
             roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
           }
-          roadLayer.layer.redraw();
         });
         selectControl.activate();
-        setDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
       }
     };
 
