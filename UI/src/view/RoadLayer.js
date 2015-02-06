@@ -27,9 +27,13 @@ var RoadStyles = function() {
     var layerStyleMapProviders = {};
     var uiState = { zoomLevel: 9 };
 
+    function stylesUndefined() {
+      return _.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
+        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()]);
+    }
+
     var enableColorsOnRoadLayer = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
-        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         var administrativeClassStyleLookup = {
           Private: { strokeColor: "#0011bb" },
           Municipality: { strokeColor: "#11bb00" },
@@ -40,15 +44,13 @@ var RoadStyles = function() {
     };
 
     var disableColorsOnRoadLayer = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
-        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         vectorLayer.styleMap.styles.default.rules = [];
       }
     };
 
     var changeRoadsWidthByZoomLevel = function() {
-      if (_.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
-        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()])) {
+      if (stylesUndefined()) {
         var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
         var roadWidth = widthBase * widthBase;
         if (applicationModel.isRoadTypeShown()) {
