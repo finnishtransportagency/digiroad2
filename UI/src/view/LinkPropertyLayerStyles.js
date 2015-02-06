@@ -44,13 +44,48 @@
 
     var createStrokeDashStyles = function() {
       var strokeDashStyles = {
-        9: '1 6',
-        10: '1 6',
-        11: '1 10',
-        12: '1 18',
-        13: '1 32',
-        14: '1 32',
-        15: '1 32'
+        9: {
+          2: '1 32',
+          4: '1 20',
+          6: '1 10',
+          8: '1 4'
+        },
+        10: {
+          2: '1 38',
+          4: '1 22',
+          6: '1 12',
+          8: '1 6'
+        },
+        11: {
+          2: '1 46',
+          4: '1 24',
+          6: '1 16',
+          8: '1 7'
+        },
+        12: {
+          2: '1 56',
+          4: '1 36',
+          6: '1 18',
+          8: '1 8'
+        },
+        13: {
+          2: '1 74',
+          4: '1 42',
+          6: '1 20',
+          8: '1 9'
+        },
+        14: {
+          2: '1 74',
+          4: '1 42',
+          6: '1 20',
+          8: '1 9'
+        },
+        15: {
+          2: '1 74',
+          4: '1 42',
+          6: '1 20',
+          8: '1 9'
+        }
       };
       return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
         return _.map(widthsByZoomLevel, function(width, index) {
@@ -59,7 +94,7 @@
             strokeWidth: width - 2,
             strokeColor: '#ffffff',
             strokeLinecap: 'square',
-            strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
+            strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)][functionalClass] || '',
             strokeOpacity: 1
           });
         });
