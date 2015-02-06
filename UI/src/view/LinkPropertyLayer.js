@@ -143,6 +143,7 @@
     selectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
     selectionStyleMap.styles.select.addRules(createStrokeDashStyles());
     selectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
+    selectionStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     var administrativeClassStyleLookup = {
       Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
