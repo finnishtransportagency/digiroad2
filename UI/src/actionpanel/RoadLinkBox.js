@@ -14,13 +14,13 @@
         '<header class="panel-header expanded"><%- title %></header>' +
         '<div class="panel-section panel-legend road-link-legend">' +
           '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="administrative-class" checked>Hallinnollinen luokka</input></label>' +
+            '<label><input type="radio" name="dataset" value="functional-class" checked>Toiminnallinen luokka</input></label>' +
           '</div>' +
           '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="functional-class">Toiminnallinen luokka</input></label>' +
+            '<label><input type="radio" name="dataset" value="link-type">Tielinkin tyyppi</input></label>' +
           '</div>' +
           '<div class="radio">' +
-            '<label><input type="radio" name="dataset" value="link-type">Linkkityyppi</input></label>' +
+            '<label><input type="radio" name="dataset" value="administrative-class">Hallinnollinen luokka</input></label>' +
           '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
