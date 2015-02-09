@@ -168,14 +168,14 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     RoadLinkService.adjustTrafficDirection(id, trafficDirection, user.username)
     RoadLinkService.adjustFunctionalClass(id, functionalClass, user.username)
-    val (_, mmlId, points, length, roadLinkType,
+    val (_, mmlId, points, length, administrativeClass,
          updatedFunctionalClass, updatedTrafficDirection,
          modifiedAt, modifiedBy, linkType) = RoadLinkService.getRoadLink(id)
     Map("roadLinkId" -> id,
       "mmlId" -> mmlId,
       "points" -> points,
       "length" -> length,
-      "type" -> roadLinkType.toString,
+      "administrativeClass" -> administrativeClass.toString,
       "functionalClass" -> updatedFunctionalClass,
       "trafficDirection" -> updatedTrafficDirection.toString,
       "modifiedAt" -> modifiedAt,
