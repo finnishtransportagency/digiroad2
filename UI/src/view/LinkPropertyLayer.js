@@ -8,23 +8,28 @@
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
 
+    var unselectRoadLink = function() {
+      currentRenderIntent = 'default';
+      selectedLinkProperty.close();
+      roadLayer.redraw();
+      highlightFeatures(null);
+    };
+
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect:  function(feature) {
+      onSelect: function(feature) {
         selectedLinkProperty.open(feature.attributes.roadLinkId);
         currentRenderIntent = 'select';
         roadLayer.redraw();
         highlightFeatures(feature);
       },
       onUnselect: function() {
-        deselectRoadLink();
-        roadLayer.redraw();
-        highlightFeatures(null);
+        unselectRoadLink();
       }
     });
+
     map.addControl(selectControl);
 
     var eventListener = _.extend({running: false}, eventbus);
-
     var highlightFeatures = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
         if (feature && (x.attributes.roadLinkId === feature.attributes.roadLinkId)) {
@@ -102,10 +107,6 @@
       }
     };
 
-    var deselectRoadLink = function() {
-      currentRenderIntent = 'default';
-      selectedLinkProperty.close();
-    };
 
     var prepareRoadLinkDraw = function() {
       selectControl.deactivate();
@@ -143,7 +144,6 @@
         selectControl.activate();
       }
     };
-
 
     var displayConfirmMessage = function() { new Confirm(); };
 
@@ -187,8 +187,8 @@
     };
 
     var hide = function() {
+      unselectRoadLink();
       stop();
-      deselectRoadLink();
     };
 
     return {
