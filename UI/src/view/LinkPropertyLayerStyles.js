@@ -91,7 +91,6 @@
       State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
     };
 
-
     // --- Functional class style maps
 
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({
@@ -180,9 +179,9 @@
         strokeOpacity: 0.7,
         rotation: '${rotation}'}))
       });
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
-    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeWidthStyles());
     linkTypeDefaultStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
@@ -197,13 +196,13 @@
         rotation: '${rotation}'
       }))
     });
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
     linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
-    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
     linkTypeSelectionStyleMap.styles.select.addRules(createStrokeDashStyles());
-    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
     linkTypeSelectionStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     return {
