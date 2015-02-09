@@ -57,8 +57,8 @@
           'select': administrativeClassSelectionStyleMap
         },
         'link-type': {
-          'default': new OpenLayers.StyleMap(),
-          'select': new OpenLayers.StyleMap()
+          'default': linkTypeDefaultStyleMap,
+          'select': linkTypeSelectionStyleMap
         }
       };
       return styleMaps[dataset][renderIntent];
@@ -155,6 +155,56 @@
     roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     administrativeClassSelectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     administrativeClassSelectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
+
+    // --- Link type style maps
+
+    var linkTypeColorLookup = {
+      1: { strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/link-type-1.svg' },
+      2: { strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/link-type-2.svg' },
+      3: { strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/link-type-3.svg' },
+      4: { strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/link-type-4.svg' },
+      5: { strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/link-type-5.svg' },
+      6: { strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/link-type-6.svg' },
+      7: { strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/link-type-7.svg' },
+      8: { strokeColor: '#888',     externalGraphic: 'images/link-properties/link-type-8.svg' },
+      9: { strokeColor: '#888',     externalGraphic: 'images/link-properties/link-type-9.svg' },
+      10: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/link-type-10.svg' },
+      11: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/link-type-11.svg' },
+      12: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/link-type-12.svg' },
+      13: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/link-type-13.svg' },
+      21: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/link-type-21.svg' }
+    };
+
+    var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7,
+        rotation: '${rotation}'}))
+      });
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
+    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeWidthStyles());
+    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeDashStyles());
+
+    var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
+      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.7,
+        graphicOpacity: 1.0,
+        rotation: '${rotation}'
+      })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.3,
+        graphicOpacity: 0.3,
+        rotation: '${rotation}'
+      }))
+    });
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
+    linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
+    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
+    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeDashStyles());
+    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
+    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap
