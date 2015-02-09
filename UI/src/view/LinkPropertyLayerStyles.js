@@ -55,6 +55,10 @@
         'administrative-class': {
           'default': administrativeClassDefaultStyleMap,
           'select': administrativeClassSelectionStyleMap
+        },
+        'link-type': {
+          'default': new OpenLayers.StyleMap(),
+          'select': new OpenLayers.StyleMap()
         }
       };
       return styleMaps[dataset][renderIntent];

@@ -19,6 +19,9 @@
           '<div class="radio">' +
             '<label><input type="radio" name="dataset" value="functional-class">Toiminnallinen luokka</input></label>' +
           '</div>' +
+          '<div class="radio">' +
+            '<label><input type="radio" name="dataset" value="link-type">Linkkityyppi</input></label>' +
+          '</div>' +
         '</div>' +
         '<div class="legend-container"></div>' +
       '</div>');
