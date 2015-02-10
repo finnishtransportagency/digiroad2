@@ -70,6 +70,18 @@
       roadLayer.layer.addFeatures(oneWaySigns);
     };
 
+    var removeOneWaySigns = function() {
+      var oneWaySigns = _.filter(roadLayer.layer.features, function(feature) {
+        return feature.attributes.rotation !== undefined;
+      });
+      roadLayer.layer.removeFeatures(oneWaySigns);
+    };
+
+    var redrawOneWaySigns = function(roadLinks) {
+      removeOneWaySigns();
+      drawOneWaySigns(roadLinks);
+    };
+
     var drawDashedLineFeatures = function(roadLinks) {
       var lineFeatures = function(roadLinks) {
         return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -141,6 +153,7 @@
           roadLayer.redraw();
           if (dataset === 'functional-class') {
             drawDashedLineFeatures(roadCollection.getAll());
+            redrawOneWaySigns(roadCollection.getAll());
           } else {
             roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
           }
