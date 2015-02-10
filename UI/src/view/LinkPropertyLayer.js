@@ -114,14 +114,18 @@
 
     eventbus.on('map:moved', handleMapMoved);
 
+    var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
+      if (linkPropertiesModel.getDataset() === 'functional-class') {
+        drawDashedLineFeatures(roadLinks);
+      }
+    };
+
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
         eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
         eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
-          if (linkPropertiesModel.getDataset() === 'functional-class') {
-            drawDashedLineFeatures(roadLinks);
-          }
+          drawDashedLineFeaturesIfApplicable(roadLinks);
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
@@ -143,6 +147,7 @@
         });
         selectControl.activate();
       }
+      drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
     };
 
     var displayConfirmMessage = function() { new Confirm(); };
@@ -167,14 +172,13 @@
       roadLayer.layer.removeFeatures(selectedFeatures);
       var data = selectedLinkProperty.get().getData();
       roadLayer.drawRoadLink(data);
-      if (linkPropertiesModel.getDataset() === 'functional-class') {
-        drawDashedLineFeatures([data]);
-      }
+      drawDashedLineFeaturesIfApplicable([data]);
       drawOneWaySigns([data]);
       reselectRoadLink();
     };
 
     var stop = function() {
+      roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
       selectControl.deactivate();
       eventListener.stopListening(eventbus);
       eventListener.running = false;
