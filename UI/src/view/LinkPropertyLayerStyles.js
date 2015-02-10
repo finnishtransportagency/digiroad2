@@ -23,82 +23,27 @@
       });
     };
 
-    var strokeWidthsByZoomLevelAndFunctionalClass = {
-      9: [ 10, 10, 8, 8, 6, 6, 4, 4 ],
-      10: [ 18, 18, 12, 12, 7, 7, 4, 4 ],
-      11: [ 20, 20, 12, 12, 7, 7, 4, 4 ],
-      12: [ 25, 25, 17, 17, 9, 9, 4, 4 ],
-      13: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
-      14: [ 32, 32, 20, 20, 9, 9, 4, 4 ],
-      15: [ 32, 32, 20, 20, 9, 9, 4, 4 ]
-    };
-
-    var createStrokeWidthStyles = function() {
-      return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
-        return _.map(widthsByZoomLevel, function(width, index) {
-          var functionalClass = index + 1;
-          return strokeWidthStyle(parseInt(zoomLevel, 10), functionalClass, { strokeWidth: width });
-        });
-      }).flatten().value();
-    };
-
     var createStrokeDashStyles = function() {
       var strokeDashStyles = {
-        9: {
-          2: '1 32',
-          4: '1 20',
-          6: '1 10',
-          8: '1 4'
-        },
-        10: {
-          2: '1 38',
-          4: '1 22',
-          6: '1 12',
-          8: '1 6'
-        },
-        11: {
-          2: '1 46',
-          4: '1 24',
-          6: '1 16',
-          8: '1 7'
-        },
-        12: {
-          2: '1 56',
-          4: '1 36',
-          6: '1 18',
-          8: '1 8'
-        },
-        13: {
-          2: '1 74',
-          4: '1 42',
-          6: '1 20',
-          8: '1 9'
-        },
-        14: {
-          2: '1 74',
-          4: '1 42',
-          6: '1 20',
-          8: '1 9'
-        },
-        15: {
-          2: '1 74',
-          4: '1 42',
-          6: '1 20',
-          8: '1 9'
-        }
+        9: '1 6',
+        10: '1 10',
+        11: '1 18',
+        12: '1 32',
+        13: '1 32',
+        14: '1 32',
+        15: '1 32'
       };
-      return _.chain(strokeWidthsByZoomLevelAndFunctionalClass).map(function(widthsByZoomLevel, zoomLevel) {
-        return _.map(widthsByZoomLevel, function(width, index) {
-          var functionalClass = index + 1;
+      return _.flatten(_.map(strokeDashStyles, function(width, zoomLevel) {
+        return _.map([2, 4, 6, 8], function(functionalClass) {
           return dashedStrokeWidthStyle(parseInt(zoomLevel, 10), functionalClass, {
             strokeWidth: width - 2,
-            strokeColor: '#ffffff',
-            strokeLinecap: 'square',
-            strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)][functionalClass] || '',
-            strokeOpacity: 1
+                 strokeColor: '#ffffff',
+                 strokeLinecap: 'square',
+                 strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
+                 strokeOpacity: 1
           });
         });
-      }).flatten().value();
+      }));
     };
 
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
@@ -150,10 +95,10 @@
         strokeOpacity: 0.7,
         rotation: '${rotation}'}))
       });
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     functionalClassDefaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
-    functionalClassDefaultStyleMap.styles.default.addRules(createStrokeWidthStyles());
     functionalClassDefaultStyleMap.styles.default.addRules(createStrokeDashStyles());
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
 
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -167,14 +112,14 @@
         rotation: '${rotation}'
       }))
     });
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     functionalClassSelectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     functionalClassSelectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
-    functionalClassSelectionStyleMap.styles.select.addRules(createStrokeWidthStyles());
     functionalClassSelectionStyleMap.styles.select.addRules(createStrokeDashStyles());
-    functionalClassSelectionStyleMap.styles.default.addRules(createStrokeWidthStyles());
     functionalClassSelectionStyleMap.styles.default.addRules(createStrokeDashStyles());
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
 
     // --- Administrative class style maps ---
 
