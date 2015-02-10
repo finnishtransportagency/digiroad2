@@ -82,47 +82,34 @@
       drawOneWaySigns(roadLinks);
     };
 
-    var drawDashedLineFeatures = function(roadLinks) {
-      var lineFeatures = function(roadLinks) {
-        return _.flatten(_.map(roadLinks, function(roadLink) {
-          var points = _.map(roadLink.points, function(point) {
-            return new OpenLayers.Geometry.Point(point.x, point.y);
-          });
-          var attributes = {
-            functionalClass: roadLink.functionalClass,
-            roadLinkId: roadLink.roadLinkId,
-            type: 'overlay'
-          };
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-        }));
-      };
+    var createDashedLineFeatures = function(roadLinks, dashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          dashedLineFeature: roadLink[dashedLineFeature],
+          roadLinkId: roadLink.roadLinkId,
+          type: 'overlay'
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
 
+    var drawDashedLineFeatures = function(roadLinks) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
       });
-      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
     };
-    var drawDashedLineFeaturesForType = function(roadLinks) {
-      var lineFeatures = function(roadLinks) {
-        return _.flatten(_.map(roadLinks, function(roadLink) {
-          var points = _.map(roadLink.points, function(point) {
-            return new OpenLayers.Geometry.Point(point.x, point.y);
-          });
-          var attributes = {
-            linkType: roadLink.linkType,
-            roadLinkId: roadLink.roadLinkId,
-            type: 'overlay'
-          };
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-        }));
-      };
 
+    var drawDashedLineFeaturesForType = function(roadLinks) {
       var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedLinkTypes, roadLink.linkType);
       });
-      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
     var reselectRoadLink = function() {
@@ -139,7 +126,6 @@
         selectControl.deactivate();
       }
     };
-
 
     var prepareRoadLinkDraw = function() {
       selectControl.deactivate();
