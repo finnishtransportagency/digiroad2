@@ -16,9 +16,14 @@
       });
     };
 
-    var strokeWidthStyle = function(zoomLevel, functionalClass, symbolizer) {
+    var linkTypeFilter = function(linkType) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'linkType', value: linkType });
+    };
+
+    var dashedStrokeWidthStyleForLinkType = function(zoomLevel, linkType, symbolizer) {
+      var overlayTypeFilter = new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' });
       return new OpenLayers.Rule({
-        filter: combineFilters([functionalClassFilter(functionalClass), roadLayer.createZoomLevelFilter(zoomLevel)]),
+        filter: combineFilters([overlayTypeFilter, linkTypeFilter(linkType), roadLayer.createZoomLevelFilter(zoomLevel)]),
         symbolizer: symbolizer
       });
     };
@@ -41,6 +46,29 @@
                  strokeLinecap: 'square',
                  strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
                  strokeOpacity: 1
+          });
+        });
+      }));
+    };
+
+    var createStrokeDashStylesForLinkType = function() {
+      var strokeDashStyles = {
+        9: '1 6',
+        10: '1 10',
+        11: '1 18',
+        12: '1 32',
+        13: '1 32',
+        14: '1 32',
+        15: '1 32'
+      };
+      return _.flatten(_.map(strokeDashStyles, function(width, zoomLevel) {
+        return _.map([2, 4, 5, 8, 12, 13], function(linkType) {
+          return dashedStrokeWidthStyleForLinkType(parseInt(zoomLevel, 10), linkType, {
+            strokeWidth: width - 2,
+            strokeColor: '#ffffff',
+            strokeLinecap: 'square',
+            strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
+            strokeOpacity: 1
           });
         });
       }));
@@ -179,11 +207,11 @@
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
         strokeOpacity: 0.7,
         rotation: '${rotation}'}))
-      });
+    });
+    linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
+    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeDashStylesForLinkType());
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
-    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -197,14 +225,14 @@
         rotation: '${rotation}'
       }))
     });
+    linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
+    linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
+    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeDashStylesForLinkType());
+    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeDashStylesForLinkType());
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
-    linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
-    linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
-    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeDashStyles());
-    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeDashStyles());
 
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap

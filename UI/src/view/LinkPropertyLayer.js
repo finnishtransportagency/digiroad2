@@ -103,6 +103,27 @@
       });
       roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
     };
+    var drawDashedLineFeaturesForType = function(roadLinks) {
+      var lineFeatures = function(roadLinks) {
+        return _.flatten(_.map(roadLinks, function(roadLink) {
+          var points = _.map(roadLink.points, function(point) {
+            return new OpenLayers.Geometry.Point(point.x, point.y);
+          });
+          var attributes = {
+            linkType: roadLink.linkType,
+            roadLinkId: roadLink.roadLinkId,
+            type: 'overlay'
+          };
+          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        }));
+      };
+
+      var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
+      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(dashedLinkTypes, roadLink.linkType);
+      });
+      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+    };
 
     var reselectRoadLink = function() {
       selectControl.activate();
@@ -129,6 +150,8 @@
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
+      } else if (linkPropertiesModel.getDataset() === 'link-type') {
+        drawDashedLineFeaturesForType(roadLinks);
       }
     };
 
@@ -150,12 +173,14 @@
           selectControl.select(feature);
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+          roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
           roadLayer.redraw();
           if (dataset === 'functional-class') {
             drawDashedLineFeatures(roadCollection.getAll());
             redrawOneWaySigns(roadCollection.getAll());
-          } else {
-            roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
+          } else if (dataset === 'link-type') {
+            drawDashedLineFeaturesForType(roadCollection.getAll());
+            redrawOneWaySigns(roadCollection.getAll());
           }
         });
         selectControl.activate();
