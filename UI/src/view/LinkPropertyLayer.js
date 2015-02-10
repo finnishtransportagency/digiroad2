@@ -161,6 +161,7 @@
         selectControl.activate();
       }
       drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+      redrawOneWaySigns(roadCollection.getAll());
     };
 
     var displayConfirmMessage = function() { new Confirm(); };
