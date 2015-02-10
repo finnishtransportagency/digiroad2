@@ -124,6 +124,7 @@
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
 
+
     // --- Administrative class style maps ---
 
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({
