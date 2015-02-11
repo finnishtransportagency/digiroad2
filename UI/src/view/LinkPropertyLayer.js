@@ -159,11 +159,7 @@
           selectControl.select(feature);
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
-          roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-          roadLayer.redraw();
-          drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
-          redrawOneWaySigns(roadCollection.getAll());
-          reselectRoadLink();
+          roadLayer.drawRoadLinks(roadLinks.getAll(), map.getZoom());
         });
         selectControl.activate();
         drawDashedLineFeaturesIfApplicable(roadCollection.getAll());

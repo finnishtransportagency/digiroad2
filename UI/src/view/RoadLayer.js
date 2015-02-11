@@ -196,6 +196,7 @@ var RoadStyles = function() {
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
       addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
       drawRoadLink: drawRoadLink,
+      drawRoadLinks: drawRoadLinks,
       createZoomLevelFilter: createZoomLevelFilter
     };
   };
