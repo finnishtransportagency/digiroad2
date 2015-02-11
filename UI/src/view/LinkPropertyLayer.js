@@ -159,7 +159,7 @@
           selectControl.select(feature);
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
-          roadLayer.drawRoadLinks(roadLinks.getAll(), map.getZoom());
+          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         });
         selectControl.activate();
         drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
