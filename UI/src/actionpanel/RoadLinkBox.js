@@ -143,7 +143,7 @@
 
     bindExternalEventHandlers();
 
-    elements.expanded.find('.legend-container').append(administrativeClassLegend);
+    elements.expanded.find('.legend-container').append(functionalClassLegend);
     this.element = $('<div class="panel-group ' + className + 's"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
