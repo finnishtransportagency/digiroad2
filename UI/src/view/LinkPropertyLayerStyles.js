@@ -79,9 +79,10 @@
     };
 
     var administrativeClassStyleLookup = {
-      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/privateroad.svg' },
-      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/street.svg' },
-      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/road.svg' }
+      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' },
+      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' },
+      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' },
+      Unknown: { strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' }
     };
 
     // --- Functional class style maps
