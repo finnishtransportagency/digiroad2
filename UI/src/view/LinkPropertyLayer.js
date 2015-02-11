@@ -161,13 +161,8 @@
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
           roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
           roadLayer.redraw();
-          if (dataset === 'functional-class') {
-            drawDashedLineFeatures(roadCollection.getAll());
-            redrawOneWaySigns(roadCollection.getAll());
-          } else if (dataset === 'link-type') {
-            drawDashedLineFeaturesForType(roadCollection.getAll());
-            redrawOneWaySigns(roadCollection.getAll());
-          }
+          drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+          redrawOneWaySigns(roadCollection.getAll());
           reselectRoadLink();
         });
         selectControl.activate();
