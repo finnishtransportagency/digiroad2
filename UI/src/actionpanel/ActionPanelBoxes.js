@@ -233,7 +233,7 @@
       '    </div>',
       '    <div class="checkbox road-type-checkbox">',
       '      <label>',
-      '        <input name="road-types" type="checkbox"> V&auml;yl&auml;tyyppi',
+      '        <input name="road-types" type="checkbox"> Hallinnollinen luokka',
       '      </label>',
       '    </div>',
       '  </div>',
