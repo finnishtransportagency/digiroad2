@@ -50,6 +50,10 @@
       return selected;
     };
 
+    var isCarTrafficRoad = function() {
+      return !_.contains([8, 9, 21], data.linkType);
+    };
+
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
@@ -75,6 +79,7 @@
       setFunctionalClass: setFunctionalClass,
       isDirty: isDirty,
       isSelected: isSelected,
+      isCarTrafficRoad: isCarTrafficRoad,
       select: select,
       unselect: unselect,
       cancel: cancel,
@@ -109,9 +114,14 @@
     };
 
     this.getAll = function() {
-      return _.map(roadLinks, function(roadLink) {
-        return roadLink.getData();
-      });
+      return _.chain(roadLinks)
+        .filter(function(roadLink) {
+          return roadLink.isCarTrafficRoad();
+        })
+        .map(function(roadLink) {
+          return roadLink.getData();
+        })
+        .value();
     };
 
     this.get = function(id) {
