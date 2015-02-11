@@ -127,17 +127,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       RoadLinkService.getRoadLinks(
           bounds = boundingRectangle,
           municipalities = municipalities).map { roadLink =>
-        val (id, mmlId, points, length, roadLinkType, functionalClass,
-             trafficDirection, modifiedAt, modifiedBy) = roadLink
+        val (id, mmlId, points, length, administrativeClass, functionalClass,
+             trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
         Map("roadLinkId" -> id,
             "mmlId" -> mmlId,
             "points" -> points,
             "length" -> length,
-            "administrativeClass" -> roadLinkType.toString,
+            "administrativeClass" -> administrativeClass.toString,
             "functionalClass" -> functionalClass,
             "trafficDirection" -> trafficDirection.toString,
             "modifiedAt" -> modifiedAt,
-            "modifiedBy" -> modifiedBy)
+            "modifiedBy" -> modifiedBy,
+            "linkType" -> linkType)
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -167,18 +168,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     RoadLinkService.adjustTrafficDirection(id, trafficDirection, user.username)
     RoadLinkService.adjustFunctionalClass(id, functionalClass, user.username)
-    val (_, mmlId, points, length, roadLinkType,
+    val (_, mmlId, points, length, administrativeClass,
          updatedFunctionalClass, updatedTrafficDirection,
-         modifiedAt, modifiedBy) = RoadLinkService.getRoadLink(id)
+         modifiedAt, modifiedBy, linkType) = RoadLinkService.getRoadLink(id)
     Map("roadLinkId" -> id,
       "mmlId" -> mmlId,
       "points" -> points,
       "length" -> length,
-      "type" -> roadLinkType.toString,
+      "administrativeClass" -> administrativeClass.toString,
       "functionalClass" -> updatedFunctionalClass,
       "trafficDirection" -> updatedTrafficDirection.toString,
       "modifiedAt" -> modifiedAt,
-      "modifiedBy" -> modifiedBy)
+      "modifiedBy" -> modifiedBy,
+      "linkType" -> linkType)
   }
 
   get("/images/:imageId") {

@@ -14,6 +14,23 @@
       TowardsDigitizing: 'Digitointisuuntaan'
     };
 
+    var linkTypes = [
+      [1, 'Moottoritien osa'],
+      [2, 'Moniajorataisen tien osa'],
+      [3, 'Yksiajorataisen tien osa'],
+      [4, 'Moottoriliikennetien osa'],
+      [5, 'Kiertoliittymän osa'],
+      [6, 'Ramppi'],
+      [7, 'Levähdysalue'],
+      [8, 'Kevyen liikenteen väylä'],
+      [9, 'Jalankulkualueen osa'],
+      [10, 'Huolto- tai pelastustien osa'],
+      [11, 'Liitännäisliikennealueen osa'],
+      [12, 'Ajopolku'],
+      [13, 'Huoltoaukko moottoritiellä'],
+      [21, 'Lautta/lossi']
+    ];
+
     var disabled = 'disabled';
     var buttons =
       '<div class="link-properties form-controls">' +
@@ -42,6 +59,9 @@
             '<label class="control-label">Liikennevirran suunta</label>' +
             '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
             '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
+            '<label class="control-label">Tielinkin tyyppi</label>' +
+            '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
+            '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -58,6 +78,7 @@
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
+        linkProperties.localizedLinkTypes = _.find(linkTypes, function(x) { return x[0] === linkProperties.linkType; })[1] || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
@@ -68,8 +89,13 @@
           var selected = value == linkProperties.functionalClass ? " selected" : "";
           return '<option value="' + value + '"' + selected + '>' + value + '</option>';
         }).join('');
+        var linkTypesOptionTags = _.map(linkTypes, function(value) {
+          var selected = value[0] == linkProperties.linkType ? " selected" : "";
+          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+        }).join('');
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
-                                                                           functionalClassOptionTags: functionalClassOptionTags }}));
+                                                                           functionalClassOptionTags: functionalClassOptionTags,
+                                                                           linkTypesOptionTags: linkTypesOptionTags }}));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });

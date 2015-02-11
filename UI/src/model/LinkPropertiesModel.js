@@ -1,6 +1,6 @@
 (function(root) {
   root.LinkPropertiesModel = function() {
-    var currentDataset = 'administrative-class';
+    var currentDataset = 'functional-class';
 
     var getDataset = function() {
       return currentDataset;

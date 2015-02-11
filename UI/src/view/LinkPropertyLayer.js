@@ -70,26 +70,46 @@
       roadLayer.layer.addFeatures(oneWaySigns);
     };
 
-    var drawDashedLineFeatures = function(roadLinks) {
-      var lineFeatures = function(roadLinks) {
-        return _.flatten(_.map(roadLinks, function(roadLink) {
-          var points = _.map(roadLink.points, function(point) {
-            return new OpenLayers.Geometry.Point(point.x, point.y);
-          });
-          var attributes = {
-            functionalClass: roadLink.functionalClass,
-            roadLinkId: roadLink.roadLinkId,
-            type: 'overlay'
-          };
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-        }));
-      };
+    var removeOneWaySigns = function() {
+      var oneWaySigns = _.filter(roadLayer.layer.features, function(feature) {
+        return feature.attributes.rotation !== undefined;
+      });
+      roadLayer.layer.removeFeatures(oneWaySigns);
+    };
 
+    var redrawOneWaySigns = function(roadLinks) {
+      removeOneWaySigns();
+      drawOneWaySigns(roadLinks);
+    };
+
+    var createDashedLineFeatures = function(roadLinks, dashedLineFeature) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var attributes = {
+          dashedLineFeature: roadLink[dashedLineFeature],
+          roadLinkId: roadLink.roadLinkId,
+          type: 'overlay'
+        };
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      }));
+    };
+
+    var drawDashedLineFeatures = function(roadLinks) {
       var dashedFunctionalClasses = [2, 4, 6, 8];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedFunctionalClasses, roadLink.functionalClass);
       });
-      roadLayer.layer.addFeatures(lineFeatures(dashedRoadLinks));
+      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'functionalClass'));
+    };
+
+    var drawDashedLineFeaturesForType = function(roadLinks) {
+      var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
+      var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return _.contains(dashedLinkTypes, roadLink.linkType);
+      });
+      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
     var reselectRoadLink = function() {
@@ -107,7 +127,6 @@
       }
     };
 
-
     var prepareRoadLinkDraw = function() {
       selectControl.deactivate();
     };
@@ -117,6 +136,8 @@
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
+      } else if (linkPropertiesModel.getDataset() === 'link-type') {
+        drawDashedLineFeaturesForType(roadLinks);
       }
     };
 
@@ -138,16 +159,16 @@
           selectControl.select(feature);
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+          roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
           roadLayer.redraw();
-          if (dataset === 'functional-class') {
-            drawDashedLineFeatures(roadCollection.getAll());
-          } else {
-            roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-          }
+          drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+          redrawOneWaySigns(roadCollection.getAll());
+          reselectRoadLink();
         });
         selectControl.activate();
+        drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+        redrawOneWaySigns(roadCollection.getAll());
       }
-      drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
     };
 
     var displayConfirmMessage = function() { new Confirm(); };
