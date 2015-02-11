@@ -168,6 +168,7 @@
             drawDashedLineFeaturesForType(roadCollection.getAll());
             redrawOneWaySigns(roadCollection.getAll());
           }
+          reselectRoadLink();
         });
         selectControl.activate();
       }
