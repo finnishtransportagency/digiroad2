@@ -171,9 +171,9 @@
           reselectRoadLink();
         });
         selectControl.activate();
+        drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+        redrawOneWaySigns(roadCollection.getAll());
       }
-      drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
-      redrawOneWaySigns(roadCollection.getAll());
     };
 
     var displayConfirmMessage = function() { new Confirm(); };
