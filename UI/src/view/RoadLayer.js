@@ -87,13 +87,8 @@ var RoadStyles = function() {
       }
     };
 
-    var fetchRoads = function(bbox, zoom) {
-      roadCollection.fetch(bbox, zoom);
-    };
-
     var mapMovedHandler = function(mapState) {
       if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
-        fetchRoads(mapState.bbox, mapState.zoom);
         changeRoadsWidthByZoomLevel();
       } else {
         vectorLayer.removeAllFeatures();
@@ -172,10 +167,6 @@ var RoadStyles = function() {
     eventbus.on('road-type:selected', toggleRoadType, this);
 
     eventbus.on('map:moved', mapMovedHandler, this);
-
-    eventbus.on('roadLinks:fetched', function(roadLinks, zoom) {
-      drawRoadLinks(roadLinks, zoom);
-    }, this);
 
     eventbus.on('layer:selected', function(layer) {
       activateLayerStyleMap(layer);

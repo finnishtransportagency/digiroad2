@@ -1,4 +1,4 @@
-window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
+window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
@@ -542,7 +542,11 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
   var handleMapMoved = function(mapMoveEvent) {
     if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
       if (mapMoveEvent.selectedLayer === 'asset') {
-        assetsModel.refreshAssets(mapMoveEvent);
+        eventbus.once('roadLinks:fetched', function(roadLinks) {
+          roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+          assetsModel.refreshAssets(mapMoveEvent);
+        });
+        roadCollection.fetch(map.getExtent(), map.getZoom());
       }
     } else {
       if (selectedAssetModel.isDirty()) {
@@ -602,7 +606,11 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      assetsModel.fetchAssets(map.getExtent());
+      eventbus.once('roadLinks:fetched', function(roadLinks) {
+        roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+        assetsModel.fetchAssets(map.getExtent());
+      });
+      roadCollection.fetch(map.getExtent(), map.getZoom());
     }
   };
 

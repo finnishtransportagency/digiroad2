@@ -43,6 +43,15 @@
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
         start();
+        eventbus.once('roadLinks:fetched', function(roadLinks) {
+          prepareRoadLinkDraw();
+          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+          drawDashedLineFeaturesIfApplicable(roadLinks);
+          drawOneWaySigns(roadLinks);
+          reselectRoadLink();
+        });
+        roadCollection.fetch(map.getExtent(), map.getZoom());
+
       } else if (selectedLinkProperty.isDirty()) {
         displayConfirmMessage();
       } else {
@@ -144,12 +153,15 @@
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
-        eventListener.listenTo(eventbus, 'roadLinks:beforeDraw', prepareRoadLinkDraw);
-        eventListener.listenTo(eventbus, 'roadLinks:afterDraw', function(roadLinks) {
+        eventbus.once('roadLinks:fetched', function(roadLinks) {
+          prepareRoadLinkDraw();
+          roadLayer.drawRoadLinks(roadLinks, map.getZoom());
           drawDashedLineFeaturesIfApplicable(roadLinks);
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
         });
+        roadCollection.fetch(map.getExtent(), map.getZoom());
+
         eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
         eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
         eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
@@ -159,7 +171,11 @@
           selectControl.select(feature);
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+          prepareRoadLinkDraw();
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+          drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
+          drawOneWaySigns(roadCollection.getAll());
+          reselectRoadLink();
         });
         selectControl.activate();
         drawDashedLineFeaturesIfApplicable(roadCollection.getAll());
