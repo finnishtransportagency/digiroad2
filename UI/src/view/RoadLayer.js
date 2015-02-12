@@ -35,11 +35,12 @@ var RoadStyles = function() {
     var enableColorsOnRoadLayer = function() {
       if (stylesUndefined()) {
         var administrativeClassStyleLookup = {
-          Private: { strokeColor: "#0011bb" },
-          Municipality: { strokeColor: "#11bb00" },
-          State: { strokeColor: "#ff0000" }
+          Private: { strokeColor: '#0011bb' },
+          Municipality: { strokeColor: '#11bb00' },
+          State: { strokeColor: '#ff0000' },
+          Unknown: { strokeColor: '#888' }
         };
-        vectorLayer.styleMap.addUniqueValueRules("default", "administrativeClass", administrativeClassStyleLookup);
+        vectorLayer.styleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
       }
     };
 

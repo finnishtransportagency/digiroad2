@@ -332,7 +332,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
   var createNewAsset = function(lonlat) {
     var selectedLon = lonlat.lon;
     var selectedLat = lonlat.lat;
-    var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), selectedLon, selectedLat);
+    var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAllCarTrafficRoads(), selectedLon, selectedLat);
     var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
     var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
     var data = {
@@ -413,7 +413,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping) {
     if (selectedAsset.massTransitStop.getMarker()) {
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAll(), lonlat.lon, lonlat.lat);
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAllCarTrafficRoads(), lonlat.lon, lonlat.lat);
       roadCollection.activate(nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;

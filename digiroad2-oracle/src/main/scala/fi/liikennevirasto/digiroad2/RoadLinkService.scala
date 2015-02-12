@@ -247,20 +247,19 @@ object RoadLinkService {
     adjustedRoadLinks(Seq(roadLink)).head
   }
 
-  def getRoadLinks(bounds: BoundingRectangle, filterRoads: Boolean = true, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
+  def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
     val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
       val leftBottomX = bounds.leftBottom.x
       val leftBottomY = bounds.leftBottom.y
       val rightTopX = bounds.rightTop.x
       val rightTopY = bounds.rightTop.y
 
-      val roadFilter = if (filterRoads) "mod(functionalroadclass, 10) IN (1, 2, 3, 4, 5, 6) and" else ""
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val query =
       s"""
             select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
               from tielinkki_ctas
-              where $roadFilter $municipalityFilter
+              where $municipalityFilter
                     mdsys.sdo_filter(shape,
                                      sdo_cs.viewport_transform(
                                        mdsys.sdo_geometry(
