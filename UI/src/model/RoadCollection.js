@@ -113,7 +113,7 @@
       });
     };
 
-    this.getAll = function() {
+    this.getAllCarTrafficRoads = function() {
       return _.chain(roadLinks)
         .filter(function(roadLink) {
           return roadLink.isCarTrafficRoad();
@@ -122,6 +122,12 @@
           return roadLink.getData();
         })
         .value();
+    };
+
+    this.getAll = function() {
+      return _.map(roadLinks, function(roadLink) {
+        return roadLink.getData();
+      });
     };
 
     this.get = function(id) {
