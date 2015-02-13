@@ -124,11 +124,11 @@
 
     var reselectRoadLink = function() {
       selectControl.activate();
-      currentRenderIntent = 'select';
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
       if (feature) {
+        currentRenderIntent = 'select';
         selectControl.select(feature);
         highlightFeatures(feature);
       }
