@@ -262,6 +262,7 @@ window.NumericalLimitLayer = function(params) {
       start();
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
+        reselectNumericalLimit();
         collection.fetch(boundingBox, selectedNumericalLimit);
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());
@@ -350,6 +351,7 @@ window.NumericalLimitLayer = function(params) {
       start();
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
+        reselectNumericalLimit();
         collection.fetch(state.bbox, selectedNumericalLimit);
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());
@@ -386,6 +388,18 @@ window.NumericalLimitLayer = function(params) {
     }
   };
 
+  var reselectNumericalLimit = function() {
+    if (selectedNumericalLimit.exists && selectedNumericalLimit.exists()) {
+      selectControl.onSelect = function() {};
+      var feature = _.first(getSelectedFeatures(selectedNumericalLimit));
+      if (feature) {
+        selectControl.select(feature);
+        highlightNumericalLimitFeatures(feature);
+      }
+      selectControl.onSelect = numericalLimitOnSelect;
+    }
+  };
+
   var drawNumericalLimits = function(numericalLimits) {
     var numericalLimitsWithType = _.map(numericalLimits, function(limit) {
       return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
@@ -396,15 +410,7 @@ window.NumericalLimitLayer = function(params) {
     var numericalLimitsWithAdjustments = _.map(numericalLimitsWithType, offsetBySideCode);
     vectorLayer.addFeatures(lineFeatures(numericalLimitsWithAdjustments));
 
-    if (selectedNumericalLimit.exists && selectedNumericalLimit.exists()) {
-      selectControl.onSelect = function() {};
-      var feature = _.first(getSelectedFeatures(selectedNumericalLimit));
-      if (feature) {
-        selectControl.select(feature);
-        highlightNumericalLimitFeatures(feature);
-      }
-      selectControl.onSelect = numericalLimitOnSelect;
-    }
+    reselectNumericalLimit();
   };
 
   var lineFeatures = function(numericalLimits) {
