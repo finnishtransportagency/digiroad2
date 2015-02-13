@@ -43,9 +43,10 @@
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
         start();
-        eventbus.once('roadLinks:fetched', function(roadLinks) {
+        eventbus.once('roadLinks:fetched', function() {
           prepareRoadLinkDraw();
-          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
+          var roadLinks = roadCollection.getAll();
+          roadLayer.drawRoadLinks(roadLinks, map.getZoom());
           drawDashedLineFeaturesIfApplicable(roadLinks);
           drawOneWaySigns(roadLinks);
           reselectRoadLink();
@@ -153,8 +154,9 @@
     var start = function() {
       if (!eventListener.running) {
         eventListener.running = true;
-        eventbus.once('roadLinks:fetched', function(roadLinks) {
+        eventbus.once('roadLinks:fetched', function() {
           prepareRoadLinkDraw();
+          var roadLinks = roadCollection.getAll();
           roadLayer.drawRoadLinks(roadLinks, map.getZoom());
           drawDashedLineFeaturesIfApplicable(roadLinks);
           drawOneWaySigns(roadLinks);

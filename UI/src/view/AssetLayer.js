@@ -542,8 +542,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
   var handleMapMoved = function(mapMoveEvent) {
     if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
       if (mapMoveEvent.selectedLayer === 'asset') {
-        eventbus.once('roadLinks:fetched', function(roadLinks) {
-          roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+        eventbus.once('roadLinks:fetched', function() {
+          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
           assetsModel.refreshAssets(mapMoveEvent);
         });
         roadCollection.fetch(map.getExtent(), map.getZoom());
@@ -606,8 +606,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
     map.addLayer(assetDirectionLayer);
     map.addLayer(assetLayer);
     if (zoomlevels.isInAssetZoomLevel(map.getZoom())) {
-      eventbus.once('roadLinks:fetched', function(roadLinks) {
-        roadLayer.drawRoadLinks(roadLinks, map.getZoom());
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         assetsModel.fetchAssets(map.getExtent());
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());

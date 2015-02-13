@@ -416,8 +416,8 @@ window.SpeedLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      eventbus.once('roadLinks:fetched', function(roadLinks) {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
         collection.fetch(boundingBox);
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());
@@ -509,7 +509,7 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      eventbus.once('roadLinks:fetched', function(roadLinks) {
+      eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
         collection.fetch(state.bbox);
       });
