@@ -146,7 +146,16 @@ Karttan&auml;kym&auml;&auml;n voi valita tielinkit valitsemalla tietolajit-palet
 
 _Tielinkit._
 
-3.3 Joukkoliikenteen pys&auml;kkien valinta
+3.2.1 Tielinkkien haku
+----------------------
+
+Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
+
+https://devtest.liikennevirasto.fi/digiroad/#linkProperties/373320541
+
+miss&auml; numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
+
+3.3 Joukkoliikenteen pys&auml;kit
 --------------------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
@@ -184,7 +193,7 @@ miss&auml; numerosarja 95374 on pys&auml;kin kansallinen ID. Toiminto tarkentaa 
 
 _Joukkoliikenteen pys&auml;kkien haku._
 
-3.4 Nopeusrajoitusten valinta
+3.4 Nopeusrajoitukset
 -----------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
@@ -222,13 +231,32 @@ Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei vo
 4.1 Tielinkin tietojen katselu
 ------------------------------
 
-Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka ja liikennevirran suunta.
+Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi.
 
-Tielinkit on visualisoitu hallinnollisen luokan ja toiminnallisen luokan mukaan siten, ett&auml; valtion omistamat tielinkit ovat punaisia, kunnan omistamat vihreit&auml; ja yksityisten omistamat sinisi&auml;. Ne tielinkit, joilla ei ole omistajaa tiedossa, on visualisoitu harmaaksi. Toiminnallinen luokka on visualisoitu tielinkin paksuutena (luokat 1-8). Niill&auml; tielinkeill&auml;, joiden liikennevirran suunta on yhteen suuntaan, on visualisoitu suuntanuoli osoittamaan liikennevirran suuntaan.
+Tielinkeille voi valita visualisoinnin Tietolajit -paletista (1) tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin tai hallinnollisen luokan mukaan. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t Tietolajit-paletissa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
-![Tielinkit](k7.jpg)
+Toiminnallisen luokan selitteet ovat:
 
-_Tielinkit._
+Luokka 1: Ohjeellisesti valtatie tai seudullinen p&auml;&auml;katu
+Luokka 2: Ohjeellisesti kantatie tai seudullinen p&auml;&auml;katu
+Luokka 3: Ohjeellisesti seututie tai alueellinen p&auml;&auml;katu
+Luokka 4: Ohjeellisesti yhdystie tai kokoojakatu
+Luokka 5: Liitynt&auml;katu, t&auml;rke&auml; yksityistie
+Luokka 6: Muu yksityistie
+Luokka 7: Ajopolku
+Luokka 8: Kevyen liikenteen v&auml;yl&auml;
+
+![Tielinkit visualisoitu toiminnallisen luokan mukaan](k7.jpg)
+
+_Tielinkit visualisoitu toiminnallisen luokan mukaan._
+
+![Tielinkit visualisoitu tielinkin tyypin mukaan](k41.JPG)
+
+_Tielinkit visualisoitu tielinkin tyypin mukaan._
+
+![Tielinkit visualisoitu hallinnollisen luokan mukaan](k41.JPG)
+
+_Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
 4.2 Pys&auml;kin tietojen katselu
 ----------------------------
@@ -302,7 +330,7 @@ Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden 
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan. Muokattava tielinkki valitaan hiirell&auml; klikkaamalla.
 
-Tielinkin ominaisuustiedoista toiminnallinen luokka ja liikennevirran suunta ovat muokattavissa.
+Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa.
 
 ![Tielinkin ominaisuustietojen muokkaus.](k39.JPG)
 
