@@ -160,7 +160,7 @@ var URLRouter = function(map, backend, models) {
     var layers = _.merge({
       road: roadLayer,
       linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
-      asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel)),
+      asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
@@ -169,7 +169,8 @@ var URLRouter = function(map, backend, models) {
         roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
-        backend: backend
+        backend: backend,
+        roadLayer: roadLayer
       })
     }, numericalLimitLayers);
 

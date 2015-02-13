@@ -6,7 +6,8 @@ window.SpeedLimitLayer = function(params) {
       roadCollection = params.roadCollection,
       geometryUtils = params.geometryUtils,
       backend = params.backend,
-      linearAsset = params.linearAsset;
+      linearAsset = params.linearAsset,
+      roadLayer = params.roadLayer;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -415,7 +416,11 @@ window.SpeedLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox);
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
+        collection.fetch(boundingBox);
+      });
+      roadCollection.fetch(map.getExtent(), map.getZoom());
     }
   };
 
@@ -504,7 +509,11 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox);
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
+        collection.fetch(state.bbox);
+      });
+      roadCollection.fetch(map.getExtent(), map.getZoom());
     } else if (selectedSpeedLimit.isDirty()) {
       new Confirm();
     } else {

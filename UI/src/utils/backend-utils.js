@@ -217,7 +217,7 @@
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
         callback(roadLinkData);
-        eventbus.trigger('roadLinks:fetched', roadLinkData);
+        eventbus.trigger('roadLinks:fetched');
       };
       return self;
     };

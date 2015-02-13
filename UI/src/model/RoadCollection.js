@@ -109,7 +109,7 @@
         roadLinks = _.reject(fetchedRoadLinkModels, function(roadLink) {
           return _.contains(selectedIds, roadLink.getId());
         }).concat(getSelectedRoadLinks());
-        eventbus.trigger('roadLinks:fetched', self.getAll(), zoom);
+        eventbus.trigger('roadLinks:fetched');
       });
     };
 
