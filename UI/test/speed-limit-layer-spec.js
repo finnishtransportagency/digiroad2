@@ -28,7 +28,8 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
           getZoom: function() {
             return 10;
           },
-          viewPortDiv: ""
+          viewPortDiv: "",
+          getExtent: function() {}
         };
         layer = new SpeedLimitLayer({
           map: map,
@@ -39,7 +40,14 @@ define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'Sele
           collection: speedLimitsCollection,
           selectedSpeedLimit: selectedSpeedLimit,
           geometryUtils: new GeometryUtils(),
-          linearAsset: new LinearAsset()
+          linearAsset: new LinearAsset(),
+          roadCollection: {
+            fetch: function() {  eventbus.trigger('roadLinks:fetched'); },
+            getAll: function() {}
+          },
+          roadLayer: {
+            drawRoadLinks:  function() {}
+          }
         });
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
