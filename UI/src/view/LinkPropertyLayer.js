@@ -124,6 +124,7 @@
 
     var reselectRoadLink = function() {
       selectControl.activate();
+      currentRenderIntent = 'select';
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
@@ -170,7 +171,9 @@
           var feature = _.find(roadLayer.layer.features, function(feature) {
             return feature.attributes.roadLinkId === link.roadLinkId;
           });
-          selectControl.select(feature);
+          if (feature) {
+            selectControl.select(feature);
+          }
         });
         eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
           prepareRoadLinkDraw();
