@@ -216,12 +216,16 @@ object RoadLinkService {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedLinkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedLinkTypesMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
 
       basicRoadLinks.map { basicRoadLink =>
         val mmlId = basicRoadLink._2
         val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
+        val adjustedLinkType = adjustedLinkTypes.get(mmlId).flatMap(_.headOption)
         val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
+
         val functionalClassValue = functionalClass.map(_._2).getOrElse(basicRoadLink._6)
+        val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(basicRoadLink._8)
         val trafficDirectionValue = trafficDirection.map( trafficDirection =>
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
@@ -237,7 +241,7 @@ object RoadLinkService {
           case (None, None) => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue), modification)
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modification)
       }
     }
   }

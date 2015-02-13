@@ -1,9 +1,32 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{AgainstDigitizing, TowardsDigitizing, BoundingRectangle}
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class RoadLinkServiceSpec extends FunSuite with Matchers {
+import fi.liikennevirasto.digiroad2.asset.{AgainstDigitizing, TowardsDigitizing, BoundingRectangle}
+import _root_.oracle.spatial.geometry.JGeometry
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.ConversionDatabase._
+import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+import org.joda.time.DateTime
+
+import scala.collection.JavaConversions._
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
+class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+  after {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""delete from adjusted_link_type""".execute()
+    }
+  }
+
   test("Get production road link with test id that maps to one production road link") {
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
@@ -37,4 +60,20 @@ class RoadLinkServiceSpec extends FunSuite with Matchers {
     modifiedAt should be (Some("12.12.2014 00:00:00"))
     modifiedBy should be (Some("test"))
   }
+
+  test("Adjust link type") {
+    addLinkTypeAdjustment(99, 896628487)
+
+    val roadLink = RoadLinkService.getRoadLink(5925952)
+    val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
+    linkType should be (99)
+  }
+
+  def addLinkTypeAdjustment(linkTypeAdjustment: Int, mmlId: Int): Unit = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""insert into adjusted_link_type (mml_id, link_type, modified_by) values ($mmlId, $linkTypeAdjustment, 'testuser')""".execute()
+    }
+  }
+
+
 }
