@@ -1,18 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
-import org.scalatest.Tag
+import org.scalatest.{BeforeAndAfter, Tag}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.asset.EnumeratedPropertyValue
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import scala.Some
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
 
-class Digiroad2ApiSpec extends AuthenticatedApiSpec {
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.slick.jdbc.StaticQuery.interpolation
+
+class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
@@ -20,6 +22,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
 
   addServlet(classOf[Digiroad2Api], "/*")
   addServlet(classOf[SessionApi], "/auth/*")
+
+  after {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""delete from adjusted_functional_class where mml_id = 388565458""".execute()
+      sqlu"""delete from adjusted_link_type where mml_id = 388565458""".execute()
+      sqlu"""delete from adjusted_traffic_direction where mml_id = 388565458""".execute()
+    }
+  }
 
   test("require authentication", Tag("db")) {
     get("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
@@ -248,6 +258,25 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec {
   test("updating speed limits requires an operator role") {
     putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test") {
       status should equal(401)
+    }
+  }
+
+  case class RoadLinkHelper(roadLinkId: Long, mmlId: Long, points: Seq[Point], length: Double,
+                            administrativeClass: String, functionalClass: Int, trafficDirection: String,
+                            modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
+
+  test("update adjusted link properties") {
+    putJsonWithUserAuth("/linkproperties/7478",
+      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 666}""".getBytes, username = "test2") {
+      status should equal(200)
+      getWithUserAuth("roadlinks?bbox=373118,6676151,373888,6677474") {
+        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.roadLinkId == 7478)
+        adjustedLinkOpt.map { adjustedLink =>
+          TrafficDirection(adjustedLink.trafficDirection) should be (TowardsDigitizing)
+          adjustedLink.functionalClass should be (333)
+          adjustedLink.linkType should be (666)
+        }.getOrElse(fail())
+      }
     }
   }
 

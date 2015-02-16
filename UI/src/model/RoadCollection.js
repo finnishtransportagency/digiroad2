@@ -16,21 +16,17 @@
       return _.cloneDeep(data.points);
     };
 
-    var setTrafficDirection = function(trafficDirection) {
-      if (trafficDirection != data.trafficDirection) {
-        data.trafficDirection = trafficDirection;
+    var setLinkProperty = function(name, value) {
+      if (value != data[name]) {
+        data[name] = value;
         dirty = true;
         eventbus.trigger('linkProperties:changed');
       }
     };
 
-    var setFunctionalClass = function(functionalClass) {
-      if (functionalClass != data.functionalClass) {
-        data.functionalClass = functionalClass;
-        dirty = true;
-        eventbus.trigger('linkProperties:changed');
-      }
-    };
+    var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
+    var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
+    var setLinkType = _.partial(setLinkProperty, 'linkType');
 
     var isDirty = function() {
       return dirty;
@@ -57,6 +53,7 @@
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
+      data.linkType = original.linkType;
       dirty = false;
       eventbus.trigger('linkProperties:cancelled', data);
     };
@@ -77,6 +74,7 @@
       getPoints: getPoints,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
+      setLinkType: setLinkType,
       isDirty: isDirty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,

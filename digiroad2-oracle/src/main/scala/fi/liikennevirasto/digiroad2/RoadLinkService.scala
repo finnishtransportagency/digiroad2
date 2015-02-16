@@ -206,6 +206,12 @@ object RoadLinkService {
     addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId, username)
   }
 
+  def adjustLinkType(id: Long, linkType: Int, username: String): Unit = {
+    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedLinkType) = (unadjustedRoadLink._2, unadjustedRoadLink._8)
+    addAdjustment("adjusted_link_type", "link_type", linkType, unadjustedLinkType, mmlId, username)
+  }
+
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic._1, basic._2, basic._3, basic._4,
@@ -216,28 +222,38 @@ object RoadLinkService {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedFunctionalClassesByMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedLinkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedLinkTypesMMLId(basicRoadLinks.map(_._2), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
 
       basicRoadLinks.map { basicRoadLink =>
         val mmlId = basicRoadLink._2
         val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
+        val adjustedLinkType = adjustedLinkTypes.get(mmlId).flatMap(_.headOption)
         val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
+
         val functionalClassValue = functionalClass.map(_._2).getOrElse(basicRoadLink._6)
+        val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(basicRoadLink._8)
         val trafficDirectionValue = trafficDirection.map( trafficDirection =>
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
 
-        val modification = (functionalClass, trafficDirection) match {
-          case (Some((_, _, fcModifiedAt, fcModifiedBy)), Some((_, _, tdModifiedAt, tdModifiedBy))) =>
-            if (fcModifiedAt.isAfter(tdModifiedAt))
-              Some((fcModifiedAt, fcModifiedBy))
-            else
-              Some((tdModifiedAt, tdModifiedBy))
-          case (Some((_, _, fcModifiedAt, fcModifiedBy)), None) => Some((fcModifiedAt, fcModifiedBy))
-          case (None, Some((_, _, tdModifiedAt, tdModifiedBy))) => Some((tdModifiedAt, tdModifiedBy))
-          case (None, None) => None
+        def latesModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+          (a, b) match {
+            case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
+              if (firstModifiedAt.isAfter(secondModifiedAt))
+                Some((firstModifiedAt, firstModifiedBy))
+              else
+                Some((secondModifiedAt, secondModifiedBy))
+            case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
+            case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
+            case (None, None) => None
+          }
+        }
+        val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
+          case Some((_, _, at, by)) => Some((at, by))
+          case _ => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue), modification)
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latesModifications))
       }
     }
   }
