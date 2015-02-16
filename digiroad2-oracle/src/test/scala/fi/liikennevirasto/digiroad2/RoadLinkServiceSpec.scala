@@ -61,12 +61,20 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     modifiedBy should be (Some("test"))
   }
 
-  test("Adjust link type") {
+  test("Override road link type with adjusted value") {
     addLinkTypeAdjustment(99, 896628487)
 
     val roadLink = RoadLinkService.getRoadLink(5925952)
     val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
     linkType should be (99)
+  }
+
+  test("Adjust link type") {
+    RoadLinkService.adjustLinkType(5925952, 111, "testuser")
+
+    val roadLink = RoadLinkService.getRoadLink(5925952)
+    val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
+    linkType should be (111)
   }
 
   def addLinkTypeAdjustment(linkTypeAdjustment: Int, mmlId: Int): Unit = {

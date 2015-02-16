@@ -206,6 +206,12 @@ object RoadLinkService {
     addAdjustment("adjusted_functional_class", "functional_class", functionalClass, unadjustedFunctionalClass, mmlId, username)
   }
 
+  def adjustLinkType(id: Long, linkType: Int, username: String): Unit = {
+    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    val (mmlId, unadjustedLinkType) = (unadjustedRoadLink._2, unadjustedRoadLink._8)
+    addAdjustment("adjusted_link_type", "link_type", linkType, unadjustedLinkType, mmlId, username)
+  }
+
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)]): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic._1, basic._2, basic._3, basic._4,
