@@ -355,7 +355,6 @@ window.NumericalLimitLayer = function(params) {
         collection.fetch(state.bbox, selectedNumericalLimit);
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());
-
     } else if (selectedNumericalLimit.isDirty()) {
       new Confirm();
     } else {
