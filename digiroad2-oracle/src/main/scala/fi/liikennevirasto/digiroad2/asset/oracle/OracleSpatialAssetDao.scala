@@ -197,7 +197,7 @@ object OracleSpatialAssetDao {
       } else {
         assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
         val assetRow = assetRows.head
-        user.isAuthorizedFor(assetRow.municipalityCode)
+        user.isAuthorizedToRead(assetRow.municipalityCode)
       }
     }
     val assets = authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
