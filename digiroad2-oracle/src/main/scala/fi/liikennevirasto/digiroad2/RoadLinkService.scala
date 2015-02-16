@@ -236,18 +236,24 @@ object RoadLinkService {
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
 
-        val modification = (functionalClass, trafficDirection) match {
-          case (Some((_, _, fcModifiedAt, fcModifiedBy)), Some((_, _, tdModifiedAt, tdModifiedBy))) =>
-            if (fcModifiedAt.isAfter(tdModifiedAt))
-              Some((fcModifiedAt, fcModifiedBy))
-            else
-              Some((tdModifiedAt, tdModifiedBy))
-          case (Some((_, _, fcModifiedAt, fcModifiedBy)), None) => Some((fcModifiedAt, fcModifiedBy))
-          case (None, Some((_, _, tdModifiedAt, tdModifiedBy))) => Some((tdModifiedAt, tdModifiedBy))
-          case (None, None) => None
+        def latesModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+          (a, b) match {
+            case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
+              if (firstModifiedAt.isAfter(secondModifiedAt))
+                Some((firstModifiedAt, firstModifiedBy))
+              else
+                Some((secondModifiedAt, secondModifiedBy))
+            case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
+            case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
+            case (None, None) => None
+          }
+        }
+        val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
+          case Some((_, _, at, by)) => Some((at, by))
+          case _ => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modification)
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latesModifications))
       }
     }
   }
