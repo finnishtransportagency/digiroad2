@@ -16,29 +16,17 @@
       return _.cloneDeep(data.points);
     };
 
-    var setTrafficDirection = function(trafficDirection) {
-      if (trafficDirection != data.trafficDirection) {
-        data.trafficDirection = trafficDirection;
+    var setLinkProperty = function(name, value) {
+      if (value != data[name]) {
+        data[name] = value;
         dirty = true;
         eventbus.trigger('linkProperties:changed');
       }
     };
 
-    var setFunctionalClass = function(functionalClass) {
-      if (functionalClass != data.functionalClass) {
-        data.functionalClass = functionalClass;
-        dirty = true;
-        eventbus.trigger('linkProperties:changed');
-      }
-    };
-
-    var setLinkType = function(linkType) {
-      if (linkType != data.linkType) {
-        data.linkType = linkType;
-        dirty = true;
-        eventbus.trigger('linkProperties:changed');
-      }
-    };
+    var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
+    var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
+    var setLinkType = _.partial(setLinkProperty, 'linkType');
 
     var isDirty = function() {
       return dirty;
