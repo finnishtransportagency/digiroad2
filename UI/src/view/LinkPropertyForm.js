@@ -102,6 +102,9 @@
         rootElement.find('.functional-class').change(function(event) {
           selectedLinkProperty.get().setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
+        rootElement.find('.link-types').change(function(event) {
+          selectedLinkProperty.get().setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+        });
         toggleMode(applicationModel.isReadOnly());
       });
       eventbus.on('linkProperties:changed', function() {

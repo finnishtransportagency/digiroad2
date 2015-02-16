@@ -32,6 +32,14 @@
       }
     };
 
+    var setLinkType = function(linkType) {
+      if (linkType != data.linkType) {
+        data.linkType = linkType;
+        dirty = true;
+        eventbus.trigger('linkProperties:changed');
+      }
+    };
+
     var isDirty = function() {
       return dirty;
     };
@@ -77,6 +85,7 @@
       getPoints: getPoints,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
+      setLinkType: setLinkType,
       isDirty: isDirty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,
