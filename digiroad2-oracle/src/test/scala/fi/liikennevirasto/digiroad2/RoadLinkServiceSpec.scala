@@ -88,7 +88,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   def addLinkTypeAdjustment(linkTypeAdjustment: Int, mmlId: Int): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""insert into adjusted_link_type (mml_id, link_type, modified_by, modified_date) values ($mmlId, $linkTypeAdjustment, 'testuser', '12.12.2014')""".execute()
+      sqlu"""insert into adjusted_link_type (mml_id, link_type, modified_by, modified_date) values ($mmlId, $linkTypeAdjustment, 'testuser', to_timestamp('2014-12-12', 'YYYY-MM-DD'))""".execute()
     }
   }
 
