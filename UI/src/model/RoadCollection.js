@@ -65,6 +65,7 @@
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
+      data.linkType = original.linkType;
       dirty = false;
       eventbus.trigger('linkProperties:cancelled', data);
     };
