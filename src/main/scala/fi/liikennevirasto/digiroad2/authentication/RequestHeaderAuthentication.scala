@@ -14,6 +14,7 @@ trait RequestHeaderAuthentication extends Authentication {
     if (remoteUser == null || remoteUser.isEmpty) {
       throw new UnauthenticatedException()
     }
-    userProvider.getUser(remoteUser).getOrElse(throw new UserNotFoundException(remoteUser))
+
+    userProvider.getUser(remoteUser).getOrElse(viewerUser)
   }
 }
