@@ -9,9 +9,9 @@ case class Configuration(
     roles: Set[String] = Set()
 )
 case class User(id: Long, username: String, configuration: Configuration) {
-  def hasWriteAccess() = {
-    configuration.roles.map(_.toLowerCase).contains("viewer") == false
-  }
+  def hasWriteAccess() = !isViewer()
+
+  def isViewer() = configuration.roles(Role.Viewer)
 
   def isOperator(): Boolean = {
     configuration.roles(Role.Operator)
@@ -21,7 +21,11 @@ case class User(id: Long, username: String, configuration: Configuration) {
     configuration.roles(Role.Premium) || configuration.roles(Role.Operator)
   }
 
-  def isAuthorizedFor(municipalityCode: Int): Boolean =
+  def isAuthorizedToRead(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode) || isViewer()
+
+  def isAuthorizedToWrite(municipalityCode: Int): Boolean = isAuthorizedFor(municipalityCode)
+
+  private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 }
 
@@ -29,4 +33,5 @@ object Role {
   val Operator = "operator"
   val Administrator = "administrator"
   val Premium = "premium"
+  val Viewer = "viewer"
 }
