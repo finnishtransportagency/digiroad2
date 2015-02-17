@@ -96,8 +96,8 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
     val role = hasWriteAccess match {
-      case "true" => Set("")
-      case _ => Set("viewer")
+      case "true" => Set(Role.Premium)
+      case _ => Set(Role.Viewer)
     }
 
     userProvider.getUser(username) match {
