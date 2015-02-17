@@ -16,6 +16,12 @@
       });
     }, 1000);
 
+    this.getManoeuvres = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/manoeuvre?bbox=' + boundingBox, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
     this.getRoadLinkByMMLId = _.throttle(function(mmlId, callback) {
       $.getJSON('api/roadlinks/' + mmlId + '?mmlId=true', function(data) {
         callback(data);

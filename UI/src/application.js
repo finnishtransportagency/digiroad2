@@ -172,7 +172,7 @@ var URLRouter = function(map, backend, models) {
         backend: backend,
         roadLayer: roadLayer
       }),
-      manoeuvre: new ManoeuvreLayer()
+      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.roadCollection, backend)
     }, numericalLimitLayers);
 
     var mapPluginsContainer = $('#map-plugins');
