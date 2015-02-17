@@ -265,33 +265,13 @@ object RoadLinkService {
 
   def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
     val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
-      val leftBottomX = bounds.leftBottom.x
-      val leftBottomY = bounds.leftBottom.y
-      val rightTopX = bounds.rightTop.x
-      val rightTopY = bounds.rightTop.y
-
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds)
       val query =
       s"""
             select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
               from tielinkki_ctas
-              where $municipalityFilter
-                    mdsys.sdo_filter(shape,
-                                     sdo_cs.viewport_transform(
-                                       mdsys.sdo_geometry(
-                                         2003,
-                                         0,
-                                         NULL,
-                                         mdsys.sdo_elem_info_array(1,1003,3),
-                                         mdsys.sdo_ordinate_array($leftBottomX,
-                                                                  $leftBottomY,
-                                                                  $rightTopX,
-                                                                  $rightTopY)
-                                       ),
-                                       3067
-                                     ),
-                                     'querytype=WINDOW'
-                                    ) = 'TRUE'
+              where $municipalityFilter $boundingBoxFilter
       """
       Q.queryNA[BasicRoadLink](query).iterator().toSeq
     }
