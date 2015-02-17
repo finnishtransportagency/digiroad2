@@ -24,7 +24,7 @@ object ManoeuvreService {
 
       val manoeuvresById: Map[Long, Seq[(Long, Long, Int)]] = manoeuvres.groupBy(_._1)
       manoeuvresById.filter { case(id, links) =>
-        links.size == 2 && !links.exists{ case(_, _, linkType) => linkType == 2 }
+        links.size == 2 && links.exists(_._3 == 1) && links.exists(_._3 == 3)
       }.map { case(id, links) =>
         Manoeuvre(id, links.find(_._3 == 1).get._2, links.find(_._3 == 3).get._2)
       }.toSeq
