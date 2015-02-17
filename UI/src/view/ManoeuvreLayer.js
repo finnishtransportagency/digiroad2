@@ -3,6 +3,6 @@
     return {
       show: function() {},
       hide: function() {}
-    }
-  }
+    };
+  };
 })(this);
