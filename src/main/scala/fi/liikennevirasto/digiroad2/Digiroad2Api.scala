@@ -386,4 +386,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
                                         (parsedBody \ "limit").extract[Int],
                                         userProvider.getCurrentUser().username)
   }
+
+  get("/manoeuvre") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      ManoeuvreService.getByBoundingBox(boundingRectangle, municipalities)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
 }
