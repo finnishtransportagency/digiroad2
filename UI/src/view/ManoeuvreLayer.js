@@ -7,18 +7,39 @@
       1: { strokeColor: '#0000ff' }
     };
     var featureTypeLookup = {
-      normal: { strokeWidth: 8, strokeOpacity: 0.5 },
-      overlay: { strokeOpacity: 0.7, strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
+      normal: { strokeWidth: 8},
+      overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({}))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({  strokeOpacity: 0.65  }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
+    roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
+
+    var selectionStyleMap = new OpenLayers.StyleMap({
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9 })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3 }))
+    });
+    selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
+    selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
+    selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
+    selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
+
 
     var eventListener = _.extend({running: false}, eventbus);
+    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
+      onSelect: function(feature) {
+        roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
+        roadLayer.redraw();
+      },
+      onUnselect: function() {
+        roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
+        roadLayer.redraw();
+      }
+    });
+    map.addControl(selectControl);
 
-    roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -83,6 +104,7 @@
 
     var start = function() {
       if (!isStarted()) {
+        selectControl.activate();
         eventListener.running = true;
         eventbus.once('roadLinks:fetched', function() {
           draw();
@@ -92,6 +114,7 @@
     };
 
     var stop = function() {
+      selectControl.deactivate();
       eventListener.stopListening(eventbus);
       eventListener.running = false;
     };
