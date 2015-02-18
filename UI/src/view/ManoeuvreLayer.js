@@ -21,10 +21,10 @@
     var draw = function() {
       backend.getManoeuvres(map.getExtent(), function(manoeuvres) {
         var roadLinks = _.map(roadCollection.getAll(), function(roadLink) {
-          var manoeuvre = _.find(manoeuvres, function(manoeuvre) {
+          var manoeuvreStartLink = _.find(manoeuvres, function(manoeuvre) {
             return manoeuvre.sourceRoadLinkId === roadLink.roadLinkId;
           });
-          return _.merge({}, roadLink, { startsManoeuvre: manoeuvre ? 1 : 0 });
+          return _.merge({}, roadLink, { startsManoeuvre: manoeuvreStartLink ? 1 : 0 });
         });
         roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       });
