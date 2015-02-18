@@ -3,11 +3,14 @@
 
     var layerName = 'manoeuvre';
     var manoeuvreColorLookup = {
-      0: { strokeColor: '#00fb00' },
-      1: { strokeColor: '#ff0000' }
+      0: { strokeColor: '#a4a4a2' },
+      1: { strokeColor: '#0000ff' }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.7 }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeWidth: 5,
+        strokeOpacity: 0.7
+      }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'startsManoeuvre', manoeuvreColorLookup);
 
