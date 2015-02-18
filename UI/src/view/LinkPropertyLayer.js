@@ -40,14 +40,14 @@
       });
     };
 
-    function draw() {
+    var draw = function() {
       prepareRoadLinkDraw();
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
       drawOneWaySigns(roadLinks);
       reselectRoadLink();
-    }
+    };
 
     var handleMapMoved = function(state) {
       if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
