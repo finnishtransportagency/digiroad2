@@ -49,6 +49,7 @@ _Muokkaustila._
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
+- Ilman varsinaisia digiroad-oikeuksia, liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
 - Perusk&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarojen sis&auml;puolella oleviin pys&auml;kkiaineistoihin.
 - Premium-k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarojen sis&auml;puolella oleviin kaikkiin aineistoihin.
 - DR-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
