@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, manoeuvresCollection, roadCollection, backend) {
+  root.ManoeuvreLayer = function(map, roadLayer, manoeuvresCollection) {
 
     var layerName = 'manoeuvre';
     var manoeuvreSourceLookup = {
@@ -61,22 +61,9 @@
     };
 
     var draw = function() {
-      backend.getManoeuvres(map.getExtent(), function(manoeuvres) {
-        var roadLinks = _.map(roadCollection.getAll(), function(roadLink) {
-          var manoeuvreSourceLink = _.find(manoeuvres, function(manoeuvre) {
-            return manoeuvre.sourceRoadLinkId === roadLink.roadLinkId;
-          });
-          var manoeuvreDestinationLink = _.find(manoeuvres, function(manoeuvre) {
-            return manoeuvre.destRoadLinkId === roadLink.roadLinkId;
-          });
-          return _.merge({}, roadLink, {
-            manoeuvreSource: manoeuvreSourceLink ? 1 : 0,
-            manoeuvreDestination: manoeuvreDestinationLink ? 1 : 0,
-            type: 'normal'
-          });
-        });
-        roadLayer.drawRoadLinks(roadLinks, map.getZoom());
-        drawDashedLineFeatures(roadLinks);
+      manoeuvresCollection.getManoeuvres(map.getExtent(), function(roadLinksWithManoeuvres) {
+        roadLayer.drawRoadLinks(roadLinksWithManoeuvres, map.getZoom());
+        drawDashedLineFeatures(roadLinksWithManoeuvres);
       });
     };
 
