@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, roadCollection, backend) {
+  root.ManoeuvreLayer = function(map, roadLayer, manoeuvresCollection, roadCollection, backend) {
 
     var layerName = 'manoeuvre';
     var manoeuvreSourceLookup = {
@@ -86,10 +86,7 @@
           start();
         }
         else {
-          eventbus.once('roadLinks:fetched', function() {
-            draw();
-          });
-          roadCollection.fetch(map.getExtent(), map.getZoom());
+          manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
         }
       } else {
         stop();
@@ -106,10 +103,7 @@
       if (!isStarted()) {
         selectControl.activate();
         eventListener.running = true;
-        eventbus.once('roadLinks:fetched', function() {
-          draw();
-        });
-        roadCollection.fetch(map.getExtent(), map.getZoom());
+        manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
       }
     };
 

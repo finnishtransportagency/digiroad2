@@ -172,7 +172,7 @@ var URLRouter = function(map, backend, models) {
         backend: backend,
         roadLayer: roadLayer
       }),
-      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.roadCollection, backend)
+      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.manoeuvresCollection, models.roadCollection, backend)
     }, numericalLimitLayers);
 
     var mapPluginsContainer = $('#map-plugins');
@@ -281,6 +281,7 @@ var URLRouter = function(map, backend, models) {
     var roadCollection = new RoadCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
+    var manoeuvresCollection = new ManoeuvresCollection(roadCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -299,7 +300,8 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit: selectedSpeedLimit,
       selectedLinkProperty: selectedLinkProperty,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
-      linkPropertiesModel: linkPropertiesModel
+      linkPropertiesModel: linkPropertiesModel,
+      manoeuvresCollection: manoeuvresCollection
     };
 
     bindEvents();
