@@ -1,5 +1,6 @@
 (function(root) {
   root.ManoeuvresCollection = function(backend, roadCollection) {
+    var manoeuvres = [];
     var roadLinksWithManoeuvres = [];
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
@@ -27,8 +28,9 @@
 
     var fetch = function(extent, zoom, callback) {
       eventbus.once('roadLinks:fetched', function() {
-        fetchManoeuvres(extent, function(manoeuvres) {
-          roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
+        fetchManoeuvres(extent, function(ms) {
+          manoeuvres = ms;
+          roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), ms);
           callback();
         });
       });
@@ -39,9 +41,19 @@
       return roadLinksWithManoeuvres;
     };
 
+    var getDestinationRoadLinksBySourceRoadLink = function(roadLinkId) {
+      return _.chain(manoeuvres)
+        .filter(function(manoeuvre) {
+          return manoeuvre.sourceRoadLinkId === roadLinkId;
+        })
+        .pluck('destRoadLinkId')
+        .value();
+    };
+
     return {
       fetch: fetch,
-      getAll: getAll
+      getAll: getAll,
+      getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink
     };
   };
 })(this);

@@ -32,6 +32,7 @@
         selectedManoeuvre.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
+        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
       },
       onUnselect: function() {
         selectedManoeuvre.close();
@@ -41,6 +42,18 @@
     });
     this.selectControl = selectControl;
     map.addControl(selectControl);
+
+    var highlightOverlayFeatures = function(roadLinkIds) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (x.attributes.type === 'overlay') {
+          if (_.contains(roadLinkIds, x.attributes.roadLinkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
