@@ -1,7 +1,8 @@
 (function(root){
   root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvre, manoeuvresCollection) {
-
     var layerName = 'manoeuvre';
+    Layer.call(this, layerName);
+    var me = this;
     var manoeuvreSourceLookup = {
       0: { strokeColor: '#a4a4a2' },
       1: { strokeColor: '#0000ff' }
@@ -26,8 +27,8 @@
     selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
 
-
     var eventListener = _.extend({running: false}, eventbus);
+    this.eventListener = eventListener;
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
         selectedManoeuvre.open(feature.attributes.roadLinkId);
@@ -40,8 +41,8 @@
         roadLayer.redraw();
       }
     });
+    this.selectControl = selectControl;
     map.addControl(selectControl);
-
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
@@ -78,47 +79,18 @@
       reselectManoeuvre();
     };
 
-    var handleMapMoved = function(state) {
-      if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === layerName) {
-        if (!isStarted()) {
-          start();
-        }
-        else {
-          manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
-        }
-      } else {
-        stop();
-      }
-    };
-
-    eventbus.on('map:moved', handleMapMoved);
-
-    var isStarted = function() {
-      return eventListener.running;
-    };
-
-    var start = function() {
-      if (!isStarted()) {
-        selectControl.activate();
-        eventListener.running = true;
-        manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
-      }
-    };
-
-    var stop = function() {
-      selectControl.deactivate();
-      eventListener.stopListening(eventbus);
-      eventListener.running = false;
+    this.refreshView = function() {
+      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
     };
 
     var show = function(map) {
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        start();
+        me.start();
       }
     };
 
     var hide = function() {
-      stop();
+      me.stop();
     };
 
     return {

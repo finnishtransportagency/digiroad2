@@ -1,7 +1,8 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
     var layerName = 'linkProperties';
-
+    Layer.call(this, layerName);
+    var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
 
@@ -27,10 +28,11 @@
         unselectRoadLink();
       }
     });
-
+    this.selectControl = selectControl;
     map.addControl(selectControl);
 
     var eventListener = _.extend({running: false}, eventbus);
+    this.eventListener = eventListener;
     var highlightFeatures = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
         if (feature && (x.attributes.roadLinkId === feature.attributes.roadLinkId)) {
@@ -50,18 +52,13 @@
       reselectRoadLink();
     };
 
-    var handleMapMoved = function(state) {
-      if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === layerName) {
-        if(!isStarted()) { start(); }
-        else {
-          eventbus.once('roadLinks:fetched', function() { draw(); });
-          roadCollection.fetch(map.getExtent(), map.getZoom());
-        }
-      } else if (selectedLinkProperty.isDirty()) {
-        displayConfirmMessage();
-      } else {
-        stop();
-      }
+    this.refreshView = function() {
+      eventbus.once('roadLinks:fetched', function() { draw(); });
+      roadCollection.fetch(map.getExtent(), map.getZoom());
+    };
+
+    this.isDirty = function() {
+      return selectedLinkProperty.isDirty();
     };
 
     var drawOneWaySigns = function(roadLinks) {
@@ -146,8 +143,6 @@
       selectControl.deactivate();
     };
 
-    eventbus.on('map:moved', handleMapMoved);
-
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
       if (linkPropertiesModel.getDataset() === 'functional-class') {
         drawDashedLineFeatures(roadLinks);
@@ -156,44 +151,32 @@
       }
     };
 
-    var isStarted = function() {
-      return eventListener.running;
-    };
-
-    var start = function() {
-      if (!isStarted()) {
-        eventListener.running = true;
-        eventbus.once('roadLinks:fetched', function() { draw(); });
-        roadCollection.fetch(map.getExtent(), map.getZoom());
-        eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
-        eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
-        eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
-          var feature = _.find(roadLayer.layer.features, function(feature) {
-            return feature.attributes.roadLinkId === link.roadLinkId;
-          });
-          if (feature) {
-            selectControl.select(feature);
-          }
+    this.bindEventHandlers = function(eventListener) {
+      eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
+      eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
+      eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
+        var feature = _.find(roadLayer.layer.features, function(feature) {
+          return feature.attributes.roadLinkId === link.roadLinkId;
         });
-        eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
-          draw();
-        });
-        selectControl.activate();
-      }
+        if (feature) {
+          selectControl.select(feature);
+        }
+      });
+      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+        draw();
+      });
     };
-
-    var displayConfirmMessage = function() { new Confirm(); };
 
     var handleLinkPropertyChanged = function() {
       redrawSelected();
       selectControl.deactivate();
-      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-      eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
     var concludeLinkPropertyEdit = function() {
       selectControl.activate();
-      eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       redrawSelected();
     };
 
@@ -209,22 +192,19 @@
       reselectRoadLink();
     };
 
-    var stop = function() {
+    this.removeLayerFeatures = function() {
       roadLayer.layer.removeFeatures(roadLayer.layer.getFeaturesByAttribute('type', 'overlay'));
-      selectControl.deactivate();
-      eventListener.stopListening(eventbus);
-      eventListener.running = false;
     };
 
     var show = function(map) {
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
-        start();
+        me.start();
       }
     };
 
     var hide = function() {
       unselectRoadLink();
-      stop();
+      me.stop();
     };
 
     return {
