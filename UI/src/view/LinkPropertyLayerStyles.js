@@ -79,7 +79,6 @@
         rotation: '${rotation}'}))
       });
     functionalClassDefaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
-    var dashedFunctionalClasses = [2, 4, 6, 8];
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     functionalClassDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
@@ -162,7 +161,6 @@
         rotation: '${rotation}'}))
     });
     linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
-    var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     linkTypeDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
