@@ -1,10 +1,11 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
+    var layerName = 'linkProperties';
 
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
 
-    roadLayer.setLayerSpecificStyleMapProvider('linkProperties', function() {
+    roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
 
@@ -50,7 +51,7 @@
     };
 
     var handleMapMoved = function(state) {
-      if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === 'linkProperties') {
+      if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === layerName) {
         if(!isStarted()) { start(); }
         else {
           eventbus.once('roadLinks:fetched', function() { draw(); });
