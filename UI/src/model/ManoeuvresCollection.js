@@ -7,12 +7,15 @@
         var manoeuvreSourceLink = _.find(manoeuvres, function(manoeuvre) {
           return manoeuvre.sourceRoadLinkId === roadLink.roadLinkId;
         });
-        var manoeuvreDestinationLink = _.find(manoeuvres, function(manoeuvre) {
-          return manoeuvre.destRoadLinkId === roadLink.roadLinkId;
-        });
+        var destinationOfManoeuvres = _.chain(manoeuvres)
+          .filter(function(manoeuvre) {
+            return manoeuvre.destRoadLinkId === roadLink.roadLinkId;
+          })
+          .pluck('id')
+          .value();
         return _.merge({}, roadLink, {
           manoeuvreSource: manoeuvreSourceLink ? 1 : 0,
-          manoeuvreDestination: manoeuvreDestinationLink ? 1 : 0,
+          destinationOfManoeuvres: destinationOfManoeuvres,
           type: 'normal'
         });
       });

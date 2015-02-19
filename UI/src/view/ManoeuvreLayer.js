@@ -56,7 +56,7 @@
 
     var drawDashedLineFeatures = function(roadLinks) {
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
-        return roadLink.manoeuvreDestination === 1;
+        return !_.isEmpty(roadLink.destinationOfManoeuvres);
       });
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks));
     };
