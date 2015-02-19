@@ -31,8 +31,6 @@
     this.selectControl = selectControl;
     map.addControl(selectControl);
 
-    var eventListener = _.extend({running: false}, eventbus);
-    this.eventListener = eventListener;
     var highlightFeatures = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
         if (feature && (x.attributes.roadLinkId === feature.attributes.roadLinkId)) {
@@ -152,8 +150,10 @@
     };
 
     this.bindEventHandlers = function(eventListener) {
-      eventListener.listenTo(eventbus, 'linkProperties:changed', handleLinkPropertyChanged);
-      eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', concludeLinkPropertyEdit);
+      var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
+      var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
+      eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
+      eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.roadLinkId === link.roadLinkId;
@@ -167,14 +167,14 @@
       });
     };
 
-    var handleLinkPropertyChanged = function() {
+    var handleLinkPropertyChanged = function(eventListener) {
       redrawSelected();
       selectControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
-    var concludeLinkPropertyEdit = function() {
+    var concludeLinkPropertyEdit = function(eventListener) {
       selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       redrawSelected();

@@ -1,6 +1,7 @@
 (function(root) {
   root.Layer = function(layerName) {
     var me = this;
+    this.eventListener = _.extend({running: false}, eventbus);
     this.refreshView = function() {};
     this.isDirty = function() { return false; };
     this.bindEventHandlers = function() {};

@@ -27,8 +27,6 @@
     selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
 
-    var eventListener = _.extend({running: false}, eventbus);
-    this.eventListener = eventListener;
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
         selectedManoeuvre.open(feature.attributes.roadLinkId);
