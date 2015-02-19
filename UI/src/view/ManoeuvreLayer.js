@@ -61,10 +61,8 @@
     };
 
     var draw = function() {
-      manoeuvresCollection.getManoeuvres(map.getExtent(), function(roadLinksWithManoeuvres) {
-        roadLayer.drawRoadLinks(roadLinksWithManoeuvres, map.getZoom());
-        drawDashedLineFeatures(roadLinksWithManoeuvres);
-      });
+      roadLayer.drawRoadLinks(manoeuvresCollection.getAll(), map.getZoom());
+      drawDashedLineFeatures(manoeuvresCollection.getAll());
     };
 
     var handleMapMoved = function(state) {
