@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvre, manoeuvresCollection) {
 
     var layerName = 'manoeuvre';
     var manoeuvreSourceLookup = {
@@ -30,10 +30,12 @@
     var eventListener = _.extend({running: false}, eventbus);
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
+        selectedManoeuvre.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
       },
       onUnselect: function() {
+        selectedManoeuvre.close();
         roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
         roadLayer.redraw();
       }
@@ -60,9 +62,20 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks));
     };
 
+    var reselectManoeuvre = function() {
+      selectControl.activate();
+      var originalOnSelectHandler = selectControl.onSelect;
+      selectControl.onSelect = function() {};
+      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedManoeuvre.getRoadLinkId(); });
+      if (feature) { selectControl.select(feature); }
+      selectControl.onSelect = originalOnSelectHandler;
+    };
+
     var draw = function() {
+      selectControl.deactivate();
       roadLayer.drawRoadLinks(manoeuvresCollection.getAll(), map.getZoom());
       drawDashedLineFeatures(manoeuvresCollection.getAll());
+      reselectManoeuvre();
     };
 
     var handleMapMoved = function(state) {
