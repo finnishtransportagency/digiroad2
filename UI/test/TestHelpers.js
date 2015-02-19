@@ -71,7 +71,7 @@ define(['AssetsTestData',
   };
 
   var clickMarker = function(id, map) {
-    var markerBounds = _.find(map.getLayersByName('asset')[0].markers, {id: id}).bounds;
+    var markerBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
     var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
     var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
     var asset = assetsModel.getAsset(id);
@@ -81,7 +81,7 @@ define(['AssetsTestData',
   var moveMarker = function(id, map, deltaLon, deltaLat) {
     var asset = assetsModel.getAsset(id);
     if (asset) {
-      var originBounds = _.find(map.getLayersByName('asset')[0].markers, {id: id}).bounds;
+      var originBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
       var originLonLat = new OpenLayers.LonLat(originBounds.top, originBounds.left);
       var targetLonLat = new OpenLayers.LonLat(originLonLat.lon + deltaLon, originLonLat.lat + deltaLat);
       var originPixel = map.getPixelFromLonLat(originLonLat);
@@ -100,7 +100,7 @@ define(['AssetsTestData',
   };
 
   var getAssetMarkers = function(map) {
-    return map.getLayersByName('asset')[0].markers;
+    return map.getLayersByName('massTransitStop')[0].markers;
   };
 
   var getSpeedLimitFeatures = function(map) {

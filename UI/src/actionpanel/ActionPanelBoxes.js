@@ -319,7 +319,7 @@
         executeOrShowConfirmDialog(function() {
           elements.collapsed.hide();
           elements.expanded.show();
-          applicationModel.selectLayer('asset');
+          applicationModel.selectLayer('massTransitStop');
         });
       });
 
@@ -361,7 +361,7 @@
       }, this);
 
       eventbus.on('layer:selected', function(selectedLayer) {
-        if (selectedLayer !== 'asset') {
+        if (selectedLayer !== 'massTransitStop') {
           elements.expanded.hide();
           elements.editMode.hide();
           elements.collapsed.show();

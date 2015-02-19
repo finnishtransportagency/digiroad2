@@ -18,7 +18,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     massTransitStop: function(id) {
-      applicationModel.selectLayer('asset');
+      applicationModel.selectLayer('massTransitStop');
       backend.getAssetByExternalId(id, function(massTransitStop) {
         eventbus.once('massTransitStops:available', function() {
           models.selectedMassTransitStopModel.changeByExternalId(id);
@@ -160,7 +160,7 @@ var URLRouter = function(map, backend, models) {
     var layers = _.merge({
       road: roadLayer,
       linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
-      asset: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
+      massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,

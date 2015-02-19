@@ -31,7 +31,7 @@
                 return $('<caption/>').html(municipalityName);
             };
             var assetLink = function(externalId) {
-                var link =  Environment.urlPath() + '/#/asset/' + externalId;
+                var link =  Environment.urlPath() + '/#massTransitStop/' + externalId;
                 return $('<a/>').attr('href', link).html(link);
             };
             var tableContentRows = function(externalIds) {

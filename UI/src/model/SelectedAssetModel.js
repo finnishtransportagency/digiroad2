@@ -109,9 +109,9 @@
       }
     };
 
-    // TODO: Better solution is to unbind all events when layer not 'asset'
+    // TODO: Better solution is to unbind all events when layer not 'massTransitStop'
     eventbus.on('layer:selected', function(layer) {
-      if (layer !== 'asset') {
+      if (layer !== 'massTransitStop') {
         close();
       }
     });

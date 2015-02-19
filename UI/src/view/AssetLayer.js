@@ -2,7 +2,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
-  var assetLayer = new OpenLayers.Layer.Boxes('asset');
+  var assetLayer = new OpenLayers.Layer.Boxes('massTransitStop');
 
   map.addLayer(assetDirectionLayer);
   map.addLayer(assetLayer);
@@ -541,7 +541,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
 
   var handleMapMoved = function(mapMoveEvent) {
     if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
-      if (mapMoveEvent.selectedLayer === 'asset') {
+      if (mapMoveEvent.selectedLayer === 'massTransitStop') {
         eventbus.once('roadLinks:fetched', function() {
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
           assetsModel.refreshAssets(mapMoveEvent);
@@ -552,7 +552,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
       if (selectedAssetModel.isDirty()) {
         new Confirm();
       } else {
-        if (applicationModel.getSelectedLayer() === 'asset') {
+        if (applicationModel.getSelectedLayer() === 'massTransitStop') {
           hideAssets();
         }
       }

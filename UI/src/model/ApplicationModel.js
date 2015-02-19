@@ -1,7 +1,7 @@
 (function(root) {
   root.ApplicationModel = function(models) {
     var zoomLevel;
-    var selectedLayer = 'asset';
+    var selectedLayer = 'massTransitStop';
     var selectedTool = 'Select';
     var readOnly = true;
     var setReadOnly = function(newState) {
@@ -57,7 +57,7 @@
         }
       },
       isRoadTypeShown: function() {
-        return selectedLayer === 'asset' && roadTypeShown;
+        return selectedLayer === 'massTransitStop' && roadTypeShown;
       }
     };
   };

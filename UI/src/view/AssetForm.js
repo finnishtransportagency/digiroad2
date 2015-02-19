@@ -66,10 +66,10 @@
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
-      var activeLayer = 'asset';
+      var activeLayer = 'massTransitStop';
 
       var renderAssetForm = function() {
-        if (activeLayer !== 'asset') {
+        if (activeLayer !== 'massTransitStop') {
           return;
         }
         var container = $("#feature-attributes").empty();
