@@ -4,40 +4,26 @@
       return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
     };
 
-    var dashedLineFeatureFilter = function(dashedLineFeature) {
-      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'dashedLineFeature', value: dashedLineFeature });
+    var typeFilter = function(type) {
+      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
     };
 
-    var dashedStrokeWidthStyle = function(zoomLevel, dashedLineFeature, symbolizer) {
-      var overlayTypeFilter = new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: 'overlay' });
+    var createStrokeDashStyle = function(zoomLevel, style) {
       return new OpenLayers.Rule({
-        filter: combineFilters([overlayTypeFilter, dashedLineFeatureFilter(dashedLineFeature), roadLayer.createZoomLevelFilter(zoomLevel)]),
-        symbolizer: symbolizer
+        filter: combineFilters([typeFilter('overlay'), roadLayer.createZoomLevelFilter(zoomLevel)]),
+        symbolizer: style
       });
     };
 
-    var createStrokeDashStyles = function(dashedLineFeatures) {
-      var strokeDashStyles = {
-        9: '1 6',
-        10: '1 10',
-        11: '1 18',
-        12: '1 32',
-        13: '1 32',
-        14: '1 32',
-        15: '1 32'
-      };
-      return _.flatten(_.map(strokeDashStyles, function(width, zoomLevel) {
-        return _.map(dashedLineFeatures, function(dashedLineFeature) {
-          return dashedStrokeWidthStyle(parseInt(zoomLevel, 10), dashedLineFeature, {
-            strokeWidth: width - 2,
-                 strokeColor: '#ffffff',
-                 strokeLinecap: 'square',
-                 strokeDashstyle: strokeDashStyles[parseInt(zoomLevel, 10)],
-                 strokeOpacity: 1
-          });
-        });
-      }));
-    };
+    var overlayStrokeDashStyleRules = [
+      createStrokeDashStyle(9,  { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      createStrokeDashStyle(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      createStrokeDashStyle(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
+      createStrokeDashStyle(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      createStrokeDashStyle(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      createStrokeDashStyle(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      createStrokeDashStyle(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
+    ];
 
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var styleMaps = {
@@ -94,9 +80,9 @@
       });
     functionalClassDefaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     var dashedFunctionalClasses = [2, 4, 6, 8];
-    functionalClassDefaultStyleMap.styles.default.addRules(createStrokeDashStyles(dashedFunctionalClasses));
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    functionalClassDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
 
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -112,12 +98,12 @@
     });
     functionalClassSelectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     functionalClassSelectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
-    functionalClassSelectionStyleMap.styles.select.addRules(createStrokeDashStyles(dashedFunctionalClasses));
-    functionalClassSelectionStyleMap.styles.default.addRules(createStrokeDashStyles(dashedFunctionalClasses));
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
+    functionalClassSelectionStyleMap.styles.select.addRules(overlayStrokeDashStyleRules);
+    functionalClassSelectionStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
 
 
     // --- Administrative class style maps ---
@@ -177,9 +163,9 @@
     });
     linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
     var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
-    linkTypeDefaultStyleMap.styles.default.addRules(createStrokeDashStyles(dashedLinkTypes));
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
 
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -195,12 +181,12 @@
     });
     linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
     linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
-    linkTypeSelectionStyleMap.styles.select.addRules(createStrokeDashStyles(dashedLinkTypes));
-    linkTypeSelectionStyleMap.styles.default.addRules(createStrokeDashStyles(dashedLinkTypes));
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeSelectionStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
+    linkTypeSelectionStyleMap.styles.select.addRules(overlayStrokeDashStyleRules);
 
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap
