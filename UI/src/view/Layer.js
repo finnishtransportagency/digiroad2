@@ -18,10 +18,12 @@
       }
     };
     this.stop = function() {
-      me.removeLayerFeatures();
-      me.selectControl.deactivate();
-      me.eventListener.stopListening(eventbus);
-      me.eventListener.running = false;
+      if (me.isStarted()) {
+        me.removeLayerFeatures();
+        me.selectControl.deactivate();
+        me.eventListener.stopListening(eventbus);
+        me.eventListener.running = false;
+      }
     };
     this.displayConfirmMessage = function() { new Confirm(); };
     this.handleMapMoved = function(state) {
