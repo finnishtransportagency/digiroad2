@@ -38,6 +38,7 @@
         selectedManoeuvre.close();
         roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
         roadLayer.redraw();
+        highlightOverlayFeatures([]);
       }
     });
     this.selectControl = selectControl;
