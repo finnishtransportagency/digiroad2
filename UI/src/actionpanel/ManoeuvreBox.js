@@ -8,12 +8,23 @@
       '  </header>',
       '</div>'].join('');
 
+    var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen lähde ja kohde'];
+    var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + value + '</div>' +
+        '<div class="symbol linear limit-' + idx + '" />' +
+        '</div>';
+    }).join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
       '    Kääntymisrajoitus',
       '  </header>',
-     '</div>'].join('');
+      '  <div class="panel-section panel-legend limit-legend">',
+      manoeuvreLegendTemplate,
+      '  </div>',
+      '</div>'].join('');
 
     var elements = {
       collapsed: $(collapsedTemplate),
@@ -46,7 +57,7 @@
 
     bindExternalEventHandlers();
 
-    this.element = $('<div class="panel-group simple-limit manoeuvres"/>')
+    this.element = $('<div class="panel-group manoeuvres-limit manoeuvres"/>')
       .append(elements.collapsed)
       .append(elements.expanded);
   };

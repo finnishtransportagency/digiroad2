@@ -246,6 +246,22 @@
   }
 }
 
+.dotted-manoeuvre-limit(@color) {
+  background-image: linear-gradient(to right, @color 50%, transparent 0%);
+  background-position: -5px top;
+  background-size: 14px 14px;
+  background-repeat: repeat-x;
+}
+
+.manoeuvres-limit {
+  .legend-entry {
+    .limit-0 { .linear-asset-color(@gray); }
+    .limit-1 { .linear-asset-color(@linear-asset-5); }
+    .limit-2 { .linear-asset-color(@gray); .dotted-manoeuvre-limit(@linear-asset-4); }
+    .limit-3 { .linear-asset-color(@linear-asset-5); .dotted-manoeuvre-limit(@linear-asset-4); }
+  }
+}
+
 .panel-actions {
   .clearfix();
 
