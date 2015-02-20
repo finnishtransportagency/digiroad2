@@ -51,7 +51,7 @@
     };
 
     var get = function(roadLinkId){
-      return _.find(manoeuvres, function(manoeuvre){
+      return _.filter(manoeuvres, function(manoeuvre){
         return manoeuvre.sourceRoadLinkId === roadLinkId;
       });
     };
