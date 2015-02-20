@@ -50,10 +50,16 @@
         .value();
     };
 
+    var get = function(roadLinkId){
+      return _.find(manoeuvres, function(manoeuvre){
+        return manoeuvre.sourceRoadLinkId === roadLinkId;
+      });
+    };
     return {
       fetch: fetch,
       getAll: getAll,
-      getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink
+      getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
+      get: get
     };
   };
 })(this);

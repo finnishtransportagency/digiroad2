@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedManoeuvre = function() {
+  root.SelectedManoeuvre = function(collection) {
     var current = null;
 
     var close = function() {
@@ -12,6 +12,7 @@
       if (current !== roadLinkId) {
         close();
         current = roadLinkId;
+        eventbus.trigger('manoeuvres:selected', collection.get(roadLinkId));
       }
     };
 

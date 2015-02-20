@@ -130,7 +130,7 @@ var URLRouter = function(map, backend, models) {
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
-
+    new ManoeuvreForm();
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
           numericalLimit.selectedNumericalLimit,
@@ -280,9 +280,9 @@ var URLRouter = function(map, backend, models) {
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var roadCollection = new RoadCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-    var selectedManoeuvre = new SelectedManoeuvre();
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
+    var selectedManoeuvre = new SelectedManoeuvre(manoeuvresCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
