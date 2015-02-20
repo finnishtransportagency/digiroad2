@@ -79,7 +79,10 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedManoeuvre.getRoadLinkId(); });
-      if (feature) { selectControl.select(feature); }
+      if (feature) {
+        selectControl.select(feature);
+        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
+      }
       selectControl.onSelect = originalOnSelectHandler;
     };
 
