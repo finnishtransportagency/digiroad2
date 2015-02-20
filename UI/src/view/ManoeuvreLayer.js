@@ -32,17 +32,31 @@
         selectedManoeuvre.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
+        highlightFeatures(feature.attributes.roadLinkId);
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
       },
       onUnselect: function() {
         selectedManoeuvre.close();
         roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
         roadLayer.redraw();
+        highlightFeatures(null);
         highlightOverlayFeatures([]);
       }
     });
     this.selectControl = selectControl;
     map.addControl(selectControl);
+
+    var highlightFeatures = function(roadLinkId) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (x.attributes.type === 'normal') {
+          if (roadLinkId && (x.attributes.roadLinkId === roadLinkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
 
     var highlightOverlayFeatures = function(roadLinkIds) {
       _.each(roadLayer.layer.features, function(x) {
