@@ -27,6 +27,14 @@
     selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
 
+    var unselectManoeuvre = function() {
+      selectedManoeuvre.close();
+      roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
+      roadLayer.redraw();
+      highlightFeatures(null);
+      highlightOverlayFeatures([]);
+    };
+
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
         selectedManoeuvre.open(feature.attributes.roadLinkId);
@@ -36,11 +44,7 @@
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
       },
       onUnselect: function() {
-        selectedManoeuvre.close();
-        roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
-        roadLayer.redraw();
-        highlightFeatures(null);
-        highlightOverlayFeatures([]);
+        unselectManoeuvre();
       }
     });
     this.selectControl = selectControl;
@@ -119,6 +123,7 @@
     };
 
     var hide = function() {
+      unselectManoeuvre();
       me.stop();
     };
 
