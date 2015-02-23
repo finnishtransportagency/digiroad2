@@ -190,4 +190,9 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       BadRequest("Missing mandatory 'municipality' parameter")
     }
   }
+
+  get("/service_points") {
+    contentType = formats("json")
+    PointAssetService.getServicePoints()
+  }
 }
