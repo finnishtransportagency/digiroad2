@@ -30,7 +30,7 @@ var URLRouter = function(map, backend, models) {
     linkProperty: function(mmlId) {
       applicationModel.selectLayer('linkProperties');
       backend.getRoadLinkByMMLId(mmlId, function(response) {
-        eventbus.once('roadLinks:fetched', function() {
+        eventbus.once('linkProperties:available', function() {
           models.selectedLinkProperty.open(response.id);
         });
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);

@@ -48,6 +48,7 @@
       drawDashedLineFeaturesIfApplicable(roadLinks);
       drawOneWaySigns(roadLinks);
       reselectRoadLink();
+      eventbus.trigger('linkProperties:available');
     };
 
     this.refreshView = function() {
