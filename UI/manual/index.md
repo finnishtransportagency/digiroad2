@@ -205,7 +205,16 @@ Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, e
 
 _Nopeusrajoitusten valinta._
 
-3.5 Suurin sallittu -valinta
+3.5 K&auml;&auml;ntymisrajoitus
+--------------------------------
+
+Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset paksuuntuvat, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymisrajoitukset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml;, on sininen, ja linkki, jolle ei saa k&auml;&auml;nty&auml; on visualisoitu punaisella katkoviivalla. Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa.
+
+![K&auml;&auml;ntymisrajoitus](k43.JPG)
+
+_K&auml;&auml;ntymisrajoitusten valinta._
+
+3.6 Suurin sallittu -valinta
 ------------------------------------
 
 Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
@@ -289,7 +298,16 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 
 _Nopeusrajoitusten visualisointi._
 
-4.4 Suurin sallittu -valinnan tietojen katselu
+4.4 k&auml;&auml;ntymisrajoituksen tietojen katselu
+---------------------------------------------------
+
+Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
+
+![K&auml;&auml;ntymisrajoituksen visualisointi] (k44.JPG)
+
+_K&auml;&auml;ntymisrajoituksen tietojen katselu._
+
+4.5 Suurin sallittu -valinnan tietojen katselu
 ---------------------------------------------
 
 Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml; (6).
