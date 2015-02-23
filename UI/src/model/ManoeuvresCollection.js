@@ -5,7 +5,7 @@
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
-        var manoeuvreSourceLink = _.find(manoeuvres, function(manoeuvre) {
+        var filteredManoeuvres = _.filter(manoeuvres, function(manoeuvre) {
           return manoeuvre.sourceRoadLinkId === roadLink.roadLinkId;
         });
         var destinationOfManoeuvres = _.chain(manoeuvres)
@@ -14,9 +14,11 @@
           })
           .pluck('id')
           .value();
+
         return _.merge({}, roadLink, {
-          manoeuvreSource: manoeuvreSourceLink ? 1 : 0,
+          manoeuvreSource: _.isEmpty(filteredManoeuvres) ? 0 : 1,
           destinationOfManoeuvres: destinationOfManoeuvres,
+          manoeuvres: filteredManoeuvres,
           type: 'normal'
         });
       });
@@ -51,8 +53,8 @@
     };
 
     var get = function(roadLinkId){
-      return _.filter(manoeuvres, function(manoeuvre){
-        return manoeuvre.sourceRoadLinkId === roadLinkId;
+      return _.find(roadLinksWithManoeuvres, function(manoeuvre){
+        return manoeuvre.roadLinkId === roadLinkId;
       });
     };
     return {
