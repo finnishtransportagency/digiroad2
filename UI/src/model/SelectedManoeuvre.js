@@ -5,6 +5,7 @@
     var close = function() {
       if (current) {
         current = null;
+        eventbus.trigger('manoeuvres:unselected');
       }
     };
 

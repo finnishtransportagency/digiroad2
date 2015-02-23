@@ -16,6 +16,9 @@
           rootElement.find('.form').append(_.template(manouvreTemplate, manoeuvre));
         });
       });
+      eventbus.on('manoeuvres:unselected', function() {
+        rootElement.empty();
+      });
     };
     bindEvents();
   };
