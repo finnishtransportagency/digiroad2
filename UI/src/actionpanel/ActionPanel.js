@@ -14,6 +14,9 @@
       var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
       $('.action-panels').append(speedLimitBox.element);
 
+      var manoeuvreBox = new ManoeuvreBox();
+      $('.action-panels').append(manoeuvreBox.element);
+
       _.forEach(numericalLimits, function(numericalLimit) {
         var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className);
         $('.action-panels').append(numericalLimitBox.element);

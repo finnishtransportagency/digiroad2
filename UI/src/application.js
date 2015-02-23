@@ -130,7 +130,7 @@ var URLRouter = function(map, backend, models) {
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
-
+    new ManoeuvreForm();
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
           numericalLimit.selectedNumericalLimit,
@@ -171,7 +171,8 @@ var URLRouter = function(map, backend, models) {
         linearAsset: linearAsset,
         backend: backend,
         roadLayer: roadLayer
-      })
+      }),
+      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.selectedManoeuvre, models.manoeuvresCollection)
     }, numericalLimitLayers);
 
     var mapPluginsContainer = $('#map-plugins');
@@ -280,6 +281,8 @@ var URLRouter = function(map, backend, models) {
     var roadCollection = new RoadCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
+    var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
+    var selectedManoeuvre = new SelectedManoeuvre(manoeuvresCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -297,8 +300,10 @@ var URLRouter = function(map, backend, models) {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
       selectedLinkProperty: selectedLinkProperty,
+      selectedManoeuvre: selectedManoeuvre,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
-      linkPropertiesModel: linkPropertiesModel
+      linkPropertiesModel: linkPropertiesModel,
+      manoeuvresCollection: manoeuvresCollection
     };
 
     bindEvents();
