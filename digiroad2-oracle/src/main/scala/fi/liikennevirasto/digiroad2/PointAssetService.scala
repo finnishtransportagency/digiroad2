@@ -13,7 +13,7 @@ object PointAssetService {
          select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi
            from palvelupisteet p
         """
-      query.as[(Int, String, Int, Int, Int, Seq[Point], Long, String)].iterator().map {
+      query.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].iterator().map {
         case (serviceType, extraInfo, railwayStationType, parkingPlaceCount, restAreaType, geometry, id, name) =>
           Map("id" -> id, "geometry" -> geometry.head, "serviceType" -> serviceType, "extraInfo" -> extraInfo, "railwayStationType" -> railwayStationType, "parkingPlaceCount" -> parkingPlaceCount, "restAreaType" -> restAreaType, "name" -> name)
       }.toSeq
