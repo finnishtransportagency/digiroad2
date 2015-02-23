@@ -2,6 +2,25 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    env: {
+      options: {},
+      development: {
+        NODE_ENV: 'DEVELOPMENT'
+      },
+      production: {
+        NODE_ENV: 'PRODUCTION'
+      }
+    },
+    preprocess: {
+      development: {
+        src: './UI/tmpl/index.html',
+        dest: './UI/index.html'
+      },
+      production: {
+        src: './UI/tmpl/index.html',
+        dest: './UI/index.html'
+      }
+    },
     concat: {
       options: {
         separator: ';'
@@ -131,7 +150,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-      tasks: ['jshint', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
+      tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies'],
       options: {
         livereload: true
       }
@@ -142,6 +161,12 @@ module.exports = function(grunt) {
           args: ['localhost', 9002]
         },
         src: ['vallu_test_server.js']
+      }
+    },
+    exec: {
+      build_openlayers: {
+        cmd: './build.py',
+        cwd: './bower_components/openlayers/build/'
       }
     }
   });
@@ -157,16 +182,19 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-connect-proxy');
   grunt.loadNpmTasks('grunt-execute');
   grunt.loadNpmTasks('grunt-cache-breaker');
+  grunt.loadNpmTasks('grunt-env');
+  grunt.loadNpmTasks('grunt-preprocess');
+  grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('server', ['configureProxies:server', 'connect', 'less:development', 'watch']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'less:development', 'watch']);
 
-  grunt.registerTask('test', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'configureProxies:server', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'env:production', 'exec:build_openlayers', 'configureProxies:server', 'preprocess:production', 'connect', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('integration-test', ['jshint', 'configureProxies:server', 'connect', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:server', 'preprocess:development', 'connect', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 };
