@@ -21,10 +21,15 @@
       return current;
     };
 
+    var exists = function() {
+      return current !== null;
+    };
+
     return {
       close: close,
       open: open,
-      getRoadLinkId: getRoadLinkId
+      getRoadLinkId: getRoadLinkId,
+      exists: exists
     };
   };
 })(this);
