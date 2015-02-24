@@ -14,6 +14,10 @@ object ConversionDatabase {
   private def toPoints(bytes: Array[Byte]): Seq[Point] = {
     val geometry = JGeometry.load(bytes)
     if (geometry == null) Nil
+    else if(geometry.isPoint) {
+      val point = geometry.getPoint
+      List(Point(point(0), point(1)))
+    }
     else {
       geometry.getOrdinatesArray.grouped(2).map { point ⇒
         Point(point(0), point(1))
