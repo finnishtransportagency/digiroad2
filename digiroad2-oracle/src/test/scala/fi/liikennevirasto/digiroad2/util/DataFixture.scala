@@ -140,7 +140,7 @@ object DataFixture {
         importWeightLimitsFromConversion()
       case Some("dimensionlimits") =>
         importDimensionLimitsFromConversion()
-      case _ => println("Usage: DataFixture test | speedlimits")
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits")
     }
   }
 }
