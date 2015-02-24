@@ -15,7 +15,7 @@ object PointAssetService {
         """
       query.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].iterator().map {
         case (serviceType, extraInfo, railwayStationType, parkingPlaceCount, restAreaType, geometry, id, name) =>
-          Map("id" -> id, "geometry" -> geometry.head, "serviceType" -> serviceType, "extraInfo" -> extraInfo, "railwayStationType" -> railwayStationType, "parkingPlaceCount" -> parkingPlaceCount, "restAreaType" -> restAreaType, "name" -> name)
+          Map("id" -> id, "point" -> geometry.head, "serviceType" -> serviceType, "extraInfo" -> extraInfo, "railwayStationType" -> railwayStationType, "parkingPlaceCount" -> parkingPlaceCount, "restAreaType" -> restAreaType, "name" -> name)
       }.toSeq
     }
   }
