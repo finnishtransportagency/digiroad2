@@ -285,6 +285,26 @@ class AssetDataImporter {
     }
   }
 
+  def importManoeuvres(database: DatabaseDef): Unit = {
+    val query =
+      sql"""
+        select kaan_id, kaan_tyyppi, tl_dr1_id, elem_jarjestyslaji
+          from kaantymismaarays
+        """
+    val manoeuvres: Seq[(Long, Int, Long, Int)] = database.withDynSession {
+      query.as[(Long, Int, Long, Int)].list()
+    }
+    Database.forDataSource(ds).withDynTransaction {
+      manoeuvres.foreach { manoeuvre =>
+        val (id, manoeuvreType, roadLinkId, elementType) = manoeuvre
+        sqlu"""
+          insert into manoeuvre (id, type, road_link_id, element_type, created_by)
+          values ($id, $manoeuvreType, $roadLinkId, $elementType, 'dr1_conversion')
+          """.execute()
+      }
+    }
+  }
+
   def getTypeProperties = {
     Database.forDataSource(ds).withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first

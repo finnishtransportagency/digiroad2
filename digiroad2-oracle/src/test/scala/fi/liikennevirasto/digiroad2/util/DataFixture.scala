@@ -97,6 +97,15 @@ object DataFixture {
     println("\n")
   }
 
+  def importManoeuvresFromConversion() {
+    print("\nCommencing manoeuvre import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importManoeuvres(Conversion.database())
+    print("Manoeuvre import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importMunicipalityCodes() {
     println("\nCommencing municipality code import at time: ")
     println(DateTime.now())
@@ -140,6 +149,8 @@ object DataFixture {
         importWeightLimitsFromConversion()
       case Some("dimensionlimits") =>
         importDimensionLimitsFromConversion()
+      case Some("manoeuvres") =>
+        importManoeuvresFromConversion()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits")
     }
   }
