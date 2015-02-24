@@ -66,6 +66,19 @@ public class OracleArray {
         }
     }
 
+    private static class RowToManoeuvre implements RowToElement<Tuple6<Long, Int, Long, Int, DateTime, String>> {
+        @Override
+        public Tuple6<Long, Int, Long, Int, DateTime, String> convert(ResultSet row) throws SQLException {
+            long manoeuvreId = row.getLong(1);
+            int type = row.getInt(2);
+            long roadLinkId = row.getLong(3);
+            int elementType = row.getInt(4);
+            DateTime createdAt = DateTime.parse(row.getString(5));
+            String createdBy = row.getString(6);
+            return new Tuple6(manoeuvreId, type, roadLinkId, elementType, createdAt, createdBy);
+        }
+    }
+
     public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchAssetLinksByRoadLinkIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
@@ -88,6 +101,13 @@ public class OracleArray {
                 "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
                 "AND (a.valid_to >= sysdate OR a.valid_to is null)";
         return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
+    }
+
+    public static List<Tuple6<Long, Int, Long, Int, DateTime, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
+        String query = "SELECT m.id, m.type, m.road_link_id, m.element_type, to_char(m.created_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.created_by " +
+                "FROM MANOEUVRE m " +
+                "WHERE m.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return queryWithIdArray(ids, connection, query, new RowToManoeuvre());
     }
 
     public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
