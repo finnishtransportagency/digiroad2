@@ -26,10 +26,14 @@ object ManoeuvreService {
   def getManoeuvres(boundingBoxFilter: String, municipalityFilter: String): Seq[Manoeuvre] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val manoeuvres = sql"""
-        select k.kaan_id, k.tl_dr1_id, tl.mml_id, elem_jarjestyslaji
+        select k.kaan_id, k.tl_dr1_id, tl.mml_id, k.elem_jarjestyslaji
         from kaantymismaarays k
         join tielinkki_ctas tl on k.tl_dr1_id = tl.dr1_id
-        where #$municipalityFilter #$boundingBoxFilter
+        where k.kaan_id in (
+          select distinct(k.kaan_id)
+          from kaantymismaarays k
+          join tielinkki_ctas tl on k.tl_dr1_id = tl.dr1_id
+          where #$municipalityFilter #$boundingBoxFilter)
       """.as[(Long, Long, Long, Int)].list
 
       val manoeuvresById: Map[Long, Seq[(Long, Long, Long, Int)]] = manoeuvres.groupBy(_._1)
