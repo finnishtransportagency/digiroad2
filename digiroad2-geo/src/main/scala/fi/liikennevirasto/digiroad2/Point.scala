@@ -22,6 +22,10 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
     Vector3d(x - that.x, y - that.y, z - that.z)
   }
 
+  def -(that: Vector3d): Point = {
+    Point(x - that.x, y - that.y, z - that.z)
+  }
+
   def +(that: Vector3d): Point = {
     Point(x + that.x, y + that.y, z + that.z)
   }
