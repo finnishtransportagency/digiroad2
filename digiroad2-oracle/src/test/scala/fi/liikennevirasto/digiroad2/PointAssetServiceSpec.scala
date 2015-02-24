@@ -23,7 +23,5 @@ class PointAssetServiceSpec extends FunSuite with Matchers {
     val point = element.get("point").get.asInstanceOf[Point]
     point.x should equal(446693.6681)
     point.y should equal(6755143.4397)
-    point.z should equal(0)
   }
-
 }
