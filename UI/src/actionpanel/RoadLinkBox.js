@@ -58,20 +58,18 @@
 
     var linkTypeLegend = $('<div class="panel-section panel-legend linear-asset-legend link-type-legend"></div>');
     var linkTypes = [
-      [1, 'Moottoritien osa'],
-      [2, 'Moniajorataisen tien osa'],
-      [3, 'Yksiajorataisen tien osa'],
-      [4, 'Moottoriliikennetien osa'],
-      [5, 'Kiertoliittymän osa'],
-      [6, 'Ramppi'],
-      [7, 'Levähdysalue'],
+      [1, 'Moottoritie'],
+      [4, 'Moottoriliikennetie'],
+      [3, 'Yksiajoratainen tie'],
+      [2, 'Moniajoratainen tie'],
+      [6, 'Kiertoliittymä'],
+      [5, 'Ramppi'],
+      [9, 'Jalankulkualue'],
       [8, 'Kevyen liikenteen väylä'],
-      [9, 'Jalankulkualueen osa'],
-      [10, 'Huolto- tai pelastustien osa'],
-      [11, 'Liitännäisliikennealueen osa'],
+      [11, '<div class="label-2lined">Huolto- tai pelastustie, liitännäisliikennealue tai levähdysalue</div>'],
       [12, 'Ajopolku'],
-      [13, 'Huoltoaukko moottoritiellä'],
-      [21, 'Lautta/lossi']
+      [21, 'Huoltoaukko moottoritiellä'],
+      [13, 'Lautta tai lossi']
     ];
     var linkTypeLegendEntries = _.map(linkTypes, function(linkType) {
       return '<div class="legend-entry">' +

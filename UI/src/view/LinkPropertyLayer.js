@@ -115,7 +115,7 @@
     };
 
     var drawDashedLineFeaturesForType = function(roadLinks) {
-      var dashedLinkTypes = [2, 4, 5, 8, 12, 13];
+      var dashedLinkTypes = [2, 4, 6, 8, 12, 21];
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return _.contains(dashedLinkTypes, roadLink.linkType);
       });
