@@ -311,12 +311,20 @@ object RoadLinkService {
         val boundingBoxFilter2 = OracleDatabase.boundingBoxFilter(bounds2)
 
         sql"""
-        select dr1_id
+        select dr1_id, to_2d(shape)
         from tielinkki_ctas
         where #$boundingBoxFilter or #$boundingBoxFilter2
-      """.as[(Long)].iterator().toSeq
+      """.as[(Long, Seq[Point])].iterator().toSeq
       }
-      roadLinks.filterNot(_ == id)
+      roadLinks.filterNot(_._1 == id).filter(roadLink => {
+        val (_, geometry) = roadLink
+        val epsilon = 0.01
+        val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
+        rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
+          rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
+          rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
+          rlEndpoints._2.distanceTo(endpoint._2) < epsilon
+      }).map(_._1)
     }).getOrElse(Nil)
   }
 }
