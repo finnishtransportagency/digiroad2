@@ -16,17 +16,19 @@
 
     var linkTypes = [
       [1, 'Moottoritie'],
-      [4, 'Moottoriliikennetie'],
-      [3, 'Yksiajoratainen tie'],
       [2, 'Moniajoratainen tie'],
-      [6, 'Kiertoliittymä'],
-      [5, 'Ramppi'],
-      [9, 'Jalankulkualue'],
+      [3, 'Yksiajoratainen tie'],
+      [4, 'Moottoriliikennetie'],
+      [5, 'Kiertoliittymä'],
+      [6, 'Ramppi'],
+      [7, 'Levähdysalue'],
       [8, 'Kevyen liikenteen väylä'],
-      [11, '<div class="label-2lined">Huolto- tai pelastustie, Liitännäisliikennealue tai Levähdysalue</div>'],
+      [9, 'Jalankulkualue'],
+      [10, 'Huolto- tai pelastustie'],
+      [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
-      [21, 'Huoltoaukko moottoritiellä'],
-      [13, 'Lautta tai lossi']
+      [13, 'Huoltoaukko moottoritiellä'],
+      [21, 'Lautta/lossi']
     ];
 
     var disabled = 'disabled';
