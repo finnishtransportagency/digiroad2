@@ -13,7 +13,9 @@
       if (current !== roadLinkId) {
         close();
         current = roadLinkId;
-        eventbus.trigger('manoeuvres:selected', collection.get(roadLinkId));
+        collection.get(roadLinkId, function(roadLink){
+          eventbus.trigger('manoeuvres:selected', roadLink);
+        });
       }
     };
 

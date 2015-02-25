@@ -20,6 +20,14 @@
         rootElement.empty();
       });
     };
+
+    function toggleMode(readOnly) {
+      if(!readOnly){
+
+      }
+    }
+
+    eventbus.on('application:readOnly', toggleMode);
     bindEvents();
   };
 })(this);

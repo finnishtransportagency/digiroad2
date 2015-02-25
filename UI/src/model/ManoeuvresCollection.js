@@ -52,9 +52,13 @@
         .value();
     };
 
-    var get = function(roadLinkId){
-      return _.find(roadLinksWithManoeuvres, function(manoeuvre){
+    var get = function(roadLinkId, callback) {
+      var roadLink = _.find(roadLinksWithManoeuvres, function(manoeuvre) {
         return manoeuvre.roadLinkId === roadLinkId;
+      });
+      backend.getAdjacent(roadLink.roadLinkId, function(adjacent) {
+        roadLink.adjacent = adjacent;
+        callback(roadLink);
       });
     };
     return {
