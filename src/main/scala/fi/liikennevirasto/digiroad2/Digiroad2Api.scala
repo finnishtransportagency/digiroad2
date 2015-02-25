@@ -157,6 +157,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/roadlinks/adjacent/:id"){
+    val id = params("id").toLong
+    RoadLinkService.getAdjacent(id)
+  }
+
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val municipalityCode = RoadLinkService.getMunicipalityCode(id)
