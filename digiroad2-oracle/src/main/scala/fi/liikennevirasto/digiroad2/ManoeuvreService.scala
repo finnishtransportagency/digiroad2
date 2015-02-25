@@ -57,9 +57,8 @@ object ManoeuvreService {
       }.map { case (id, links) =>
         val source: (Long, Int, Long, Int, DateTime, String) = links.find(_._4 == 1).get
         val dest: (Long, Int, Long, Int, DateTime, String) = links.find(_._4 == 3).get
-        val sourceMmlId = roadLinks.find(_._1 == source._3).get._2
-        val destMmlId = roadLinks.find(_._1 == dest._3).get._2
-
+        val sourceMmlId = roadLinks.find(_._1 == source._3).map(_._2).getOrElse(RoadLinkService.getRoadLink(source._3)._2)
+        val destMmlId = roadLinks.find(_._1 == dest._3).map(_._2).getOrElse(RoadLinkService.getRoadLink(source._3)._2)
         Manoeuvre(id, source._3, dest._3, sourceMmlId, destMmlId)
       }.toSeq
     }
