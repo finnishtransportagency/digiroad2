@@ -35,20 +35,21 @@ object ManoeuvreService {
   }
 
   private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val roadLinkIds = roadLinks.keys.toList
+    val FirstElement = 1
+    val LastElement = 3
 
-    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList, bonecpToInternalConnection(dynamicSession.conn))
 
     val manoeuvresById: Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = manoeuvres.toList.groupBy(_._1)
     manoeuvresById.filter { case (id, links) =>
       links.size == 2 && links.exists(_._4 == 1) && links.exists(_._4 == 3)
     }.map { case (id, links) =>
-      val source: (Long, Int, Long, Int, DateTime, String) = links.find(_._4 == 1).get
-      val dest: (Long, Int, Long, Int, DateTime, String) = links.find(_._4 == 3).get
-      val sourceMmlId = roadLinks.getOrElse(source._3, RoadLinkService.getRoadLink(source._3)._2)
-      val destMmlId = roadLinks.getOrElse(dest._3, RoadLinkService.getRoadLink(source._3)._2)
+      val (_, _, sourceRoadLinkId, _, _, _) = links.find(_._4 == FirstElement).get
+      val (_, _, destRoadLinkId, _, _, _) = links.find(_._4 == LastElement).get
+      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
+      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
 
-      Manoeuvre(id, source._3, dest._3, sourceMmlId, destMmlId)
+      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId)
     }.toSeq
   }
 
