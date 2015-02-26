@@ -57,8 +57,7 @@
         return manoeuvre.roadLinkId === roadLinkId;
       });
       backend.getAdjacent(roadLink.roadLinkId, function(adjacent) {
-        roadLink.adjacent = adjacent;
-        callback(roadLink);
+        callback(_.merge({}, roadLink, { adjacent: adjacent }));
       });
     };
     return {
