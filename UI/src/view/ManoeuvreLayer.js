@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvre, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvreSource, manoeuvresCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName);
     var me = this;
@@ -28,7 +28,7 @@
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
 
     var unselectManoeuvre = function() {
-      selectedManoeuvre.close();
+      selectedManoeuvreSource.close();
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
       roadLayer.redraw();
       highlightFeatures(null);
@@ -37,7 +37,7 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        selectedManoeuvre.open(feature.attributes.roadLinkId);
+        selectedManoeuvreSource.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
         highlightFeatures(feature.attributes.roadLinkId);
@@ -97,14 +97,14 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      if (selectedManoeuvre.exists()) {
+      if (selectedManoeuvreSource.exists()) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.roadLinkId === selectedManoeuvre.getRoadLinkId();
+          return feature.attributes.roadLinkId === selectedManoeuvreSource.getRoadLinkId();
         });
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvre.getRoadLinkId()));
+        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
       }
       selectControl.onSelect = originalOnSelectHandler;
     };

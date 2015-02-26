@@ -1,5 +1,5 @@
 (function (root) {
-  root.ManoeuvreForm = function(selectedManoeuvre) {
+  root.ManoeuvreForm = function(selectedManoeuvreSource) {
     var template = '' +
       '<header><span>Linkin ID: <%= mmlId %></span></header>' +
       '<div class="wrapper read-only"><div class="form form-horizontal form-dark form-manoeuvre"><div></div></div></div>';
@@ -42,9 +42,9 @@
           var eventTarget = $(event.currentTarget);
           var destRoadLinkId = eventTarget.attr('roadLinkId');
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvre.add(destRoadLinkId);
+            selectedManoeuvreSource.add(destRoadLinkId);
           } else {
-            selectedManoeuvre.remove(destRoadLinkId);
+            selectedManoeuvreSource.remove(destRoadLinkId);
           }
         });
       });

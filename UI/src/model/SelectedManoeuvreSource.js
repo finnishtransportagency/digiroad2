@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedManoeuvre = function(collection) {
+  root.SelectedManoeuvreSource = function(collection) {
     var current = null;
 
     var close = function() {
