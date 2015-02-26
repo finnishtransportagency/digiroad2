@@ -236,7 +236,7 @@ object RoadLinkService {
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
 
-        def latesModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+        def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
           (a, b) match {
             case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
               if (firstModifiedAt.isAfter(secondModifiedAt))
@@ -253,7 +253,7 @@ object RoadLinkService {
           case _ => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latesModifications))
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latestModifications))
       }
     }
   }
