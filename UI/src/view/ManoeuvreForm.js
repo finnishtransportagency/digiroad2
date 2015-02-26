@@ -2,7 +2,7 @@
   root.ManoeuvreForm = function() {
     var template = '' +
       '<header><span>Linkin ID: <%= mmlId %></span></header>' +
-      '<div class="wrapper read-only"><div class="form form-horizontal form-dark"><div></div></div></div>';
+      '<div class="wrapper read-only"><div class="form form-horizontal form-dark form-manoeuvre"><div></div></div></div>';
     var manouvreTemplate = '' +
       '<div class="form-group manoeuvre">' +
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
@@ -10,8 +10,11 @@
       '</div>';
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link style="display: none">' +
-      '<label class="control-label">Naapurilinkki</label>' +
+      '<label class="control-label">Kääntyminen kielletty linkille </label>' +
       '<p class="form-control-static"><%= mmlId %></p>' +
+      '<div class="checkbox" >' +
+      '<input type="checkbox"/>' +
+      '</div>' +
       '</div>';
 
     var bindEvents = function() {
