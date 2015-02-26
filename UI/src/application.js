@@ -130,7 +130,7 @@ var URLRouter = function(map, backend, models) {
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
-    new ManoeuvreForm();
+    new ManoeuvreForm(models.selectedManoeuvre);
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
           numericalLimit.selectedNumericalLimit,

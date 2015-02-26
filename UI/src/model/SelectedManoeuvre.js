@@ -27,11 +27,21 @@
       return current !== null;
     };
 
+    var add = function(destRoadLinkId) {
+      console.log('adding manoeuvre to link: ', destRoadLinkId);
+    };
+
+    var remove = function(destRoadLinkId) {
+      console.log('removing manoeuvre from link: ', destRoadLinkId);
+    };
+
     return {
       close: close,
       open: open,
       getRoadLinkId: getRoadLinkId,
-      exists: exists
+      exists: exists,
+      add: add,
+      remove: remove
     };
   };
 })(this);

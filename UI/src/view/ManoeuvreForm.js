@@ -1,5 +1,5 @@
 (function (root) {
-  root.ManoeuvreForm = function() {
+  root.ManoeuvreForm = function(selectedManoeuvre) {
     var template = '' +
       '<header><span>Linkin ID: <%= mmlId %></span></header>' +
       '<div class="wrapper read-only"><div class="form form-horizontal form-dark form-manoeuvre"><div></div></div></div>';
@@ -10,11 +10,11 @@
       '</div>';
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link style="display: none">' +
-      '<label class="control-label">Kääntyminen kielletty linkille </label>' +
-      '<p class="form-control-static"><%= mmlId %></p>' +
-      '<div class="checkbox" >' +
-      '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
-      '</div>' +
+        '<label class="control-label">Kääntyminen kielletty linkille </label>' +
+        '<p class="form-control-static"><%= mmlId %></p>' +
+        '<div class="checkbox" >' +
+          '<input type="checkbox" roadLinkId="<%= id %>" <% print(checked ? "checked" : "") %>/>' +
+        '</div>' +
       '</div>';
 
     var bindEvents = function() {
@@ -38,6 +38,15 @@
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
         });
         toggleMode(applicationModel.isReadOnly());
+        rootElement.find('.adjacent-link input').change(function(event) {
+          var eventTarget = $(event.currentTarget);
+          var destRoadLinkId = eventTarget.attr('roadLinkId');
+          if (eventTarget.attr('checked') === 'checked') {
+            selectedManoeuvre.add(destRoadLinkId);
+          } else {
+            selectedManoeuvre.remove(destRoadLinkId);
+          }
+        });
       });
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
