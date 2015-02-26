@@ -1,7 +1,7 @@
 (function (root) {
   root.ManoeuvreForm = function() {
     var template = '' +
-      '<header><span>Linkin ID: <%= mmlId %></span></header>' +
+      '<header><span>Linkin MML ID: <%= mmlId %></span></header>' +
       '<div class="wrapper read-only"><div class="form form-horizontal form-dark"><div></div></div></div>';
     var manouvreTemplate = '' +
       '<div class="form-group">' +
