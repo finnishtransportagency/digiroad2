@@ -42,9 +42,9 @@
           var eventTarget = $(event.currentTarget);
           var destRoadLinkId = eventTarget.attr('roadLinkId');
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.add(destRoadLinkId);
+            selectedManoeuvreSource.addManoeuvreTo(destRoadLinkId);
           } else {
-            selectedManoeuvreSource.remove(destRoadLinkId);
+            selectedManoeuvreSource.removeManoeuvreTo(destRoadLinkId);
           }
         });
       });
