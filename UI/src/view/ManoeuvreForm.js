@@ -13,7 +13,7 @@
       '<label class="control-label">Kääntyminen kielletty linkille </label>' +
       '<p class="form-control-static"><%= mmlId %></p>' +
       '<div class="checkbox" >' +
-      '<input type="checkbox"/>' +
+      '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
       '</div>' +
       '</div>';
 
@@ -32,7 +32,10 @@
           rootElement.find('.form').append(_.template(manouvreTemplate, manoeuvre));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
-          rootElement.find('.form').append(_.template(adjacentLinkTemplate, adjacentLink));
+          var attributes = _.merge({}, adjacentLink, {
+            checked: _.some(roadLink.manoeuvres, function(manoeuvre) { return manoeuvre.destMmlId === adjacentLink.mmlId; })
+          });
+          rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
         });
         toggleMode(applicationModel.isReadOnly());
       });
