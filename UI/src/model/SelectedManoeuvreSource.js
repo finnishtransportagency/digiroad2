@@ -10,25 +10,26 @@
     };
 
     var open = function(roadLinkId) {
-      if (current !== roadLinkId) {
+      if (!current || current.roadLinkId !== roadLinkId) {
         close();
-        current = roadLinkId;
         collection.get(roadLinkId, function(roadLink){
+          current = roadLink;
           eventbus.trigger('manoeuvres:selected', roadLink);
         });
       }
     };
 
     var getRoadLinkId = function() {
-      return current;
+      return current.roadLinkId;
     };
 
     var exists = function() {
       return current !== null;
     };
 
-    var addManoeuvreTo = function(destRoadLinkId) {
-      eventbus.trigger('manoeuvre:changed');
+    var addManoeuvreTo = function(destRoadLink) {
+      var newManoeuvre = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, destRoadLink);
+      collection.addManoeuvre(newManoeuvre);
     };
 
     var removeManoeuvreTo = function(destRoadLinkId) {

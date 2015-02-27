@@ -60,11 +60,18 @@
         callback(_.merge({}, roadLink, { adjacent: adjacent }));
       });
     };
+
+    var addManoeuvre = function(newManoeuvre) {
+      manoeuvres.push(newManoeuvre);
+      roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
+      eventbus.trigger('manoeuvre:changed');
+    };
     return {
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
-      get: get
+      get: get,
+      addManoeuvre: addManoeuvre
     };
   };
 })(this);

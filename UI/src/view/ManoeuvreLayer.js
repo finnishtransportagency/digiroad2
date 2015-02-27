@@ -131,6 +131,14 @@
       me.stop();
     };
 
+    var changeHandler = function() {
+      draw();
+    };
+
+    this.bindEventHandlers = function(eventListener) {
+      eventListener.listenTo(eventbus, 'manoeuvre:changed', changeHandler);
+    };
+
     return {
       show: show,
       hide: hide,

@@ -26,7 +26,7 @@
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
-          '<input type="checkbox" roadLinkId="<%= id %>" <% print(checked ? "checked" : "") %>/>' +
+          '<input type="checkbox" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
       '</div>';
 
@@ -56,9 +56,10 @@
 
         rootElement.find('.adjacent-link input').change(function(event) {
           var eventTarget = $(event.currentTarget);
-          var destRoadLinkId = eventTarget.attr('roadLinkId');
+          var destRoadLinkId = parseInt(eventTarget.attr('roadLinkId'), 10);
+          var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.addManoeuvreTo(destRoadLinkId);
+            selectedManoeuvreSource.addManoeuvreTo({ destRoadLinkId: destRoadLinkId, destMmlId: destMmlId });
           } else {
             selectedManoeuvreSource.removeManoeuvreTo(destRoadLinkId);
           }
