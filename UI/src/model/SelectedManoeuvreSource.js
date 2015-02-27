@@ -33,7 +33,7 @@
     };
 
     var removeManoeuvreTo = function(destRoadLinkId) {
-      eventbus.trigger('manoeuvre:changed');
+      collection.removeManoeuvre(current.roadLinkId, destRoadLinkId)
     };
 
     return {

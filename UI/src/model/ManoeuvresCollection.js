@@ -66,12 +66,21 @@
       roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
       eventbus.trigger('manoeuvre:changed');
     };
+
+    var removeManoeuvre = function(sourceRoadlinkId, destRoadLinkId) {
+      _.remove(manoeuvres, function(manoeuvre) {
+        return (manoeuvre.sourceRoadLinkId === sourceRoadlinkId && manoeuvre.destRoadLinkId === destRoadLinkId);
+      });
+      roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
+      eventbus.trigger('manoeuvre:changed');
+    };
     return {
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
       get: get,
-      addManoeuvre: addManoeuvre
+      addManoeuvre: addManoeuvre,
+      removeManoeuvre: removeManoeuvre
     };
   };
 })(this);
