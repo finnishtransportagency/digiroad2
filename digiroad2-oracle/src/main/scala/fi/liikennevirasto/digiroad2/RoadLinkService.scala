@@ -287,7 +287,6 @@ object RoadLinkService {
   }
 
   def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
-    val start: Long = java.lang.System.currentTimeMillis
     val kalpaRoadLinks = Database.forDataSource(dataSource).withDynTransaction {
       sql"""
         select dr1_id, mml_id, to_2d(shape), omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
