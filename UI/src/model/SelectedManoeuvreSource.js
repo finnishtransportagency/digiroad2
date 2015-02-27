@@ -28,11 +28,11 @@
     };
 
     var addManoeuvreTo = function(destRoadLinkId) {
-      console.log('adding manoeuvre to link: ', destRoadLinkId);
+      eventbus.trigger('manoeuvre:changed');
     };
 
     var removeManoeuvreTo = function(destRoadLinkId) {
-      console.log('removing manoeuvre from link: ', destRoadLinkId);
+      eventbus.trigger('manoeuvre:changed');
     };
 
     return {
