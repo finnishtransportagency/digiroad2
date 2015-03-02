@@ -90,13 +90,20 @@
       return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
     };
 
+    var cancelModifications = function() {
+      addedManoeuvres = [];
+      removedManoeuvres = [];
+      eventbus.trigger('manoeuvre:cancelled');
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
       get: get,
       addManoeuvre: addManoeuvre,
-      removeManoeuvre: removeManoeuvre
+      removeManoeuvre: removeManoeuvre,
+      cancelModifications: cancelModifications
     };
   };
 })(this);

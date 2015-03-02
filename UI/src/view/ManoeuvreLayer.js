@@ -136,7 +136,7 @@
     };
 
     this.bindEventHandlers = function(eventListener) {
-      eventListener.listenTo(eventbus, 'manoeuvre:changed', changeHandler);
+      eventListener.listenTo(eventbus, 'manoeuvre:changed manoeuvre:cancelled', changeHandler);
     };
 
     return {

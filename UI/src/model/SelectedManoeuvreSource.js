@@ -41,7 +41,7 @@
     };
 
     var cancel = function() {
-      console.log('SelectedManoeuvreSource::cancel called');
+      collection.cancelModifications();
     };
 
     return {
