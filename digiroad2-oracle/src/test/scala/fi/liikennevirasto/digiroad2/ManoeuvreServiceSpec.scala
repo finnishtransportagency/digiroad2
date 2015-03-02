@@ -1,9 +1,22 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-class ManoeuvreServiceSpec extends FunSuite with Matchers {
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.StaticQuery.interpolation
+
+class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+  after {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""delete from manoeuvre where created_by = 'unittest'""".execute()
+    }
+  }
+
   test("Get all manoeuvres partially or completely in bounding box") {
     val bounds = BoundingRectangle(Point(373880.25, 6677085), Point(374133, 6677382))
     val manoeuvres = ManoeuvreService.getByBoundingBox(bounds, Set(235))
@@ -15,4 +28,16 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers {
     completelyContainedManoeuvre.sourceMmlId should equal(388569430)
     completelyContainedManoeuvre.destMmlId should equal(388569418)
   }
+
+  test("Create manoeuvre") {
+    val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", 7482, 6677)
+
+    val manoeuvre = ManoeuvreService.getByMunicipality(235).find { manoeuvre =>
+      manoeuvre.id == manoeuvreId
+    }.get
+
+    manoeuvre.sourceRoadLinkId should equal(7482)
+    manoeuvre.destRoadLinkId should equal(6677)
+  }
+
 }

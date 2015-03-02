@@ -10,10 +10,32 @@ import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
 
 object ManoeuvreService {
+  val FirstElement = 1
+  val LastElement = 3
+
+  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long): Long = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
+
+      sqlu"""
+             insert into manoeuvre
+             values ($manoeuvreId, 2, $sourceRoadLinkId, $FirstElement, sysdate, $userName)
+          """.execute()
+
+      sqlu"""
+             insert into manoeuvre
+             values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
+          """.execute()
+
+      manoeuvreId
+    }
+  }
+
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val roadLinks = RoadLinkService.getByMunicipalityWithProperties(municipalityNumber)
@@ -35,9 +57,6 @@ object ManoeuvreService {
   }
 
   private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val FirstElement = 1
-    val LastElement = 3
-
     val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList, bonecpToInternalConnection(dynamicSession.conn))
 
     val manoeuvresById: Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = manoeuvres.toList.groupBy(_._1)

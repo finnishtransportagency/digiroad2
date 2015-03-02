@@ -403,4 +403,14 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
+
+  post("/manoeuvre") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val sourceRoadLinkId = (parsedBody \ "sourceRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'sourceRoadLinkId' parameter")))
+    val destRoadLinkId =  (parsedBody \ "destRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'destRoadLinkId' parameter")))
+
+    ManoeuvreService.createManoeuvre(user.username, sourceRoadLinkId, destRoadLinkId)
+  }
 }
