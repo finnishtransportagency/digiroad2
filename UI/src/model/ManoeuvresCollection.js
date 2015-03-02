@@ -36,7 +36,7 @@
           manoeuvres = addedManoeuvres.concat(ms);
           _.remove(manoeuvres, function(manoeuvre) {
             return _.some(removedManoeuvres, function(x) {
-              return (x.sourceRoadLinkId === manoeuvre.sourceRoadLinkId && x.destRoadLinkId === manoeuvre.destRoadLinkId);
+              return (manoeuvresEqual(x, manoeuvre));
             });
           });
           roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
@@ -72,23 +72,29 @@
       manoeuvres.push(newManoeuvre);
       addedManoeuvres.push(newManoeuvre);
       _.remove(removedManoeuvres, function(x) {
-        return (x.sourceRoadLinkId === newManoeuvre.sourceRoadLinkId && x.destRoadLinkId === newManoeuvre.destRoadLinkId);
+        return manoeuvresEqual(x, newManoeuvre);
       });
       roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
       eventbus.trigger('manoeuvre:changed');
     };
 
     var removeManoeuvre = function(sourceRoadLinkId, destRoadLinkId) {
+      var removedManoeuvre = { sourceRoadLinkId: sourceRoadLinkId, destRoadLinkId: destRoadLinkId};
+      removedManoeuvres.push(removedManoeuvre);
       _.remove(manoeuvres, function(manoeuvre) {
-        return (manoeuvre.sourceRoadLinkId === sourceRoadLinkId && manoeuvre.destRoadLinkId === destRoadLinkId);
+        return manoeuvresEqual(manoeuvre, removedManoeuvre);
       });
-      removedManoeuvres.push({ sourceRoadLinkId: sourceRoadLinkId, destRoadLinkId: destRoadLinkId });
       _.remove(addedManoeuvres, function(x) {
-        return (x.sourceRoadLinkId === sourceRoadLinkId && x.destRoadLinkId === destRoadLinkId);
+        return manoeuvresEqual(x, removedManoeuvre);
       });
       roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
       eventbus.trigger('manoeuvre:changed');
     };
+
+    var manoeuvresEqual = function(x, y) {
+      return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
