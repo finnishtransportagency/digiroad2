@@ -15,6 +15,16 @@ import scala.slick.jdbc.StaticQuery.interpolation
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
 
 object ManoeuvreService {
+  def deleteManouvre(id: Long) = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""
+             update manoeuvre
+             set valid_to = sysdate
+             where id = $id
+          """.execute()
+    }
+  }
+
   val FirstElement = 1
   val LastElement = 3
 
@@ -23,12 +33,12 @@ object ManoeuvreService {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
 
       sqlu"""
-             insert into manoeuvre
+             insert into manoeuvre(id, type, road_link_id, element_type, created_date, created_by)
              values ($manoeuvreId, 2, $sourceRoadLinkId, $FirstElement, sysdate, $userName)
           """.execute()
 
       sqlu"""
-             insert into manoeuvre
+             insert into manoeuvre(id, type, road_link_id, element_type, created_date, created_by)
              values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
           """.execute()
 

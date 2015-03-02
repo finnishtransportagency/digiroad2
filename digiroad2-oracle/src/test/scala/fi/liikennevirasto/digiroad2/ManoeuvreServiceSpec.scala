@@ -30,14 +30,31 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Create manoeuvre") {
+    val manoeuvre: Manoeuvre = createManouvre
+
+    manoeuvre.sourceRoadLinkId should equal(7482)
+    manoeuvre.destRoadLinkId should equal(6677)
+  }
+
+  def createManouvre: Manoeuvre = {
     val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", 7482, 6677)
 
     val manoeuvre = ManoeuvreService.getByMunicipality(235).find { manoeuvre =>
       manoeuvre.id == manoeuvreId
     }.get
+    manoeuvre
+  }
 
-    manoeuvre.sourceRoadLinkId should equal(7482)
-    manoeuvre.destRoadLinkId should equal(6677)
+  test("Delete manoeuvre") {
+    val manoeuvre: Manoeuvre = createManouvre
+
+    ManoeuvreService.deleteManouvre(manoeuvre.id)
+
+    val deletedManouver = ManoeuvreService.getByMunicipality(235).find { m =>
+      m.id == manoeuvre.id
+    }
+    deletedManouver should equal(None)
+
   }
 
 }

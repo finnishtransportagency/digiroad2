@@ -109,7 +109,8 @@ public class OracleArray {
                 "WHERE m.id in (" +
                 "SELECT distinct(k.id) " +
                 "FROM MANOEUVRE k " +
-                "WHERE k.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?)))";
+                "WHERE k.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
+                "AND valid_to is null)";
 
         return queryWithIdArray(ids, connection, query, new RowToManoeuvre());
     }
