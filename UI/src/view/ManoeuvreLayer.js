@@ -131,12 +131,24 @@
       me.stop();
     };
 
-    var changeHandler = function() {
+    var handleManoeuvreChanged = function(eventListener) {
+      draw();
+      selectControl.deactivate();
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
+    };
+
+    var concludeManoeuvreEdit = function(eventListener) {
+      selectControl.activate();
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       draw();
     };
 
     this.bindEventHandlers = function(eventListener) {
-      eventListener.listenTo(eventbus, 'manoeuvre:changed manoeuvres:cancelled', changeHandler);
+      var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
+      var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
+      eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
     };
 
     return {
