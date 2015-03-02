@@ -67,9 +67,9 @@
       eventbus.trigger('manoeuvre:changed');
     };
 
-    var removeManoeuvre = function(sourceRoadlinkId, destRoadLinkId) {
+    var removeManoeuvre = function(sourceRoadLinkId, destRoadLinkId) {
       _.remove(manoeuvres, function(manoeuvre) {
-        return (manoeuvre.sourceRoadLinkId === sourceRoadlinkId && manoeuvre.destRoadLinkId === destRoadLinkId);
+        return (manoeuvre.sourceRoadLinkId === sourceRoadLinkId && manoeuvre.destRoadLinkId === destRoadLinkId);
       });
       roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
       eventbus.trigger('manoeuvre:changed');
