@@ -1,7 +1,7 @@
 (function (root) {
   root.ManoeuvreForm = function(selectedManoeuvreSource) {
     var buttons = '' +
-      '<div class="link-properties form-controls">' +
+      '<div class="manoeuvres form-controls">' +
         '<button class="save btn btn-primary" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
