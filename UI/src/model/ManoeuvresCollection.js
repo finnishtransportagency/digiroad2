@@ -32,24 +32,27 @@
     var fetch = function(extent, zoom, callback) {
       eventbus.once('roadLinks:fetched', function() {
         fetchManoeuvres(extent, function(ms) {
-          manoeuvres = addedManoeuvres.concat(ms);
-          _.remove(manoeuvres, function(manoeuvre) {
-            return _.some(removedManoeuvres, function(x) {
-              return (manoeuvresEqual(x, manoeuvre));
-            });
-          });
+          manoeuvres = ms;
           callback();
         });
       });
       roadCollection.fetch(extent, zoom);
     };
 
+    var manoeuvresWithModifications = function() {
+      return _.reject(manoeuvres.concat(addedManoeuvres), function(manoeuvre) {
+        return _.some(removedManoeuvres, function(x) {
+          return (manoeuvresEqual(x, manoeuvre));
+        });
+      });
+    };
+
     var getAll = function() {
-      return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvres);
+      return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvresWithModifications());
     };
 
     var getDestinationRoadLinksBySourceRoadLink = function(roadLinkId) {
-      return _.chain(manoeuvres)
+      return _.chain(manoeuvresWithModifications())
         .filter(function(manoeuvre) {
           return manoeuvre.sourceRoadLinkId === roadLinkId;
         })
@@ -67,7 +70,6 @@
     };
 
     var addManoeuvre = function(newManoeuvre) {
-      manoeuvres.push(newManoeuvre);
       addedManoeuvres.push(newManoeuvre);
       _.remove(removedManoeuvres, function(x) {
         return manoeuvresEqual(x, newManoeuvre);
@@ -78,9 +80,6 @@
     var removeManoeuvre = function(sourceRoadLinkId, destRoadLinkId) {
       var removedManoeuvre = { sourceRoadLinkId: sourceRoadLinkId, destRoadLinkId: destRoadLinkId};
       removedManoeuvres.push(removedManoeuvre);
-      _.remove(manoeuvres, function(manoeuvre) {
-        return manoeuvresEqual(manoeuvre, removedManoeuvre);
-      });
       _.remove(addedManoeuvres, function(x) {
         return manoeuvresEqual(x, removedManoeuvre);
       });
