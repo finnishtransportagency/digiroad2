@@ -549,12 +549,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         roadCollection.fetch(map.getExtent(), map.getZoom());
       }
     } else {
-      if (selectedAssetModel.isDirty()) {
-        new Confirm();
-      } else {
-        if (applicationModel.getSelectedLayer() === 'massTransitStop') {
-          hideAssets();
-        }
+      if (applicationModel.getSelectedLayer() === 'massTransitStop') {
+        hideAssets();
       }
     }
   };

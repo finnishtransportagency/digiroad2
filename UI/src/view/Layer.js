@@ -34,8 +34,6 @@
         else {
           me.refreshView();
         }
-      } else if (me.isDirty()) {
-        me.displayConfirmMessage();
       } else {
         me.stop();
       }
