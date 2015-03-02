@@ -93,7 +93,6 @@
     var cancelModifications = function() {
       addedManoeuvres = [];
       removedManoeuvres = [];
-      eventbus.trigger('manoeuvre:cancelled');
     };
 
     return {

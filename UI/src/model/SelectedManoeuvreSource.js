@@ -42,6 +42,7 @@
 
     var cancel = function() {
       collection.cancelModifications();
+      eventbus.trigger('manoeuvres:cancelled', current);
     };
 
     return {
