@@ -33,7 +33,7 @@
     };
 
     var removeManoeuvreTo = function(destRoadLinkId) {
-      collection.removeManoeuvre(current.roadLinkId, destRoadLinkId)
+      collection.removeManoeuvre(current.roadLinkId, destRoadLinkId);
     };
 
     return {
