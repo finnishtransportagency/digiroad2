@@ -120,7 +120,18 @@ var URLRouter = function(map, backend, models) {
 
   var setupMap = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
-    map.addControl(new OpenLayers.Control.Navigation());
+
+    var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
+      wheelDown: function(evt, delta) {
+        if (applicationModel.canZoomOut()) {
+          return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
+        } else {
+          new Confirm();
+        }
+      }
+    });
+
+    map.addControl(new NavigationControl());
 
     var mapOverlay = new MapOverlay($('.container'));
 
