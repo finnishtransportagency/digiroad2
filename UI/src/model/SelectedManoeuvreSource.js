@@ -36,13 +36,23 @@
       collection.removeManoeuvre(current.roadLinkId, destRoadLinkId);
     };
 
+    var save = function() {
+      console.log('SelectedManoeuvreSource::save called');
+    };
+
+    var cancel = function() {
+      console.log('SelectedManoeuvreSource::cancel called');
+    };
+
     return {
       close: close,
       open: open,
       getRoadLinkId: getRoadLinkId,
       exists: exists,
       addManoeuvreTo: addManoeuvreTo,
-      removeManoeuvreTo: removeManoeuvreTo
+      removeManoeuvreTo: removeManoeuvreTo,
+      save: save,
+      cancel: cancel
     };
   };
 })(this);

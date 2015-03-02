@@ -71,6 +71,12 @@
       eventbus.on('manoeuvre:changed', function() {
         rootElement.find('.form-controls button').attr('disabled', false);
       });
+      rootElement.on('click', '.manoeuvres button.save', function() {
+        selectedManoeuvreSource.save();
+      });
+      rootElement.on('click', '.manoeuvres button.cancel', function() {
+        selectedManoeuvreSource.cancel();
+      });
     };
 
     bindEvents();
