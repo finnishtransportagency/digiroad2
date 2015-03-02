@@ -95,6 +95,10 @@
       removedManoeuvres = [];
     };
 
+    var isDirty = function() {
+      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres);
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -102,7 +106,8 @@
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
-      cancelModifications: cancelModifications
+      cancelModifications: cancelModifications,
+      isDirty: isDirty
     };
   };
 })(this);

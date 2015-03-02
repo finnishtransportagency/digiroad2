@@ -311,7 +311,11 @@ var URLRouter = function(map, backend, models) {
     window.selectedAssetModel = selectedMassTransitStopModel;
     window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
-    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
+    window.applicationModel = new ApplicationModel([
+      selectedAssetModel,
+      selectedSpeedLimit,
+      selectedLinkProperty,
+      selectedManoeuvreSource].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);

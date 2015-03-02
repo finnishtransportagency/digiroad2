@@ -45,6 +45,10 @@
       eventbus.trigger('manoeuvres:cancelled', current);
     };
 
+    var isDirty = function() {
+      return collection.isDirty();
+    };
+
     return {
       close: close,
       open: open,
@@ -53,7 +57,8 @@
       addManoeuvreTo: addManoeuvreTo,
       removeManoeuvreTo: removeManoeuvreTo,
       save: save,
-      cancel: cancel
+      cancel: cancel,
+      isDirty: isDirty
     };
   };
 })(this);
