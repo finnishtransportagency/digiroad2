@@ -12,6 +12,9 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
 
+
+case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long)
+
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
@@ -405,13 +408,14 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   post("/manoeuvre") {
     val user = userProvider.getCurrentUser()
 
-    val sourceRoadLinkId = (parsedBody \ "sourceRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'sourceRoadLinkId' parameter")))
-    val destRoadLinkId =  (parsedBody \ "destRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'destRoadLinkId' parameter")))
+    val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
-    val municipality = RoadLinkService.getMunicipalityCode(sourceRoadLinkId)
-    hasWriteAccess(user, municipality.get)
-
-    ManoeuvreService.createManoeuvre(user.username, sourceRoadLinkId, destRoadLinkId)
+    manoeuvres.foreach { manoeuvre =>
+      val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
+      hasWriteAccess(user, municipality.get)
+      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId)
+    }
+    Created
   }
 
   put("/manoeuvre/:manoeuvreId") {

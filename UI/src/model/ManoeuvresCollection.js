@@ -95,6 +95,13 @@
       removedManoeuvres = [];
     };
 
+    var save = function() {
+      var manoeuvresData = _.map(addedManoeuvres, function(manoeuvre) {
+          return { sourceRoadLinkId: manoeuvre.sourceRoadLinkId, destRoadLinkId: manoeuvre.destRoadLinkId };
+      });
+      backend.createManoeuvre(manoeuvresData, function() {}, function() {});
+    };
+
     var isDirty = function() {
       return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres);
     };
@@ -107,7 +114,8 @@
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       cancelModifications: cancelModifications,
-      isDirty: isDirty
+      isDirty: isDirty,
+      save: save
     };
   };
 })(this);

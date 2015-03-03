@@ -22,6 +22,18 @@
       });
     }, 1000);
 
+    this.createManoeuvre = function(manoeuvres, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/manoeuvre",
+        data: JSON.stringify({ manoeuvres: manoeuvres }),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getAdjacent = _.throttle(function(id, callback) {
       $.getJSON('api/roadlinks/adjacent/' + id, function(data) {
         callback(data);

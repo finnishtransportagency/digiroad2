@@ -37,7 +37,7 @@
     };
 
     var save = function() {
-      console.log('SelectedManoeuvreSource::save called');
+      collection.save();
     };
 
     var cancel = function() {
