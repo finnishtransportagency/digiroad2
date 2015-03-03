@@ -25,6 +25,7 @@ var RoadStyles = function() {
     var selectControl;
     var layerStyleMaps = {};
     var layerStyleMapProviders = {};
+    var layerMinContentZoomLevels = {};
     var uiState = { zoomLevel: 9 };
 
     function stylesUndefined() {
@@ -52,7 +53,7 @@ var RoadStyles = function() {
 
     var changeRoadsWidthByZoomLevel = function() {
       if (stylesUndefined()) {
-        var widthBase = 2 + (map.getZoom() - zoomlevels.minZoomForRoadLinks);
+        var widthBase = 2 + (map.getZoom() - minimumContentZoomLevel());
         var roadWidth = widthBase * widthBase;
         if (applicationModel.isRoadTypeShown()) {
           vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
@@ -81,14 +82,21 @@ var RoadStyles = function() {
       usingLayerSpecificStyleProvider(function() { vectorLayer.redraw(); });
     };
 
+    var minimumContentZoomLevel = function() {
+      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
+        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
+      }
+      return zoomlevels.minZoomForRoadLinks;
+    };
+
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisibility(zoomlevels.isInRoadLinkZoomLevel(map.getZoom()));
+        vectorLayer.setVisibility(map.getZoom() >= minimumContentZoomLevel());
       }
     };
 
     var mapMovedHandler = function(mapState) {
-      if (zoomlevels.isInRoadLinkZoomLevel(mapState.zoom)) {
+      if (mapState.zoom >= minimumContentZoomLevel()) {
         changeRoadsWidthByZoomLevel();
       } else {
         vectorLayer.removeAllFeatures();
@@ -146,6 +154,10 @@ var RoadStyles = function() {
       layerStyleMapProviders[layer] = provider;
     };
 
+    var setLayerSpecificMinContentZoomLevel = function(layer, zoomLevel) {
+      layerMinContentZoomLevels[layer] = zoomLevel;
+    };
+
     var redraw = function() {
       usingLayerSpecificStyleProvider(function() {
         vectorLayer.redraw();
@@ -186,6 +198,7 @@ var RoadStyles = function() {
       redraw: redraw,
       setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
+      setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,
       addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,

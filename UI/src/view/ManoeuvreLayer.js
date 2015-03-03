@@ -3,6 +3,8 @@
     var layerName = 'manoeuvre';
     Layer.call(this, layerName);
     var me = this;
+    this.minZoomForContent = zoomlevels.minZoomForAssets;
+    roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
       0: { strokeColor: '#a4a4a2' },
       1: { strokeColor: '#0000ff' }
@@ -157,7 +159,7 @@
     return {
       show: show,
       hide: hide,
-      minZoomForContent: zoomlevels.minZoomForRoadLinks
+      minZoomForContent: me.minZoomForContent
     };
   };
 })(this);

@@ -5,6 +5,7 @@
     var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
+    this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
     roadLayer.setLayerSpecificStyleMapProvider(layerName, function() {
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
@@ -211,7 +212,7 @@
     return {
       show: show,
       hide: hide,
-      minZoomForContent: zoomlevels.minZoomForRoadLinks
+      minZoomForContent: me.minZoomForContent
     };
   };
 })(this);
