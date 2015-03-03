@@ -114,6 +114,9 @@
       roadLayer.drawRoadLinks(manoeuvresCollection.getAll(), map.getZoom());
       drawDashedLineFeatures(manoeuvresCollection.getAll());
       reselectManoeuvre();
+      if (selectedManoeuvreSource.isDirty()) {
+        selectControl.deactivate();
+      }
     };
 
     this.refreshView = function() {
