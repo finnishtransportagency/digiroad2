@@ -73,6 +73,9 @@
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
       });
+      eventbus.on('manoeuvres:saved', function() {
+        rootElement.find('.form-controls button').attr('disabled', true);
+      });
       eventbus.on('manoeuvre:changed', function() {
         rootElement.find('.form-controls button').attr('disabled', false);
       });
