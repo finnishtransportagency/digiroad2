@@ -418,6 +418,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(params("manoeuvreId").toLong)
     hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
-    ManoeuvreService.deleteManoeuvre(params("manoeuvreId").toLong)
+    ManoeuvreService.deleteManoeuvre(user.username, params("manoeuvreId").toLong)
   }
 }

@@ -49,7 +49,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Delete manoeuvre") {
     val manoeuvre: Manoeuvre = createManouvre
 
-    ManoeuvreService.deleteManoeuvre(manoeuvre.id)
+    ManoeuvreService.deleteManoeuvre("unittest", manoeuvre.id)
 
     val deletedManouver = ManoeuvreService.getByMunicipality(235).find { m =>
       m.id == manoeuvre.id

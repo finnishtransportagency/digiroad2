@@ -25,11 +25,11 @@ object ManoeuvreService {
     }
   }
 
-  def deleteManoeuvre(id: Long) = {
+  def deleteManoeuvre(username: String, id: Long) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sqlu"""
              update manoeuvre
-             set valid_to = sysdate
+             set valid_to = sysdate, modified_date = sysdate, modified_by = $username
              where id = $id
           """.execute()
     }
