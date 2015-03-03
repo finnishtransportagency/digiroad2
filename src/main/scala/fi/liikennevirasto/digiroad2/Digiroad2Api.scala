@@ -404,18 +404,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
   post("/manoeuvre") {
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
     val sourceRoadLinkId = (parsedBody \ "sourceRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'sourceRoadLinkId' parameter")))
     val destRoadLinkId =  (parsedBody \ "destRoadLinkId").extractOrElse[Long](halt(BadRequest("Missing mandatory 'destRoadLinkId' parameter")))
+
+    val municipality = RoadLinkService.getMunicipalityCode(sourceRoadLinkId)
+    hasWriteAccess(user, municipality.get)
 
     ManoeuvreService.createManoeuvre(user.username, sourceRoadLinkId, destRoadLinkId)
   }
 
   put("/manoeuvre/:manoeuvreId") {
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-    ManoeuvreService.deleteManouvre(params("manoeuvreId").toLong)
+    ManoeuvreService.deleteManoeuvre(params("manoeuvreId").toLong)
   }
 }

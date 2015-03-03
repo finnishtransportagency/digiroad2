@@ -15,7 +15,7 @@ import scala.slick.jdbc.StaticQuery.interpolation
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
 
 object ManoeuvreService {
-  def deleteManouvre(id: Long) = {
+  def deleteManoeuvre(id: Long) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sqlu"""
              update manoeuvre
