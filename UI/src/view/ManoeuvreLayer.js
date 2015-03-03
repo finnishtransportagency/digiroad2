@@ -154,6 +154,7 @@
       var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
       eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
+      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreEditConclusion);
     };
 
     return {

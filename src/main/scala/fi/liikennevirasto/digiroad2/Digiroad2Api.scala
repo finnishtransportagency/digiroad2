@@ -410,18 +410,23 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
 
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
-    manoeuvres.foreach { manoeuvre =>
+    val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
       hasWriteAccess(user, municipality.get)
       ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId)
     }
-    Created
+    Created(manoeuvreIds)
   }
 
-  put("/manoeuvre/:manoeuvreId") {
+  put("/manoeuvre") {
     val user = userProvider.getCurrentUser()
-    val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(params("manoeuvreId").toLong)
-    hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
-    ManoeuvreService.deleteManoeuvre(user.username, params("manoeuvreId").toLong)
+
+    val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
+
+    manoeuvreIds.foreach { manoeuvreId =>
+      val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
+      hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
+    }
   }
 }

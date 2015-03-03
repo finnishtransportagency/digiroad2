@@ -22,12 +22,24 @@
       });
     }, 1000);
 
-    this.createManoeuvre = function(manoeuvres, success, failure) {
+    this.createManoeuvres = function(manoeuvres, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/manoeuvre",
         data: JSON.stringify({ manoeuvres: manoeuvres }),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.removeManoeuvres = function(manoeuvreIds, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/manoeuvre",
+        data: JSON.stringify({ manoeuvreIds: manoeuvreIds }),
         dataType: "json",
         success: success,
         error: failure

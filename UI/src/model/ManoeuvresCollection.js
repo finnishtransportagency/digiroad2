@@ -95,11 +95,23 @@
       removedManoeuvres = [];
     };
 
-    var save = function() {
-      var manoeuvresData = _.map(addedManoeuvres, function(manoeuvre) {
-          return { sourceRoadLinkId: manoeuvre.sourceRoadLinkId, destRoadLinkId: manoeuvre.destRoadLinkId };
+    var save = function(callback) {
+      var removedManoeuvreIds = _.map(removedManoeuvres, function(manoeuvreToRemove) {
+        var id = _.find(manoeuvres, function(manoeuvre) {
+          return manoeuvresEqual(manoeuvre, manoeuvreToRemove);
+        }).id;
+        return id;
       });
-      backend.createManoeuvre(manoeuvresData, function() {}, function() {});
+
+      backend.removeManoeuvres(removedManoeuvreIds, function() {
+        console.log('removed ok');
+        removedManoeuvres = [];
+        backend.createManoeuvres(addedManoeuvres, function() {
+          console.log('adding ok');
+          addedManoeuvres = [];
+          callback();
+        }, function() { console.log('adding failed'); });
+      }, function() { console.log('remove failed'); });
     };
 
     var isDirty = function() {

@@ -37,7 +37,9 @@
     };
 
     var save = function() {
-      collection.save();
+      collection.save(function() {
+        eventbus.trigger('manoeuvres:saved', current);
+      });
     };
 
     var cancel = function() {
