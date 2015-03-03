@@ -166,9 +166,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val id = params("id").toLong
     val municipalityCode = RoadLinkService.getMunicipalityCode(id)
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = (parsedBody \ "linkType").extract[Int]
@@ -311,9 +309,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
@@ -328,9 +324,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val expired = (parsedBody \ "expired").extract[Boolean]
@@ -382,14 +376,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         roadLinkId,
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "limit").extract[Int],
                                         userProvider.getCurrentUser().username)
+  }
+
+  def hasWriteAccess(user: User, municipality: Int) {
+    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+      halt(Unauthorized("User not authorized"))
+    }
   }
 
   get("/manoeuvre") {
