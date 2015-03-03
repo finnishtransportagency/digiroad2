@@ -298,7 +298,7 @@ class AssetDataImporter {
       manoeuvres.foreach { manoeuvre =>
         val (id, manoeuvreType, roadLinkId, elementType) = manoeuvre
         sqlu"""
-          insert into manoeuvre (id, type, road_link_id, element_type, created_by)
+          insert into manoeuvre (id, type, road_link_id, element_type, modified_by)
           values ($id, $manoeuvreType, $roadLinkId, $elementType, 'dr1_conversion')
           """.execute()
       }
