@@ -103,15 +103,14 @@
         return id;
       });
 
+      var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
       backend.removeManoeuvres(removedManoeuvreIds, function() {
-        console.log('removed ok');
         removedManoeuvres = [];
         backend.createManoeuvres(addedManoeuvres, function() {
-          console.log('adding ok');
           addedManoeuvres = [];
           callback();
-        }, function() { console.log('adding failed'); });
-      }, function() { console.log('remove failed'); });
+        }, failureCallback);
+      }, failureCallback);
     };
 
     var isDirty = function() {
