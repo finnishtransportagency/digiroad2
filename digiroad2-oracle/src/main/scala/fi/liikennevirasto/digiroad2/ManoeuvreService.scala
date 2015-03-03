@@ -15,6 +15,16 @@ import scala.slick.jdbc.StaticQuery.interpolation
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
 
 object ManoeuvreService {
+  def getSourceRoadLinkIdById(id: Long): Long = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sql"""
+             select road_link_id
+             from manoeuvre
+             where id = $id and element_type = 1
+          """.as[Long].first
+    }
+  }
+
   def deleteManoeuvre(id: Long) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sqlu"""
