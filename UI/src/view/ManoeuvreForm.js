@@ -26,7 +26,7 @@
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
-          '<input type="checkbox" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
+          '<input type="checkbox" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
       '</div>';
 
@@ -46,8 +46,12 @@
           rootElement.find('.form').append(_.template(manouvreTemplate, manoeuvre));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
+          var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.id === manoeuvre.destRoadLinkId; });
+          var checked = manoeuvre ? true : false;
+          var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var attributes = _.merge({}, adjacentLink, {
-            checked: _.some(roadLink.manoeuvres, function(manoeuvre) { return manoeuvre.destMmlId === adjacentLink.mmlId; })
+            checked: checked,
+            manoeuvreId: manoeuvreId
           });
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
         });
@@ -58,10 +62,11 @@
           var eventTarget = $(event.currentTarget);
           var destRoadLinkId = parseInt(eventTarget.attr('roadLinkId'), 10);
           var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
+          var manoeuvreId = !_.isEmpty(eventTarget.attr('manoeuvreId')) ? parseInt(eventTarget.attr('manoeuvreId'), 10) : null;
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.addManoeuvreTo({ destRoadLinkId: destRoadLinkId, destMmlId: destMmlId });
+            selectedManoeuvreSource.addManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId, destMmlId: destMmlId });
           } else {
-            selectedManoeuvreSource.removeManoeuvreTo(destRoadLinkId);
+            selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
           }
         });
       });

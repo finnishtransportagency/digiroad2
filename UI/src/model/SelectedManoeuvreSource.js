@@ -27,13 +27,14 @@
       return current !== null;
     };
 
-    var addManoeuvreTo = function(destRoadLink) {
-      var newManoeuvre = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, destRoadLink);
+    var addManoeuvre = function(manoeuvre) {
+      var newManoeuvre = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
-    var removeManoeuvreTo = function(destRoadLinkId) {
-      collection.removeManoeuvre(current.roadLinkId, destRoadLinkId);
+    var removeManoeuvre = function(manoeuvre) {
+      var manoeuvreToBeRemoved = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, manoeuvre);
+      collection.removeManoeuvre(manoeuvreToBeRemoved);
     };
 
     var save = function() {
@@ -56,8 +57,8 @@
       open: open,
       getRoadLinkId: getRoadLinkId,
       exists: exists,
-      addManoeuvreTo: addManoeuvreTo,
-      removeManoeuvreTo: removeManoeuvreTo,
+      addManoeuvre: addManoeuvre,
+      removeManoeuvre: removeManoeuvre,
       save: save,
       cancel: cancel,
       isDirty: isDirty

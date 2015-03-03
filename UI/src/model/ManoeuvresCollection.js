@@ -70,19 +70,24 @@
     };
 
     var addManoeuvre = function(newManoeuvre) {
-      addedManoeuvres.push(newManoeuvre);
-      _.remove(removedManoeuvres, function(x) {
-        return manoeuvresEqual(x, newManoeuvre);
-      });
+      if (_.isNull(newManoeuvre.manoeuvreId)) {
+        addedManoeuvres.push(newManoeuvre);
+      } else {
+        _.remove(removedManoeuvres, function(x) {
+          return manoeuvresEqual(x, newManoeuvre);
+        });
+      }
       eventbus.trigger('manoeuvre:changed');
     };
 
-    var removeManoeuvre = function(sourceRoadLinkId, destRoadLinkId) {
-      var removedManoeuvre = { sourceRoadLinkId: sourceRoadLinkId, destRoadLinkId: destRoadLinkId};
-      removedManoeuvres.push(removedManoeuvre);
-      _.remove(addedManoeuvres, function(x) {
-        return manoeuvresEqual(x, removedManoeuvre);
-      });
+    var removeManoeuvre = function(manoeuvre) {
+      if (_.isNull(manoeuvre.manoeuvreId)) {
+        _.remove(addedManoeuvres, function(x) {
+          return manoeuvresEqual(x, manoeuvre);
+        });
+      } else {
+        removedManoeuvres.push(manoeuvre);
+      }
       eventbus.trigger('manoeuvre:changed');
     };
 
