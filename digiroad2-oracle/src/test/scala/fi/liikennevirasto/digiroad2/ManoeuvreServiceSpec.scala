@@ -13,7 +13,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   after {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from manoeuvre where created_by = 'unittest'""".execute()
+      sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute()
     }
   }
 

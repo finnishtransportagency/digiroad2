@@ -43,12 +43,12 @@ object ManoeuvreService {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
 
       sqlu"""
-             insert into manoeuvre(id, type, road_link_id, element_type, created_date, created_by)
+             insert into manoeuvre(id, type, road_link_id, element_type, modified_date, modified_by)
              values ($manoeuvreId, 2, $sourceRoadLinkId, $FirstElement, sysdate, $userName)
           """.execute()
 
       sqlu"""
-             insert into manoeuvre(id, type, road_link_id, element_type, created_date, created_by)
+             insert into manoeuvre(id, type, road_link_id, element_type, modified_date, modified_by)
              values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
           """.execute()
 
