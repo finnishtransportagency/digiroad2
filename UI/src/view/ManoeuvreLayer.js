@@ -149,12 +149,19 @@
       draw();
     };
 
+    var handleManoeuvreSaved = function(eventListener) {
+      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), function() {
+        concludeManoeuvreEdit(eventListener);
+      });
+    };
+
     this.bindEventHandlers = function(eventListener) {
       var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
       var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
+      var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
       eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
-      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreEditConclusion);
+      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
     };
 
     return {

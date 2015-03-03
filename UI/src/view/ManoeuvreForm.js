@@ -40,7 +40,7 @@
       }
       eventbus.on('application:readOnly', toggleMode);
 
-      eventbus.on('manoeuvres:selected manoeuvres:cancelled manoeuvres:saved', function(roadLink) {
+      eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
         rootElement.html(_.template(template, roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           rootElement.find('.form').append(_.template(manouvreTemplate, manoeuvre));
