@@ -152,6 +152,7 @@
     var handleManoeuvreSaved = function(eventListener) {
       manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), function() {
         concludeManoeuvreEdit(eventListener);
+        selectedManoeuvreSource.refresh();
       });
     };
 

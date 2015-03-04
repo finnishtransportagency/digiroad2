@@ -19,6 +19,14 @@
       }
     };
 
+    var refresh = function() {
+      if (current) {
+        var roadLinkId = current.roadLinkId;
+        current = null;
+        open(roadLinkId);
+      }
+    };
+
     var getRoadLinkId = function() {
       return current.roadLinkId;
     };
@@ -61,7 +69,8 @@
       removeManoeuvre: removeManoeuvre,
       save: save,
       cancel: cancel,
-      isDirty: isDirty
+      isDirty: isDirty,
+      refresh: refresh
     };
   };
 })(this);
