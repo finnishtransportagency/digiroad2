@@ -300,4 +300,33 @@ object RoadLinkService {
           "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._8)
     }
   }
+
+  def getAdjacent(id: Long): Seq[Map[String, Any]] = {
+    val endpoints = getRoadLinkGeometry(id).map(GeometryUtils.geometryEndpoints)
+    endpoints.map(endpoint => {
+      val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+        val delta: Vector3d = Vector3d(0.1, 0.1, 0)
+        val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
+        val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds)
+
+        val bounds2 = BoundingRectangle(endpoint._2 - delta, endpoint._2 + delta)
+        val boundingBoxFilter2 = OracleDatabase.boundingBoxFilter(bounds2)
+
+        sql"""
+        select dr1_id, mml_id, to_2d(shape)
+        from tielinkki_ctas
+        where #$boundingBoxFilter or #$boundingBoxFilter2
+      """.as[(Long, Long, Seq[Point])].iterator().toSeq
+      }
+      roadLinks.filterNot(_._1 == id).filter(roadLink => {
+        val (_, _, geometry) = roadLink
+        val epsilon = 0.01
+        val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
+        rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
+          rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
+          rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
+          rlEndpoints._2.distanceTo(endpoint._2) < epsilon
+      }).map(roadLink => Map("id" -> roadLink._1, "mmlId" -> roadLink._2))
+    }).getOrElse(Nil)
+  }
 }

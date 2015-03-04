@@ -3,6 +3,7 @@
     var zoomLevel;
     var selectedLayer = 'massTransitStop';
     var selectedTool = 'Select';
+    var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var readOnly = true;
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
@@ -11,6 +12,9 @@
       }
     };
     var roadTypeShown = true;
+    var isDirty = function() {
+      return _.any(models, function(model) { return model.isDirty(); });
+    };
 
     return {
       moveMap: function(zoom, bbox) {
@@ -30,6 +34,9 @@
       setZoomLevel: function(level) {
         zoomLevel = level;
       },
+      setMinDirtyZoomLevel: function(level) {
+        minDirtyZoomLevel = level;
+      },
       selectLayer: function(layer) {
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
@@ -46,7 +53,10 @@
         return readOnly;
       },
       isDirty: function() {
-        return _.any(models, function(model) { return model.isDirty(); });
+        return isDirty();
+      },
+      canZoomOut: function() {
+        return !(isDirty() && (zoomLevel <= minDirtyZoomLevel));
       },
       assetDragDelay: 100,
       assetGroupingDistance: 36,

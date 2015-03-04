@@ -7,9 +7,12 @@
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
     };
 
+    var minZoomForContent = function() {
+      return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
+    };
+
     var mapMovedHandler = function(mapState) {
-      var minZoomForContent = layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
-      if (mapState.zoom < minZoomForContent) {
+      if (mapState.zoom < minZoomForContent()) {
         if (isInitialized && mapState.hasZoomLevelChanged) {
           showAssetZoomDialog();
         }
@@ -67,6 +70,7 @@
 
       layerToBeShown.show(map);
       layerToBeHidden.hide(map);
+      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
     map.events.register('moveend', this, function() {

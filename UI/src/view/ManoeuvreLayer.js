@@ -1,8 +1,10 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvre, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvreSource, manoeuvresCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName);
     var me = this;
+    this.minZoomForContent = zoomlevels.minZoomForAssets;
+    roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
       0: { strokeColor: '#a4a4a2' },
       1: { strokeColor: '#0000ff' }
@@ -28,7 +30,7 @@
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
 
     var unselectManoeuvre = function() {
-      selectedManoeuvre.close();
+      selectedManoeuvreSource.close();
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
       roadLayer.redraw();
       highlightFeatures(null);
@@ -37,7 +39,7 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        selectedManoeuvre.open(feature.attributes.roadLinkId);
+        selectedManoeuvreSource.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
         highlightFeatures(feature.attributes.roadLinkId);
@@ -97,14 +99,14 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      if (selectedManoeuvre.exists()) {
+      if (selectedManoeuvreSource.exists()) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.roadLinkId === selectedManoeuvre.getRoadLinkId();
+          return feature.attributes.roadLinkId === selectedManoeuvreSource.getRoadLinkId();
         });
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvre.getRoadLinkId()));
+        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -114,6 +116,9 @@
       roadLayer.drawRoadLinks(manoeuvresCollection.getAll(), map.getZoom());
       drawDashedLineFeatures(manoeuvresCollection.getAll());
       reselectManoeuvre();
+      if (selectedManoeuvreSource.isDirty()) {
+        selectControl.deactivate();
+      }
     };
 
     this.refreshView = function() {
@@ -131,10 +136,38 @@
       me.stop();
     };
 
+    var handleManoeuvreChanged = function(eventListener) {
+      draw();
+      selectControl.deactivate();
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
+    };
+
+    var concludeManoeuvreEdit = function(eventListener) {
+      selectControl.activate();
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      draw();
+    };
+
+    var handleManoeuvreSaved = function(eventListener) {
+      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), function() {
+        concludeManoeuvreEdit(eventListener);
+      });
+    };
+
+    this.bindEventHandlers = function(eventListener) {
+      var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
+      var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
+      var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
+      eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
+      eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
+    };
+
     return {
       show: show,
       hide: hide,
-      minZoomForContent: zoomlevels.minZoomForRoadLinks
+      minZoomForContent: me.minZoomForContent
     };
   };
 })(this);

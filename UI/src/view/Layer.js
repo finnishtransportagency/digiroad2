@@ -27,15 +27,13 @@
     };
     this.displayConfirmMessage = function() { new Confirm(); };
     this.handleMapMoved = function(state) {
-      if (zoomlevels.isInRoadLinkZoomLevel(state.zoom) && state.selectedLayer === layerName) {
+      if (state.selectedLayer === layerName && state.zoom >= me.minZoomForContent) {
         if (!me.isStarted()) {
           me.start();
         }
         else {
           me.refreshView();
         }
-      } else if (me.isDirty()) {
-        me.displayConfirmMessage();
       } else {
         me.stop();
       }

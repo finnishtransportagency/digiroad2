@@ -1,7 +1,8 @@
 (function(root) {
   root.ManoeuvresCollection = function(backend, roadCollection) {
     var manoeuvres = [];
-    var roadLinksWithManoeuvres = [];
+    var addedManoeuvres = [];
+    var removedManoeuvres = [];
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
@@ -32,19 +33,26 @@
       eventbus.once('roadLinks:fetched', function() {
         fetchManoeuvres(extent, function(ms) {
           manoeuvres = ms;
-          roadLinksWithManoeuvres = combineRoadLinksWithManoeuvres(roadCollection.getAll(), ms);
           callback();
         });
       });
       roadCollection.fetch(extent, zoom);
     };
 
+    var manoeuvresWithModifications = function() {
+      return _.reject(manoeuvres.concat(addedManoeuvres), function(manoeuvre) {
+        return _.some(removedManoeuvres, function(x) {
+          return (manoeuvresEqual(x, manoeuvre));
+        });
+      });
+    };
+
     var getAll = function() {
-      return roadLinksWithManoeuvres;
+      return combineRoadLinksWithManoeuvres(roadCollection.getAll(), manoeuvresWithModifications());
     };
 
     var getDestinationRoadLinksBySourceRoadLink = function(roadLinkId) {
-      return _.chain(manoeuvres)
+      return _.chain(manoeuvresWithModifications())
         .filter(function(manoeuvre) {
           return manoeuvre.sourceRoadLinkId === roadLinkId;
         })
@@ -52,16 +60,78 @@
         .value();
     };
 
-    var get = function(roadLinkId){
-      return _.find(roadLinksWithManoeuvres, function(manoeuvre){
+    var get = function(roadLinkId, callback) {
+      var roadLink = _.find(getAll(), function(manoeuvre) {
         return manoeuvre.roadLinkId === roadLinkId;
       });
+      backend.getAdjacent(roadLink.roadLinkId, function(adjacent) {
+        callback(_.merge({}, roadLink, { adjacent: adjacent }));
+      });
     };
+
+    var addManoeuvre = function(newManoeuvre) {
+      if (_.isNull(newManoeuvre.manoeuvreId)) {
+        addedManoeuvres.push(newManoeuvre);
+      } else {
+        _.remove(removedManoeuvres, function(x) {
+          return manoeuvresEqual(x, newManoeuvre);
+        });
+      }
+      eventbus.trigger('manoeuvre:changed');
+    };
+
+    var removeManoeuvre = function(manoeuvre) {
+      if (_.isNull(manoeuvre.manoeuvreId)) {
+        _.remove(addedManoeuvres, function(x) {
+          return manoeuvresEqual(x, manoeuvre);
+        });
+      } else {
+        removedManoeuvres.push(manoeuvre);
+      }
+      eventbus.trigger('manoeuvre:changed');
+    };
+
+    var manoeuvresEqual = function(x, y) {
+      return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
+    };
+
+    var cancelModifications = function() {
+      addedManoeuvres = [];
+      removedManoeuvres = [];
+    };
+
+    var save = function(callback) {
+      var removedManoeuvreIds = _.map(removedManoeuvres, function(manoeuvreToRemove) {
+        var id = _.find(manoeuvres, function(manoeuvre) {
+          return manoeuvresEqual(manoeuvre, manoeuvreToRemove);
+        }).id;
+        return id;
+      });
+
+      var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
+      backend.removeManoeuvres(removedManoeuvreIds, function() {
+        removedManoeuvres = [];
+        backend.createManoeuvres(addedManoeuvres, function() {
+          addedManoeuvres = [];
+          callback();
+        }, failureCallback);
+      }, failureCallback);
+    };
+
+    var isDirty = function() {
+      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres);
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
-      get: get
+      get: get,
+      addManoeuvre: addManoeuvre,
+      removeManoeuvre: removeManoeuvre,
+      cancelModifications: cancelModifications,
+      isDirty: isDirty,
+      save: save
     };
   };
 })(this);

@@ -12,6 +12,9 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
 
+
+case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long)
+
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
@@ -157,13 +160,16 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/roadlinks/adjacent/:id"){
+    val id = params("id").toLong
+    RoadLinkService.getAdjacent(id)
+  }
+
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val municipalityCode = RoadLinkService.getMunicipalityCode(id)
     val user = userProvider.getCurrentUser()
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = (parsedBody \ "linkType").extract[Int]
@@ -306,9 +312,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
@@ -323,9 +327,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val expired = (parsedBody \ "expired").extract[Boolean]
@@ -377,14 +379,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipalityCode.get)) {
-      halt(Unauthorized("User not authorized"))
-    }
+    hasWriteAccess(user, municipalityCode.get)
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         roadLinkId,
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "limit").extract[Int],
                                         userProvider.getCurrentUser().username)
+  }
+
+  def hasWriteAccess(user: User, municipality: Int) {
+    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+      halt(Unauthorized("User not authorized"))
+    }
   }
 
   get("/manoeuvre") {
@@ -396,6 +402,31 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       ManoeuvreService.getByBoundingBox(boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  post("/manoeuvre") {
+    val user = userProvider.getCurrentUser()
+
+    val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
+
+    val manoeuvreIds = manoeuvres.map { manoeuvre =>
+      val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
+      hasWriteAccess(user, municipality.get)
+      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId)
+    }
+    Created(manoeuvreIds)
+  }
+
+  put("/manoeuvre") {
+    val user = userProvider.getCurrentUser()
+
+    val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
+
+    manoeuvreIds.foreach { manoeuvreId =>
+      val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
+      hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
 }

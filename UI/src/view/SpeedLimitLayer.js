@@ -514,8 +514,6 @@ window.SpeedLimitLayer = function(params) {
         collection.fetch(state.bbox);
       });
       roadCollection.fetch(map.getExtent(), map.getZoom());
-    } else if (selectedSpeedLimit.isDirty()) {
-      new Confirm();
     } else {
       vectorLayer.setVisibility(false);
       stop();

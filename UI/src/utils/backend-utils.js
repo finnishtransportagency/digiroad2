@@ -22,6 +22,36 @@
       });
     }, 1000);
 
+    this.createManoeuvres = function(manoeuvres, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/manoeuvre",
+        data: JSON.stringify({ manoeuvres: manoeuvres }),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.removeManoeuvres = function(manoeuvreIds, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/manoeuvre",
+        data: JSON.stringify({ manoeuvreIds: manoeuvreIds }),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
+    this.getAdjacent = _.throttle(function(id, callback) {
+      $.getJSON('api/roadlinks/adjacent/' + id, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
     this.getRoadLinkByMMLId = _.throttle(function(mmlId, callback) {
       $.getJSON('api/roadlinks/' + mmlId + '?mmlId=true', function(data) {
         callback(data);

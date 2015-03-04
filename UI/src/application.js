@@ -120,7 +120,18 @@ var URLRouter = function(map, backend, models) {
 
   var setupMap = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
-    map.addControl(new OpenLayers.Control.Navigation());
+
+    var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
+      wheelDown: function(evt, delta) {
+        if (applicationModel.canZoomOut()) {
+          return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
+        } else {
+          new Confirm();
+        }
+      }
+    });
+
+    map.addControl(new NavigationControl());
 
     var mapOverlay = new MapOverlay($('.container'));
 
@@ -130,7 +141,7 @@ var URLRouter = function(map, backend, models) {
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
-    new ManoeuvreForm();
+    new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(numericalLimits, function(numericalLimit) {
       new NumericalLimitForm(
           numericalLimit.selectedNumericalLimit,
@@ -172,7 +183,7 @@ var URLRouter = function(map, backend, models) {
         backend: backend,
         roadLayer: roadLayer
       }),
-      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.selectedManoeuvre, models.manoeuvresCollection)
+      manoeuvre: new ManoeuvreLayer(map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection)
     }, numericalLimitLayers);
 
     var mapPluginsContainer = $('#map-plugins');
@@ -282,7 +293,7 @@ var URLRouter = function(map, backend, models) {
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
-    var selectedManoeuvre = new SelectedManoeuvre(manoeuvresCollection);
+    var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -300,7 +311,7 @@ var URLRouter = function(map, backend, models) {
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
       selectedLinkProperty: selectedLinkProperty,
-      selectedManoeuvre: selectedManoeuvre,
+      selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
       manoeuvresCollection: manoeuvresCollection
@@ -311,7 +322,11 @@ var URLRouter = function(map, backend, models) {
     window.selectedAssetModel = selectedMassTransitStopModel;
     window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
-    window.applicationModel = new ApplicationModel([selectedAssetModel, selectedSpeedLimit, selectedLinkProperty].concat(selectedNumericalLimitModels));
+    window.applicationModel = new ApplicationModel([
+      selectedAssetModel,
+      selectedSpeedLimit,
+      selectedLinkProperty,
+      selectedManoeuvreSource].concat(selectedNumericalLimitModels));
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);

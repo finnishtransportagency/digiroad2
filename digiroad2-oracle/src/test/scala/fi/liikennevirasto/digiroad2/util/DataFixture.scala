@@ -54,7 +54,8 @@ object DataFixture {
       "kauniainen_production_speed_limits.sql",
       "kauniainen_total_weight_limits.sql",
       "adjusted_traffic_directions.sql",
-      "adjusted_functional_classes.sql"))
+      "adjusted_functional_classes.sql",
+      "kauniainen_manoeuvres.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
@@ -93,6 +94,15 @@ object DataFixture {
     dataImporter.importNumericalLimits(Conversion.database(), 19, 80)
     dataImporter.importNumericalLimits(Conversion.database(), 23, 90)
     print("Dimension limit import complete: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importManoeuvresFromConversion() {
+    print("\nCommencing manoeuvre import from conversion: ")
+    println(DateTime.now())
+    dataImporter.importManoeuvres(Conversion.database())
+    print("Manoeuvre import complete: ")
     println(DateTime.now())
     println("\n")
   }
@@ -140,7 +150,9 @@ object DataFixture {
         importWeightLimitsFromConversion()
       case Some("dimensionlimits") =>
         importDimensionLimitsFromConversion()
-      case _ => println("Usage: DataFixture test | speedlimits")
+      case Some("manoeuvres") =>
+        importManoeuvresFromConversion()
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres")
     }
   }
 }
