@@ -73,10 +73,17 @@ http://www.digiroad.fi/
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysytyt kysymykset
------------------------------
+1.2 Usein kysytyt kysymykset ja ongelmatilanteet
+------------------------------------------------
 
 Digiroad 2 -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set [t&auml;&auml;lt&auml;.](http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/ )
+
+####Ongelmatilanteet#####
+
+Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu oikein) toimi seuraavasti:
+
+1. Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
+2. Jos sivun lataaminen uudelleen ei korjaa ongelmaa, ota yhteytt&auml; DR2-operaattoriin: info@digiroad.fi 
 
 2. Kirjautuminen Digiroad-sovellukseen
 --------------------------------------
@@ -305,7 +312,7 @@ _Nopeusrajoitusten visualisointi._
 
 Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
 
-![K&auml;&auml;ntymisrajoituksen visualisointi] (k44.JPG)
+![K&auml;&auml;ntymisrajoituksen visualisointi](k44.JPG)
 
 _K&auml;&auml;ntymisrajoituksen tietojen katselu._
 
@@ -547,12 +554,32 @@ Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lke
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
-5.4 Suurin sallittu -valinta
+5.4 K&auml;&auml;ntymisrajoitukset
+----------------------------------
+
+5.4.1 K&auml;&auml;ntymisrajoitusten muokkaus
+---------------------------------------------
+
+K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+
+![K&auml;&auml;ntymisrajoitusten muokkaus.](k28.jpg)
+
+_K&auml;&auml;ntymisrajoitusten muokkaus._
+
+####Uuden k&auml;&auml;ntymisrajoituksen lis&auml;&auml;minen####
+
+Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta se tielinkki, joka on k&auml;&auml;ntymisrajoituksen l&auml;hde. Sivun oikeaan laitaan avautuu ominaisuustieton&auml;kym&auml;, jossa on n&auml;kyviss&auml; valitulta tielinkilt&auml; l&auml;htev&auml;t tielinkit. Ominaisuustieton&auml;kym&auml;st&auml; valitaan ne tielinkit, joille valitulta tielinkilt&auml; ei saa k&auml;&auml;nty&auml;. Valitsemalla k&auml;&auml;ntymisrajoituksen kohde uusi k&auml;&auml;ntymisrajoitus visualisoituu kartalle.
+ 
+####Uuden k&auml;&auml;ntymisrajoituksen poistaminen####
+
+K&auml;&auml;ntymisrajoituksen voi poistaa valitsemalla sen kartalta. Ominaisuustieton&auml;kym&auml;&auml;n avautuu k&auml;&auml;ntymisrajoituksen kohteet. Poistamalla valinnan kaikista k&auml;&auml;ntymisrajoituksen kohteista ja tallentamalla, k&auml;&auml;ntymisrajoitus poistuu.
+
+5.5 Suurin sallittu -valinta
 ----------------------------
 
 Suurin sallittu -valintoja ovat: suurin sallittu massa, yhdistelm&auml;n suurin sallittu massa, suurin sallittu akselimassa, suurin sallittu telimassa, suurin sallittu korkeus, ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus ja suurin sallittu leveys.
 
-5.4.1 Suurin sallittu -valinnan ominaisuustietojen muokkaus
+5.5.1 Suurin sallittu -valinnan ominaisuustietojen muokkaus
 ----------------------------------------------------------
 
 Toistaiseksi suurin sallittu -valintoja voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
@@ -565,7 +592,7 @@ Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen
 
 _Suurin sallittu -valinnan muokkaus._
 
-5.4.2 Suurin sallittu -kohteen poistaminen
+5.5.2 Suurin sallittu -kohteen poistaminen
 -------------------------------------------
 
 Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei rajoitusta".
@@ -574,7 +601,7 @@ Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&au
 
 _Suurin sallittu -kohteen poistaminen._
 
-5.4.3 Uuden suurin sallittu -kohteen lis&auml;&auml;minen
+5.5.3 Uuden suurin sallittu -kohteen lis&auml;&auml;minen
 -----------------------------------------------------------
 
 Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella.
@@ -583,7 +610,7 @@ Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geome
 
 _Suurin sallittu -kohteen lis&auml;&auml;minen._
 
-5.4.4 Suurin sallittu -kohteen katkaisu
+5.5.4 Suurin sallittu -kohteen katkaisu
 ----------------------------------------
 
 Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
