@@ -18,6 +18,7 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
+  type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
@@ -236,7 +237,7 @@ object RoadLinkService {
           TrafficDirection(trafficDirection._2)
         ).getOrElse(basicRoadLink._7)
 
-        def latesModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+        def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
           (a, b) match {
             case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
               if (firstModifiedAt.isAfter(secondModifiedAt))
@@ -253,7 +254,7 @@ object RoadLinkService {
           case _ => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latesModifications))
+        basicToAdjusted(basicRoadLink.copy(_6 = functionalClassValue, _7 = trafficDirectionValue, _8 = adjustedLinkTypeValue), modifications.reduce(latestModifications))
       }
     }
   }
@@ -286,13 +287,14 @@ object RoadLinkService {
   }
 
   def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
-    val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+    val kalpaRoadLinks = Database.forDataSource(dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
+        select dr1_id, mml_id, to_2d(shape), omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
           from tielinkki_ctas
           where kunta_nro = $municipality
-        """.as[BasicRoadLink].iterator().toSeq
+        """.as[KalpaRoadLink].list()
     }
+    val roadLinks: Seq[BasicRoadLink] = kalpaRoadLinks.map { k => (k._1, k._2, k._3, 0.0, k._4, k._5, k._6, k._7) }
     adjustedRoadLinks(roadLinks).map { roadLink =>
       Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
           "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._8)

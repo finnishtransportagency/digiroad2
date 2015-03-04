@@ -7,7 +7,7 @@
       '</div>';
     var template = '' +
       '<header>' +
-        '<span>Linkin ID: <%= mmlId %></span>' +
+        '<span>Linkin MML ID: <%= mmlId %></span>' +
         buttons +
       '</header>' +
       '<div class="wrapper read-only">' +

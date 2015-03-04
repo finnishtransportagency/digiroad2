@@ -1,6 +1,8 @@
 Loppuk&auml;ytt&auml;j&auml;n manuaali
 ==============================================
 
+__Huom! Suosittelemme Firefoxia tai Chromea, kun sovelluksella yll&auml;pidet&auml;&auml;n DR2-tietoja.__
+
 ###Katselutila - muokkaajan roolissa###
 
 ![Katselutila - muokkaajan roolissa](k0.jpg)

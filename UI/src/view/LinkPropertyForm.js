@@ -15,17 +15,17 @@
     };
 
     var linkTypes = [
-      [1, 'Moottoritien osa'],
-      [2, 'Moniajorataisen tien osa'],
-      [3, 'Yksiajorataisen tien osa'],
-      [4, 'Moottoriliikennetien osa'],
-      [5, 'Kiertoliittymän osa'],
+      [1, 'Moottoritie'],
+      [2, 'Moniajoratainen tie'],
+      [3, 'Yksiajoratainen tie'],
+      [4, 'Moottoriliikennetie'],
+      [5, 'Kiertoliittymä'],
       [6, 'Ramppi'],
       [7, 'Levähdysalue'],
       [8, 'Kevyen liikenteen väylä'],
-      [9, 'Jalankulkualueen osa'],
-      [10, 'Huolto- tai pelastustien osa'],
-      [11, 'Liitännäisliikennealueen osa'],
+      [9, 'Jalankulkualue'],
+      [10, 'Huolto- tai pelastustie'],
+      [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
       [13, 'Huoltoaukko moottoritiellä'],
       [21, 'Lautta/lossi']
