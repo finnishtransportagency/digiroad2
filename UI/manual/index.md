@@ -82,8 +82,8 @@ Digiroad 2 -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digi
 
 Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu oikein) toimi seuraavasti:
 
-1. Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
-2. Jos sivun lataaminen uudelleen ei korjaa ongelmaa, ota yhteytt&auml; DR2-operaattoriin: info@digiroad.fi 
+- Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
+- Jos sivun lataaminen uudelleen ei korjaa ongelmaa, ota yhteytt&auml; DR2-operaattoriin: info@digiroad.fi 
 
 2. Kirjautuminen Digiroad-sovellukseen
 --------------------------------------
@@ -562,7 +562,7 @@ Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa a
 
 K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
-![K&auml;&auml;ntymisrajoitusten muokkaus.](k28.jpg)
+![K&auml;&auml;ntymisrajoitusten muokkaus.](k45.JPG)
 
 _K&auml;&auml;ntymisrajoitusten muokkaus._
 
