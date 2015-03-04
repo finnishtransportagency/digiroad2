@@ -152,7 +152,9 @@ object DataFixture {
         importDimensionLimitsFromConversion()
       case Some("manoeuvres") =>
         importManoeuvresFromConversion()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres")
+      case Some("repair") =>
+        flyway.repair()
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | repair")
     }
   }
 }
