@@ -10,6 +10,8 @@ window.NumericalLimitLayer = function(params) {
     layerName = params.layerName,
     multiElementEventCategory = params.multiElementEventCategory,
     singleElementEventCategory = params.singleElementEventCategory;
+  Layer.call(this, layerName, roadLayer);
+  var me = this;
 
   var NumericalLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -435,15 +437,16 @@ window.NumericalLimitLayer = function(params) {
     update(map.getZoom(), map.getExtent());
   };
 
-  var hide = function(map) {
+  var hideLayer = function(map) {
     reset();
     map.removeLayer(vectorLayer);
+    me.hide();
   };
 
   return {
     update: update,
     vectorLayer: vectorLayer,
     show: show,
-    hide: hide
+    hide: hideLayer
   };
 };

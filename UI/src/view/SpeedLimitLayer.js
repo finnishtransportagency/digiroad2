@@ -8,6 +8,8 @@ window.SpeedLimitLayer = function(params) {
       backend = params.backend,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer;
+  Layer.call(this, 'speedLimit', roadLayer);
+  var me = this;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -602,15 +604,16 @@ window.SpeedLimitLayer = function(params) {
     update(map.getZoom(), map.getExtent());
   };
 
-  var hide = function(map) {
+  var hideLayer = function(map) {
     reset();
     map.removeLayer(vectorLayer);
+    me.hide();
   };
 
   return {
     update: update,
     vectorLayer: vectorLayer,
     show: show,
-    hide: hide
+    hide: hideLayer
   };
 };

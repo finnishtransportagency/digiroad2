@@ -1,5 +1,5 @@
 (function(root) {
-  root.Layer = function(layerName, geometryUtils) {
+  root.Layer = function(layerName, roadLayer) {
     var me = this;
     this.eventListener = _.extend({running: false}, eventbus);
     this.refreshView = function() {};
@@ -38,7 +38,7 @@
         me.stop();
       }
     };
-    this.drawOneWaySigns = function(layer, roadLinks) {
+    this.drawOneWaySigns = function(layer, roadLinks, geometryUtils) {
       var oneWaySigns = _.chain(roadLinks)
         .filter(function(link) {
           return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
@@ -56,6 +56,9 @@
         .value();
 
       layer.addFeatures(oneWaySigns);
+    };
+    this.hide = function() {
+      roadLayer.clear();
     };
 
     eventbus.on('map:moved', this.handleMapMoved);

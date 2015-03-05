@@ -1,7 +1,7 @@
 (function(root){
   root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection) {
     var layerName = 'manoeuvre';
-    Layer.call(this, layerName, geometryUtils);
+    Layer.call(this, layerName, roadLayer);
     var me = this;
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
@@ -128,7 +128,7 @@
       var linksWithManoeuvres = manoeuvresCollection.getAll();
       roadLayer.drawRoadLinks(linksWithManoeuvres, map.getZoom());
       drawDashedLineFeatures(linksWithManoeuvres);
-      me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres);
+      me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres, geometryUtils);
       reselectManoeuvre();
       if (selectedManoeuvreSource.isDirty()) {
         selectControl.deactivate();
@@ -145,9 +145,10 @@
       }
     };
 
-    var hide = function() {
+    var hideLayer = function() {
       unselectManoeuvre();
       me.stop();
+      me.hide();
     };
 
     var handleManoeuvreChanged = function(eventListener) {
@@ -181,7 +182,7 @@
 
     return {
       show: show,
-      hide: hide,
+      hide: hideLayer,
       minZoomForContent: me.minZoomForContent
     };
   };

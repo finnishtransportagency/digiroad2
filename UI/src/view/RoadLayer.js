@@ -164,6 +164,10 @@ var RoadStyles = function() {
       });
     };
 
+    var clear = function() {
+      vectorLayer.removeAllFeatures();
+    };
+
     eventbus.on('road:active', function(roadLinkId) {
       var nearestFeature = _.find(vectorLayer.features, function(feature) {
         return feature.attributes.roadLinkId == roadLinkId;
@@ -196,6 +200,7 @@ var RoadStyles = function() {
     return {
       layer: vectorLayer,
       redraw: redraw,
+      clear: clear,
       setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
       setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,

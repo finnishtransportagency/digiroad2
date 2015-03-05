@@ -1,7 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
     var layerName = 'linkProperties';
-    Layer.call(this, layerName, geometryUtils);
+    Layer.call(this, layerName, roadLayer);
     var me = this;
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
@@ -47,7 +47,7 @@
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
-      me.drawOneWaySigns(roadLayer.layer, roadLinks);
+      me.drawOneWaySigns(roadLayer.layer, roadLinks, geometryUtils);
       reselectRoadLink();
       eventbus.trigger('linkProperties:available');
     };
@@ -158,7 +158,7 @@
       var data = selectedLinkProperty.get().getData();
       roadLayer.drawRoadLink(data);
       drawDashedLineFeaturesIfApplicable([data]);
-      me.drawOneWaySigns(roadLayer.layer, [data]);
+      me.drawOneWaySigns(roadLayer.layer, [data], geometryUtils);
       reselectRoadLink();
     };
 
@@ -172,14 +172,15 @@
       }
     };
 
-    var hide = function() {
+    var hideLayer = function() {
       unselectRoadLink();
       me.stop();
+      me.hide();
     };
 
     return {
       show: show,
-      hide: hide,
+      hide: hideLayer,
       minZoomForContent: me.minZoomForContent
     };
   };

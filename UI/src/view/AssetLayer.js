@@ -1,4 +1,6 @@
 window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
+  Layer.call(this, 'massTransitStop', roadLayer);
+  var me = this;
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var assetDirectionLayer = new OpenLayers.Layer.Vector('assetDirection');
@@ -610,17 +612,18 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
     }
   };
 
-  var hide = function() {
+  var hideLayer = function() {
     selectedAssetModel.close();
     if (assetLayer.map && assetDirectionLayer.map) {
       map.removeLayer(assetLayer);
       map.removeLayer(assetDirectionLayer);
     }
     stopListening();
+    me.hide();
   };
 
   return {
     show: show,
-    hide: hide
+    hide: hideLayer
   };
 };
