@@ -21,7 +21,7 @@
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= destMmlId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
-        '<div>' +
+        '<div class="form-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
           '<ul>' +
             '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e %></li> <% }) %>' +
@@ -36,25 +36,28 @@
         '<div class="checkbox" >' +
           '<input type="checkbox" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
+        '<select class="form-control">' +
+          '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
+        '</select>' +
       '</div>';
 
+    var exceptions = {
+      4: 'Kuorma-auto',
+      5: 'Linja-auto',
+      6: 'Pakettiauto',
+      7: 'Henkilöauto',
+      8: 'Taksi',
+      13: 'Ajoneuvoyhdistelmä',
+      14: 'Traktori tai maatalousajoneuvo',
+      15: 'Matkailuajoneuvo',
+      16: 'Jakeluauto',
+      18: 'Kimppakyytiajoneuvo',
+      19: 'Sotilasajoneuvo',
+      20: 'Vaarallista lastia kuljettava ajoneuvo',
+      21: 'Huoltoajo',
+      22: 'Tontille ajo'
+    };
     var localizeException = function(e) {
-      var exceptions = {
-        4: 'Kuorma-auto',
-        5: 'Linja-auto',
-        6: 'Pakettiauto',
-        7: 'Henkilöauto',
-        8: 'Taksi',
-        13: 'Ajoneuvoyhdistelmä',
-        14: 'Traktori tai maatalousajoneuvo',
-        15: 'Matkailuajoneuvo',
-        16: 'Jakeluauto',
-        18: 'Kimppakyytiajoneuvo',
-        19: 'Sotilasajoneuvo',
-        20: 'Vaarallista lastia kuljettava ajoneuvo',
-        21: 'Huoltoajo',
-        22: 'Tontille ajo'
-      };
       return exceptions[e];
     };
     var bindEvents = function() {
@@ -81,7 +84,8 @@
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
-            manoeuvreId: manoeuvreId
+            manoeuvreId: manoeuvreId,
+            exceptionOptions: exceptions
           });
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
         });
