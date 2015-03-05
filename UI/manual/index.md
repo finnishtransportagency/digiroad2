@@ -85,8 +85,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 - Lataa sivu uudelleen n&auml;pp&auml;imist&ouml;n F5-painikkeella.
 - Jos sivun lataaminen uudelleen ei korjaa ongelmaa, ota yhteytt&auml; DR2-operaattoriin: info@digiroad.fi 
 
-2. Kirjautuminen Digiroad-sovellukseen
---------------------------------------
+####Kirjautuminen Digiroad-sovellukseen####
 
 Digiroad-selainsovellukseen kirjaudutaan osoitteessa: https://testiextranet.liikennevirasto.fi/digiroad/. Kirjautumiseen tarvitaan voimassa olevat Liikenneviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
@@ -102,7 +101,7 @@ _Karttak&auml;ytt&ouml;liittym&auml;n katselutila._
 
 Mik&auml;li kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei k&auml;ytt&auml;j&auml;ll&auml; ole oikeuksia Digiroad-sovellukseen. Digiroad-oikeuksia voi pyyt&auml;&auml; digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
-3. Yleist&auml;
+2. Yleist&auml;
 ----------
 
 Sovelluksella on kaksi tilaa: katselu- ja muokkaustila. Jos k&auml;ytt&auml;j&auml;n rooli on katselija, h&auml;n p&auml;&auml;see vain katselutilaan. Muokkaajan roolissa oleva k&auml;ytt&auml;j&auml; p&auml;&auml;see sek&auml; katselu- ett&auml; muokkaustilaan. Kirjautumisen j&auml;lkeen avautuu katselutila, jossa voi ainoastaan katsella eri tietolajeja, esimerkiksi pys&auml;kkej&auml; tai nopeusrajoituksia. Tietolajien muokkaus suoritetaan muokkaustilassa. Molemmissa tiloissa n&auml;kyv&auml;t ainoastaan ne tietolajit, joihin k&auml;ytt&auml;j&auml;ll&auml; on oikeudet (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)). Kartalle voi valita yhden tietolajin kerrallaan, esimerkiksi pys&auml;kit. Tietolaji valitaan sivun vasemman tietolajit-paletista (1).
@@ -119,7 +118,7 @@ _Katselutila._
 
 _Muokkaustila._
 
-3.1 Karttan&auml;kym&auml;n muokkaus
+2.1 Karttan&auml;kym&auml;n muokkaus
 --------------------------
 
 ####Kartan liikutus####
@@ -147,7 +146,7 @@ Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
 
 _Karttan&auml;kym&auml;n muokkaus._
 
-3.2 Tielinkit
+2.2 Tielinkit
 -------------
 
 Karttan&auml;kym&auml;&auml;n voi valita tielinkit valitsemalla tietolajit-paletista (1) Tielinkit. 
@@ -156,7 +155,7 @@ Karttan&auml;kym&auml;&auml;n voi valita tielinkit valitsemalla tietolajit-palet
 
 _Tielinkit._
 
-3.2.1 Tielinkkien haku
+2.2.1 Tielinkkien haku
 ----------------------
 
 Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
@@ -165,7 +164,7 @@ https://devtest.liikennevirasto.fi/digiroad/#linkProperties/373320541
 
 miss&auml; numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
-3.3 Joukkoliikenteen pys&auml;kit
+2.3 Joukkoliikenteen pys&auml;kit
 --------------------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita pys&auml;kkej&auml; valitsemalla tietolajit-paletista (1) Joukkoliikenteen pys&auml;kit. Pys&auml;kkej&auml; valitaan pys&auml;kin voimassaolon mukaan: voimassa olevat, tulevat ja/tai k&auml;yt&ouml;st&auml; poistuneet. Valitseminen toimii samalla tavalla sek&auml; katselu- ett&auml; muokkaustilassa.
@@ -190,7 +189,7 @@ Kelluvista pys&auml;keist&auml; on lista [t&auml;&auml;ll&auml;.](https://testie
 
 _Kelluvien pys&auml;kkien lista._
 
-3.3.1 Joukkoliikenteen pys&auml;kkien haku
+2.3.1 Joukkoliikenteen pys&auml;kkien haku
 -------------------------------------
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin kansallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
@@ -203,7 +202,7 @@ miss&auml; numerosarja 95374 on pys&auml;kin kansallinen ID. Toiminto tarkentaa 
 
 _Joukkoliikenteen pys&auml;kkien haku._
 
-3.4 Nopeusrajoitukset
+2.4 Nopeusrajoitukset
 -----------------------------
 
 Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoituksilla on nopeusrajoitusl&auml;tk&auml;, joka kertoo nopeusrajoituksen arvon ja linkit on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
@@ -214,7 +213,7 @@ Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, e
 
 _Nopeusrajoitusten valinta._
 
-3.5 K&auml;&auml;ntymisrajoitus
+2.5 K&auml;&auml;ntymisrajoitus
 --------------------------------
 
 Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset paksuuntuvat, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymisrajoitukset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml;, on sininen, ja linkki, jolle ei saa k&auml;&auml;nty&auml; on visualisoitu punaisella katkoviivalla. Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa.
@@ -223,7 +222,7 @@ Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-palet
 
 _K&auml;&auml;ntymisrajoitusten valinta._
 
-3.6 Suurin sallittu -valinta
+2.6 Suurin sallittu -valinta
 ------------------------------------
 
 Kartalle voi valita tietolajit-paletista (1) Suurin sallittu -valinnan. Karttaa tarkennettaessa geometriat paksuuntuvat, jotta niiden erottaminen on helpompaa. Geometriat on visualisoitu punaisella v&auml;rill&auml; ja tielinkit, joilla suurinta sallittua arvoa ei ole, on visualisoitu harmaalla v&auml;rill&auml;.
@@ -242,12 +241,12 @@ __Suurin sallittu leveys__
 
 _Suurin sallittu -valinta._
 
-4. Katselutila
+3. Katselutila
 --------------
 
 Katselutila on sovelluksen tietolajien katselemista varten. Katselutilassa ei voi muokata tietolajeja.
 
-4.1 Tielinkin tietojen katselu
+3.1 Tielinkin tietojen katselu
 ------------------------------
 
 Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi.
@@ -277,7 +276,7 @@ _Tielinkit visualisoitu tielinkin tyypin mukaan._
 
 _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
-4.2 Pys&auml;kin tietojen katselu
+3.2 Pys&auml;kin tietojen katselu
 ----------------------------
 
 Yksitt&auml;isen pys&auml;kin ominaisuustiedot tulevat n&auml;kyviin, kun pys&auml;kki&auml; klikataan. T&auml;ll&ouml;in sivun oikeaan laitaan avautuu Google Street View (5) ja ominaisuustieto-n&auml;kym&auml; (6). Valitulle pys&auml;kille avautuu infokupla, jossa n&auml;kyy pys&auml;kin valtakunnallinen ID, suomenkielinen nimi, liikenn&ouml;intisuuntima ja pys&auml;kin tyyppi kuvana. (4)
@@ -290,7 +289,7 @@ Ominaisuustieto-n&auml;kym&auml;ss&auml; kaikki kent&auml;t ovat disabloituja el
 
 _Joukkoliikenteen pys&auml;kin tietojen katselu._
 
-4.3 Nopeusrajoituksen tietojen katselu
+3.3 Nopeusrajoituksen tietojen katselu
 --------------------------------------
 
 Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
@@ -307,7 +306,7 @@ Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusr
 
 _Nopeusrajoitusten visualisointi._
 
-4.4 k&auml;&auml;ntymisrajoituksen tietojen katselu
+3.4 k&auml;&auml;ntymisrajoituksen tietojen katselu
 ---------------------------------------------------
 
 Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta sen geometriaa.  Valittu k&auml;&auml;ntymisrajoitus (4) korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6).
@@ -316,7 +315,7 @@ Yksitt&auml;isen k&auml;&auml;ntymisrajoituksen voi valita klikkaamalla kartalta
 
 _K&auml;&auml;ntymisrajoituksen tietojen katselu._
 
-4.5 Suurin sallittu -valinnan tietojen katselu
+3.5 Suurin sallittu -valinnan tietojen katselu
 ---------------------------------------------
 
 Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen geometriaa (4). Geometria tummentuu ja muut geometriat n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu valitun kohteen ominaisuustieton&auml;kym&auml; (6).
@@ -325,7 +324,7 @@ Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen g
 
 _Suurin sallittu -katsleutila._
 
-5. Muokkaustila
+4. Muokkaustila
 ---------------
 
 Muokkaustila aktivoidaan painamalla "Siirry muokkaustilaan"-painiketta (3). Muokkaustila on eri tietolajien muokkaamista varten ja se on ulkoasultaan erilainen kuin katselutila. Kartan yl&auml;osassa on teksti: "Olet muokkaustilassa. Kuntak&auml;ytt&auml;jien tulee kohdistaa muutokset katuverkolle, ELY-k&auml;ytt&auml;jien maantieverkolle."
@@ -348,12 +347,12 @@ Jotta tietolajeja voi muokata, t&auml;ytyy kartan mittakaavan olla 1:20 000 tai 
 
 _Muutos-dialogi._
 
-5.1 Tielinkit
+4.1 Tielinkit
 -------------
 
 Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla.
 
-5.1.1 Tielinkin ominaisuustietojen muokkaus
+4.1.1 Tielinkin ominaisuustietojen muokkaus
 -------------------------------------------
 
 Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan. Muokattava tielinkki valitaan hiirell&auml; klikkaamalla.
@@ -364,12 +363,12 @@ Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja ti
 
 _Tielinkin ominaisuustietojen muokkaus._
 
-5.2 Joukkoliikenteen pys&auml;kit
+4.2 Joukkoliikenteen pys&auml;kit
 ----------------------------
 
 Joukkoliikenteen pys&auml;kit ovat julkisen liikenteen k&auml;yt&ouml;ss&auml; olevia pys&auml;kkej&auml;: linja-autojen paikallisliikenteen, linja-autojen kaukoliikenteen, linja-autojen pikavuorojen ja raitiovaunujen pys&auml;kit sek&auml; virtuaalipys&auml;kit.
 
-5.2.1 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus
+4.2.1 Joukkoliikenteen pys&auml;kin ominaisuustietojen muokkaus
 --------------------------------------------------------
 Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkausty&ouml;kalun (12). Muokattava pys&auml;kki valitaan hiirell&auml; klikkaamalla. P&auml;&auml;llekk&auml;in esitetyist&auml; pys&auml;keist&auml; voi valita yhden pys&auml;kin klikkaamalla pys&auml;kki&auml;. Pinosta valitun pys&auml;kin erottaa sille avautuvasta kuplasta. Valittaessa pys&auml;kin sivun oikeaan laitaan avautuu Google Street View -n&auml;kym&auml; (5) pys&auml;kist&auml; sek&auml; pys&auml;kin ominaisuustiedot (6). Jos pysäkillä ei ole tyyppiä, tulee se asettaa ennen tallentamista. Pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; n&auml;kyy ilmoitus, jos pys&auml;kilt&auml; puuttuu pakollisia tietoja.
 
@@ -450,7 +449,7 @@ __Pys&auml;kin omistaja:__ Kunta, Helsingin seudun liikenne, ELY-keskus tai Liik
 __Palauteosoite:__ Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.
 __Lis&auml;tiedot:__ Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".
 
-5.2.2 Pys&auml;kin siirt&auml;minen
+4.2.2 Pys&auml;kin siirt&auml;minen
 -----------------------
 
 Pys&auml;kki&auml; siirret&auml;&auml;n k&auml;ytt&auml;m&auml;ll&auml; muokkausty&ouml;kalua (12). Pys&auml;kkej&auml; voi siirt&auml;&auml; vain tarpeeksi tarkalta mittakaavatasolta, joka on 1:10 000 tai tarkempi (9).
@@ -465,7 +464,7 @@ Pys&auml;kin siirto t&auml;ytyy tallentaa tai peruuttaa ennen kuin voi siirty&au
 
 _Joukkoliikenteen pys&auml;kin siirt&auml;minen._
 
-5.2.3 Uuden pys&auml;kin lis&auml;&auml;minen
+4.2.3 Uuden pys&auml;kin lis&auml;&auml;minen
 ----------------------------
 
 Uusia pys&auml;kkej&auml; voi lis&auml;t&auml;, kun mittakaavataso on 1:10 000 tai tarkempi. T&auml;m&auml; mittakaavataso on yht&auml; tasoa tarkempi kuin uloin mittakaavataso jolla pys&auml;kit n&auml;ytet&auml;&auml;n. Uusi pys&auml;kki luodaan klikkaamalla kartan tiest&ouml;st&auml; haluttu sijainti pys&auml;kille lis&auml;ysty&ouml;kalulla (13). Jos valitulla kohdalla ei ole tielinkki&auml;, muodostuu pys&auml;kki l&auml;himm&auml;lle tielinkille. Jos pys&auml;kin yritt&auml;&auml; luoda liian kauas l&auml;himm&auml;st&auml; tielinkist&auml;, ei pys&auml;kki&auml; muodostu. Uusi pys&auml;kki on korostettu sinisell&auml; v&auml;rill&auml; (4) ja sivun oikealle puolelle avautuu Google Street View (5) ja ominaisuustieton&auml;kym&auml; (6), jossa pys&auml;kille tallennetaan tiedossa olevat ominaisuustiedot.
@@ -491,7 +490,7 @@ Uuden pys&auml;kin lis&auml;&auml;misen vaiheet:
 
 _Joukkoliikenteen pys&auml;kin lis&auml;&auml;minen._
 
-5.2.4 Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi
+4.2.4 Pys&auml;kin m&auml;&auml;ritt&auml;minen k&auml;yt&ouml;st&auml; poistuneeksi
 ------------------------------
 
 Olemassa oleva pys&auml;kki m&auml;&auml;ritet&auml;&auml;n k&auml;yt&ouml;st&auml; poistuneeksi muokkausty&ouml;kalulla (12). Kartan mittakaavan tulee olla 1:20 000 tai tarkempi, jotta pys&auml;kin voi m&auml;&auml;ritt&auml;&auml; k&auml;yt&ouml;st&auml; poistuneeksi (9). K&auml;yt&ouml;st&auml; poistunut pys&auml;kki valitaan klikkaamalla pys&auml;kkikuvaketta, jolloin avautuu ominaisuustieton&auml;kym&auml; (6). Valittu pys&auml;kki korostuu sinisell&auml; huomiov&auml;rill&auml; (4). Pys&auml;kin k&auml;yt&ouml;st&auml; poistuneeksi m&auml;&auml;ritt&auml;minen suoritetaan asettamalla ominaisuustieton&auml;kym&auml;n (6) "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n (20) pys&auml;kin viimeinen voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;. Pys&auml;kin tila muuttuu k&auml;yt&ouml;st&auml; poistuneeksi viimeist&auml; voimassaolop&auml;iv&auml;m&auml;&auml;r&auml;&auml; seuraavana p&auml;iv&auml;n&auml;. Pys&auml;kin poistamisen voi perua valitsemalla "Viimeinen voimassaolop&auml;iv&auml;" -kentt&auml;&auml;n "Ei tietoa" avautuvasta kalenterista tai pyyhkim&auml;ll&auml; kent&auml;n tyhj&auml;ksi. Jos pys&auml;kilt&auml; puuttuu tyyppi tai suomenkielinen nimi, tulee ne t&auml;ydent&auml;&auml; ennen tallentamista.
@@ -513,12 +512,12 @@ Vanhan pys&auml;kin poistamisen vaiheet:
 
 _Joukkoliikenteen pys&auml;kin poistaminen._
 
-5.3 Nopeusrajoitukset
+4.3 Nopeusrajoitukset
 ---------------------
 
 Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus.
 
-5.3.1 Nopeusrajoituksen ominaisuustietojen muokkaus
+4.3.1 Nopeusrajoituksen ominaisuustietojen muokkaus
 --------------------------------------------------
 
 Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
@@ -539,7 +538,7 @@ Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeus
 
 _Useamman nopeusrajoituksen arvon muokkaus kerralla._
 
-5.3.2 Nopeusrajoituksen katkaiseminen
+4.3.2 Nopeusrajoituksen katkaiseminen
 -------------------------------------
 
 Nopeusrajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (13). Leikkausty&ouml;kalulla klikataan nopeusrajoituksen geometriasta kohtaa, josta nopeusrajoitus halutaan katkaista. Nopeusrajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;.
@@ -554,10 +553,10 @@ Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lke
 
 Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
 
-5.4 K&auml;&auml;ntymisrajoitukset
+4.4 K&auml;&auml;ntymisrajoitukset
 ----------------------------------
 
-5.4.1 K&auml;&auml;ntymisrajoitusten muokkaus
+4.4.1 K&auml;&auml;ntymisrajoitusten muokkaus
 ---------------------------------------------
 
 K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
@@ -574,15 +573,13 @@ Uusi k&auml;&auml;ntymisrajoitus lis&auml;t&auml;&auml;n valitsemalla kartalta s
 
 K&auml;&auml;ntymisrajoituksen voi poistaa valitsemalla sen kartalta. Ominaisuustieton&auml;kym&auml;&auml;n avautuu k&auml;&auml;ntymisrajoituksen kohteet. Poistamalla valinnan kaikista k&auml;&auml;ntymisrajoituksen kohteista ja tallentamalla, k&auml;&auml;ntymisrajoitus poistuu.
 
-5.5 Suurin sallittu -valinta
+4.5 Suurin sallittu -valinta
 ----------------------------
 
 Suurin sallittu -valintoja ovat: suurin sallittu massa, yhdistelm&auml;n suurin sallittu massa, suurin sallittu akselimassa, suurin sallittu telimassa, suurin sallittu korkeus, ajoneuvon- tai yhdistelm&auml;n suurin sallittu pituus ja suurin sallittu leveys.
 
-5.5.1 Suurin sallittu -valinnan ominaisuustietojen muokkaus
+4.5.1 Suurin sallittu -valinnan ominaisuustietojen muokkaus
 ----------------------------------------------------------
-
-Toistaiseksi suurin sallittu -valintoja voi muokata vain operaattorik&auml;ytt&auml;j&auml;. Muilla k&auml;ytt&auml;jill&auml; ei ole muokkaustilaa k&auml;yt&ouml;ss&auml;&auml;n.
 
 Suurin sallittu -valintaa muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
@@ -592,7 +589,7 @@ Huom! Rajoituksen arvokent&auml;ss&auml; muiden kuin numeroarvojen tallentaminen
 
 _Suurin sallittu -valinnan muokkaus._
 
-5.5.2 Suurin sallittu -kohteen poistaminen
+4.5.2 Suurin sallittu -kohteen poistaminen
 -------------------------------------------
 
 Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&auml; (6) valitsemalla Rajoitus-kohdasta "Ei rajoitusta".
@@ -601,7 +598,7 @@ Tielinkin suurin sallittu -kohde poistetaan ominaisuustieton&auml;kym&auml;ss&au
 
 _Suurin sallittu -kohteen poistaminen._
 
-5.5.3 Uuden suurin sallittu -kohteen lis&auml;&auml;minen
+4.5.3 Uuden suurin sallittu -kohteen lis&auml;&auml;minen
 -----------------------------------------------------------
 
 Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geometrian (4) Suurin sallittu -muokkaustilassa. Ominaisuustieton&auml;kym&auml;&auml;n (6) avautuu tielinkin suurin sallittu -kohteen tiedot. Valitaan "Rajoitus" ja sy&ouml;tet&auml;&auml;n suurin sallittu arvo sy&ouml;tekentt&auml;&auml;n. Suurin sallittu arvo tallennetaan painamalla Tallenna (8). Uuden suurin sallittu -kohteen lis&auml;&auml;misen voi perua Peruuta-painikkeella.
@@ -610,7 +607,7 @@ Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geome
 
 _Suurin sallittu -kohteen lis&auml;&auml;minen._
 
-5.5.4 Suurin sallittu -kohteen katkaisu
+4.5.4 Suurin sallittu -kohteen katkaisu
 ----------------------------------------
 
 Rajoituksen voi jakaa kahteen osaan leikkausty&ouml;kalulla (1). Siten leikkausty&ouml;kalun avulla voi m&auml;&auml;ritell&auml; lyhyit&auml; rajoituksia poistamalla voimasta katkaisussa j&auml;ljelle j&auml;&auml;neit&auml; rajoituksia. Leikkausty&ouml;kalulla klikataan rajoituksen geometriasta kohtaa, josta rajoitus halutaan katkaista. Rajoituksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml; (2). 
