@@ -13,11 +13,21 @@
       normal: { strokeWidth: 8},
       overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
     };
+    var oneWaySignSizeLookup = {
+      9: { pointRadius: 0 },
+      10: { pointRadius: 12 },
+      11: { pointRadius: 14 },
+      12: { pointRadius: 16 },
+      13: { pointRadius: 20 },
+      14: { pointRadius: 24 },
+      15: { pointRadius: 24 }
+    };
     var defaultStyleMap = new OpenLayers.StyleMap({
       'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}' }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
@@ -28,6 +38,8 @@
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
 
     var unselectManoeuvre = function() {
       selectedManoeuvreSource.close();
