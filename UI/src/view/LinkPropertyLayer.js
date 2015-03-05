@@ -81,18 +81,6 @@
       roadLayer.layer.addFeatures(oneWaySigns);
     };
 
-    var removeOneWaySigns = function() {
-      var oneWaySigns = _.filter(roadLayer.layer.features, function(feature) {
-        return feature.attributes.rotation !== undefined;
-      });
-      roadLayer.layer.removeFeatures(oneWaySigns);
-    };
-
-    var redrawOneWaySigns = function(roadLinks) {
-      removeOneWaySigns();
-      drawOneWaySigns(roadLinks);
-    };
-
     var createDashedLineFeatures = function(roadLinks, dashedLineFeature) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
