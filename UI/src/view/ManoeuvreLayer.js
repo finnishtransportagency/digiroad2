@@ -1,7 +1,7 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, selectedManoeuvreSource, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection) {
     var layerName = 'manoeuvre';
-    Layer.call(this, layerName);
+    Layer.call(this, layerName, geometryUtils);
     var me = this;
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
