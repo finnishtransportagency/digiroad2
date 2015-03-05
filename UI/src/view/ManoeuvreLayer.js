@@ -14,15 +14,15 @@
       overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12 }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}' }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12 })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12 }))
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}' })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12, rotation: '${rotation}' }))
     });
     selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
