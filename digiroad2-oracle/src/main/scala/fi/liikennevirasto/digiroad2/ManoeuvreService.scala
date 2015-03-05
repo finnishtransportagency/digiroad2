@@ -12,7 +12,7 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
 
-case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
+case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int])
 
 object ManoeuvreService {
   def getSourceRoadLinkIdById(id: Long): Long = {
@@ -88,7 +88,7 @@ object ManoeuvreService {
       val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
       val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
 
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId)
+      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, Seq(7, 13))
     }.toSeq
   }
 
