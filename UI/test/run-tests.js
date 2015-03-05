@@ -8,6 +8,7 @@ require.config({
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
         'LinearAsset':              '../src/utils/LinearAsset',
+        'Layer':                    '../src/view/Layer',
         'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
         'GeometryUtils':            '../src/utils/GeometryUtils',
         'SpeedLimitsCollection':    '../src/model/SpeedLimitsCollection',
@@ -37,6 +38,7 @@ require.config({
         'SelectedAssetModel': {
             deps: ['EventBus', 'lodash']
         },
+        'Layer': { exports: 'Layer' },
         'LinearAsset': {
             exports: 'LinearAsset'
         },

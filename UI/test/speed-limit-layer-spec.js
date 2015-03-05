@@ -1,5 +1,5 @@
-define(['chai', 'TestHelpers', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils', 'LinearAsset'],
-       function(chai, testHelpers, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils, LinearAsset) {
+define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils', 'LinearAsset'],
+       function(chai, testHelpers, BaseLayer, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils, LinearAsset) {
   var assert = chai.assert;
 
   describe('SpeedLimitLayer', function() {
