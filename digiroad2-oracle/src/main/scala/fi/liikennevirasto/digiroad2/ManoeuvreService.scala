@@ -80,6 +80,10 @@ object ManoeuvreService {
     val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList, bonecpToInternalConnection(dynamicSession.conn))
 
     val manoeuvresById: Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = manoeuvres.toList.groupBy(_._1)
+
+    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toList.distinct, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
+
     manoeuvresById.filter { case (id, links) =>
       links.size == 2 && links.exists(_._4 == 1) && links.exists(_._4 == 3)
     }.map { case (id, links) =>
@@ -88,7 +92,7 @@ object ManoeuvreService {
       val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
       val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
 
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, Seq(7, 13))
+      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()))
     }.toSeq
   }
 
