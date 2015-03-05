@@ -6,23 +6,23 @@
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
-      0: { strokeColor: '#a4a4a2' },
-      1: { strokeColor: '#0000ff' }
+      0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
+      1: { strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }
     };
     var featureTypeLookup = {
       normal: { strokeWidth: 8},
       overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({  strokeOpacity: 0.65  }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12 }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9 })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3 }))
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12 })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12 }))
     });
     selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
@@ -113,8 +113,10 @@
 
     var draw = function() {
       selectControl.deactivate();
-      roadLayer.drawRoadLinks(manoeuvresCollection.getAll(), map.getZoom());
-      drawDashedLineFeatures(manoeuvresCollection.getAll());
+      var linksWithManoeuvres = manoeuvresCollection.getAll();
+      roadLayer.drawRoadLinks(linksWithManoeuvres, map.getZoom());
+      drawDashedLineFeatures(linksWithManoeuvres);
+      me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres);
       reselectManoeuvre();
       if (selectedManoeuvreSource.isDirty()) {
         selectControl.deactivate();
