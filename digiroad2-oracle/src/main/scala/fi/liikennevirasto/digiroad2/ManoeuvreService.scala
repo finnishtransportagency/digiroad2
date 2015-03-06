@@ -77,15 +77,11 @@ object ManoeuvreService {
   }
 
   private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList, bonecpToInternalConnection(dynamicSession.conn))
-
-    val manoeuvresById: Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = manoeuvres.toList.groupBy(_._1)
-
-    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toList.distinct, bonecpToInternalConnection(dynamicSession.conn))
-    val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
+    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList)
+    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toList.distinct)
 
     manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._4 == 1) && links.exists(_._4 == 3)
+      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
     }.map { case (id, links) =>
       val (_, _, sourceRoadLinkId, _, _, _) = links.find(_._4 == FirstElement).get
       val (_, _, destRoadLinkId, _, _, _) = links.find(_._4 == LastElement).get
@@ -95,5 +91,18 @@ object ManoeuvreService {
       Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()))
     }.toSeq
   }
+
+  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: List[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = {
+    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvresById = manoeuvres.toList.groupBy(_._1)
+    manoeuvresById
+  }
+
+  private def fetchManoeuvreExceptionsByIds(manoeuvreIds: List[Long]): Map[Long, Seq[Int]] = {
+    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
+    manoeuvreExceptionsById
+  }
+
 
 }
