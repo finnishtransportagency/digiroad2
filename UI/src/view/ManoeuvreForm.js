@@ -159,9 +159,9 @@
           var isChecked = target.is(':checked');
           var selects = target.parents('div.adjacent-link').find('select');
           if(isChecked){
-            selects.prop('disabled', false)
+            selects.prop('disabled', false);
           } else {
-            selects.prop('disabled', 'disabled')
+            selects.prop('disabled', 'disabled');
           }
         });
       });
