@@ -47,7 +47,7 @@
       '</div>';
     var newExceptionTemplate = '' +
       '<select class="form-control new-exception">' +
-        '<option></option>' +
+        '<option class="empty"></option>' +
         '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
       '</select>';
 
@@ -139,6 +139,7 @@
           exceptionOptions: exceptions
         }));
         selectElement.removeClass('new-exception');
+        selectElement.find('option.empty').remove();
       });
     };
 
