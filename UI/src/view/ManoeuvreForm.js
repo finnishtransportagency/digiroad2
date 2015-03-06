@@ -34,7 +34,7 @@
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
-          '<input type="checkbox" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
+          '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<select class="form-control exception">' +
@@ -118,8 +118,8 @@
         rootElement.find('.adjacent-link').on('change', 'input', function(event) {
           var eventTarget = $(event.currentTarget);
           var formGroup = $(event.delegateTarget);
-          var destRoadLinkId = parseInt(eventTarget.attr('roadLinkId'), 10);
-          var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
+          var destRoadLinkId = parseInt(formGroup.attr('roadLinkId'), 10);
+          var destMmlId = parseInt(formGroup.attr('mmlId'), 10);
           var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
           if (eventTarget.attr('checked') === 'checked') {
             selectedManoeuvreSource.addManoeuvre({
