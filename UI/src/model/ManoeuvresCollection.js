@@ -72,6 +72,7 @@
 
     var addManoeuvre = function(newManoeuvre) {
       if (_.isNull(newManoeuvre.manoeuvreId)) {
+        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, newManoeuvre); });
         addedManoeuvres.push(newManoeuvre);
       } else {
         _.remove(removedManoeuvres, function(x) {

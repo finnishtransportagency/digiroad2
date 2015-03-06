@@ -30,7 +30,7 @@
         '<% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
-      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" style="display: none">' +
+      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
@@ -106,6 +106,15 @@
 
         toggleMode(applicationModel.isReadOnly());
 
+        var manoeuvreExceptions = function(formGroupElement) {
+          var selectedOptions = formGroupElement.find('select option:selected');
+          return _.chain(selectedOptions)
+            .map(function(option) { return $(option).val(); })
+            .reject(function(value) { return _.isEmpty(value); })
+            .map(function(value) { return parseInt(value, 10); })
+            .value();
+        };
+
         rootElement.find('.adjacent-link').on('change', 'input', function(event) {
           var eventTarget = $(event.currentTarget);
           var formGroup = $(event.delegateTarget);
@@ -113,14 +122,21 @@
           var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
           var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.addManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId, destMmlId: destMmlId });
+            selectedManoeuvreSource.addManoeuvre({
+              manoeuvreId: manoeuvreId,
+              destRoadLinkId: destRoadLinkId,
+              destMmlId: destMmlId,
+              exceptions: manoeuvreExceptions(formGroup)
+            });
           } else {
             selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
           }
         });
         rootElement.on('change', '.exception', function(event) {
           var selectElement = $(event.target);
-          var manoeuvreId = selectElement.parent().attr('manoeuvreId');
+          var manoeuvreId = !_.isEmpty(selectElement.parent().attr('manoeuvreId')) ? parseInt(selectElement.parent().attr('manoeuvreId'), 10) : null;
+          var destRoadLinkId = parseInt(selectElement.parent().attr('roadLinkId'), 10);
+          var destMmlId = parseInt(selectElement.parent().attr('mmlId'), 10);
           var selectedOptions = selectElement.parent().find('select option:selected');
           var exceptions = _.chain(selectedOptions)
             .map(function(option) { return $(option).val(); })
@@ -129,7 +145,16 @@
             .value();
           console.log(exceptions);
           console.log(selectElement.parent().attr('manoeuvreId'));
-          selectedManoeuvreSource.setExceptions(manoeuvreId, exceptions);
+          if (_.isNull(manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre({
+              manoeuvreId: manoeuvreId,
+              destRoadLinkId: destRoadLinkId,
+              destMmlId: destMmlId,
+              exceptions: exceptions
+            });
+          } else {
+            selectedManoeuvreSource.setExceptions(manoeuvreId, exceptions);
+          }
         });
         rootElement.on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
