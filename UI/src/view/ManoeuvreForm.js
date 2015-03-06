@@ -156,8 +156,9 @@
         });
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
           var target = $(event.target);
+          var formGroup = $(event.delegateTarget);
           var isChecked = target.is(':checked');
-          var selects = target.parents('div.adjacent-link').find('select');
+          var selects = formGroup.find('select');
           if(isChecked){
             selects.prop('disabled', false);
           } else {
