@@ -117,6 +117,14 @@
             selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
           }
         });
+        rootElement.on('change', '.new-exception', function(event) {
+          var selectElement = $(event.target);
+          selectElement.parent().append(_.template(newExceptionTemplate, {
+            exceptionOptions: exceptions
+          }));
+          selectElement.removeClass('new-exception');
+          selectElement.find('option.empty').remove();
+        });
       });
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
@@ -132,14 +140,6 @@
       });
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
-      });
-      rootElement.on('change', '.new-exception', function(event) {
-        var selectElement = $(event.target);
-        selectElement.parent().append(_.template(newExceptionTemplate, {
-          exceptionOptions: exceptions
-        }));
-        selectElement.removeClass('new-exception');
-        selectElement.find('option.empty').remove();
       });
     };
 
