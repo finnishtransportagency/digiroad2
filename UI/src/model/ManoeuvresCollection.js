@@ -105,6 +105,7 @@
     var cancelModifications = function() {
       addedManoeuvres = [];
       removedManoeuvres = [];
+      updatedExceptions = {};
     };
 
     var save = function(callback) {

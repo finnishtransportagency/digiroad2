@@ -145,7 +145,7 @@
             selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
           }
         });
-        rootElement.on('change', '.new-exception', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
           selectElement.parent().append(_.template(newExceptionTemplate, {
             exceptionOptions: exceptions,
@@ -154,7 +154,7 @@
           selectElement.removeClass('new-exception');
           selectElement.find('option.empty').remove();
         });
-        rootElement.on('click', '.checkbox :checkbox', function(event) {
+        rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
           var target = $(event.target);
           var isChecked = target.is(':checked');
           var selects = target.parents('div.adjacent-link').find('select');
