@@ -43,11 +43,13 @@
           '<% }) %>' +
         '</select>' +
         '<% }) %>' +
-        '<select class="form-control">' +
-          '<option></option>' +
-          '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
-        '</select>' +
+        '<%= newExceptionSelect %>' +
       '</div>';
+    var newExceptionTemplate = '' +
+      '<select class="form-control new-exception">' +
+        '<option></option>' +
+        '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
+      '</select>';
 
     var exceptions = {
       4: 'Kuorma-auto',
@@ -95,7 +97,8 @@
             checked: checked,
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptions,
-            localizedExceptions: localizedExceptions
+            localizedExceptions: localizedExceptions,
+            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions })
           });
 
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
@@ -129,6 +132,13 @@
       });
       rootElement.on('click', '.manoeuvres button.cancel', function() {
         selectedManoeuvreSource.cancel();
+      });
+      rootElement.on('change', '.new-exception', function(event) {
+        var selectElement = $(event.target);
+        selectElement.parent().append(_.template(newExceptionTemplate, {
+          exceptionOptions: exceptions
+        }));
+        selectElement.removeClass('new-exception');
       });
     };
 
