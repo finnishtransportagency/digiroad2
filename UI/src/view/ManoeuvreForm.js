@@ -106,9 +106,9 @@
 
         toggleMode(applicationModel.isReadOnly());
 
-        rootElement.find('.adjacent-link input').change(function(event) {
+        rootElement.find('.adjacent-link').on('change', 'input', function(event) {
           var eventTarget = $(event.currentTarget);
-          var formGroup = eventTarget.parentsUntil('.form').filter('.form-group');
+          var formGroup = $(event.delegateTarget);
           var destRoadLinkId = parseInt(eventTarget.attr('roadLinkId'), 10);
           var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
           var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
