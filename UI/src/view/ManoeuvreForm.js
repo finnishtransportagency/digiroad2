@@ -30,7 +30,7 @@
         '<% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
-      '<div class="form-group adjacent-link style="display: none">' +
+      '<div class="form-group adjacent-link" style="display: none">' +
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
