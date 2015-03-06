@@ -34,7 +34,7 @@
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
-          '<input type="checkbox" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
+          '<input type="checkbox" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<select class="form-control exception">' +
@@ -108,9 +108,10 @@
 
         rootElement.find('.adjacent-link input').change(function(event) {
           var eventTarget = $(event.currentTarget);
+          var formGroup = eventTarget.parentsUntil('.form').filter('.form-group');
           var destRoadLinkId = parseInt(eventTarget.attr('roadLinkId'), 10);
           var destMmlId = parseInt(eventTarget.attr('mmlId'), 10);
-          var manoeuvreId = !_.isEmpty(eventTarget.attr('manoeuvreId')) ? parseInt(eventTarget.attr('manoeuvreId'), 10) : null;
+          var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
           if (eventTarget.attr('checked') === 'checked') {
             selectedManoeuvreSource.addManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId, destMmlId: destMmlId });
           } else {
