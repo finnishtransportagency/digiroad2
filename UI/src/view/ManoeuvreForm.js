@@ -46,7 +46,7 @@
         '<%= newExceptionSelect %>' +
       '</div>';
     var newExceptionTemplate = '' +
-      '<select class="form-control exception new-exception">' +
+      '<select class="form-control exception new-exception" <% print(checked ? "" : "disabled") %> >' +
         '<option class="empty"></option>' +
         '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
       '</select>';
@@ -98,7 +98,7 @@
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptions,
             localizedExceptions: localizedExceptions,
-            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions })
+            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked })
           });
 
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
@@ -154,10 +154,21 @@
         rootElement.on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
           selectElement.parent().append(_.template(newExceptionTemplate, {
-            exceptionOptions: exceptions
+            exceptionOptions: exceptions,
+            checked: true
           }));
           selectElement.removeClass('new-exception');
           selectElement.find('option.empty').remove();
+        });
+        rootElement.on('click', '.checkbox :checkbox', function(event) {
+          var target = $(event.target);
+          var isChecked = target.is(':checked');
+          var selects = target.parents('div.adjacent-link').find('select');
+          if(isChecked){
+            selects.prop('disabled', false)
+          } else {
+            selects.prop('disabled', 'disabled')
+          }
         });
       });
       eventbus.on('manoeuvres:unselected', function() {
