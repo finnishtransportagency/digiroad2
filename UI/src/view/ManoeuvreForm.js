@@ -36,7 +36,15 @@
         '<div class="checkbox" >' +
           '<input type="checkbox" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
+      '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<select class="form-control">' +
+          '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
+            '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
+          '<% }) %>' +
+        '</select>' +
+      '<% }) %>' +
+        '<select class="form-control">' +
+          '<option></option>' +
           '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
         '</select>' +
       '</div>';
@@ -85,8 +93,13 @@
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
-            exceptionOptions: exceptions
+            exceptionOptions: exceptions,
+            localizedExceptions: []
           });
+          if(manoeuvre) {
+            attributes.localizedExceptions = _.map(manoeuvre.exceptions, function(e) { return localizeException(e); });
+          }
+
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
         });
 
