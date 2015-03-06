@@ -77,8 +77,8 @@ object ManoeuvreService {
   }
 
   private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList)
-    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toList.distinct)
+    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toSeq)
+    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
 
     manoeuvresById.filter { case (id, links) =>
       links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
@@ -92,17 +92,15 @@ object ManoeuvreService {
     }.toSeq
   }
 
-  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: List[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = {
+  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = {
     val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
     val manoeuvresById = manoeuvres.toList.groupBy(_._1)
     manoeuvresById
   }
 
-  private def fetchManoeuvreExceptionsByIds(manoeuvreIds: List[Long]): Map[Long, Seq[Int]] = {
+  private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
     val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
     val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
     manoeuvreExceptionsById
   }
-
-
 }
