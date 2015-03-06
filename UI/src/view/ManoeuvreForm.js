@@ -153,8 +153,7 @@
           selectElement.find('option.empty').remove();
         });
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
-          var target = $(event.target);
-          var isChecked = target.is(':checked');
+          var isChecked = $(event.target).is(':checked');
           var selects = $(event.delegateTarget).find('select');
           if(isChecked){
             selects.prop('disabled', false);
