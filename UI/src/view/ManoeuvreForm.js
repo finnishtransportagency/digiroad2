@@ -106,6 +106,18 @@
 
         toggleMode(applicationModel.isReadOnly());
 
+        var manoeuvreData = function(formGroupElement) {
+          var destRoadLinkId = parseInt(formGroupElement.attr('roadLinkId'), 10);
+          var destMmlId = parseInt(formGroupElement.attr('mmlId'), 10);
+          var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
+          return {
+            manoeuvreId: manoeuvreId,
+            destRoadLinkId: destRoadLinkId,
+            destMmlId: destMmlId,
+            exceptions: manoeuvreExceptions(formGroupElement)
+          };
+        };
+
         var manoeuvreExceptions = function(formGroupElement) {
           var selectedOptions = formGroupElement.find('select option:selected');
           return _.chain(selectedOptions)
@@ -117,38 +129,20 @@
 
         rootElement.find('.adjacent-link').on('change', 'input', function(event) {
           var eventTarget = $(event.currentTarget);
-          var formGroup = $(event.delegateTarget);
-          var destRoadLinkId = parseInt(formGroup.attr('roadLinkId'), 10);
-          var destMmlId = parseInt(formGroup.attr('mmlId'), 10);
-          var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
+          var manoeuvre = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
-            selectedManoeuvreSource.addManoeuvre({
-              manoeuvreId: manoeuvreId,
-              destRoadLinkId: destRoadLinkId,
-              destMmlId: destMmlId,
-              exceptions: manoeuvreExceptions(formGroup)
-            });
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
           } else {
-            selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
+            selectedManoeuvreSource.removeManoeuvre(manoeuvre);
           }
         });
         rootElement.find('.adjacent-link').on('change', '.exception', function(event) {
-          var formGroup = $(event.delegateTarget);
-          var destRoadLinkId = parseInt(formGroup.attr('roadLinkId'), 10);
-          var destMmlId = parseInt(formGroup.attr('mmlId'), 10);
-          var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
-          var exceptions = manoeuvreExceptions(formGroup);
-          console.log(exceptions);
-          console.log(formGroup.attr('manoeuvreId'));
+          var manoeuvre = manoeuvreData($(event.delegateTarget));
+          var manoeuvreId = manoeuvre.manoeuvreId;
           if (_.isNull(manoeuvreId)) {
-            selectedManoeuvreSource.addManoeuvre({
-              manoeuvreId: manoeuvreId,
-              destRoadLinkId: destRoadLinkId,
-              destMmlId: destMmlId,
-              exceptions: exceptions
-            });
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
           } else {
-            selectedManoeuvreSource.setExceptions(manoeuvreId, exceptions);
+            selectedManoeuvreSource.setExceptions(manoeuvreId, manoeuvre.exceptions);
           }
         });
         rootElement.on('change', '.new-exception', function(event) {
