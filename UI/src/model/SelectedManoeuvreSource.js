@@ -36,12 +36,12 @@
     };
 
     var addManoeuvre = function(manoeuvre) {
-      var newManoeuvre = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, manoeuvre);
+      var newManoeuvre = _.merge({}, { sourceRoadLinkId: current.roadLinkId }, manoeuvre);
       collection.addManoeuvre(newManoeuvre);
     };
 
     var removeManoeuvre = function(manoeuvre) {
-      var manoeuvreToBeRemoved = _.merge({}, {sourceRoadLinkId: current.roadLinkId, sourceMmlID:current.mmlId}, manoeuvre);
+      var manoeuvreToBeRemoved = _.merge({}, { sourceRoadLinkId: current.roadLinkId }, manoeuvre);
       collection.removeManoeuvre(manoeuvreToBeRemoved);
     };
 
