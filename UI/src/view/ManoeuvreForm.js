@@ -132,14 +132,14 @@
             selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
           }
         });
-        rootElement.on('change', '.exception', function(event) {
-          var selectElement = $(event.target);
-          var manoeuvreId = !_.isEmpty(selectElement.parent().attr('manoeuvreId')) ? parseInt(selectElement.parent().attr('manoeuvreId'), 10) : null;
-          var destRoadLinkId = parseInt(selectElement.parent().attr('roadLinkId'), 10);
-          var destMmlId = parseInt(selectElement.parent().attr('mmlId'), 10);
-          var exceptions = manoeuvreExceptions(selectElement.parent());
+        rootElement.find('.adjacent-link').on('change', '.exception', function(event) {
+          var formGroup = $(event.delegateTarget);
+          var destRoadLinkId = parseInt(formGroup.attr('roadLinkId'), 10);
+          var destMmlId = parseInt(formGroup.attr('mmlId'), 10);
+          var manoeuvreId = !_.isEmpty(formGroup.attr('manoeuvreId')) ? parseInt(formGroup.attr('manoeuvreId'), 10) : null;
+          var exceptions = manoeuvreExceptions(formGroup);
           console.log(exceptions);
-          console.log(selectElement.parent().attr('manoeuvreId'));
+          console.log(formGroup.attr('manoeuvreId'));
           if (_.isNull(manoeuvreId)) {
             selectedManoeuvreSource.addManoeuvre({
               manoeuvreId: manoeuvreId,
