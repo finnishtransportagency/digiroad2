@@ -137,12 +137,7 @@
           var manoeuvreId = !_.isEmpty(selectElement.parent().attr('manoeuvreId')) ? parseInt(selectElement.parent().attr('manoeuvreId'), 10) : null;
           var destRoadLinkId = parseInt(selectElement.parent().attr('roadLinkId'), 10);
           var destMmlId = parseInt(selectElement.parent().attr('mmlId'), 10);
-          var selectedOptions = selectElement.parent().find('select option:selected');
-          var exceptions = _.chain(selectedOptions)
-            .map(function(option) { return $(option).val(); })
-            .reject(function(value) { return _.isEmpty(value); })
-            .map(function(value) { return parseInt(value, 10); })
-            .value();
+          var exceptions = manoeuvreExceptions(selectElement.parent());
           console.log(exceptions);
           console.log(selectElement.parent().attr('manoeuvreId'));
           if (_.isNull(manoeuvreId)) {
