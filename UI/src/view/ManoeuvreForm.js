@@ -30,14 +30,14 @@
         '<% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
-      '<div class="form-group adjacent-link" style="display: none">' +
+      '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" style="display: none">' +
         '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= mmlId %></p>' +
         '<div class="checkbox" >' +
           '<input type="checkbox" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" <% print(checked ? "checked" : "") %>/>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-        '<select class="form-control">' +
+        '<select class="form-control exception">' +
           '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
             '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
           '<% }) %>' +
@@ -46,9 +46,9 @@
         '<%= newExceptionSelect %>' +
       '</div>';
     var newExceptionTemplate = '' +
-      '<select class="form-control new-exception">' +
+      '<select class="form-control exception new-exception">' +
         '<option class="empty"></option>' +
-        '<% _.forEach(exceptionOptions, function(e) { %> <option><%- e %></option> <% }) %>' +
+        '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
       '</select>';
 
     var exceptions = {
@@ -116,6 +116,19 @@
           } else {
             selectedManoeuvreSource.removeManoeuvre({ manoeuvreId: manoeuvreId, destRoadLinkId: destRoadLinkId });
           }
+        });
+        rootElement.on('change', '.exception', function(event) {
+          var selectElement = $(event.target);
+          var manoeuvreId = selectElement.parent().attr('manoeuvreId');
+          var selectedOptions = selectElement.parent().find('select option:selected');
+          var exceptions = _.chain(selectedOptions)
+            .map(function(option) { return $(option).val(); })
+            .reject(function(value) { return _.isEmpty(value); })
+            .map(function(value) { return parseInt(value, 10); })
+            .value();
+          console.log(exceptions);
+          console.log(selectElement.parent().attr('manoeuvreId'));
+          selectedManoeuvreSource.setExceptions(manoeuvreId, exceptions);
         });
         rootElement.on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);

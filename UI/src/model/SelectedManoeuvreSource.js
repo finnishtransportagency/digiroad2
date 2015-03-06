@@ -45,6 +45,10 @@
       collection.removeManoeuvre(manoeuvreToBeRemoved);
     };
 
+    var setExceptions = function(manoeuvreId, exceptions) {
+      collection.setExceptions(manoeuvreId, exceptions);
+    };
+
     var save = function() {
       collection.save(function() {
         eventbus.trigger('manoeuvres:saved', current);
@@ -67,6 +71,7 @@
       exists: exists,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
+      setExceptions: setExceptions,
       save: save,
       cancel: cancel,
       isDirty: isDirty,

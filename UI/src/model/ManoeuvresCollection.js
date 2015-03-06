@@ -3,6 +3,7 @@
     var manoeuvres = [];
     var addedManoeuvres = [];
     var removedManoeuvres = [];
+    var updatedExceptions = {};
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
@@ -91,6 +92,11 @@
       eventbus.trigger('manoeuvre:changed');
     };
 
+    var setExceptions = function(manoeuvreId, exceptions) {
+      updatedExceptions[manoeuvreId] = exceptions;
+      eventbus.trigger('manoeuvre:changed');
+    };
+
     var manoeuvresEqual = function(x, y) {
       return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
     };
@@ -119,7 +125,7 @@
     };
 
     var isDirty = function() {
-      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres);
+      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres) || !_.isEmpty(updatedExceptions);
     };
 
     return {
@@ -129,6 +135,7 @@
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
+      setExceptions: setExceptions,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
       save: save
