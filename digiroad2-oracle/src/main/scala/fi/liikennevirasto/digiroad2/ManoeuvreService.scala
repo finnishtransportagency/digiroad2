@@ -67,7 +67,6 @@ object ManoeuvreService {
   }
 
   def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
-    println("*** Updating manoeuvre: " + manoeuvreId + " to exceptions " + exceptions + " as user " + username)
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sqlu"""
            delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
