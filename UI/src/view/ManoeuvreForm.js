@@ -40,7 +40,7 @@
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<div class="form-group exception">' +
-        '<%= deleteButtonTemplate %>' +
+          '<%= deleteButtonTemplate %>' +
           '<select class="form-control exception-select">' +
             '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
               '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
