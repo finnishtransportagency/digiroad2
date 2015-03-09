@@ -15,6 +15,10 @@ import scala.slick.jdbc.StaticQuery.interpolation
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int])
 
 object ManoeuvreService {
+  def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+    println("*** Updating manoeuvre: " + manoeuvreId + " to exceptions " + exceptions + " as user " + username)
+  }
+
   def getSourceRoadLinkIdById(id: Long): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sql"""
