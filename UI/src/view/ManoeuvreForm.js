@@ -41,7 +41,7 @@
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<div class="form-group exception">' +
           '<%= deleteButtonTemplate %>' +
-          '<select class="form-control exception-select">' +
+          '<select class="form-control select">' +
             '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
               '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
             '<% }) %>' +
@@ -52,7 +52,7 @@
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
-        '<select class="form-control exception-select new-exception" <% print(checked ? "" : "disabled") %> >' +
+        '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
           '<option class="empty"></option>' +
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
         '</select>' +
@@ -143,7 +143,7 @@
             selectedManoeuvreSource.removeManoeuvre(manoeuvre);
           }
         });
-        rootElement.find('.adjacent-link').on('change', '.exception-select', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.exception .select', function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
           if (_.isNull(manoeuvreId)) {
