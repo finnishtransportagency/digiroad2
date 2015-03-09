@@ -162,7 +162,7 @@
           selectElement.find('option.empty').remove();
           selectElement.before(deleteButtonTemplate);
           selectElement.parent().on('click', 'button.delete-exception', function(event) {
-            $(event.delegateTarget).remove();
+            deleteException(event);
           });
         });
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
@@ -175,8 +175,17 @@
           }
         });
         rootElement.find('.exception').on('click', 'button.delete-exception', function(event) {
-          $(event.delegateTarget).remove();
+          deleteException(event);
         });
+        var deleteException = function(event) {
+          var exceptionRow = $(event.delegateTarget);
+          var formGroupElement = exceptionRow.parent();
+          exceptionRow.remove();
+          var manoeuvre = manoeuvreData(formGroupElement);
+          if(manoeuvre.manoeuvreId) {
+            selectedManoeuvreSource.setExceptions(manoeuvre.manoeuvreId, manoeuvre.exceptions);
+          }
+        };
       });
       eventbus.on('manoeuvres:unselected', function() {
         rootElement.empty();
