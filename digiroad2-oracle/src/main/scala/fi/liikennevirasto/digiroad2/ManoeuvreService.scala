@@ -63,10 +63,12 @@ object ManoeuvreService {
            delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
           """.execute()
 
-      val query = s"insert all " +
-        exceptions.map{exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
-        s"select * from dual"
-      Q.updateNA(query).execute()
+      if (exceptions.nonEmpty) {
+        val query = s"insert all " +
+          exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
+          s"select * from dual"
+        Q.updateNA(query).execute()
+      }
 
       sqlu"""
            update manoeuvre
