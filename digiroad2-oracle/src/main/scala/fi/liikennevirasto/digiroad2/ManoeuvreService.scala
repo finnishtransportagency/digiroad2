@@ -15,10 +15,6 @@ import scala.slick.jdbc.StaticQuery.interpolation
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int])
 
 object ManoeuvreService {
-  def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
-    println("*** Updating manoeuvre: " + manoeuvreId + " to exceptions " + exceptions + " as user " + username)
-  }
-
   def getSourceRoadLinkIdById(id: Long): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sql"""
@@ -57,6 +53,26 @@ object ManoeuvreService {
           """.execute()
 
       manoeuvreId
+    }
+  }
+
+  def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+    println("*** Updating manoeuvre: " + manoeuvreId + " to exceptions " + exceptions + " as user " + username)
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""
+           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+          """.execute()
+
+      val query = s"insert all " +
+        exceptions.map{exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
+        s"select * from dual"
+      Q.updateNA(query).execute()
+
+      sqlu"""
+           update manoeuvre
+           set modified_date = sysdate, modified_by = $username
+           where id = $manoeuvreId
+          """.execute()
     }
   }
 
