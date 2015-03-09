@@ -31,25 +31,33 @@
       '</div>';
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
-        '<label class="control-label">Kääntyminen kielletty linkille </label>' +
-        '<p class="form-control-static"><%= mmlId %></p>' +
-        '<div class="checkbox" >' +
-          '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
+        '<div class="form-group">' +
+          '<label class="control-label">Kääntyminen kielletty linkille </label>' +
+          '<p class="form-control-static"><%= mmlId %></p>' +
+          '<div class="checkbox" >' +
+            '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
+          '</div>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-        '<select class="form-control exception">' +
-          '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
-            '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
-          '<% }) %>' +
-        '</select>' +
+        '<div class="form-group exception">' +
+        '<%= deleteButtonTemplate %>' +
+          '<select class="form-control exception-select">' +
+            '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
+              '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
+            '<% }) %>' +
+          '</select>' +
+        '</div>' +
         '<% }) %>' +
         '<%= newExceptionSelect %>' +
       '</div>';
     var newExceptionTemplate = '' +
-      '<select class="form-control exception new-exception" <% print(checked ? "" : "disabled") %> >' +
-        '<option class="empty"></option>' +
-        '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
-      '</select>';
+      '<div class="form-group exception">' +
+        '<select class="form-control exception-select new-exception" <% print(checked ? "" : "disabled") %> >' +
+          '<option class="empty"></option>' +
+          '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
+        '</select>' +
+      '</div>';
+    var deleteButtonTemplate = '<span class="control-label"><button class="delete-exception">x</button></span>';
 
     var exceptions = {
       4: 'Kuorma-auto',
@@ -98,7 +106,8 @@
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptions,
             localizedExceptions: localizedExceptions,
-            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked })
+            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked }),
+            deleteButtonTemplate: deleteButtonTemplate
           });
 
           rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
@@ -134,7 +143,7 @@
             selectedManoeuvreSource.removeManoeuvre(manoeuvre);
           }
         });
-        rootElement.find('.adjacent-link').on('change', '.exception', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.exception-select', function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
           if (_.isNull(manoeuvreId)) {
@@ -145,12 +154,16 @@
         });
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
-          selectElement.parent().append(_.template(newExceptionTemplate, {
+          selectElement.parent().after(_.template(newExceptionTemplate, {
             exceptionOptions: exceptions,
             checked: true
           }));
           selectElement.removeClass('new-exception');
           selectElement.find('option.empty').remove();
+          selectElement.before(deleteButtonTemplate);
+          selectElement.parent().on('click', 'button.delete-exception', function(event) {
+            $(event.delegateTarget).remove();
+          });
         });
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
           var isChecked = $(event.target).is(':checked');
@@ -160,6 +173,9 @@
           } else {
             selects.prop('disabled', 'disabled');
           }
+        });
+        rootElement.find('.exception').on('click', 'button.delete-exception', function(event) {
+          $(event.delegateTarget).remove();
         });
       });
       eventbus.on('manoeuvres:unselected', function() {
