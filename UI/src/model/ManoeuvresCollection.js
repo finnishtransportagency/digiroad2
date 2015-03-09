@@ -117,11 +117,19 @@
       });
 
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
+      var exceptions = _.omit(updatedExceptions, function(value, key) {
+        return _.some(removedManoeuvreIds, function(id) {
+          return id === parseInt(key, 10);
+        });
+      });
       backend.removeManoeuvres(removedManoeuvreIds, function() {
         removedManoeuvres = [];
         backend.createManoeuvres(addedManoeuvres, function() {
           addedManoeuvres = [];
-          callback();
+          backend.updateManoeuvreExceptions(exceptions, function() {
+            updatedExceptions = {};
+            callback();
+          }, failureCallback);
         }, failureCallback);
       }, failureCallback);
     };

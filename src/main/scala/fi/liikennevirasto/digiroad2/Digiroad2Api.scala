@@ -429,4 +429,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
+
+  put("/manoeuvres") {
+    println("Updating manoeuvres: " + parsedBody)
+  }
 }

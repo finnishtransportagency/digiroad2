@@ -22,6 +22,18 @@
       });
     }, 1000);
 
+    this.updateManoeuvreExceptions = function(exceptions, success, failure) {
+       $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/manoeuvres",
+        data: JSON.stringify(exceptions),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.createManoeuvres = function(manoeuvres, success, failure) {
       $.ajax({
         contentType: "application/json",
