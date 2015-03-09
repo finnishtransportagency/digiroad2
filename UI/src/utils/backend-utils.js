@@ -17,7 +17,7 @@
     }, 1000);
 
     this.getManoeuvres = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/manoeuvre?bbox=' + boundingBox, function(data) {
+      $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
         callback(data);
       });
     }, 1000);
@@ -26,7 +26,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/manoeuvre",
+        url: "api/manoeuvres",
         data: JSON.stringify({ manoeuvres: manoeuvres }),
         dataType: "json",
         success: success,

@@ -393,7 +393,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/manoeuvre") {
+  get("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     params.get("bbox").map { bbox =>
@@ -405,7 +405,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  post("/manoeuvre") {
+  post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
