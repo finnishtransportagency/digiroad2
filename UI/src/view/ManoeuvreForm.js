@@ -12,13 +12,13 @@
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
+          '<label class="control-label">Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +
         '</div>' +
       '</div>' +
       '<footer>' + buttons + '</footer>';
     var manouvreTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<label class="control-label">Kääntyminen kielletty linkille </label>' +
         '<p class="form-control-static"><%= destMmlId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group">' +
@@ -32,7 +32,6 @@
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
         '<div class="form-group">' +
-          '<label class="control-label">Kääntyminen kielletty linkille </label>' +
           '<p class="form-control-static"><%= mmlId %></p>' +
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
