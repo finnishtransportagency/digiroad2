@@ -37,8 +37,8 @@
     this.removeManoeuvres = function(manoeuvreIds, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
-        url: "api/manoeuvre",
+        type: "DELETE",
+        url: "api/manoeuvres",
         data: JSON.stringify({ manoeuvreIds: manoeuvreIds }),
         dataType: "json",
         success: success,

@@ -418,7 +418,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     Created(manoeuvreIds)
   }
 
-  put("/manoeuvre") {
+  delete("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
