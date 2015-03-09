@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
 
 
-case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long)
+case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int])
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -413,7 +413,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
       hasWriteAccess(user, municipality.get)
-      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId)
+      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId, manoeuvre.exceptions)
     }
     Created(manoeuvreIds)
   }

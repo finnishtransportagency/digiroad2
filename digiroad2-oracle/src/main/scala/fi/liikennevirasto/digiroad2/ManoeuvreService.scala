@@ -38,7 +38,7 @@ object ManoeuvreService {
   val FirstElement = 1
   val LastElement = 3
 
-  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long): Long = {
+  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int]): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
 
@@ -51,6 +51,13 @@ object ManoeuvreService {
              insert into manoeuvre(id, type, road_link_id, element_type, modified_date, modified_by)
              values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
           """.execute()
+
+      if (exceptions.nonEmpty) {
+        val query = s"insert all " +
+          exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
+          s"select * from dual"
+        Q.updateNA(query).execute()
+      }
 
       manoeuvreId
     }
