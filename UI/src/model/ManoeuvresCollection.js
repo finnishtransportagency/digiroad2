@@ -109,13 +109,7 @@
     };
 
     var save = function(callback) {
-      var removedManoeuvreIds = _.map(removedManoeuvres, function(manoeuvreToRemove) {
-        var id = _.find(manoeuvres, function(manoeuvre) {
-          return manoeuvresEqual(manoeuvre, manoeuvreToRemove);
-        }).id;
-        return id;
-      });
-
+      var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
       var exceptions = _.omit(updatedExceptions, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
