@@ -57,7 +57,7 @@
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
         '</select>' +
       '</div>';
-    var deleteButtonTemplate = '<span class="control-label"><button class="delete-exception">x</button></span>';
+    var deleteButtonTemplate = '<span class="control-label"><button class="delete">x</button></span>';
 
     var exceptions = {
       4: 'Kuorma-auto',
@@ -161,7 +161,7 @@
           selectElement.removeClass('new-exception');
           selectElement.find('option.empty').remove();
           selectElement.before(deleteButtonTemplate);
-          selectElement.parent().on('click', 'button.delete-exception', function(event) {
+          selectElement.parent().on('click', 'button.delete', function(event) {
             deleteException(event);
           });
         });
@@ -174,7 +174,7 @@
             selects.prop('disabled', 'disabled');
           }
         });
-        rootElement.find('.exception').on('click', 'button.delete-exception', function(event) {
+        rootElement.find('.exception').on('click', 'button.delete', function(event) {
           deleteException(event);
         });
         var deleteException = function(event) {
