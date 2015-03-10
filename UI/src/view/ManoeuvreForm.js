@@ -12,6 +12,9 @@
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
+          '<div class="form-group">' +
+            '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %> </p>' +
+          '</div>' +
           '<label class="control-label">Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +
         '</div>' +
@@ -100,6 +103,8 @@
       };
 
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
+        roadLink.modifiedBy = roadLink.modifiedBy || '-';
+        roadLink.modifiedAt = roadLink.modifiedAt || '';
         rootElement.html(_.template(template, roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           var attributes = _.merge({}, manoeuvre, {
