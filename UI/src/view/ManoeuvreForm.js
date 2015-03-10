@@ -86,7 +86,11 @@
         rootElement.find('.adjacent-link').toggle(!readOnly);
         rootElement.find('.manoeuvre').toggle(readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
-        readOnly ? rootElement.find('.wrapper').addClass('read-only') : rootElement.find('.wrapper').removeClass('read-only');
+        if(readOnly){
+          rootElement.find('.wrapper').addClass('read-only')
+        } else {
+          rootElement.find('.wrapper').removeClass('read-only');
+        }
       }
       eventbus.on('application:readOnly', toggleMode);
 
