@@ -37,15 +37,16 @@
           '</div>' +
           '<p class="form-control-static">MML ID <%= mmlId %></p>' +
         '</div>' +
+        '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-        '<div class="form-group exception">' +
-          '<%= deleteButtonTemplate %>' +
-          '<select class="form-control select">' +
-            '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
-              '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
-            '<% }) %>' +
-          '</select>' +
-        '</div>' +
+          '<div class="form-group exception">' +
+            '<%= deleteButtonTemplate %>' +
+            '<select class="form-control select">' +
+              '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
+                '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
+              '<% }) %>' +
+            '</select>' +
+          '</div>' +
         '<% }) %>' +
         '<%= newExceptionSelect %>' +
       '</div>';
