@@ -139,9 +139,8 @@
         var manoeuvreExceptions = function(formGroupElement) {
           var selectedOptions = formGroupElement.find('select option:selected');
           return _.chain(selectedOptions)
-            .map(function(option) { return $(option).val(); })
-            .reject(function(value) { return _.isEmpty(value); })
-            .map(function(value) { return parseInt(value, 10); })
+            .map(function(option) { return parseInt($(option).val(), 10); })
+            .reject(function(val) { return _.isNaN(val); })
             .value();
         };
 
