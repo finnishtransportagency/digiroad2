@@ -52,13 +52,12 @@
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
-        '<span class="control-label"></span>' +
         '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
           '<option class="empty"></option>' +
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
         '</select>' +
       '</div>';
-    var deleteButtonTemplate = '<span class="control-label"><button class="delete">x</button></span>';
+    var deleteButtonTemplate = '<button class="delete">x</button>';
 
     var exceptions = {
       4: 'Kuorma-auto',
