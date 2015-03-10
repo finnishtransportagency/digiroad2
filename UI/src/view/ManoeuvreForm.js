@@ -52,6 +52,7 @@
           '</div>' +
         '<% }) %>' +
         '<%= newExceptionSelect %>' +
+        '<div class="form-group"><input type="text" class="form-control additional-info" placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %>></div>' +
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
@@ -184,12 +185,15 @@
           var isChecked = $(event.target).is(':checked');
           var selects = $(event.delegateTarget).find('select');
           var button = $(event.delegateTarget).find('button');
+          var text = $(event.delegateTarget).find('input[type="text"]');
           if(isChecked){
             selects.prop('disabled', false);
             button.prop('disabled', false);
+            text.prop('disabled', false);
           } else {
             selects.prop('disabled', 'disabled');
             button.prop('disabled', 'disabled');
+            text.prop('disabled', 'disabled');
           }
         });
         rootElement.find('.exception').on('click', 'button.delete', function(event) {
