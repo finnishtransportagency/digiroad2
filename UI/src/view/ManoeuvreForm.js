@@ -57,7 +57,7 @@
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
         '</select>' +
       '</div>';
-    var deleteButtonTemplate = '<button class="delete">x</button>';
+    var deleteButtonTemplate = '<button class="btn-delete delete">x</button>';
 
     var exceptions = {
       4: 'Kuorma-auto',
