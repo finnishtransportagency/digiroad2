@@ -79,6 +79,15 @@ public class OracleArray {
         }
     }
 
+    private static class RowToManoeuvreException implements RowToElement<Tuple2<Long, Int>> {
+        @Override
+        public Tuple2<Long, Int> convert(ResultSet row) throws SQLException {
+            long manoeuvreId = row.getLong(1);
+            int exceptionType = row.getInt(2);
+            return new Tuple2(manoeuvreId, exceptionType);
+        }
+    }
+
     public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchAssetLinksByRoadLinkIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
@@ -113,6 +122,14 @@ public class OracleArray {
                 "AND valid_to is null)";
 
         return queryWithIdArray(ids, connection, query, new RowToManoeuvre());
+    }
+
+    public static List<Tuple2<Long, Int>> fetchManoeuvreExceptionsByIds(List ids, Connection connection) throws SQLException {
+        String query = "SELECT m.manoeuvre_id, m.exception_type " +
+                "FROM MANOEUVRE_EXCEPTIONS m " +
+                "WHERE m.manoeuvre_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+
+        return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
     }
 
     public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {

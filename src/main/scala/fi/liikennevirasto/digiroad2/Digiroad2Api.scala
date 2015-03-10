@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.user.{User}
 import com.newrelic.api.agent.NewRelic
 
 
-case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long)
+case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int])
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
@@ -393,7 +393,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  get("/manoeuvre") {
+  get("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     params.get("bbox").map { bbox =>
@@ -405,7 +405,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
-  post("/manoeuvre") {
+  post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
     val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
@@ -413,12 +413,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
       hasWriteAccess(user, municipality.get)
-      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId)
+      ManoeuvreService.createManoeuvre(user.username, manoeuvre.sourceRoadLinkId, manoeuvre.destRoadLinkId, manoeuvre.exceptions)
     }
     Created(manoeuvreIds)
   }
 
-  put("/manoeuvre") {
+  delete("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
     val manoeuvreIds = (parsedBody \ "manoeuvreIds").extractOrElse[Seq[Long]](halt(BadRequest("Malformed 'manoeuvreIds' parameter")))
@@ -427,6 +427,19 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
       hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
       ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
+    }
+  }
+
+  put("/manoeuvres") {
+    val user = userProvider.getCurrentUser()
+
+    val manoeuvreExceptions: Map[Long, Seq[Int]] = parsedBody
+      .extractOrElse[Map[String, Seq[Int]]](halt(BadRequest("Malformed body on put manoeuvres request")))
+      .map{case(id, exceptions) => (id.toLong, exceptions)}
+    manoeuvreExceptions.foreach{ case(id, exceptions) =>
+      val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(id)
+      hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      ManoeuvreService.setManoeuvreExceptions(user.username, id, exceptions)
     }
   }
 }

@@ -3,6 +3,7 @@
     var manoeuvres = [];
     var addedManoeuvres = [];
     var removedManoeuvres = [];
+    var updatedExceptions = {};
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
@@ -71,6 +72,7 @@
 
     var addManoeuvre = function(newManoeuvre) {
       if (_.isNull(newManoeuvre.manoeuvreId)) {
+        _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, newManoeuvre); });
         addedManoeuvres.push(newManoeuvre);
       } else {
         _.remove(removedManoeuvres, function(x) {
@@ -91,6 +93,11 @@
       eventbus.trigger('manoeuvre:changed');
     };
 
+    var setExceptions = function(manoeuvreId, exceptions) {
+      updatedExceptions[manoeuvreId] = exceptions;
+      eventbus.trigger('manoeuvre:changed');
+    };
+
     var manoeuvresEqual = function(x, y) {
       return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
     };
@@ -98,28 +105,31 @@
     var cancelModifications = function() {
       addedManoeuvres = [];
       removedManoeuvres = [];
+      updatedExceptions = {};
     };
 
     var save = function(callback) {
-      var removedManoeuvreIds = _.map(removedManoeuvres, function(manoeuvreToRemove) {
-        var id = _.find(manoeuvres, function(manoeuvre) {
-          return manoeuvresEqual(manoeuvre, manoeuvreToRemove);
-        }).id;
-        return id;
-      });
-
+      var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
+      var exceptions = _.omit(updatedExceptions, function(value, key) {
+        return _.some(removedManoeuvreIds, function(id) {
+          return id === parseInt(key, 10);
+        });
+      });
       backend.removeManoeuvres(removedManoeuvreIds, function() {
         removedManoeuvres = [];
         backend.createManoeuvres(addedManoeuvres, function() {
           addedManoeuvres = [];
-          callback();
+          backend.updateManoeuvreExceptions(exceptions, function() {
+            updatedExceptions = {};
+            callback();
+          }, failureCallback);
         }, failureCallback);
       }, failureCallback);
     };
 
     var isDirty = function() {
-      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres);
+      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres) || !_.isEmpty(updatedExceptions);
     };
 
     return {
@@ -129,6 +139,7 @@
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
+      setExceptions: setExceptions,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
       save: save

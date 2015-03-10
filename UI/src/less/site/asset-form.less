@@ -148,7 +148,16 @@
   }
 
   .form-manoeuvre {
-    .adjacent-link {
+    .control-label {
+      width: 100%;
+      margin-left: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .adjacent-link, .manoeuvre {
+      margin-left: 10px;
+
       .form-control-static {
         width: auto;
         margin-right: 10px;
@@ -159,7 +168,21 @@
       }
 
       input[type="checkbox"] {
-        margin: 6px 0 0;
+        margin: 6px 6px 0 0;
+      }
+
+      label {
+        width: 100%;
+        font-size: @font-size-small;
+        line-height: @line-height-modifier * 3;
+        color: @input-color-placeholder-dark;
+        text-transform: none;
+        font-weight: normal;
+      }
+
+      select.new-exception {
+        margin-left: 18px;
+        color: @input-color-placeholder-dark;
       }
     }
   }

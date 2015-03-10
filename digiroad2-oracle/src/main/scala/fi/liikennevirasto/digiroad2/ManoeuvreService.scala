@@ -12,7 +12,7 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
 
-case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long)
+case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int])
 
 object ManoeuvreService {
   def getSourceRoadLinkIdById(id: Long): Long = {
@@ -35,10 +35,19 @@ object ManoeuvreService {
     }
   }
 
+  private def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
+    if (exceptions.nonEmpty) {
+      val query = s"insert all " +
+        exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
+        s"select * from dual"
+      Q.updateNA(query).execute()
+    }
+  }
+
   val FirstElement = 1
   val LastElement = 3
 
-  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long): Long = {
+  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int]): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
 
@@ -52,7 +61,24 @@ object ManoeuvreService {
              values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
           """.execute()
 
+      addManoeuvreExceptions(manoeuvreId, exceptions)
       manoeuvreId
+    }
+  }
+
+  def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""
+           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+          """.execute()
+
+      addManoeuvreExceptions(manoeuvreId, exceptions)
+
+      sqlu"""
+           update manoeuvre
+           set modified_date = sysdate, modified_by = $username
+           where id = $manoeuvreId
+          """.execute()
     }
   }
 
@@ -77,19 +103,30 @@ object ManoeuvreService {
   }
 
   private def getByRoadlinks(roadLinks: Map[Long,Long]): Seq[Manoeuvre] = {
-    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinks.keys.toList, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvresById = fetchManoeuvresByRoadLinkIds(roadLinks.keys.toSeq)
+    val manoeuvreExceptionsById = fetchManoeuvreExceptionsByIds(manoeuvresById.keys.toSeq)
 
-    val manoeuvresById: Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = manoeuvres.toList.groupBy(_._1)
     manoeuvresById.filter { case (id, links) =>
-      links.size == 2 && links.exists(_._4 == 1) && links.exists(_._4 == 3)
+      links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
     }.map { case (id, links) =>
       val (_, _, sourceRoadLinkId, _, _, _) = links.find(_._4 == FirstElement).get
       val (_, _, destRoadLinkId, _, _, _) = links.find(_._4 == LastElement).get
       val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
       val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
 
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId)
+      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()))
     }.toSeq
   }
 
+  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = {
+    val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvresById = manoeuvres.toList.groupBy(_._1)
+    manoeuvresById
+  }
+
+  private def fetchManoeuvreExceptionsByIds(manoeuvreIds: Seq[Long]): Map[Long, Seq[Int]] = {
+    val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
+    val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
+    manoeuvreExceptionsById
+  }
 }

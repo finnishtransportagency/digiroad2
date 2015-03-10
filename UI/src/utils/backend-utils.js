@@ -17,16 +17,28 @@
     }, 1000);
 
     this.getManoeuvres = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/manoeuvre?bbox=' + boundingBox, function(data) {
+      $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
         callback(data);
       });
     }, 1000);
+
+    this.updateManoeuvreExceptions = function(exceptions, success, failure) {
+       $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/manoeuvres",
+        data: JSON.stringify(exceptions),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
 
     this.createManoeuvres = function(manoeuvres, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/manoeuvre",
+        url: "api/manoeuvres",
         data: JSON.stringify({ manoeuvres: manoeuvres }),
         dataType: "json",
         success: success,
@@ -37,8 +49,8 @@
     this.removeManoeuvres = function(manoeuvreIds, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
-        url: "api/manoeuvre",
+        type: "DELETE",
+        url: "api/manoeuvres",
         data: JSON.stringify({ manoeuvreIds: manoeuvreIds }),
         dataType: "json",
         success: success,
