@@ -157,7 +157,6 @@
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
-      getLatestModificationDataBySourceRoadLink: getLatestModificationDataBySourceRoadLink,
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
