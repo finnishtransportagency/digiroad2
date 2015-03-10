@@ -1,5 +1,5 @@
 create table manoeuvre
 (
-  id number(38, 0) not null,
+  id number primary key,
   additional_info varchar2(4000)
 );
