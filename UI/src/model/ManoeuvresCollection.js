@@ -86,7 +86,8 @@
         return manoeuvre.roadLinkId === roadLinkId;
       });
       backend.getAdjacent(roadLink.roadLinkId, function(adjacent) {
-        callback(_.merge({}, roadLink, { adjacent: adjacent }));
+        var modificationData = getLatestModificationDataBySourceRoadLink(roadLinkId);
+        callback(_.merge({}, roadLink, modificationData, { adjacent: adjacent }));
       });
     };
 
