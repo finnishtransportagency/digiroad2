@@ -127,8 +127,7 @@ public class OracleArray {
     public static List<Tuple2<Long, Int>> fetchManoeuvreExceptionsByIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT m.manoeuvre_id, m.exception_type " +
                 "FROM MANOEUVRE_EXCEPTIONS m " +
-                "WHERE m.manoeuvre_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
-                "ORDER BY m.exception_type";
+                "WHERE m.manoeuvre_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
 
         return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
     }

@@ -87,11 +87,17 @@
       }
       eventbus.on('application:readOnly', toggleMode);
 
+      var sortExceptions = function(exceptions) {
+        return exceptions ? exceptions.sort(function (x, y) {
+          return x - y;
+        }) : [];
+      };
+
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
         rootElement.html(_.template(template, roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           var attributes = _.merge({}, manoeuvre, {
-            localizedExceptions: _.map(manoeuvre.exceptions, function(e) { return localizeException(e); })
+            localizedExceptions: _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); })
           });
           rootElement.find('.form').append(_.template(manouvreTemplate, attributes));
         });
@@ -99,7 +105,7 @@
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.id === manoeuvre.destRoadLinkId; });
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
-          var localizedExceptions = manoeuvre ? _.map(manoeuvre.exceptions, function(e) { return localizeException(e); }) : [];
+          var localizedExceptions = manoeuvre ? _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); }) : [];
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
