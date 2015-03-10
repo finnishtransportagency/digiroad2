@@ -19,7 +19,7 @@
       '<footer>' + buttons + '</footer>';
     var manouvreTemplate = '' +
       '<div class="form-group manoeuvre">' +
-        '<p class="form-control-static"><%= destMmlId %></p>' +
+        '<p class="form-control-static">MML ID: <%= destMmlId %></p>' +
         '<% if(localizedExceptions.length > 0) { %>' +
         '<div class="form-group">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
