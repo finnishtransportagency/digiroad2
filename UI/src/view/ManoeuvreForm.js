@@ -180,10 +180,13 @@
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
           var isChecked = $(event.target).is(':checked');
           var selects = $(event.delegateTarget).find('select');
+          var button = $(event.delegateTarget).find('button');
           if(isChecked){
             selects.prop('disabled', false);
+            button.prop('disabled', false);
           } else {
             selects.prop('disabled', 'disabled');
+            button.prop('disabled', 'disabled');
           }
         });
         rootElement.find('.exception').on('click', 'button.delete', function(event) {
