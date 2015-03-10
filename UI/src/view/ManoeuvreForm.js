@@ -86,7 +86,7 @@
         rootElement.find('.manoeuvre').toggle(readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
         if(readOnly){
-          rootElement.find('.wrapper').addClass('read-only')
+          rootElement.find('.wrapper').addClass('read-only');
         } else {
           rootElement.find('.wrapper').removeClass('read-only');
         }
