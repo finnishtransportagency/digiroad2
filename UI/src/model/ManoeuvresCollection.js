@@ -61,6 +61,26 @@
         .value();
     };
 
+    var sortLinkManoeuvres = function(manoeuvres) {
+      return manoeuvres.sort(function(m1, m2) {
+        var date1 = moment(m1.modifiedDateTime, "DD.MM.YYYY HH:mm:ss");
+        var date2 = moment(m2.modifiedDateTime, "DD.MM.YYYY HH:mm:ss");
+        return date1.isBefore(date2) ? 1 : -1;
+      });
+    };
+
+    var getLatestModificationDataBySourceRoadLink = function(roadLinkId) {
+      var sourceLinkManoeuvres = _.filter(manoeuvresWithModifications(), function(manoeuvre) {
+        return manoeuvre.sourceRoadLinkId === roadLinkId;
+      });
+      var sortedManoeuvres = sortLinkManoeuvres(sourceLinkManoeuvres);
+      var latestModification = _.first(sortedManoeuvres);
+      return {
+        modifiedAt: latestModification ? latestModification.modifiedDateTime : null,
+        modifiedBy: latestModification ? latestModification.modifiedBy : null
+      };
+    };
+
     var get = function(roadLinkId, callback) {
       var roadLink = _.find(getAll(), function(manoeuvre) {
         return manoeuvre.roadLinkId === roadLinkId;
@@ -136,6 +156,7 @@
       fetch: fetch,
       getAll: getAll,
       getDestinationRoadLinksBySourceRoadLink: getDestinationRoadLinksBySourceRoadLink,
+      getLatestModificationDataBySourceRoadLink: getLatestModificationDataBySourceRoadLink,
       get: get,
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
