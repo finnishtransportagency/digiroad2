@@ -51,6 +51,7 @@
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
+        '<span class="control-label"></span>' +
         '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
           '<option class="empty"></option>' +
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
@@ -84,6 +85,7 @@
         rootElement.find('.adjacent-link').toggle(!readOnly);
         rootElement.find('.manoeuvre').toggle(readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        readOnly ? rootElement.find('.wrapper').addClass('read-only') : rootElement.find('.wrapper').removeClass('read-only');
       }
       eventbus.on('application:readOnly', toggleMode);
 
