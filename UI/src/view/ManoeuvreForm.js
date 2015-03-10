@@ -32,10 +32,10 @@
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
         '<div class="form-group">' +
-          '<p class="form-control-static"><%= mmlId %></p>' +
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
+          '<p class="form-control-static">MML ID <%= mmlId %></p>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
         '<div class="form-group exception">' +
