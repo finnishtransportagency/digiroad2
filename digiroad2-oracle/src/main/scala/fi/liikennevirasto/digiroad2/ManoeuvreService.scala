@@ -29,7 +29,7 @@ object ManoeuvreService {
   def deleteManoeuvre(username: String, id: Long) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sqlu"""
-             update manoeuvre_element
+             update manoeuvre
              set valid_to = sysdate, modified_date = sysdate, modified_by = $username
              where id = $id
           """.execute()
@@ -53,13 +53,18 @@ object ManoeuvreService {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
 
       sqlu"""
-             insert into manoeuvre_element(id, type, road_link_id, element_type, modified_date, modified_by)
-             values ($manoeuvreId, 2, $sourceRoadLinkId, $FirstElement, sysdate, $userName)
+             insert into manoeuvre(id, type, modified_date, modified_by)
+             values ($manoeuvreId, 2, sysdate, $userName)
           """.execute()
 
       sqlu"""
-             insert into manoeuvre_element(id, type, road_link_id, element_type, modified_date, modified_by)
-             values ($manoeuvreId, 2, $destRoadLinkId, $LastElement, sysdate, $userName)
+             insert into manoeuvre_element(id, road_link_id, element_type)
+             values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
+          """.execute()
+
+      sqlu"""
+             insert into manoeuvre_element(id, road_link_id, element_type)
+             values ($manoeuvreId, $destRoadLinkId, $LastElement)
           """.execute()
 
       addManoeuvreExceptions(manoeuvreId, exceptions)
@@ -76,7 +81,7 @@ object ManoeuvreService {
       addManoeuvreExceptions(manoeuvreId, exceptions)
 
       sqlu"""
-           update manoeuvre_element
+           update manoeuvre
            set modified_date = sysdate, modified_by = $username
            where id = $manoeuvreId
           """.execute()

@@ -113,8 +113,9 @@ public class OracleArray {
     }
 
     public static List<Tuple6<Long, Int, Long, Int, DateTime, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT m.id, m.type, m.road_link_id, m.element_type, to_char(m.modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.modified_by " +
-                "FROM MANOEUVRE_ELEMENT m " +
+        String query = "SELECT m.id, m.type, e.road_link_id, e.element_type, to_char(m.modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.modified_by " +
+                "FROM MANOEUVRE m " +
+                "JOIN MANOEUVRE_ELEMENT e ON m.id = e.id " +
                 "WHERE m.id in (" +
                 "SELECT distinct(k.id) " +
                 "FROM MANOEUVRE_ELEMENT k " +
