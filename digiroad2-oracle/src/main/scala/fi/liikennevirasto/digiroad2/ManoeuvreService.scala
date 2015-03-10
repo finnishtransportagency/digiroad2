@@ -21,7 +21,7 @@ object ManoeuvreService {
       sql"""
              select road_link_id
              from manoeuvre_element
-             where id = $id and element_type = 1
+             where manoeuvre_id = $id and element_type = 1
           """.as[Long].first
     }
   }
@@ -58,12 +58,12 @@ object ManoeuvreService {
           """.execute()
 
       sqlu"""
-             insert into manoeuvre_element(id, road_link_id, element_type)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
           """.execute()
 
       sqlu"""
-             insert into manoeuvre_element(id, road_link_id, element_type)
+             insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $destRoadLinkId, $LastElement)
           """.execute()
 
