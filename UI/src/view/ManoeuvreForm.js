@@ -36,8 +36,8 @@
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
           '<p class="form-control-static">MML ID <%= mmlId %></p>' +
+          '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
         '</div>' +
-        '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
           '<div class="form-group exception">' +
             '<%= deleteButtonTemplate %>' +
