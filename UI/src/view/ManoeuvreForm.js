@@ -53,7 +53,7 @@
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
         '<select class="form-control select new-exception" <% print(checked ? "" : "disabled") %> >' +
-          '<option class="empty"></option>' +
+          '<option class="empty" disabled selected>Valitse tyyppi</option>' +
           '<% _.forEach(exceptionOptions, function(e, key) { %> <option value="<%- key %>"><%- e %></option> <% }) %>' +
         '</select>' +
       '</div>';
