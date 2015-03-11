@@ -119,6 +119,11 @@
       eventbus.trigger('manoeuvre:changed');
     };
 
+    var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
+      updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { additionalInfo: additionalInfo });
+      eventbus.trigger('manoeuvre:changed');
+    };
+
     var manoeuvresEqual = function(x, y) {
       return (x.sourceRoadLinkId === y.sourceRoadLinkId && x.destRoadLinkId === y.destRoadLinkId);
     };
@@ -161,6 +166,7 @@
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       setExceptions: setExceptions,
+      setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
       save: save
