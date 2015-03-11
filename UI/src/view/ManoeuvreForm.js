@@ -159,13 +159,14 @@
             .value();
         };
 
-        rootElement.find('.adjacent-link').on('input', 'input[type="text"]', function(event) {
+        var throttledAdditionalInfoHandler = _.throttle(function(event) {
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           var manoeuvreId = manoeuvre.manoeuvreId;
           if (_.isNull(manoeuvreId)) {
             selectedManoeuvreSource.addManoeuvre(manoeuvre);
           }
-        });
+        }, 1000);
+        rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
         rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvre = manoeuvreData($(event.delegateTarget));
