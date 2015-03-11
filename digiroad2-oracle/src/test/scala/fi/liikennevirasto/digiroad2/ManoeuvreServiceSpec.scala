@@ -32,7 +32,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", 7482, 6677, Nil)
+    val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", ManoeuvrePostParam(7482, 6677, Nil, None))
 
     val manoeuvre = ManoeuvreService.getByMunicipality(235).find { manoeuvre =>
       manoeuvre.id == manoeuvreId
