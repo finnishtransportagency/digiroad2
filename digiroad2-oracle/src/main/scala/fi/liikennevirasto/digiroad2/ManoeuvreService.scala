@@ -15,7 +15,7 @@ import scala.slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
-case class ManoeuvreUpdates(exceptions: Seq[Int], additionalInfo: Option[String])
+case class ManoeuvreUpdates(exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 object ManoeuvreService {
 
@@ -90,10 +90,9 @@ object ManoeuvreService {
 
   def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      manoeuvreUpdates.additionalInfo.map { additionalInfo =>
-        setManoeuvreAdditionalInfo(userName, manoeuvreId, additionalInfo)
-      }
-      setManoeuvreExceptions(userName, manoeuvreId, manoeuvreUpdates.exceptions)
+      manoeuvreUpdates.additionalInfo.map(setManoeuvreAdditionalInfo(manoeuvreId))
+      manoeuvreUpdates.exceptions.map(setManoeuvreExceptions(manoeuvreId))
+      updateModifiedData(userName, manoeuvreId)
     }
   }
 
@@ -135,13 +134,14 @@ object ManoeuvreService {
     manoeuvreExceptionsById
   }
 
-  private def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+  private def setManoeuvreExceptions(manoeuvreId: Long)(exceptions: Seq[Int]) = {
     sqlu"""
            delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
         """.execute()
-
     addManoeuvreExceptions(manoeuvreId, exceptions)
+  }
 
+  private def updateModifiedData(username: String, manoeuvreId: Long) {
     sqlu"""
            update manoeuvre
            set modified_date = sysdate, modified_by = $username
@@ -149,7 +149,7 @@ object ManoeuvreService {
         """.execute()
   }
 
-  private def setManoeuvreAdditionalInfo(userName: String, manoeuvreId: Long, additionalInfo: String) = {
+  private def setManoeuvreAdditionalInfo(manoeuvreId: Long)(additionalInfo: String) = {
     sqlu"""
            update manoeuvre
            set additional_info = $additionalInfo
