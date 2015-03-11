@@ -142,10 +142,12 @@
         var manoeuvreData = function(formGroupElement) {
           var destRoadLinkId = parseInt(formGroupElement.attr('roadLinkId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
+          var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           return {
             manoeuvreId: manoeuvreId,
             destRoadLinkId: destRoadLinkId,
-            exceptions: manoeuvreExceptions(formGroupElement)
+            exceptions: manoeuvreExceptions(formGroupElement),
+            additionalInfo: additionalInfo
           };
         };
 
@@ -157,6 +159,13 @@
             .value();
         };
 
+        rootElement.find('.adjacent-link').on('input', 'input[type="text"]', function(event) {
+          var manoeuvre = manoeuvreData($(event.delegateTarget));
+          var manoeuvreId = manoeuvre.manoeuvreId;
+          if (_.isNull(manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          }
+        });
         rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvre = manoeuvreData($(event.delegateTarget));
