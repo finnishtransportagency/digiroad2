@@ -1,12 +1,12 @@
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (97666,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (97665,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39560,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39559,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39564,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39561,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39558,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39563,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
-Insert into MANOEUVRE (ID,TYPE,MODIFIED_DATE,MODIFIED_BY) values (39562,2,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (97666,2,'Yksityisalue!',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (97665,2,'Kielletään kaikki!',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39560,2,null,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39559,2,null,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39564,2,'Ei mitään asiaa tänne!',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39561,2,'Täällä ei ole mitään nähtävää',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39558,2,null,to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39563,2,'Seis!',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
+Insert into MANOEUVRE (ID,TYPE,ADDITIONAL_INFO,MODIFIED_DATE,MODIFIED_BY) values (39562,2,'This is a local road for local people',to_timestamp('24-FEB-15','DD-MON-RR'),'dr1_conversion');
 
 Insert into MANOEUVRE_ELEMENT (MANOEUVRE_ID,ROAD_LINK_ID,ELEMENT_TYPE) values (97666,6586,3);
 Insert into MANOEUVRE_ELEMENT (MANOEUVRE_ID,ROAD_LINK_ID,ELEMENT_TYPE) values (97665,6683,3);
