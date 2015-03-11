@@ -28,6 +28,7 @@
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
           '<ul>' +
             '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e %></li> <% }) %>' +
+            '<% if(!_.isEmpty(additionalInfo)) { %> <li>Tarkenne: <%- additionalInfo %></li> <% } %>' +
           '</ul>' +
         '</div>' +
         '<% } %>' +
