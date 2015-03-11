@@ -115,17 +115,17 @@ object ManoeuvreService {
     manoeuvresById.filter { case (id, links) =>
       links.size == 2 && links.exists(_._4 == FirstElement) && links.exists(_._4 == LastElement)
     }.map { case (id, links) =>
-      val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy) = links.find(_._4 == FirstElement).get
-      val (_, _, destRoadLinkId, _, _, _) = links.find(_._4 == LastElement).get
+      val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
+      val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
       val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
       val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
       val modifiedTimeStamp = AssetPropertyConfiguration.DateTimePropertyFormat.print(modifiedDate)
 
-      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, "balaillaan!")
+      Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
     }.toSeq
   }
 
-  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String)]] = {
+  private def fetchManoeuvresByRoadLinkIds(roadLinkIds: Seq[Long]): Map[Long, Seq[(Long, Int, Long, Int, DateTime, String, String)]] = {
     val manoeuvres = OracleArray.fetchManoeuvresByRoadLinkIds(roadLinkIds, bonecpToInternalConnection(dynamicSession.conn))
     val manoeuvresById = manoeuvres.toList.groupBy(_._1)
     manoeuvresById

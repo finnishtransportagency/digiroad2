@@ -66,16 +66,17 @@ public class OracleArray {
         }
     }
 
-    private static class RowToManoeuvre implements RowToElement<Tuple6<Long, Int, Long, Int, DateTime, String>> {
+    private static class RowToManoeuvre implements RowToElement<Tuple7<Long, Int, Long, Int, DateTime, String, String>> {
         @Override
-        public Tuple6<Long, Int, Long, Int, DateTime, String> convert(ResultSet row) throws SQLException {
+        public Tuple7<Long, Int, Long, Int, DateTime, String, String> convert(ResultSet row) throws SQLException {
             long manoeuvreId = row.getLong(1);
             int type = row.getInt(2);
             long roadLinkId = row.getLong(3);
             int elementType = row.getInt(4);
             DateTime createdAt = DateTime.parse(row.getString(5));
             String createdBy = row.getString(6);
-            return new Tuple6(manoeuvreId, type, roadLinkId, elementType, createdAt, createdBy);
+            String additionalInfo = row.getString(7);
+            return new Tuple7(manoeuvreId, type, roadLinkId, elementType, createdAt, createdBy, additionalInfo);
         }
     }
 
@@ -112,8 +113,8 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
     }
 
-    public static List<Tuple6<Long, Int, Long, Int, DateTime, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT m.id, m.type, e.road_link_id, e.element_type, to_char(m.modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.modified_by " +
+    public static List<Tuple7<Long, Int, Long, Int, DateTime, String, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
+        String query = "SELECT m.id, m.type, e.road_link_id, e.element_type, to_char(m.modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.modified_by, m.additional_info " +
                 "FROM MANOEUVRE m " +
                 "JOIN MANOEUVRE_ELEMENT e ON m.id = e.manoeuvre_id " +
                 "WHERE m.id in (" +
