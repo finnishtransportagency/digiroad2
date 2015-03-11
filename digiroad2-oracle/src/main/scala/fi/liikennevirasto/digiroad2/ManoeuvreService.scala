@@ -14,7 +14,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
-case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
+case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
 case class ManoeuvreUpdates(exceptions: Seq[Int], additionalInfo: Option[String])
 
 object ManoeuvreService {
@@ -81,7 +81,7 @@ object ManoeuvreService {
   val FirstElement = 1
   val LastElement = 3
 
-  def createManoeuvre(userName: String, manoeuvre: ManoeuvrePostParam): Long = {
+  def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
       val additionalInfo = manoeuvre.additionalInfo.getOrElse("")

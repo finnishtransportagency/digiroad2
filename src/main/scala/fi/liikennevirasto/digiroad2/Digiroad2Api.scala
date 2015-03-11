@@ -405,7 +405,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   post("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
-    val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[ManoeuvrePostParam]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
+    val manoeuvres = (parsedBody \ "manoeuvres").extractOrElse[Seq[NewManoeuvre]](halt(BadRequest("Malformed 'manoeuvres' parameter")))
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
