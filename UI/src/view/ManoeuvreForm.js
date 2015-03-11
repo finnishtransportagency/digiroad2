@@ -28,10 +28,10 @@
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
           '<ul>' +
             '<% _.forEach(localizedExceptions, function(e) { %> <li><%- e %></li> <% }) %>' +
-            '<% if(!_.isEmpty(additionalInfo)) { %> <li>Tarkenne: <%- additionalInfo %></li> <% } %>' +
           '</ul>' +
         '</div>' +
         '<% } %>' +
+        '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
