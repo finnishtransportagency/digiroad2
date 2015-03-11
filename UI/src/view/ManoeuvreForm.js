@@ -157,7 +157,7 @@
             .value();
         };
 
-        rootElement.find('.adjacent-link').on('change', 'input', function(event) {
+        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
