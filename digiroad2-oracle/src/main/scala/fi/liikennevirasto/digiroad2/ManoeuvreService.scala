@@ -18,36 +18,9 @@ case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions
 case class ManoeuvreUpdates(exceptions: Seq[Int], additionalInfo: Option[String])
 
 object ManoeuvreService {
-  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      manoeuvreUpdates.additionalInfo.map { additionalInfo =>
-        setManoeuvreAdditionalInfo(userName, manoeuvreId, additionalInfo)
-      }
-      setManoeuvreExceptions(userName, manoeuvreId, manoeuvreUpdates.exceptions)
-    }
-  }
 
-  private def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
-    sqlu"""
-           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
-        """.execute()
-
-    addManoeuvreExceptions(manoeuvreId, exceptions)
-
-    sqlu"""
-           update manoeuvre
-           set modified_date = sysdate, modified_by = $username
-           where id = $manoeuvreId
-        """.execute()
-  }
-
-  private def setManoeuvreAdditionalInfo(userName: String, manoeuvreId: Long, additionalInfo: String) = {
-    sqlu"""
-           update manoeuvre
-           set additional_info = $additionalInfo
-           where id = $manoeuvreId
-        """.execute()
-  }
+  val FirstElement = 1
+  val LastElement = 3
 
   def getSourceRoadLinkIdById(id: Long): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -56,6 +29,26 @@ object ManoeuvreService {
              from manoeuvre_element
              where manoeuvre_id = $id and element_type = 1
           """.as[Long].first
+    }
+  }
+
+  def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val roadLinks = RoadLinkService.getByMunicipalityWithProperties(municipalityNumber)
+        .map(link => (link("id").asInstanceOf[Long], link("mmlId").asInstanceOf[Long]))
+        .toMap
+
+      getByRoadlinks(roadLinks)
+    }
+  }
+
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
+        .map(link => (link._1, link._2))
+        .toMap
+
+      getByRoadlinks(roadLinks)
     }
   }
 
@@ -68,18 +61,6 @@ object ManoeuvreService {
           """.execute()
     }
   }
-
-  private def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
-    if (exceptions.nonEmpty) {
-      val query = s"insert all " +
-        exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
-        s"select * from dual"
-      Q.updateNA(query).execute()
-    }
-  }
-
-  val FirstElement = 1
-  val LastElement = 3
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -107,25 +88,21 @@ object ManoeuvreService {
     }
   }
 
-
-
-  def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
+  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val roadLinks = RoadLinkService.getByMunicipalityWithProperties(municipalityNumber)
-        .map(link => (link("id").asInstanceOf[Long], link("mmlId").asInstanceOf[Long]))
-        .toMap
-
-      getByRoadlinks(roadLinks)
+      manoeuvreUpdates.additionalInfo.map { additionalInfo =>
+        setManoeuvreAdditionalInfo(userName, manoeuvreId, additionalInfo)
+      }
+      setManoeuvreExceptions(userName, manoeuvreId, manoeuvreUpdates.exceptions)
     }
   }
 
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-        .map(link => (link._1, link._2))
-        .toMap
-
-      getByRoadlinks(roadLinks)
+  private def addManoeuvreExceptions(manoeuvreId: Long, exceptions: Seq[Int]) {
+    if (exceptions.nonEmpty) {
+      val query = s"insert all " +
+        exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
+        s"select * from dual"
+      Q.updateNA(query).execute()
     }
   }
 
@@ -156,5 +133,27 @@ object ManoeuvreService {
     val manoeuvreExceptions = OracleArray.fetchManoeuvreExceptionsByIds(manoeuvreIds, bonecpToInternalConnection(dynamicSession.conn))
     val manoeuvreExceptionsById: Map[Long, Seq[Int]] = manoeuvreExceptions.toList.groupBy(_._1).mapValues(_.map(_._2))
     manoeuvreExceptionsById
+  }
+
+  private def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+    sqlu"""
+           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+        """.execute()
+
+    addManoeuvreExceptions(manoeuvreId, exceptions)
+
+    sqlu"""
+           update manoeuvre
+           set modified_date = sysdate, modified_by = $username
+           where id = $manoeuvreId
+        """.execute()
+  }
+
+  private def setManoeuvreAdditionalInfo(userName: String, manoeuvreId: Long, additionalInfo: String) = {
+    sqlu"""
+           update manoeuvre
+           set additional_info = $additionalInfo
+           where id = $manoeuvreId
+        """.execute()
   }
 }
