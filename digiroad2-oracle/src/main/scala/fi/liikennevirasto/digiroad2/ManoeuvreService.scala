@@ -15,8 +15,40 @@ import scala.slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
+case class ManoeuvreUpdates(exceptions: Seq[Int], additionalInfo: Option[String])
 
 object ManoeuvreService {
+  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      manoeuvreUpdates.additionalInfo.map { additionalInfo =>
+        setManoeuvreAdditionalInfo(userName, manoeuvreId, additionalInfo)
+      }
+      setManoeuvreExceptions(userName, manoeuvreId, manoeuvreUpdates.exceptions)
+    }
+  }
+
+  private def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
+    sqlu"""
+           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
+        """.execute()
+
+    addManoeuvreExceptions(manoeuvreId, exceptions)
+
+    sqlu"""
+           update manoeuvre
+           set modified_date = sysdate, modified_by = $username
+           where id = $manoeuvreId
+        """.execute()
+  }
+
+  private def setManoeuvreAdditionalInfo(userName: String, manoeuvreId: Long, additionalInfo: String) = {
+    sqlu"""
+           update manoeuvre
+           set additional_info = $additionalInfo
+           where id = $manoeuvreId
+        """.execute()
+  }
+
   def getSourceRoadLinkIdById(id: Long): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       sql"""
@@ -75,21 +107,7 @@ object ManoeuvreService {
     }
   }
 
-  def setManoeuvreExceptions(username: String, manoeuvreId: Long, exceptions: Seq[Int]) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""
-           delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
-          """.execute()
 
-      addManoeuvreExceptions(manoeuvreId, exceptions)
-
-      sqlu"""
-           update manoeuvre
-           set modified_date = sysdate, modified_by = $username
-           where id = $manoeuvreId
-          """.execute()
-    }
-  }
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
