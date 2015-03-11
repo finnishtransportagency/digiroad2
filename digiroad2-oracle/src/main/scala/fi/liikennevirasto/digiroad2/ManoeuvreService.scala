@@ -14,6 +14,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
+case class ManoeuvrePostParam(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
 
 object ManoeuvreService {
   def getSourceRoadLinkIdById(id: Long): Long = {
@@ -48,26 +49,28 @@ object ManoeuvreService {
   val FirstElement = 1
   val LastElement = 3
 
-  def createManoeuvre(userName: String, sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int]): Long = {
+  def createManoeuvre(userName: String, manoeuvre: ManoeuvrePostParam): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
-
+      val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
       sqlu"""
-             insert into manoeuvre(id, type, modified_date, modified_by)
-             values ($manoeuvreId, 2, sysdate, $userName)
+             insert into manoeuvre(id, type, modified_date, modified_by, additional_info)
+             values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
           """.execute()
 
+      val sourceRoadLinkId = manoeuvre.sourceRoadLinkId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
           """.execute()
 
+      val destRoadLinkId = manoeuvre.destRoadLinkId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $destRoadLinkId, $LastElement)
           """.execute()
 
-      addManoeuvreExceptions(manoeuvreId, exceptions)
+      addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)
       manoeuvreId
     }
   }
