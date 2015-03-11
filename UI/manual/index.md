@@ -216,7 +216,7 @@ _Nopeusrajoitusten valinta._
 2.5 K&auml;&auml;ntymisrajoitus
 --------------------------------
 
-Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset paksuuntuvat, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymisrajoitukset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml;, on sininen, ja linkki, jolle ei saa k&auml;&auml;nty&auml; on visualisoitu punaisella katkoviivalla. Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa.
+Kartalle voi valita k&auml;&auml;ntymisrajoitukset valitsemalla tietolajit-paletista (1) K&auml;&auml;ntymisrajoitus. Karttaa tarkennettaessa k&auml;&auml;ntymisrajoitukset paksuuntuvat, jotta niiden erottaminen olisi helpompaa. K&auml;&auml;ntymisrajoitukset on visualisoitu siten, ett&auml; linkki, jolta ei saa k&auml;&auml;nty&auml;, on sininen, ja linkki, jolle ei saa k&auml;&auml;nty&auml; on visualisoitu punaisella katkoviivalla. Visualisoinnin selitteet n&auml;kyv&auml;t K&auml;&auml;ntymisrajoitus-valinnan alla tietolajit-paletissa. Tielinkeill&auml;, joiden liikennevirran suunta on vain yhteen suuntaan, on visualisoitu suuntanuoli kuvaamaan liikennevirran suuntaa.
 
 ![K&auml;&auml;ntymisrajoitus](k43.JPG)
 
@@ -559,7 +559,7 @@ Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa a
 4.4.1 K&auml;&auml;ntymisrajoitusten muokkaus
 ---------------------------------------------
 
-K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+K&auml;&auml;ntymisrajoituksia muokataan muokkaustilassa. Muokattava kohde valitaan klikkaamalla sen geometriaa (4). Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muokattavia tietoja ovat k&auml;&auml;ntymisrajoituksen kohdelinkit sek&auml; ajoneuvotyypit, joita k&auml;&auml;ntymisrajoitus ei koske. Muutokset tallennetaan painamalla Tallenna-painiketta (8). Ennen Tallenna-painikkeen painamista muutokset voi peruuttaa painamalla Peruuta-painiketta (9). Tallenna- ja Peruuta -painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole tallennettu tai peruutettu ja siirryt&auml;&auml;n pois painorajoituksen valinnasta, sovellus antaa muutos-dialogin. Muutos-dialogi kertoo k&auml;ytt&auml;j&auml;lle, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 ![K&auml;&auml;ntymisrajoitusten muokkaus.](k45.JPG)
 
