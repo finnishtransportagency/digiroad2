@@ -22,12 +22,12 @@
       });
     }, 1000);
 
-    this.updateManoeuvreExceptions = function(exceptions, success, failure) {
+    this.updateManoeuvreDetails = function(details, success, failure) {
        $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/manoeuvres",
-        data: JSON.stringify(exceptions),
+        data: JSON.stringify(details),
         dataType: "json",
         success: success,
         error: failure

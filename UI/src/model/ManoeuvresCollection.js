@@ -137,7 +137,7 @@
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
-      var exceptions = _.omit(updatedInfo, function(value, key) {
+      var details = _.omit(updatedInfo, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
         });
@@ -146,7 +146,7 @@
         removedManoeuvres = [];
         backend.createManoeuvres(addedManoeuvres, function() {
           addedManoeuvres = [];
-          backend.updateManoeuvreExceptions(exceptions, function() {
+          backend.updateManoeuvreDetails(details, function() {
             updatedInfo = {};
             callback();
           }, failureCallback);
