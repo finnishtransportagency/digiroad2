@@ -53,7 +53,11 @@
           '</div>' +
         '<% }) %>' +
         '<%= newExceptionSelect %>' +
-        '<div class="form-group"><input type="text" class="form-control additional-info" placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %>></div>' +
+        '<div class="form-group">' +
+          '<input type="text" class="form-control additional-info" ' +
+                             'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
+                             '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
+        '</div>' +
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
@@ -119,11 +123,13 @@
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = manoeuvre ? _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); }) : [];
+          var additionalInfo = (manoeuvre && !_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptions,
             localizedExceptions: localizedExceptions,
+            additionalInfo: additionalInfo,
             newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate
           });
