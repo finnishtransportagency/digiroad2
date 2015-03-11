@@ -430,13 +430,13 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   put("/manoeuvres") {
     val user = userProvider.getCurrentUser()
 
-    val manoeuvreExceptions: Map[Long, ManoeuvreUpdates] = parsedBody
+    val manoeuvreUpdates: Map[Long, ManoeuvreUpdates] = parsedBody
       .extractOrElse[Map[String, ManoeuvreUpdates]](halt(BadRequest("Malformed body on put manoeuvres request")))
-      .map{case(id, manoeuvreUpdates) => (id.toLong, manoeuvreUpdates)}
-    manoeuvreExceptions.foreach{ case(id, manoeuvreUpdates) =>
+      .map{case(id, updates) => (id.toLong, updates)}
+    manoeuvreUpdates.foreach{ case(id, updates) =>
       val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(id)
       hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
-      ManoeuvreService.updateManoeuvre(user.username, id, manoeuvreUpdates)
+      ManoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
 }
