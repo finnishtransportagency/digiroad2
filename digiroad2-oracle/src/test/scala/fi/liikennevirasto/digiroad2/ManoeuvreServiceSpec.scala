@@ -13,6 +13,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   after {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      sqlu"""delete from manoeuvre_element where manoeuvre_id in (select id from manoeuvre where modified_by = 'unittest')""".execute()
       sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute()
     }
   }
@@ -31,7 +32,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
   def createManouvre: Manoeuvre = {
-    val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", 7482, 6677, Nil)
+    val manoeuvreId = ManoeuvreService.createManoeuvre("unittest", NewManoeuvre(7482, 6677, Nil, None))
 
     val manoeuvre = ManoeuvreService.getByMunicipality(235).find { manoeuvre =>
       manoeuvre.id == manoeuvreId

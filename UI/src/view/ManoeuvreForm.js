@@ -31,6 +31,7 @@
           '</ul>' +
         '</div>' +
         '<% } %>' +
+        '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
       '</div>';
     var adjacentLinkTemplate = '' +
       '<div class="form-group adjacent-link" manoeuvreId="<%= manoeuvreId %>" roadLinkId="<%= id %>"  mmlId="<%= mmlId %>" style="display: none">' +
@@ -52,6 +53,11 @@
           '</div>' +
         '<% }) %>' +
         '<%= newExceptionSelect %>' +
+        '<div class="form-group">' +
+          '<input type="text" class="form-control additional-info" ' +
+                             'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
+                             '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
+        '</div>' +
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
@@ -117,11 +123,13 @@
           var checked = manoeuvre ? true : false;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = manoeuvre ? _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); }) : [];
+          var additionalInfo = (manoeuvre && !_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;
           var attributes = _.merge({}, adjacentLink, {
             checked: checked,
             manoeuvreId: manoeuvreId,
             exceptionOptions: exceptions,
             localizedExceptions: localizedExceptions,
+            additionalInfo: additionalInfo,
             newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate
           });
@@ -134,10 +142,12 @@
         var manoeuvreData = function(formGroupElement) {
           var destRoadLinkId = parseInt(formGroupElement.attr('roadLinkId'), 10);
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
+          var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
           return {
             manoeuvreId: manoeuvreId,
             destRoadLinkId: destRoadLinkId,
-            exceptions: manoeuvreExceptions(formGroupElement)
+            exceptions: manoeuvreExceptions(formGroupElement),
+            additionalInfo: additionalInfo
           };
         };
 
@@ -149,7 +159,17 @@
             .value();
         };
 
-        rootElement.find('.adjacent-link').on('change', 'input', function(event) {
+        var throttledAdditionalInfoHandler = _.throttle(function(event) {
+          var manoeuvre = manoeuvreData($(event.delegateTarget));
+          var manoeuvreId = manoeuvre.manoeuvreId;
+          if (_.isNull(manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          } else {
+            selectedManoeuvreSource.setAdditionalInfo(manoeuvreId, manoeuvre.additionalInfo || "");
+          }
+        }, 1000);
+        rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
+        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvre = manoeuvreData($(event.delegateTarget));
           if (eventTarget.attr('checked') === 'checked') {
@@ -184,12 +204,15 @@
           var isChecked = $(event.target).is(':checked');
           var selects = $(event.delegateTarget).find('select');
           var button = $(event.delegateTarget).find('button');
+          var text = $(event.delegateTarget).find('input[type="text"]');
           if(isChecked){
             selects.prop('disabled', false);
             button.prop('disabled', false);
+            text.prop('disabled', false);
           } else {
             selects.prop('disabled', 'disabled');
             button.prop('disabled', 'disabled');
+            text.prop('disabled', 'disabled');
           }
         });
         rootElement.find('.exception').on('click', 'button.delete', function(event) {

@@ -3,7 +3,7 @@
     var manoeuvres = [];
     var addedManoeuvres = [];
     var removedManoeuvres = [];
-    var updatedExceptions = {};
+    var updatedInfo = {};
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
@@ -115,7 +115,12 @@
     };
 
     var setExceptions = function(manoeuvreId, exceptions) {
-      updatedExceptions[manoeuvreId] = exceptions;
+      updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { exceptions: exceptions });
+      eventbus.trigger('manoeuvre:changed');
+    };
+
+    var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
+      updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { additionalInfo: additionalInfo });
       eventbus.trigger('manoeuvre:changed');
     };
 
@@ -126,13 +131,13 @@
     var cancelModifications = function() {
       addedManoeuvres = [];
       removedManoeuvres = [];
-      updatedExceptions = {};
+      updatedInfo = {};
     };
 
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
-      var exceptions = _.omit(updatedExceptions, function(value, key) {
+      var details = _.omit(updatedInfo, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
         });
@@ -141,8 +146,8 @@
         removedManoeuvres = [];
         backend.createManoeuvres(addedManoeuvres, function() {
           addedManoeuvres = [];
-          backend.updateManoeuvreExceptions(exceptions, function() {
-            updatedExceptions = {};
+          backend.updateManoeuvreDetails(details, function() {
+            updatedInfo = {};
             callback();
           }, failureCallback);
         }, failureCallback);
@@ -150,7 +155,7 @@
     };
 
     var isDirty = function() {
-      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres) || !_.isEmpty(updatedExceptions);
+      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres) || !_.isEmpty(updatedInfo);
     };
 
     return {
@@ -161,6 +166,7 @@
       addManoeuvre: addManoeuvre,
       removeManoeuvre: removeManoeuvre,
       setExceptions: setExceptions,
+      setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
       save: save
