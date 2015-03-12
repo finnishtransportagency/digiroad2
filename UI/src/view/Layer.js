@@ -4,7 +4,7 @@
     this.eventListener = _.extend({running: false}, eventbus);
     this.refreshView = function() {};
     this.isDirty = function() { return false; };
-    this.bindEventHandlers = function() {};
+    this.layerStarted = function() {};
     this.removeLayerFeatures = function() {};
     this.isStarted = function() {
       return me.eventListener.running;
@@ -14,7 +14,7 @@
         me.selectControl.activate();
         me.eventListener.running = true;
         me.refreshView();
-        me.bindEventHandlers(me.eventListener);
+        me.layerStarted(me.eventListener);
       }
     };
     this.stop = function() {

@@ -208,7 +208,8 @@
       indicatorLayer.clearMarkers();
     };
 
-    this.bindEventHandlers = function(eventListener) {
+    this.layerStarted = function(eventListener) {
+      indicatorLayer.setZIndex(1000);
       var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
       var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
       var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
