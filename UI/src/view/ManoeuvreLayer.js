@@ -202,7 +202,7 @@
     };
 
     this.removeLayerFeatures = function() {
-      indicatorLayer.removeAllFeatures();
+      indicatorLayer.clearMarkers();
     };
 
     this.bindEventHandlers = function(eventListener) {
