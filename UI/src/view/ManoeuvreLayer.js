@@ -122,7 +122,7 @@
         }
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
         indicatorLayer.clearMarkers();
-        handleManoeuvreSelected();
+        handleMarkerDraw();
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -197,8 +197,7 @@
       });
     };
 
-    var adjacentLinks = function() {
-      var roadLink = selectedManoeuvreSource.get();
+    var adjacentLinks = function(roadLink) {
       return _.chain(roadLink.adjacent)
         .map(function(adjacent) {
           return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
@@ -209,15 +208,18 @@
         .value();
     };
 
-    var handleManoeuvreSelected = function() {
+    var handleManoeuvreSelected = function(roadLink) {
       if (!application.isReadOnly()) {
-        drawIndicators(adjacentLinks());
+        drawIndicators(adjacentLinks(roadLink));
       }
     };
 
-    var handleReadOnlyStateChanged = function() {
+    var handleMarkerDraw = function() {
       if (!application.isReadOnly()) {
-        drawIndicators(adjacentLinks());
+        var roadLink = selectedManoeuvreSource.get();
+        if(roadLink) {
+          drawIndicators(adjacentLinks(roadLink));
+        }
       } else {
         indicatorLayer.clearMarkers();
       }
@@ -236,7 +238,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
-      eventListener.listenTo(eventbus, 'application:readOnly', handleReadOnlyStateChanged);
+      eventListener.listenTo(eventbus, 'application:readOnly', handleMarkerDraw);
     };
 
     return {
