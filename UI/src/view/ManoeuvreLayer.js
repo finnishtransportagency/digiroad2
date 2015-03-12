@@ -184,7 +184,7 @@
         var lineString = new OpenLayers.Geometry.LineString(points);
         var indicatorPosition = geometryUtils.calculateMidpointOfLineString(lineString);
         var bounds = OpenLayers.Bounds.fromArray([indicatorPosition.x, indicatorPosition.y, indicatorPosition.x, indicatorPosition.y]);
-        var box = new OpenLayers.Marker.Box(bounds);
+        var box = new OpenLayers.Marker.Box(bounds, "00000000");
         $(box.div).html(markerTemplate(link));
         $(box.div).css('overflow', 'visible');
         return box;
