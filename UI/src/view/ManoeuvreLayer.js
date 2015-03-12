@@ -121,6 +121,8 @@
           selectControl.select(feature);
         }
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
+        indicatorLayer.clearMarkers();
+        drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -195,8 +197,8 @@
       });
     };
 
-    var handleManoeuvreSelected = function(roadLink) {
-      var adjacentLinks = _.chain(roadLink.adjacent)
+    var adjacentLinks = function(roadLink) {
+      return _.chain(roadLink.adjacent)
         .map(function(adjacent) {
           return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
             return link.roadLinkId === adjacent.id;
@@ -204,7 +206,10 @@
         })
         .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
         .value();
-      drawIndicators(adjacentLinks);
+    };
+
+    var handleManoeuvreSelected = function(roadLink) {
+      drawIndicators(adjacentLinks(roadLink));
     };
 
     this.removeLayerFeatures = function() {
