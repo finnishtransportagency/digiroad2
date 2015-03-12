@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
+  root.ManoeuvreLayer = function(application, map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -122,7 +122,7 @@
         }
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
         indicatorLayer.clearMarkers();
-        drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
+        handleManoeuvreSelected();
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -197,7 +197,8 @@
       });
     };
 
-    var adjacentLinks = function(roadLink) {
+    var adjacentLinks = function() {
+      var roadLink = selectedManoeuvreSource.get();
       return _.chain(roadLink.adjacent)
         .map(function(adjacent) {
           return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
@@ -208,8 +209,18 @@
         .value();
     };
 
-    var handleManoeuvreSelected = function(roadLink) {
-      drawIndicators(adjacentLinks(roadLink));
+    var handleManoeuvreSelected = function() {
+      if (!application.isReadOnly()) {
+        drawIndicators(adjacentLinks());
+      }
+    };
+
+    var handleReadOnlyStateChanged = function() {
+      if (!application.isReadOnly()) {
+        drawIndicators(adjacentLinks());
+      } else {
+        indicatorLayer.clearMarkers();
+      }
     };
 
     this.removeLayerFeatures = function() {
@@ -225,6 +236,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
+      eventListener.listenTo(eventbus, 'application:readOnly', handleReadOnlyStateChanged);
     };
 
     return {
