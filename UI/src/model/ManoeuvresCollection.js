@@ -87,7 +87,13 @@
       });
       backend.getAdjacent(roadLink.roadLinkId, function(adjacent) {
         var modificationData = getLatestModificationDataBySourceRoadLink(roadLinkId);
-        callback(_.merge({}, roadLink, modificationData, { adjacent: adjacent }));
+        var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+        var sortedAdjantedWithMarker = _.chain(adjacent)
+          .sortBy('id')
+          .map(function(a, i){
+            return _.merge({}, a, { marker: markers[i] });
+          }).value();
+        callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjantedWithMarker }));
       });
     };
 
