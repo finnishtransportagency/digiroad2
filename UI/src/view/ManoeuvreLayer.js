@@ -196,11 +196,14 @@
     };
 
     var handleManoeuvreSelected = function(roadLink) {
-      var adjacentLinks = _.map(roadLink.adjacent, function(adjacent) {
-        return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
-          return link.roadLinkId === adjacent.id;
-        }));
-      });
+      var adjacentLinks = _.chain(roadLink.adjacent)
+        .map(function(adjacent) {
+          return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
+            return link.roadLinkId === adjacent.id;
+          }));
+        })
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .value();
       drawIndicators(adjacentLinks);
     };
 
