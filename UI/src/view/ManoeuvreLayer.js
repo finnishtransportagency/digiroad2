@@ -1,9 +1,10 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName, roadLayer);
     var me = this;
     this.minZoomForContent = zoomlevels.minZoomForAssets;
+    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
       0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
@@ -140,6 +141,7 @@
     };
 
     var show = function(map) {
+      map.addLayer(indicatorLayer);
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         me.start();
       }
@@ -149,6 +151,7 @@
       unselectManoeuvre();
       me.stop();
       me.hide();
+      map.removeLayer(indicatorLayer);
     };
 
     var handleManoeuvreChanged = function(eventListener) {
@@ -171,6 +174,36 @@
       });
     };
 
+    var drawIndicators = function(links) {
+      var indicators = _.map(links, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var lineString = new OpenLayers.Geometry.LineString(points);
+        var indicatorPosition = geometryUtils.calculateMidpointOfLineString(lineString);
+        var bounds = OpenLayers.Bounds.fromArray([indicatorPosition.x, indicatorPosition.y, indicatorPosition.x, indicatorPosition.y]);
+        var box = new OpenLayers.Marker.Box(bounds);
+        $(box.div).html(link.roadLinkId);
+        $(box.div).css('overflow', 'visible');
+        return box;
+      });
+
+      _.forEach(indicators, function(indicator) {
+        indicatorLayer.addMarker(indicator);
+      });
+    };
+
+    var handleManoeuvreSelected = function(roadLink) {
+      var adjacentLinks = _.filter(roadCollection.getAll(), function(link) {
+        return _.some(roadLink.adjacent, function(adjacent) { return link.roadLinkId === adjacent.id; });
+      });
+      drawIndicators(adjacentLinks);
+    };
+
+    this.removeLayerFeatures = function() {
+      indicatorLayer.removeAllFeatures();
+    };
+
     this.bindEventHandlers = function(eventListener) {
       var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
       var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
@@ -178,6 +211,7 @@
       eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
     };
 
     return {
