@@ -176,6 +176,7 @@
     };
 
     var drawIndicators = function(links) {
+      var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
       var indicators = _.map(links, function(link) {
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
@@ -184,7 +185,7 @@
         var indicatorPosition = geometryUtils.calculateMidpointOfLineString(lineString);
         var bounds = OpenLayers.Bounds.fromArray([indicatorPosition.x, indicatorPosition.y, indicatorPosition.x, indicatorPosition.y]);
         var box = new OpenLayers.Marker.Box(bounds);
-        $(box.div).html(link.roadLinkId);
+        $(box.div).html(markerTemplate(link));
         $(box.div).css('overflow', 'visible');
         return box;
       });
@@ -195,8 +196,10 @@
     };
 
     var handleManoeuvreSelected = function(roadLink) {
-      var adjacentLinks = _.filter(roadCollection.getAll(), function(link) {
-        return _.some(roadLink.adjacent, function(adjacent) { return link.roadLinkId === adjacent.id; });
+      var adjacentLinks = _.map(roadLink.adjacent, function(adjacent) {
+        return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
+          return link.roadLinkId === adjacent.id;
+        }));
       });
       drawIndicators(adjacentLinks);
     };
