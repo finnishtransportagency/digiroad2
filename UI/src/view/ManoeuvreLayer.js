@@ -48,6 +48,7 @@
       roadLayer.redraw();
       highlightFeatures(null);
       highlightOverlayFeatures([]);
+      indicatorLayer.clearMarkers();
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
