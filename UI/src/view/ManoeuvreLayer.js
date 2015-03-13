@@ -24,7 +24,7 @@
       15: { pointRadius: 24 }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}' }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
@@ -32,8 +32,8 @@
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}' })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12, rotation: '${rotation}' }))
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 0.3 }))
     });
     selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
@@ -47,7 +47,7 @@
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
       roadLayer.redraw();
       highlightFeatures(null);
-      highlightOverlayFeatures([]);
+      highlightOverlayFeatures(null);
       indicatorLayer.clearMarkers();
     };
 
@@ -57,7 +57,7 @@
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
         highlightFeatures(feature.attributes.roadLinkId);
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
+        highlightOverlayFeatures(feature.attributes.roadLinkId);
       },
       onUnselect: function() {
         unselectManoeuvre();
@@ -78,10 +78,13 @@
       });
     };
 
-    var highlightOverlayFeatures = function(roadLinkIds) {
+    var highlightOverlayFeatures = function(sourceRoadLinkId) {
+      var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(sourceRoadLinkId);
+      var sourceAndDestinationRoadLinkIds = destinationRoadLinkIds.concat([sourceRoadLinkId]);
+
       _.each(roadLayer.layer.features, function(x) {
-        if (x.attributes.type === 'overlay') {
-          if (_.contains(roadLinkIds, x.attributes.roadLinkId)) {
+        if ((x.attributes.type === 'overlay' &&  x.attributes.roadLinkId != sourceRoadLinkId) || x.attributes.rotation) {
+          if (_.contains(sourceAndDestinationRoadLinkIds, x.attributes.roadLinkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -120,7 +123,7 @@
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
+        highlightOverlayFeatures(selectedManoeuvreSource.getRoadLinkId());
         indicatorLayer.clearMarkers();
         updateAdjacentLinkIndicators();
       }
