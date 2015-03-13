@@ -182,13 +182,8 @@
 
     var drawIndicators = function(links) {
       var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
-      var indicators = _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var lineString = new OpenLayers.Geometry.LineString(points);
-        var indicatorPosition = geometryUtils.calculateMidpointOfLineString(lineString);
-        var bounds = OpenLayers.Bounds.fromArray([indicatorPosition.x, indicatorPosition.y, indicatorPosition.x, indicatorPosition.y]);
+      var indicators = me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+        var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
         var box = new OpenLayers.Marker.Box(bounds, "00000000");
         $(box.div).html(markerTemplate(link));
         $(box.div).css('overflow', 'visible');
