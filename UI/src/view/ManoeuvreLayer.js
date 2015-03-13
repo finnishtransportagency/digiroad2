@@ -47,7 +47,8 @@
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
       roadLayer.redraw();
       highlightFeatures(null);
-      highlightOverlayFeatures(null);
+      highlightOneWaySigns([]);
+      highlightOverlayFeatures([]);
       indicatorLayer.clearMarkers();
     };
 
@@ -57,7 +58,9 @@
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
         highlightFeatures(feature.attributes.roadLinkId);
-        highlightOverlayFeatures(feature.attributes.roadLinkId);
+        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId);
+        highlightOneWaySigns(destinationRoadLinkIds.concat([feature.attributes.roadLinkId]));
+        highlightOverlayFeatures(destinationRoadLinkIds);
       },
       onUnselect: function() {
         unselectManoeuvre();
@@ -78,13 +81,24 @@
       });
     };
 
-    var highlightOverlayFeatures = function(sourceRoadLinkId) {
-      var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(sourceRoadLinkId);
-      var sourceAndDestinationRoadLinkIds = destinationRoadLinkIds.concat([sourceRoadLinkId]);
+    var highlightOneWaySigns = function(roadLinkIds) {
+      var isOneWaySign = function(feature) { return !_.isUndefined(feature.attributes.rotation); };
 
       _.each(roadLayer.layer.features, function(x) {
-        if ((x.attributes.type === 'overlay' &&  x.attributes.roadLinkId != sourceRoadLinkId) || x.attributes.rotation) {
-          if (_.contains(sourceAndDestinationRoadLinkIds, x.attributes.roadLinkId)) {
+        if (isOneWaySign(x)) {
+          if (_.contains(roadLinkIds, x.attributes.roadLinkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
+
+    var highlightOverlayFeatures = function(roadLinkIds) {
+      _.each(roadLayer.layer.features, function(x) {
+        if (x.attributes.type === 'overlay') {
+          if (_.contains(roadLinkIds, x.attributes.roadLinkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -123,7 +137,9 @@
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOverlayFeatures(selectedManoeuvreSource.getRoadLinkId());
+        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId());
+        highlightOneWaySigns(destinationRoadLinkIds.concat([selectedManoeuvreSource.getRoadLinkId()]));
+        highlightOverlayFeatures(destinationRoadLinkIds);
         indicatorLayer.clearMarkers();
         updateAdjacentLinkIndicators();
       }
