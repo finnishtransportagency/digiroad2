@@ -71,13 +71,8 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        selectedManoeuvreSource.open(feature.attributes.roadLinkId);
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
-        roadLayer.redraw();
-        highlightFeatures(feature.attributes.roadLinkId);
-        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId);
-        highlightOneWaySigns(destinationRoadLinkIds.concat([feature.attributes.roadLinkId]));
-        highlightOverlayFeatures(destinationRoadLinkIds);
+        selectedManoeuvreSource.open(feature.attributes.roadLinkId);
       },
       onUnselect: function() {
         unselectManoeuvre();
@@ -250,6 +245,10 @@
     var handleManoeuvreSelected = function(roadLink) {
       var aLinks = adjacentLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'roadLinkId');
+      highlightFeatures(roadLink.roadLinkId);
+      var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(roadLink.roadLinkId);
+      highlightOneWaySigns(destinationRoadLinkIds.concat([roadLink.roadLinkId]));
+      highlightOverlayFeatures(destinationRoadLinkIds);
       markAdjacentFeatures(adjacentLinkIds);
       roadLayer.redraw();
       if (!application.isReadOnly()) {
