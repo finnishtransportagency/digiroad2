@@ -40,24 +40,27 @@
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
           '<p class="form-control-static">MML ID <%= mmlId %> <span class="marker"><%= marker %></span></p>' +
+        '</div>' +
+        '<div class="exception-group <% print(checked ? "" : "exception-hidden") %>">' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
-        '</div>' +
-        '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
-          '<div class="form-group exception">' +
-            '<%= deleteButtonTemplate %>' +
-            '<select class="form-control select">' +
-              '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
-                '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
-              '<% }) %>' +
-            '</select>' +
+
+          '<% _.forEach(localizedExceptions, function(selectedException) { %>' +
+            '<div class="form-group exception">' +
+              '<%= deleteButtonTemplate %>' +
+              '<select class="form-control select">' +
+                '<% _.forEach(exceptionOptions, function(e, key) { %> ' +
+                  '<option value="<%- key %>" <% if(selectedException === e) { print(selected="selected")} %> ><%- e %></option> ' +
+                '<% }) %>' +
+              '</select>' +
+            '</div>' +
+          '<% }) %>' +
+          '<%= newExceptionSelect %>' +
+          '<div class="form-group">' +
+            '<input type="text" class="form-control additional-info" ' +
+                               'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
+                               '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
           '</div>' +
-        '<% }) %>' +
-        '<%= newExceptionSelect %>' +
-        '<div class="form-group">' +
-          '<input type="text" class="form-control additional-info" ' +
-                             'placeholder="Muu tarkenne, esim. aika." <% print(checked ? "" : "disabled") %> ' +
-                             '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
-        '</div>' +
+        '<div>' +
       '</div>';
     var newExceptionTemplate = '' +
       '<div class="form-group exception">' +
@@ -205,14 +208,17 @@
           var selects = $(event.delegateTarget).find('select');
           var button = $(event.delegateTarget).find('button');
           var text = $(event.delegateTarget).find('input[type="text"]');
+          var group = $(event.delegateTarget).find('.exception-group');
           if(isChecked){
             selects.prop('disabled', false);
             button.prop('disabled', false);
             text.prop('disabled', false);
+            group.slideDown();
           } else {
             selects.prop('disabled', 'disabled');
             button.prop('disabled', 'disabled');
             text.prop('disabled', 'disabled');
+            group.slideUp();
           }
         });
         rootElement.find('.exception').on('click', 'button.delete', function(event) {
