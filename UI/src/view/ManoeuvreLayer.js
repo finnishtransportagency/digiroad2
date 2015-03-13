@@ -122,7 +122,7 @@
         }
         highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
         indicatorLayer.clearMarkers();
-        handleMarkerDraw();
+        updateAdjacentLinkIndicators();
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -214,11 +214,10 @@
       }
     };
 
-    var handleMarkerDraw = function() {
+    var updateAdjacentLinkIndicators = function() {
       if (!application.isReadOnly()) {
-        var roadLink = selectedManoeuvreSource.get();
-        if(roadLink) {
-          drawIndicators(adjacentLinks(roadLink));
+        if(selectedManoeuvreSource.exists()) {
+          drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
         }
       } else {
         indicatorLayer.clearMarkers();
@@ -238,7 +237,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
-      eventListener.listenTo(eventbus, 'application:readOnly', handleMarkerDraw);
+      eventListener.listenTo(eventbus, 'application:readOnly', updateAdjacentLinkIndicators);
     };
 
     return {
