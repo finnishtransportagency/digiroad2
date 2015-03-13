@@ -33,7 +33,7 @@
 
     var selectionStyleMap = new OpenLayers.StyleMap({
       'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 0.3 }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.15, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 0.15 }))
     });
     selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
