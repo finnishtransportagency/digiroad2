@@ -1,10 +1,22 @@
 (function(root) {
   root.Layer = function(layerName, roadLayer) {
     var me = this;
+
+    var mapOverLinkMiddlePoints = function(links, geometryUtils, transformation) {
+      return _.map(links, function(link) {
+        var points = _.map(link.points, function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        });
+        var lineString = new OpenLayers.Geometry.LineString(points);
+        var middlePoint = geometryUtils.calculateMidpointOfLineString(lineString);
+        return transformation(link, middlePoint);
+      });
+    };
+
     this.eventListener = _.extend({running: false}, eventbus);
     this.refreshView = function() {};
     this.isDirty = function() { return false; };
-    this.bindEventHandlers = function() {};
+    this.layerStarted = function() {};
     this.removeLayerFeatures = function() {};
     this.isStarted = function() {
       return me.eventListener.running;
@@ -14,7 +26,7 @@
         me.selectControl.activate();
         me.eventListener.running = true;
         me.refreshView();
-        me.bindEventHandlers(me.eventListener);
+        me.layerStarted(me.eventListener);
       }
     };
     this.stop = function() {
@@ -39,24 +51,18 @@
       }
     };
     this.drawOneWaySigns = function(layer, roadLinks, geometryUtils) {
-      var oneWaySigns = _.chain(roadLinks)
-        .filter(function(link) {
-          return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
-        })
-        .map(function(link) {
-          var points = _.map(link.points, function(point) {
-            return new OpenLayers.Geometry.Point(point.x, point.y);
-          });
-          var lineString = new OpenLayers.Geometry.LineString(points);
-          var signPosition = geometryUtils.calculateMidpointOfLineString(lineString);
-          var rotation = link.trafficDirection === 'AgainstDigitizing' ? signPosition.angleFromNorth + 180.0 : signPosition.angleFromNorth;
-          var attributes = _.merge({}, link, { rotation: rotation });
-          return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
-        })
-        .value();
+      var filteredLinks = _.filter(roadLinks, function(link) {
+        return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
+      });
+      var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, geometryUtils, function(link, middlePoint) {
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + 180.0 : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+      });
 
       layer.addFeatures(oneWaySigns);
     };
+    this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.hide = function() {
       roadLayer.clear();
     };

@@ -39,7 +39,7 @@
           '<div class="checkbox" >' +
             '<input type="checkbox" <% print(checked ? "checked" : "") %>/>' +
           '</div>' +
-          '<p class="form-control-static">MML ID <%= mmlId %></p>' +
+          '<p class="form-control-static">MML ID <%= mmlId %> <span class="marker"><%= marker %></span></p>' +
           '<label>Rajoitus ei koske seuraavia ajoneuvoja</label>' +
         '</div>' +
         '<% _.forEach(localizedExceptions, function(selectedException) { %>' +

@@ -119,7 +119,7 @@
       }
     };
 
-    this.bindEventHandlers = function(eventListener) {
+    this.layerStarted = function(eventListener) {
       var linkPropertyChangeHandler = _.partial(handleLinkPropertyChanged, eventListener);
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);

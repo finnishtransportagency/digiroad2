@@ -1,9 +1,10 @@
 (function(root){
-  root.ManoeuvreLayer = function(map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection) {
+  root.ManoeuvreLayer = function(application, map, roadLayer, geometryUtils, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
     var layerName = 'manoeuvre';
     Layer.call(this, layerName, roadLayer);
     var me = this;
     this.minZoomForContent = zoomlevels.minZoomForAssets;
+    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
       0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
@@ -23,7 +24,7 @@
       15: { pointRadius: 24 }
     };
     var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}' }))
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 }))
     });
     defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
@@ -31,8 +32,8 @@
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}' })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.3, pointRadius: 12, rotation: '${rotation}' }))
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.15, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 0.15 }))
     });
     selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
@@ -46,7 +47,9 @@
       roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
       roadLayer.redraw();
       highlightFeatures(null);
+      highlightOneWaySigns([]);
       highlightOverlayFeatures([]);
+      indicatorLayer.clearMarkers();
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
@@ -55,7 +58,9 @@
         roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
         roadLayer.redraw();
         highlightFeatures(feature.attributes.roadLinkId);
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId));
+        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(feature.attributes.roadLinkId);
+        highlightOneWaySigns(destinationRoadLinkIds.concat([feature.attributes.roadLinkId]));
+        highlightOverlayFeatures(destinationRoadLinkIds);
       },
       onUnselect: function() {
         unselectManoeuvre();
@@ -68,6 +73,20 @@
       _.each(roadLayer.layer.features, function(x) {
         if (x.attributes.type === 'normal') {
           if (roadLinkId && (x.attributes.roadLinkId === roadLinkId)) {
+            selectControl.highlight(x);
+          } else {
+            selectControl.unhighlight(x);
+          }
+        }
+      });
+    };
+
+    var highlightOneWaySigns = function(roadLinkIds) {
+      var isOneWaySign = function(feature) { return !_.isUndefined(feature.attributes.rotation); };
+
+      _.each(roadLayer.layer.features, function(x) {
+        if (isOneWaySign(x)) {
+          if (_.contains(roadLinkIds, x.attributes.roadLinkId)) {
             selectControl.highlight(x);
           } else {
             selectControl.unhighlight(x);
@@ -118,7 +137,11 @@
         if (feature) {
           selectControl.select(feature);
         }
-        highlightOverlayFeatures(manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId()));
+        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId());
+        highlightOneWaySigns(destinationRoadLinkIds.concat([selectedManoeuvreSource.getRoadLinkId()]));
+        highlightOverlayFeatures(destinationRoadLinkIds);
+        indicatorLayer.clearMarkers();
+        updateAdjacentLinkIndicators();
       }
       selectControl.onSelect = originalOnSelectHandler;
     };
@@ -140,6 +163,7 @@
     };
 
     var show = function(map) {
+      map.addLayer(indicatorLayer);
       if (zoomlevels.isInRoadLinkZoomLevel(map.getZoom())) {
         me.start();
       }
@@ -149,6 +173,7 @@
       unselectManoeuvre();
       me.stop();
       me.hide();
+      map.removeLayer(indicatorLayer);
     };
 
     var handleManoeuvreChanged = function(eventListener) {
@@ -171,13 +196,62 @@
       });
     };
 
-    this.bindEventHandlers = function(eventListener) {
+    var drawIndicators = function(links) {
+      var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+      var indicators = me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+        var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
+        var box = new OpenLayers.Marker.Box(bounds, "00000000");
+        $(box.div).html(markerTemplate(link));
+        $(box.div).css('overflow', 'visible');
+        return box;
+      });
+
+      _.forEach(indicators, function(indicator) {
+        indicatorLayer.addMarker(indicator);
+      });
+    };
+
+    var adjacentLinks = function(roadLink) {
+      return _.chain(roadLink.adjacent)
+        .map(function(adjacent) {
+          return _.merge({}, adjacent, _.find(roadCollection.getAll(), function(link) {
+            return link.roadLinkId === adjacent.id;
+          }));
+        })
+        .reject(function(adjacentLink) { return _.isUndefined(adjacentLink.points); })
+        .value();
+    };
+
+    var handleManoeuvreSelected = function(roadLink) {
+      if (!application.isReadOnly()) {
+        drawIndicators(adjacentLinks(roadLink));
+      }
+    };
+
+    var updateAdjacentLinkIndicators = function() {
+      if (!application.isReadOnly()) {
+        if(selectedManoeuvreSource.exists()) {
+          drawIndicators(adjacentLinks(selectedManoeuvreSource.get()));
+        }
+      } else {
+        indicatorLayer.clearMarkers();
+      }
+    };
+
+    this.removeLayerFeatures = function() {
+      indicatorLayer.clearMarkers();
+    };
+
+    this.layerStarted = function(eventListener) {
+      indicatorLayer.setZIndex(1000);
       var manoeuvreChangeHandler = _.partial(handleManoeuvreChanged, eventListener);
       var manoeuvreEditConclusion = _.partial(concludeManoeuvreEdit, eventListener);
       var manoeuvreSaveHandler = _.partial(handleManoeuvreSaved, eventListener);
       eventListener.listenTo(eventbus, 'manoeuvre:changed', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
+      eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
+      eventListener.listenTo(eventbus, 'application:readOnly', updateAdjacentLinkIndicators);
     };
 
     return {

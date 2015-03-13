@@ -19,6 +19,10 @@
       }
     };
 
+    var get = function() {
+      return current;
+    };
+
     var refresh = function() {
       if (current) {
         var roadLinkId = current.roadLinkId;
@@ -71,6 +75,7 @@
     return {
       close: close,
       open: open,
+      get: get,
       getRoadLinkId: getRoadLinkId,
       exists: exists,
       addManoeuvre: addManoeuvre,
