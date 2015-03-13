@@ -10,6 +10,10 @@
       0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
       1: { strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }
     };
+    var adjacentLinkLookup = {
+      0: { strokeOpacity: 0.15 },
+      1: { strokeOpacity: 0.9 }
+    };
     var featureTypeLookup = {
       normal: { strokeWidth: 8},
       overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
@@ -32,15 +36,28 @@
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.9, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.15, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 0.15 }))
+      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.9,
+        pointRadius: 12,
+        rotation: '${rotation}',
+        graphicOpacity: 1.0,
+        strokeColor: '#0000ff',
+        externalGraphic: 'images/link-properties/arrow-blue.svg'
+      })),
+      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+        strokeOpacity: 0.15,
+        pointRadius: 12,
+        rotation: '${rotation}',
+        graphicOpacity: 0.15,
+        strokeColor: '#a4a4a2',
+        externalGraphic: 'images/link-properties/arrow-grey.svg'
+      }))
     });
-    selectionStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
-    selectionStyleMap.addUniqueValueRules('select', 'manoeuvreSource', manoeuvreSourceLookup);
     selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
     selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    selectionStyleMap.addUniqueValueRules('default', 'adjacent', adjacentLinkLookup);
 
     var unselectManoeuvre = function() {
       selectedManoeuvreSource.close();
@@ -223,6 +240,11 @@
     };
 
     var handleManoeuvreSelected = function(roadLink) {
+      var adjacentLinkIds = _.pluck(adjacentLinks(roadLink), 'roadLinkId');
+      _.forEach(roadLayer.layer.features, function(feature) {
+        feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.roadLinkId);
+      });
+      roadLayer.redraw();
       if (!application.isReadOnly()) {
         drawIndicators(adjacentLinks(roadLink));
       }
