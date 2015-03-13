@@ -134,6 +134,22 @@
       updatedInfo = {};
     };
 
+    var unwindBackendCallStack = function(stack, callback, failureCallback) {
+      if(_.isEmpty(stack)) {
+        callback();
+      } else {
+        var call = stack.pop();
+        if(_.isEmpty(call.data)) {
+          unwindBackendCallStack(stack, callback, failureCallback);
+        } else {
+          call.operation(call.data, function() {
+            call.resetData();
+            unwindBackendCallStack(stack, callback, failureCallback);
+          }, failureCallback);
+        }
+      }
+    };
+
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
       var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
@@ -142,16 +158,25 @@
           return id === parseInt(key, 10);
         });
       });
-      backend.removeManoeuvres(removedManoeuvreIds, function() {
-        removedManoeuvres = [];
-        backend.createManoeuvres(addedManoeuvres, function() {
-          addedManoeuvres = [];
-          backend.updateManoeuvreDetails(details, function() {
-            updatedInfo = {};
-            callback();
-          }, failureCallback);
-        }, failureCallback);
-      }, failureCallback);
+
+      var backendCallStack = [];
+      backendCallStack.push({
+        data: removedManoeuvreIds,
+        operation: backend.removeManoeuvres,
+        resetData: function() { removedManoeuvres = []; }
+      });
+      backendCallStack.push({
+        data: addedManoeuvres,
+        operation: backend.createManoeuvres,
+        resetData: function() { addedManoeuvres = []; }
+      });
+      backendCallStack.push({
+        data: details,
+        operation: backend.updateManoeuvreDetails,
+        resetData: function() { updatedInfo = {}; }
+      });
+
+      unwindBackendCallStack(backendCallStack, callback, failureCallback);
     };
 
     var isDirty = function() {
