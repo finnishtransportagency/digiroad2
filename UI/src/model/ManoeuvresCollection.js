@@ -164,14 +164,13 @@
 
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
-      var saveFailed = false;
 
       var failureCallback = function() {
-        saveFailed = true;
+        dirty = true;
         eventbus.trigger('asset:updateFailed');
       };
-      var callbackWrapper = function() {
-        dirty = saveFailed;
+      var successCallback = function() {
+        dirty = false;
         callback();
       };
       var details = _.omit(updatedInfo, function(value, key) {
@@ -197,7 +196,7 @@
         resetData: function() { updatedInfo = {}; }
       });
 
-      unwindBackendCallStack(backendCallStack, callbackWrapper, failureCallback);
+      unwindBackendCallStack(backendCallStack, successCallback, failureCallback);
     };
 
     var isDirty = function() {
