@@ -213,12 +213,12 @@
             selects.prop('disabled', false);
             button.prop('disabled', false);
             text.prop('disabled', false);
-            group.slideDown();
+            group.slideDown('fast');
           } else {
             selects.prop('disabled', 'disabled');
             button.prop('disabled', 'disabled');
             text.prop('disabled', 'disabled');
-            group.slideUp();
+            group.slideUp('fast');
           }
         });
         rootElement.find('.exception').on('click', 'button.delete', function(event) {
