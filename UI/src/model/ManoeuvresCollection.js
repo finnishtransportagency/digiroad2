@@ -4,6 +4,7 @@
     var addedManoeuvres = [];
     var removedManoeuvres = [];
     var updatedInfo = {};
+    var dirty = false;
 
     var combineRoadLinksWithManoeuvres = function(roadLinks, manoeuvres) {
       return _.map(roadLinks, function(roadLink) {
@@ -98,6 +99,7 @@
     };
 
     var addManoeuvre = function(newManoeuvre) {
+      dirty = true;
       if (_.isNull(newManoeuvre.manoeuvreId)) {
         _.remove(addedManoeuvres, function(m) { return manoeuvresEqual(m, newManoeuvre); });
         addedManoeuvres.push(newManoeuvre);
@@ -110,6 +112,7 @@
     };
 
     var removeManoeuvre = function(manoeuvre) {
+      dirty = true;
       if (_.isNull(manoeuvre.manoeuvreId)) {
         _.remove(addedManoeuvres, function(x) {
           return manoeuvresEqual(x, manoeuvre);
@@ -121,11 +124,13 @@
     };
 
     var setExceptions = function(manoeuvreId, exceptions) {
+      dirty = true;
       updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { exceptions: exceptions });
       eventbus.trigger('manoeuvre:changed');
     };
 
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
+      dirty = true;
       updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { additionalInfo: additionalInfo });
       eventbus.trigger('manoeuvre:changed');
     };
@@ -138,6 +143,7 @@
       addedManoeuvres = [];
       removedManoeuvres = [];
       updatedInfo = {};
+      dirty = false;
     };
 
     var unwindBackendCallStack = function(stack, callback, failureCallback) {
@@ -158,7 +164,16 @@
 
     var save = function(callback) {
       var removedManoeuvreIds = _.pluck(removedManoeuvres, 'manoeuvreId');
-      var failureCallback = function() { eventbus.trigger('asset:updateFailed'); };
+      var saveFailed = false;
+
+      var failureCallback = function() {
+        saveFailed = true;
+        eventbus.trigger('asset:updateFailed');
+      };
+      var callbackWrapper = function() {
+        dirty = saveFailed;
+        callback();
+      };
       var details = _.omit(updatedInfo, function(value, key) {
         return _.some(removedManoeuvreIds, function(id) {
           return id === parseInt(key, 10);
@@ -182,11 +197,11 @@
         resetData: function() { updatedInfo = {}; }
       });
 
-      unwindBackendCallStack(backendCallStack, callback, failureCallback);
+      unwindBackendCallStack(backendCallStack, callbackWrapper, failureCallback);
     };
 
     var isDirty = function() {
-      return !_.isEmpty(addedManoeuvres) || !_.isEmpty(removedManoeuvres) || !_.isEmpty(updatedInfo);
+      return dirty;
     };
 
     return {
