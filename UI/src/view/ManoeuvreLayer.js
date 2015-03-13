@@ -148,6 +148,8 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
+        markAdjacentFeatures(_.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'roadLinkId'));
+        roadLayer.redraw();
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.roadLinkId === selectedManoeuvreSource.getRoadLinkId();
         });
@@ -239,14 +241,19 @@
         .value();
     };
 
-    var handleManoeuvreSelected = function(roadLink) {
-      var adjacentLinkIds = _.pluck(adjacentLinks(roadLink), 'roadLinkId');
+    var markAdjacentFeatures = function(adjacentLinkIds) {
       _.forEach(roadLayer.layer.features, function(feature) {
         feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.roadLinkId);
       });
+    };
+
+    var handleManoeuvreSelected = function(roadLink) {
+      var aLinks = adjacentLinks(roadLink);
+      var adjacentLinkIds = _.pluck(aLinks, 'roadLinkId');
+      markAdjacentFeatures(adjacentLinkIds);
       roadLayer.redraw();
       if (!application.isReadOnly()) {
-        drawIndicators(adjacentLinks(roadLink));
+        drawIndicators(aLinks);
       }
     };
 
