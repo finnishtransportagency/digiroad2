@@ -302,8 +302,6 @@ object RoadLinkService {
   }
 
   def getAdjacent(id: Long): Seq[Map[String, Any]] = {
-    def isCarTrafficRoad(linkType: Int) = !List(8,9,21).contains(linkType)
-
     val endpoints = getRoadLinkGeometry(id).map(GeometryUtils.geometryEndpoints)
     endpoints.map(endpoint => {
       val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
@@ -315,20 +313,19 @@ object RoadLinkService {
         val boundingBoxFilter2 = OracleDatabase.boundingBoxFilter(bounds2)
 
         sql"""
-        select dr1_id, mml_id, to_2d(shape), linkkityyppi
+        select dr1_id, mml_id, to_2d(shape)
         from tielinkki_ctas
-        where #$boundingBoxFilter or #$boundingBoxFilter2
-      """.as[(Long, Long, Seq[Point], Int)].iterator().toSeq
+        where (#$boundingBoxFilter or #$boundingBoxFilter2) and linkkityyppi not in (8, 9, 21)
+      """.as[(Long, Long, Seq[Point])].iterator().toSeq
       }
       roadLinks.filterNot(_._1 == id).filter(roadLink => {
-        val (_, _, geometry, linkType) = roadLink
+        val (_, _, geometry) = roadLink
         val epsilon = 0.01
         val rlEndpoints = GeometryUtils.geometryEndpoints(geometry)
-        (rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
+        rlEndpoints._1.distanceTo(endpoint._1) < epsilon ||
           rlEndpoints._2.distanceTo(endpoint._1) < epsilon ||
           rlEndpoints._1.distanceTo(endpoint._2) < epsilon ||
-          rlEndpoints._2.distanceTo(endpoint._2) < epsilon) &&
-          isCarTrafficRoad(linkType)
+          rlEndpoints._2.distanceTo(endpoint._2) < epsilon
       }).map(roadLink => Map("id" -> roadLink._1, "mmlId" -> roadLink._2))
     }).getOrElse(Nil)
   }
