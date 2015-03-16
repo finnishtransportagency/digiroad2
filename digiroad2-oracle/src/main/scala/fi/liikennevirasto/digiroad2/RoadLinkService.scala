@@ -315,7 +315,7 @@ object RoadLinkService {
         sql"""
         select dr1_id, mml_id, to_2d(shape)
         from tielinkki_ctas
-        where #$boundingBoxFilter or #$boundingBoxFilter2
+        where (#$boundingBoxFilter or #$boundingBoxFilter2) and linkkityyppi not in (8, 9, 21)
       """.as[(Long, Long, Seq[Point])].iterator().toSeq
       }
       roadLinks.filterNot(_._1 == id).filter(roadLink => {
