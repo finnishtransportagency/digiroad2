@@ -76,7 +76,7 @@
           roadLayer.redraw();
           selectedManoeuvreSource.open(feature.attributes.roadLinkId);
         } else {
-          selectControl.unhighlight(feature);
+          unselectManoeuvre();
         }
       },
       onUnselect: function() {
