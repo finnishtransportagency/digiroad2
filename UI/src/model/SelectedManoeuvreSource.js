@@ -19,6 +19,10 @@
       }
     };
 
+    var isCarTrafficRoad = function(roadLinkId) {
+      return collection.isCarTrafficRoad(roadLinkId);
+    };
+
     var get = function() {
       return current;
     };
@@ -85,7 +89,8 @@
       save: save,
       cancel: cancel,
       isDirty: isDirty,
-      refresh: refresh
+      refresh: refresh,
+      isCarTrafficRoad: isCarTrafficRoad
     };
   };
 })(this);

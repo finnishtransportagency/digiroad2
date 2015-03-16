@@ -71,9 +71,13 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
-        roadLayer.redraw();
-        selectedManoeuvreSource.open(feature.attributes.roadLinkId);
+        if (selectedManoeuvreSource.isCarTrafficRoad(feature.attributes.roadLinkId)) {
+          roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
+          roadLayer.redraw();
+          selectedManoeuvreSource.open(feature.attributes.roadLinkId);
+        } else {
+          selectControl.unhighlight(feature);
+        }
       },
       onUnselect: function() {
         unselectManoeuvre();

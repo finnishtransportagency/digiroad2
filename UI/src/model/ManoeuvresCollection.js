@@ -203,6 +203,10 @@
       return dirty;
     };
 
+    var isCarTrafficRoad = function(roadLinkId) {
+      return roadCollection.get(roadLinkId).isCarTrafficRoad();
+    };
+
     return {
       fetch: fetch,
       getAll: getAll,
@@ -214,7 +218,8 @@
       setAdditionalInfo: setAdditionalInfo,
       cancelModifications: cancelModifications,
       isDirty: isDirty,
-      save: save
+      save: save,
+      isCarTrafficRoad: isCarTrafficRoad
     };
   };
 })(this);
