@@ -71,7 +71,7 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        if (selectedManoeuvreSource.isCarTrafficRoad(feature.attributes.roadLinkId)) {
+        if (roadCollection.get(feature.attributes.roadLinkId).isCarTrafficRoad()) {
           roadLayer.setLayerSpecificStyleMap(layerName, selectionStyleMap);
           roadLayer.redraw();
           selectedManoeuvreSource.open(feature.attributes.roadLinkId);
