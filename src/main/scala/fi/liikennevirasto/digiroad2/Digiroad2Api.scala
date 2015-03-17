@@ -53,7 +53,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    assetProvider.getAssets(user, Some(bbox), validFrom, validTo)
+    assetProvider.getAssets(user, bbox, validFrom, validTo)
   }
 
   get("/floatingAssets") {

@@ -55,9 +55,9 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
+  def getAssets(user: User, bounds: BoundingRectangle, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getAssets(user, bounds, validFrom, validTo)
+      OracleSpatialAssetDao.getAssets(user, Some(bounds), validFrom, validTo)
     }
   }
 
