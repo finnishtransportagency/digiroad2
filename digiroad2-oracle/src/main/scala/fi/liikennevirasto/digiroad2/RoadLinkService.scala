@@ -285,8 +285,18 @@ object RoadLinkService {
     adjustedRoadLinks(roadLinks)
   }
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
+    val administrativeClassesByMmlId = getAdministrativeClassesByMmlIds(vvhRoadLinks.map(_.mmlId))
+
+    vvhRoadLinks.map { roadLink =>
+      val administrativeClass = administrativeClassesByMmlId.getOrElse(roadLink.mmlId, Unknown)
+      VVHRoadLink(roadLink.mmlId, roadLink.geometry, administrativeClass)
+    }
+  }
+
+  protected implicit val jsonFormats: Formats = DefaultFormats
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -308,6 +318,13 @@ object RoadLinkService {
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
       VVHRoadLink(mmlId, linkGeometry, Unknown)
     })
+  }
+
+  def getAdministrativeClassesByMmlIds(mmlIds: Seq[Long]) = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      val administrativeClasses: Seq[(Long, Int)] = OracleArray.fetchAdministrativeClassesByMMLId(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
+      administrativeClasses.map(a => (a._1, AdministrativeClass(a._2))).toMap
+    }
   }
 
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
