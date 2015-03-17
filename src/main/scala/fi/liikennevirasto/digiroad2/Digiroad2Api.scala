@@ -51,11 +51,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
       case _ => (None, None)
     }
-    getAssetsBy(user, validFrom, validTo)
-  }
-
-
-  def getAssetsBy(user: User, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
     assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
   }
 
