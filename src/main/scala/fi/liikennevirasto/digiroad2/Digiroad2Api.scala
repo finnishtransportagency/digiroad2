@@ -145,6 +145,28 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  get("/roadlinks2") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      RoadLinkService.getRoadLinksFromVVH(
+        bounds = boundingRectangle,
+        municipalities = municipalities).map { roadLink =>
+          Map(
+            "mmlId" -> roadLink.mmlId,
+            "points" -> roadLink.geometry,
+            "administrativeClass" -> roadLink.administrativeClass.toString)
+        }
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   get("/roadlinks/:id") {
     val withMMLId = params.get("mmlId").getOrElse("false")
     if (withMMLId == "true") {

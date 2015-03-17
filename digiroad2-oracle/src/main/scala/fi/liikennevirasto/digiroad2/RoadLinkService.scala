@@ -25,6 +25,7 @@ object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
+  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass)
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -285,11 +286,10 @@ object RoadLinkService {
   }
 
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
-    println(url)
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -297,7 +297,7 @@ object RoadLinkService {
     val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
     val featureMap: Map[String, Any] = layers.find(map => {map.contains("features")}).get
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    val basicRoadLinks: Seq[BasicRoadLink] = features.map(feature => {
+    features.map(feature => {
       val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
       val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
       val path: List[List[Double]] = paths.head
@@ -305,11 +305,9 @@ object RoadLinkService {
         Point(point(0), point(1))
       })
       val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-      val id = attributes("OBJECTID").asInstanceOf[BigInt].longValue()
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      (id, mmlId, linkGeometry, 0.0, Unknown, 4, BothDirections, 3)
+      VVHRoadLink(mmlId, linkGeometry, Unknown)
     })
-    adjustedRoadLinks(basicRoadLinks)
   }
 
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
