@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
@@ -15,6 +15,11 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
@@ -277,6 +282,34 @@ object RoadLinkService {
       Q.queryNA[BasicRoadLink](query).iterator().toSeq
     }
     adjustedRoadLinks(roadLinks)
+  }
+
+  protected implicit val jsonFormats: Formats = DefaultFormats
+  def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
+    val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+      "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
+    println(url)
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
+    val featureMap: Map[String, Any] = layers.find(map => {map.contains("features")}).get
+    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
+    val basicRoadLinks: Seq[BasicRoadLink] = features.map(feature => {
+      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
+      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
+      val path: List[List[Double]] = paths.head
+      val linkGeometry: Seq[Point] = path.map(point => {
+        Point(point(0), point(1))
+      })
+      val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
+      val id = attributes("OBJECTID").asInstanceOf[BigInt].longValue()
+      val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
+      (id, mmlId, linkGeometry, 0.0, Unknown, 4, BothDirections, 3)
+    })
+    adjustedRoadLinks(basicRoadLinks)
   }
 
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
