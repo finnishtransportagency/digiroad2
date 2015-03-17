@@ -363,32 +363,33 @@ class AssetDataImporter {
 
   def importMMLIdsOnMassTransitStops(conversionDB: DatabaseDef) {
     Database.forDataSource(ds).withSession { dbSession =>
-      val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator()(dbSession)
-      municipalityCodes.foreach { municipalityCode =>
-        println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
-        val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
-          sql"""select a.id, lrm.id, lrm.road_link_id, lrm.prod_road_link_id
+      conversionDB.withSession { conversionSession =>
+        val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator()(dbSession)
+        municipalityCodes.foreach { municipalityCode =>
+          println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
+          val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
+            sql"""select a.id, lrm.id, lrm.road_link_id, lrm.prod_road_link_id
                 from asset a
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = 10 and a.municipality_code = $municipalityCode"""
-            .as[(Long, Long, Option[Long], Option[Long])].iterator()(dbSession)
-        val mmlIds: CloseableIterator[(Long, Long, Option[Long])] = conversionDB.withSession { conversionSession =>
-          roadLinkIds.map { roadLinkId =>
-            val (assetId, lrmId, testRoadLinkId, productionRoadLinkId) = roadLinkId
-            val mmlId: Option[Long] = (testRoadLinkId, productionRoadLinkId) match {
-              case (_, Some(prodId)) => sql"""select mml_id from tielinkki_ctas where dr1_id = $prodId""".as[Long].firstOption()(conversionSession)
-              case (Some(testId), None) => sql"""select mml_id from tielinkki where objectid = $testId""".as[Long].firstOption()(conversionSession)
-              case _ => None
+              .as[(Long, Long, Option[Long], Option[Long])].iterator()(dbSession)
+          val mmlIds: CloseableIterator[(Long, Long, Option[Long])] =
+            roadLinkIds.map { roadLinkId =>
+              val (assetId, lrmId, testRoadLinkId, productionRoadLinkId) = roadLinkId
+              val mmlId: Option[Long] = (testRoadLinkId, productionRoadLinkId) match {
+                case (_, Some(prodId)) => sql"""select mml_id from tielinkki_ctas where dr1_id = $prodId""".as[Long].firstOption()(conversionSession)
+                case (Some(testId), None) => sql"""select mml_id from tielinkki where objectid = $testId""".as[Long].firstOption()(conversionSession)
+                case _ => None
+              }
+              (assetId, lrmId, mmlId)
             }
-            (assetId, lrmId, mmlId)
-          }
-        }
-        dbSession.withTransaction {
-          mmlIds.foreach { case(assetId, lrmId, mmlId) =>
-            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
-            if (mmlId.isEmpty) {
-              sqlu"""update asset set floating = 1 where id = $assetId""".execute()(dbSession)
+          dbSession.withTransaction {
+            mmlIds.foreach { case (assetId, lrmId, mmlId) =>
+              sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
+              if (mmlId.isEmpty) {
+                sqlu"""update asset set floating = 1 where id = $assetId""".execute()(dbSession)
+              }
             }
           }
         }
