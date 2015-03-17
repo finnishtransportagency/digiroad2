@@ -29,6 +29,8 @@ import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrim
 import fi.liikennevirasto.digiroad2.RoadLinkService
 import fi.liikennevirasto.digiroad2.Point
 
+import scala.slick.util.CloseableIterator
+
 object AssetDataImporter {
 
   case class SimpleBusStop(shelterType: Int,
@@ -356,6 +358,41 @@ class AssetDataImporter {
       insertTextPropertyData(typeProps.accessibilityPropertyId, assetId, "Ei tiedossa")
       insertSingleChoiceValue(typeProps.administratorPropertyId, assetId, 2)
       insertSingleChoiceValue(typeProps.shelterTypePropertyId, assetId, busStop.shelterType)
+    }
+  }
+
+  def importMMLIdsOnMassTransitStops(conversionDB: DatabaseDef) {
+    Database.forDataSource(ds).withSession { dbSession =>
+      val municipalityCodes: CloseableIterator[Long] = sql"""select id from municipality""".as[Long].iterator()(dbSession)
+      municipalityCodes.foreach { municipalityCode =>
+        println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
+        val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
+          sql"""select a.id, lrm.id, lrm.road_link_id, lrm.prod_road_link_id
+                from asset a
+                join asset_link al on a.id = al.asset_id
+                join lrm_position lrm on lrm.id = al.position_id
+                where a.asset_type_id = 10 and a.municipality_code = $municipalityCode"""
+            .as[(Long, Long, Option[Long], Option[Long])].iterator()(dbSession)
+        val mmlIds: CloseableIterator[(Long, Long, Option[Long])] = conversionDB.withSession { conversionSession =>
+          roadLinkIds.map { roadLinkId =>
+            val (assetId, lrmId, testRoadLinkId, productionRoadLinkId) = roadLinkId
+            val mmlId: Option[Long] = (testRoadLinkId, productionRoadLinkId) match {
+              case (_, Some(prodId)) => sql"""select mml_id from tielinkki_ctas where dr1_id = $prodId""".as[Long].firstOption()(conversionSession)
+              case (Some(testId), None) => sql"""select mml_id from tielinkki where objectid = $testId""".as[Long].firstOption()(conversionSession)
+              case _ => None
+            }
+            (assetId, lrmId, mmlId)
+          }
+        }
+        dbSession.withTransaction {
+          mmlIds.foreach { case(assetId, lrmId, mmlId) =>
+            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
+            if (mmlId.isEmpty) {
+              sqlu"""update asset set floating = 1 where id = $assetId""".execute()(dbSession)
+            }
+          }
+        }
+      }
     }
   }
 
