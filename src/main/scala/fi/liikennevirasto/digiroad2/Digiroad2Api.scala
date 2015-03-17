@@ -51,7 +51,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
       case _ => (None, None)
     }
-    assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    assetProvider.getAssets(user, Some(bbox), validFrom, validTo)
   }
 
   get("/floatingAssets") {
@@ -236,15 +238,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       NewRelic.noticeError(e)
       halt(InternalServerError("API error"))
     }
-  }
-
-  private[this] def boundsFromParams: Option[BoundingRectangle] = {
-    val bboxOption = params.get("bbox").map(constructBoundingRectangle)
-    bboxOption.foreach(validateBoundingBox)
-    if (bboxOption.isEmpty) {
-      halt(BadRequest("Bounding box was missing"))
-    }
-    bboxOption
   }
 
   private def validateBoundingBox(bbox: BoundingRectangle): Unit = {
