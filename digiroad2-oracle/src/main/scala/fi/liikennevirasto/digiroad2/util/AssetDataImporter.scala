@@ -363,7 +363,7 @@ class AssetDataImporter {
 
   def importMMLIdsOnMassTransitStops(conversionDB: DatabaseDef) {
     Database.forDataSource(ds).withSession { dbSession =>
-      val municipalityCodes: CloseableIterator[Long] = sql"""select id from municipality""".as[Long].iterator()(dbSession)
+      val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator()(dbSession)
       municipalityCodes.foreach { municipalityCode =>
         println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
         val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
