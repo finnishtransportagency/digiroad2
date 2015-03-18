@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{Interval, DateTime, LocalDate}
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.{PositionedResult, GetResult}
+import scala.slick.jdbc.{SQLInterpolationResult, PositionedResult, GetResult}
 import scala.slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.getPoint
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 
 object MassTransitStopService {
   case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
@@ -35,13 +35,15 @@ object MassTransitStopService {
     }
   }
 
-  def getByBoundingBox: Seq[MassTransitStop] = {
-    // TODO: add bounding box filtering
+  def getByBoundingBox(bounds: BoundingRectangle): Seq[MassTransitStop] = {
     // TODO: add validity period filtering
     // TODO: add authorization filtering
     // TODO: calculate floating status
     // TODO: update floating status
+
     Database.forDataSource(OracleDatabase.ds).withDynSession {
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+
       val massTransitStops = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
           a.municipality_code, a.floating, lrm.start_measure, lrm.end_measure, lrm.mml_id,
@@ -49,7 +51,7 @@ object MassTransitStopService {
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-          where a.asset_type_id = 10
+          where a.asset_type_id = 10 and #$boundingBoxFilter
        """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
       massTransitStops.map { massTransitStop =>
         val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point, validFrom, validTo) = massTransitStop
