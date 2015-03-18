@@ -1,19 +1,39 @@
 package fi.liikennevirasto.digiroad2
 
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{ValidityPeriod, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, DateTime, LocalDate}
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.slick.jdbc.{PositionedResult, GetResult}
 import scala.slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.getPoint
 
 object MassTransitStopService {
   case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                              validityDirection: Int, readOnly: Boolean, municipalityNumber: Int,
-                             validityPeriod: Option[String], floating: Boolean)
+                             validityPeriod: String, floating: Boolean)
+
+  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
+    def apply(r: PositionedResult) = {
+      r.nextDateOption().map(new LocalDate(_))
+    }
+  }
+
+  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+    (validFrom, validTo) match {
+      case (Some(from), None) => if (from.isBefore(LocalDate.now())) { ValidityPeriod.Current } else { ValidityPeriod.Future }
+      case (None, Some(to)) => if (to.isBefore(LocalDate.now())) { ValidityPeriod.Past } else { ValidityPeriod.Current }
+      case (Some(from), Some(to)) =>
+        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
+        if (interval.containsNow()) { ValidityPeriod.Current }
+        else if (interval.isBeforeNow) { ValidityPeriod.Past }
+        else { ValidityPeriod.Future }
+      case _ => ValidityPeriod.Current
+    }
+  }
 
   def getByBoundingBox: Seq[MassTransitStop] = {
     // TODO: add bounding box filtering
@@ -25,16 +45,16 @@ object MassTransitStopService {
       val massTransitStops = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
           a.municipality_code, a.floating, lrm.start_measure, lrm.end_measure, lrm.mml_id,
-          a.geometry
+          a.geometry, a.valid_from, a.valid_to
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           where a.asset_type_id = 10
-       """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point)].list()
+       """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
       massTransitStops.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point) = massTransitStop
-        // TODO: add readOnly, validityPeriod
-        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, true, municipalityCode, None, floating)
+        val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point, validFrom, validTo) = massTransitStop
+        // TODO: add readOnly
+        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, true, municipalityCode, validityPeriod(validFrom, validTo), floating)
       }
     }
 
