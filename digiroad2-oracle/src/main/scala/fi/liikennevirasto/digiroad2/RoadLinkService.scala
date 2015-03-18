@@ -291,7 +291,7 @@ object RoadLinkService {
 
     vvhRoadLinks.map { roadLink =>
       localRoadLinkDataByMmlId.get(roadLink.mmlId) match {
-        case Some((_, ad, linkType)) => VVHRoadLink(roadLink.mmlId, roadLink.geometry, ad, linkType)
+        case Some((_, administrativeClass, linkType)) => VVHRoadLink(roadLink.mmlId, roadLink.geometry, administrativeClass, linkType)
         case None => roadLink
       }
     }
