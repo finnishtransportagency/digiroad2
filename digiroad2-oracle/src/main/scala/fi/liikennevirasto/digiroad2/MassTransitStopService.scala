@@ -35,10 +35,11 @@ object MassTransitStopService {
     }
   }
 
-  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
+  def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
     // TODO: calculate floating status
     // TODO: update floating status
 
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     Database.forDataSource(OracleDatabase.ds).withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
 
@@ -55,7 +56,8 @@ object MassTransitStopService {
         val (_, _, _, _, municipalityCode, _, _, _, _, _, _, _) = massTransitStop
         user.isAuthorizedToRead(municipalityCode)
       }.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point, validFrom, validTo) = massTransitStop
+        val (id, nationalId, bearing, sideCode, municipalityCode, _, _, _, mmlId, point, validFrom, validTo) = massTransitStop
+        val floating = roadLinks.find(_._1 == mmlId).isEmpty
         MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating)
       }
     }

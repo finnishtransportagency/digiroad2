@@ -21,7 +21,10 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-object RoadLinkService {
+trait RoadLinkService {
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
+}
+object RoadLinkService extends RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
@@ -289,7 +292,7 @@ object RoadLinkService {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
     val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1)).groupBy(_._1).mapValues(_.head)
 
-    vvhRoadLinks.map { case (mmlId, geometry) =>
+    vvhRoadLinks.map { case (mmlId, _, geometry) =>
       localRoadLinkDataByMmlId.get(mmlId) match {
         case Some((_, administrativeClass, linkType)) => VVHRoadLink(mmlId, geometry, administrativeClass, linkType)
         case None                                     => VVHRoadLink(mmlId, geometry, Unknown, None)
@@ -298,7 +301,7 @@ object RoadLinkService {
   }
 
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Seq[Point])] = {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -318,7 +321,8 @@ object RoadLinkService {
       })
       val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      (mmlId, linkGeometry)
+      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[Int]
+      (mmlId, municipalityCode, linkGeometry)
     })
   }
 
