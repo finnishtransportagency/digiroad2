@@ -11,10 +11,9 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.getPoint
 
 object MassTransitStopService {
-  case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, roadLinkMMLId: Long,
-                 bearing: Option[Int] = None, validityDirection: Int,
-                 readOnly: Boolean, municipalityNumber: Int, validityPeriod: Option[String],
-                 floating: Boolean)
+  case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
+                             validityDirection: Int, readOnly: Boolean, municipalityNumber: Int,
+                             validityPeriod: Option[String], floating: Boolean)
 
   def getByBoundingBox: Seq[MassTransitStop] = {
     // TODO: add bounding box filtering
@@ -34,8 +33,8 @@ object MassTransitStopService {
        """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point)].list()
       massTransitStops.map { massTransitStop =>
         val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point) = massTransitStop
-        // TODO: add roadLinkMMLId, readOnly, validityPeriod
-        MassTransitStop(id, nationalId, point.x, point.y, 0, bearing, sideCode, true, municipalityCode, None, floating)
+        // TODO: add readOnly, validityPeriod
+        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, true, municipalityCode, None, floating)
       }
     }
 
