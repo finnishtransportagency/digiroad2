@@ -89,12 +89,13 @@ public class OracleArray {
         }
     }
 
-    private static class RowToAdministrativeClass implements RowToElement<Tuple2<Long, Int>> {
+    private static class RowToRoadLinkData implements RowToElement<Tuple3<Long, Int, Int>> {
         @Override
-        public Tuple2<Long, Int> convert(ResultSet row) throws SQLException {
+        public Tuple3<Long, Int, Int> convert(ResultSet row) throws SQLException {
             long mmlId = row.getLong(1);
-            int value = row.getInt(2);
-            return new Tuple2(mmlId, value);
+            int administrativeClass = row.getInt(2);
+            int linkType = row.getInt(3);
+            return new Tuple3(mmlId, administrativeClass, linkType);
         }
     }
 
@@ -158,8 +159,8 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple2<Long, Int>> fetchAdministrativeClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, omistaja FROM tielinkki_ctas WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToAdministrativeClass());
+    public static List<Tuple3<Long, Int, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, omistaja, linkkityyppi FROM tielinkki_ctas WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        return queryWithIdArray(ids, connection, query, new RowToRoadLinkData());
     }
 }

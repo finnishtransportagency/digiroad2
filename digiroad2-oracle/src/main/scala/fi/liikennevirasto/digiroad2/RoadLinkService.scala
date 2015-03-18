@@ -25,7 +25,7 @@ object RoadLinkService {
   type BasicRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
-  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass)
+  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, linkType: Option[Int])
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -287,11 +287,13 @@ object RoadLinkService {
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
-    val administrativeClassesByMmlId = getAdministrativeClassesByMmlIds(vvhRoadLinks.map(_.mmlId))
+    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_.mmlId)).groupBy(_._1).mapValues(_.head)
 
     vvhRoadLinks.map { roadLink =>
-      val administrativeClass = administrativeClassesByMmlId.getOrElse(roadLink.mmlId, Unknown)
-      VVHRoadLink(roadLink.mmlId, roadLink.geometry, administrativeClass)
+      localRoadLinkDataByMmlId.get(roadLink.mmlId) match {
+        case Some((_, ad, linkType)) => VVHRoadLink(roadLink.mmlId, roadLink.geometry, ad, linkType)
+        case None => roadLink
+      }
     }
   }
 
@@ -316,14 +318,19 @@ object RoadLinkService {
       })
       val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      VVHRoadLink(mmlId, linkGeometry, Unknown)
+      VVHRoadLink(mmlId, linkGeometry, Unknown, None)
     })
   }
 
-  def getAdministrativeClassesByMmlIds(mmlIds: Seq[Long]) = {
+  def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[(Long, AdministrativeClass, Option[Int])] = {
+    def toOptionalLinkType(linkType: Int): Option[Int] =  if (linkType == 0) None else Some(linkType)
+
     Database.forDataSource(dataSource).withDynTransaction {
-      val administrativeClasses: Seq[(Long, Int)] = OracleArray.fetchAdministrativeClassesByMMLId(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
-      administrativeClasses.map(a => (a._1, AdministrativeClass(a._2))).toMap
+      val roadLinkData: Seq[(Long, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
+
+      roadLinkData.map { case (mmlId, administrativeClass, linkType) =>
+        (mmlId, AdministrativeClass(administrativeClass), toOptionalLinkType(linkType))
+      }
     }
   }
 
