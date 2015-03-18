@@ -287,18 +287,18 @@ object RoadLinkService {
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
-    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_.mmlId)).groupBy(_._1).mapValues(_.head)
+    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1)).groupBy(_._1).mapValues(_.head)
 
-    vvhRoadLinks.map { roadLink =>
-      localRoadLinkDataByMmlId.get(roadLink.mmlId) match {
-        case Some((_, administrativeClass, linkType)) => VVHRoadLink(roadLink.mmlId, roadLink.geometry, administrativeClass, linkType)
-        case None => roadLink
+    vvhRoadLinks.map { case (mmlId, geometry) =>
+      localRoadLinkDataByMmlId.get(mmlId) match {
+        case Some((_, administrativeClass, linkType)) => VVHRoadLink(mmlId, geometry, administrativeClass, linkType)
+        case None                                     => VVHRoadLink(mmlId, geometry, Unknown, None)
       }
     }
   }
 
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Seq[Point])] = {
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -318,7 +318,7 @@ object RoadLinkService {
       })
       val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      VVHRoadLink(mmlId, linkGeometry, Unknown, None)
+      (mmlId, linkGeometry)
     })
   }
 
