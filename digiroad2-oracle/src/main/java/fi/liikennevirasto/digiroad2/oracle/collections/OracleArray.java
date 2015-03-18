@@ -89,13 +89,14 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkData implements RowToElement<Tuple3<Long, Int, Int>> {
+    private static class RowToRoadLinkData implements RowToElement<Tuple3<Long, Int, Option<Int>>> {
         @Override
-        public Tuple3<Long, Int, Int> convert(ResultSet row) throws SQLException {
+        public Tuple3<Long, Int, Option<Int>> convert(ResultSet row) throws SQLException {
             long mmlId = row.getLong(1);
             int administrativeClass = row.getInt(2);
             int linkType = row.getInt(3);
-            return new Tuple3(mmlId, administrativeClass, linkType);
+            Option<Int> optionalLinkType = row.wasNull() ? Option.empty() : new Some(linkType);
+            return new Tuple3(mmlId, administrativeClass, optionalLinkType);
         }
     }
 
@@ -159,7 +160,7 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple3<Long, Int, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
+    public static List<Tuple3<Long, Int, Option<Int>>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT mml_id, omistaja, linkkityyppi FROM tielinkki_ctas WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkData());
     }

@@ -323,13 +323,12 @@ object RoadLinkService {
   }
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[(Long, AdministrativeClass, Option[Int])] = {
-    def toOptionalLinkType(linkType: Int): Option[Int] =  if (linkType == 0) None else Some(linkType)
-
     Database.forDataSource(dataSource).withDynTransaction {
-      val roadLinkData: Seq[(Long, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
+      val roadLinkData: Seq[(Long, Int, Option[Int])] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
 
-      roadLinkData.map { case (mmlId, administrativeClass, linkType) =>
-        (mmlId, AdministrativeClass(administrativeClass), toOptionalLinkType(linkType))
+      roadLinkData.map { case (mmlId, administrativeClass, optionalLinkType) =>
+        println(optionalLinkType)
+        (mmlId, AdministrativeClass(administrativeClass), optionalLinkType)
       }
     }
   }
