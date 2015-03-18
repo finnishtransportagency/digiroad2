@@ -327,7 +327,6 @@ object RoadLinkService {
       val roadLinkData: Seq[(Long, Int, Option[Int])] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
 
       roadLinkData.map { case (mmlId, administrativeClass, optionalLinkType) =>
-        println(optionalLinkType)
         (mmlId, AdministrativeClass(administrativeClass), optionalLinkType)
       }
     }
