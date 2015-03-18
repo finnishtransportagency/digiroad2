@@ -17,7 +17,7 @@ Ympäristön pystytys
   npm install -g bower
   ```
 
-1. Hae ja asenna projektin tarvitsemat riippuvuudet
+1. Hae ja asenna projektin tarvitsemat riippuvuudet hakemistoon, johon projekti on kloonattu
 
   ```
   npm install && bower install
