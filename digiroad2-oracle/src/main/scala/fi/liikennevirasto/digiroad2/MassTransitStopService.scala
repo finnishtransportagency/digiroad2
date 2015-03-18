@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.getPoint
 
 object MassTransitStopService {
   case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
-                             validityDirection: Int, readOnly: Boolean, municipalityNumber: Int,
+                             validityDirection: Int, municipalityNumber: Int,
                              validityPeriod: String, floating: Boolean)
 
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
@@ -53,8 +53,7 @@ object MassTransitStopService {
        """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
       massTransitStops.map { massTransitStop =>
         val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point, validFrom, validTo) = massTransitStop
-        // TODO: add readOnly
-        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, true, municipalityCode, validityPeriod(validFrom, validTo), floating)
+        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating)
       }
     }
 
