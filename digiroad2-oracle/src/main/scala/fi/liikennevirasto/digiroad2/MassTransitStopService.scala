@@ -36,7 +36,6 @@ object MassTransitStopService {
   }
 
   def getByBoundingBox(bounds: BoundingRectangle): Seq[MassTransitStop] = {
-    // TODO: add validity period filtering
     // TODO: add authorization filtering
     // TODO: calculate floating status
     // TODO: update floating status
