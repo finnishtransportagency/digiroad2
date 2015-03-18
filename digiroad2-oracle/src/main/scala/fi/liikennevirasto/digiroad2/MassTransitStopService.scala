@@ -20,6 +20,8 @@ object MassTransitStopService {
     // TODO: add bounding box filtering
     // TODO: add validity period filtering
     // TODO: add authorization filtering
+    // TODO: calculate floating status
+    // TODO: update floating status
     Database.forDataSource(OracleDatabase.ds).withDynSession {
       val massTransitStops = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
