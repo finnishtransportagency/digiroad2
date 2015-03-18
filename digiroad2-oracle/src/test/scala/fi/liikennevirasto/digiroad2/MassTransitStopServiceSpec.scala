@@ -40,4 +40,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     stops.find(_.id == 300000).map(_.floating) should be(Some(true))
   }
 
+  test("Stop floats if stop and roadlink municipality codes differ") _
+  test("Stop floats if stop is too far from linearly referenced location ") _
 }
