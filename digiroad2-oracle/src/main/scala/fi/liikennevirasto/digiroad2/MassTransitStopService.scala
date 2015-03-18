@@ -35,8 +35,7 @@ object MassTransitStopService {
     }
   }
 
-  def getByBoundingBox(bounds: BoundingRectangle): Seq[MassTransitStop] = {
-    // TODO: add authorization filtering
+  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
     // TODO: calculate floating status
     // TODO: update floating status
 
@@ -52,7 +51,10 @@ object MassTransitStopService {
           join lrm_position lrm on al.position_id = lrm.id
           where a.asset_type_id = 10 and #$boundingBoxFilter
        """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
-      massTransitStops.map { massTransitStop =>
+      massTransitStops.filter { massTransitStop =>
+        val (_, _, _, _, municipalityCode, _, _, _, _, _, _, _) = massTransitStop
+        user.isAuthorizedToRead(municipalityCode)
+      }.map { massTransitStop =>
         val (id, nationalId, bearing, sideCode, municipalityCode, floating, _, _, _, point, validFrom, validTo) = massTransitStop
         MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating)
       }
