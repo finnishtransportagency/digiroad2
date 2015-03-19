@@ -11,12 +11,12 @@ import scala.slick.jdbc.{SQLInterpolationResult, PositionedResult, GetResult}
 import scala.slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 
+case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
+                           validityDirection: Int, municipalityNumber: Int,
+                           validityPeriod: String, floating: Boolean)
+
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
-
-  case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
-                             validityDirection: Int, municipalityNumber: Int,
-                             validityPeriod: String, floating: Boolean)
 
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) = {
