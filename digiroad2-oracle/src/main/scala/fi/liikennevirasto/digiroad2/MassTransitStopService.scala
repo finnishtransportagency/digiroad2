@@ -37,7 +37,7 @@ object MassTransitStopService {
 
   def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
-    if (geometry.size < 2) { None }
+    if (geometry.size < 2 || measure < 0) { None }
     else {
       val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
         if (acc.result.isDefined) {

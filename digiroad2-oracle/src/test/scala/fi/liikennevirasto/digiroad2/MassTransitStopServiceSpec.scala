@@ -64,4 +64,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val point: Option[Point] = MassTransitStopService.calculateLinearReferencePoint(linkGeometry, 1.5)
     point should be(None)
   }
+
+  test("Linear reference point on negative measurement should be undefined") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val point: Option[Point] = MassTransitStopService.calculateLinearReferencePoint(linkGeometry, -1.5)
+    point should be(None)
+  }
 }
