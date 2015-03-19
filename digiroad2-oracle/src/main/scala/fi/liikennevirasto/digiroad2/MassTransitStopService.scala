@@ -11,7 +11,9 @@ import scala.slick.jdbc.{SQLInterpolationResult, PositionedResult, GetResult}
 import scala.slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 
-object MassTransitStopService {
+trait MassTransitStopService {
+  def withDynSession[T](f: => T): T
+
   case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                              validityDirection: Int, municipalityNumber: Int,
                              validityPeriod: String, floating: Boolean)
@@ -67,34 +69,46 @@ object MassTransitStopService {
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
-    // TODO: update floating status
+    case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
-    Database.forDataSource(OracleDatabase.ds).withDynSession {
+    withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
 
       val massTransitStops = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
           a.municipality_code, lrm.start_measure, lrm.mml_id,
-          a.geometry, a.valid_from, a.valid_to
+          a.geometry, a.valid_from, a.valid_to, a.floating
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           where a.asset_type_id = 10 and #$boundingBoxFilter
-       """.as[(Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
+       """.as[(Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean)].list()
 
-      massTransitStops.filter { massTransitStop =>
-        val (_, _, _, _, municipalityCode, _, _, _, _, _) = massTransitStop
+      val stopsBeforeUpdate = massTransitStops.filter { massTransitStop =>
+        val (_, _, _, _, municipalityCode, _, _, _, _, _, _) = massTransitStop
         user.isAuthorizedToRead(municipalityCode)
       }.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo) = massTransitStop
+        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo, persistedFloating) = massTransitStop
         val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
         val floating = roadLinkForStop match {
           case None => true
           case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculateLinearReferencePoint(roadLink._3, measure))
         }
-        MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating)
+        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating), persistedFloating)
       }
+
+      stopsBeforeUpdate.foreach { stop =>
+        if (stop.stop.floating != stop.persistedFloating) {
+          sqlu"""update asset set floating = ${stop.stop.floating} where id = ${stop.stop.id}""".execute()
+        }
+      }
+
+      stopsBeforeUpdate.map(_.stop)
     }
   }
+}
+
+object MassTransitStopService extends MassTransitStopService {
+  def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
 }

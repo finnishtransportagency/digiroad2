@@ -1,13 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{ValidityPeriod, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.Matchers.any
 
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.StaticQuery.interpolation
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
@@ -18,35 +22,67 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val roadLinkService = MockitoSugar.mock[RoadLinkService]
   when(roadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
 
+  object RollbackMassTransitStopService extends MassTransitStopService {
+    override def withDynSession[T](f: => T): T = f
+  }
+
+  def runWithCleanup(test: => Unit): Unit = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      test
+      dynamicSession.rollback()
+    }
+  }
+
   test("Calculate mass transit stop validity periods") {
-    val massTransitStops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
-    massTransitStops.find(_.id == 300000).map(_.validityPeriod) should be(Some(ValidityPeriod.Current))
-    massTransitStops.find(_.id == 300001).map(_.validityPeriod) should be(Some(ValidityPeriod.Past))
-    massTransitStops.find(_.id == 300003).map(_.validityPeriod) should be(Some(ValidityPeriod.Future))
+    runWithCleanup {
+      val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+      massTransitStops.find(_.id == 300000).map(_.validityPeriod) should be(Some(ValidityPeriod.Current))
+      massTransitStops.find(_.id == 300001).map(_.validityPeriod) should be(Some(ValidityPeriod.Past))
+      massTransitStops.find(_.id == 300003).map(_.validityPeriod) should be(Some(ValidityPeriod.Future))
+    }
   }
 
   test("Get stops by bounding box") {
-    val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)), roadLinkService)
-    stops.size shouldBe 1
+    runWithCleanup {
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)), roadLinkService)
+      stops.size shouldBe 1
+    }
   }
 
   test("Filter stops by authorization") {
-    val stops = MassTransitStopService.getByBoundingBox(User(0, "test", Configuration()), boundingBoxWithKauniainenAssets, roadLinkService)
-    stops should be(empty)
+    runWithCleanup {
+      val stops = RollbackMassTransitStopService.getByBoundingBox(User(0, "test", Configuration()), boundingBoxWithKauniainenAssets, roadLinkService)
+      stops should be(empty)
+    }
   }
 
   test("Stop floats if road link does not exist") {
-    val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
-    stops.find(_.id == 300000).map(_.floating) should be(Some(true))
+    runWithCleanup {
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+      stops.find(_.id == 300000).map(_.floating) should be(Some(true))
+    }
   }
 
   test("Stop floats if stop and roadlink municipality codes differ") {
-    val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
-    stops.find(_.id == 300004).map(_.floating) should be(Some(true))
+    runWithCleanup {
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+      stops.find(_.id == 300004).map(_.floating) should be(Some(true))
+    }
   }
+
   test("Stop floats if stop is too far from linearly referenced location") {
-    val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
-    stops.find(_.id == 300008).map(_.floating) should be(Some(true))
+    runWithCleanup {
+      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+      stops.find(_.id == 300008).map(_.floating) should be(Some(true))
+    }
+  }
+
+  test("Persist mass transit stop floating status change") {
+    runWithCleanup {
+      RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+      val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption()
+      floating should be(Some(true))
+    }
   }
 
   test("Calculate linear reference point") {
