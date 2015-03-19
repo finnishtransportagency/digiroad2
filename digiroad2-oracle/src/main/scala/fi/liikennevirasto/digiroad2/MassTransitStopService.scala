@@ -18,56 +18,6 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
 
-  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
-    def apply(r: PositionedResult) = {
-      r.nextDateOption().map(new LocalDate(_))
-    }
-  }
-
-  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
-    (validFrom, validTo) match {
-      case (Some(from), None) => if (from.isBefore(LocalDate.now())) { ValidityPeriod.Current } else { ValidityPeriod.Future }
-      case (None, Some(to)) => if (to.isBefore(LocalDate.now())) { ValidityPeriod.Past } else { ValidityPeriod.Current }
-      case (Some(from), Some(to)) =>
-        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
-        if (interval.containsNow()) { ValidityPeriod.Current }
-        else if (interval.isBeforeNow) { ValidityPeriod.Past }
-        else { ValidityPeriod.Future }
-      case _ => ValidityPeriod.Current
-    }
-  }
-
-  def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Option[Point] = {
-    case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
-    if (geometry.size < 2 || measure < 0) { None }
-    else {
-      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
-        if (acc.result.isDefined) {
-          acc
-        } else {
-          val distance = point.distanceTo(acc.previousPoint)
-          if (acc.remainingMeasure <= distance) {
-            val directionVector = point - acc.previousPoint
-            val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
-            AlgorithmState(point, acc.remainingMeasure - distance, result)
-          } else {
-            AlgorithmState(point, acc.remainingMeasure - distance, None)
-          }
-        }
-      }
-      state.result
-    }
-  }
-
-  private val FLOAT_THRESHOLD_IN_METERS = 3
-
-  private def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
-    (pt1, pt2) match {
-      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
-      case _ => false
-    }
-  }
-
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
 
@@ -107,6 +57,57 @@ trait MassTransitStopService {
       stopsBeforeUpdate.map(_.stop)
     }
   }
+
+  def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Option[Point] = {
+    case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
+    if (geometry.size < 2 || measure < 0) { None }
+    else {
+      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
+        if (acc.result.isDefined) {
+          acc
+        } else {
+          val distance = point.distanceTo(acc.previousPoint)
+          if (acc.remainingMeasure <= distance) {
+            val directionVector = point - acc.previousPoint
+            val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
+            AlgorithmState(point, acc.remainingMeasure - distance, result)
+          } else {
+            AlgorithmState(point, acc.remainingMeasure - distance, None)
+          }
+        }
+      }
+      state.result
+    }
+  }
+
+  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
+    def apply(r: PositionedResult) = {
+      r.nextDateOption().map(new LocalDate(_))
+    }
+  }
+
+  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+    (validFrom, validTo) match {
+      case (Some(from), None) => if (from.isBefore(LocalDate.now())) { ValidityPeriod.Current } else { ValidityPeriod.Future }
+      case (None, Some(to)) => if (to.isBefore(LocalDate.now())) { ValidityPeriod.Past } else { ValidityPeriod.Current }
+      case (Some(from), Some(to)) =>
+        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
+        if (interval.containsNow()) { ValidityPeriod.Current }
+        else if (interval.isBeforeNow) { ValidityPeriod.Past }
+        else { ValidityPeriod.Future }
+      case _ => ValidityPeriod.Current
+    }
+  }
+
+  private val FLOAT_THRESHOLD_IN_METERS = 3
+
+  private def coordinatesWithinThreshold(pt1: Option[Point], pt2: Option[Point]): Boolean = {
+    (pt1, pt2) match {
+      case (Some(point1), Some(point2)) => point1.distanceTo(point2) <= FLOAT_THRESHOLD_IN_METERS
+      case _ => false
+    }
+  }
+
 }
 
 object MassTransitStopService extends MassTransitStopService {
