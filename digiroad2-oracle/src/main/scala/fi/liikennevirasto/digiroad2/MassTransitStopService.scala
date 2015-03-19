@@ -35,6 +35,11 @@ object MassTransitStopService {
     }
   }
 
+  def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Point = {
+    val v = geometry(1) - geometry(0)
+    geometry(0) + v.scale(measure)
+  }
+
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
     // TODO: calculate floating status
     // TODO: update floating status

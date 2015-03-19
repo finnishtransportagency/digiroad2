@@ -45,4 +45,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     stops.find(_.id == 300004).map(_.floating) should be(Some(true))
   }
   test("Stop floats if stop is too far from linearly referenced location ") _
+  test("Calculate linear reference point") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val point: Point = MassTransitStopService.calculateLinearReferencePoint(linkGeometry, 0.5)
+    point.x should be(0.5)
+    point.y should be(0.0)
+  }
 }
