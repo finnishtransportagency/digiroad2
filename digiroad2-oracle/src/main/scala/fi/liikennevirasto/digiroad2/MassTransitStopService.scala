@@ -37,21 +37,24 @@ object MassTransitStopService {
 
   def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
-    val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
-      if (acc.result.isDefined) {
-        acc
-      } else {
-        val distance = point.distanceTo(acc.previousPoint)
-        if (acc.remainingMeasure <= distance) {
-          val directionVector = point - acc.previousPoint
-          val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
-          AlgorithmState(point, acc.remainingMeasure - distance, result)
+    if (geometry.size < 2) { None }
+    else {
+      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
+        if (acc.result.isDefined) {
+          acc
         } else {
-          AlgorithmState(point, acc.remainingMeasure - distance, None)
+          val distance = point.distanceTo(acc.previousPoint)
+          if (acc.remainingMeasure <= distance) {
+            val directionVector = point - acc.previousPoint
+            val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
+            AlgorithmState(point, acc.remainingMeasure - distance, result)
+          } else {
+            AlgorithmState(point, acc.remainingMeasure - distance, None)
+          }
         }
       }
+      state.result
     }
-    state.result
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
