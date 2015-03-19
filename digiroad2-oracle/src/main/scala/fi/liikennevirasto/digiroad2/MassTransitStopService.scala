@@ -75,18 +75,19 @@ object MassTransitStopService {
 
       val massTransitStops = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
-          a.municipality_code, a.floating, lrm.start_measure, lrm.mml_id,
+          a.municipality_code, lrm.start_measure, lrm.mml_id,
           a.geometry, a.valid_from, a.valid_to
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
           where a.asset_type_id = 10 and #$boundingBoxFilter
-       """.as[(Long, Long, Option[Int], Int, Int, Boolean, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
+       """.as[(Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate])].list()
+
       massTransitStops.filter { massTransitStop =>
-        val (_, _, _, _, municipalityCode, _, _, _, _, _, _) = massTransitStop
+        val (_, _, _, _, municipalityCode, _, _, _, _, _) = massTransitStop
         user.isAuthorizedToRead(municipalityCode)
       }.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, _, measure, mmlId, point, validFrom, validTo) = massTransitStop
+        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo) = massTransitStop
         val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
         val floating = roadLinkForStop match {
           case None => true
