@@ -125,13 +125,17 @@
 
     var setExceptions = function(manoeuvreId, exceptions) {
       dirty = true;
-      updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { exceptions: exceptions });
+      var info = updatedInfo[manoeuvreId] || {};
+      info.exceptions = exceptions;
+      updatedInfo[manoeuvreId] = info;
       eventbus.trigger('manoeuvre:changed');
     };
 
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       dirty = true;
-      updatedInfo[manoeuvreId] = _.merge(updatedInfo[manoeuvreId] || {}, { additionalInfo: additionalInfo });
+      var info = updatedInfo[manoeuvreId] || {};
+      info.additionalInfo = additionalInfo;
+      updatedInfo[manoeuvreId] = info;
       eventbus.trigger('manoeuvre:changed');
     };
 

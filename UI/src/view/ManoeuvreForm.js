@@ -192,6 +192,7 @@
         });
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
+          var formGroupElement = $(event.delegateTarget);
           selectElement.parent().after(_.template(newExceptionTemplate, {
             exceptionOptions: exceptions,
             checked: true
@@ -200,7 +201,7 @@
           selectElement.find('option.empty').remove();
           selectElement.before(deleteButtonTemplate);
           selectElement.parent().on('click', 'button.delete', function(event) {
-            deleteException(event);
+            deleteException($(event.target).parent(), formGroupElement);
           });
         });
         rootElement.find('.adjacent-link').on('click', '.checkbox :checkbox', function(event) {
@@ -221,12 +222,10 @@
             group.slideUp('fast');
           }
         });
-        rootElement.find('.exception').on('click', 'button.delete', function(event) {
-          deleteException(event);
+        rootElement.find('.adjacent-link').on('click', '.exception button.delete', function(event) {
+          deleteException($(event.target).parent(), $(event.delegateTarget));
         });
-        var deleteException = function(event) {
-          var exceptionRow = $(event.delegateTarget);
-          var formGroupElement = exceptionRow.parent();
+        var deleteException = function(exceptionRow, formGroupElement) {
           exceptionRow.remove();
           var manoeuvre = manoeuvreData(formGroupElement);
           if(manoeuvre.manoeuvreId) {
