@@ -16,7 +16,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val roadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(roadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, Nil)))
+  when(roadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
 
   test("Calculate mass transit stop validity periods") {
     val massTransitStops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
@@ -44,7 +44,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
     stops.find(_.id == 300004).map(_.floating) should be(Some(true))
   }
-  test("Stop floats if stop is too far from linearly referenced location ") _
+  test("Stop floats if stop is too far from linearly referenced location") {
+    val stops = MassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets, roadLinkService)
+    stops.find(_.id == 300008).map(_.floating) should be(Some(true))
+  }
+
   test("Calculate linear reference point") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val point: Point = MassTransitStopService.calculateLinearReferencePoint(linkGeometry, 0.5).get
