@@ -57,7 +57,8 @@ object MassTransitStopService {
         user.isAuthorizedToRead(municipalityCode)
       }.map { massTransitStop =>
         val (id, nationalId, bearing, sideCode, municipalityCode, _, _, _, mmlId, point, validFrom, validTo) = massTransitStop
-        val floating = roadLinks.find(_._1 == mmlId).isEmpty
+        val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
+        val floating = roadLinkForStop.isEmpty || roadLinkForStop.map(_._2) != Some(municipalityCode)
         MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating)
       }
     }
