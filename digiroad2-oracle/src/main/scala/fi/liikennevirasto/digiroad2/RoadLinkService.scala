@@ -321,7 +321,7 @@ object RoadLinkService extends RoadLinkService {
       })
       val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[Int]
+      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
       (mmlId, municipalityCode, linkGeometry)
     })
   }
