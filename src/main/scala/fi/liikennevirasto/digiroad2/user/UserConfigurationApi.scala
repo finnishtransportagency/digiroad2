@@ -105,7 +105,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
         val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalityNumbers.toSet, roles = role))
         userProvider.saveUser(updatedUser)
       case None =>
-        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet))
+        userProvider.createUser(username, Configuration(authorizedMunicipalities = municipalityNumbers.toSet, roles = role))
     }
     redirect("/newuser.html?username="+username)
   }
