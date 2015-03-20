@@ -228,7 +228,9 @@
         var deleteException = function(exceptionRow, formGroupElement) {
           exceptionRow.remove();
           var manoeuvre = manoeuvreData(formGroupElement);
-          if(manoeuvre.manoeuvreId) {
+          if (_.isNull(manoeuvre.manoeuvreId)) {
+            selectedManoeuvreSource.addManoeuvre(manoeuvre);
+          } else {
             selectedManoeuvreSource.setExceptions(manoeuvre.manoeuvreId, manoeuvre.exceptions);
           }
         };
