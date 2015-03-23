@@ -11,29 +11,34 @@
       value: attributeValue
     });
   };
-  var useFunction = function(style, filters) {
-    return new OpenLayers.Rule({
-      filter: new OpenLayers.Filter.Logical({
-        type: OpenLayers.Filter.Logical.AND,
-        filters: filters
-      }),
-      symbolizer: style
-    });
+  var createUseFunction = function(state) {
+    return function(style) {
+      return new OpenLayers.Rule({
+        filter: new OpenLayers.Filter.Logical({
+          type: OpenLayers.Filter.Logical.AND,
+          filters: state.filters
+        }),
+        symbolizer: style
+      });
+    };
   };
   var createWhereFunction = function(state) {
     return function(attributeName, context) {
       return {
         is: function(attributeValue) {
-          var ret = state;
           var filter = context ? contextFilter(attributeName, attributeValue, context) :
             featureAttributeFilter(attributeName, attributeValue);
-          ret.filters = ret.filters.concat([filter]);
-          ret.use = function(style) {
-            return useFunction(style, ret.filters);
-          };
-          return state;
+          return newIsObject({
+            filters: state.filters.concat([filter])
+          });
         }
       };
+    };
+  };
+  var newIsObject = function(state) {
+    return {
+      and: createWhereFunction(state),
+      use: createUseFunction(state)
     };
   };
   root.OpenLayersRule = function() {

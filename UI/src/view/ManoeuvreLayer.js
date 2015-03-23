@@ -7,8 +7,20 @@
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var featureTypeRules = [
-      new OpenLayersRule().where('type').is('normal').use({ strokeWidth: 8 }),
-      new OpenLayersRule().where('type').is('overlay').use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10' })
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeWidth: 3 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 5 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 9 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeWidth: 16 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeWidth: 16 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeWidth: 16 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeWidth: 16 }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
     ];
     var signSizeRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
