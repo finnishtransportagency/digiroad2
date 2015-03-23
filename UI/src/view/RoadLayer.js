@@ -207,7 +207,8 @@ var RoadStyles = function() {
       addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
-      createZoomLevelFilter: createZoomLevelFilter
+      createZoomLevelFilter: createZoomLevelFilter,
+      uiState: uiState
     };
   };
 })(this);

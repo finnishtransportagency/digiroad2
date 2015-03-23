@@ -6,10 +6,6 @@
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
-    var manoeuvreSourceLookup = {
-      0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
-      1: { strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }
-    };
     var adjacentLinkLookup = {
       0: { strokeOpacity: 0.15 },
       1: { strokeOpacity: 0.9 }
@@ -27,12 +23,30 @@
       14: { pointRadius: 24 },
       15: { pointRadius: 24 }
     };
-    var defaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({ strokeOpacity: 0.65, pointRadius: 12, rotation: '${rotation}', graphicOpacity: 1.0 }))
-    });
-    defaultStyleMap.addUniqueValueRules('default', 'manoeuvreSource', manoeuvreSourceLookup);
-    defaultStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(defaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.65,
+      pointRadius: 12,
+      rotation: '${rotation}',
+      graphicOpacity: 1.0
+    }));
+    var defaultStyleMap = new OpenLayers.StyleMap({ default: defaultStyle });
+    defaultStyle.addRules([
+      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
+      new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' })
+    ]);
+    defaultStyle.addRules([
+      new OpenLayersRule().where('type').is('normal').use({ strokeWidth: 8 }),
+      new OpenLayersRule().where('type').is('overlay').use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10' })
+    ]);
+    defaultStyle.addRules([
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
+    ]);
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
     var selectionStyleMap = new OpenLayers.StyleMap({

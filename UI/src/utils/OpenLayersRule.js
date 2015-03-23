@@ -20,24 +20,28 @@
       symbolizer: style
     });
   };
-  var whereFunction = function(attributeName, context) {
-    return {
-      is: function(attributeValue) {
-        var ret = rule;
-        var filter = context ? contextFilter(attributeName, attributeValue, context) :
-          featureAttributeFilter(attributeName, attributeValue);
-        ret.filters = ret.filters.concat([filter]);
-        ret.use = function(style) {
-          return useFunction(style, ret.filters);
-        };
-        return ret;
-      }
+  var createWhereFunction = function(state) {
+    return function(attributeName, context) {
+      return {
+        is: function(attributeValue) {
+          var ret = state;
+          var filter = context ? contextFilter(attributeName, attributeValue, context) :
+            featureAttributeFilter(attributeName, attributeValue);
+          ret.filters = ret.filters.concat([filter]);
+          ret.use = function(style) {
+            return useFunction(style, ret.filters);
+          };
+          return state;
+        }
+      };
     };
   };
-  var rule = {
-    where: whereFunction,
-    and: whereFunction,
-    filters: []
+  root.OpenLayersRule = function() {
+    var state = {
+      filters: []
+    };
+    return {
+      where: createWhereFunction(state)
+    };
   };
-  root.OpenLayersRule = rule;
 })(this);
