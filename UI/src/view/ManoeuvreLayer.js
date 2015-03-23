@@ -20,7 +20,10 @@
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      new OpenLayersRule().where('linkType').is(8).use({ strokeWidth: 5 }),
+      new OpenLayersRule().where('linkType').is(9).use({ strokeWidth: 5 }),
+      new OpenLayersRule().where('linkType').is(21).use({ strokeWidth: 5 })
     ];
     var signSizeRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
