@@ -6,38 +6,30 @@
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
-    var adjacentLinkLookup = {
-      0: { strokeOpacity: 0.15 },
-      1: { strokeOpacity: 0.9 }
-    };
-    var featureTypeLookup = {
-      normal: { strokeWidth: 8},
-      overlay: { strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10'  }
-    };
-    var oneWaySignSizeLookup = {
-      9: { pointRadius: 0 },
-      10: { pointRadius: 12 },
-      11: { pointRadius: 14 },
-      12: { pointRadius: 16 },
-      13: { pointRadius: 20 },
-      14: { pointRadius: 24 },
-      15: { pointRadius: 24 }
-    };
+    var featureTypeRules = [
+      new OpenLayersRule().where('type').is('normal').use({ strokeWidth: 8 }),
+      new OpenLayersRule().where('type').is('overlay').use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10' })
+    ];
+    var signSizeRules = [
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
+    ];
     var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.65,
       pointRadius: 12,
       rotation: '${rotation}',
       graphicOpacity: 1.0
     }));
-    var defaultStyleMap = new OpenLayers.StyleMap({ default: defaultStyle });
     defaultStyle.addRules([
       new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
       new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' })
     ]);
-    defaultStyle.addRules([
-      new OpenLayersRule().where('type').is('normal').use({ strokeWidth: 8 }),
-      new OpenLayersRule().where('type').is('overlay').use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 6, strokeDashstyle: '1 10' })
-    ]);
+    defaultStyle.addRules(featureTypeRules);
     defaultStyle.addRules([
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
@@ -47,31 +39,37 @@
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
     ]);
+    var defaultStyleMap = new OpenLayers.StyleMap({ default: defaultStyle });
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
 
+    var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.9,
+      pointRadius: 12,
+      rotation: '${rotation}',
+      graphicOpacity: 1.0,
+      strokeColor: '#0000ff',
+      externalGraphic: 'images/link-properties/arrow-blue.svg'
+    }));
+    var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.15,
+      pointRadius: 12,
+      rotation: '${rotation}',
+      graphicOpacity: 0.15,
+      strokeColor: '#a4a4a2',
+      externalGraphic: 'images/link-properties/arrow-grey.svg'
+    }));
+    selectionDefaultStyle.addRules(featureTypeRules);
+    selectionSelectStyle.addRules(featureTypeRules);
+    selectionDefaultStyle.addRules(signSizeRules);
+    selectionSelectStyle.addRules(signSizeRules);
+    selectionDefaultStyle.addRules([
+      new OpenLayersRule().where('adjacent').is(0).use({ strokeOpacity: 0.15 }),
+      new OpenLayersRule().where('adjacent').is(1).use({ strokeOpacity: 0.9 })
+    ]);
     var selectionStyleMap = new OpenLayers.StyleMap({
-      'select':  new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.9,
-        pointRadius: 12,
-        rotation: '${rotation}',
-        graphicOpacity: 1.0,
-        strokeColor: '#0000ff',
-        externalGraphic: 'images/link-properties/arrow-blue.svg'
-      })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.15,
-        pointRadius: 12,
-        rotation: '${rotation}',
-        graphicOpacity: 0.15,
-        strokeColor: '#a4a4a2',
-        externalGraphic: 'images/link-properties/arrow-grey.svg'
-      }))
+      select:  selectionSelectStyle,
+      default: selectionDefaultStyle
     });
-    selectionStyleMap.addUniqueValueRules('default', 'type', featureTypeLookup);
-    selectionStyleMap.addUniqueValueRules('select', 'type', featureTypeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(selectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
-    selectionStyleMap.addUniqueValueRules('default', 'adjacent', adjacentLinkLookup);
 
     var unselectManoeuvre = function() {
       selectedManoeuvreSource.close();
