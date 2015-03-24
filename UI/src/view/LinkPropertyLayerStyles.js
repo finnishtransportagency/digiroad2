@@ -25,24 +25,6 @@
       createStrokeDashStyle(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
     ];
 
-    var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
-      var styleMaps = {
-        'functional-class': {
-          'default': functionalClassDefaultStyleMap,
-          'select': functionalClassSelectionStyleMap
-        },
-        'administrative-class': {
-          'default': administrativeClassDefaultStyleMap,
-          'select': administrativeClassSelectionStyleMap
-        },
-        'link-type': {
-          'default': linkTypeDefaultStyleMap,
-          'select': linkTypeSelectionStyleMap
-        }
-      };
-      return styleMaps[dataset][renderIntent];
-    };
-
     var oneWaySignSizeLookup = {
       9: { pointRadius: 0 },
       10: { pointRadius: 12 },
@@ -185,6 +167,24 @@
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
     linkTypeSelectionStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
     linkTypeSelectionStyleMap.styles.select.addRules(overlayStrokeDashStyleRules);
+
+    var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
+      var styleMaps = {
+        'functional-class': {
+          'default': functionalClassDefaultStyleMap,
+          'select': functionalClassSelectionStyleMap
+        },
+        'administrative-class': {
+          'default': administrativeClassDefaultStyleMap,
+          'select': administrativeClassSelectionStyleMap
+        },
+        'link-type': {
+          'default': linkTypeDefaultStyleMap,
+          'select': linkTypeSelectionStyleMap
+        }
+      };
+      return styleMaps[dataset][renderIntent];
+    };
 
     return {
       getDatasetSpecificStyleMap: getDatasetSpecificStyleMap
