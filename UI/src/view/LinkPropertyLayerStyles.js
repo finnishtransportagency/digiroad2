@@ -124,14 +124,14 @@
       graphicOpacity: 1.0,
       rotation: '${rotation}'
     }));
-    var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
-      select: administrativeClassSelectionSelectStyle,
-      default: administrativeClassSelectionDefaultStyle
-    });
     administrativeClassSelectionDefaultStyle.addRules(zoomLevelRules);
     administrativeClassSelectionSelectStyle.addRules(zoomLevelRules);
     administrativeClassSelectionDefaultStyle.addRules(administrativeClassRules);
     administrativeClassSelectionSelectStyle.addRules(administrativeClassRules);
+    var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
+      select: administrativeClassSelectionSelectStyle,
+      default: administrativeClassSelectionDefaultStyle
+    });
 
     // --- Link type style maps
 
