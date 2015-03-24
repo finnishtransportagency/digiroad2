@@ -88,17 +88,19 @@
     ]);
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
 
+    var functionalClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var functionalClassSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
-      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        graphicOpacity: 1.0,
-        rotation: '${rotation}'
-      })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.3,
-        graphicOpacity: 0.3,
-        rotation: '${rotation}'
-      }))
+      select: functionalClassSelectionSelectStyle,
+      default: functionalClassSelectionDefaultStyle
     });
     functionalClassSelectionStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
     functionalClassSelectionStyleMap.addUniqueValueRules('select', 'functionalClass', functionalClassColorLookup);
