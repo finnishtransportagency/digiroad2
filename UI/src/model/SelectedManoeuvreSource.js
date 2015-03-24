@@ -4,6 +4,7 @@
 
     var close = function() {
       if (current) {
+        current.unselect();
         current = null;
         eventbus.trigger('manoeuvres:unselected');
       }
@@ -14,6 +15,7 @@
         close();
         collection.get(roadLinkId, function(roadLink){
           current = roadLink;
+          current.select();
           eventbus.trigger('manoeuvres:selected', roadLink);
         });
       }
