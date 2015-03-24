@@ -119,22 +119,22 @@
     ]);
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
+    var administrativeClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var administrativeClassSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
     var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
-      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        graphicOpacity: 1.0,
-        rotation: '${rotation}'
-      })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.3,
-        graphicOpacity: 0.3,
-        rotation: '${rotation}'
-      }))
+      select: administrativeClassSelectionSelectStyle,
+      default: administrativeClassSelectionDefaultStyle
     });
-    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(administrativeClassSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    administrativeClassSelectionDefaultStyle.addRules(zoomLevelRules);
+    administrativeClassSelectionSelectStyle.addRules(zoomLevelRules);
     administrativeClassSelectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
     administrativeClassSelectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
 
