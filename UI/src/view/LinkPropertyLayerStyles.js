@@ -174,8 +174,7 @@
       rotation: '${rotation}'}));
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
     linkTypeDefaultStyle.addRules(linkTypeRules);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
 
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
