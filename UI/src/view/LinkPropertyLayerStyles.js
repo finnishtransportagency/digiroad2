@@ -177,17 +177,19 @@
     linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyle.addRules(overlayRules);
 
+    var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.3,
+      graphicOpacity: 0.3,
+      rotation: '${rotation}'
+    }));
+    var linkTypeSelectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      graphicOpacity: 1.0,
+      rotation: '${rotation}'
+    }));
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
-      'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        graphicOpacity: 1.0,
-        rotation: '${rotation}'
-      })),
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.3,
-        graphicOpacity: 0.3,
-        rotation: '${rotation}'
-      }))
+      select: linkTypeSelectionSelectStyle,
+      default: linkTypeSelectionDefaultStyle
     });
     linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
     linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
