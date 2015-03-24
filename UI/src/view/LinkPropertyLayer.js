@@ -69,7 +69,8 @@
         var attributes = {
           dashedLineFeature: roadLink[dashedLineFeature],
           roadLinkId: roadLink.roadLinkId,
-          type: 'overlay'
+          type: 'overlay',
+          linkType: roadLink.linkType
         };
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
       }));

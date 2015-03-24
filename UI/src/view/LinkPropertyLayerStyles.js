@@ -31,6 +31,21 @@
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
     ];
 
+    var linkTypeSizeRules = [
+      new OpenLayersRule().where('linkType').is(8).use({ strokeWidth: 6 }),
+      new OpenLayersRule().where('linkType').is(9).use({ strokeWidth: 6 }),
+      new OpenLayersRule().where('linkType').is(21).use({ strokeWidth: 6 }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').is(8).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').is(9).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').is(21).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('linkType').is(8).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
+      new OpenLayersRule().where('linkType').is(9).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
+      new OpenLayersRule().where('linkType').is(21).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(8).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(9).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(21).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+    ];
+
     var administrativeClassRules = [
       new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
       new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
@@ -46,6 +61,7 @@
     functionalClassDefaultStyle.addRules(functionalClassRules);
     functionalClassDefaultStyle.addRules(zoomLevelRules);
     functionalClassDefaultStyle.addRules(overlayRules);
+    functionalClassDefaultStyle.addRules(linkTypeSizeRules);
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
 
     var functionalClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
