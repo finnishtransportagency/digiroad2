@@ -135,23 +135,6 @@
 
     // --- Link type style maps
 
-    var linkTypeColorLookup = {
-      1: { strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg' },
-      2: { strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg' },
-      3: { strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg' },
-      4: { strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg' },
-      5: { strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-cyan.svg' },
-      6: { strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-cyan.svg' },
-      7: { strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/arrow-green.svg' },
-      8: { strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-grey.svg' },
-      9: { strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-grey.svg' },
-      10: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' },
-      11: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' },
-      12: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' },
-      13: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg' },
-      21: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg' }
-    };
-
     var linkTypeRules = [
       new OpenLayersRule().where('linkType').is(1).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg'   }),
       new OpenLayersRule().where('linkType').is(2).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg'  }),
@@ -191,8 +174,8 @@
       select: linkTypeSelectionSelectStyle,
       default: linkTypeSelectionDefaultStyle
     });
-    linkTypeSelectionStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
-    linkTypeSelectionStyleMap.addUniqueValueRules('select', 'linkType', linkTypeColorLookup);
+    linkTypeSelectionDefaultStyle.addRules(linkTypeRules);
+    linkTypeSelectionSelectStyle.addRules(linkTypeRules);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
