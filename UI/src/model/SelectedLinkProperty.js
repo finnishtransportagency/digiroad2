@@ -5,6 +5,7 @@
     var close = function() {
       if (current && !current.isDirty()) {
         current.unselect();
+        eventbus.trigger('linkProperties:unselected');
         current = null;
       }
     };
@@ -14,6 +15,7 @@
         close();
         current = collection.get(id);
         current.select();
+        eventbus.trigger('linkProperties:selected', current.getData());
       }
     };
 

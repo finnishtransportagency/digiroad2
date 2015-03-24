@@ -34,12 +34,10 @@
 
     var select = function() {
       selected = true;
-      eventbus.trigger('linkProperties:selected', data);
     };
 
     var unselect = function() {
       selected = false;
-      eventbus.trigger('linkProperties:unselected');
     };
 
     var isSelected = function() {
