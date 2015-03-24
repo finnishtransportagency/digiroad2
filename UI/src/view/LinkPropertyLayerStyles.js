@@ -152,12 +152,28 @@
       21: { strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg' }
     };
 
-    var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        rotation: '${rotation}'}))
-    });
-    linkTypeDefaultStyleMap.addUniqueValueRules('default', 'linkType', linkTypeColorLookup);
+    var linkTypeRules = [
+      new OpenLayersRule().where('linkType').is(1).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg'   }),
+      new OpenLayersRule().where('linkType').is(2).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg'  }),
+      new OpenLayersRule().where('linkType').is(3).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg'  }),
+      new OpenLayersRule().where('linkType').is(4).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg'   }),
+      new OpenLayersRule().where('linkType').is(5).use({ strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-cyan.svg'  }),
+      new OpenLayersRule().where('linkType').is(6).use({ strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-cyan.svg'  }),
+      new OpenLayersRule().where('linkType').is(7).use({ strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/arrow-green.svg' }),
+      new OpenLayersRule().where('linkType').is(8).use({ strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-grey.svg'  }),
+      new OpenLayersRule().where('linkType').is(9).use({ strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-grey.svg'  }),
+      new OpenLayersRule().where('linkType').is(10).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
+      new OpenLayersRule().where('linkType').is(11).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
+      new OpenLayersRule().where('linkType').is(12).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
+      new OpenLayersRule().where('linkType').is(13).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg'  }),
+      new OpenLayersRule().where('linkType').is(21).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg'  })
+    ];
+
+    var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}'}));
+    var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
+    linkTypeDefaultStyle.addRules(linkTypeRules);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(linkTypeDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     linkTypeDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
