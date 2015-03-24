@@ -55,12 +55,20 @@
 
     // --- Functional class style maps
 
-    var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({
-      'default': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-        strokeOpacity: 0.7,
-        rotation: '${rotation}'}))
-      });
-    functionalClassDefaultStyleMap.addUniqueValueRules('default', 'functionalClass', functionalClassColorLookup);
+    var functionalClassDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
+      strokeOpacity: 0.7,
+      rotation: '${rotation}'}));
+    var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
+    functionalClassDefaultStyle.addRules([
+      new OpenLayersRule().where('functionalClass').is(1).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-1.svg' }),
+      new OpenLayersRule().where('functionalClass').is(2).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-2.svg' }),
+      new OpenLayersRule().where('functionalClass').is(3).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-3.svg' }),
+      new OpenLayersRule().where('functionalClass').is(4).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-4.svg' }),
+      new OpenLayersRule().where('functionalClass').is(5).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-5.svg' }),
+      new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-6.svg' }),
+      new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-7.svg' }),
+      new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-8.svg' })
+    ]);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
     roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     functionalClassDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
