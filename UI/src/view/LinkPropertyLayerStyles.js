@@ -70,15 +70,14 @@
       new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-8.svg' })
     ]);
     functionalClassDefaultStyle.addRules([
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[9], { pointRadius: 0 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[10], { pointRadius: 12 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[11], { pointRadius: 14 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[12], { pointRadius: 16 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[13], { pointRadius: 20 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[14], { pointRadius: 24 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[15], { pointRadius: 24 }))
     ]);
-    roadLayer.addUIStateDependentLookupToStyleMap(functionalClassDefaultStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
     functionalClassDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
 
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
