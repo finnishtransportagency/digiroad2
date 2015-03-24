@@ -1,15 +1,5 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
-    var oneWaySignSizeLookup = {
-      9: { pointRadius: 0 },
-      10: { pointRadius: 12 },
-      11: { pointRadius: 14 },
-      12: { pointRadius: 16 },
-      13: { pointRadius: 20 },
-      14: { pointRadius: 24 },
-      15: { pointRadius: 24 }
-    };
-
     var functionalClassRules = [
       new OpenLayersRule().where('functionalClass').is(1).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-1.svg' }),
       new OpenLayersRule().where('functionalClass').is(2).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-2.svg' }),
