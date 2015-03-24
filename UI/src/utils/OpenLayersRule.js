@@ -4,6 +4,15 @@
       return context[attributeName] === attributeValue;
     } });
   };
+  var isInContextFilter = function(attributeName, attributeValues, context) {
+    var filters = _.map(attributeValues, function(value) {
+      return contextFilter(attributeName, value, context);
+    });
+    return new OpenLayers.Filter.Logical({
+      type: OpenLayers.Filter.Logical.OR,
+      filters: filters
+    });
+  };
   var featureAttributeFilter = function(attributeName, attributeValue) {
     return new OpenLayers.Filter.Comparison({
       type: OpenLayers.Filter.Comparison.EQUAL_TO,
@@ -42,7 +51,8 @@
           });
         },
         isIn: function(attributeValues) {
-          var filter = isInFeatureAttributeFilter(attributeName, attributeValues);
+          var filter = context ? isInContextFilter(attributeName, attributeValues, context) :
+            isInFeatureAttributeFilter(attributeName, attributeValues);
           return newIsObject({
             filters: state.filters.concat([filter])
           });
