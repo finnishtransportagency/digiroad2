@@ -175,7 +175,7 @@
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
     linkTypeDefaultStyle.addRules(linkTypeRules);
     linkTypeDefaultStyle.addRules(zoomLevelRules);
-    linkTypeDefaultStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
+    linkTypeDefaultStyle.addRules(overlayRules);
 
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
