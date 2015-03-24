@@ -22,6 +22,7 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
+    context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
     server.setHandler(context)
 
     server.start()
