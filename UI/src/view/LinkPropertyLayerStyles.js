@@ -120,10 +120,10 @@
     var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       rotation: '${rotation}'}));
-    var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
     linkTypeDefaultStyle.addRules(linkTypeRules);
     linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyle.addRules(overlayRules);
+    var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
 
     var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.3,
@@ -135,16 +135,16 @@
       graphicOpacity: 1.0,
       rotation: '${rotation}'
     }));
-    var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
-      select: linkTypeSelectionSelectStyle,
-      default: linkTypeSelectionDefaultStyle
-    });
     linkTypeSelectionDefaultStyle.addRules(linkTypeRules);
     linkTypeSelectionSelectStyle.addRules(linkTypeRules);
     linkTypeSelectionDefaultStyle.addRules(zoomLevelRules);
     linkTypeSelectionSelectStyle.addRules(zoomLevelRules);
     linkTypeSelectionDefaultStyle.addRules(overlayRules);
     linkTypeSelectionSelectStyle.addRules(overlayRules);
+    var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
+      select: linkTypeSelectionSelectStyle,
+      default: linkTypeSelectionDefaultStyle
+    });
 
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var styleMaps = {
