@@ -110,7 +110,6 @@
       strokeOpacity: 0.7,
       rotation: '${rotation}'
     }));
-    var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
     administrativeClassDefaultStyle.addRules(zoomLevelRules);
     administrativeClassDefaultStyle.addRules([
       new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
@@ -118,6 +117,7 @@
       new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' }),
       new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' })
     ]);
+    var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
     var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
       'select': new OpenLayers.Style(OpenLayers.Util.applyDefaults({
