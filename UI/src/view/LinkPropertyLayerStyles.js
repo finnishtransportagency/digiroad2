@@ -32,18 +32,10 @@
     ];
 
     var linkTypeSizeRules = [
-      new OpenLayersRule().where('linkType').is(8).use({ strokeWidth: 6 }),
-      new OpenLayersRule().where('linkType').is(9).use({ strokeWidth: 6 }),
-      new OpenLayersRule().where('linkType').is(21).use({ strokeWidth: 6 }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').is(8).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').is(9).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').is(21).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('linkType').is(8).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('linkType').is(9).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('linkType').is(21).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(8).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(9).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).and('linkType').is(21).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+      new OpenLayersRule().where('linkType').isIn([8, 9, 21]).use({ strokeWidth: 6 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 4 }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' }),
     ];
 
     var administrativeClassRules = [
