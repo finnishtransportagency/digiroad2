@@ -1,30 +1,5 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
-    var combineFilters = function(filters) {
-      return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
-    };
-
-    var typeFilter = function(type) {
-      return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
-    };
-
-    var createStrokeDashStyle = function(zoomLevel, style) {
-      return new OpenLayers.Rule({
-        filter: combineFilters([typeFilter('overlay'), roadLayer.createZoomLevelFilter(zoomLevel)]),
-        symbolizer: style
-      });
-    };
-
-    var overlayStrokeDashStyleRules = [
-      createStrokeDashStyle(9,  { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
-      createStrokeDashStyle(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-      createStrokeDashStyle(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
-      createStrokeDashStyle(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      createStrokeDashStyle(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      createStrokeDashStyle(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      createStrokeDashStyle(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
-    ];
-
     var oneWaySignSizeLookup = {
       9: { pointRadius: 0 },
       10: { pointRadius: 12 },
@@ -178,8 +153,8 @@
     linkTypeSelectionSelectStyle.addRules(linkTypeRules);
     linkTypeSelectionDefaultStyle.addRules(zoomLevelRules);
     linkTypeSelectionSelectStyle.addRules(zoomLevelRules);
-    linkTypeSelectionStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
-    linkTypeSelectionStyleMap.styles.select.addRules(overlayStrokeDashStyleRules);
+    linkTypeSelectionDefaultStyle.addRules(overlayRules);
+    linkTypeSelectionSelectStyle.addRules(overlayRules);
 
     var getDatasetSpecificStyleMap = function(dataset, renderIntent) {
       var styleMaps = {
