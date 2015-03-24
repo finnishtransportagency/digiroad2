@@ -66,12 +66,12 @@
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
     ];
 
-    var administrativeClassStyleLookup = {
-      Private: { strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' },
-      Municipality: { strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' },
-      State: { strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' },
-      Unknown: { strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' }
-    };
+    var administrativeClassRules = [
+      new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' })
+    ];
 
     // --- Functional class style maps
 
@@ -111,12 +111,7 @@
       rotation: '${rotation}'
     }));
     administrativeClassDefaultStyle.addRules(zoomLevelRules);
-    administrativeClassDefaultStyle.addRules([
-      new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' })
-    ]);
+    administrativeClassDefaultStyle.addRules(administrativeClassRules);
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
     var administrativeClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -135,8 +130,8 @@
     });
     administrativeClassSelectionDefaultStyle.addRules(zoomLevelRules);
     administrativeClassSelectionSelectStyle.addRules(zoomLevelRules);
-    administrativeClassSelectionStyleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-    administrativeClassSelectionStyleMap.addUniqueValueRules('select', 'administrativeClass', administrativeClassStyleLookup);
+    administrativeClassSelectionDefaultStyle.addRules(administrativeClassRules);
+    administrativeClassSelectionSelectStyle.addRules(administrativeClassRules);
 
     // --- Link type style maps
 
