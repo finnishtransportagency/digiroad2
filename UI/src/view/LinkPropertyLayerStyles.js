@@ -72,6 +72,8 @@
     functionalClassSelectionSelectStyle.addRules(zoomLevelRules);
     functionalClassSelectionDefaultStyle.addRules(overlayRules);
     functionalClassSelectionSelectStyle.addRules(overlayRules);
+    functionalClassSelectionDefaultStyle.addRules(linkTypeSizeRules);
+    functionalClassSelectionSelectStyle.addRules(linkTypeSizeRules);
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: functionalClassSelectionSelectStyle,
       default: functionalClassSelectionDefaultStyle
@@ -85,6 +87,7 @@
     }));
     administrativeClassDefaultStyle.addRules(zoomLevelRules);
     administrativeClassDefaultStyle.addRules(administrativeClassRules);
+    administrativeClassDefaultStyle.addRules(linkTypeSizeRules);
     var administrativeClassDefaultStyleMap = new OpenLayers.StyleMap({ default: administrativeClassDefaultStyle });
 
     var administrativeClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -101,6 +104,8 @@
     administrativeClassSelectionSelectStyle.addRules(zoomLevelRules);
     administrativeClassSelectionDefaultStyle.addRules(administrativeClassRules);
     administrativeClassSelectionSelectStyle.addRules(administrativeClassRules);
+    administrativeClassSelectionDefaultStyle.addRules(linkTypeSizeRules);
+    administrativeClassSelectionSelectStyle.addRules(linkTypeSizeRules);
     var administrativeClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: administrativeClassSelectionSelectStyle,
       default: administrativeClassSelectionDefaultStyle
@@ -131,6 +136,7 @@
     linkTypeDefaultStyle.addRules(linkTypeRules);
     linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyle.addRules(overlayRules);
+    linkTypeDefaultStyle.addRules(linkTypeSizeRules);
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
 
     var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -149,6 +155,8 @@
     linkTypeSelectionSelectStyle.addRules(zoomLevelRules);
     linkTypeSelectionDefaultStyle.addRules(overlayRules);
     linkTypeSelectionSelectStyle.addRules(overlayRules);
+    linkTypeSelectionDefaultStyle.addRules(linkTypeSizeRules);
+    linkTypeSelectionSelectStyle.addRules(linkTypeSizeRules);
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       select: linkTypeSelectionSelectStyle,
       default: linkTypeSelectionDefaultStyle
