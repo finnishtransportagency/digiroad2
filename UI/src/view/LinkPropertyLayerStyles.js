@@ -176,10 +176,8 @@
     });
     linkTypeSelectionDefaultStyle.addRules(linkTypeRules);
     linkTypeSelectionSelectStyle.addRules(linkTypeRules);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'default', 'zoomLevel', oneWaySignSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', RoadLayerSelectionStyle.linkSizeLookup);
-    roadLayer.addUIStateDependentLookupToStyleMap(linkTypeSelectionStyleMap, 'select', 'zoomLevel', oneWaySignSizeLookup);
+    linkTypeSelectionDefaultStyle.addRules(zoomLevelRules);
+    linkTypeSelectionSelectStyle.addRules(zoomLevelRules);
     linkTypeSelectionStyleMap.styles.default.addRules(overlayStrokeDashStyleRules);
     linkTypeSelectionStyleMap.styles.select.addRules(overlayStrokeDashStyleRules);
 
