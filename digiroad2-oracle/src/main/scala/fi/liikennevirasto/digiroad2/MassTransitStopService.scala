@@ -68,7 +68,7 @@ trait MassTransitStopService {
         } else {
           val distance = point.distanceTo(acc.previousPoint)
           if (acc.remainingMeasure <= distance) {
-            val directionVector = point - acc.previousPoint
+            val directionVector = (point - acc.previousPoint).normalize()
             val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
             AlgorithmState(point, acc.remainingMeasure - distance, result)
           } else {
