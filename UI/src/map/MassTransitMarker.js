@@ -91,7 +91,8 @@
     var mapBusStopImageIdsToImages = function(imageIds) {
       imageIds.sort();
       return _.map(_.isEmpty(imageIds) ? [EMPTY_IMAGE_TYPE] : imageIds, function(imageId) {
-        return '<img src="api/images/' + imageId + '.png">';
+        var id = imageId.split('_')[0];
+        return '<img src="/images/mass-transit-stops/' + id + '.png">';
       });
     };
 
