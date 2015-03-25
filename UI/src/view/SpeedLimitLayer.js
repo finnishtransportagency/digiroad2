@@ -235,11 +235,11 @@ window.SpeedLimitLayer = function(params) {
   var overlayStyleRules = [
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
     overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-    overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
-    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-    overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-    overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-    overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' })
+    overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+    overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+    overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
+    overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
   ];
 
   var oneWayOverlayStyleRule = _.partial(createZoomAndTypeDependentOneWayRule, 'overlay');
@@ -257,8 +257,8 @@ window.SpeedLimitLayer = function(params) {
     createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
     createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
     createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(12, { strokeWidth: 8 }),
-    createZoomDependentOneWayRule(13, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(12, { strokeWidth: 5 }),
+    createZoomDependentOneWayRule(13, { strokeWidth: 5 }),
     createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
     createZoomDependentOneWayRule(15, { strokeWidth: 8 }),
   ];
@@ -277,12 +277,12 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitFeatureSizeLookup = {
     9: { strokeWidth: 3, pointRadius: 0 },
-    10: { strokeWidth: 5, pointRadius: 12 },
-    11: { strokeWidth: 9, pointRadius: 14 },
-    12: { strokeWidth: 16, pointRadius: 16 },
-    13: { strokeWidth: 16, pointRadius: 20 },
-    14: { strokeWidth: 16, pointRadius: 24 },
-    15: { strokeWidth: 16, pointRadius: 24 }
+    10: { strokeWidth: 5, pointRadius: 10 },
+    11: { strokeWidth: 7, pointRadius: 14 },
+    12: { strokeWidth: 10, pointRadius: 16 },
+    13: { strokeWidth: 10, pointRadius: 16 },
+    14: { strokeWidth: 14, pointRadius: 22 },
+    15: { strokeWidth: 14, pointRadius: 22 }
   };
 
   var typeSpecificStyleLookup = {
