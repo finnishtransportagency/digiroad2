@@ -63,6 +63,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     MassTransitStopService.getByBoundingBox(user, bbox, RoadLinkService).map { massTransitStop =>
       Map("id" -> massTransitStop.id,
         "nationalId" -> massTransitStop.nationalId,
+        "externalId" -> massTransitStop.nationalId,
         "lon" -> massTransitStop.lon,
         "lat" -> massTransitStop.lat,
         "bearing" -> massTransitStop.bearing,
