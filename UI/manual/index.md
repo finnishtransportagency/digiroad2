@@ -263,6 +263,7 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 
 |Ominaisuustieto|Kuvaus|Sovellus generoi|
 |---------------|------|----------------|
+|Valtakunnallinen ID|Pys&auml;kin valtakunnallinen ID|X|
 |Lis&auml;tty j&auml;rjestelm&auml;&auml;n|Tiedon luojan k&auml;ytt&auml;j&auml;tunnus tai massaimportin l&auml;hde ja tiedon lis&auml;yshetki.|X|
 |Muokattu viimeksi|Muokkaajan k&auml;ytt&auml;j&auml;tunnus ja tiedon muokkaushetki. |X|
 |Liikenn&ouml;intisuuntima| Sovellus laskee itse tiegeometriasta. Pohjoinen on nolla astetta ja koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Ilmoitetaan asteluvun mukaan pohjoinen, it&auml;, etel&auml; tai l&auml;nsi.|X|
