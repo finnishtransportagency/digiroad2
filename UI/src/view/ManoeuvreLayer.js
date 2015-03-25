@@ -47,10 +47,10 @@
     defaultStyle.addRules(featureTypeRules);
     defaultStyle.addRules([
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 8 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 10 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 14 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 16 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 20 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 20 })
     ]);
@@ -63,7 +63,7 @@
       rotation: '${rotation}',
       graphicOpacity: 1.0,
       strokeColor: '#0000ff',
-      externalGraphic: 'images/link-properties/arrow-drop-green.svg'
+      externalGraphic: 'images/link-properties/arrow-drop-blue.svg'
     }));
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.15,
@@ -71,7 +71,7 @@
       rotation: '${rotation}',
       graphicOpacity: 0.15,
       strokeColor: '#a4a4a2',
-      externalGraphic: 'images/link-properties/arrow-drop-blue.svg'
+      externalGraphic: 'images/link-properties/arrow-drop-grey.svg'
     }));
     selectionDefaultStyle.addRules(featureTypeRules);
     selectionSelectStyle.addRules(featureTypeRules);
