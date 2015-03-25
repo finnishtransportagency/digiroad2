@@ -27,7 +27,7 @@
     ];
     var signSizeRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
@@ -41,8 +41,8 @@
       graphicOpacity: 1.0
     }));
     defaultStyle.addRules([
-      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
-      new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' })
+      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ]);
     defaultStyle.addRules(featureTypeRules);
     defaultStyle.addRules([
