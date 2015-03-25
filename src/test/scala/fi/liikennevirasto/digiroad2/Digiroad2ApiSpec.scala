@@ -181,20 +181,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("load image by id", Tag("db")) {
-    getWithUserAuth("/images/2") {
-      status should equal(200)
-      body.length should(be > 0)
-    }
-  }
-
-  test("load image by id and timestamp", Tag("db")) {
-    getWithUserAuth("/images/1_123456789") {
-      status should equal(200)
-      body.length should(be > 0)
-    }
-  }
-
   test("write requests pass only if user is not in viewer role", Tag("db")) {
     postJsonWithUserAuth("/assets/", Array(), username = "testviewer") {
       status should equal(401)

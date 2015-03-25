@@ -215,14 +215,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       "linkType" -> updatedLinkType)
   }
 
-  get("/images/:imageId") {
-    val id = params("imageId").split("_").head // last modified date is appended with an underscore to image id in order to cache image when it has not been altered
-    val bytes = assetProvider.getImage(id.toLong)
-    response.setHeader("Expires", Never)
-    response.setContentType("application/octet-stream")
-    bytes
-  }
-
   get("/assetTypeProperties/:assetTypeId") {
     try {
       val assetTypeId = params("assetTypeId").toLong

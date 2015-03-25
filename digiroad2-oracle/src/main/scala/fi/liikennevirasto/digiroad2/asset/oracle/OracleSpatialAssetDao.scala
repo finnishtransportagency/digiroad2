@@ -499,10 +499,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def getImage(imageId: Long): Array[Byte] = {
-    Q.query[Long, Array[Byte]](imageById).first(imageId)
-  }
-
   def getMunicipalities: Seq[Int] = {
     sql"""
       select id from municipality

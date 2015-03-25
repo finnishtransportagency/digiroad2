@@ -299,12 +299,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     an[IllegalArgumentException] should be thrownBy provider.updateAsset(TestAssetId, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "INVALID DATE"))
   }
 
-  test("load image by id", Tag("db")) {
-    val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
-    val image = provider.getImage(2)
-    image.size should (be > 1)
-  }
-
   test("loads all asset with properties in municipality find", Tag("db")) {
     val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
     val assets = provider.getAssetsByMunicipality(235)

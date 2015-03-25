@@ -403,5 +403,4 @@ object Queries {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
 
-  def imageById = "select image_data from image where id = ?"
 }

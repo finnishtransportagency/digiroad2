@@ -165,12 +165,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       }
   }
 
-  def getImage(imageId: Long): Array[Byte] = {
-    Database.forDataSource(ds).withDynTransaction {
-      OracleSpatialAssetDao.getImage(imageId)
-    }
-  }
-
   def availableProperties(assetTypeId: Long): Seq[Property] = {
     (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ Database.forDataSource(ds).withDynTransaction {
       OracleSpatialAssetDao.availableProperties(assetTypeId)

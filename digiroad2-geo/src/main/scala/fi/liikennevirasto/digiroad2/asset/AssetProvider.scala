@@ -17,7 +17,6 @@ trait AssetProvider {
   def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty] = Seq(), roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, AssetWithProperties]
   def removeAsset(assetId: Long): Unit
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue]
-  def getImage(imageId: Long): Array[Byte]
   def availableProperties(assetTypeId: Long): Seq[Property]
   def assetPropertyNames(language: String): Map[String, String]
 }
