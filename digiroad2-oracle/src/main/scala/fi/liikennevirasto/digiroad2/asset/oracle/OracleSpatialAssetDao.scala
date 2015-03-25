@@ -63,12 +63,6 @@ object OracleSpatialAssetDao {
     assetsWithProperties.map(_._1)
   }
 
-  private[oracle] def getImageId(image: Image) = {
-    image.imageId match {
-      case None => null
-      case _ => image.imageId.get + "_" + image.lastModified.get.getMillis
-    }
-  }
 
   private[oracle] def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
@@ -77,8 +71,7 @@ object OracleSpatialAssetDao {
         assetRows.map(assetRow =>
           PropertyValue(
             assetRow.property.propertyValue,
-            propertyDisplayValueFromAssetRow(assetRow),
-            getImageId(assetRow.image))
+            propertyDisplayValueFromAssetRow(assetRow))
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
@@ -100,7 +93,6 @@ object OracleSpatialAssetDao {
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
   }
@@ -124,7 +116,6 @@ object OracleSpatialAssetDao {
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
         floating = floating), row.persistedFloating)
@@ -209,7 +200,6 @@ object OracleSpatialAssetDao {
         lon = point.x,
         lat = point.y,
         roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary solution for possibly missing roadLinkId
-        imageIds = assetRows.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
         municipalityNumber = row.municipalityCode,
