@@ -2,11 +2,11 @@
   var linkSizeLookup = {
     9: { strokeWidth: 3 },
     10: { strokeWidth: 5 },
-    11: { strokeWidth: 9 },
-    12: { strokeWidth: 16 },
-    13: { strokeWidth: 16 },
-    14: { strokeWidth: 16 },
-    15: { strokeWidth: 16 }
+    11: { strokeWidth: 7 },
+    12: { strokeWidth: 10 },
+    13: { strokeWidth: 10 },
+    14: { strokeWidth: 14 },
+    15: { strokeWidth: 14 }
   };
 
   root.RoadLayerSelectionStyle = {
