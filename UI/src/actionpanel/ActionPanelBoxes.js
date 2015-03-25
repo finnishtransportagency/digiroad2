@@ -171,7 +171,7 @@
         '     <div class="symbol linear private-road"/>',
         '   </div>',
         '   <div class="legend-entry">',
-        '     <div class="label">Ei tiedossa</div>',
+        '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
         '     <div class="symbol linear unknown"/>',
         '   </div>',
         '  </div>'
