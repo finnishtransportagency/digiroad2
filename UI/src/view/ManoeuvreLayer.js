@@ -6,8 +6,8 @@
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var manoeuvreSourceLookup = {
-      0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-grey.svg' },
-      1: { strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-blue.svg' }
+      0: { strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' },
+      1: { strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }
     };
     var featureTypeLookup = {
       normal: { strokeWidth: 8},
@@ -15,7 +15,7 @@
     };
     var oneWaySignSizeLookup = {
       9: { pointRadius: 0 },
-      10: { pointRadius: 12 },
+      10: { pointRadius: 10 },
       11: { pointRadius: 14 },
       12: { pointRadius: 16 },
       13: { pointRadius: 20 },
