@@ -77,7 +77,7 @@
     };
 
     this.getAssetsWithCallback = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/assets?bbox=' + boundingBox, callback)
+      $.getJSON('api/massTransitStops?bbox=' + boundingBox, callback)
         .fail(function() { console.log("error"); });
     }, 1000);
 
