@@ -78,7 +78,7 @@ case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double,
-                 stopTypes: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
+                 stopTypes: Seq[Int] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  readOnly: Boolean = true,
                  municipalityNumber: Int,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,

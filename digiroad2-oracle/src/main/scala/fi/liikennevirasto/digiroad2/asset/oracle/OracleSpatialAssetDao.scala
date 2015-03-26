@@ -104,6 +104,12 @@ object OracleSpatialAssetDao {
     }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
   }
 
+  private def extractStopTypes(rows: Seq[SingleAssetRow]): Seq[Int] = {
+    rows
+      .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
+      .map { row => row.property.propertyValue.toInt }
+  }
+
   private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): (AssetWithProperties, Boolean) = {
     val row = param._2.head
     val point = row.point.get
@@ -118,6 +124,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
+        stopTypes = extractStopTypes(param._2),
         floating = floating), row.persistedFloating)
   }
 
