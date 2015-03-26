@@ -273,6 +273,10 @@
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
+      self.getRoadLinksFromVVH = function(boundingBox, callback) {
+        callback(roadLinkData);
+        eventbus.trigger('roadLinks:fetched');
+      };
       return self;
     };
 
