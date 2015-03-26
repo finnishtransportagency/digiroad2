@@ -97,7 +97,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   def extractBearing(asset: AssetWithProperties): (String, Option[Int]) = { "suuntima" -> asset.bearing }
 
-  def extractExternalId(asset: AssetWithProperties): (String, Long) = { "valtakunnallinen_id" -> asset.externalId }
+  def extractExternalId(asset: AssetWithProperties): (String, Long) = { "valtakunnallinen_id" -> asset.nationalId }
 
   def extractFloating(asset: AssetWithProperties): (String, Boolean) = { "kelluvuus" -> asset.floating }
 

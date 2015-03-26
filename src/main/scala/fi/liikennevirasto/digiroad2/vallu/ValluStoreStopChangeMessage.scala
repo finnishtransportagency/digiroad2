@@ -11,7 +11,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
     """<?xml version="1.0" encoding="UTF-8"?>""" +
     (<Stops xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <Stop>
-        <StopId>{asset.externalId}</StopId>
+        <StopId>{asset.nationalId}</StopId>
         <AdminStopId>{if (propertyIsDefined(asset, "yllapitajan_tunnus")) extractPropertyValue(asset, "yllapitajan_tunnus") }</AdminStopId>
         <StopCode>{if (propertyIsDefined(asset, "matkustajatunnus")) extractPropertyValue(asset, "matkustajatunnus") }</StopCode>
         { if (localizedNameIsDefined(asset))

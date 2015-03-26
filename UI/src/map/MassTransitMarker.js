@@ -55,7 +55,7 @@
         .addClass(groupIndex === 0 && 'root')
         .addClass(data.floating ? 'floating' : '')
         .append($('<div class="images field" />').html(busStopImages))
-        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
+        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.nationalId)))
         .append($('<div class="bus-stop-name field"/>').text(name))
         .append($('<div class="bus-stop-direction field"/>').text(direction));
     };

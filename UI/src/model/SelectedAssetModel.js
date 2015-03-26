@@ -6,7 +6,7 @@
       'lat',
       'lon',
       'roadLinkId',
-      'externalId',
+      'nationalId',
       'validityDirection',
       'floating'];
     var assetHasBeenModified = false;
@@ -218,14 +218,14 @@
     };
 
     var change = function(asset) {
-      changeByExternalId(asset.externalId);
+      changeByNationalId(asset.nationalId);
     };
 
-    var changeByExternalId = function(assetExternalId) {
-      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.externalId !== assetExternalId && !assetHasBeenModified;
+    var changeByNationalId = function(assetNationalId) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        backend.getAssetByExternalId(assetExternalId, function(asset) {
+        backend.getAssetByExternalId(assetNationalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -257,7 +257,7 @@
       cancel: cancel,
       exists: exists,
       change: change,
-      changeByExternalId: changeByExternalId,
+      changeByExternalId: changeByNationalId,
       getId: getId,
       getName: getName,
       getDirection: getDirection,

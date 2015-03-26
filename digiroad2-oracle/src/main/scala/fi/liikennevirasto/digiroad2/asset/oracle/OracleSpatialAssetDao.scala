@@ -88,7 +88,7 @@ object OracleSpatialAssetDao {
     val wgsPoint = row.wgsPoint.get
     val municipalityCode = row.municipalityCode
     val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
-    (AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+    (AssetWithProperties(id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = municipalityCode,
@@ -111,7 +111,7 @@ object OracleSpatialAssetDao {
     val roadLinkOption = getOptionalProductionRoadLink(row)
     val floating = isFloating(row, roadLinkOption)
     (AssetWithProperties(
-        id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+        id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = row.municipalityCode,

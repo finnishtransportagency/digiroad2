@@ -150,7 +150,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
             return {
                 assetTypeId: 10,
                 bearing: 80,
-                externalId: 1,
+                nationalId: 1,
                 id: 300000,
                 imageIds: ['2_1398341376263'],
                 lat: 6677267.45072414,

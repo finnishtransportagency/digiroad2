@@ -106,8 +106,8 @@
 
           var header = $('<header/>');
 
-          if (_.isNumber(selectedAssetModel.get('externalId'))) {
-            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('externalId') + '</span>');
+          if (_.isNumber(selectedAssetModel.get('nationalId'))) {
+            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('nationalId') + '</span>');
           } else {
             header.append('<span>Uusi pys&auml;kki</span>');
           }

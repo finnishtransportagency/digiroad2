@@ -77,7 +77,7 @@ case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat
                  floating: Boolean)
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class AssetWithProperties(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double,
+case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  readOnly: Boolean = true,
                  municipalityNumber: Int,

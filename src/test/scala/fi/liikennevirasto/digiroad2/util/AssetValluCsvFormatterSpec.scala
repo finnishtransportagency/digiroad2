@@ -125,7 +125,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
   }
 
   private def testAsset(): AssetWithProperties = {
-    assetsByMunicipality.find(_.externalId == 5).get
+    assetsByMunicipality.find(_.nationalId == 5).get
   }
 
   private def parseDate(date: String): DateTime = {

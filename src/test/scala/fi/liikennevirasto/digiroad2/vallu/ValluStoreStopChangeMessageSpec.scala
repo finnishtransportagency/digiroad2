@@ -16,7 +16,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
 
   val testAsset = AssetWithProperties(
     id = 1,
-    externalId = 123,
+    nationalId = 123,
     assetTypeId = 1,
     validityDirection = Some(2),
     lon = 1,
