@@ -152,7 +152,7 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
                 bearing: 80,
                 nationalId: 1,
                 id: 300000,
-                imageIds: ['2_1398341376263'],
+                stopTypes: [2],
                 lat: 6677267.45072414,
                 lon: 374635.608258218,
                 municipalityNumber: 235,

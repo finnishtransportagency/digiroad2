@@ -10,7 +10,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
       var backend = testHelpers
         .fakeBackend(assetsData, {}, 12)
         .withAssetCreationTransformation(function(assetData) {
-          return _.merge({}, assetData, {imageIds: ['2_1403010580826'], id: 2});
+          return _.merge({}, assetData, {stopTypes: [2], id: 2});
         });
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;

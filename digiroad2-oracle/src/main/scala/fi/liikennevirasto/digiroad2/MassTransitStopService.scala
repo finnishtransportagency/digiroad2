@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
-                           validityPeriod: String, floating: Boolean, stopType: Seq[Int])
+                           validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T

@@ -12,7 +12,7 @@
           lon: 374750,
           lat: 6677409,
           roadLinkId: 5809,
-          imageIds: ['2_1403010580826'],
+          stopTypes: [2],
           bearing: 219,
           validityDirection: 3,
           readOnly: true,

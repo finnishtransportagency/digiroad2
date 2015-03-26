@@ -351,7 +351,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
       massTransitStop: massTransitStop};
-    selectedAsset.data.imageIds = [];
+    selectedAsset.data.stopTypes = [];
     selectedAssetModel.place(selectedAsset.data);
 
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
