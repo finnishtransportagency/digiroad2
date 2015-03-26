@@ -16,6 +16,12 @@
       });
     }, 1000);
 
+    this.getRoadLinksFromVVH = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
     this.getManoeuvres = _.throttle(function(boundingBox, callback) {
       $.getJSON('api/manoeuvres?bbox=' + boundingBox, function(data) {
         callback(data);

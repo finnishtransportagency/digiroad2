@@ -109,6 +109,21 @@
       });
     };
 
+    this.fetchFromVVH = function(boundingBox, zoom) {
+      backend.getRoadLinksFromVVH(boundingBox, function(fetchedRoadLinks) {
+        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+          return roadLink.getId();
+        });
+        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLink) {
+          return new RoadLinkModel(roadLink);
+        });
+        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLink) {
+          return _.contains(selectedIds, roadLink.getId());
+        }).concat(getSelectedRoadLinks());
+        eventbus.trigger('roadLinks:fetched');
+      });
+    };
+
     this.getAllCarTrafficRoads = function() {
       return _.chain(roadLinks)
         .filter(function(roadLink) {
