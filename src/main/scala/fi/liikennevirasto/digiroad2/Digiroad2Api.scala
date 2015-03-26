@@ -70,7 +70,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
         "municipalityNumber" -> massTransitStop.municipalityNumber,
         "validityPeriod" -> massTransitStop.validityPeriod,
         "floating" -> massTransitStop.floating,
-        "imageIds" -> massTransitStop.stopType.map { stopType => stopType.toString + "_" })
+        "imageIds" -> massTransitStop.stopType)
     }
   }
 

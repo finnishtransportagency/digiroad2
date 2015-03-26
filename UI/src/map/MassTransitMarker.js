@@ -3,7 +3,7 @@
 
     var GROUP_ASSET_PADDING = 8;
     var IMAGE_HEIGHT = 17;
-    var EMPTY_IMAGE_TYPE = '99_';
+    var EMPTY_IMAGE_TYPE = '99';
     var getBounds = function(lon, lat) {
       return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
     };
@@ -91,8 +91,7 @@
     var mapBusStopImageIdsToImages = function(imageIds) {
       imageIds.sort();
       return _.map(_.isEmpty(imageIds) ? [EMPTY_IMAGE_TYPE] : imageIds, function(imageId) {
-        var id = imageId.split('_')[0];
-        return '<img src="/images/mass-transit-stops/' + id + '.png">';
+        return '<img src="/images/mass-transit-stops/' + imageId + '.png">';
       });
     };
 
@@ -101,7 +100,7 @@
               .where(function(property) { return property.publicId === 'pysakin_tyyppi'; })
               .pluck('values')
               .flatten()
-              .map(function(value) { return value.propertyValue + '_'; })
+              .pluck('propertyValue')
               .value();
     };
 
