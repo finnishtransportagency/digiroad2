@@ -13,39 +13,51 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
-                           validityPeriod: String, floating: Boolean)
+                           validityPeriod: String, floating: Boolean, stopType: Seq[Int])
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
+    type MassTransitStopAndType = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Int)
+    type MassTransitStopWithTypes = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Seq[Int])
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
 
-      val massTransitStops = sql"""
+      val massTransitStopsAndStopTypes = sql"""
           select a.id, a.external_id, a.bearing, lrm.side_code,
           a.municipality_code, lrm.start_measure, lrm.mml_id,
-          a.geometry, a.valid_from, a.valid_to, a.floating
+          a.geometry, a.valid_from, a.valid_to, a.floating, e.value
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-          where a.asset_type_id = 10 and #$boundingBoxFilter
-       """.as[(Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean)].list()
+          left join multiple_choice_value v on a.id = v.asset_id
+          left join enumerated_value e on v.enumerated_value_id = e.id
+          where a.asset_type_id = 10
+          and #$boundingBoxFilter
+          and v.property_id = (select id from property where public_id = 'pysakin_tyyppi')
+       """.as[MassTransitStopAndType].list()
+
+      val massTransitStops: Seq[MassTransitStopWithTypes] = massTransitStopsAndStopTypes.groupBy(_._1).map { case(id, rows) =>
+        val stopTypes = rows.map(_._12)
+        val (_, nationalId, bearing, sideCode, municipalityCode, startMeasure, mmlId, geometry, validFrom, validTo, floating, _) = rows.head
+        id -> (id, nationalId, bearing, sideCode, municipalityCode, startMeasure, mmlId, geometry, validFrom, validTo, floating, stopTypes)
+      }.values.toSeq
 
       val stopsBeforeUpdate = massTransitStops.filter { massTransitStop =>
-        val (_, _, _, _, municipalityCode, _, _, _, _, _, _) = massTransitStop
+        val (_, _, _, _, municipalityCode, _, _, _, _, _, _, _) = massTransitStop
         user.isAuthorizedToRead(municipalityCode)
       }.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo, persistedFloating) = massTransitStop
+        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo, persistedFloating, stopTypes) = massTransitStop
         val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
         val floating = roadLinkForStop match {
           case None => true
           case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculateLinearReferencePoint(roadLink._3, measure))
         }
-        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating), persistedFloating)
+        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating, stopTypes), persistedFloating)
       }
 
       stopsBeforeUpdate.foreach { stop =>
