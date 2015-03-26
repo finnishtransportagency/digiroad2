@@ -1,7 +1,6 @@
 (function(selectedAssetModel) {
   selectedAssetModel.initialize = function(backend) {
     var usedKeysFromFetchedAsset = [
-      'assetTypeId',
       'bearing',
       'lat',
       'lon',
@@ -78,9 +77,9 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      backend.getAssetTypeProperties(10, function(properties) {
+      backend.getAssetTypeProperties(function(properties) {
         currentAsset.propertyMetadata = properties;
-        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
+        currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
         eventbus.trigger('asset:modified', currentAsset);
       });

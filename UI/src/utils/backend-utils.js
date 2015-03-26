@@ -1,8 +1,8 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getEnumeratedPropertyValues = function (assetTypeId) {
-      $.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function (enumeratedPropertyValues) {
+    this.getEnumeratedPropertyValues = function() {
+      $.getJSON('api/enumeratedPropertyValues/10', function (enumeratedPropertyValues) {
         eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
       })
         .fail(function () {
@@ -211,8 +211,8 @@
       $.get('api/assets/' + externalId + '?externalId=true', callback);
     };
 
-    this.getAssetTypeProperties = function (assetTypeId, callback) {
-      $.get('api/assetTypeProperties/' + assetTypeId, callback);
+    this.getAssetTypeProperties = function(callback) {
+      $.get('api/assetTypeProperties/10', callback);
     };
 
     this.getUserRoles = function () {
@@ -356,7 +356,7 @@
     };
 
     this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(assetTypeId, callback) {
+      self.getAssetTypeProperties = function(callback) {
         callback(assetTypePropertiesData);
       };
       return self;

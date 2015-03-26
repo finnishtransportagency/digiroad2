@@ -451,7 +451,7 @@
         streetViewHandler.update();
       });
 
-      backend.getEnumeratedPropertyValues(10);
+      backend.getEnumeratedPropertyValues();
     }
   };
 })(this);
