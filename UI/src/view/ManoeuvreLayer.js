@@ -7,20 +7,20 @@
     var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
     var featureTypeRules = [
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeWidth: 3 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeWidth: 2 }),
       new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 5 }),
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 9 }),
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeWidth: 16 }),
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeWidth: 16 }),
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeWidth: 16 }),
-      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeWidth: 16 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 7 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeWidth: 10 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeWidth: 10 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeWidth: 14 }),
+      new OpenLayersRule().where('type').is('normal').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeWidth: 14 }),
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
       new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 7, strokeDashstyle: '1 18' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 14, strokeDashstyle: '1 32' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(12).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(13).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(14).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(15).use({ strokeColor: '#be0000', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
       new OpenLayersRule().where('linkType').is(8).use({ strokeWidth: 5 }),
       new OpenLayersRule().where('linkType').is(9).use({ strokeWidth: 5 }),
       new OpenLayersRule().where('linkType').is(21).use({ strokeWidth: 5 })
@@ -28,11 +28,11 @@
     var signSizeRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 20 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 20 })
     ];
     var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.65,
@@ -41,18 +41,18 @@
       graphicOpacity: 1.0
     }));
     defaultStyle.addRules([
-      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ]);
     defaultStyle.addRules(featureTypeRules);
     defaultStyle.addRules([
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 12 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 20 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 24 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 24 })
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 20 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 20 })
     ]);
     var defaultStyleMap = new OpenLayers.StyleMap({ default: defaultStyle });
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
@@ -63,7 +63,7 @@
       rotation: '${rotation}',
       graphicOpacity: 1.0,
       strokeColor: '#0000ff',
-      externalGraphic: 'images/link-properties/arrow-blue.svg'
+      externalGraphic: 'images/link-properties/arrow-drop-blue.svg'
     }));
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.15,
@@ -71,7 +71,7 @@
       rotation: '${rotation}',
       graphicOpacity: 0.15,
       strokeColor: '#a4a4a2',
-      externalGraphic: 'images/link-properties/arrow-grey.svg'
+      externalGraphic: 'images/link-properties/arrow-drop-grey.svg'
     }));
     selectionDefaultStyle.addRules(featureTypeRules);
     selectionSelectStyle.addRules(featureTypeRules);

@@ -1,24 +1,24 @@
 (function(root) {
   root.LinkPropertyLayerStyles = function(roadLayer) {
     var functionalClassRules = [
-      new OpenLayersRule().where('functionalClass').is(1).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-1.svg' }),
-      new OpenLayersRule().where('functionalClass').is(2).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/functional-class-2.svg' }),
-      new OpenLayersRule().where('functionalClass').is(3).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-3.svg' }),
-      new OpenLayersRule().where('functionalClass').is(4).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/functional-class-4.svg' }),
-      new OpenLayersRule().where('functionalClass').is(5).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-5.svg' }),
-      new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/functional-class-6.svg' }),
-      new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-7.svg' }),
-      new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/functional-class-8.svg' })
+      new OpenLayersRule().where('functionalClass').is(1).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new OpenLayersRule().where('functionalClass').is(2).use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new OpenLayersRule().where('functionalClass').is(3).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('functionalClass').is(4).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-drop-pink.svg' }),
+      new OpenLayersRule().where('functionalClass').is(5).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+      new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
 
     var zoomLevelRules = [
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[9], { pointRadius: 0 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[10], { pointRadius: 12 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[11], { pointRadius: 14 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[10], { pointRadius: 10 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[11], { pointRadius: 12 })),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[12], { pointRadius: 16 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[13], { pointRadius: 20 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[14], { pointRadius: 24 })),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[15], { pointRadius: 24 }))
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[13], { pointRadius: 16 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[14], { pointRadius: 20 })),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use(_.merge({}, RoadLayerSelectionStyle.linkSizeLookup[15], { pointRadius: 20 }))
     ];
 
     var overlayRules = [
@@ -39,10 +39,10 @@
     ];
 
     var administrativeClassRules = [
-      new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-blue.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-red.svg' }),
-      new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-grey.svg' })
+      new OpenLayersRule().where('administrativeClass').is('Private').use({ strokeColor: '#0011bb', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('Municipality').use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('State').use({ strokeColor: '#ff0000', externalGraphic: 'images/link-properties/arrow-drop-red.svg' }),
+      new OpenLayersRule().where('administrativeClass').is('Unknown').use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ];
 
     // --- Functional class style maps
@@ -114,14 +114,14 @@
     // --- Link type style maps
 
     var linkTypeRules = [
-      new OpenLayersRule().where('linkType').is(1).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg'   }),
-      new OpenLayersRule().where('linkType').isIn([2, 3]).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-blue.svg'  }),
-      new OpenLayersRule().where('linkType').is(4).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-red.svg'   }),
-      new OpenLayersRule().where('linkType').isIn([5, 6]).use({ strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-cyan.svg'  }),
-      new OpenLayersRule().where('linkType').is(7).use({ strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/arrow-green.svg' }),
-      new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-grey.svg'  }),
-      new OpenLayersRule().where('linkType').isIn([10, 11, 12]).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-green.svg' }),
-      new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-pink.svg'  })
+      new OpenLayersRule().where('linkType').is(1).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-drop-red.svg'   }),
+      new OpenLayersRule().where('linkType').isIn([2, 3]).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-drop-blue.svg'  }),
+      new OpenLayersRule().where('linkType').is(4).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-drop-red.svg'   }),
+      new OpenLayersRule().where('linkType').isIn([5, 6]).use({ strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-drop-cyan.svg'  }),
+      new OpenLayersRule().where('linkType').is(7).use({ strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
+      new OpenLayersRule().where('linkType').isIn([10, 11, 12]).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  })
     ];
 
     var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
