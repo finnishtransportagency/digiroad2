@@ -260,7 +260,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/assets/" + id,
+        url: "api/massTransitStops/" + id,
         data: JSON.stringify(data),
         dataType: "json",
         success: successCallback,

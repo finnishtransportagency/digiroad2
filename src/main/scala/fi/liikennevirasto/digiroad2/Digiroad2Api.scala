@@ -107,6 +107,18 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
+  put("/massTransitStops/:id") {
+    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) =
+      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
+        (parsedBody \ "mmlId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
+    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
+      case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
+      case _ => None
+    }
+    assetProvider.updateAsset(params("id").toLong, position, props)
+  }
+
   post("/assets") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
