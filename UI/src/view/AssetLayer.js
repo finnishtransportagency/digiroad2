@@ -34,7 +34,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         lon: selectedAssetModel.get('lon'),
         lat: selectedAssetModel.get('lat'),
         bearing: selectedAssetModel.get('bearing'),
-        roadLinkId: selectedAssetModel.get('roadLinkId')
+        roadLinkId: selectedAssetModel.get('roadLinkId'),
+        mmlId: selectedAssetModel.get('mmlId')
       });
       eventbus.trigger('asset:moveCompleted');
       assetIsMoving = false;
@@ -434,7 +435,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         lon: lonlat.lon,
         lat: lonlat.lat,
         bearing: angle,
-        roadLinkId: nearestLine.roadLinkId
+        roadLinkId: nearestLine.roadLinkId,
+        mmlId: nearestLine.mmlId
       });
    }
   };

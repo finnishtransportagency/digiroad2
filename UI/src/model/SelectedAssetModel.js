@@ -90,6 +90,7 @@
       currentAsset.payload.lon = position.lon;
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
+      currentAsset.payload.mmlId = position.mmlId;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
       eventbus.trigger('asset:moved', position);
