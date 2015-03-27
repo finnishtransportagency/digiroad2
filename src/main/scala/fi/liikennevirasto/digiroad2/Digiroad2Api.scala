@@ -116,7 +116,8 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
       case _ => None
     }
-    assetProvider.updateAsset(params("id").toLong, position, props)
+    position.foreach { position => MassTransitStopService.updatePosition(params("id").toLong, position) }
+    assetProvider.updateAsset(params("id").toLong, None, props)
   }
 
   post("/assets") {

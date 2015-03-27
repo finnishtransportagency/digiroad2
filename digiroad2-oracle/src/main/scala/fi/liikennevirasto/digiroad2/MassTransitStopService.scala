@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.asset.{ValidityPeriod, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{Position, ValidityPeriod, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{Interval, DateTime, LocalDate}
@@ -17,6 +17,11 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
+
+  def updatePosition(id: Long, position: Position): Unit = {
+    println("**** Updating stop position by MML id")
+    // TODO: Implement me
+  }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
