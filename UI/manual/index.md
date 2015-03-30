@@ -477,7 +477,7 @@ Yksitt&auml;isen suurin sallittu -kohteen voi valita klikkaamalla kartalta sen g
 
 ![Suurimman sallitun tietojen katselu](k31.JPG)
 
-_Suurin sallittu -katsleutila._
+_Suurin sallittu -katselutila._
 
 ##Suurin sallittu x7 ominaisuustietojen muokkaus##
 
