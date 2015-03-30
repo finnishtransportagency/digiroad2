@@ -21,6 +21,13 @@ trait MassTransitStopService {
   def updatePosition(id: Long, position: Position): Unit = {
     println("**** Updating stop position by MML id")
     // TODO: Implement me
+    // 1. Fetch road link geometry from VVH
+    // 2. Gain mass transit stop position m measurement by projecting stop location to road link
+    // 3. Clamp mass transit stop m measurement between 0 < roadlink length
+    // 4. Update lrm table with new m measurement and mml id
+    // 5. Update asset bearing (use spatial asset dao if possible)
+    // 6. Update asset geometry (use spatial asset dao if possible)
+    // 7. Update asset municipality(use spatial asset dao if possible)
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
