@@ -16,6 +16,10 @@ case class Vector3d(x: Double, y: Double, z: Double) {
   def length(): Double = {
     Math.sqrt((x * x) + (y * y) + (z * z))
   }
+
+  def -(that: Vector3d): Vector3d = {
+    Vector3d(x - that.x, y - that.y, z - that.z)
+  }
 }
 
 case class Point(x: Double, y: Double, z: Double = 0.0) {
