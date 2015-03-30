@@ -107,6 +107,7 @@ object OracleSpatialAssetDao {
   private def extractStopTypes(rows: Seq[SingleAssetRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
+      .filterNot { row => row.property.propertyValue.isEmpty }
       .map { row => row.property.propertyValue.toInt }
   }
 
