@@ -95,6 +95,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
+  // TODO: Remove obsolete entry point
   put("/assets/:id") {
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) =
       ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
@@ -107,17 +108,35 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
+  // TODO: Deduce useVVHGeometry value from running environment
+  private val useVVHGeometry: Boolean = true
+  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
+    val lon = (parsedBody \ "lon").extractOpt[Double]
+    val lat = (parsedBody \ "lat").extractOpt[Double]
+    val roadLinkId = useVVHGeometry match {
+      case true => (parsedBody \ "mmlId").extractOpt[Long]
+      case false => (parsedBody \ "roadLinkId").extractOpt[Long]
+    }
+    val bearing = (parsedBody \ "bearing").extractOpt[Int]
+    (lon, lat, roadLinkId, bearing)
+  }
+  private def updateMassTransitStop(id: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
+    useVVHGeometry match {
+      case true =>
+        position.foreach { position => MassTransitStopService.updatePosition(id, position) }
+        assetProvider.updateAsset(id, None, properties)
+      case false =>
+        assetProvider.updateAsset(id, position, properties)
+    }
+  }
   put("/massTransitStops/:id") {
-    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) =
-      ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
-        (parsedBody \ "mmlId").extractOpt[Long], (parsedBody \ "bearing").extractOpt[Int])
-    val props = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
       case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
       case _ => None
     }
-    position.foreach { position => MassTransitStopService.updatePosition(params("id").toLong, position) }
-    assetProvider.updateAsset(params("id").toLong, None, props)
+    updateMassTransitStop(params("id").toLong, position, properties)
   }
 
   post("/assets") {
