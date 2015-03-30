@@ -1,6 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 case class Vector3d(x: Double, y: Double, z: Double) {
+  def dot(that: Vector3d): Double = {
+    (x * that.x) + (y * that.y) + (z * that.z)
+  }
+
   def normalize(): Vector3d = {
     scale(1 / length())
   }

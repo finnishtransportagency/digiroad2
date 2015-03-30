@@ -104,6 +104,11 @@ trait MassTransitStopService {
     }
   }
 
+  def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
+    val directionVector = (points(1) - points(0)).normalize()
+    (point - points(0)).dot(directionVector)
+  }
+
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) = {
       r.nextDateOption().map(new LocalDate(_))
