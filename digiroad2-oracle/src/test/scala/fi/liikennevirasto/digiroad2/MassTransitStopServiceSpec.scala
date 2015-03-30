@@ -146,4 +146,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(0.0)
   }
+
+  test("Project stop location to the end of geometry if point lies beyond geometry") {
+    val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val location: Point = Point(1.5, 0.5)
+    val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
+    mValue should be(1.0)
+  }
 }
