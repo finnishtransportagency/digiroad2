@@ -26,6 +26,7 @@ trait MassTransitStopService {
     val geometry = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
+    // TODO: Use transaction instead of session
     withDynSession {
       sqlu"""
            update lrm_position
