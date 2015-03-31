@@ -22,20 +22,28 @@
     ];
 
     var overlayRules = [
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
-      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(9).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([12, 13]).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
+      new OpenLayersRule().where('type').is('overlay').and('zoomLevel', roadLayer.uiState).isIn([14, 15]).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
     ];
 
     var linkTypeSizeRules = [
       new OpenLayersRule().where('linkType').isIn([8, 9, 21]).use({ strokeWidth: 6 }),
       new OpenLayersRule().where('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 2 }),
       new OpenLayersRule().where('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 16' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 16' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+    ];
+
+    var overlayDefaultOpacity = [
+      new OpenLayersRule().where('type').is('overlay').use({ strokeOpacity: 1.0 })
+    ];
+
+    var overlayUnselectedOpacity = [
+      new OpenLayersRule().where('type').is('overlay').use({ strokeOpacity: 0.3 })
     ];
 
     var administrativeClassRules = [
@@ -54,6 +62,7 @@
     functionalClassDefaultStyle.addRules(zoomLevelRules);
     functionalClassDefaultStyle.addRules(overlayRules);
     functionalClassDefaultStyle.addRules(linkTypeSizeRules);
+    functionalClassDefaultStyle.addRules(overlayDefaultOpacity);
     var functionalClassDefaultStyleMap = new OpenLayers.StyleMap({ default: functionalClassDefaultStyle });
 
     var functionalClassSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -74,6 +83,8 @@
     functionalClassSelectionSelectStyle.addRules(overlayRules);
     functionalClassSelectionDefaultStyle.addRules(linkTypeSizeRules);
     functionalClassSelectionSelectStyle.addRules(linkTypeSizeRules);
+    functionalClassSelectionDefaultStyle.addRules(overlayUnselectedOpacity);
+    functionalClassSelectionSelectStyle.addRules(overlayDefaultOpacity);
     var functionalClassSelectionStyleMap = new OpenLayers.StyleMap({
       select: functionalClassSelectionSelectStyle,
       default: functionalClassSelectionDefaultStyle
@@ -114,13 +125,12 @@
     // --- Link type style maps
 
     var linkTypeRules = [
-      new OpenLayersRule().where('linkType').is(1).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-drop-red.svg'   }),
+      
       new OpenLayersRule().where('linkType').isIn([2, 3]).use({ strokeColor: '#0011bb',  externalGraphic: 'images/link-properties/arrow-drop-blue.svg'  }),
-      new OpenLayersRule().where('linkType').is(4).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-drop-red.svg'   }),
+      new OpenLayersRule().where('linkType').isIn([1, 4]).use({ strokeColor: '#ff0000',  externalGraphic: 'images/link-properties/arrow-drop-red.svg'   }),
       new OpenLayersRule().where('linkType').isIn([5, 6]).use({ strokeColor: '#00ccdd',  externalGraphic: 'images/link-properties/arrow-drop-cyan.svg'  }),
-      new OpenLayersRule().where('linkType').is(7).use({ strokeColor: '#11bb00',  externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
-      new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888',     externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
-      new OpenLayersRule().where('linkType').isIn([10, 11, 12]).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
+      new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
+      new OpenLayersRule().where('linkType').isIn([7, 10, 11, 12]).use({ strokeColor: '#11bb00', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
       new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#ff55dd', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  })
     ];
 
@@ -131,6 +141,7 @@
     linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyle.addRules(overlayRules);
     linkTypeDefaultStyle.addRules(linkTypeSizeRules);
+    linkTypeDefaultStyle.addRules(overlayDefaultOpacity);
     var linkTypeDefaultStyleMap = new OpenLayers.StyleMap({ default: linkTypeDefaultStyle });
 
     var linkTypeSelectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -151,6 +162,8 @@
     linkTypeSelectionSelectStyle.addRules(overlayRules);
     linkTypeSelectionDefaultStyle.addRules(linkTypeSizeRules);
     linkTypeSelectionSelectStyle.addRules(linkTypeSizeRules);
+    linkTypeSelectionSelectStyle.addRules(overlayUnselectedOpacity);
+    linkTypeSelectionSelectStyle.addRules(overlayDefaultOpacity);
     var linkTypeSelectionStyleMap = new OpenLayers.StyleMap({
       select: linkTypeSelectionSelectStyle,
       default: linkTypeSelectionDefaultStyle
