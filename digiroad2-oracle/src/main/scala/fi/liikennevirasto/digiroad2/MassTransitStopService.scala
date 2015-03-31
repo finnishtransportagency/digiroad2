@@ -25,8 +25,20 @@ trait MassTransitStopService {
     val mmlId = position.roadLinkId
     val geometry = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
+
+    withDynSession {
+      sqlu"""
+           update lrm_position
+           set start_measure = $mValue, end_measure = $mValue, mml_id = $mmlId
+           where id = (
+            select lrm.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = $id)
+      """.execute
+    }
     // TODO: Implement me
-    // 4. Update lrm table with new m measurement and mml id
     // 5. Update asset bearing (use spatial asset dao if possible)
     // 6. Update asset geometry (use spatial asset dao if possible)
     // 7. Update asset municipality(use spatial asset dao if possible)
