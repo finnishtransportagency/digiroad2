@@ -19,6 +19,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
   def roadLinkService: RoadLinkService
+  def withDynTransaction[T](f: => T): T
 
   def updatePosition(id: Long, position: Position): Unit = {
     val point = Point(position.lon, position.lat)
@@ -26,8 +27,7 @@ trait MassTransitStopService {
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
-    // TODO: Use transaction instead of session
-    withDynSession {
+    withDynTransaction {
       sqlu"""
            update lrm_position
            set start_measure = $mValue, end_measure = $mValue, mml_id = $mmlId
@@ -187,5 +187,6 @@ trait MassTransitStopService {
 
 object MassTransitStopService extends MassTransitStopService {
   def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+  def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
   val roadLinkService: RoadLinkService = RoadLinkService
 }

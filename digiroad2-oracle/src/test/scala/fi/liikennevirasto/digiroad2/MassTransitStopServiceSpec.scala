@@ -24,6 +24,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   object RollbackMassTransitStopService extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
     val roadLinkService: RoadLinkService = mockRoadLinkService
   }
 
