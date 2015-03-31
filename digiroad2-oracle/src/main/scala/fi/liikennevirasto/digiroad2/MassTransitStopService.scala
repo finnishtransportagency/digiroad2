@@ -17,6 +17,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
+  def roadLinkService: RoadLinkService
 
   def updatePosition(id: Long, position: Position): Unit = {
     println("**** Updating stop position by MML id")
@@ -30,7 +31,7 @@ trait MassTransitStopService {
     // 7. Update asset municipality(use spatial asset dao if possible)
   }
 
-  def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinkService: RoadLinkService): Seq[MassTransitStop] = {
+  def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
     type MassTransitStopAndType = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Int)
     type MassTransitStopWithTypes = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Seq[Int])
@@ -160,4 +161,5 @@ trait MassTransitStopService {
 
 object MassTransitStopService extends MassTransitStopService {
   def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+  val roadLinkService: RoadLinkService = RoadLinkService
 }
