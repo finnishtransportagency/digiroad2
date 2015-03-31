@@ -21,8 +21,9 @@ trait MassTransitStopService {
 
   def updatePosition(id: Long, position: Position): Unit = {
     println("**** Updating stop position by MML id")
+    val mmlId = position.roadLinkId
+    val geometry = roadLinkService.fetchVVHRoadlink(mmlId)
     // TODO: Implement me
-    // 1. Fetch road link geometry from VVH
     // 2. Gain mass transit stop position m measurement by projecting stop location to road link
     // 3. Clamp mass transit stop m measurement between 0 < roadlink length
     // 4. Update lrm table with new m measurement and mml id

@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
+import java.net.URLEncoder
+
 import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
@@ -22,6 +24,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 trait RoadLinkService {
+  def fetchVVHRoadlink(mmlId: Long): Option[Seq[Point]]
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
 }
 object RoadLinkService extends RoadLinkService {
@@ -325,6 +328,28 @@ object RoadLinkService extends RoadLinkService {
       val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
       val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
       (mmlId, municipalityCode, linkGeometry)
+    })
+  }
+
+  override def fetchVVHRoadlink(mmlId: Long): Option[Seq[Point]] = {
+    val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
+    val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+      s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
+    val featureMap: Map[String, Any] = layers.find(map => {map.contains("features")}).get
+    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
+    features.headOption.map(feature => {
+      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
+      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
+      val path: List[List[Double]] = paths.head
+      val linkGeometry: Seq[Point] = path.map(point => {
+        Point(point(0), point(1))
+      })
+      linkGeometry
     })
   }
 
