@@ -37,9 +37,16 @@ trait MassTransitStopService {
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = $id)
       """.execute
+
+      position.bearing.foreach { bearing =>
+        sqlu"""
+           update asset
+           set bearing = $bearing
+           where id = $id
+        """.execute
+      }
     }
     // TODO: Implement me
-    // 5. Update asset bearing (use spatial asset dao if possible)
     // 6. Update asset geometry (use spatial asset dao if possible)
     // 7. Update asset municipality(use spatial asset dao if possible)
   }
