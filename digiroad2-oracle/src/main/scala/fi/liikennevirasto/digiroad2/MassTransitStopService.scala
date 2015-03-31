@@ -21,11 +21,11 @@ trait MassTransitStopService {
 
   def updatePosition(id: Long, position: Position): Unit = {
     println("**** Updating stop position by MML id")
+    val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
-    val geometry = roadLinkService.fetchVVHRoadlink(mmlId)
+    val geometry = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
+    val mValue = calculateLinearReferenceFromPoint(point, geometry)
     // TODO: Implement me
-    // 2. Gain mass transit stop position m measurement by projecting stop location to road link
-    // 3. Clamp mass transit stop m measurement between 0 < roadlink length
     // 4. Update lrm table with new m measurement and mml id
     // 5. Update asset bearing (use spatial asset dao if possible)
     // 6. Update asset geometry (use spatial asset dao if possible)
