@@ -67,7 +67,7 @@ trait MassTransitStopService {
         val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
         val floating = roadLinkForStop match {
           case None => true
-          case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculateLinearReferencePoint(roadLink._3, measure))
+          case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadLink._3, measure))
         }
         MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating, stopTypes), persistedFloating)
       }
@@ -82,7 +82,7 @@ trait MassTransitStopService {
     }
   }
 
-  def calculateLinearReferencePoint(geometry: Seq[Point], measure: Double): Option[Point] = {
+  def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
     if (geometry.size < 2 || measure < 0) { None }
     else {
