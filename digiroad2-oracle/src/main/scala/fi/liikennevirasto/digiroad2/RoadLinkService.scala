@@ -31,7 +31,7 @@ object RoadLinkService extends RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
-  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, linkType: Option[LinkType])
+  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: Int, modifiedAt: Option[String], modifiedBy: Option[String])
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -295,13 +295,10 @@ object RoadLinkService extends RoadLinkService {
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
-    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1)).groupBy(_._1).mapValues(_.head)
+    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1))
 
-    vvhRoadLinks.map { case (mmlId, _, geometry) =>
-      localRoadLinkDataByMmlId.get(mmlId) match {
-        case Some((_, administrativeClass, linkType)) => VVHRoadLink(mmlId, geometry, administrativeClass, linkType)
-        case None                                     => VVHRoadLink(mmlId, geometry, Unknown, None)
-      }
+    (localRoadLinkDataByMmlId zip vvhRoadLinks).map{
+      case(adjusted, vvh) => VVHRoadLink(vvh._1, vvh._3, adjusted._5, adjusted._6, adjusted._7, adjusted._10, adjusted._8, adjusted._9)
     }
   }
 
@@ -355,13 +352,11 @@ object RoadLinkService extends RoadLinkService {
     })
   }
 
-  def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[(Long, AdministrativeClass, Option[LinkType])] = {
+  def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
-      val roadLinkData: Seq[(Long, Int, Option[Int])] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
-
-      roadLinkData.map { case (mmlId, administrativeClass, optionalLinkType) =>
-        (mmlId, AdministrativeClass(administrativeClass), optionalLinkType.map(LinkType(_)))
-      }
+      val roadLinkData: Seq[(Long, Long, Int, Int, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
+      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3), x._4, TrafficDirection(x._5), x._6 ) }
+      adjustedRoadLinks(basicRoadLinks)
     }
   }
 
