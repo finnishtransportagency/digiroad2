@@ -21,7 +21,6 @@ trait MassTransitStopService {
   def roadLinkService: RoadLinkService
 
   def updatePosition(id: Long, position: Position): Unit = {
-    println("**** Updating stop position by MML id")
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
