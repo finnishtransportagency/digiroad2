@@ -24,7 +24,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 trait RoadLinkService {
-  def fetchVVHRoadlink(mmlId: Long): Option[Seq[Point]]
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
 }
 object RoadLinkService extends RoadLinkService {
@@ -331,7 +331,7 @@ object RoadLinkService extends RoadLinkService {
     })
   }
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[Seq[Point]] = {
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -349,7 +349,9 @@ object RoadLinkService extends RoadLinkService {
       val linkGeometry: Seq[Point] = path.map(point => {
         Point(point(0), point(1))
       })
-      linkGeometry
+      val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
+      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
+      (municipalityCode, linkGeometry)
     })
   }
 

@@ -24,7 +24,7 @@ trait MassTransitStopService {
     println("**** Updating stop position by MML id")
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
-    val geometry = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
+    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     // TODO: Use transaction instead of session
@@ -48,10 +48,14 @@ trait MassTransitStopService {
         """.execute
       }
 
+      sqlu"""
+           update asset
+           set municipality_code = $municipalityCode
+           where id = $id
+      """.execute
+
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
     }
-    // TODO: Implement me
-    // 7. Update asset municipality(use spatial asset dao if possible)
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
