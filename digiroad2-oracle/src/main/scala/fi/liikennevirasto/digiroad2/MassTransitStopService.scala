@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.asset.{Position, ValidityPeriod, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
@@ -46,9 +47,10 @@ trait MassTransitStopService {
            where id = $id
         """.execute
       }
+
+      OracleSpatialAssetDao.updateAssetGeometry(id, point)
     }
     // TODO: Implement me
-    // 6. Update asset geometry (use spatial asset dao if possible)
     // 7. Update asset municipality(use spatial asset dao if possible)
   }
 
