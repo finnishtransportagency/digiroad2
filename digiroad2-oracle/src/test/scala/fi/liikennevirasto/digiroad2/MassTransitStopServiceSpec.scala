@@ -21,7 +21,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
-  when(mockRoadLinkService.fetchVVHRoadlink(any[Long])).thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
+  when(mockRoadLinkService.fetchVVHRoadlink(388554364l)).thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
+  when(mockRoadLinkService.fetchVVHRoadlink(123l)).thenReturn(Some((91, List(Point(0.0,0.0), Point(120.0, 0.0)))))
 
   object RollbackMassTransitStopService extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -122,6 +123,20 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             where a.id = 300000
       """.as[Option[Int]].first()
       bearing should be(Some(90))
+    }
+  }
+
+  test("Update mass transit stop municipality") {
+    runWithCleanup {
+      val position = Position(60.0, 0.0, 123l, None)
+      RollbackMassTransitStopService.updatePosition(300000, position)
+      val municipality = sql"""
+            select a.municipality_code from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = 300000
+      """.as[Int].firstOption()
+      municipality should be(Some(91))
     }
   }
 
