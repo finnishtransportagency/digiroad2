@@ -45,7 +45,7 @@
     };
 
     var isCarTrafficRoad = function() {
-      return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
     };
 
     var cancel = function() {
