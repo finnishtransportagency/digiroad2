@@ -31,7 +31,7 @@ object RoadLinkService extends RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
-  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: Int, modifiedAt: Option[String], modifiedBy: Option[String])
+  case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -297,8 +297,11 @@ object RoadLinkService extends RoadLinkService {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
     val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1))
 
-    (localRoadLinkDataByMmlId zip vvhRoadLinks).map{
-      case(adjusted, vvh) => VVHRoadLink(vvh._1, vvh._3, adjusted._5, adjusted._6, adjusted._7, adjusted._10, adjusted._8, adjusted._9)
+    vvhRoadLinks.map { vvh =>
+      localRoadLinkDataByMmlId.find(_._2 == vvh._1) match {
+        case Some(adjusted) => VVHRoadLink(vvh._1, vvh._3, adjusted._5, adjusted._6, adjusted._7, LinkType(adjusted._10), adjusted._8, adjusted._9)
+        case None => VVHRoadLink(vvh._1, vvh._3, Unknown, 25, UnknownDirection, UnknownLinkType, None, None)
+      }
     }
   }
 
