@@ -41,8 +41,8 @@
       graphicOpacity: 1.0
     }));
     defaultStyle.addRules([
-      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#0000ff', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
-      new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#a4a4a2', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
+      new OpenLayersRule().where('manoeuvreSource').is(1).use({ strokeColor: '#00f', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
+      new OpenLayersRule().where('manoeuvreSource').is(0).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' })
     ]);
     defaultStyle.addRules(featureTypeRules);
     defaultStyle.addRules([
@@ -78,8 +78,8 @@
     selectionDefaultStyle.addRules(signSizeRules);
     selectionSelectStyle.addRules(signSizeRules);
     selectionDefaultStyle.addRules([
-      new OpenLayersRule().where('adjacent').is(0).use({ strokeOpacity: 0.15 }),
-      new OpenLayersRule().where('adjacent').is(1).use({ strokeOpacity: 0.9 })
+      new OpenLayersRule().where('adjacent').is(0).use({ strokeOpacity: 0.15, graphicOpacity: 0.15 }),
+      new OpenLayersRule().where('adjacent').is(1).use({ strokeOpacity: 0.9, graphicOpacity: 1.0 })
     ]);
     var selectionStyleMap = new OpenLayers.StyleMap({
       select:  selectionSelectStyle,
