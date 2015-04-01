@@ -111,6 +111,20 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update mass transit stop bearing") {
+    runWithCleanup {
+      val position = Position(60.0, 0.0, 388554364l, Some(90))
+      RollbackMassTransitStopService.updatePosition(300000, position)
+      val bearing = sql"""
+            select a.bearing from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = 300000
+      """.as[Option[Int]].first()
+      bearing should be(Some(90))
+    }
+  }
+
   test("Calculate linear reference point") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val point: Point = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 0.5).get
