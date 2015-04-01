@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{ValidityPeriod, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.{Position, ValidityPeriod, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.scalatest.{Matchers, FunSuite}
@@ -21,6 +21,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
+  when(mockRoadLinkService.fetchVVHRoadlink(any[Long])).thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
 
   object RollbackMassTransitStopService extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -93,6 +94,20 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption()
       floating should be(Some(true))
+    }
+  }
+
+  test("Update mass transit stop road link mml id") {
+    runWithCleanup {
+      val position = Position(60.0, 0.0, 388554364l, None)
+      RollbackMassTransitStopService.updatePosition(300000, position)
+      val mmlId = sql"""
+            select lrm.mml_id from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = 300000
+      """.as[Long].firstOption()
+      mmlId should be(Some(388554364l))
     }
   }
 
