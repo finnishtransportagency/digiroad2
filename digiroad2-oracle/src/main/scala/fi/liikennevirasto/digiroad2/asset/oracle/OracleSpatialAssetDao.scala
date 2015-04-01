@@ -64,7 +64,7 @@ object OracleSpatialAssetDao {
   }
 
 
-  private[oracle] def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
+  def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
       Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,

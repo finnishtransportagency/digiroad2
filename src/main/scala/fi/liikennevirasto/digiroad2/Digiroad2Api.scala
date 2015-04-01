@@ -123,8 +123,9 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   private def updateMassTransitStop(id: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
     useVVHGeometry match {
       case true =>
-        position.foreach { position => MassTransitStopService.updatePosition(id, position) }
-        assetProvider.updateAsset(id, None, properties)
+        val massTransitStop = position.map { position => MassTransitStopService.updatePosition(id, position) }
+        val asset = assetProvider.updateAsset(id, None, properties)
+        if (massTransitStop.isDefined) massTransitStop.get else asset
       case false =>
         assetProvider.updateAsset(id, position, properties)
     }

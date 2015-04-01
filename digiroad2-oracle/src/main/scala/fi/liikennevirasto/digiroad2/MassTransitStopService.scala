@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
-import fi.liikennevirasto.digiroad2.asset.{Position, ValidityPeriod, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{Interval, DateTime, LocalDate}
@@ -21,7 +21,47 @@ trait MassTransitStopService {
   def roadLinkService: RoadLinkService
   def withDynTransaction[T](f: => T): T
 
-  def updatePosition(id: Long, position: Position): Unit = {
+  case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
+                                validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
+                                created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
+                                roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
+
+  implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong
+      val externalId = r.nextLong
+      val assetTypeId = r.nextLong
+      val bearing = r.nextIntOption
+      val validityDirection = r.nextInt
+      val validFrom = r.nextDateOption.map(new LocalDate(_))
+      val validTo = r.nextDateOption.map(new LocalDate(_))
+      val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyUiIndex = r.nextInt
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
+      val lrmId = r.nextLong
+      val startMeasure = r.nextInt
+      val endMeasure = r.nextInt
+      val productionRoadLinkId = r.nextLongOption()
+      val roadLinkId = r.nextLong
+      val mmlId = r.nextLong
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      MassTransitStopRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, mmlId, bearing, validityDirection,
+        validFrom, validTo, property, created, modified, wgsPoint,
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+    }
+  }
+
+  def updatePosition(id: Long, position: Position): AssetWithProperties = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
@@ -54,7 +94,55 @@ trait MassTransitStopService {
       """.execute
 
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
+
+      val assetWithPositionById = sql"""
+        select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
+        p.id, p.public_id, p.property_type, p.ui_position_index, p.required, e.value,
+        case
+          when e.name_fi is not null then e.name_fi
+          when tp.value_fi is not null then tp.value_fi
+          else null
+        end as display_value,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, lrm.mml_id,
+        a.created_date, a.created_by, a.modified_date, a.modified_by,
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+        from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+        join property p on a.asset_type_id = p.asset_type_id
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+        where a.id = $id
+      """
+      assetWithPositionById.as[(MassTransitStopRow)].list().groupBy(_.id).map { case (_, rows) =>
+        val row = rows.head
+        val point = row.point.get
+        val wgsPoint = row.wgsPoint.get
+        // TODO: Fetch road link type from VVH
+        val roadLinkType = Unknown
+        val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
+        AssetWithProperties(
+          id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
+          lon = point.x, lat = point.y,
+          propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex),
+          bearing = row.bearing, municipalityNumber = row.municipalityCode,
+          validityPeriod = Some(validityPeriod(row.validFrom, row.validTo)),
+          validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
+          created = row.created, modified = row.modified, roadLinkType = roadLinkType,
+          stopTypes = extractStopTypes(rows),
+          floating = floating)
+      }.head
     }
+  }
+
+  private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
+    rows
+      .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
+      .filterNot { row => row.property.propertyValue.isEmpty }
+      .map { row => row.property.propertyValue.toInt }
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
