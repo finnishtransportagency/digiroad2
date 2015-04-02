@@ -62,7 +62,7 @@
       pointRadius: 12,
       rotation: '${rotation}',
       graphicOpacity: 1.0,
-      strokeColor: '#0000ff',
+      strokeColor: '#00f',
       externalGraphic: 'images/link-properties/arrow-drop-blue.svg'
     }));
     var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
@@ -70,7 +70,7 @@
       pointRadius: 12,
       rotation: '${rotation}',
       graphicOpacity: 0.15,
-      strokeColor: '#a4a4a2',
+      strokeColor: '#888',
       externalGraphic: 'images/link-properties/arrow-drop-grey.svg'
     }));
     selectionDefaultStyle.addRules(featureTypeRules);
@@ -175,7 +175,8 @@
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
-        markAdjacentFeatures(_.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'roadLinkId'));
+        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId());
+        markAdjacentFeatures(application.isReadOnly() ? destinationRoadLinkIds : _.pluck(adjacentLinks(selectedManoeuvreSource.get()), 'roadLinkId'));
         redrawRoadLayer();
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.roadLinkId === selectedManoeuvreSource.getRoadLinkId();
@@ -183,8 +184,7 @@
         if (feature) {
           selectControl.select(feature);
         }
-        var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(selectedManoeuvreSource.getRoadLinkId());
-        highlightOneWaySigns(destinationRoadLinkIds.concat([selectedManoeuvreSource.getRoadLinkId()]));
+        highlightOneWaySigns([selectedManoeuvreSource.getRoadLinkId()]);
         highlightOverlayFeatures(destinationRoadLinkIds);
         indicatorLayer.clearMarkers();
         updateAdjacentLinkIndicators();
@@ -284,9 +284,9 @@
       var adjacentLinkIds = _.pluck(aLinks, 'roadLinkId');
       highlightFeatures(roadLink.roadLinkId);
       var destinationRoadLinkIds = manoeuvresCollection.getDestinationRoadLinksBySourceRoadLink(roadLink.roadLinkId);
-      highlightOneWaySigns(destinationRoadLinkIds.concat([roadLink.roadLinkId]));
+      highlightOneWaySigns([roadLink.roadLinkId]);
       highlightOverlayFeatures(destinationRoadLinkIds);
-      markAdjacentFeatures(adjacentLinkIds);
+      markAdjacentFeatures(application.isReadOnly() ? destinationRoadLinkIds : adjacentLinkIds);
       redrawRoadLayer();
       if (!application.isReadOnly()) {
         drawIndicators(aLinks);
@@ -316,7 +316,7 @@
       eventListener.listenTo(eventbus, 'manoeuvres:cancelled', manoeuvreEditConclusion);
       eventListener.listenTo(eventbus, 'manoeuvres:saved', manoeuvreSaveHandler);
       eventListener.listenTo(eventbus, 'manoeuvres:selected', handleManoeuvreSelected);
-      eventListener.listenTo(eventbus, 'application:readOnly', updateAdjacentLinkIndicators);
+      eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
     };
 
     return {
