@@ -3,17 +3,9 @@ package fi.liikennevirasto.digiroad2
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 import fi.liikennevirasto.digiroad2.asset.{AgainstDigitizing, TowardsDigitizing, BoundingRectangle}
-import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.ConversionDatabase._
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
-import org.joda.time.DateTime
-
-import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
@@ -91,6 +83,4 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into adjusted_link_type (mml_id, link_type, modified_by, modified_date) values ($mmlId, $linkTypeAdjustment, 'testuser', to_timestamp('2014-12-12', 'YYYY-MM-DD'))""".execute()
     }
   }
-
-
 }

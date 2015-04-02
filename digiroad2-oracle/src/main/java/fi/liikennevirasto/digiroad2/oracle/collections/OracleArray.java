@@ -95,9 +95,13 @@ public class OracleArray {
             long id = row.getLong(1);
             long mmlId = row.getLong(2);
             int administrativeClass = row.getInt(3);
+            if(row.wasNull()) { administrativeClass = 99; }
             int functionalClass = row.getInt(4);
+            if(row.wasNull()) { functionalClass = 25; }
             int trafficDirection = row.getInt(5);
+            if(row.wasNull()) { trafficDirection = 99; }
             int linkType = row.getInt(6);
+            if(row.wasNull()) { linkType = 99; }
             return new Tuple6(id, mmlId, administrativeClass, functionalClass, trafficDirection, linkType);
         }
     }
