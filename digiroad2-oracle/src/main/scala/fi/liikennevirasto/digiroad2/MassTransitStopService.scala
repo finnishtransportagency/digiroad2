@@ -26,41 +26,6 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
-    def apply(r: PositionedResult) = {
-      val id = r.nextLong
-      val externalId = r.nextLong
-      val assetTypeId = r.nextLong
-      val bearing = r.nextIntOption
-      val validityDirection = r.nextInt
-      val validFrom = r.nextDateOption.map(new LocalDate(_))
-      val validTo = r.nextDateOption.map(new LocalDate(_))
-      val point = r.nextBytesOption.map(bytesToPoint)
-      val municipalityCode = r.nextInt()
-      val persistedFloating = r.nextBoolean()
-      val propertyId = r.nextLong
-      val propertyPublicId = r.nextString
-      val propertyType = r.nextString
-      val propertyUiIndex = r.nextInt
-      val propertyRequired = r.nextBoolean
-      val propertyValue = r.nextLongOption()
-      val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
-      val lrmId = r.nextLong
-      val startMeasure = r.nextInt
-      val endMeasure = r.nextInt
-      val productionRoadLinkId = r.nextLongOption()
-      val roadLinkId = r.nextLong
-      val mmlId = r.nextLong
-      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
-      MassTransitStopRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, mmlId, bearing, validityDirection,
-        validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
-    }
-  }
-
   def updatePosition(id: Long, position: Position): AssetWithProperties = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
@@ -74,13 +39,6 @@ trait MassTransitStopService {
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
       getUpdatedMassTransitStop(id, geometry)
     }
-  }
-
-  private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
-    rows
-      .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
-      .filterNot { row => row.property.propertyValue.isEmpty }
-      .map { row => row.property.propertyValue.toInt }
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
@@ -181,6 +139,41 @@ trait MassTransitStopService {
     distanceBeforeTarget + projections(targetIndex).mValue
   }
 
+  implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong
+      val externalId = r.nextLong
+      val assetTypeId = r.nextLong
+      val bearing = r.nextIntOption
+      val validityDirection = r.nextInt
+      val validFrom = r.nextDateOption.map(new LocalDate(_))
+      val validTo = r.nextDateOption.map(new LocalDate(_))
+      val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyUiIndex = r.nextInt
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
+      val lrmId = r.nextLong
+      val startMeasure = r.nextInt
+      val endMeasure = r.nextInt
+      val productionRoadLinkId = r.nextLongOption()
+      val roadLinkId = r.nextLong
+      val mmlId = r.nextLong
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      MassTransitStopRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, mmlId, bearing, validityDirection,
+        validFrom, validTo, property, created, modified, wgsPoint,
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+    }
+  }
+
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) = {
       r.nextDateOption().map(new LocalDate(_))
@@ -241,6 +234,13 @@ trait MassTransitStopService {
   }
 
   private def getUpdatedMassTransitStop(id: Long, roadlinkGeometry: Seq[Point]): AssetWithProperties = {
+    def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
+      rows
+        .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
+        .filterNot { row => row.property.propertyValue.isEmpty }
+        .map { row => row.property.propertyValue.toInt }
+    }
+
     val assetWithPositionById = sql"""
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
