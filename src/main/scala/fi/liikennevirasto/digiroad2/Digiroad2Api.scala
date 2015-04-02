@@ -125,7 +125,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case true =>
         val massTransitStop = position.map { position => MassTransitStopService.updatePosition(id, position) }
         val asset = assetProvider.updateAsset(id, None, properties)
-        if (massTransitStop.isDefined) massTransitStop.get else asset
+        massTransitStop.getOrElse(asset)
       case false =>
         assetProvider.updateAsset(id, position, properties)
     }
