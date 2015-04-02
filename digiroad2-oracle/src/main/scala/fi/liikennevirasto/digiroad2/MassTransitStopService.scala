@@ -68,73 +68,11 @@ trait MassTransitStopService {
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     withDynTransaction {
-      sqlu"""
-           update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, mml_id = $mmlId
-           where id = (
-            select lrm.id
-            from asset a
-            join asset_link al on al.asset_id = a.id
-            join lrm_position lrm on lrm.id = al.position_id
-            where a.id = $id)
-      """.execute
-
-      position.bearing.foreach { bearing =>
-        sqlu"""
-           update asset
-           set bearing = $bearing
-           where id = $id
-        """.execute
-      }
-
-      sqlu"""
-           update asset
-           set municipality_code = $municipalityCode
-           where id = $id
-      """.execute
-
+      updateLrmPosition(id, mValue, mmlId)
+      updateBearing(id, position)
+      updateMunicipality(id, municipalityCode)
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
-
-      val assetWithPositionById = sql"""
-        select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
-        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
-        p.id, p.public_id, p.property_type, p.ui_position_index, p.required, e.value,
-        case
-          when e.name_fi is not null then e.name_fi
-          when tp.value_fi is not null then tp.value_fi
-          else null
-        end as display_value,
-        lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, lrm.mml_id,
-        a.created_date, a.created_by, a.modified_date, a.modified_by,
-        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
-        from asset a
-          join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
-        join property p on a.asset_type_id = p.asset_type_id
-          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
-          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
-          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-        where a.id = $id
-      """
-      assetWithPositionById.as[(MassTransitStopRow)].list().groupBy(_.id).map { case (_, rows) =>
-        val row = rows.head
-        val point = row.point.get
-        val wgsPoint = row.wgsPoint.get
-        // TODO: Fetch road link type from VVH
-        val roadLinkType = Unknown
-        val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
-        AssetWithProperties(
-          id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-          lon = point.x, lat = point.y,
-          propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex),
-          bearing = row.bearing, municipalityNumber = row.municipalityCode,
-          validityPeriod = Some(validityPeriod(row.validFrom, row.validTo)),
-          validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-          created = row.created, modified = row.modified, roadLinkType = roadLinkType,
-          stopTypes = extractStopTypes(rows),
-          floating = floating)
-      }.head
+      getUpdatedMassTransitStop(id, geometry)
     }
   }
 
@@ -271,6 +209,77 @@ trait MassTransitStopService {
     }
   }
 
+  private def updateLrmPosition(id: Long, mValue: Double, mmlId: Long) {
+    sqlu"""
+           update lrm_position
+           set start_measure = $mValue, end_measure = $mValue, mml_id = $mmlId
+           where id = (
+            select lrm.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = $id)
+      """.execute
+  }
+
+  private def updateBearing(id: Long, position: Position) {
+    position.bearing.foreach { bearing =>
+      sqlu"""
+           update asset
+           set bearing = $bearing
+           where id = $id
+        """.execute
+    }
+  }
+
+  private def updateMunicipality(id: Long, municipalityCode: Int) {
+    sqlu"""
+           update asset
+           set municipality_code = $municipalityCode
+           where id = $id
+      """.execute
+  }
+
+  private def getUpdatedMassTransitStop(id: Long, roadlinkGeometry: Seq[Point]): AssetWithProperties = {
+    val assetWithPositionById = sql"""
+        select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
+        p.id, p.public_id, p.property_type, p.ui_position_index, p.required, e.value,
+        case
+          when e.name_fi is not null then e.name_fi
+          when tp.value_fi is not null then tp.value_fi
+          else null
+        end as display_value,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, lrm.mml_id,
+        a.created_date, a.created_by, a.modified_date, a.modified_by,
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+        from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+        join property p on a.asset_type_id = p.asset_type_id
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+        where a.id = $id
+      """
+    assetWithPositionById.as[(MassTransitStopRow)].list().groupBy(_.id).map { case (_, rows) =>
+      val row = rows.head
+      val point = row.point.get
+      val wgsPoint = row.wgsPoint.get
+      val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadlinkGeometry, row.lrmPosition.startMeasure))
+      AssetWithProperties(
+        id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
+        lon = point.x, lat = point.y,
+        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex),
+        bearing = row.bearing, municipalityNumber = row.municipalityCode,
+        validityPeriod = Some(validityPeriod(row.validFrom, row.validTo)),
+        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
+        created = row.created, modified = row.modified,
+        stopTypes = extractStopTypes(rows),
+        floating = floating)
+    }.head
+  }
 }
 
 object MassTransitStopService extends MassTransitStopService {
