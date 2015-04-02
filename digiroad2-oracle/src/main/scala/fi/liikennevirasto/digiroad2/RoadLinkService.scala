@@ -315,16 +315,7 @@ object RoadLinkService extends RoadLinkService {
 
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.map(feature => {
-      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
-      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
-      val path: List[List[Double]] = paths.head
-      val linkGeometry: Seq[Point] = path.map(point => {
-        Point(point(0), point(1))
-      })
-      val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-      val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-      (mmlId, municipalityCode, linkGeometry)
+      extractVVHFeature(feature)
     })
   }
 
@@ -337,19 +328,11 @@ object RoadLinkService extends RoadLinkService {
 
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.headOption.map(feature => {
-      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
-      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
-      val path: List[List[Double]] = paths.head
-      val linkGeometry: Seq[Point] = path.map(point => {
-        Point(point(0), point(1))
-      })
-      val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-      val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-      (municipalityCode, linkGeometry)
-    })
+      extractVVHFeature(feature)
+    }).map{ x => (x._2, x._3)}
   }
 
-  def fetchVVHFeatureMap(url: String): Map[String, Any] = {
+  private def fetchVVHFeatureMap(url: String): Map[String, Any] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -359,6 +342,19 @@ object RoadLinkService extends RoadLinkService {
       map.contains("features")
     }).get
     featureMap
+  }
+
+  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point]) = {
+    val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
+    val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
+    val path: List[List[Double]] = paths.head
+    val linkGeometry: Seq[Point] = path.map(point => {
+      Point(point(0), point(1))
+    })
+    val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
+    val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
+    val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
+    (mmlId, municipalityCode, linkGeometry)
   }
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
