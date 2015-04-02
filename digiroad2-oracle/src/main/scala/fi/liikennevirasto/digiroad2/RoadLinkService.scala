@@ -310,12 +310,9 @@ object RoadLinkService extends RoadLinkService {
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
-    val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-    val featureMap: Map[String, Any] = layers.find(map => {map.contains("features")}).get
+
+    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
+
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.map(feature => {
       val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
@@ -335,12 +332,9 @@ object RoadLinkService extends RoadLinkService {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
-    val request = new HttpGet(url)
-    val client = HttpClientBuilder.create().build()
-    val response = client.execute(request)
-    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-    val featureMap: Map[String, Any] = layers.find(map => {map.contains("features")}).get
+
+    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
+
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.headOption.map(feature => {
       val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
@@ -353,6 +347,18 @@ object RoadLinkService extends RoadLinkService {
       val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
       (municipalityCode, linkGeometry)
     })
+  }
+
+  def fetchVVHFeatureMap(url: String): Map[String, Any] = {
+    val request = new HttpGet(url)
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
+    val featureMap: Map[String, Any] = layers.find(map => {
+      map.contains("features")
+    }).get
+    featureMap
   }
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
