@@ -5,6 +5,7 @@
       'lat',
       'lon',
       'roadLinkId',
+      'mmlId',
       'nationalId',
       'validityDirection',
       'floating'];

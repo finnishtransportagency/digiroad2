@@ -158,6 +158,11 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
 
   post("/massTransitStops") {
+    val positionParameters = massTransitStopPositionParameters(parsedBody)
+    val lon = positionParameters._1.get
+    val lat = positionParameters._2.get
+    val roadLinkId = positionParameters._3.get
+    val bearing = positionParameters._4.get
     println("POST massTransitStops called with: " + parsedBody)
   }
 

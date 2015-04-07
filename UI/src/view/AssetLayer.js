@@ -343,7 +343,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
       validityDirection: validitydirections.sameDirection,
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
-      roadLinkId: nearestLine.roadLinkId
+      roadLinkId: nearestLine.roadLinkId,
+      mmlId: nearestLine.mmlId
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
