@@ -18,7 +18,6 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 }
 
 // FIXME:
-// - rename to mass transit stop service
 // - move common asset functionality to asset service
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
