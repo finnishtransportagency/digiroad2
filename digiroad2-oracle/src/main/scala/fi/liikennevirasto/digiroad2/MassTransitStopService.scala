@@ -37,7 +37,9 @@ trait MassTransitStopService {
       updateBearing(id, position)
       updateMunicipality(id, municipalityCode)
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
-      getUpdatedMassTransitStop(id, geometry)
+      val updatedMassTransitStop = getUpdatedMassTransitStop(id, geometry)
+      updateFloating(id, updatedMassTransitStop.floating)
+      updatedMassTransitStop
     }
   }
 
@@ -268,7 +270,6 @@ trait MassTransitStopService {
       val point = row.point.get
       val wgsPoint = row.wgsPoint.get
       val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadlinkGeometry, row.lrmPosition.startMeasure))
-      sqlu"""update asset set floating = $floating where id = $id""".execute()
       AssetWithProperties(
         id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
@@ -281,6 +282,8 @@ trait MassTransitStopService {
         floating = floating)
     }.head
   }
+  private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
+
 }
 
 object MassTransitStopService extends MassTransitStopService {
