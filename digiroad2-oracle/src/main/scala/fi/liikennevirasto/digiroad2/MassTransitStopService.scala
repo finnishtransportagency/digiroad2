@@ -268,6 +268,7 @@ trait MassTransitStopService {
       val point = row.point.get
       val wgsPoint = row.wgsPoint.get
       val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadlinkGeometry, row.lrmPosition.startMeasure))
+      sqlu"""update asset set floating = $floating where id = $id""".execute()
       AssetWithProperties(
         id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,

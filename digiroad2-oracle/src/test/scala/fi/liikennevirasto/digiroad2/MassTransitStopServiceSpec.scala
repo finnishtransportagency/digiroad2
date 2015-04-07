@@ -140,6 +140,18 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Persist floating on update") {
+    runWithCleanup {
+      val position = Position(60.0, 0.0, 123l, None)
+      RollbackMassTransitStopService.updatePosition(300002, position)
+      val floating = sql"""
+            select a.floating from asset a
+            where a.id = 300002
+      """.as[Int].firstOption()
+      floating should be(Some(0))
+    }
+  }
+
   test("Calculate linear reference point") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val point: Point = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 0.5).get
