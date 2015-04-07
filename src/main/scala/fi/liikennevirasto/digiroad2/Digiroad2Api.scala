@@ -157,13 +157,42 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
+  private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
+     useVVHGeometry match {
+      case true =>
+        val massTransitStop = MassTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+        Map("id" -> massTransitStop.id,
+          "nationalId" -> massTransitStop.nationalId,
+          "stopTypes" -> massTransitStop.stopTypes,
+          "lat" -> massTransitStop.lat,
+          "lon" -> massTransitStop.lon,
+          "validityDirection" -> massTransitStop.validityDirection,
+          "bearing" -> massTransitStop.bearing,
+          "validityPeriod" -> massTransitStop.validityPeriod,
+          "floating" -> massTransitStop.floating,
+          "propertyData" -> massTransitStop.propertyData)
+      case false =>
+        val asset = assetProvider.createAsset(10, lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+        Map("id" -> asset.id,
+          "nationalId" -> asset.nationalId,
+          "stopTypes" -> asset.stopTypes,
+          "lat" -> asset.lat,
+          "lon" -> asset.lon,
+          "validityDirection" -> asset.validityDirection,
+          "bearing" -> asset.bearing,
+          "validityPeriod" -> asset.validityPeriod,
+          "floating" -> asset.floating,
+          "propertyData" -> asset.propertyData)
+     }
+  }
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
     val roadLinkId = positionParameters._3.get
     val bearing = positionParameters._4.get
-    println("POST massTransitStops called with: " + parsedBody)
+    val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
+    createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }
 
   get("/roadlinks") {

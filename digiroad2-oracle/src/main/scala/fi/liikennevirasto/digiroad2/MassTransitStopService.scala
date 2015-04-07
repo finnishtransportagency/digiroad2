@@ -1,16 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
-import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.{Interval, DateTime, LocalDate}
+import org.joda.time.{DateTime, Interval, LocalDate}
+
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.{SQLInterpolationResult, PositionedResult, GetResult}
 import scala.slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
+import scala.slick.jdbc.{GetResult, PositionedResult}
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -41,6 +41,16 @@ trait MassTransitStopService {
       updateFloating(id, updatedMassTransitStop.floating)
       updatedMassTransitStop
     }
+  }
+
+  case class NewMassTransitStop(id: Long, nationalId: Long, stopTypes: Seq[Int], lat: Double, lon: Double,
+                                validityDirection: Option[Int], bearing: Option[Int],
+                                validityPeriod: Option[String], floating: Boolean,
+                                propertyData: Seq[Property])
+  def createNew(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
+    val stopTypeValues = List(PropertyValue("2", Some("foo")), PropertyValue("3", Some("bar")))
+    val stopTypeProperty = Property(200, "pysakin_tyyppi", "multiple_choice", 90, true, stopTypeValues)
+    NewMassTransitStop(600000, 123456, List(2, 3), 6677497, 374375, Some(2), Some(57), Some(ValidityPeriod.Current), false, List(stopTypeProperty))
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
