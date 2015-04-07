@@ -21,7 +21,7 @@ class OracleArraySpec extends FunSuite with Matchers with BeforeAndAfter {
     links.get(0)._3 should equal(99)
   }
   test("Should get unknown functional class if null in database") {
-    links.get(0)._4 should equal(25)
+    links.get(0)._4 should equal(99)
   }
   test("Should get unknown traffic direction if null in database") {
     links.get(0)._5 should equal(99)

@@ -97,7 +97,7 @@ public class OracleArray {
             int administrativeClass = row.getInt(3);
             if(row.wasNull()) { administrativeClass = 99; }
             int functionalClass = row.getInt(4);
-            if(row.wasNull()) { functionalClass = 25; }
+            if(row.wasNull()) { functionalClass = 99; }
             int trafficDirection = row.getInt(5);
             if(row.wasNull()) { trafficDirection = 99; }
             int linkType = row.getInt(6);

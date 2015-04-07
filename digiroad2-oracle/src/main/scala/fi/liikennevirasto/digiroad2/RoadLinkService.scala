@@ -294,7 +294,7 @@ object RoadLinkService extends RoadLinkService {
     vvhRoadLinks.map { vvh =>
       localRoadLinkDataByMmlId.find(_._2 == vvh._1) match {
         case Some(adjusted) => VVHRoadLink(vvh._1, vvh._3, adjusted._5, adjusted._6, adjusted._7, LinkType(adjusted._10), adjusted._8, adjusted._9)
-        case None => VVHRoadLink(vvh._1, vvh._3, Unknown, 25, UnknownDirection, UnknownLinkType, None, None)
+        case None => VVHRoadLink(vvh._1, vvh._3, Unknown, 99, UnknownDirection, UnknownLinkType, None, None)
       }
     }
   }
