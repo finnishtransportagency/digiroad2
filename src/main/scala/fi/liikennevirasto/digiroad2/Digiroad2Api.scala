@@ -131,14 +131,17 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
   put("/massTransitStops/:id") {
-    // TODO: return with BadRequest if a road link is not found with roadLinkId
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
       case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
       case _ => None
     }
-    updateMassTransitStop(params("id").toLong, position, properties)
+    try {
+      updateMassTransitStop(params("id").toLong, position, properties)
+    } catch {
+      case e: NoSuchElementException => BadRequest("Target roadlink not found")
+    }
   }
 
   post("/assets") {

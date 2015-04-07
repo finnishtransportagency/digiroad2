@@ -29,7 +29,7 @@ trait MassTransitStopService {
   def updatePosition(id: Long, position: Position): AssetWithProperties = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
-    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalArgumentException)
+    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     withDynTransaction {
