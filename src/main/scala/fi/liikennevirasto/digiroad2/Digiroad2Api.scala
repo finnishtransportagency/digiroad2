@@ -144,6 +144,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+  // TODO: Remove obsolete entry point
   post("/assets") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
@@ -154,6 +155,10 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "bearing").extract[Int],
       user.username,
       (parsedBody \ "properties").extract[Seq[SimpleProperty]])
+  }
+
+  post("/massTransitStops") {
+    println("POST massTransitStops called with: " + parsedBody)
   }
 
   get("/roadlinks") {

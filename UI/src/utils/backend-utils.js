@@ -245,7 +245,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/assets",
+        url: "api/massTransitStops",
         data: JSON.stringify(data),
         dataType: "json",
         success: function (asset) {
