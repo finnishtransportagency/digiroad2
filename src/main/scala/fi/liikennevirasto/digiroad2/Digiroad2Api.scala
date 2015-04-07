@@ -132,7 +132,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
   put("/massTransitStops/:id") {
     // TODO: return with BadRequest if a road link is not found with roadLinkId
-    // TODO: calculate floating using correct logic based on environment
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
