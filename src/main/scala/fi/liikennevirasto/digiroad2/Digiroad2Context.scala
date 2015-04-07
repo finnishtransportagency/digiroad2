@@ -1,16 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkUncoveredBySpeedLimit, LinearAssetProvider}
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+
+import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.oracle.{DefaultDatabaseTransaction, DatabaseTransaction}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.Props
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 class ValluActor extends Actor {
   def receive = {
@@ -48,8 +46,8 @@ object Digiroad2Context {
 
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider])
-         .newInstance(eventbus, userProvider)
+         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
+         .newInstance(eventbus, userProvider, DefaultDatabaseTransaction)
          .asInstanceOf[AssetProvider]
   }
 

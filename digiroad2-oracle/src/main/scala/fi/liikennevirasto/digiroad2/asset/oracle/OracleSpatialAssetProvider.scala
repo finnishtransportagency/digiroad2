@@ -1,22 +1,26 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.slick.driver.JdbcDriver.backend.Database
-import org.joda.time.LocalDate
-import org.slf4j.LoggerFactory
-import org.apache.commons.lang3.StringUtils.isBlank
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import fi.liikennevirasto.digiroad2.user.{User, Role, UserProvider}
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.RoadLinkService
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import org.apache.commons.lang3.StringUtils.isBlank
+import org.joda.time.LocalDate
+import org.slf4j.LoggerFactory
+
+import scala.slick.driver.JdbcDriver.backend.Database
+
+trait DatabaseTransaction {
+  def withDynTransaction[T](f: => T): T
+}
+object DefaultDatabaseTransaction extends DatabaseTransaction {
+  override def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
+}
 
 // FIXME:
 // - rename to mass transit stop service
 // - move common asset functionality to asset service
-class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider) extends AssetProvider {
+class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
   private def getMunicipalityName(roadLinkId: Long): String = {
@@ -38,31 +42,31 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     RoadLinkService.getMunicipalityCode(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getAssetById(assetId)
     }
   }
 
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getAssetByExternalId(externalId)
     }
   }
 
   def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getAssetPositionByExternalId(externalId)
     }
   }
 
   def getAssets(user: User, bounds: BoundingRectangle, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getAssets(user, Some(bounds), validFrom, validTo)
     }
   }
 
   def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getFloatingAssetsByUser(user)
     }
   }
@@ -101,7 +105,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
       validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
       validateRequiredPropertyValues(requiredProperties, properties)
@@ -115,7 +119,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       val asset = OracleSpatialAssetDao.getAssetById(assetId).get
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
       val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
@@ -126,7 +130,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
         case Some(asset) =>
@@ -139,7 +143,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
 
   def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, AssetWithProperties] = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
       optionalAsset match {
         case Some(asset) =>
@@ -153,20 +157,20 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def removeAsset(assetId: Long): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
+    databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.removeAsset(assetId)
     }
   }
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
-      Database.forDataSource(ds).withDynTransaction {
+      databaseTransaction.withDynTransaction {
         OracleSpatialAssetDao.getEnumeratedPropertyValues(assetTypeId)
       }
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {
-    (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ Database.forDataSource(ds).withDynTransaction {
+    (AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.availableProperties(assetTypeId)
     }).sortBy(_.propertyUiIndex)
   }
@@ -178,7 +182,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def assetPropertyNames(language: String): Map[String, String] = {
-    AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ Database.forDataSource(ds).withDynTransaction {
+    AssetPropertyConfiguration.assetPropertyNamesByLanguage(language) ++ databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.assetPropertyNames(language)
     }
   }
