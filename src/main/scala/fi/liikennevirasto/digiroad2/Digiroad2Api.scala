@@ -13,7 +13,11 @@ import fi.liikennevirasto.digiroad2.user.{User}
 import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
+class Digiroad2Api(val roadLinkService: RoadLinkService) extends ScalatraServlet
+with JacksonJsonSupport
+with CorsSupport
+with RequestHeaderAuthentication
+with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")

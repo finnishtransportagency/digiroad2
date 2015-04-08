@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -18,8 +19,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-  addServlet(classOf[Digiroad2Api], "/*")
+  addServlet(new Digiroad2Api(mockRoadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   after {
