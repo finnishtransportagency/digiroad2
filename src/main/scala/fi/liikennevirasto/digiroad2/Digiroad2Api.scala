@@ -190,6 +190,12 @@ with GZipSupport {
           "propertyData" -> asset.propertyData)
      }
   }
+  private def validateUserRights(roadLinkId: Long) = {
+    if(useVVHGeometry) {
+      val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_._1).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+      if (!authorized) halt(Unauthorized("User not authorized"))
+    }
+  }
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
     if(useVVHGeometry) {
       val mandatoryProperties: Map[String, String] = MassTransitStopService.mandatoryProperties()
@@ -218,6 +224,7 @@ with GZipSupport {
     val roadLinkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
+    validateUserRights(roadLinkId)
     validateCreationProperties(properties)
     createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }

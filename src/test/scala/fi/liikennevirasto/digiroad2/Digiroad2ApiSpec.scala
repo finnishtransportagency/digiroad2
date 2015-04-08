@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
@@ -20,6 +21,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+  when(mockRoadLinkService.fetchVVHRoadlink(2l)).thenReturn(Some((235, Nil)))
 
   addServlet(new Digiroad2Api(mockRoadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
@@ -143,9 +146,16 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 5990, "bearing": 0}"""
+    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 2, "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(400)
+    }
+  }
+
+  test("validate user rights when creating a new mass transit stop", Tag("db")) {
+    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 1, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+      status should equal(401)
     }
   }
 
