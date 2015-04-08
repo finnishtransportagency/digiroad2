@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, Reque
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.{User}
+import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
 
 class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
@@ -187,8 +188,23 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
   }
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
     if(useVVHGeometry) {
-      val missingProperties: Set[String] = MassTransitStopService.mandatoryProperties() -- properties.map(_.publicId).toSet
+      val mandatoryProperties: Map[String, String] = MassTransitStopService.mandatoryProperties()
+      val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
+        mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
+      }
+      val missingProperties: Set[String] = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
       if (missingProperties.nonEmpty) halt(BadRequest("Missing mandatory properties: " + missingProperties.mkString(", ")))
+      val propertiesWithInvalidValues = nonEmptyMandatoryProperties.filter { property =>
+        val propertyType = mandatoryProperties(property.publicId)
+        propertyType match {
+          case PropertyTypes.MultipleChoice =>
+            property.values.forall { value => isBlank(value.propertyValue) || value.propertyValue.toInt == 99 }
+          case _ =>
+            property.values.forall { value => isBlank(value.propertyValue) }
+        }
+      }
+      if (propertiesWithInvalidValues.nonEmpty)
+        halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
     }
   }
   post("/massTransitStops") {

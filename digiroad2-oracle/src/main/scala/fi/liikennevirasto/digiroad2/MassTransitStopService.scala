@@ -105,11 +105,12 @@ trait MassTransitStopService {
     }
   }
 
-  def mandatoryProperties(): Set[String] = {
+  def mandatoryProperties(): Map[String, String] = {
     val requiredProperties = withDynSession {
-      sql"""select public_id from property where asset_type_id = 10 and required = 1""".as[String].iterator().toSet
+      sql"""select public_id, property_type from property where asset_type_id = 10 and required = 1""".as[(String, String)].iterator().toMap
     }
-    requiredProperties ++ Set(AssetPropertyConfiguration.ValidityDirectionId)
+    val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
+    requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
   }
 
   def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
