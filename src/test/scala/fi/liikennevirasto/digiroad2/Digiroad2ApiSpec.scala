@@ -1,15 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
-import org.scalatest.{BeforeAndAfter, Tag}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import scala.Some
+import org.scalatest.{BeforeAndAfter, Tag}
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
@@ -141,10 +140,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("validate asset when creating", Tag("db")) {
-    val requestPayload = """{"assetTypeId": 10, "lon": 0, "lat": 0, "roadLinkId": 5990, "bearing": 0}"""
-    postJsonWithUserAuth("/assets", requestPayload.getBytes) {
-      status should equal(500)
+  test("validate request parameters when creating a new mass transit stop", Tag("db")) {
+    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 5990, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+      status should equal(400)
     }
   }
 
