@@ -185,6 +185,12 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
           "propertyData" -> asset.propertyData)
      }
   }
+  private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
+    if(useVVHGeometry) {
+      val missingProperties: Set[String] = MassTransitStopService.mandatoryProperties() -- properties.map(_.publicId).toSet
+      if (missingProperties.nonEmpty) halt(BadRequest("Missing mandatory properties: " + missingProperties.mkString(", ")))
+    }
+  }
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
@@ -192,6 +198,7 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     val roadLinkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
+    validateCreationProperties(properties)
     createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }
 
