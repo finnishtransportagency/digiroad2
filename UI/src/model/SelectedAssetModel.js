@@ -82,7 +82,7 @@
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
-        eventbus.trigger('asset:modified', currentAsset);
+        eventbus.trigger('asset:modified');
       });
     };
 
