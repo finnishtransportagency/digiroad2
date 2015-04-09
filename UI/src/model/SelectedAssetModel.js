@@ -192,7 +192,7 @@
           open(asset);
           eventbus.trigger('asset:saved', asset, positionUpdated);
         }, function() {
-          backend.getAssetWithCallback(currentAsset.id, function(asset) {
+          backend.getAssetByExternalId(currentAsset.payload.nationalId, function(asset) {
             open(asset);
             eventbus.trigger('asset:updateFailed', asset);
           });
