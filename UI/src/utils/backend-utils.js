@@ -203,8 +203,8 @@
       });
     };
 
-    this.getAsset = function (assetId) {
-      self.getAssetWithCallback(assetId, function (asset) {
+    this.getAsset = function(nationalId) {
+      self.getAssetByExternalId(nationalId, function(asset) {
         eventbus.trigger('asset:fetched', asset);
       });
     };

@@ -24,7 +24,7 @@
       if (tool === 'Add') {
         close();
       } else if (currentAsset.id) {
-        backend.getAsset(currentAsset.id);
+        backend.getAsset(currentAsset.payload.nationalId);
       }
     });
 
@@ -119,7 +119,7 @@
 
     eventbus.on('application:readOnly', function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id);
+        backend.getAsset(currentAsset.payload.nationalId);
       }
     });
 
