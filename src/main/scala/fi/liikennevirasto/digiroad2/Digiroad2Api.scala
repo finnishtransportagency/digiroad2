@@ -113,7 +113,6 @@ with GZipSupport {
     assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
-  // TODO: Deduce useVVHGeometry value from running environment
   private val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
