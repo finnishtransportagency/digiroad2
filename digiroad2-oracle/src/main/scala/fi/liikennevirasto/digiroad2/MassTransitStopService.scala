@@ -59,7 +59,7 @@ trait MassTransitStopService {
       println("*** CREATING ROW INTO ASSET WITH ID: " + assetId)
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, bearing, username, municipalityCode)
-//      insertAssetPosition(assetId, lrmPositionId).execute
+      insertAssetLink(assetId, lrmPositionId)
 //      updateAssetGeometry(assetId, Point(lon, lat))
 //      val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
 //      updateAssetProperties(assetId, properties ++ defaultValues)
@@ -264,6 +264,14 @@ trait MassTransitStopService {
     sqlu"""
            insert into asset (id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
            values ($id, $nationalId, 10, $bearing, sysdate, $creator, $municipalityCode)
+      """.execute
+  }
+
+  private def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
+
+    sqlu"""
+           insert into asset_link(asset_id, position_id)
+           values ($assetId, $lrmPositionId)
       """.execute
   }
 
