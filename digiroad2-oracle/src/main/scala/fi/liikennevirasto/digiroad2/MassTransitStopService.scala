@@ -60,8 +60,8 @@ trait MassTransitStopService {
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode)
       insertAssetLink(assetId, lrmPositionId)
-//      val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-//      updateAssetProperties(assetId, properties ++ defaultValues)
+      val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+      OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
 //      getAssetById(assetId).get
     }
 

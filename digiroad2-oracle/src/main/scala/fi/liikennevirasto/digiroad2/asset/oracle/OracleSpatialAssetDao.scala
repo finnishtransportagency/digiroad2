@@ -363,7 +363,7 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
