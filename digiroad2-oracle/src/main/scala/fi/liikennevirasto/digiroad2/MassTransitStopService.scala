@@ -58,9 +58,8 @@ trait MassTransitStopService {
       println("*** CREATING ROW INTO LRM_POSITION WITH ID: " + lrmPositionId)
       println("*** CREATING ROW INTO ASSET WITH ID: " + assetId)
       insertLrmPosition(lrmPositionId, mValue, mmlId)
-      insertAsset(assetId, nationalId, bearing, username, municipalityCode)
+      insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode)
       insertAssetLink(assetId, lrmPositionId)
-//      updateAssetGeometry(assetId, Point(lon, lat))
 //      val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
 //      updateAssetProperties(assetId, properties ++ defaultValues)
 //      getAssetById(assetId).get
@@ -260,10 +259,11 @@ trait MassTransitStopService {
       """.execute
   }
 
-  private def insertAsset(id: Long, nationalId: Long, bearing: Int, creator: String, municipalityCode: Int): Unit = {
+  private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int): Unit = {
     sqlu"""
-           insert into asset (id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
-           values ($id, $nationalId, 10, $bearing, sysdate, $creator, $municipalityCode)
+           insert into asset (id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code, geometry)
+           values ($id, $nationalId, 10, $bearing, sysdate, $creator, $municipalityCode,
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)))
       """.execute
   }
 
