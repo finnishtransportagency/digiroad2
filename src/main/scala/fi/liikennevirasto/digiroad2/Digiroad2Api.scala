@@ -124,16 +124,7 @@ with GZipSupport {
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
     (lon, lat, roadLinkId, bearing)
   }
-  private def updateMassTransitStop(id: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {
-    useVVHGeometry match {
-      case true =>
-        val asset = assetProvider.updateAsset(id, None, properties)
-        val massTransitStop = position.map { position => MassTransitStopService.updatePosition(id, position) }
-        massTransitStop.getOrElse(asset)
-      case false =>
-        assetProvider.updateAsset(id, position, properties)
-    }
-  }
+
   put("/massTransitStops/:id") {
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
@@ -142,7 +133,15 @@ with GZipSupport {
       case _ => None
     }
     try {
-      updateMassTransitStop(params("id").toLong, position, properties)
+      val id = params("id").toLong
+      useVVHGeometry match {
+        case true =>
+          val asset = assetProvider.updateAsset(id, None, properties)
+          val massTransitStop = position.map { position => MassTransitStopService.updatePosition(id, position) }
+          massTransitStop.getOrElse(asset)
+        case false =>
+          assetProvider.updateAsset(id, position, properties)
+      }
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
     }
