@@ -209,10 +209,6 @@
       });
     };
 
-    this.getAssetWithCallback = function(assetId, callback) {
-      $.get('api/assets/' + assetId, callback);
-    };
-
     this.getAssetByExternalId = function (externalId, callback) {
       $.get('api/assets/' + externalId + '?externalId=true', callback);
     };
@@ -313,9 +309,6 @@
 
     this.withAssetData = function(assetData) {
       self.getAssetByExternalId = function (externalId, callback) {
-        callback(assetData);
-      };
-      self.getAssetWithCallback = function(assetId, callback) {
         callback(assetData);
       };
       self.updateAsset = function (id, data, successCallback) {
