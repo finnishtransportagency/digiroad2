@@ -56,8 +56,9 @@ trait MassTransitStopService {
       val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
       println("*** CREATING ROW INTO LRM_POSITION WITH ID: " + lrmPositionId)
+      println("*** CREATING ROW INTO ASSET WITH ID: " + assetId)
       insertLrmPosition(lrmPositionId, mValue, mmlId)
-//      insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
+      insertAsset(assetId, nationalId, bearing, username, municipalityCode)
 //      insertAssetPosition(assetId, lrmPositionId).execute
 //      updateAssetGeometry(assetId, Point(lon, lat))
 //      val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
@@ -256,6 +257,13 @@ trait MassTransitStopService {
     sqlu"""
            insert into lrm_position (id, start_measure, end_measure, mml_id)
            values ($id, $mValue, $mValue, $mmlId)
+      """.execute
+  }
+
+  private def insertAsset(id: Long, nationalId: Long, bearing: Int, creator: String, municipalityCode: Int): Unit = {
+    sqlu"""
+           insert into asset (id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code)
+           values ($id, $nationalId, 10, $bearing, sysdate, $creator, $municipalityCode)
       """.execute
   }
 
