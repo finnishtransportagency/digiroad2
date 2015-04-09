@@ -77,6 +77,7 @@ with GZipSupport {
     userProvider.getCurrentUser().configuration.roles
   }
 
+  // TODO: Remove obsolete entry point
   get("/assets/:assetId") {
     val getAssetById = if (params.get("externalId").isDefined) {
       assetProvider.getAssetByExternalId _
@@ -93,6 +94,21 @@ with GZipSupport {
         }
       }
       case None => NotFound("Asset " + params("assetId") + " not found")
+    }
+  }
+
+  get("/massTransitStops/:nationalId") {
+    val nationalId = params("nationalId").toLong
+    println("*** FETCHING MASS TRANSIT STOP WITH NATIONAL ID: " + nationalId)
+    val massTransitStop = useVVHGeometry match {
+      case true => throw new NotImplementedError()
+      case false => assetProvider.getAssetByExternalId(nationalId)
+    }
+    massTransitStop match {
+      case Some(stop) =>
+        if (userProvider.getCurrentUser().isAuthorizedToRead(stop.municipalityNumber)) stop
+        else Unauthorized("User not authorized for mass transit stop " + nationalId)
+      case None => NotFound("Mass transit stop " + nationalId + " not found")
     }
   }
 

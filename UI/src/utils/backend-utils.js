@@ -209,8 +209,8 @@
       });
     };
 
-    this.getAssetByExternalId = function (externalId, callback) {
-      $.get('api/assets/' + externalId + '?externalId=true', callback);
+    this.getAssetByExternalId = function(nationalId, callback) {
+      $.get('api/massTransitStops/' + nationalId, callback);
     };
 
     this.getAssetTypeProperties = function(callback) {
