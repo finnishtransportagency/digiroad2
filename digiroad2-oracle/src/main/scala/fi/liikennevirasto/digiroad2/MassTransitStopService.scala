@@ -31,6 +31,26 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
+  def getByNationalId(nationalId: Long): Option[AssetWithProperties] = {
+    // TODO: Float stop if stop municipality number differs from road link municipality number
+    // TODO: Float stop if road link is not found with stop mml id
+    withDynTransaction {
+      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
+      val roadLink: Option[Seq[Point]] = mmlId.flatMap(roadLinkService.fetchVVHRoadlink).map(_._2)
+      val massTransitStop: Option[AssetWithProperties] = roadLink.map(getByNationalId(nationalId, _))
+      massTransitStop.foreach { stop =>
+        updateFloating(stop.id, stop.floating)
+      }
+      massTransitStop
+    }
+  }
+
+  private def getMassTransitStopMmlId(nationalId: Long): Option[Long] = {
+    Some(0l)
+  }
+
+  private def getByNationalId(nationalId: Long, roadLinkGeometry: Seq[Point]): AssetWithProperties = ???
+
   def updatePosition(id: Long, position: Position) = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId

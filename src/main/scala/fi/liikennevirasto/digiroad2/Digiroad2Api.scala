@@ -101,7 +101,7 @@ with GZipSupport {
     val nationalId = params("nationalId").toLong
     println("*** FETCHING MASS TRANSIT STOP WITH NATIONAL ID: " + nationalId)
     val massTransitStop = useVVHGeometry match {
-      case true => throw new NotImplementedError()
+      case true => MassTransitStopService.getByNationalId(nationalId)
       case false => assetProvider.getAssetByExternalId(nationalId)
     }
     massTransitStop match {
