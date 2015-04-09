@@ -217,8 +217,8 @@ trait MassTransitStopService {
 
   private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
     (validFrom, validTo) match {
-      case (Some(from), None) => if (from.isBefore(LocalDate.now())) { ValidityPeriod.Current } else { ValidityPeriod.Future }
-      case (None, Some(to)) => if (to.isBefore(LocalDate.now())) { ValidityPeriod.Past } else { ValidityPeriod.Current }
+      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { ValidityPeriod.Future } else { ValidityPeriod.Current }
+      case (None, Some(to)) => if (LocalDate.now().isAfter(to)) { ValidityPeriod.Past } else { ValidityPeriod.Current }
       case (Some(from), Some(to)) =>
         val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
         if (interval.containsNow()) { ValidityPeriod.Current }
@@ -259,8 +259,8 @@ trait MassTransitStopService {
 
   private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int): Unit = {
     sqlu"""
-           insert into asset (id, external_id, asset_type_id, bearing, valid_from, created_by, municipality_code, geometry)
-           values ($id, $nationalId, 10, $bearing, sysdate, $creator, $municipalityCode,
+           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry)
+           values ($id, $nationalId, 10, $bearing, $creator, $municipalityCode,
            MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)))
       """.execute
   }
