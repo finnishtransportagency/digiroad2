@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Position, ValidityPeriod, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import org.scalatest.{Matchers, FunSuite}
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
 import org.mockito.Matchers.any
+import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
@@ -149,6 +149,18 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             where a.id = 300002
       """.as[Int].firstOption()
       floating should be(Some(0))
+    }
+  }
+
+  test("Create new mass transit stop") {
+    runWithCleanup {
+      val values = List(PropertyValue("1"))
+      val properties = List(SimpleProperty("pysakin_tyyppi", values))
+      val massTransitStop = RollbackMassTransitStopService.createNew(60.0, 0.0, 123l, 100, "test", properties)
+      massTransitStop.bearing should be(Some(100))
+      massTransitStop.floating should be(false)
+      massTransitStop.stopTypes should be(List(1))
+      massTransitStop.validityPeriod should be(Some(ValidityPeriod.Current))
     }
   }
 
