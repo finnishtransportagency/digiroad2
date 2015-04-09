@@ -101,7 +101,7 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        backend.getAssetWithCallback(currentAsset.id, function(asset) {
+        backend.getAssetByExternalId(currentAsset.payload.nationalId, function(asset) {
           open(asset);
           eventbus.trigger('asset:updateCancelled', asset);
         });
