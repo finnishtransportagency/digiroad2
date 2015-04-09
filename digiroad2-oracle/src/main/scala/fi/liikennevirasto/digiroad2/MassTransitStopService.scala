@@ -55,8 +55,6 @@ trait MassTransitStopService {
       val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
       val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
-      println("*** CREATING ROW INTO LRM_POSITION WITH ID: " + lrmPositionId)
-      println("*** CREATING ROW INTO ASSET WITH ID: " + assetId)
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode)
       insertAssetLink(assetId, lrmPositionId)
