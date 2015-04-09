@@ -47,7 +47,24 @@ trait MassTransitStopService {
                                 validityDirection: Option[Int], bearing: Option[Int],
                                 validityPeriod: Option[String], floating: Boolean,
                                 propertyData: Seq[Property])
-  def createNew(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
+  def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
+    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+    val mValue = calculateLinearReferenceFromPoint(Point(lon, lat), geometry)
+
+    withDynTransaction {
+      val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+      val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+      val nationalId = OracleSpatialAssetDao.getNationalBusStopId
+      println("*** CREATING ROW INTO LRM_POSITION WITH ID: " + lrmPositionId)
+      insertLrmPosition(lrmPositionId, mValue, mmlId)
+//      insertAsset(assetId, externalId, assetTypeId, bearing, creator, municipalityCode).execute
+//      insertAssetPosition(assetId, lrmPositionId).execute
+//      updateAssetGeometry(assetId, Point(lon, lat))
+//      val defaultValues = propertyDefaultValues(assetTypeId).filterNot( defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+//      updateAssetProperties(assetId, properties ++ defaultValues)
+//      getAssetById(assetId).get
+    }
+
     val stopTypeValues = List(PropertyValue("2", Some("foo")), PropertyValue("3", Some("bar")))
     val stopTypeProperty = Property(200, "pysakin_tyyppi", "multiple_choice", 90, true, stopTypeValues)
     NewMassTransitStop(600000, 123456, List(2, 3), 6677497, 374375, Some(2), Some(57), Some(ValidityPeriod.Current), false, List(stopTypeProperty))
@@ -232,6 +249,13 @@ trait MassTransitStopService {
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = $id)
+      """.execute
+  }
+
+  private def insertLrmPosition(id: Long, mValue: Double, mmlId: Long) {
+    sqlu"""
+           insert into lrm_position (id, start_measure, end_measure, mml_id)
+           values ($id, $mValue, $mValue, $mmlId)
       """.execute
   }
 
