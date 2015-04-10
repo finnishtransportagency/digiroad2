@@ -143,7 +143,7 @@ trait MassTransitStopService {
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
-    val massTransitStop = withDynTransaction {
+    withDynTransaction {
       val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
       val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
@@ -153,9 +153,12 @@ trait MassTransitStopService {
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
       OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
-      getUpdatedMassTransitStop(assetId, geometry)
+      val persistedStop = getPersistedMassTransitStop(withId(assetId)).get
+      MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+        lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
+        bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+        propertyData = persistedStop.propertyData)
     }
-    massTransitStop
   }
 
   // TODO: Use `getPersistedMassTransitStop` here if possible
