@@ -94,7 +94,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val parsedBody = parse(body)
       (parsedBody \ "id").values.asInstanceOf[BigInt].toInt should be(CreatedTestAssetId)
     }
-    getWithUserAuth("/assets/9999999999999999") {
+    getWithUserAuth("/massTransitStops/9999999999999999") {
       status should equal(404)
     }
   }
@@ -131,15 +131,18 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body1.getBytes) {
       status should equal(200)
-      getWithUserAuth("/assets/" + CreatedTestAssetId) {
-        val asset = parse(body).extract[AssetWithProperties]
-        val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
+      getWithUserAuth("/massTransitStops/2") {
+        val parsedBody = parse(body)
+        val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
+        val prop = properties.find(_.publicId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be ("3")
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body2.getBytes) {
           status should equal(200)
-          getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
+          getWithUserAuth("/massTransitStops/2") {
+            val parsedBody = parse(body)
+            val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
+            properties.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
           }
         }
       }
