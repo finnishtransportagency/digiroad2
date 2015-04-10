@@ -16,8 +16,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
 
-// TODO: rename
-case class NewMassTransitStop(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                               validityDirection: Option[Int], bearing: Option[Int],
                               validityPeriod: Option[String], floating: Boolean,
                               propertyData: Seq[Property])
@@ -38,7 +37,7 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[NewMassTransitStop] = {
+  def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
       val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
       persistedMassTransitStop.map(_.municipalityCode).foreach(municipalityValidation)
@@ -51,7 +50,7 @@ trait MassTransitStopService {
             !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
         }
         if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
-        NewMassTransitStop(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+        MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
           lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
           bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
           propertyData = persistedStop.propertyData)
@@ -125,7 +124,7 @@ trait MassTransitStopService {
     }
   }
 
-  def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
+  def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
     // TODO: Calculate and store floating value
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(Point(lon, lat), geometry)
@@ -404,7 +403,7 @@ trait MassTransitStopService {
       val point = row.point.get
       val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadlinkGeometry, row.lrmPosition.startMeasure))
 
-      NewMassTransitStop(id, row.externalId, extractStopTypes(rows),
+      MassTransitStopWithProperties(id, row.externalId, extractStopTypes(rows),
         point.x, point.y, Some(row.validityDirection), row.bearing,
         Some(constructValidityPeriod(row.validFrom, row.validTo)), floating,(AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex))
     }.head
