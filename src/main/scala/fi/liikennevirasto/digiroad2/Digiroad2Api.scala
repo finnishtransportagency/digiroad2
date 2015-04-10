@@ -104,7 +104,6 @@ with GZipSupport {
         halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
     val nationalId = params("nationalId").toLong
-    println("*** FETCHING MASS TRANSIT STOP WITH NATIONAL ID: " + nationalId)
     val massTransitStop = useVVHGeometry match {
       case true => MassTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
          Map("id" -> stop.id,
