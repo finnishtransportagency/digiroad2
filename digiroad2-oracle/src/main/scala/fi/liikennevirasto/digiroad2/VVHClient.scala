@@ -10,8 +10,17 @@ import java.net.URLEncoder
 object VVHClient {
   protected implicit val jsonFormats: Formats = DefaultFormats
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
+    val municipalityFilter = {
+      if(municipalities.isEmpty) {
+        "0"
+      } else {
+        val municipalityQuery = municipalities.tail.foldLeft("Kuntatunnus=" + municipalities.head){ (acc, m) => acc + " or Kuntatunnus=" + m }
+        URLEncoder.encode(s"""{"0":"$municipalityQuery"}""", "UTF-8")
+      }
+    }
+
     val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
-      "layerDefs=0&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      s"layerDefs=$municipalityFilter&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
