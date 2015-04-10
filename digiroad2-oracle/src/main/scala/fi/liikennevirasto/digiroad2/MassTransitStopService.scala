@@ -38,8 +38,6 @@ trait MassTransitStopService {
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
   def getByNationalId(nationalId: Long): Option[AssetWithProperties] = {
-    // TODO: Float stop if stop municipality number differs from road link municipality number
-    // TODO: Float stop if road link is not found with stop mml id
     withDynTransaction {
       val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
       persistedMassTransitStop.map { persistedStop =>
@@ -50,6 +48,7 @@ trait MassTransitStopService {
           case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
             !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
         }
+        if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
         println(floating)
         println(roadLink)
       }
