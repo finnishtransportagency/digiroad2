@@ -110,6 +110,10 @@ trait MassTransitStopService {
     query + s" where a.id = $id"
   }
 
+  private def withFilter(filter: String)(query: String): String = {
+    query + " " + filter
+  }
+
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
@@ -162,47 +166,28 @@ trait MassTransitStopService {
     }
   }
 
-  // TODO: Use `getPersistedMassTransitStops` here if possible
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
-    type MassTransitStopAndType = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Int)
-    type MassTransitStopWithTypes = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Seq[Int])
 
     val roadLinks = roadLinkService.fetchVVHRoadlinks(bounds)
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val filter = s"where a.asset_type_id = 10 and $boundingBoxFilter"
+      val persistedMassTransitStops: Seq[PersistedMassTransitStop] = getPersistedMassTransitStops(withFilter(filter))
 
-      val massTransitStopsAndStopTypes = sql"""
-          select a.id, a.external_id, a.bearing, lrm.side_code,
-          a.municipality_code, lrm.start_measure, lrm.mml_id,
-          a.geometry, a.valid_from, a.valid_to, a.floating, e.value
-          from asset a
-          join asset_link al on a.id = al.asset_id
-          join lrm_position lrm on al.position_id = lrm.id
-          left join multiple_choice_value v on a.id = v.asset_id
-          left join enumerated_value e on v.enumerated_value_id = e.id
-          where a.asset_type_id = 10
-          and #$boundingBoxFilter
-          and v.property_id = (select id from property where public_id = 'pysakin_tyyppi')
-       """.as[MassTransitStopAndType].list()
-
-      val massTransitStops: Seq[MassTransitStopWithTypes] = massTransitStopsAndStopTypes.groupBy(_._1).map { case(id, rows) =>
-        val stopTypes = rows.map(_._12)
-        val (_, nationalId, bearing, sideCode, municipalityCode, startMeasure, mmlId, geometry, validFrom, validTo, floating, _) = rows.head
-        id -> (id, nationalId, bearing, sideCode, municipalityCode, startMeasure, mmlId, geometry, validFrom, validTo, floating, stopTypes)
-      }.values.toSeq
-
-      val stopsBeforeUpdate = massTransitStops.filter { massTransitStop =>
-        val (_, _, _, _, municipalityCode, _, _, _, _, _, _, _) = massTransitStop
-        user.isAuthorizedToRead(municipalityCode)
-      }.map { massTransitStop =>
-        val (id, nationalId, bearing, sideCode, municipalityCode, measure, mmlId, point, validFrom, validTo, persistedFloating, stopTypes) = massTransitStop
-        val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
+      val stopsBeforeUpdate = persistedMassTransitStops.filter { persistedStop =>
+        user.isAuthorizedToRead(persistedStop.municipalityCode)
+      }.map { persistedStop =>
+        val point = Point(persistedStop.lon, persistedStop.lat)
+        val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == persistedStop.mmlId)
         val floating = roadLinkForStop match {
           case None => true
-          case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadLink._3, measure))
+          case Some(roadLink) => roadLink._2 != persistedStop.municipalityCode ||
+            !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadLink._3, persistedStop.mValue))
         }
-        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, constructValidityPeriod(validFrom, validTo), floating, stopTypes), persistedFloating)
+        MassTransitStopBeforeUpdate(MassTransitStop(persistedStop.id, persistedStop.nationalId,
+          persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
+          persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes), persistedStop.floating)
       }
 
       stopsBeforeUpdate.foreach { stop =>
@@ -388,7 +373,6 @@ trait MassTransitStopService {
   }
 
   private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
-
 }
 
 object MassTransitStopService extends MassTransitStopService {
