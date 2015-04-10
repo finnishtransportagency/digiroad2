@@ -10,7 +10,7 @@ import org.joda.time.{DateTime, Interval, LocalDate}
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedResult}
+import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -35,14 +35,64 @@ trait MassTransitStopService {
     // TODO: Float stop if stop municipality number differs from road link municipality number
     // TODO: Float stop if road link is not found with stop mml id
     withDynTransaction {
-      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
-      val roadLink: Option[Seq[Point]] = mmlId.flatMap(roadLinkService.fetchVVHRoadlink).map(_._2)
-      val massTransitStop: Option[AssetWithProperties] = roadLink.map(getByNationalId(nationalId, _))
-      massTransitStop.foreach { stop =>
-        updateFloating(stop.id, stop.floating)
-      }
-      massTransitStop
+      val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
+      println(persistedMassTransitStop)
+      None
+//      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
+//      val roadLink: Option[Seq[Point]] = mmlId.flatMap(roadLinkService.fetchVVHRoadlink).map(_._2)
+//      val massTransitStop: Option[AssetWithProperties] = roadLink.map(getByNationalId(nationalId, _))
+//      massTransitStop.foreach { stop =>
+//        updateFloating(stop.id, stop.floating)
+//      }
+//      massTransitStop
     }
+  }
+
+  private def getPersistedMassTransitStop(filteringQuery: String => Option[NewMassTransitStop]): Option[NewMassTransitStop] = {
+    val query = """
+        select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
+        p.id, p.public_id, p.property_type, p.ui_position_index, p.required, e.value,
+        case
+          when e.name_fi is not null then e.name_fi
+          when tp.value_fi is not null then tp.value_fi
+          else null
+        end as display_value,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, lrm.mml_id,
+        a.created_date, a.created_by, a.modified_date, a.modified_by,
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+        from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+        join property p on a.asset_type_id = p.asset_type_id
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+      """
+    filteringQuery(query)
+  }
+
+  private def withNationalId(nationalId: Long)(query: String): Option[NewMassTransitStop] = {
+    val filteredQuery = query + s" where external_id = $nationalId"
+    val rows = StaticQuery.queryNA[MassTransitStopRow](filteredQuery).iterator().toSeq
+    val commonProperties: Seq[Property] = rows.headOption.map(AssetPropertyConfiguration.assetRowToCommonProperties).getOrElse(Nil)
+    val properties: Seq[Property] = commonProperties ++ OracleSpatialAssetDao.assetRowToProperty(rows)
+    rows.headOption.map { row =>
+      val point = row.point.get
+      val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
+      val stopTypes = extractStopTypes(rows)
+      NewMassTransitStop(id = row.id, nationalId = row.externalId, stopTypes = stopTypes, lon = point.x, lat = point.y,
+        validityDirection = Some(row.validityDirection), bearing = row.bearing, validityPeriod = validityPeriod,
+        floating = row.persistedFloating, propertyData = properties)
+    }
+  }
+
+  private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
+    rows
+      .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
+      .filterNot { row => row.property.propertyValue.isEmpty }
+      .map { row => row.property.propertyValue.toInt }
   }
 
   private def getMassTransitStopMmlId(nationalId: Long): Option[Long] = {
@@ -125,7 +175,7 @@ trait MassTransitStopService {
           case None => true
           case Some(roadLink) => roadLink._2 != municipalityCode || !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadLink._3, measure))
         }
-        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, validityPeriod(validFrom, validTo), floating, stopTypes), persistedFloating)
+        MassTransitStopBeforeUpdate(MassTransitStop(id, nationalId, point.x, point.y, bearing, sideCode, municipalityCode, constructValidityPeriod(validFrom, validTo), floating, stopTypes), persistedFloating)
       }
 
       stopsBeforeUpdate.foreach { stop =>
@@ -233,7 +283,7 @@ trait MassTransitStopService {
     }
   }
 
-  private def validityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
     (validFrom, validTo) match {
       case (Some(from), None) => if (from.isAfter(LocalDate.now())) { ValidityPeriod.Future } else { ValidityPeriod.Current }
       case (None, Some(to)) => if (LocalDate.now().isAfter(to)) { ValidityPeriod.Past } else { ValidityPeriod.Current }
@@ -346,7 +396,7 @@ trait MassTransitStopService {
 
       NewMassTransitStop(id, row.externalId, extractStopTypes(rows),
         point.x, point.y, Some(row.validityDirection), row.bearing,
-        Some(validityPeriod(row.validFrom, row.validTo)), floating,(AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex))
+        Some(constructValidityPeriod(row.validFrom, row.validTo)), floating,(AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex))
     }.head
   }
   private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
