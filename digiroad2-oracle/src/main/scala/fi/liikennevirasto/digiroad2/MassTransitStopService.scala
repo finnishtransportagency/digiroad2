@@ -27,7 +27,7 @@ trait MassTransitStopService {
   def withDynTransaction[T](f: => T): T
 
   case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
-                                      municipalityCode: Int, lon: Double, lat: Double,
+                                      municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                       validityDirection: Option[Int], bearing: Option[Int],
                                       validityPeriod: Option[String], floating: Boolean,
                                       propertyData: Seq[Property])
@@ -92,8 +92,10 @@ trait MassTransitStopService {
       val point = row.point.get
       val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
       val stopTypes = extractStopTypes(rows)
+      val mValue = row.lrmPosition.startMeasure
       PersistedMassTransitStop(id = row.id, nationalId = row.externalId, mmlId = row.mmlId, stopTypes = stopTypes,
-        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, validityDirection = Some(row.validityDirection), bearing = row.bearing,
+        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
+        validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, propertyData = properties)
     }
   }
