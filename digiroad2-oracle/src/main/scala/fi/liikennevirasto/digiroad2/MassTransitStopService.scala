@@ -16,6 +16,7 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
 
+// TODO: rename
 case class NewMassTransitStop(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                               validityDirection: Option[Int], bearing: Option[Int],
                               validityPeriod: Option[String], floating: Boolean,
@@ -37,9 +38,10 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  def getByNationalId(nationalId: Long): Option[AssetWithProperties] = {
+  def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[NewMassTransitStop] = {
     withDynTransaction {
       val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
+      persistedMassTransitStop.map(_.municipalityCode).foreach(municipalityValidation)
       persistedMassTransitStop.map { persistedStop =>
         val roadLink = roadLinkService.fetchVVHRoadlink(persistedStop.mmlId)
         val point = Point(persistedStop.lon, persistedStop.lat)
@@ -51,9 +53,11 @@ trait MassTransitStopService {
         if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
         println(floating)
         println(roadLink)
+        NewMassTransitStop(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+          lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
+          bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+          propertyData = persistedStop.propertyData)
       }
-      println(persistedMassTransitStop)
-      None
 //      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
 //      val roadLink: Option[Seq[Point]] = mmlId.flatMap(roadLinkService.fetchVVHRoadlink).map(_._2)
 //      val massTransitStop: Option[AssetWithProperties] = roadLink.map(getByNationalId(nationalId, _))

@@ -97,19 +97,42 @@ with GZipSupport {
     }
   }
 
+
   get("/massTransitStops/:nationalId") {
+    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+    }
     val nationalId = params("nationalId").toLong
     println("*** FETCHING MASS TRANSIT STOP WITH NATIONAL ID: " + nationalId)
     val massTransitStop = useVVHGeometry match {
-      case true => MassTransitStopService.getByNationalId(nationalId)
-      case false => assetProvider.getAssetByExternalId(nationalId)
+      case true => MassTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+         Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData)
+      }
+      case false => assetProvider.getAssetByExternalId(nationalId).map { stop =>
+        validateMunicipalityAuthorization(nationalId)(stop.municipalityNumber)
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData)
+      }
     }
-    massTransitStop match {
-      case Some(stop) =>
-        if (userProvider.getCurrentUser().isAuthorizedToRead(stop.municipalityNumber)) stop
-        else Unauthorized("User not authorized for mass transit stop " + nationalId)
-      case None => NotFound("Mass transit stop " + nationalId + " not found")
-    }
+    massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
