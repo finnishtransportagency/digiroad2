@@ -139,16 +139,17 @@ trait MassTransitStopService {
   }
 
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
-    // TODO: Calculate and store floating value
+    val point = Point(lon, lat)
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
-    val mValue = calculateLinearReferenceFromPoint(Point(lon, lat), geometry)
+    val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     val massTransitStop = withDynTransaction {
       val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
       val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
+      val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)
-      insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode)
+      insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
       OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
@@ -347,11 +348,12 @@ trait MassTransitStopService {
       """.execute
   }
 
-  private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int): Unit = {
+  private def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
     sqlu"""
-           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry)
+           insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, 10, $bearing, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)))
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
+           $floating)
       """.execute
   }
 
