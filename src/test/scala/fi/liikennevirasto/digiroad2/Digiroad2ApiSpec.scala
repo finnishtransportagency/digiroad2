@@ -92,7 +92,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/massTransitStops/2") {
       status should equal(200)
       val parsedBody = parse(body)
-      (parsedBody \ "id").values.asInstanceOf[BigInt].toInt should be(CreatedTestAssetId)
+      (parsedBody \ "id").extract[Int] should be(CreatedTestAssetId)
     }
     getWithUserAuth("/massTransitStops/9999999999999999") {
       status should equal(404)
