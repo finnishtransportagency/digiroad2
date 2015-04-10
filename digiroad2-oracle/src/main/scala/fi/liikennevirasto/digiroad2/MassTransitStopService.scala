@@ -26,6 +26,12 @@ trait MassTransitStopService {
   def roadLinkService: RoadLinkService
   def withDynTransaction[T](f: => T): T
 
+  case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
+                                      lon: Double, lat: Double,
+                                      validityDirection: Option[Int], bearing: Option[Int],
+                                      validityPeriod: Option[String], floating: Boolean,
+                                      propertyData: Seq[Property])
+
   case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
                                 validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
@@ -48,7 +54,7 @@ trait MassTransitStopService {
     }
   }
 
-  private def getPersistedMassTransitStop(filteringQuery: String => Option[NewMassTransitStop]): Option[NewMassTransitStop] = {
+  private def getPersistedMassTransitStop(filteringQuery: String => Option[PersistedMassTransitStop]): Option[PersistedMassTransitStop] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
@@ -73,7 +79,7 @@ trait MassTransitStopService {
     filteringQuery(query)
   }
 
-  private def withNationalId(nationalId: Long)(query: String): Option[NewMassTransitStop] = {
+  private def withNationalId(nationalId: Long)(query: String): Option[PersistedMassTransitStop] = {
     val filteredQuery = query + s" where external_id = $nationalId"
     val rows = StaticQuery.queryNA[MassTransitStopRow](filteredQuery).iterator().toSeq
     val commonProperties: Seq[Property] = rows.headOption.map(AssetPropertyConfiguration.assetRowToCommonProperties).getOrElse(Nil)
@@ -82,9 +88,9 @@ trait MassTransitStopService {
       val point = row.point.get
       val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
       val stopTypes = extractStopTypes(rows)
-      NewMassTransitStop(id = row.id, nationalId = row.externalId, stopTypes = stopTypes, lon = point.x, lat = point.y,
-        validityDirection = Some(row.validityDirection), bearing = row.bearing, validityPeriod = validityPeriod,
-        floating = row.persistedFloating, propertyData = properties)
+      PersistedMassTransitStop(id = row.id, nationalId = row.externalId, mmlId = row.mmlId, stopTypes = stopTypes,
+        lon = point.x, lat = point.y, validityDirection = Some(row.validityDirection), bearing = row.bearing,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, propertyData = properties)
     }
   }
 
