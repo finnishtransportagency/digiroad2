@@ -51,8 +51,6 @@ trait MassTransitStopService {
             !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
         }
         if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
-        println(floating)
-        println(roadLink)
         NewMassTransitStop(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
           lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
           bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
