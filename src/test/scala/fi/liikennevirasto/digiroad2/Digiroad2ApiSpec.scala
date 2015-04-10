@@ -229,13 +229,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("get national bus stop id", Tag("db")) {
-    getWithUserAuth("/assets/300008") {
-      val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
-      assetWithProperties.nationalId should be (85755)
-    }
-  }
-
   test("asset properties are in same order when creating new or editing existing", Tag("db")) {
     val propIds = getWithUserAuth("/assetTypeProperties/10") {
       parse(body).extract[List[Property]].map(p => p.publicId)
