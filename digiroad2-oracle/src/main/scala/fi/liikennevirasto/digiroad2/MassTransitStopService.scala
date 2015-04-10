@@ -108,12 +108,6 @@ trait MassTransitStopService {
       .map { row => row.property.propertyValue.toInt }
   }
 
-  private def getMassTransitStopMmlId(nationalId: Long): Option[Long] = {
-    Some(0l)
-  }
-
-  private def getByNationalId(nationalId: Long, roadLinkGeometry: Seq[Point]): AssetWithProperties = ???
-
   def updatePosition(id: Long, position: Position) = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
