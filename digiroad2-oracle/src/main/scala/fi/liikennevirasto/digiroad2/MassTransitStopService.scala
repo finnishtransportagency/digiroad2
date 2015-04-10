@@ -83,9 +83,8 @@ trait MassTransitStopService {
     filteringQuery(query)
   }
 
-  private def withNationalId(nationalId: Long)(query: String): Option[PersistedMassTransitStop] = {
-    val filteredQuery = query + s" where external_id = $nationalId"
-    val rows = StaticQuery.queryNA[MassTransitStopRow](filteredQuery).iterator().toSeq
+  private def queryToPersistedMassTransitStop(query: String): Option[PersistedMassTransitStop] = {
+    val rows = StaticQuery.queryNA[MassTransitStopRow](query).iterator().toSeq
     val commonProperties: Seq[Property] = rows.headOption.map(AssetPropertyConfiguration.assetRowToCommonProperties).getOrElse(Nil)
     val properties: Seq[Property] = commonProperties ++ OracleSpatialAssetDao.assetRowToProperty(rows)
     rows.headOption.map { row =>
@@ -98,6 +97,16 @@ trait MassTransitStopService {
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, propertyData = properties)
     }
+  }
+
+  private def withNationalId(nationalId: Long)(query: String): Option[PersistedMassTransitStop] = {
+    val filteredQuery = query + s" where a.external_id = $nationalId"
+    queryToPersistedMassTransitStop(filteredQuery)
+  }
+
+  private def withId(id: Long)(query: String): Option[PersistedMassTransitStop] = {
+    val filteredQuery = query + s" where a.id = $id"
+    queryToPersistedMassTransitStop(filteredQuery)
   }
 
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
@@ -118,9 +127,14 @@ trait MassTransitStopService {
       updateBearing(id, position)
       updateMunicipality(id, municipalityCode)
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
-      val massTransitStop = getUpdatedMassTransitStop(id, geometry)
-      updateFloating(id, massTransitStop.floating)
-      massTransitStop
+      val persistedStop = getPersistedMassTransitStop(withId(id)).get
+      val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
+      if (floating != persistedStop.floating)
+        updateFloating(id, floating)
+      MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+        lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
+        bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+        propertyData = persistedStop.propertyData)
     }
   }
 
