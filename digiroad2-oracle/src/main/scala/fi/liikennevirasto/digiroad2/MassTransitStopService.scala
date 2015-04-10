@@ -58,7 +58,7 @@ trait MassTransitStopService {
     }
   }
 
-  private def getPersistedMassTransitStop(filteringQuery: String => Option[PersistedMassTransitStop]): Option[PersistedMassTransitStop] = {
+  private def getPersistedMassTransitStop(queryFilter: String => String): Option[PersistedMassTransitStop] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
         a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
@@ -80,7 +80,7 @@ trait MassTransitStopService {
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
       """
-    filteringQuery(query)
+    queryToPersistedMassTransitStop(queryFilter(query))
   }
 
   private def queryToPersistedMassTransitStop(query: String): Option[PersistedMassTransitStop] = {
@@ -99,14 +99,12 @@ trait MassTransitStopService {
     }
   }
 
-  private def withNationalId(nationalId: Long)(query: String): Option[PersistedMassTransitStop] = {
-    val filteredQuery = query + s" where a.external_id = $nationalId"
-    queryToPersistedMassTransitStop(filteredQuery)
+  private def withNationalId(nationalId: Long)(query: String): String = {
+    query + s" where a.external_id = $nationalId"
   }
 
-  private def withId(id: Long)(query: String): Option[PersistedMassTransitStop] = {
-    val filteredQuery = query + s" where a.id = $id"
-    queryToPersistedMassTransitStop(filteredQuery)
+  private def withId(id: Long)(query: String): String = {
+    query + s" where a.id = $id"
   }
 
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
