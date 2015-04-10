@@ -16,6 +16,11 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
 
+case class NewMassTransitStop(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+                              validityDirection: Option[Int], bearing: Option[Int],
+                              validityPeriod: Option[String], floating: Boolean,
+                              propertyData: Seq[Property])
+
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
   def roadLinkService: RoadLinkService
@@ -26,7 +31,7 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  def updatePosition(id: Long, position: Position): AssetWithProperties = {
+  def updatePosition(id: Long, position: Position) = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
@@ -37,16 +42,12 @@ trait MassTransitStopService {
       updateBearing(id, position)
       updateMunicipality(id, municipalityCode)
       OracleSpatialAssetDao.updateAssetGeometry(id, point)
-      val updatedMassTransitStop = getUpdatedMassTransitStop(id, geometry)
-      updateFloating(id, updatedMassTransitStop.floating)
-      updatedMassTransitStop
+      val massTransitStop = getUpdatedMassTransitStop(id, geometry)
+      updateFloating(id, massTransitStop.floating)
+      massTransitStop
     }
   }
 
-  case class NewMassTransitStop(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
-                                validityDirection: Option[Int], bearing: Option[Int],
-                                validityPeriod: Option[String], floating: Boolean,
-                                propertyData: Seq[Property])
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(Point(lon, lat), geometry)
@@ -62,10 +63,7 @@ trait MassTransitStopService {
       OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
       getUpdatedMassTransitStop(assetId, geometry)
     }
-
-    NewMassTransitStop(massTransitStop.id, massTransitStop.nationalId, massTransitStop.stopTypes,
-      massTransitStop.lon, massTransitStop.lat, massTransitStop.validityDirection, massTransitStop.bearing,
-      massTransitStop.validityPeriod, massTransitStop.floating, massTransitStop.propertyData)
+    massTransitStop
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
@@ -291,7 +289,7 @@ trait MassTransitStopService {
       """.execute
   }
 
-  private def getUpdatedMassTransitStop(id: Long, roadlinkGeometry: Seq[Point]): AssetWithProperties = {
+  private def getUpdatedMassTransitStop(id: Long, roadlinkGeometry: Seq[Point]) = {
     def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
       rows
         .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
@@ -324,18 +322,11 @@ trait MassTransitStopService {
     assetWithPositionById.as[(MassTransitStopRow)].list().groupBy(_.id).map { case (_, rows) =>
       val row = rows.head
       val point = row.point.get
-      val wgsPoint = row.wgsPoint.get
       val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadlinkGeometry, row.lrmPosition.startMeasure))
-      AssetWithProperties(
-        id = id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = row.municipalityCode,
-        validityPeriod = Some(validityPeriod(row.validFrom, row.validTo)),
-        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified,
-        stopTypes = extractStopTypes(rows),
-        floating = floating)
+
+      NewMassTransitStop(id, row.externalId, extractStopTypes(rows),
+        point.x, point.y, Some(row.validityDirection), row.bearing,
+        Some(validityPeriod(row.validFrom, row.validTo)), floating,(AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ OracleSpatialAssetDao.assetRowToProperty(rows)).sortBy(_.propertyUiIndex))
     }.head
   }
   private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
