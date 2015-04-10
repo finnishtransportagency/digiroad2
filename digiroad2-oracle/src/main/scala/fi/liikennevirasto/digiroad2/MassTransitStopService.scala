@@ -58,13 +58,6 @@ trait MassTransitStopService {
           bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
           propertyData = persistedStop.propertyData)
       }
-//      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
-//      val roadLink: Option[Seq[Point]] = mmlId.flatMap(roadLinkService.fetchVVHRoadlink).map(_._2)
-//      val massTransitStop: Option[AssetWithProperties] = roadLink.map(getByNationalId(nationalId, _))
-//      massTransitStop.foreach { stop =>
-//        updateFloating(stop.id, stop.floating)
-//      }
-//      massTransitStop
     }
   }
 
