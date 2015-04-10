@@ -44,6 +44,13 @@ trait MassTransitStopService {
       val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
       persistedMassTransitStop.map { persistedStop =>
         val roadLink = roadLinkService.fetchVVHRoadlink(persistedStop.mmlId)
+        val point = Point(persistedStop.lon, persistedStop.lat)
+        val floating = roadLink match {
+          case None => true
+          case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
+            !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
+        }
+        println(floating)
         println(roadLink)
       }
       println(persistedMassTransitStop)
