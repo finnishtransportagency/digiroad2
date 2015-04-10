@@ -132,6 +132,7 @@ trait MassTransitStopService {
   }
 
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): NewMassTransitStop = {
+    // TODO: Calculate and store floating value
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(Point(lon, lat), geometry)
 
@@ -149,6 +150,7 @@ trait MassTransitStopService {
     massTransitStop
   }
 
+  // TODO: Use `getPersistedMassTransitStop` here if possible
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
     case class MassTransitStopBeforeUpdate(stop: MassTransitStop, persistedFloating: Boolean)
     type MassTransitStopAndType = (Long, Long, Option[Int], Int, Int, Double, Long, Point, Option[LocalDate], Option[LocalDate], Boolean, Int)
@@ -372,6 +374,7 @@ trait MassTransitStopService {
       """.execute
   }
 
+  // TODO: Use `getPersistedMassTransitStop` instead of this
   private def getUpdatedMassTransitStop(id: Long, roadlinkGeometry: Seq[Point]) = {
     def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
       rows
