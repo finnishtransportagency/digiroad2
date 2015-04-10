@@ -42,6 +42,10 @@ trait MassTransitStopService {
     // TODO: Float stop if road link is not found with stop mml id
     withDynTransaction {
       val persistedMassTransitStop = getPersistedMassTransitStop(withNationalId(nationalId))
+      persistedMassTransitStop.map { persistedStop =>
+        val roadLink = roadLinkService.fetchVVHRoadlink(persistedStop.mmlId)
+        println(roadLink)
+      }
       println(persistedMassTransitStop)
       None
 //      val mmlId: Option[Long] = getMassTransitStopMmlId(nationalId)
