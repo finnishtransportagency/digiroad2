@@ -39,23 +39,25 @@ trait MassTransitStopService {
 
   def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
-      val persistedMassTransitStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
-      persistedMassTransitStop.map(_.municipalityCode).foreach(municipalityValidation)
-      persistedMassTransitStop.map { persistedStop =>
-        val roadLink = roadLinkService.fetchVVHRoadlink(persistedStop.mmlId)
-        val point = Point(persistedStop.lon, persistedStop.lat)
-        val floating = roadLink match {
-          case None => true
-          case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
-            !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
-        }
-        if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
-        MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
-          lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
-          bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
-          propertyData = persistedStop.propertyData)
-      }
+      getPersistedMassTransitStops(withNationalId(nationalId))
+        .headOption
+        .map(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink(_)))
     }
+  }
+
+  private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
+                                                          (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
+    val point = Point(persistedStop.lon, persistedStop.lat)
+    val floating = roadLinkByMmlId(persistedStop.mmlId) match {
+      case None => true
+      case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
+        !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
+    }
+    if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
+    MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+      lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
+      bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+      propertyData = persistedStop.propertyData)
   }
 
   private def getPersistedMassTransitStops(queryFilter: String => String): Seq[PersistedMassTransitStop] = {
