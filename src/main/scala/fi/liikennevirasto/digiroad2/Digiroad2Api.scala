@@ -164,6 +164,10 @@ with GZipSupport {
   }
 
   put("/massTransitStops/:id") {
+    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
+        halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
+    }
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
@@ -175,7 +179,9 @@ with GZipSupport {
       useVVHGeometry match {
         case true =>
           val asset = assetProvider.updateAsset(id, None, properties)
-          val massTransitStop = position.map { position => MassTransitStopService.updatePosition(id, position) }
+          val massTransitStop = position.map {
+            position => MassTransitStopService.updatePosition(id, position, validateMunicipalityAuthorization(id))
+          }
           massTransitStop.getOrElse(asset)
         case false =>
           assetProvider.updateAsset(id, position, properties)

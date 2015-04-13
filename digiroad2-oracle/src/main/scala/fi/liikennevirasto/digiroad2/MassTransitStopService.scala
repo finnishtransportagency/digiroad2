@@ -124,13 +124,15 @@ trait MassTransitStopService {
       .map { row => row.property.propertyValue.toInt }
   }
 
-  def updatePosition(id: Long, position: Position): MassTransitStopWithProperties = {
+  def updatePosition(id: Long, position: Position, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     val point = Point(position.lon, position.lat)
     val mmlId = position.roadLinkId
     val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     withDynTransaction {
+      val persistedStop = getPersistedMassTransitStops(withId(id))
+      persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       updateLrmPosition(id, mValue, mmlId)
       updateBearing(id, position)
       updateMunicipality(id, municipalityCode)
