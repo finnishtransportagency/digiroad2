@@ -98,6 +98,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Assert user rights when fetching mass transit stop with id") {
+    runWithCleanup {
+      an [Exception] should be thrownBy RollbackMassTransitStopService.getByNationalId(85755, { municipalityCode => throw new Exception })
+    }
+  }
+
   test("Update mass transit stop road link mml id") {
     runWithCleanup {
       val position = Position(60.0, 0.0, 388554364l, None)

@@ -39,9 +39,10 @@ trait MassTransitStopService {
 
   def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
-      getPersistedMassTransitStops(withNationalId(nationalId))
-        .headOption
-        .map(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink(_)))
+      val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId))
+      persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+      persistedStop.headOption
+        .map(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink))
     }
   }
 
