@@ -39,10 +39,13 @@ trait MassTransitStopService {
 
   def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
-      val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId))
+      val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      persistedStop.headOption
-        .map(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink))
+      persistedStop.map { persistedStop =>
+        val massTransitStop = persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)(persistedStop)
+        if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
+        massTransitStop
+      }
     }
   }
 
@@ -54,7 +57,6 @@ trait MassTransitStopService {
       case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
         !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
     }
-    if (persistedStop.floating != floating) updateFloating(persistedStop.id, floating)
     MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
@@ -146,10 +148,11 @@ trait MassTransitStopService {
         updateMunicipality(id, municipalityCode)
         OracleSpatialAssetDao.updateAssetGeometry(id, point)
       }
-      getPersistedMassTransitStops(withId(id))
-        .headOption
-        .map(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))}))
-        .getOrElse(throw new NoSuchElementException)
+      getPersistedMassTransitStops(withId(id)).headOption.map { persistedStop =>
+        val massTransitStop = persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})(persistedStop)
+        if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
+        massTransitStop
+      }.get
     }
   }
 
@@ -162,13 +165,13 @@ trait MassTransitStopService {
       val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
       val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
+      val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)
-      insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, false)
+      insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
       OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
-      getPersistedMassTransitStops(withId(assetId))
-        .headOption
+      getPersistedMassTransitStops(withId(assetId)).headOption
         .map(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))}))
         .get
     }
