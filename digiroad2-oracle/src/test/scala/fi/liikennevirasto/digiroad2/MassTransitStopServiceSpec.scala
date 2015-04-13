@@ -23,6 +23,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((1140018963l, 90, Nil), (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
   when(mockRoadLinkService.fetchVVHRoadlink(388554364l)).thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)))))
   when(mockRoadLinkService.fetchVVHRoadlink(123l)).thenReturn(Some((91, List(Point(0.0,0.0), Point(120.0, 0.0)))))
+  when(mockRoadLinkService.fetchVVHRoadlink(388553080l)).thenReturn(Some((235, Nil)))
 
   object RollbackMassTransitStopService extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -114,7 +115,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop road link mml id") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 388554364l, None))
-      RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
+      RollbackMassTransitStopService.updatePosition(300000, position, "user", _ => Unit)
       val mmlId = sql"""
             select lrm.mml_id from asset a
             join asset_link al on al.asset_id = a.id
@@ -128,7 +129,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop bearing") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 388554364l, Some(90)))
-      RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
+      RollbackMassTransitStopService.updatePosition(300000, position, "user", _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a
             join asset_link al on al.asset_id = a.id
@@ -142,7 +143,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop municipality") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
+      RollbackMassTransitStopService.updatePosition(300000, position, "user", _ => Unit)
       val municipality = sql"""
             select a.municipality_code from asset a
             join asset_link al on al.asset_id = a.id
@@ -153,10 +154,21 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Update last modified info") {
+    runWithCleanup {
+      RollbackMassTransitStopService.updatePosition(300000, None, "user", _ => Unit)
+      val modifier = sql"""
+            select a.modified_by from asset a
+            where a.id = 300000
+      """.as[String].firstOption()
+      modifier should be(Some("user"))
+    }
+  }
+
   test("Persist floating on update") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      RollbackMassTransitStopService.updatePosition(300002, position, _ => Unit)
+      RollbackMassTransitStopService.updatePosition(300002, position, "user", _ => Unit)
       val floating = sql"""
             select a.floating from asset a
             where a.id = 300002
@@ -168,7 +180,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Assert user rights when updating a mass transit stop") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      an [Exception] should be thrownBy RollbackMassTransitStopService.updatePosition(300002, position, { municipalityCode => throw new Exception })
+      an [Exception] should be thrownBy RollbackMassTransitStopService.updatePosition(300002, position, "user", { municipalityCode => throw new Exception })
     }
   }
 

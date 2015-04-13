@@ -342,7 +342,7 @@ object OracleSpatialAssetDao {
     getAssetById(assetId).get
   }
 
-  private def updateAssetLastModified(assetId: Long, modifier: String) {
+  def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute()
   }
 
