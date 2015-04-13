@@ -124,7 +124,7 @@ trait MassTransitStopService {
       .map { row => row.property.propertyValue.toInt }
   }
 
-  def updatePosition(id: Long, optionalPosition: Option[Position], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  def updatePosition(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withId(id)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
@@ -134,6 +134,9 @@ trait MassTransitStopService {
       }
       val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
       OracleSpatialAssetDao.updateAssetLastModified(id, username)
+      if (properties.nonEmpty) {
+        OracleSpatialAssetDao.updateAssetProperties(id, properties)
+      }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
         val point = Point(position.lon, position.lat)
