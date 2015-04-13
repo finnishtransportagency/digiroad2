@@ -113,7 +113,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop road link mml id") {
     runWithCleanup {
-      val position = Position(60.0, 0.0, 388554364l, None)
+      val position = Some(Position(60.0, 0.0, 388554364l, None))
       RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
       val mmlId = sql"""
             select lrm.mml_id from asset a
@@ -127,7 +127,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop bearing") {
     runWithCleanup {
-      val position = Position(60.0, 0.0, 388554364l, Some(90))
+      val position = Some(Position(60.0, 0.0, 388554364l, Some(90)))
       RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a
@@ -141,7 +141,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update mass transit stop municipality") {
     runWithCleanup {
-      val position = Position(60.0, 0.0, 123l, None)
+      val position = Some(Position(60.0, 0.0, 123l, None))
       RollbackMassTransitStopService.updatePosition(300000, position, _ => Unit)
       val municipality = sql"""
             select a.municipality_code from asset a
@@ -155,7 +155,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Persist floating on update") {
     runWithCleanup {
-      val position = Position(60.0, 0.0, 123l, None)
+      val position = Some(Position(60.0, 0.0, 123l, None))
       RollbackMassTransitStopService.updatePosition(300002, position, _ => Unit)
       val floating = sql"""
             select a.floating from asset a
@@ -167,7 +167,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Assert user rights when updating a mass transit stop") {
     runWithCleanup {
-      val position = Position(60.0, 0.0, 123l, None)
+      val position = Some(Position(60.0, 0.0, 123l, None))
       an [Exception] should be thrownBy RollbackMassTransitStopService.updatePosition(300002, position, { municipalityCode => throw new Exception })
     }
   }

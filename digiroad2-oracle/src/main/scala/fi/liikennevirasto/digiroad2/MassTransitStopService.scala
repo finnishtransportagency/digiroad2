@@ -124,19 +124,24 @@ trait MassTransitStopService {
       .map { row => row.property.propertyValue.toInt }
   }
 
-  def updatePosition(id: Long, position: Position, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-    val point = Point(position.lon, position.lat)
-    val mmlId = position.roadLinkId
-    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
-    val mValue = calculateLinearReferenceFromPoint(point, geometry)
-
+  def updatePosition(id: Long, optionalPosition: Option[Position], municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
-      val persistedStop = getPersistedMassTransitStops(withId(id))
+      val persistedStop = getPersistedMassTransitStops(withId(id)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      updateLrmPosition(id, mValue, mmlId)
-      updateBearing(id, position)
-      updateMunicipality(id, municipalityCode)
-      OracleSpatialAssetDao.updateAssetGeometry(id, point)
+      val mmlId = optionalPosition match {
+        case Some(position) => position.roadLinkId
+        case _ => persistedStop.get.mmlId
+      }
+      val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+      if (optionalPosition.isDefined) {
+        val position = optionalPosition.get
+        val point = Point(position.lon, position.lat)
+        val mValue = calculateLinearReferenceFromPoint(point, geometry)
+        updateLrmPosition(id, mValue, mmlId)
+        updateBearing(id, position)
+        updateMunicipality(id, municipalityCode)
+        OracleSpatialAssetDao.updateAssetGeometry(id, point)
+      }
       getPersistedMassTransitStops(withId(id))
         .headOption
         .map(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))}))
