@@ -139,7 +139,7 @@ trait MassTransitStopService {
       propertyData = stop.propertyData)
   }
 
-  def updatePosition(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  def updateExisting(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withId(id)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)

@@ -180,7 +180,7 @@ with GZipSupport {
         case true =>
           val asset = assetProvider.updateAsset(id, None, properties)
           val massTransitStop = position.map {
-            position => massTransitStopService.updatePosition(id, Some(position), properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+            position => massTransitStopService.updateExisting(id, Some(position), properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
           }
           massTransitStop.getOrElse(asset)
         case false =>
