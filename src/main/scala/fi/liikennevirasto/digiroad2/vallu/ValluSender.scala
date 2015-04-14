@@ -1,16 +1,16 @@
 package fi.liikennevirasto.digiroad2.vallu
 
+import java.nio.charset.Charset
+
+import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.{StringEntity, ContentType}
+import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
-import java.nio.charset.Charset
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.Digiroad2Context
-import org.apache.http.client.config.RequestConfig
-import com.newrelic.api.agent.NewRelic
-import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 
 object ValluSender extends AssetPropertiesReader {
   val messageLogger = LoggerFactory.getLogger("ValluMsgLogger")
@@ -25,8 +25,8 @@ object ValluSender extends AssetPropertiesReader {
 
   val httpClient = HttpClients.custom().setDefaultRequestConfig(config).build()
 
-  def postToVallu(municipalityName: String, asset: AssetWithProperties) {
-    val payload = ValluStoreStopChangeMessage.create(municipalityName, asset)
+  def postToVallu(massTransitStop: EventBusMassTransitStop) {
+    val payload = ValluStoreStopChangeMessage.create(massTransitStop)
     withLogging(payload) {
       postToVallu
     }

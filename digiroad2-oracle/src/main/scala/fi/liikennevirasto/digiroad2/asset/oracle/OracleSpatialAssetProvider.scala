@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -102,6 +102,12 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  private def eventBusMassTransitStop(asset: AssetWithProperties, municipalityName: String): EventBusMassTransitStop = {
+    EventBusMassTransitStop(municipalityNumber = asset.municipalityNumber, municipalityName = municipalityName,
+      nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
+      created = asset.created, modified = asset.modified, propertyData = asset.propertyData)
+  }
+
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
     databaseTransaction.withDynTransaction {
@@ -112,7 +118,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
         throw new IllegalArgumentException("User does not have write access to municipality")
       }
       val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, definedProperties)
-      eventbus.publish("asset:saved", (getMunicipalityName(roadLinkId), asset))
+      eventbus.publish("asset:saved", eventBusMassTransitStop(asset, getMunicipalityName(roadLinkId)))
       asset
     }
   }
@@ -123,7 +129,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
       val updatedAsset = OracleSpatialAssetDao.updateAsset(assetId, position, userProvider.getCurrentUser().username, properties)
       val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(updatedAsset.municipalityNumber)
-      eventbus.publish("asset:saved", (municipalityName, updatedAsset))
+      eventbus.publish("asset:saved", eventBusMassTransitStop(updatedAsset, municipalityName))
       updatedAsset
     }
   }

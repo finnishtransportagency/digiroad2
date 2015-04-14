@@ -1,21 +1,20 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import org.scalatest._
-import scala.util.Random
-import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
-import org.joda.time.LocalDate
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import scala.language.implicitConversions
-import fi.liikennevirasto.digiroad2.user.Role
-import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import java.sql.SQLIntegrityConstraintViolationException
-import fi.liikennevirasto.digiroad2.{Point, DummyEventBus, DigiroadEventBus}
-import org.mockito.Mockito.verify
+
 import fi.liikennevirasto.digiroad2.asset._
-import scala.Some
-import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.user.Configuration
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.user.{Configuration, Role, User}
+import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
+import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, EventBusMassTransitStop, Point}
+import org.joda.time.LocalDate
+import org.mockito.Mockito.verify
+import org.scalatest._
+
+import scala.language.implicitConversions
 import scala.slick.jdbc.{StaticQuery => Q}
+import scala.util.Random
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -81,11 +80,15 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
       180,
       AssetCreator,
       mandatoryBusStopProperties)
+    val eventBusStop = EventBusMassTransitStop(municipalityNumber = 235, municipalityName = "Kauniainen",
+      nationalId = newAsset.nationalId, lon = existingAsset.lon, lat = existingAsset.lat, bearing = Some(180),
+      validityDirection = Some(2), created = newAsset.created, modified = newAsset.modified,
+      propertyData = newAsset.propertyData)
     try {
       newAsset.id should (be > 300000L)
       Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
       Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
-      verify(eventBus).publish("asset:saved", ("Kauniainen", newAsset))
+      verify(eventBus).publish("asset:saved", eventBusStop)
       newAsset.nationalId should (be >= 300000L)
     } finally {
       deleteCreatedTestAsset(newAsset.id)
@@ -231,7 +234,11 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = 6928, lon = lon2, lat = lat2, bearing = Some(b2))))
     val updated = providerWithMockedEventBus.getAssetById(asset.id).get
     providerWithMockedEventBus.updateAsset(assetId = asset.id, position = Some(Position(roadLinkId = 6928, lon = asset.lon, lat = asset.lat, bearing = asset.bearing)))
-    verify(eventBus).publish("asset:saved", ("Kauniainen", updated))
+    val eventBusStop = EventBusMassTransitStop(municipalityNumber = 235, municipalityName = "Kauniainen",
+      nationalId = updated.nationalId, lon = updated.lon, lat = updated.lat, bearing = updated.bearing,
+      validityDirection = Some(2), created = updated.created, modified = updated.modified,
+      propertyData = updated.propertyData)
+    verify(eventBus).publish("asset:saved", eventBusStop)
     Math.abs(updated.lat - lat1) should (be > 3.0)
     Math.abs(updated.lon - lon1) should (be > 20.0)
     updated.bearing.get should be (b2)

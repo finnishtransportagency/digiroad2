@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.{DefaultDatabaseTransaction, DatabaseTransaction}
+import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.vallu.ValluSender
 
 class ValluActor extends Actor {
   def receive = {
-    case (municipalityName: String, asset: AssetWithProperties) => ValluSender.postToVallu(municipalityName, asset)
+    case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
     case _                               => println("received unknown message")
   }
 }
