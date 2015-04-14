@@ -65,7 +65,7 @@ with GZipSupport {
     val user = userProvider.getCurrentUser
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    MassTransitStopService.getByBoundingBox(user, bbox)
+    massTransitStopService.getByBoundingBox(user, bbox)
   }
 
   get("/floatingAssets") {
@@ -105,7 +105,7 @@ with GZipSupport {
     }
     val nationalId = params("nationalId").toLong
     val massTransitStop = useVVHGeometry match {
-      case true => MassTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+      case true => massTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
          Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
@@ -180,7 +180,7 @@ with GZipSupport {
         case true =>
           val asset = assetProvider.updateAsset(id, None, properties)
           val massTransitStop = position.map {
-            position => MassTransitStopService.updatePosition(id, Some(position), properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+            position => massTransitStopService.updatePosition(id, Some(position), properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
           }
           massTransitStop.getOrElse(asset)
         case false =>
@@ -207,7 +207,7 @@ with GZipSupport {
   private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
      useVVHGeometry match {
       case true =>
-        val massTransitStop = MassTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+        val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
         Map("id" -> massTransitStop.id,
           "nationalId" -> massTransitStop.nationalId,
           "stopTypes" -> massTransitStop.stopTypes,
@@ -240,7 +240,7 @@ with GZipSupport {
   }
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
     if(useVVHGeometry) {
-      val mandatoryProperties: Map[String, String] = MassTransitStopService.mandatoryProperties()
+      val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
       val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
         mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
       }

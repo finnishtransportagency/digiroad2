@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 
-import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -25,11 +24,13 @@ trait MassTransitStopService {
   def withDynSession[T](f: => T): T
   def roadLinkService: RoadLinkService
   def withDynTransaction[T](f: => T): T
+  def eventbus: DigiroadEventBus
 
   case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
                                       municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                       validityDirection: Option[Int], bearing: Option[Int],
                                       validityPeriod: Option[String], floating: Boolean,
+                                      created: Modification, modified: Modification,
                                       propertyData: Seq[Property])
 
   case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
@@ -107,7 +108,8 @@ trait MassTransitStopService {
       id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, mmlId = row.mmlId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
-        validityPeriod = validityPeriod, floating = row.persistedFloating, propertyData = properties)
+        validityPeriod = validityPeriod, floating = row.persistedFloating, created = row.created, modified = row.modified,
+        propertyData = properties)
     }.values.toSeq
   }
 
@@ -128,6 +130,13 @@ trait MassTransitStopService {
       .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
       .filterNot { row => row.property.propertyValue.isEmpty }
       .map { row => row.property.propertyValue.toInt }
+  }
+
+  private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {
+    EventBusMassTransitStop(municipalityNumber = stop.municipalityCode, municipalityName = municipalityName,
+      nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = stop.bearing,
+      validityDirection = stop.validityDirection, created = stop.created, modified = stop.modified,
+      propertyData = stop.propertyData)
   }
 
   def updatePosition(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
@@ -152,7 +161,12 @@ trait MassTransitStopService {
         updateMunicipality(id, municipalityCode)
         OracleSpatialAssetDao.updateAssetGeometry(id, point)
       }
-      getPersistedMassTransitStops(withId(id)).headOption.map { persistedStop =>
+      val updatedStop = getPersistedMassTransitStops(withId(id)).headOption
+      updatedStop.foreach { persistedStop =>
+        val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
+        eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
+      }
+      updatedStop.map { persistedStop =>
         val massTransitStop = persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})(persistedStop)
         if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
         massTransitStop
@@ -384,8 +398,3 @@ trait MassTransitStopService {
   private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
 }
 
-object MassTransitStopService extends MassTransitStopService {
-  def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
-  def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-  val roadLinkService: RoadLinkService = RoadLinkService
-}

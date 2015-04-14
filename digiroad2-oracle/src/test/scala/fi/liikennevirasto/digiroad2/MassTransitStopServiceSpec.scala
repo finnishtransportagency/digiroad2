@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import org.mockito.Matchers.any
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -25,11 +25,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.fetchVVHRoadlink(123l)).thenReturn(Some((91, List(Point(0.0,0.0), Point(120.0, 0.0)))))
   when(mockRoadLinkService.fetchVVHRoadlink(388553080l)).thenReturn(Some((235, Nil)))
 
-  object RollbackMassTransitStopService extends MassTransitStopService {
+  class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     val roadLinkService: RoadLinkService = mockRoadLinkService
   }
+
+  object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   def runWithCleanup(test: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -191,6 +193,20 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Send event to event bus in update") {
+    runWithCleanup {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      val stop = service.updatePosition(300002, position, Nil, "user", _ => Unit)
+      val eventBusStop = EventBusMassTransitStop(municipalityNumber = 91, municipalityName = "Helsinki",
+        nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = Some(358),
+        validityDirection = Some(3), created = Modification(None, None), modified = Modification(None, None),
+        propertyData = stop.propertyData)
+      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
+    }
+  }
+
   test("Assert user rights when updating a mass transit stop") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
@@ -212,61 +228,61 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Calculate linear reference point") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
-    val point: Point = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 0.5).get
+    val point: Point = RollbackMassTransitStopService.calculatePointFromLinearReference(linkGeometry, 0.5).get
     point.x should be(0.5)
     point.y should be(0.0)
   }
 
   test("Calculate linear reference point on three-point geometry") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
-    val point: Point = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5).get
+    val point: Point = RollbackMassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5).get
     point.x should be(1.0)
     point.y should be(0.5)
   }
 
   test("Linear reference point on less than two-point geometry should be undefined") {
     val linkGeometry = Nil
-    val point: Option[Point] = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5)
+    val point: Option[Point] = RollbackMassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5)
     point should be(None)
   }
 
   test("Linear reference point on negative measurement should be undefined") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
-    val point: Option[Point] = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, -1.5)
+    val point: Option[Point] = RollbackMassTransitStopService.calculatePointFromLinearReference(linkGeometry, -1.5)
     point should be(None)
   }
 
   test("Linear reference point outside geometry should be undefined") {
     val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
-    val point: Option[Point] = MassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5)
+    val point: Option[Point] = RollbackMassTransitStopService.calculatePointFromLinearReference(linkGeometry, 1.5)
     point should be(None)
   }
 
   test("Project stop location on two-point geometry") {
     val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val location: Point = Point(0.5, 0.5)
-    val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
+    val mValue: Double = RollbackMassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(0.5)
   }
 
   test("Project stop location on three-point geometry") {
     val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 0.5))
     val location: Point = Point(1.2, 0.25)
-    val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
+    val mValue: Double = RollbackMassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(1.25)
   }
 
   test("Project stop location to beginning of geometry if point lies behind geometry") {
     val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val location: Point = Point(-0.5, 0.0)
-    val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
+    val mValue: Double = RollbackMassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(0.0)
   }
 
   test("Project stop location to the end of geometry if point lies beyond geometry") {
     val linkGeometry: Seq[Point] = List(Point(0.0, 0.0), Point(1.0, 0.0))
     val location: Point = Point(1.5, 0.5)
-    val mValue: Double = MassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
+    val mValue: Double = RollbackMassTransitStopService.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(1.0)
   }
 }

@@ -7,8 +7,10 @@ import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDa
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
+import scala.slick.driver.JdbcDriver.backend.Database
 
 class ValluActor extends Actor {
   def receive = {
@@ -68,6 +70,15 @@ object Digiroad2Context {
 
   lazy val eventbus: DigiroadEventBus = {
     Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
+  }
+
+  lazy val massTransitStopService: MassTransitStopService = {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def roadLinkService: RoadLinkService = RoadLinkService
+      override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+    }
+    new ProductionMassTransitStopService(eventbus)
   }
 
   val env = System.getProperty("env")
