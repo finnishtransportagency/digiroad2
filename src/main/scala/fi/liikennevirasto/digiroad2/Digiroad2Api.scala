@@ -178,11 +178,7 @@ with GZipSupport {
       val id = params("id").toLong
       useVVHGeometry match {
         case true =>
-          val asset = assetProvider.updateAsset(id, None, properties)
-          val massTransitStop = position.map {
-            position => massTransitStopService.updateExisting(id, Some(position), properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
-          }
-          massTransitStop.getOrElse(asset)
+          massTransitStopService.updateExisting(id, position, properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
         case false =>
           assetProvider.updateAsset(id, position, properties)
       }
