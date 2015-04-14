@@ -49,14 +49,18 @@ trait MassTransitStopService {
     }
   }
 
-  private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
-                                                          (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
+  private def isFloating(persistedStop: PersistedMassTransitStop, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedStop.lon, persistedStop.lat)
-    val floating = roadLinkByMmlId(persistedStop.mmlId) match {
+    roadLink match {
       case None => true
       case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
         !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
     }
+  }
+
+  private def persistedStopToMassTransitStopWithProperties(roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
+                                                          (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
+    val floating = isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
     MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
@@ -189,13 +193,7 @@ trait MassTransitStopService {
       val stopsBeforeUpdate = persistedMassTransitStops.filter { persistedStop =>
         user.isAuthorizedToRead(persistedStop.municipalityCode)
       }.map { persistedStop =>
-        val point = Point(persistedStop.lon, persistedStop.lat)
-        val roadLinkForStop: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == persistedStop.mmlId)
-        val floating = roadLinkForStop match {
-          case None => true
-          case Some(roadLink) => roadLink._2 != persistedStop.municipalityCode ||
-            !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(roadLink._3, persistedStop.mValue))
-        }
+        val floating = isFloating(persistedStop, roadLinks.find(_._1 == persistedStop.mmlId).map(link => (link._2, link._3)))
         MassTransitStopBeforeUpdate(MassTransitStop(persistedStop.id, persistedStop.nationalId,
           persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
           persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes), persistedStop.floating)
