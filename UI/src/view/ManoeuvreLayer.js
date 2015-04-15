@@ -29,10 +29,10 @@
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 20 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 20 })
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 13 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 16 })
     ];
     var defaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.65,
@@ -49,10 +49,10 @@
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(9).use({ pointRadius: 0 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(10).use({ pointRadius: 10 }),
       new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(11).use({ pointRadius: 12 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 16 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 20 }),
-      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 20 })
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(12).use({ pointRadius: 13 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(13).use({ pointRadius: 14 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(14).use({ pointRadius: 16 }),
+      new OpenLayersRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 16 })
     ]);
     var defaultStyleMap = new OpenLayers.StyleMap({ default: defaultStyle });
     roadLayer.setLayerSpecificStyleMap(layerName, defaultStyleMap);
