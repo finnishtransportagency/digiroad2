@@ -11,6 +11,11 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
+trait FloatingStop {
+  val id: Long
+  val floating: Boolean
+}
+
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
                            validityPeriod: String, floating: Boolean, stopTypes: Seq[Int])
@@ -18,7 +23,13 @@ case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
 case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
                               validityDirection: Option[Int], bearing: Option[Int],
                               validityPeriod: Option[String], floating: Boolean,
-                              propertyData: Seq[Property])
+                              propertyData: Seq[Property]) extends FloatingStop
+
+case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
+                              validityDirection: Option[Int], bearing: Option[Int],
+                              validityPeriod: Option[String], floating: Boolean,
+                              created: Modification, modified: Modification,
+                              propertyData: Seq[Property]) extends FloatingStop
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
@@ -46,8 +57,8 @@ trait MassTransitStopService {
     }
   }
 
-  private def withFloatingUpdate(toMassTransitStop: PersistedMassTransitStop => MassTransitStopWithProperties)
-                                (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
+  private def withFloatingUpdate[T <: FloatingStop](toMassTransitStop: PersistedMassTransitStop => T)
+                                (persistedStop: PersistedMassTransitStop): T = {
     val massTransitStop = toMassTransitStop(persistedStop)
     if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
     massTransitStop
@@ -69,6 +80,13 @@ trait MassTransitStopService {
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
       propertyData = persistedStop.propertyData)
+  }
+
+  private def convertPersistedStop[T](conversion: (PersistedMassTransitStop, Boolean) => T,
+                                      roadLinkByMmlId: Long => Option[(Int, Seq[Point])])
+                                     (persistedStop: PersistedMassTransitStop): T = {
+    val floating = isFloating(persistedStop, roadLinkByMmlId(persistedStop.mmlId))
+    conversion(persistedStop, floating)
   }
 
   private def getPersistedMassTransitStops(queryFilter: String => String): Seq[PersistedMassTransitStop] = {
@@ -228,10 +246,17 @@ trait MassTransitStopService {
     }
   }
 
-  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithProperties] = {
+  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
+    def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
+      MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
+        lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
+        bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+        created = persistedStop.created, modified = persistedStop.modified,
+        propertyData = persistedStop.propertyData)
+    }
     withDynSession {
       getPersistedMassTransitStops(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)))
+        .map(withFloatingUpdate(convertPersistedStop(toMassTransitStopWithTimeStamps, roadLinkService.fetchVVHRoadlink)))
     }
   }
 
