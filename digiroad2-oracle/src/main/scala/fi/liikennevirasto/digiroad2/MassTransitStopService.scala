@@ -232,7 +232,7 @@ trait MassTransitStopService {
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
   }
 
-  private def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
+  def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
     case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
     if (geometry.size < 2 || measure < 0) { None }
     else {
@@ -254,7 +254,7 @@ trait MassTransitStopService {
     }
   }
 
-  private def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
+  def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
     case class Projection(distance: Double, segmentIndex: Int, segmentLength: Double, mValue: Double)
     val lineSegments: Seq[((Point, Point), Int)] = points.zip(points.tail).zipWithIndex
     val projections: Seq[Projection] = lineSegments.map { case((p1: Point, p2: Point), segmentIndex: Int) =>
