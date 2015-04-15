@@ -128,6 +128,10 @@ trait MassTransitStopService {
     query + " " + filter
   }
 
+  private def withMunicipality(municipalityCode: Int)(query: String): String = {
+    withFilter(s"where a.asset_type_id = 10 and a.municipality_code = $municipalityCode")(query)
+  }
+
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
@@ -221,6 +225,13 @@ trait MassTransitStopService {
       }
 
       stopsBeforeUpdate.map(_.stop)
+    }
+  }
+
+  def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithProperties] = {
+    withDynSession {
+      getPersistedMassTransitStops(withMunicipality(municipalityCode))
+        .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)))
     }
   }
 
