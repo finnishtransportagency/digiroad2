@@ -4,12 +4,14 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
+import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, Property}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
+import org.scalatra.{NotImplemented, BadRequest, ScalatraServlet, ScalatraBase}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
@@ -158,8 +160,12 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
 
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[IntegrationMassTransitStop] = {
-    OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)
-      .map(assetToIntegrationMassTransitStop)
+    useVVHGeometry match {
+      case true =>
+        halt(NotImplemented("Fetching mass transit stops over VVH geometry not implemented yet"))
+      case false =>
+        OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber).map(assetToIntegrationMassTransitStop)
+    }
   }
 
   get("/:assetType") {

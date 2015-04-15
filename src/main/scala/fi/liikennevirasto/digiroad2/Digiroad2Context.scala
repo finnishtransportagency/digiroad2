@@ -81,6 +81,8 @@ object Digiroad2Context {
     new ProductionMassTransitStopService(eventbus)
   }
 
+  lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
+
   val env = System.getProperty("env")
   def getProperty(name: String) = {
     val property = properties.getProperty(name)
