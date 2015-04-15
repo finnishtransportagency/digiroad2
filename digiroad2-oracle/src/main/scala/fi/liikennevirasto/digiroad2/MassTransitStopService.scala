@@ -25,9 +25,8 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
                               validityPeriod: Option[String], floating: Boolean,
                               propertyData: Seq[Property]) extends FloatingStop
 
-case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, stopTypes: Seq[Int], lon: Double, lat: Double,
-                              validityDirection: Option[Int], bearing: Option[Int],
-                              validityPeriod: Option[String], floating: Boolean,
+case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
+                              bearing: Option[Int], floating: Boolean,
                               created: Modification, modified: Modification,
                               propertyData: Seq[Property]) extends FloatingStop
 
@@ -248,9 +247,9 @@ trait MassTransitStopService {
 
   def getByMunicipality(municipalityCode: Int): Seq[MassTransitStopWithTimeStamps] = {
     def toMassTransitStopWithTimeStamps(persistedStop: PersistedMassTransitStop, floating: Boolean): MassTransitStopWithTimeStamps = {
-      MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
-        lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
-        bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
+      MassTransitStopWithTimeStamps(id = persistedStop.id, nationalId = persistedStop.nationalId,
+        lon = persistedStop.lon, lat = persistedStop.lat,
+        bearing = persistedStop.bearing, floating = floating,
         created = persistedStop.created, modified = persistedStop.modified,
         propertyData = persistedStop.propertyData)
     }

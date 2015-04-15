@@ -3,15 +3,14 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, Property}
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Property}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
-import org.scalatra.{NotImplemented, BadRequest, ScalatraServlet, ScalatraBase}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
@@ -19,10 +18,6 @@ import org.slf4j.LoggerFactory
 import scala.slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
-
-case class IntegrationMassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
-                                 bearing: Option[Int] = None, propertyData: Seq[Property] = List(),
-                                 created: Modification, modified: Modification, floating: Boolean)
 
 class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String)
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
@@ -94,20 +89,20 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     key -> transformation(values)
   }
 
-  def extractModificationTime(massTransitStop: IntegrationMassTransitStop): (String, String) = {
+  def extractModificationTime(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
       massTransitStop.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
         .getOrElse(massTransitStop.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
         .getOrElse(""))
   }
 
-  def extractBearing(massTransitStop: IntegrationMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+  def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
 
-  def extractExternalId(massTransitStop: IntegrationMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
+  def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
 
-  def extractFloating(massTransitStop: IntegrationMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
+  def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
 
-  private def toGeoJSON(input: Iterable[IntegrationMassTransitStop]): Map[String, Any] = {
+  private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -152,17 +147,18 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       })
   }
 
-  private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): IntegrationMassTransitStop =  {
-    IntegrationMassTransitStop(asset.id,asset.nationalId, asset.lon, asset.lat, asset.bearing,
-      asset.propertyData, asset.created, asset.modified, asset.floating)
+  private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
+    MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
+      bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
+      modified = asset.modified, floating = asset.floating)
   }
 
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
 
-  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[IntegrationMassTransitStop] = {
+  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
     useVVHGeometry match {
       case true =>
-        halt(NotImplemented("Fetching mass transit stops over VVH geometry not implemented yet"))
+        massTransitStopService.getByMunicipality(municipalityNumber)
       case false =>
         OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber).map(assetToIntegrationMassTransitStop)
     }
