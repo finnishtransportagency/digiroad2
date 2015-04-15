@@ -1,31 +1,26 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Properties
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, Property}
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, CommonAssetProperty, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import org.json4s.DefaultFormats
-import org.json4s.Formats
-import org.scalatra.{BadRequest, ScalatraServlet, ScalatraBase}
-import org.scalatra.json.JacksonJsonSupport
-import org.slf4j.LoggerFactory
+import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
-import org.scalatra.auth.{ScentrySupport, ScentryConfig}
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import java.util.Properties
+import org.scalatra.auth.{ScentryConfig, ScentrySupport}
+import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
+import org.slf4j.LoggerFactory
+
 import scala.slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
 
 case class IntegrationMassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double,
                                  bearing: Option[Int] = None, propertyData: Seq[Property] = List(),
-                                 created: Modification, modified: Modification, floating: Boolean) {
-  def getPropertyValue(propertyName: String): Option[String] = {
-    propertyData.find(_.publicId.equals(propertyName))
-      .flatMap(_.values.headOption.map(_.propertyValue))
-  }
-}
+                                 created: Modification, modified: Modification, floating: Boolean)
 
 class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String)
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
