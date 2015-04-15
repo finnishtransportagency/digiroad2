@@ -42,12 +42,15 @@ trait MassTransitStopService {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      persistedStop.map { persistedStop =>
-        val massTransitStop = persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)(persistedStop)
-        if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
-        massTransitStop
-      }
+      persistedStop.map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)))
     }
+  }
+
+  private def withFloatingUpdate(toMassTransitStop: PersistedMassTransitStop => MassTransitStopWithProperties)
+                                (persistedStop: PersistedMassTransitStop): MassTransitStopWithProperties = {
+    val massTransitStop = toMassTransitStop(persistedStop)
+    if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
+    massTransitStop
   }
 
   private def isFloating(persistedStop: PersistedMassTransitStop, roadLink: Option[(Int, Seq[Point])]): Boolean = {
@@ -166,11 +169,9 @@ trait MassTransitStopService {
         val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
         eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
       }
-      updatedStop.map { persistedStop =>
-        val massTransitStop = persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})(persistedStop)
-        if (persistedStop.floating != massTransitStop.floating) updateFloating(massTransitStop.id, massTransitStop.floating)
-        massTransitStop
-      }.get
+      updatedStop
+        .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})))
+        .get
     }
   }
 
