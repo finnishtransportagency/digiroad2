@@ -216,7 +216,7 @@ trait MassTransitStopService {
 
       stopsBeforeUpdate.foreach { stop =>
         if (stop.stop.floating != stop.persistedFloating) {
-          sqlu"""update asset set floating = ${stop.stop.floating} where id = ${stop.stop.id}""".execute()
+          updateFloating(stop.stop.id, stop.stop.floating)
         }
       }
 
