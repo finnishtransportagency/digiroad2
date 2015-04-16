@@ -68,13 +68,18 @@ with GZipSupport {
     massTransitStopService.getByBoundingBox(user, bbox)
   }
 
+  // TODO: Remove obsolete entry point
   get("/floatingAssets") {
     redirect("/api/floatingMassTransitStops")
   }
 
   get("/floatingMassTransitStops") {
-    val user = userProvider.getCurrentUser
-    massTransitStopService.getFloatingStopsByUser(user)
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    massTransitStopService.getFloatingStops(includedMunicipalities)
   }
 
   get("/user/roles") {

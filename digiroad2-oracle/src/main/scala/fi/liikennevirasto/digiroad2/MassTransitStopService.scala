@@ -48,9 +48,9 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  def getFloatingStopsByUser(user: User): Map[String, Seq[Long]] = {
+  def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]] = {
     withDynSession {
-      val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
+      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val allFloatingAssetsQuery = s"""
       select a.external_id, m.name_fi
       from asset a
@@ -58,10 +58,9 @@ trait MassTransitStopService {
       where asset_type_id = 10 and floating = '1'
     """
 
-      val sql = if (user.isOperator()) {
-        allFloatingAssetsQuery
-      } else {
-        allFloatingAssetsQuery + s" and municipality_code in ($municipalitiesOfUser)"
+      val sql = optionalMunicipalities match {
+        case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
+        case _ => allFloatingAssetsQuery
       }
 
       val floatingAssets = StaticQuery.queryNA[(Long, String)](sql).list()
