@@ -51,21 +51,19 @@ trait MassTransitStopService {
   def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]] = {
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
-      val allFloatingAssetsQuery = s"""
-      select a.external_id, m.name_fi
-      from asset a
+      val allFloatingAssetsQuery = """
+        select a.external_id, m.name_fi
+        from asset a
         join municipality m on a.municipality_code = m.id
-      where asset_type_id = 10 and floating = '1'
-    """
+        where asset_type_id = 10 and floating = '1'
+      """
 
       val sql = optionalMunicipalities match {
         case Some(municipalities) => allFloatingAssetsQuery + s" and municipality_code in ($municipalities)"
         case _ => allFloatingAssetsQuery
       }
 
-      val floatingAssets = StaticQuery.queryNA[(Long, String)](sql).list()
-
-      floatingAssets
+      StaticQuery.queryNA[(Long, String)](sql).list()
         .groupBy(_._2)
         .mapValues(_.map(_._1))
     }
