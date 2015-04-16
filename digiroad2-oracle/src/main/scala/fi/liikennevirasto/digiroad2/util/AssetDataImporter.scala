@@ -336,17 +336,11 @@ class AssetDataImporter {
       """.execute
 
       OracleSpatialAssetDao.updateAssetGeometry(assetId, busStop.point)
-
-      val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
-        case Some(a) =>
-          RoadLinkService.getRoadLinkGeometryByTestId(busStop.roadLinkId) match {
-            case Some(geometry) => GeometryUtils.calculateBearing((a.lon, a.lat), geometry.map { point => (point.x, point.y) })
-            case None =>
-              println(s"No road link found for Asset: $assetId")
-              0.0
-          }
+      val bearing = RoadLinkService.getRoadLinkGeometryByTestId(busStop.roadLinkId) match {
+        case Some(geometry) =>
+          GeometryUtils.calculateBearing((busStop.point.x, busStop.point.y), geometry.map { point => (point.x, point.y)})
         case None =>
-          println(s"No Asset found: $assetId")
+          println(s"No road link found for Asset: $assetId")
           0.0
       }
 
