@@ -355,8 +355,8 @@ trait MassTransitStopService {
       val propertyDisplayValue = r.nextStringOption()
       val property = new PropertyRow(propertyId, propertyPublicId, propertyType, propertyUiIndex, propertyRequired, propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString, propertyDisplayValue.getOrElse(null))
       val lrmId = r.nextLong
-      val startMeasure = r.nextInt
-      val endMeasure = r.nextInt
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
       val mmlId = r.nextLong
