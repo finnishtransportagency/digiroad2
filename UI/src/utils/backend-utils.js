@@ -233,7 +233,7 @@
     };
 
     this.getFloatingAssetsWithCallback = function(callback) {
-      $.getJSON('api/floatingAssets', callback);
+      $.getJSON('api/floatingMassTransitStops', callback);
     };
 
     this.createAsset = function (data, errorCallback) {
