@@ -64,12 +64,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
-    databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.getFloatingAssetsByUser(user)
-    }
-  }
-
   private def validatePresenceOf(requiredProperties: Set[String], properties: Seq[SimpleProperty]): Unit = {
     val providedProperties = properties.map { property =>
       property.publicId

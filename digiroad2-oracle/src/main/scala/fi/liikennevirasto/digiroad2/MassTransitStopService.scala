@@ -48,6 +48,30 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
+  def getFloatingStopsByUser(user: User): Map[String, Seq[Long]] = {
+    withDynSession {
+      val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
+      val allFloatingAssetsQuery = s"""
+      select a.external_id, m.name_fi
+      from asset a
+        join municipality m on a.municipality_code = m.id
+      where asset_type_id = 10 and floating = '1'
+    """
+
+      val sql = if (user.isOperator()) {
+        allFloatingAssetsQuery
+      } else {
+        allFloatingAssetsQuery + s" and municipality_code in ($municipalitiesOfUser)"
+      }
+
+      val floatingAssets = StaticQuery.queryNA[(Long, String)](sql).list()
+
+      floatingAssets
+        .groupBy(_._2)
+        .mapValues(_.map(_._1))
+    }
+  }
+
   def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption

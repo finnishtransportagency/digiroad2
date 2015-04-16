@@ -74,7 +74,7 @@ with GZipSupport {
 
   get("/floatingMassTransitStops") {
     val user = userProvider.getCurrentUser
-    assetProvider.getFloatingAssetsByUser(user)
+    massTransitStopService.getFloatingStopsByUser(user)
   }
 
   get("/user/roles") {

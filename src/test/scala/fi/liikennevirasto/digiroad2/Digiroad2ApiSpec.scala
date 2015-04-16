@@ -58,15 +58,15 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("get floating assets") {
-    getWithUserAuth("/floatingAssets") {
+  test("get floating mass transit stops") {
+    getWithUserAuth("/floatingMassTransitStops") {
       val response = parse(body).extract[Map[String, Seq[Long]]]
       status should equal(200)
       response.size should be(1)
       response should be(Map("Kauniainen" -> List(6)))
     }
 
-    getWithOperatorAuth("/floatingAssets") {
+    getWithOperatorAuth("/floatingMassTransitStops") {
       val response = parse(body).extract[Map[String, Seq[Long]]]
       status should equal(200)
       response.size should be(1)

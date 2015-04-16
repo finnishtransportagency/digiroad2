@@ -10,7 +10,6 @@ trait AssetProvider {
   def getAssetPositionByExternalId(externalId: Long): Option[Point]
   def getAssetsByMunicipality(municipality: Int): Iterable[AssetWithProperties]
   def getAssets(user: User, bounds: BoundingRectangle, validFrom: Option[LocalDate] = None, validTo: Option[LocalDate] = None): Seq[Asset]
-  def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]]
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties
   def updateAsset(assetId: Long, position: Option[Position] = None, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties
   def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty] = Seq()): AssetWithProperties

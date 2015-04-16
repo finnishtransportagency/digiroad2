@@ -218,28 +218,6 @@ object OracleSpatialAssetDao {
     assets.map(_._1).toSeq
   }
 
-  def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
-    val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
-    val allFloatingAssetsQuery =  s"""
-      select a.external_id, m.name_fi
-      from asset a
-        join municipality m on a.municipality_code = m.id
-      where asset_type_id = 10 and floating = '1'
-    """
-
-    val sql = if (user.isOperator()) {
-      allFloatingAssetsQuery
-    } else {
-      allFloatingAssetsQuery + s" and municipality_code in ($municipalitiesOfUser)"
-    }
-
-    val floatingAssets = Q.queryNA[(Long, String)](sql).list()
-
-    floatingAssets
-      .groupBy(_._2)
-      .mapValues(_.map(_._1))
-  }
-
   private val FLOAT_THRESHOLD_IN_METERS = 3
 
   private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {
