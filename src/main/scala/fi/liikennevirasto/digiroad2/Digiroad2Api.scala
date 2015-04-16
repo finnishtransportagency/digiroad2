@@ -69,6 +69,10 @@ with GZipSupport {
   }
 
   get("/floatingAssets") {
+    redirect("/api/floatingMassTransitStops")
+  }
+
+  get("/floatingMassTransitStops") {
     val user = userProvider.getCurrentUser
     assetProvider.getFloatingAssetsByUser(user)
   }
