@@ -5,23 +5,6 @@ import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, Ro
 import org.scalatest._
 
 class GeometryUtilsSpec extends FunSuite with Matchers {
-  test("calculate bearing at asset position") {
-    val asset = AssetWithProperties(0, 0, 0, 10.0, 10.0, wgslon = 10.0, wgslat = 10.0,
-        created = Modification(None, None), modified = Modification(None, None), floating = false,
-        municipalityNumber = 235)
-    val rlDegenerate = RoadLink(id = 0, lonLat = Seq(), municipalityNumber = 235)
-    val rlQuadrant1 = RoadLink(id = 0, lonLat = Seq((1d, 1d), (2d, 2d)), municipalityNumber = 235)
-    val rlQuadrant2 = RoadLink(id = 0, lonLat = Seq((-1d, 1d), (-2d, 2d)), municipalityNumber = 235)
-    val rlQuadrant3 = RoadLink(id = 0, lonLat = Seq((-1d, -1d), (-2d, -2d)), municipalityNumber = 235)
-    val rlQuadrant4 = RoadLink(id = 0, lonLat = Seq((1d, -1d), (2d, -2d)), municipalityNumber = 235)
-    val point = (asset.lon, asset.lat)
-    calculateBearing(point, rlDegenerate.lonLat) should be (0)
-    calculateBearing(point, rlQuadrant1.lonLat) should be (45)
-    calculateBearing(point, rlQuadrant2.lonLat) should be (315)
-    calculateBearing(point, rlQuadrant3.lonLat) should be (225)
-    calculateBearing(point, rlQuadrant4.lonLat) should be (135)
-  }
-
   test("truncate empty geometry") {
     val truncated = truncateGeometry(Nil, 10, 15)
     truncated should be (Nil)
