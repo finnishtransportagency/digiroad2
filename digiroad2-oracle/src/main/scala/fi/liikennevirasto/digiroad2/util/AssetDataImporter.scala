@@ -42,7 +42,8 @@ object AssetDataImporter {
                            validTo: Option[LocalDate] = None,
                            point: Point,
                            roadLinkId: Long,
-                           municipalityCode: Int)
+                           municipalityCode: Int,
+                           bearing: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
