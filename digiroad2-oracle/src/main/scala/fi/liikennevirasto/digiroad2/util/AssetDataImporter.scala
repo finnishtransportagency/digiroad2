@@ -325,10 +325,10 @@ class AssetDataImporter {
       val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
 
       sqlu"""
-        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code)
+        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code, bearing)
         values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId},
                $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)},
-               ${busStop.municipalityCode})
+               ${busStop.municipalityCode}, ${busStop.bearing})
       """.execute
 
       sqlu"""
@@ -337,15 +337,6 @@ class AssetDataImporter {
       """.execute
 
       OracleSpatialAssetDao.updateAssetGeometry(assetId, busStop.point)
-      val bearing = RoadLinkService.getRoadLinkGeometryByTestId(busStop.roadLinkId) match {
-        case Some(geometry) =>
-          GeometryUtils.calculateBearing((busStop.point.x, busStop.point.y), geometry.map { point => (point.x, point.y)})
-        case None =>
-          println(s"No road link found for Asset: $assetId")
-          0.0
-      }
-
-      sqlu"update asset set bearing = $bearing where id = $assetId".execute
       busStop.busStopType.foreach { busStopType =>
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
