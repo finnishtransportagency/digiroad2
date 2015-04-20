@@ -8,10 +8,10 @@ class PointAssetServiceSpec extends FunSuite with Matchers {
     val element = data(0)
 
     val id = element.get("id").get.asInstanceOf[Long]
-    id should equal(9815555)
+    id should equal(24189944)
     val point = element.get("point").get.asInstanceOf[Point]
-    point.x should equal(374699.3691)
-    point.y should equal(6677284.2874)
+    point.x should equal(374673.0256)
+    point.y should equal(6676887.3011)
   }
 
   test("Get Service point data") {
