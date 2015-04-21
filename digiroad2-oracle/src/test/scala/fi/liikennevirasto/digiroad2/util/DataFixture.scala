@@ -148,7 +148,6 @@ object DataFixture {
         setUpTest()
         val typeProps = dataImporter.getTypeProperties
         BusStopTestData.generateTestData.foreach(x => dataImporter.insertBusStops(x, typeProps))
-        BusStopIconImageData.insertImages("testdataimport")
         importMunicipalityCodes()
       case Some("speedlimits") =>
         val taskPool = new ForkJoinPool(8)

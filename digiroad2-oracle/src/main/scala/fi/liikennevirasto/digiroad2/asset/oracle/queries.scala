@@ -28,7 +28,6 @@ object Queries {
     }
   }
 
-  case class Image(imageId: Option[Long], lastModified: Option[DateTime])
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyUiIndex: Int, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String)
 
   trait IAssetRow {
@@ -39,23 +38,22 @@ object Queries {
     val validityDirection: Int
     val property: PropertyRow
     val bearing: Option[Int]
-    val image: Image
   }
 
   case class AssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                      image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point],
+                      created: Modification, modified: Modification, wgsPoint: Option[Point],
                       lrmPosition: LRMPosition, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
   case class SingleAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                            validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                           image: Image, created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
+                           created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                            roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
                            extends IAssetRow
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
-                      image: Image, lrmPosition: LRMPosition, persistedFloating: Boolean)
+                      lrmPosition: LRMPosition, persistedFloating: Boolean, property: PropertyRow)
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
@@ -94,12 +92,11 @@ object Queries {
       val endMeasure = r.nextInt
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
-      val image = new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_)))
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       AssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, property, image,
+        validFrom, validTo, property,
         created, modified, wgsPoint, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode, persistedFloating)
     }
   }
@@ -129,12 +126,11 @@ object Queries {
       val endMeasure = r.nextInt
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong
-      val image = new Image(r.nextLongOption, r.nextTimestampOption.map(new DateTime(_)))
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
       SingleAssetRow(id, externalId, assetTypeId, point, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-                     validFrom, validTo, property, image, created, modified, wgsPoint,
+                     validFrom, validTo, property, created, modified, wgsPoint,
                      lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
   }
@@ -156,10 +152,12 @@ object Queries {
       val endMeasure = r.nextInt()
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong()
-      val image = new Image(r.nextLongOption(), r.nextTimestampOption().map(new DateTime(_)))
+      val propertyPublicId = r.nextString()
+      val propertyValue = r.nextIntOption().map(_.toString).getOrElse("")
       val point = pos.map(bytesToPoint)
+      val property = PropertyRow(0, propertyPublicId, "", 0, false, propertyValue, "")
       ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, image, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating)
+        validFrom, validTo, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating, property)
     }
   }
 
@@ -219,7 +217,7 @@ object Queries {
       when tp.value_fi is not null then tp.value_fi
       else null
     end as display_value,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date,
+    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id,
     a.created_date, a.created_by, a.modified_date, a.modified_by,
     SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
     from asset a
@@ -230,14 +228,13 @@ object Queries {
         left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
         left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
         left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-        left join image i on e.image_id = i.id
     where a.asset_type_id = 10"""
 
   def allAssetsWithoutProperties =
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, i.id as image_id, i.modified_date as image_modified_date
+    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, p.public_id, e.value
     from asset a
       join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
@@ -245,7 +242,6 @@ object Queries {
         left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
         left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
         left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-        join image i on e.image_id = i.id
     where a.asset_type_id = 10"""
 
   def assetLrmPositionId =
@@ -403,5 +399,4 @@ object Queries {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
 
-  def imageById = "select image_data from image where id = ?"
 }

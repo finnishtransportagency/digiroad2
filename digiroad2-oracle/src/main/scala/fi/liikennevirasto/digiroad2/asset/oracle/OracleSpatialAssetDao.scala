@@ -63,22 +63,15 @@ object OracleSpatialAssetDao {
     assetsWithProperties.map(_._1)
   }
 
-  private[oracle] def getImageId(image: Image) = {
-    image.imageId match {
-      case None => null
-      case _ => image.imageId.get + "_" + image.lastModified.get.getMillis
-    }
-  }
 
-  private[oracle] def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
+  def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
       Property(key, row.property.publicId, row.property.propertyType, row.property.propertyUiIndex, row.property.propertyRequired,
         assetRows.map(assetRow =>
           PropertyValue(
             assetRow.property.propertyValue,
-            propertyDisplayValueFromAssetRow(assetRow),
-            getImageId(assetRow.image))
+            propertyDisplayValueFromAssetRow(assetRow))
         ).filter(_.propertyDisplayValue.isDefined).toSeq)
     }.toSeq
   }
@@ -95,12 +88,11 @@ object OracleSpatialAssetDao {
     val wgsPoint = row.wgsPoint.get
     val municipalityCode = row.municipalityCode
     val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
-    (AssetWithProperties(id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+    (AssetWithProperties(id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = assetRows.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
   }
@@ -112,6 +104,13 @@ object OracleSpatialAssetDao {
     }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
   }
 
+  private def extractStopTypes(rows: Seq[PropertyRow]): Seq[Int] = {
+    rows
+      .filter { row => row.publicId.equals("pysakin_tyyppi") }
+      .filterNot { row => row.propertyValue.isEmpty }
+      .map { row => row.propertyValue.toInt }
+  }
+
   private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): (AssetWithProperties, Boolean) = {
     val row = param._2.head
     val point = row.point.get
@@ -119,14 +118,14 @@ object OracleSpatialAssetDao {
     val roadLinkOption = getOptionalProductionRoadLink(row)
     val floating = isFloating(row, roadLinkOption)
     (AssetWithProperties(
-        id = row.id, externalId = row.externalId, assetTypeId = row.assetTypeId,
+        id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
         lon = point.x, lat = point.y,
         propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(param._2)).sortBy(_.propertyUiIndex),
         bearing = row.bearing, municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        imageIds = param._2.map(row => getImageId(row.image)).toSeq.filter(_ != null),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
+        stopTypes = extractStopTypes(param._2.map(_.property)),
         floating = floating), row.persistedFloating)
   }
 
@@ -204,42 +203,20 @@ object OracleSpatialAssetDao {
       val row = assetRows.head
       val point = row.point.get
       (Asset(id = row.id,
-        externalId = row.externalId,
+        nationalId = row.externalId,
         assetTypeId = row.assetTypeId,
         lon = point.x,
         lat = point.y,
         roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary solution for possibly missing roadLinkId
-        imageIds = assetRows.map(row => getImageId(row.image)).toSeq,
         bearing = row.bearing,
         validityDirection = Some(row.validityDirection),
         municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row, roadLinkOption)), row.persistedFloating)
+        floating = isFloating(row, roadLinkOption),
+        stopTypes = extractStopTypes(assetRows.map(_.property))), row.persistedFloating)
     }
     assets.foreach(updateAssetFloatingStatus)
     assets.map(_._1).toSeq
-  }
-
-  def getFloatingAssetsByUser(user: User): Map[String, Seq[Long]] = {
-    val municipalitiesOfUser = user.configuration.authorizedMunicipalities.mkString(",")
-    val allFloatingAssetsQuery =  s"""
-      select a.external_id, m.name_fi
-      from asset a
-        join municipality m on a.municipality_code = m.id
-      where asset_type_id = 10 and floating = '1'
-    """
-
-    val sql = if (user.isOperator()) {
-      allFloatingAssetsQuery
-    } else {
-      allFloatingAssetsQuery + s" and municipality_code in ($municipalitiesOfUser)"
-    }
-
-    val floatingAssets = Q.queryNA[(Long, String)](sql).list()
-
-    floatingAssets
-      .groupBy(_._2)
-      .mapValues(_.map(_._1))
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
@@ -344,7 +321,7 @@ object OracleSpatialAssetDao {
     getAssetById(assetId).get
   }
 
-  private def updateAssetLastModified(assetId: Long, modifier: String) {
+  def updateAssetLastModified(assetId: Long, modifier: String) {
     updateAssetModified(assetId, modifier).execute()
   }
 
@@ -365,7 +342,7 @@ object OracleSpatialAssetDao {
     }
   }
 
-  private def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         OracleSpatialAssetDao.updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
@@ -497,10 +474,6 @@ object OracleSpatialAssetDao {
       v =>
         insertMultipleChoiceValue(assetId, propertyId, v.toLong).execute()
     }
-  }
-
-  def getImage(imageId: Long): Array[Byte] = {
-    Q.query[Long, Array[Byte]](imageById).first(imageId)
   }
 
   def getMunicipalities: Seq[Int] = {

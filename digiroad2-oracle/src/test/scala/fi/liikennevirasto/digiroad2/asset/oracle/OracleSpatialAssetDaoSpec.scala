@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import org.scalatest.{MustMatchers, FunSuite}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{Image, PropertyRow, AssetRow}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{PropertyRow, AssetRow}
 import fi.liikennevirasto.digiroad2.asset.{State, AdministrativeClass, Position, Modification}
 import scala.slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
@@ -107,7 +107,7 @@ class OracleSpatialAssetDaoSpec extends FunSuite with MustMatchers {
   }
 
   private def createAssetRow(propertyRow: PropertyRow) = {
-    AssetRow(1, 1, 1, Some(Point(1, 1)), Some(1), 1, Some(180), 2, None, None, propertyRow, Image(None, None),
+    AssetRow(1, 1, 1, Some(Point(1, 1)), Some(1), 1, Some(180), 2, None, None, propertyRow,
       Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, 235, false)
   }
 }

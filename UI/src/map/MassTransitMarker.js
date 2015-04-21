@@ -3,7 +3,7 @@
 
     var GROUP_ASSET_PADDING = 8;
     var IMAGE_HEIGHT = 17;
-    var EMPTY_IMAGE_TYPE = '99_';
+    var EMPTY_IMAGE_TYPE = '99';
     var getBounds = function(lon, lat) {
       return OpenLayers.Bounds.fromArray([lon, lat, lon, lat]);
     };
@@ -43,8 +43,8 @@
       }
     };
 
-    var getSelectedContent = function(asset, imageIds) {
-      var busStopImages = mapBusStopImageIdsToImages(imageIds);
+    var getSelectedContent = function(asset, stopTypes) {
+      var busStopImages = mapBusStopTypesToImages(stopTypes);
       var name = selectedAssetModel.getName();
       var direction = selectedAssetModel.getDirection();
 
@@ -55,7 +55,7 @@
         .addClass(groupIndex === 0 && 'root')
         .addClass(data.floating ? 'floating' : '')
         .append($('<div class="images field" />').html(busStopImages))
-        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.externalId)))
+        .append($('<div class="bus-stop-id field"/>').html($('<div class="padder">').text(asset.nationalId)))
         .append($('<div class="bus-stop-name field"/>').text(name))
         .append($('<div class="bus-stop-direction field"/>').text(direction));
     };
@@ -76,7 +76,7 @@
 
       return _.chain(filteredGroup)
               .take(groupIndex)
-              .map(function(x) { return x.imageIds.length * IMAGE_HEIGHT; })
+              .map(function(x) { return x.stopTypes.length * IMAGE_HEIGHT; })
               .map(function(x) { return GROUP_ASSET_PADDING + x; })
               .reduce(function(acc, x) { return acc + x; }, 0)
               .value();
@@ -88,29 +88,29 @@
         .css("transform", "translate(0px," + yPositionInGroup + "px)");
     };
 
-    var mapBusStopImageIdsToImages = function(imageIds) {
-      imageIds.sort();
-      return _.map(_.isEmpty(imageIds) ? [EMPTY_IMAGE_TYPE] : imageIds, function(imageId) {
-        return '<img src="api/images/' + imageId + '.png">';
+    var mapBusStopTypesToImages = function(stopTypes) {
+      stopTypes.sort();
+      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
+        return '<img src="/images/mass-transit-stops/' + stopType + '.png">';
       });
     };
 
-    var createImageIds = function(properties) {
+    var extractStopTypes = function(properties) {
       return _.chain(properties)
               .where(function(property) { return property.publicId === 'pysakin_tyyppi'; })
               .pluck('values')
               .flatten()
-              .map(function(value) { return value.propertyValue + '_'; })
+              .pluck('propertyValue')
               .value();
     };
 
     var handleAssetPropertyValueChanged = function(simpleAsset) {
       if (simpleAsset.id === data.id && _.contains(['pysakin_tyyppi', 'nimi_suomeksi'], simpleAsset.propertyData.publicId)) {
         var properties = selectedAssetModel.getProperties();
-        var imageIds = createImageIds(properties);
-        data.imageIds = imageIds;
+        var stopTypes = extractStopTypes(properties);
+        data.stopTypes = stopTypes;
         var assetWithProperties = _.merge({}, data, {propertyData: properties});
-        $(box.div).html(getSelectedContent(assetWithProperties, imageIds));
+        $(box.div).html(getSelectedContent(assetWithProperties, stopTypes));
       }
     };
 
@@ -119,7 +119,7 @@
       var groupIndex = findGroupIndexForAsset(filteredGroup, data);
       var defaultMarker = $('<div class="bus-basic-marker" />')
         .addClass(data.floating ? 'floating' : '')
-        .append($('<div class="images" />').append(mapBusStopImageIdsToImages(data.imageIds)))
+        .append($('<div class="images" />').append(mapBusStopTypesToImages(data.stopTypes)))
         .addClass(groupIndex === 0 && 'root');
       $(box.div).html(defaultMarker);
       $(box.div).removeClass('selected-asset');
@@ -127,8 +127,8 @@
     };
 
     var renderSelectedState = function() {
-      var imageIds = createImageIds(selectedAssetModel.getProperties());
-      $(box.div).html(getSelectedContent(data, imageIds))
+      var stopTypes = extractStopTypes(selectedAssetModel.getProperties());
+      $(box.div).html(getSelectedContent(data, stopTypes))
                 .addClass('selected-asset');
       setYPositionForAssetOnGroup();
     };

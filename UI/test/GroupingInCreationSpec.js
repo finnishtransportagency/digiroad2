@@ -4,13 +4,13 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
 
   describe('when loading application with bus stop', function() {
     var openLayersMap;
-    var testAsset1 = AssetsTestData.generateAsset({id: 1, externalId: 1, lon: 374704.900011667, lat: 6677465.03054922, roadLinkId: 2148015});
+    var testAsset1 = AssetsTestData.generateAsset({id: 1, nationalId: 1, lon: 374704.900011667, lat: 6677465.03054922, roadLinkId: 2148015});
     before(function(done) {
       var assetsData = [testAsset1];
       var backend = testHelpers
         .fakeBackend(assetsData, {}, 12)
         .withAssetCreationTransformation(function(assetData) {
-          return _.merge({}, assetData, {imageIds: ['2_1403010580826'], id: 2});
+          return _.merge({}, assetData, {stopTypes: [2], id: 2});
         });
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;

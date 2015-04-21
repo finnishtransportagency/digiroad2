@@ -1,20 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.asset.AssetProvider
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkUncoveredBySpeedLimit, LinearAssetProvider}
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+
+import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.Props
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import scala.slick.driver.JdbcDriver.backend.Database
 
 class ValluActor extends Actor {
   def receive = {
-    case (municipalityName: String, asset: AssetWithProperties) => ValluSender.postToVallu(municipalityName, asset)
+    case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
     case _                               => println("received unknown message")
   }
 }
@@ -48,8 +48,8 @@ object Digiroad2Context {
 
   lazy val assetProvider: AssetProvider = {
     Class.forName(properties.getProperty("digiroad2.featureProvider"))
-         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider])
-         .newInstance(eventbus, userProvider)
+         .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[UserProvider], classOf[DatabaseTransaction])
+         .newInstance(eventbus, userProvider, DefaultDatabaseTransaction)
          .asInstanceOf[AssetProvider]
   }
 
@@ -71,6 +71,17 @@ object Digiroad2Context {
   lazy val eventbus: DigiroadEventBus = {
     Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
   }
+
+  lazy val massTransitStopService: MassTransitStopService = {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def roadLinkService: RoadLinkService = RoadLinkService
+      override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+    }
+    new ProductionMassTransitStopService(eventbus)
+  }
+
+  lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
 
   val env = System.getProperty("env")
   def getProperty(name: String) = {

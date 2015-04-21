@@ -45,7 +45,7 @@
     };
 
     var isCarTrafficRoad = function() {
-      return !_.contains([8, 9, 21], data.linkType);
+      return !_.isUndefined(data.linkType) && !_.contains([8, 9, 21, 99], data.linkType);
     };
 
     var cancel = function() {
@@ -96,6 +96,21 @@
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
+        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+          return roadLink.getId();
+        });
+        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLink) {
+          return new RoadLinkModel(roadLink);
+        });
+        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLink) {
+          return _.contains(selectedIds, roadLink.getId());
+        }).concat(getSelectedRoadLinks());
+        eventbus.trigger('roadLinks:fetched');
+      });
+    };
+
+    this.fetchFromVVH = function(boundingBox, zoom) {
+      backend.getRoadLinksFromVVH(boundingBox, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });

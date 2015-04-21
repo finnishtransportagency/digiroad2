@@ -1,41 +1,39 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, PropertyTypes, Property, AssetWithProperties}
-import scala.xml.{Elem, NodeSeq, XML}
-import javax.xml.validation.SchemaFactory
+import java.io.StringReader
 import javax.xml.XMLConstants
-import java.io.{StringReader}
 import javax.xml.transform.stream.StreamSource
-import fi.liikennevirasto.digiroad2.asset.Modification
+import javax.xml.validation.SchemaFactory
+
+import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
+import fi.liikennevirasto.digiroad2.asset.{Modification, Property, PropertyTypes, PropertyValue}
 import org.joda.time.DateTime
+import org.scalatest._
+
+import scala.xml.{NodeSeq, XML}
 
 class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
   val modifiedDatetime = new DateTime(2014, 5, 19, 10, 21, 0)
   val createdDateTime = modifiedDatetime.minusYears(1).minusMonths(1).minusDays(1)
 
-  val testAsset = AssetWithProperties(
-    id = 1,
-    externalId = 123,
-    assetTypeId = 1,
+  val testAsset = EventBusMassTransitStop(
+    nationalId = 123,
     validityDirection = Some(2),
     lon = 1,
     lat = 1,
-    wgslon = 1,
-    wgslat = 1,
     bearing = Some(120),
     municipalityNumber = 235,
+    municipalityName = "Kauniainen",
     created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser")),
     propertyData = List(
         Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa")))),
         Property(id = 1, publicId = "pysakin_tyyppi", propertyType = "text", values = List())
-    ),
-    floating = false
+    )
   )
 
   it must "specify encoding" in {
-    val message: String = ValluStoreStopChangeMessage.create("Kauniainen", testAsset)
+    val message: String = ValluStoreStopChangeMessage.create(testAsset)
     validateValluMessage(message)
     message startsWith("""<?xml version="1.0" encoding="UTF-8"?>""")
   }
@@ -238,8 +236,8 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     schema.newValidator().validate(new StreamSource(new StringReader(valluMessage)))
   }
 
-  private def validateAndParseTestAssetMessage(asset: AssetWithProperties): NodeSeq = {
-    val message = ValluStoreStopChangeMessage.create("Kauniainen", asset)
+  private def validateAndParseTestAssetMessage(stop: EventBusMassTransitStop): NodeSeq = {
+    val message = ValluStoreStopChangeMessage.create(stop)
     validateValluMessage(message)
     XML.loadString(message) \ "Stop"
   }

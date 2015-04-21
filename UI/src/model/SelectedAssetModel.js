@@ -1,12 +1,12 @@
 (function(selectedAssetModel) {
   selectedAssetModel.initialize = function(backend) {
     var usedKeysFromFetchedAsset = [
-      'assetTypeId',
       'bearing',
       'lat',
       'lon',
       'roadLinkId',
-      'externalId',
+      'mmlId',
+      'nationalId',
       'validityDirection',
       'floating'];
     var assetHasBeenModified = false;
@@ -24,7 +24,7 @@
       if (tool === 'Add') {
         close();
       } else if (currentAsset.id) {
-        backend.getAsset(currentAsset.id);
+        backend.getAsset(currentAsset.payload.nationalId);
       }
     });
 
@@ -78,11 +78,11 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      backend.getAssetTypeProperties(10, function(properties) {
+      backend.getAssetTypeProperties(function(properties) {
         currentAsset.propertyMetadata = properties;
-        currentAsset.payload = _.merge({ assetTypeId: 10 }, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
+        currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
-        eventbus.trigger('asset:modified', currentAsset);
+        eventbus.trigger('asset:modified');
       });
     };
 
@@ -91,6 +91,7 @@
       currentAsset.payload.lon = position.lon;
       currentAsset.payload.lat = position.lat;
       currentAsset.payload.roadLinkId = position.roadLinkId;
+      currentAsset.payload.mmlId = position.mmlId;
       assetHasBeenModified = true;
       changedProps = _.union(changedProps, ['bearing', 'lon', 'lat', 'roadLinkId']);
       eventbus.trigger('asset:moved', position);
@@ -100,7 +101,7 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        backend.getAssetWithCallback(currentAsset.id, function(asset) {
+        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
           open(asset);
           eventbus.trigger('asset:updateCancelled', asset);
         });
@@ -118,7 +119,7 @@
 
     eventbus.on('application:readOnly', function() {
       if (currentAsset.id) {
-        backend.getAsset(currentAsset.id);
+        backend.getAsset(currentAsset.payload.nationalId);
       }
     });
 
@@ -191,7 +192,7 @@
           open(asset);
           eventbus.trigger('asset:saved', asset, positionUpdated);
         }, function() {
-          backend.getAssetWithCallback(currentAsset.id, function(asset) {
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
             open(asset);
             eventbus.trigger('asset:updateFailed', asset);
           });
@@ -218,14 +219,14 @@
     };
 
     var change = function(asset) {
-      changeByExternalId(asset.externalId);
+      changeByNationalId(asset.nationalId);
     };
 
-    var changeByExternalId = function(assetExternalId) {
-      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.externalId !== assetExternalId && !assetHasBeenModified;
+    var changeByNationalId = function(assetNationalId) {
+      var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        backend.getAssetByExternalId(assetExternalId, function(asset) {
+        backend.getMassTransitStopByNationalId(assetNationalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -257,7 +258,7 @@
       cancel: cancel,
       exists: exists,
       change: change,
-      changeByExternalId: changeByExternalId,
+      changeByExternalId: changeByNationalId,
       getId: getId,
       getName: getName,
       getDirection: getDirection,

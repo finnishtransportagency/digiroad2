@@ -10,9 +10,14 @@ import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, Reque
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.{User}
+import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
 
-class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupport with RequestHeaderAuthentication with GZipSupport {
+class Digiroad2Api(val roadLinkService: RoadLinkService) extends ScalatraServlet
+with JacksonJsonSupport
+with CorsSupport
+with RequestHeaderAuthentication
+with GZipSupport {
   val logger = LoggerFactory.getLogger(getClass)
   val MunicipalityNumber = "municipalityNumber"
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
@@ -51,23 +56,35 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
       case _ => (None, None)
     }
-    getAssetsBy(user, validFrom, validTo)
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    assetProvider.getAssets(user, bbox, validFrom, validTo)
   }
 
-
-  def getAssetsBy(user: User, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    assetProvider.getAssets(user, boundsFromParams, validFrom, validTo)
-  }
-
-  get("/floatingAssets") {
+  get("/massTransitStops") {
     val user = userProvider.getCurrentUser
-    assetProvider.getFloatingAssetsByUser(user)
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    useVVHGeometry match {
+      case true => massTransitStopService.getByBoundingBox(user, bbox)
+      case false => assetProvider.getAssets(user, bbox, None, None)
+    }
+  }
+
+  get("/floatingMassTransitStops") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    massTransitStopService.getFloatingStops(includedMunicipalities)
   }
 
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }
 
+  // TODO: Remove obsolete entry point
   get("/assets/:assetId") {
     val getAssetById = if (params.get("externalId").isDefined) {
       assetProvider.getAssetByExternalId _
@@ -87,10 +104,48 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     }
   }
 
+
+  get("/massTransitStops/:nationalId") {
+    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
+    }
+    val nationalId = params("nationalId").toLong
+    val massTransitStop = useVVHGeometry match {
+      case true => massTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+         Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData)
+      }
+      case false => assetProvider.getAssetByExternalId(nationalId).map { stop =>
+        validateMunicipalityAuthorization(nationalId)(stop.municipalityNumber)
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData)
+      }
+    }
+    massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+  }
+
   get("/enumeratedPropertyValues/:assetTypeId") {
     assetProvider.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
+  // TODO: Remove obsolete entry point
   put("/assets/:id") {
     val (optionalLon, optionalLat, optionalRoadLinkId, bearing) =
       ((parsedBody \ "lon").extractOpt[Double], (parsedBody \ "lat").extractOpt[Double],
@@ -103,10 +158,46 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
     assetProvider.updateAsset(params("id").toLong, position, props)
   }
 
+  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
+    val lon = (parsedBody \ "lon").extractOpt[Double]
+    val lat = (parsedBody \ "lat").extractOpt[Double]
+    val roadLinkId = useVVHGeometry match {
+      case true => (parsedBody \ "mmlId").extractOpt[Long]
+      case false => (parsedBody \ "roadLinkId").extractOpt[Long]
+    }
+    val bearing = (parsedBody \ "bearing").extractOpt[Int]
+    (lon, lat, roadLinkId, bearing)
+  }
+
+  put("/massTransitStops/:id") {
+    def validateMunicipalityAuthorization(id: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
+        halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
+    }
+    val (optionalLon, optionalLat, optionalRoadLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val position = (optionalLon, optionalLat, optionalRoadLinkId) match {
+      case (Some(lon), Some(lat), Some(roadLinkId)) => Some(Position(lon, lat, roadLinkId, bearing))
+      case _ => None
+    }
+    try {
+      val id = params("id").toLong
+      useVVHGeometry match {
+        case true =>
+          massTransitStopService.updateExisting(id, position, properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+        case false =>
+          assetProvider.updateAsset(id, position, properties)
+      }
+    } catch {
+      case e: NoSuchElementException => BadRequest("Target roadlink not found")
+    }
+  }
+
+  // TODO: Remove obsolete entry point
   post("/assets") {
     val user = userProvider.getCurrentUser()
     assetProvider.createAsset(
-      (parsedBody \ "assetTypeId").extract[Long],
+      10,
       (parsedBody \ "lon").extract[Int].toDouble,
       (parsedBody \ "lat").extract[Int].toDouble,
       (parsedBody \ "roadLinkId").extract[Long],
@@ -115,34 +206,134 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
+  private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
+     useVVHGeometry match {
+      case true =>
+        val massTransitStop = massTransitStopService.createNew(lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+        Map("id" -> massTransitStop.id,
+          "nationalId" -> massTransitStop.nationalId,
+          "stopTypes" -> massTransitStop.stopTypes,
+          "lat" -> massTransitStop.lat,
+          "lon" -> massTransitStop.lon,
+          "validityDirection" -> massTransitStop.validityDirection,
+          "bearing" -> massTransitStop.bearing,
+          "validityPeriod" -> massTransitStop.validityPeriod,
+          "floating" -> massTransitStop.floating,
+          "propertyData" -> massTransitStop.propertyData)
+      case false =>
+        val asset = assetProvider.createAsset(10, lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
+        Map("id" -> asset.id,
+          "nationalId" -> asset.nationalId,
+          "stopTypes" -> asset.stopTypes,
+          "lat" -> asset.lat,
+          "lon" -> asset.lon,
+          "validityDirection" -> asset.validityDirection,
+          "bearing" -> asset.bearing,
+          "validityPeriod" -> asset.validityPeriod,
+          "floating" -> asset.floating,
+          "propertyData" -> asset.propertyData)
+     }
+  }
+  private def validateUserRights(roadLinkId: Long) = {
+    if(useVVHGeometry) {
+      val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_._1).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+      if (!authorized) halt(Unauthorized("User not authorized"))
+    }
+  }
+  private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
+    if(useVVHGeometry) {
+      val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
+      val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
+        mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
+      }
+      val missingProperties: Set[String] = mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
+      if (missingProperties.nonEmpty) halt(BadRequest("Missing mandatory properties: " + missingProperties.mkString(", ")))
+      val propertiesWithInvalidValues = nonEmptyMandatoryProperties.filter { property =>
+        val propertyType = mandatoryProperties(property.publicId)
+        propertyType match {
+          case PropertyTypes.MultipleChoice =>
+            property.values.forall { value => isBlank(value.propertyValue) || value.propertyValue.toInt == 99 }
+          case _ =>
+            property.values.forall { value => isBlank(value.propertyValue) }
+        }
+      }
+      if (propertiesWithInvalidValues.nonEmpty)
+        halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
+    }
+  }
+  post("/massTransitStops") {
+    val positionParameters = massTransitStopPositionParameters(parsedBody)
+    val lon = positionParameters._1.get
+    val lat = positionParameters._2.get
+    val roadLinkId = positionParameters._3.get
+    val bearing = positionParameters._4.get
+    val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
+    validateUserRights(roadLinkId)
+    validateCreationProperties(properties)
+    createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
+  }
+
+
+  private def getRoadLinks(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    RoadLinkService.getRoadLinks(
+      bounds = boundingRectangle,
+      municipalities = municipalities).map { roadLink =>
+      val (id, mmlId, points, length, administrativeClass, functionalClass,
+      trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
+      Map("roadLinkId" -> id,
+        "mmlId" -> mmlId,
+        "points" -> points,
+        "length" -> length,
+        "administrativeClass" -> administrativeClass.toString,
+        "functionalClass" -> functionalClass,
+        "trafficDirection" -> trafficDirection.toString,
+        "modifiedAt" -> modifiedAt,
+        "modifiedBy" -> modifiedBy,
+        "linkType" -> linkType)
+    }
+  }
+
+  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]]  = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    RoadLinkService.getRoadLinksFromVVH(
+      bounds = boundingRectangle,
+      municipalities = municipalities).map { roadLink =>
+      Map(
+        "mmlId" -> roadLink.mmlId,
+        "points" -> roadLink.geometry,
+        "administrativeClass" -> roadLink.administrativeClass.toString,
+        "linkType" -> roadLink.linkType.value)
+    }
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      RoadLinkService.getRoadLinks(
-          bounds = boundingRectangle,
-          municipalities = municipalities).map { roadLink =>
-        val (id, mmlId, points, length, administrativeClass, functionalClass,
-             trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
-        Map("roadLinkId" -> id,
-            "mmlId" -> mmlId,
-            "points" -> points,
-            "length" -> length,
-            "administrativeClass" -> administrativeClass.toString,
-            "functionalClass" -> functionalClass,
-            "trafficDirection" -> trafficDirection.toString,
-            "modifiedAt" -> modifiedAt,
-            "modifiedBy" -> modifiedBy,
-            "linkType" -> linkType)
-      }
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
+    params.get("bbox")
+      .map (getRoadLinks(municipalities))
+      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  get("/roadlinks2") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val getRoadLinksFn = useVVHGeometry match {
+      case true => getRoadLinksFromVVH(municipalities) _
+      case false => getRoadLinks(municipalities) _
     }
+
+    params.get("bbox")
+      .map (getRoadLinksFn)
+      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   get("/roadlinks/:id") {
@@ -188,14 +379,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       "linkType" -> updatedLinkType)
   }
 
-  get("/images/:imageId") {
-    val id = params("imageId").split("_").head // last modified date is appended with an underscore to image id in order to cache image when it has not been altered
-    val bytes = assetProvider.getImage(id.toLong)
-    response.setHeader("Expires", Never)
-    response.setContentType("application/octet-stream")
-    bytes
-  }
-
   get("/assetTypeProperties/:assetTypeId") {
     try {
       val assetTypeId = params("assetTypeId").toLong
@@ -219,15 +402,6 @@ class Digiroad2Api extends ScalatraServlet with JacksonJsonSupport with CorsSupp
       NewRelic.noticeError(e)
       halt(InternalServerError("API error"))
     }
-  }
-
-  private[this] def boundsFromParams: Option[BoundingRectangle] = {
-    val bboxOption = params.get("bbox").map(constructBoundingRectangle)
-    bboxOption.foreach(validateBoundingBox)
-    if (bboxOption.isEmpty) {
-      halt(BadRequest("Bounding box was missing"))
-    }
-    bboxOption
   }
 
   private def validateBoundingBox(bbox: BoundingRectangle): Unit = {

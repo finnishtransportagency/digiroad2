@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
-import org.scalatest.{BeforeAndAfter, Tag}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import scala.Some
+import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, Tag}
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
@@ -19,8 +20,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+  when(mockRoadLinkService.fetchVVHRoadlink(2l)).thenReturn(Some((235, Nil)))
 
-  addServlet(classOf[Digiroad2Api], "/*")
+  addServlet(new Digiroad2Api(mockRoadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   after {
@@ -54,15 +58,15 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("get floating assets") {
-    getWithUserAuth("/floatingAssets") {
+  test("get floating mass transit stops") {
+    getWithUserAuth("/floatingMassTransitStops") {
       val response = parse(body).extract[Map[String, Seq[Long]]]
       status should equal(200)
       response.size should be(1)
       response should be(Map("Kauniainen" -> List(6)))
     }
 
-    getWithOperatorAuth("/floatingAssets") {
+    getWithOperatorAuth("/floatingMassTransitStops") {
       val response = parse(body).extract[Map[String, Seq[Long]]]
       status should equal(200)
       response.size should be(1)
@@ -85,11 +89,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get asset by id", Tag("db")) {
-    getWithUserAuth("/assets/" + CreatedTestAssetId) {
+    getWithUserAuth("/massTransitStops/2") {
       status should equal(200)
-      parse(body).extract[AssetWithProperties].id should be (CreatedTestAssetId)
+      val parsedBody = parse(body)
+      (parsedBody \ "id").extract[Int] should be(CreatedTestAssetId)
     }
-    getWithUserAuth("/assets/9999999999999999") {
+    getWithUserAuth("/massTransitStops/9999999999999999") {
       status should equal(404)
     }
   }
@@ -126,25 +131,35 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body1.getBytes) {
       status should equal(200)
-      getWithUserAuth("/assets/" + CreatedTestAssetId) {
-        val asset = parse(body).extract[AssetWithProperties]
-        val prop = asset.propertyData.find(_.publicId == TestPropertyId2).get
+      getWithUserAuth("/massTransitStops/2") {
+        val parsedBody = parse(body)
+        val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
+        val prop = properties.find(_.publicId == TestPropertyId2).get
         prop.values.size should be (1)
         prop.values.head.propertyValue should be ("3")
         putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body2.getBytes) {
           status should equal(200)
-          getWithUserAuth("/assets/" + CreatedTestAssetId) {
-            parse(body).extract[AssetWithProperties].propertyData.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
+          getWithUserAuth("/massTransitStops/2") {
+            val parsedBody = parse(body)
+            val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
+            properties.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
           }
         }
       }
     }
   }
 
-  test("validate asset when creating", Tag("db")) {
-    val requestPayload = """{"assetTypeId": 10, "lon": 0, "lat": 0, "roadLinkId": 5990, "bearing": 0}"""
-    postJsonWithUserAuth("/assets", requestPayload.getBytes) {
-      status should equal(500)
+  test("validate request parameters when creating a new mass transit stop", Tag("db")) {
+    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 2, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+      status should equal(400)
+    }
+  }
+
+  test("validate user rights when creating a new mass transit stop", Tag("db")) {
+    val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 1, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+      status should equal(401)
     }
   }
 
@@ -181,20 +196,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("load image by id", Tag("db")) {
-    getWithUserAuth("/images/2") {
-      status should equal(200)
-      body.length should(be > 0)
-    }
-  }
-
-  test("load image by id and timestamp", Tag("db")) {
-    getWithUserAuth("/images/1_123456789") {
-      status should equal(200)
-      body.length should(be > 0)
-    }
-  }
-
   test("write requests pass only if user is not in viewer role", Tag("db")) {
     postJsonWithUserAuth("/assets/", Array(), username = "testviewer") {
       status should equal(401)
@@ -225,13 +226,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val propertyNames = parse(body).extract[Map[String, String]]
       propertyNames("ensimmainen_voimassaolopaiva") should be("Ensimmäinen voimassaolopäivä")
       propertyNames("matkustajatunnus") should be("Matkustajatunnus")
-    }
-  }
-
-  test("get national bus stop id", Tag("db")) {
-    getWithUserAuth("/assets/300008") {
-      val assetWithProperties: AssetWithProperties = parse(body).extract[AssetWithProperties]
-      assetWithProperties.externalId should be (85755)
     }
   }
 

@@ -16,7 +16,7 @@ trait AssetPropertiesReader {
     }
   }
 
-  protected def extractPropertyValueOption(asset: AssetWithProperties, propertyPublicId: String): Option[String] = {
+  protected def extractPropertyValueOption(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
     asset.propertyData
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)

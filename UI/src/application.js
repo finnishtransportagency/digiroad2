@@ -2,8 +2,8 @@ var URLRouter = function(map, backend, models) {
   var Router = Backbone.Router.extend({
     initialize: function() {
       // Support legacy format for opening mass transit stop via ...#300289
-      this.route(/^(\d+)$/, function(externalId) {
-        this.massTransitStop(externalId);
+      this.route(/^(\d+)$/, function(nationalId) {
+        this.massTransitStop(nationalId);
       });
 
       this.route(/^([A-Za-z]+)$/, function(layer) {
@@ -19,7 +19,7 @@ var URLRouter = function(map, backend, models) {
 
     massTransitStop: function(id) {
       applicationModel.selectLayer('massTransitStop');
-      backend.getAssetByExternalId(id, function(massTransitStop) {
+      backend.getMassTransitStopByNationalId(id, function(massTransitStop) {
         eventbus.once('massTransitStops:available', function() {
           models.selectedMassTransitStopModel.changeByExternalId(id);
         });
@@ -49,7 +49,7 @@ var URLRouter = function(map, backend, models) {
   });
 
   eventbus.on('asset:fetched asset:created', function(asset) {
-    router.navigate('massTransitStop/' + asset.externalId);
+    router.navigate('massTransitStop/' + asset.nationalId);
   });
 
   eventbus.on('linkProperties:unselected', function() {

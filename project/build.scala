@@ -57,6 +57,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % "2.2",
         "com.github.tototoshi" %% "slick-joda-mapper" % "1.0.0",
         "com.github.tototoshi" %% "scala-csv" % "1.0.0",
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3" % "test"
       ),

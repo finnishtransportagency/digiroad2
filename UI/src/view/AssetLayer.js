@@ -34,7 +34,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         lon: selectedAssetModel.get('lon'),
         lat: selectedAssetModel.get('lat'),
         bearing: selectedAssetModel.get('bearing'),
-        roadLinkId: selectedAssetModel.get('roadLinkId')
+        roadLinkId: selectedAssetModel.get('roadLinkId'),
+        mmlId: selectedAssetModel.get('mmlId')
       });
       eventbus.trigger('asset:moveCompleted');
       assetIsMoving = false;
@@ -342,7 +343,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
       validityDirection: validitydirections.sameDirection,
       lon: projectionOnNearestLine.x,
       lat: projectionOnNearestLine.y,
-      roadLinkId: nearestLine.roadLinkId
+      roadLinkId: nearestLine.roadLinkId,
+      mmlId: nearestLine.mmlId
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
@@ -351,7 +353,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
     selectedAsset = {directionArrow: massTransitStop.getDirectionArrow(true),
       data: data,
       massTransitStop: massTransitStop};
-    selectedAsset.data.imageIds = [];
+    selectedAsset.data.stopTypes = [];
     selectedAssetModel.place(selectedAsset.data);
 
     assetDirectionLayer.addFeatures(selectedAsset.massTransitStop.getDirectionArrow());
@@ -434,7 +436,8 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         lon: lonlat.lon,
         lat: lonlat.lat,
         bearing: angle,
-        roadLinkId: nearestLine.roadLinkId
+        roadLinkId: nearestLine.roadLinkId,
+        mmlId: nearestLine.mmlId
       });
    }
   };
@@ -548,7 +551,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
           assetsModel.refreshAssets(mapMoveEvent);
         });
-        roadCollection.fetch(map.getExtent(), map.getZoom());
+        roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
       }
     } else {
       if (applicationModel.getSelectedLayer() === 'massTransitStop') {
@@ -608,7 +611,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         assetsModel.fetchAssets(map.getExtent());
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     }
   };
 

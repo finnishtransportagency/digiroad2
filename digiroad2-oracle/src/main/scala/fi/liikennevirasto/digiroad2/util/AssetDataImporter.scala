@@ -42,7 +42,8 @@ object AssetDataImporter {
                            validTo: Option[LocalDate] = None,
                            point: Point,
                            roadLinkId: Long,
-                           municipalityCode: Int)
+                           municipalityCode: Int,
+                           bearing: Double)
   case class SimpleRoadLink(id: Long, roadType: Int, roadNumber: Int, roadPartNumber: Int, functionalClass: Int, rStartHn: Int, lStartHn: Int,
                             rEndHn: Int, lEndHn: Int, municipalityNumber: Int, geom: STRUCT)
 
@@ -324,10 +325,10 @@ class AssetDataImporter {
       val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
 
       sqlu"""
-        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code)
+        insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code, bearing)
         values($assetId, ${busStop.busStopId}, ${typeProps.busStopAssetTypeId},
                $Modifier, ${busStop.validFrom}, ${busStop.validTo.getOrElse(null)},
-               ${busStop.municipalityCode})
+               ${busStop.municipalityCode}, ${busStop.bearing})
       """.execute
 
       sqlu"""
@@ -336,21 +337,6 @@ class AssetDataImporter {
       """.execute
 
       OracleSpatialAssetDao.updateAssetGeometry(assetId, busStop.point)
-
-      val bearing = OracleSpatialAssetDao.getAssetById(assetId) match {
-        case Some(a) =>
-          RoadLinkService.getRoadLinkGeometryByTestId(busStop.roadLinkId) match {
-            case Some(geometry) => GeometryUtils.calculateBearing((a.lon, a.lat), geometry.map { point => (point.x, point.y) })
-            case None =>
-              println(s"No road link found for Asset: $assetId")
-              0.0
-          }
-        case None =>
-          println(s"No Asset found: $assetId")
-          0.0
-      }
-
-      sqlu"update asset set bearing = $bearing where id = $assetId".execute
       busStop.busStopType.foreach { busStopType =>
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }

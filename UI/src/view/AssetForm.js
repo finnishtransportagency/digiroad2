@@ -106,8 +106,8 @@
 
           var header = $('<header/>');
 
-          if (_.isNumber(selectedAssetModel.get('externalId'))) {
-            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('externalId') + '</span>');
+          if (_.isNumber(selectedAssetModel.get('nationalId'))) {
+            header.append('<span>Valtakunnallinen ID: ' + selectedAssetModel.get('nationalId') + '</span>');
           } else {
             header.append('<span>Uusi pys&auml;kki</span>');
           }
@@ -373,6 +373,45 @@
         return element;
       };
 
+      var sortProperties = function(properties) {
+        var propertyOrdering = [
+          'lisatty_jarjestelmaan',
+          'muokattu_viimeksi',
+          'nimi_suomeksi',
+          'nimi_ruotsiksi',
+          'tietojen_yllapitaja',
+          'yllapitajan_tunnus',
+          'yllapitajan_koodi',
+          'matkustajatunnus',
+          'maastokoordinaatti_x',
+          'maastokoordinaatti_y',
+          'maastokoordinaatti_z',
+          'liikennointisuunta',
+          'vaikutussuunta',
+          'liikennointisuuntima',
+          'ensimmainen_voimassaolopaiva',
+          'viimeinen_voimassaolopaiva',
+          'pysakin_tyyppi',
+          'aikataulu',
+          'katos',
+          'mainoskatos',
+          'penkki',
+          'pyorateline',
+          'sahkoinen_aikataulunaytto',
+          'valaistus',
+          'esteettomyys_liikuntarajoitteiselle',
+          'saattomahdollisuus_henkiloautolla',
+          'liityntapysakointipaikkojen_maara',
+          'liityntapysakoinnin_lisatiedot',
+          'pysakin_omistaja',
+          'palauteosoite',
+          'lisatiedot'];
+
+        return _.sortBy(properties, function(property) {
+          return _.indexOf(propertyOrdering, property.publicId);
+        });
+      };
+
       var floatingStatus = function(selectedAssetModel) {
         return [{
           propertyType: 'notification',
@@ -382,7 +421,7 @@
       };
 
       var getAssetForm = function() {
-        var properties = selectedAssetModel.getProperties();
+        var properties = sortProperties(selectedAssetModel.getProperties());
         var contents = _.first(properties, 2)
           .concat(floatingStatus(selectedAssetModel))
           .concat(_.rest(properties, 2));
@@ -451,7 +490,7 @@
         streetViewHandler.update();
       });
 
-      backend.getEnumeratedPropertyValues(10);
+      backend.getEnumeratedPropertyValues();
     }
   };
 })(this);

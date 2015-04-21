@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.vallu
 
-import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Property}
 import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 object ValluTransformer extends AssetPropertiesReader {
   def transformToISODate(dateOption: Option[String]) = {
@@ -10,7 +10,7 @@ object ValluTransformer extends AssetPropertiesReader {
     dateOption.map(date => ISODateTimeFormat.dateHourMinuteSecond().print(inputDateFormat.parseDateTime(date))).getOrElse("")
   }
 
-  def describeReachability(asset: AssetWithProperties): String = {
+  def describeReachability(asset: {val propertyData: Seq[Property]}): String = {
     val result = List(
       extractPropertyValueOption(asset, "saattomahdollisuus_henkiloautolla").map { continuousParking =>
         if (continuousParking == "2") "Liityntäpysäköinti" else ""
@@ -22,7 +22,7 @@ object ValluTransformer extends AssetPropertiesReader {
     result
   }
 
-  def describeEquipments(asset: AssetWithProperties): String = {
+  def describeEquipments(asset: {val propertyData: Seq[Property]}): String = {
     val result = List(
       extractPropertyValueOption(asset, "aikataulu").map { x =>
         if (x == "2") "Aikataulu" else ""

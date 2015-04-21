@@ -1,19 +1,20 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Property, AssetWithProperties}
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, CommonAssetProperty, OracleSpatialAssetDao}
+import java.util.Properties
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
+import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
+import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Property}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import org.json4s.DefaultFormats
-import org.json4s.Formats
-import org.scalatra.{BadRequest, ScalatraServlet, ScalatraBase}
-import org.scalatra.json.JacksonJsonSupport
-import org.slf4j.LoggerFactory
+import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
-import org.scalatra.auth.{ScentrySupport, ScentryConfig}
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import java.util.Properties
+import org.scalatra.auth.{ScentryConfig, ScentrySupport}
+import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
+import org.slf4j.LoggerFactory
+
 import scala.slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
@@ -88,65 +89,80 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     key -> transformation(values)
   }
 
-  def extractModificationTime(asset: AssetWithProperties): (String, String) = {
+  def extractModificationTime(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-      asset.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(asset.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      massTransitStop.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+        .getOrElse(massTransitStop.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
         .getOrElse(""))
   }
 
-  def extractBearing(asset: AssetWithProperties): (String, Option[Int]) = { "suuntima" -> asset.bearing }
+  def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
 
-  def extractExternalId(asset: AssetWithProperties): (String, Long) = { "valtakunnallinen_id" -> asset.externalId }
+  def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
 
-  def extractFloating(asset: AssetWithProperties): (String, Boolean) = { "kelluvuus" -> asset.floating }
+  def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
 
-  private def toGeoJSON(input: Iterable[AssetWithProperties]): Map[String, Any] = {
+  private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (asset) => Map(
+        case (massTransitStop) => Map(
           "type" -> "Feature",
-          "id" -> asset.id,
-          "geometry" -> Map("type" -> "Point", "coordinates" -> List(asset.lon, asset.lat)),
+          "id" -> massTransitStop.id,
+          "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
           "properties" -> Map(
-            extractModificationTime(asset),
-            extractBearing(asset),
-            extractExternalId(asset),
-            extractFloating(asset),
-            extractPropertyValue("pysakin_tyyppi", asset.propertyData, propertyValuesToIntList),
-            extractPropertyValue("nimi_suomeksi", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("nimi_ruotsiksi", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("tietojen_yllapitaja", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("yllapitajan_tunnus", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("yllapitajan_koodi", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("matkustajatunnus", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_x", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_y", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("maastokoordinaatti_z", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("liikennointisuunta", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("vaikutussuunta", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("ensimmainen_voimassaolopaiva", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("viimeinen_voimassaolopaiva", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("aikataulu", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("katos", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("mainoskatos", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("penkki", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("sahkoinen_aikataulunaytto", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("valaistus", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("esteettomyys_liikuntarajoitteiselle", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("saattomahdollisuus_henkiloautolla", asset.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("liityntapysakointipaikkojen_maara", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("liityntapysakoinnin_lisatiedot", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("pysakin_omistaja", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("palauteosoite", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("lisatiedot", asset.propertyData, propertyValuesToString),
-            extractPropertyValue("pyorateline", asset.propertyData, firstPropertyValueToInt))
+            extractModificationTime(massTransitStop),
+            extractBearing(massTransitStop),
+            extractExternalId(massTransitStop),
+            extractFloating(massTransitStop),
+            extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
+            extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("tietojen_yllapitaja", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("yllapitajan_tunnus", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("yllapitajan_koodi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("matkustajatunnus", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("maastokoordinaatti_x", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("maastokoordinaatti_y", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("maastokoordinaatti_z", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("liikennointisuunta", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("vaikutussuunta", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("ensimmainen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("viimeinen_voimassaolopaiva", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("aikataulu", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("katos", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("mainoskatos", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("penkki", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("sahkoinen_aikataulunaytto", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("valaistus", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("esteettomyys_liikuntarajoitteiselle", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("saattomahdollisuus_henkiloautolla", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("liityntapysakointipaikkojen_maara", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("liityntapysakoinnin_lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt))
        )
       })
   }
 
+  private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
+    MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
+      bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
+      modified = asset.modified, floating = asset.floating)
+  }
+
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
+
+  private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
+    useVVHGeometry match {
+      case true =>
+        massTransitStopService.getByMunicipality(municipalityNumber)
+      case false =>
+        OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber).map(assetToIntegrationMassTransitStop)
+    }
+  }
 
   get("/:assetType") {
     contentType = formats("json")
@@ -154,7 +170,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
       assetType match {
-        case "mass_transit_stops" => withDynSession { toGeoJSON(OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber)) }
+        case "mass_transit_stops" => withDynSession { toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber)) }
         case "speed_limits" => withDynSession { OracleLinearAssetDao.getByMunicipality(municipalityNumber) }
         case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
         case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)

@@ -30,8 +30,8 @@
             var tableHeaderRow = function(municipalityName) {
                 return $('<caption/>').html(municipalityName);
             };
-            var assetLink = function(externalId) {
-                var link =  Environment.urlPath() + '/#massTransitStop/' + externalId;
+            var assetLink = function(nationalId) {
+                var link =  Environment.urlPath() + '/#massTransitStop/' + nationalId;
                 return $('<a/>').attr('href', link).html(link);
             };
             var tableContentRows = function(externalIds) {

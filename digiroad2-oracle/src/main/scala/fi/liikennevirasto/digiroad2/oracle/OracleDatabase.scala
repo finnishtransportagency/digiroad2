@@ -35,13 +35,13 @@ object OracleDatabase {
     props
   }
 
-  def boundingBoxFilter(bounds: BoundingRectangle): String = {
+  def boundingBoxFilter(bounds: BoundingRectangle, geometryColumn: String): String = {
     val leftBottomX = bounds.leftBottom.x
     val leftBottomY = bounds.leftBottom.y
     val rightTopX = bounds.rightTop.x
     val rightTopY = bounds.rightTop.y
     s"""
-        mdsys.sdo_filter(shape,
+        mdsys.sdo_filter($geometryColumn,
                          sdo_cs.viewport_transform(
                          mdsys.sdo_geometry(
                          2003,

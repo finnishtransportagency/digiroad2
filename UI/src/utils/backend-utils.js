@@ -1,8 +1,8 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getEnumeratedPropertyValues = function (assetTypeId) {
-      $.getJSON('api/enumeratedPropertyValues/' + assetTypeId, function (enumeratedPropertyValues) {
+    this.getEnumeratedPropertyValues = function() {
+      $.getJSON('api/enumeratedPropertyValues/10', function (enumeratedPropertyValues) {
         eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
       })
         .fail(function () {
@@ -12,6 +12,12 @@
 
     this.getRoadLinks = _.throttle(function(boundingBox, callback) {
       $.getJSON('api/roadlinks?bbox=' + boundingBox, function(data) {
+        callback(data);
+      });
+    }, 1000);
+
+    this.getRoadLinksFromVVH = _.throttle(function(boundingBox, callback) {
+      $.getJSON('api/roadlinks2?bbox=' + boundingBox, function(data) {
         callback(data);
       });
     }, 1000);
@@ -77,7 +83,7 @@
     };
 
     this.getAssetsWithCallback = _.throttle(function(boundingBox, callback) {
-      $.getJSON('api/assets?bbox=' + boundingBox, callback)
+      $.getJSON('api/massTransitStops?bbox=' + boundingBox, callback)
         .fail(function() { console.log("error"); });
     }, 1000);
 
@@ -197,22 +203,18 @@
       });
     };
 
-    this.getAsset = function (assetId) {
-      self.getAssetWithCallback(assetId, function (asset) {
+    this.getAsset = function(nationalId) {
+      self.getMassTransitStopByNationalId(nationalId, function(asset) {
         eventbus.trigger('asset:fetched', asset);
       });
     };
 
-    this.getAssetWithCallback = function(assetId, callback) {
-      $.get('api/assets/' + assetId, callback);
+    this.getMassTransitStopByNationalId = function(nationalId, callback) {
+      $.get('api/massTransitStops/' + nationalId, callback);
     };
 
-    this.getAssetByExternalId = function (externalId, callback) {
-      $.get('api/assets/' + externalId + '?externalId=true', callback);
-    };
-
-    this.getAssetTypeProperties = function (assetTypeId, callback) {
-      $.get('api/assetTypeProperties/' + assetTypeId, callback);
+    this.getAssetTypeProperties = function(callback) {
+      $.get('api/assetTypeProperties/10', callback);
     };
 
     this.getUserRoles = function () {
@@ -231,7 +233,7 @@
     };
 
     this.getFloatingAssetsWithCallback = function(callback) {
-      $.getJSON('api/floatingAssets', callback);
+      $.getJSON('api/floatingMassTransitStops', callback);
     };
 
     this.createAsset = function (data, errorCallback) {
@@ -239,7 +241,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/assets",
+        url: "api/massTransitStops",
         data: JSON.stringify(data),
         dataType: "json",
         success: function (asset) {
@@ -254,7 +256,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/assets/" + id,
+        url: "api/massTransitStops/" + id,
         data: JSON.stringify(data),
         dataType: "json",
         success: successCallback,
@@ -264,6 +266,10 @@
 
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
+        callback(roadLinkData);
+        eventbus.trigger('roadLinks:fetched');
+      };
+      self.getRoadLinksFromVVH = function(boundingBox, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
@@ -302,10 +308,7 @@
     };
 
     this.withAssetData = function(assetData) {
-      self.getAssetByExternalId = function (externalId, callback) {
-        callback(assetData);
-      };
-      self.getAssetWithCallback = function(assetId, callback) {
+      self.getMassTransitStopByNationalId = function (externalId, callback) {
         callback(assetData);
       };
       self.updateAsset = function (id, data, successCallback) {
@@ -356,7 +359,7 @@
     };
 
     this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(assetTypeId, callback) {
+      self.getAssetTypeProperties = function(callback) {
         callback(assetTypePropertiesData);
       };
       return self;
