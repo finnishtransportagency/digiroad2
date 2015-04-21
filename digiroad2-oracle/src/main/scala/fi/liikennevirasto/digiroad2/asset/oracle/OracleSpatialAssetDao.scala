@@ -203,7 +203,7 @@ object OracleSpatialAssetDao {
       val row = assetRows.head
       val point = row.point.get
       (Asset(id = row.id,
-        externalId = row.externalId,
+        nationalId = row.externalId,
         assetTypeId = row.assetTypeId,
         lon = point.x,
         lat = point.y,

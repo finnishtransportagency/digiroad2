@@ -71,7 +71,7 @@ case object TowardsDigitizing extends TrafficDirection { def value = 4 }
 case object UnknownDirection extends TrafficDirection { def value = 99 }
 
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
-case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
+case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  readOnly: Boolean = true, municipalityNumber: Int, validityPeriod: Option[String] = None,
                  floating: Boolean, stopTypes: Seq[Int] = List())
