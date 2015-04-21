@@ -74,7 +74,7 @@ case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, externalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  readOnly: Boolean = true, municipalityNumber: Int, validityPeriod: Option[String] = None,
-                 floating: Boolean)
+                 floating: Boolean, stopTypes: Seq[Int] = List())
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double,

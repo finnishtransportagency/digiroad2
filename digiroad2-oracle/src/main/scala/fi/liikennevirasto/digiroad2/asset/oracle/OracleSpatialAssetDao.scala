@@ -104,11 +104,11 @@ object OracleSpatialAssetDao {
     }.getOrElse(RoadLinkService.getByTestIdAndMeasure(row.roadLinkId, row.lrmPosition.startMeasure))
   }
 
-  private def extractStopTypes(rows: Seq[SingleAssetRow]): Seq[Int] = {
+  private def extractStopTypes(rows: Seq[PropertyRow]): Seq[Int] = {
     rows
-      .filter { row => row.property.publicId.equals("pysakin_tyyppi") }
-      .filterNot { row => row.property.propertyValue.isEmpty }
-      .map { row => row.property.propertyValue.toInt }
+      .filter { row => row.publicId.equals("pysakin_tyyppi") }
+      .filterNot { row => row.propertyValue.isEmpty }
+      .map { row => row.propertyValue.toInt }
   }
 
   private[this] def singleAssetRowToAssetWithProperties(param: (Long, List[SingleAssetRow])): (AssetWithProperties, Boolean) = {
@@ -125,7 +125,7 @@ object OracleSpatialAssetDao {
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
         created = row.created, modified = row.modified, roadLinkType = roadLinkOption.map(_._4).getOrElse(Unknown),
-        stopTypes = extractStopTypes(param._2),
+        stopTypes = extractStopTypes(param._2.map(_.property)),
         floating = floating), row.persistedFloating)
   }
 
@@ -212,7 +212,8 @@ object OracleSpatialAssetDao {
         validityDirection = Some(row.validityDirection),
         municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row, roadLinkOption)), row.persistedFloating)
+        floating = isFloating(row, roadLinkOption),
+        stopTypes = extractStopTypes(List(row.property))), row.persistedFloating)
     }
     assets.foreach(updateAssetFloatingStatus)
     assets.map(_._1).toSeq

@@ -53,7 +53,7 @@ object Queries {
 
   case class ListedAssetRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], municipalityCode: Int, productionRoadLinkId: Option[Long], roadLinkId: Long, bearing: Option[Int],
                       validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate],
-                      lrmPosition: LRMPosition, persistedFloating: Boolean)
+                      lrmPosition: LRMPosition, persistedFloating: Boolean, property: PropertyRow)
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
     val geometry = JGeometry.load(bytes)
@@ -153,8 +153,9 @@ object Queries {
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong()
       val point = pos.map(bytesToPoint)
+      val property = PropertyRow(0, "pysakin_tyyppi", "", 0, false, "2", "")
       ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
-        validFrom, validTo, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating)
+        validFrom, validTo, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating, property)
     }
   }
 
