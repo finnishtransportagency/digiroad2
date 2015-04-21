@@ -67,10 +67,7 @@ with GZipSupport {
     validateBoundingBox(bbox)
     useVVHGeometry match {
       case true => massTransitStopService.getByBoundingBox(user, bbox)
-      case false =>
-        val assets = assetProvider.getAssets(user, bbox, None, None)
-        println("*** Stop types: " + assets.map(_.stopTypes).map(_.toList).toList)
-        assets
+      case false => assetProvider.getAssets(user, bbox, None, None)
     }
   }
 
