@@ -213,7 +213,7 @@ object OracleSpatialAssetDao {
         municipalityNumber = row.municipalityCode,
         validityPeriod = validityPeriod(row.validFrom, row.validTo),
         floating = isFloating(row, roadLinkOption),
-        stopTypes = extractStopTypes(List(row.property))), row.persistedFloating)
+        stopTypes = extractStopTypes(assetRows.map(_.property))), row.persistedFloating)
     }
     assets.foreach(updateAssetFloatingStatus)
     assets.map(_._1).toSeq

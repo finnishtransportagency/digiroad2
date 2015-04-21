@@ -152,8 +152,10 @@ object Queries {
       val endMeasure = r.nextInt()
       val productionRoadLinkId = r.nextLongOption()
       val roadLinkId = r.nextLong()
+      val propertyPublicId = r.nextString()
+      val propertyValue = r.nextIntOption().map(_.toString).getOrElse("")
       val point = pos.map(bytesToPoint)
-      val property = PropertyRow(0, "pysakin_tyyppi", "", 0, false, "2", "")
+      val property = PropertyRow(0, propertyPublicId, "", 0, false, propertyValue, "")
       ListedAssetRow(id, externalId, assetTypeId, point, municipalityCode, productionRoadLinkId, roadLinkId, bearing, validityDirection,
         validFrom, validTo, lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point), persistedFloating, property)
     }
@@ -232,7 +234,7 @@ object Queries {
     """
     select a.id as asset_id, a.external_id as asset_external_id, a.asset_type_id, a.bearing as bearing, lrm.side_code as validity_direction,
     a.valid_from as valid_from, a.valid_to as valid_to, geometry AS position, a.municipality_code, a.floating,
-    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id
+    lrm.id, lrm.start_measure, lrm.end_measure, lrm.prod_road_link_id, lrm.road_link_id, p.public_id, e.value
     from asset a
       join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
