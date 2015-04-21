@@ -19,7 +19,7 @@ var URLRouter = function(map, backend, models) {
 
     massTransitStop: function(id) {
       applicationModel.selectLayer('massTransitStop');
-      backend.getAssetByExternalId(id, function(massTransitStop) {
+      backend.getMassTransitStopByNationalId(id, function(massTransitStop) {
         eventbus.once('massTransitStops:available', function() {
           models.selectedMassTransitStopModel.changeByExternalId(id);
         });

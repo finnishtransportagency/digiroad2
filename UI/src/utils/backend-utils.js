@@ -204,12 +204,12 @@
     };
 
     this.getAsset = function(nationalId) {
-      self.getAssetByExternalId(nationalId, function(asset) {
+      self.getMassTransitStopByNationalId(nationalId, function(asset) {
         eventbus.trigger('asset:fetched', asset);
       });
     };
 
-    this.getAssetByExternalId = function(nationalId, callback) {
+    this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
@@ -308,7 +308,7 @@
     };
 
     this.withAssetData = function(assetData) {
-      self.getAssetByExternalId = function (externalId, callback) {
+      self.getMassTransitStopByNationalId = function (externalId, callback) {
         callback(assetData);
       };
       self.updateAsset = function (id, data, successCallback) {

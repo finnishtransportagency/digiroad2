@@ -101,7 +101,7 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        backend.getAssetByExternalId(currentAsset.payload.nationalId, function(asset) {
+        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
           open(asset);
           eventbus.trigger('asset:updateCancelled', asset);
         });
@@ -192,7 +192,7 @@
           open(asset);
           eventbus.trigger('asset:saved', asset, positionUpdated);
         }, function() {
-          backend.getAssetByExternalId(currentAsset.payload.nationalId, function(asset) {
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
             open(asset);
             eventbus.trigger('asset:updateFailed', asset);
           });
@@ -226,7 +226,7 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
-        backend.getAssetByExternalId(assetNationalId, function(asset) {
+        backend.getMassTransitStopByNationalId(assetNationalId, function(asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
