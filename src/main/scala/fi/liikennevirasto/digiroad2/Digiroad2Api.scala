@@ -273,34 +273,51 @@ with GZipSupport {
     createMassTransitStop(lon, lat, roadLinkId, bearing, properties)
   }
 
+
+  private def getRoadLinks(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    RoadLinkService.getRoadLinks(
+      bounds = boundingRectangle,
+      municipalities = municipalities).map { roadLink =>
+      val (id, mmlId, points, length, administrativeClass, functionalClass,
+      trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
+      Map("roadLinkId" -> id,
+        "mmlId" -> mmlId,
+        "points" -> points,
+        "length" -> length,
+        "administrativeClass" -> administrativeClass.toString,
+        "functionalClass" -> functionalClass,
+        "trafficDirection" -> trafficDirection.toString,
+        "modifiedAt" -> modifiedAt,
+        "modifiedBy" -> modifiedBy,
+        "linkType" -> linkType)
+    }
+  }
+
+  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]]  = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    RoadLinkService.getRoadLinksFromVVH(
+      bounds = boundingRectangle,
+      municipalities = municipalities).map { roadLink =>
+      Map(
+        "mmlId" -> roadLink.mmlId,
+        "points" -> roadLink.geometry,
+        "administrativeClass" -> roadLink.administrativeClass.toString,
+        "linkType" -> roadLink.linkType.value)
+    }
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      RoadLinkService.getRoadLinks(
-          bounds = boundingRectangle,
-          municipalities = municipalities).map { roadLink =>
-        val (id, mmlId, points, length, administrativeClass, functionalClass,
-             trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
-        Map("roadLinkId" -> id,
-            "mmlId" -> mmlId,
-            "points" -> points,
-            "length" -> length,
-            "administrativeClass" -> administrativeClass.toString,
-            "functionalClass" -> functionalClass,
-            "trafficDirection" -> trafficDirection.toString,
-            "modifiedAt" -> modifiedAt,
-            "modifiedBy" -> modifiedBy,
-            "linkType" -> linkType)
-      }
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
-    }
+    params.get("bbox")
+      .map (getRoadLinks(municipalities))
+      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   get("/roadlinks2") {
@@ -309,21 +326,14 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      RoadLinkService.getRoadLinksFromVVH(
-        bounds = boundingRectangle,
-        municipalities = municipalities).map { roadLink =>
-          Map(
-            "mmlId" -> roadLink.mmlId,
-            "points" -> roadLink.geometry,
-            "administrativeClass" -> roadLink.administrativeClass.toString,
-            "linkType" -> roadLink.linkType.value)
-        }
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
+    val getRoadLinksFn = useVVHGeometry match {
+      case true => getRoadLinksFromVVH(municipalities) _
+      case false => getRoadLinks(municipalities) _
     }
+
+    params.get("bbox")
+      .map (getRoadLinksFn)
+      .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
   get("/roadlinks/:id") {
