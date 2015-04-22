@@ -204,7 +204,7 @@ trait MassTransitStopService {
         updateLrmPosition(id, mValue, mmlId)
         updateBearing(id, position)
         updateMunicipality(id, municipalityCode)
-        OracleSpatialAssetDao.updateAssetGeometry(id, point)
+        updateAssetGeometry(id, point)
       }
       val updatedStop = getPersistedMassTransitStops(withId(id)).headOption
       updatedStop.foreach { persistedStop =>

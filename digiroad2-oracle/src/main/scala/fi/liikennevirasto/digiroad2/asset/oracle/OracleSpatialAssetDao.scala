@@ -241,21 +241,6 @@ object OracleSpatialAssetDao {
     Some(status)
   }
 
-  def updateAssetGeometry(id: Long, point: Point): Unit = {
-    val x = point.x
-    val y = point.y
-    sqlu"""
-      update asset
-        set geometry = MDSYS.SDO_GEOMETRY(4401,
-                                          3067,
-                                          NULL,
-                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
-                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
-                                         )
-        where id = $id
-    """.execute
-  }
-
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue

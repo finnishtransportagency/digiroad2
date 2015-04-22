@@ -259,6 +259,21 @@ object Queries {
 
   def updateAssetBearing(assetId: Long, bearing: Int) = sqlu"update asset set bearing = $bearing where id = $assetId"
 
+  def updateAssetGeometry(id: Long, point: Point): Unit = {
+    val x = point.x
+    val y = point.y
+    sqlu"""
+      UPDATE asset
+        SET geometry = MDSYS.SDO_GEOMETRY(4401,
+                                          3067,
+                                          NULL,
+                                          MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1),
+                                          MDSYS.SDO_ORDINATE_ARRAY($x, $y, 0, 0)
+                                         )
+        WHERE id = $id
+    """.execute
+  }
+
   def insertAsset(assetId: Long, externalId: Long,
                   assetTypeId: Long, bearing: Int,
                   creator: String, municipalityCode: Int) =

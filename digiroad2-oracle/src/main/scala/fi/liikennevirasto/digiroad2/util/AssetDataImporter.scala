@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import oracle.sql.STRUCT
 import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
@@ -327,7 +328,7 @@ class AssetDataImporter {
          values($assetId, ${busStop.lrmPositionId})
       """.execute
 
-      OracleSpatialAssetDao.updateAssetGeometry(assetId, busStop.point)
+      updateAssetGeometry(assetId, busStop.point)
       busStop.busStopType.foreach { busStopType =>
         insertMultipleChoiceValue(typeProps.busStopTypePropertyId, assetId, busStopType)
       }
