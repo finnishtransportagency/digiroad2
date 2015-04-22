@@ -91,7 +91,7 @@
     var mapBusStopTypesToImages = function(stopTypes) {
       stopTypes.sort();
       return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
-        return '<img src="/images/mass-transit-stops/' + stopType + '.png">';
+        return '<img src="images/mass-transit-stops/' + stopType + '.png">';
       });
     };
 
