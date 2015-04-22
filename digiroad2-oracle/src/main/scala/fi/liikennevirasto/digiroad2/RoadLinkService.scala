@@ -1,12 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
-import _root_.oracle.spatial.geometry.JGeometry
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.ConversionDatabase._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
@@ -17,12 +15,6 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 trait RoadLinkService {
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
-  def getMunicipalityCode(roadLinkId: Long): Option[Int]
-}
-
-object RoadLinkService extends RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: Int)
   type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
@@ -300,13 +292,9 @@ object RoadLinkService extends RoadLinkService {
     }
   }
 
-  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
-    VVHClient.fetchVVHRoadlinks(bounds, municipalities)
-  }
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
-    VVHClient.fetchVVHRoadlink(mmlId)
-  }
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -365,5 +353,25 @@ object RoadLinkService extends RoadLinkService {
           rlEndpoints._2.distanceTo(endpoint._2) < epsilon
       }).map(roadLink => Map("id" -> roadLink._1, "mmlId" -> roadLink._2))
     }).getOrElse(Nil)
+  }
+}
+
+object RoadLinkService extends RoadLinkService {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
+    throw new NotImplementedError()
+  }
+
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
+    throw new NotImplementedError()
+  }
+}
+
+object VVHRoadLinkService extends RoadLinkService {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
+    VVHClient.fetchVVHRoadlinks(bounds, municipalities)
+  }
+
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
+    VVHClient.fetchVVHRoadlink(mmlId)
   }
 }
