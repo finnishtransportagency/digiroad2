@@ -72,9 +72,13 @@ object Digiroad2Context {
     Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
+  lazy val vvhClient: VVHClient = {
+    new VVHClient(getProperty("digiroad2.VVHServiceHost"))
+  }
+
   lazy val roadLinkService: RoadLinkService = {
     if (useVVHGeometry) {
-      VVHRoadLinkService
+      new VVHRoadLinkService(vvhClient)
     } else RoadLinkService
   }
 

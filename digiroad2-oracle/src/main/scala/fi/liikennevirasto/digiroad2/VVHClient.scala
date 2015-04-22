@@ -7,7 +7,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import java.net.URLEncoder
 
-object VVHClient {
+class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
     val municipalityFilter = {
@@ -19,7 +19,7 @@ object VVHClient {
       }
     }
 
-    val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$municipalityFilter&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
@@ -33,7 +33,7 @@ object VVHClient {
 
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
-    val url = "http://10.129.47.146:6080/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)

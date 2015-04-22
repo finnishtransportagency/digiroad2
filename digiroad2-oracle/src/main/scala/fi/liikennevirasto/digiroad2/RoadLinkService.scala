@@ -366,12 +366,12 @@ object RoadLinkService extends RoadLinkService {
   }
 }
 
-object VVHRoadLinkService extends RoadLinkService {
+class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
   override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
-    VVHClient.fetchVVHRoadlinks(bounds, municipalities)
+    vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
 
   override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
-    VVHClient.fetchVVHRoadlink(mmlId)
+    vvhClient.fetchVVHRoadlink(mmlId)
   }
 }
