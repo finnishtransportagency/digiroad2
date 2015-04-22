@@ -1,27 +1,23 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import java.sql.SQLException
+
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.asset._
+
 import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.{Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{ValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import Q.interpolation
-import PropertyTypes._
-import org.joda.time.format.ISODateTimeFormat
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.user.User
+import org.joda.time.{DateTime, Interval, LocalDate}
+import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
-import scala.Array
-import org.joda.time.LocalDate
-import fi.liikennevirasto.digiroad2.user.{Role, User, UserProvider}
-import fi.liikennevirasto.digiroad2.asset.ValidityPeriod
-import org.joda.time.Interval
-import org.joda.time.DateTime
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.RoadLinkService
 import scala.language.reflectiveCalls
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 object OracleSpatialAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
@@ -32,14 +28,6 @@ object OracleSpatialAssetDao {
         p.ps.setObject(i, seq(i - 1))
       }
     }
-  }
-
-  def nextPrimaryKeySeqValue = {
-    nextPrimaryKeyId.as[Long].first
-  }
-
-  def nextLrmPositionPrimaryKeySeqValue = {
-    nextLrmPositionPrimaryKeyId.as[Long].first
   }
 
   def getNationalBusStopId = {
@@ -269,8 +257,8 @@ object OracleSpatialAssetDao {
   }
 
   def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    val assetId = nextPrimaryKeySeqValue
-    val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val externalId = getNationalBusStopId
     val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, Point(lon, lat))
     val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)

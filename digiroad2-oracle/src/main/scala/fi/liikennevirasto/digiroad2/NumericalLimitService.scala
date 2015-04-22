@@ -1,23 +1,23 @@
 package fi.liikennevirasto.digiroad2
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.{AgainstLinkChain, TowardsLinkChain}
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
+import org.joda.time.DateTime
+
 import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
-import org.joda.time.DateTime
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
 case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
@@ -181,10 +181,10 @@ trait NumericalLimitOperations {
   }
 
   private def createNumericalLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
-    val id = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-    val numberPropertyValueId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val id = Sequences.nextPrimaryKeySeqValue
+    val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).first(valuePropertyId)
-    val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
     sqlu"""
       insert all

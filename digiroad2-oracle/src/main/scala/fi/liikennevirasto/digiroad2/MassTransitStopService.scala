@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
+import fi.liikennevirasto.digiroad2.asset.oracle.{Sequences, AssetPropertyConfiguration, LRMPosition, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
@@ -223,8 +223,8 @@ trait MassTransitStopService {
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     withDynTransaction {
-      val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
-      val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
       val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)

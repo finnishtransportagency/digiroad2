@@ -1,33 +1,24 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.util.Properties
 import javax.sql.DataSource
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
-import java.util.{Locale, Properties}
-import fi.liikennevirasto.digiroad2.GeometryUtils
-import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef, Session}
-import scala.slick.jdbc.{StaticQuery => Q, _}
+
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+
+import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import Q.interpolation
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import org.joda.time.{Interval, DateTime, LocalDate}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import oracle.sql.STRUCT
-import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter._
-import scala.collection.parallel.{ParSeq, ForkJoinTaskSupport}
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.Some
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleBusStop
-import fi.liikennevirasto.digiroad2.util.AssetDataImporter.SimpleRoadLink
-import org.joda.time.format.PeriodFormatterBuilder
-import java.sql.Statement
-import java.text.{DecimalFormat, NumberFormat}
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao.{nextPrimaryKeySeqValue, nextLrmPositionPrimaryKeySeqValue}
-import fi.liikennevirasto.digiroad2.RoadLinkService
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
+import oracle.sql.STRUCT
+import org.joda.time.LocalDate
+import org.slf4j.LoggerFactory
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc._
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 import scala.slick.util.CloseableIterator
 
@@ -158,7 +149,7 @@ class AssetDataImporter {
         val speedLimitPS = dynamicSession.prepareStatement("insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, modified_by) values (?, (select id from enumerated_value where value = ? and property_id = (select id from property where public_id = 'rajoitus')), (select id from property where public_id = 'rajoitus'), sysdate, 'dr1_conversion')")
 
         segments.foreach { segment =>
-          val assetId = nextPrimaryKeySeqValue
+          val assetId = Sequences.nextPrimaryKeySeqValue
           var speedLimit = -1
           assetPS.setLong(1, assetId)
           assetPS.addBatch()
@@ -171,7 +162,7 @@ class AssetDataImporter {
             val endMeasure   = insertValues.next.toDouble
             speedLimit = insertValues.next.toInt
             val sideCode = insertValues.next.toInt
-            val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
+            val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
             lrmPositionPS.setLong(1, lrmPositionId)
             lrmPositionPS.setLong(2, roadLinkId)
@@ -251,14 +242,14 @@ class AssetDataImporter {
         val numericalLimitPS = dynamicSession.prepareStatement("insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, ?, (select id from property where public_id = 'mittarajoitus'), ?)")
 
         val (_, links) = numericalLimit
-        val assetId = nextPrimaryKeySeqValue
+        val assetId = Sequences.nextPrimaryKeySeqValue
         assetPS.setLong(1, assetId)
         assetPS.setInt(2, targetTypeId)
         assetPS.addBatch()
 
         links.foreach { link ⇒
           val (_, roadLinkId, sideCode, startMeasure, endMeasure, _) = link
-          val lrmPositionId = nextLrmPositionPrimaryKeySeqValue
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
           lrmPositionPS.setLong(1, lrmPositionId)
           lrmPositionPS.setLong(2, roadLinkId)
           lrmPositionPS.setDouble(3, startMeasure)
@@ -322,7 +313,7 @@ class AssetDataImporter {
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
     Database.forDataSource(ds).withDynSession {
-      val assetId = busStop.assetId.getOrElse(nextPrimaryKeySeqValue)
+      val assetId = busStop.assetId.getOrElse(Sequences.nextPrimaryKeySeqValue)
 
       sqlu"""
         insert into asset(id, external_id, asset_type_id, created_by, valid_from, valid_to, municipality_code, bearing)

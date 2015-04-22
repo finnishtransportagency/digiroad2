@@ -1,26 +1,21 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkUncoveredBySpeedLimit
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Queries}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
-import Q.interpolation
+
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import Q.interpolation
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import collection.JavaConversions._
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import org.slf4j.LoggerFactory
+import scala.collection.JavaConversions._
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 object OracleLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
@@ -167,12 +162,12 @@ object OracleLinearAssetDao {
   }
 
   def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
-    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val assetId = Sequences.nextPrimaryKeySeqValue
     createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
   }
 
   def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
-    val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val (startMeasure, endMeasure) = linkMeasures
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
@@ -269,7 +264,7 @@ object OracleLinearAssetDao {
       Private -> 80)
 
   private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass): (Long, Long, Int, Int, Double, Double) = {
-    val assetId = OracleSpatialAssetDao.nextPrimaryKeySeqValue
+    val assetId = Sequences.nextPrimaryKeySeqValue
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
   }
@@ -283,7 +278,7 @@ object OracleLinearAssetDao {
       val enumeratedValues = sql"select value, id from enumerated_value where property_id = $propertyId".as[(Int, Long)].list.toMap
 
       speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
-        val lrmPositionId = OracleSpatialAssetDao.nextLrmPositionPrimaryKeySeqValue
+        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
         val enumeratedValueId = enumeratedValues(value)
         val sb = new StringBuilder()
         sb.append("insert all")
