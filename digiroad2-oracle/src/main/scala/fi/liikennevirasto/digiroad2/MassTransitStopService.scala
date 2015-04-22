@@ -277,6 +277,7 @@ trait MassTransitStopService {
     withDynSession {
       getPersistedMassTransitStops(withMunicipality(municipalityCode))
         .map(withFloatingUpdate(convertPersistedStop(toMassTransitStopWithTimeStamps, roadLinkService.fetchVVHRoadlink)))
+        .toList
     }
   }
 
