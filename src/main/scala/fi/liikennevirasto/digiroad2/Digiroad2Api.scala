@@ -298,7 +298,7 @@ with GZipSupport {
   private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]]  = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    RoadLinkService.getRoadLinksFromVVH(
+    roadLinkService.getRoadLinksFromVVH(
       bounds = boundingRectangle,
       municipalities = municipalities).map { roadLink =>
       Map(
