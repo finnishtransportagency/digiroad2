@@ -72,9 +72,17 @@ object Digiroad2Context {
     Class.forName(properties.getProperty("digiroad2.eventBus")).newInstance().asInstanceOf[DigiroadEventBus]
   }
 
+  lazy val roadLinkService: RoadLinkService = {
+    RoadLinkService
+  }
+
+  lazy val assetService: AssetService = {
+    new AssetService(roadLinkService)
+  }
+
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
-      override def roadLinkService: RoadLinkService = RoadLinkService
+      override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
       override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
       override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
     }

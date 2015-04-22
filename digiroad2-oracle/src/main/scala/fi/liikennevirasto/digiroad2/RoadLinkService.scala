@@ -19,6 +19,7 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 trait RoadLinkService {
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
+  def getMunicipalityCode(roadLinkId: Long): Option[Int]
 }
 
 object RoadLinkService extends RoadLinkService {

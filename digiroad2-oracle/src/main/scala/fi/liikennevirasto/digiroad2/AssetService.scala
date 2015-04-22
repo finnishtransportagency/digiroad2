@@ -6,8 +6,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 
-
-object AssetService {
+class AssetService(roadLinkService: RoadLinkService) {
   def getMunicipalityCodes(assetId: Long): Set[Int] = {
     val roadLinkIds = Database.forDataSource(ds).withDynTransaction {
       sql"""
@@ -18,6 +17,6 @@ object AssetService {
         where a.id = $assetId
     """.as[Long].list
     }
-    roadLinkIds.flatMap(RoadLinkService.getMunicipalityCode(_)).toSet
+    roadLinkIds.flatMap(roadLinkService.getMunicipalityCode).toSet
   }
 }

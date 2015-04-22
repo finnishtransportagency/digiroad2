@@ -463,7 +463,7 @@ with GZipSupport {
   put("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    if (!user.hasEarlyAccess() || !AssetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite(_))) {
+    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite(_))) {
       halt(Unauthorized("User not authorized"))
     }
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
@@ -516,7 +516,7 @@ with GZipSupport {
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
     val speedLimitId = params("speedLimitId").toLong
-    if (!user.hasEarlyAccess() || !AssetService.getMunicipalityCodes(speedLimitId).forall(user.isAuthorizedToWrite(_))) {
+    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(speedLimitId).forall(user.isAuthorizedToWrite(_))) {
       halt(Unauthorized("User not authorized"))
     }
     (parsedBody \ "limit").extractOpt[Int] match {
@@ -534,7 +534,7 @@ with GZipSupport {
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
     val authorizedForMunicipalities: Boolean = optionalIds
-      .map(_.forall(AssetService.getMunicipalityCodes(_).forall(user.isAuthorizedToWrite)))
+      .map(_.forall(assetService.getMunicipalityCodes(_).forall(user.isAuthorizedToWrite)))
       .getOrElse(halt(BadRequest("Speed limit id list not provided")))
 
     if (!user.hasEarlyAccess() || !authorizedForMunicipalities) {
