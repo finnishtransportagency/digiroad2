@@ -31,6 +31,19 @@ class VVHClient(hostname: String) {
     })
   }
 
+  def fetchByMunicipality(municipality: Int): Seq[(Long, Int, Seq[Point])] = {
+    val municipalityFilter = URLEncoder.encode(s"""{"0":"Kuntatunnus=$municipality"}""", "UTF-8")
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+      s"layerDefs=$municipalityFilter&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
+
+    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
+
+    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
+    features.map(feature => {
+      extractVVHFeature(feature)
+    })
+  }
+
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
