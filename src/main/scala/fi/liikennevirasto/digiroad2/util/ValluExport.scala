@@ -1,12 +1,14 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.io._
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetProvider
+
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.util.AssetValluCsvFormatter._
+
+import scala.collection.immutable
 import scala.slick.driver.JdbcDriver.backend.Database
 
 object ValluExport {
@@ -32,7 +34,7 @@ object ValluExport {
       val assets = Database.forDataSource(ds).withDynSession {
         getAssetsForMunicipality(municipalityId)
       }
-      AssetValluCsvFormatter.valluCsvRowsFromAssets(municipalityId, municipalityName, assets, valluComplementaryBusStopNames).foreach(x => printer.write(x + "\n"))
+      valluCsvRowsFromAssets(municipalityId, municipalityName, assets, valluComplementaryBusStopNames).foreach(x => printer.write(x + "\n"))
     })
     printer.close
   }
@@ -51,9 +53,15 @@ object ValluExport {
     }
   }
 
-  def getAssetsForMunicipality(municipality: Int) = {
+  def assetToValluCsvMassTransitStop(asset: AssetWithProperties): ValluCsvMassTransitStop = {
+    ValluCsvMassTransitStop(nationalId = asset.nationalId, propertyData = asset.propertyData,
+      lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
+      created = asset.created, modified = asset.modified, administrativeClass = asset.roadLinkType)
+  }
+
+  def getAssetsForMunicipality(municipality: Int): immutable.Iterable[ValluCsvMassTransitStop] = {
     println(s"Get assets for municipality $municipality")
-    OracleSpatialAssetDao.getAssetsByMunicipality(municipality)
+    OracleSpatialAssetDao.getAssetsByMunicipality(municipality).map(assetToValluCsvMassTransitStop)
   }
 
   def getMunicipalities = {

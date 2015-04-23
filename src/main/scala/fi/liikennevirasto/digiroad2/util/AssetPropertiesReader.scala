@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property, AssetWithProperties}
+import scala.language.reflectiveCalls
 
 trait AssetPropertiesReader {
   protected def calculateActualBearing(validityDirection: Int, bearing: Int): Int = {
@@ -39,7 +40,7 @@ trait AssetPropertiesReader {
     massTransitStopTypes.size == 0 || (massTransitStopTypes.contains(unknownType) && (massTransitStopTypes.size == 1))
   }
 
-  protected def isTramStop(asset: AssetWithProperties): Boolean = {
+  protected def isTramStop(asset: { val propertyData: Seq[Property] }): Boolean = {
     val tramStopType = 1L
     val massTransitStopTypes: Seq[Long] = getPropertyValuesByPublicId("pysakin_tyyppi", asset.propertyData).map(property => property.propertyValue.toLong)
     massTransitStopTypes.contains(tramStopType) && (massTransitStopTypes.size == 1)

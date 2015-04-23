@@ -8,7 +8,7 @@ object AssetLMJFormatter extends AssetCsvFormatter with AssetPropertiesReader {
   val fields = "stop_id,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station"
 
   def formatFromAssetWithProperties(asset: AssetWithProperties): String = {
-    (addStopId _)
+    (addStopId[AssetWithProperties] _)
      .andThen ((addName _ curried)("nimi_suomeksi")(_))
       .andThen (addIsolator _)
       .andThen (addYCoord _)

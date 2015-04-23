@@ -70,6 +70,7 @@ case object AgainstDigitizing extends TrafficDirection { def value = 3 }
 case object TowardsDigitizing extends TrafficDirection { def value = 4 }
 case object UnknownDirection extends TrafficDirection { def value = 99 }
 
+trait NationalStop { val nationalId: Long }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
@@ -83,7 +84,7 @@ case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lo
                  municipalityNumber: Int,
                  propertyData: Seq[Property] = List(), validityPeriod: Option[String] = None,
                  wgslon: Double, wgslat: Double, created: Modification, modified: Modification, roadLinkType: AdministrativeClass = Unknown,
-                 floating: Boolean) {
+                 floating: Boolean) extends NationalStop {
   def getPropertyValue(propertyName: String): Option[String] = {
     propertyData.find(_.publicId.equals(propertyName))
       .flatMap(_.values.headOption.map(_.propertyValue))

@@ -1,22 +1,23 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.util.AssetValluCsvFormatter.ValluCsvMassTransitStop
 import org.scalatest._
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, AssetWithProperties}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetProvider, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.util.ValluExport._
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import scala.slick.driver.JdbcDriver.backend.Database
-import fi.liikennevirasto.digiroad2.asset.Modification
 
 class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeAndAfter with BeforeAndAfterAll {
   val userProvider = new OracleUserProvider
-  var assetsByMunicipality: Iterable[AssetWithProperties] = null
+  var assetsByMunicipality: Iterable[ValluCsvMassTransitStop] = null
 
   before {
     Database.forDataSource(ds).withDynSession {
-      assetsByMunicipality = OracleSpatialAssetDao.getAssetsByMunicipality(235)
+      assetsByMunicipality = OracleSpatialAssetDao.getAssetsByMunicipality(235).map(assetToValluCsvMassTransitStop)
     }
   }
 
@@ -73,8 +74,8 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     csvRows must have size 2
   }
 
-  val testasset = AssetWithProperties(1, 1, 1, 2.1, 2.2, bearing = Some(3), validityDirection = None, wgslon = 2.2, wgslat = 0.56,
-      created = Modification(None, None), modified = Modification(None, None), floating = false, municipalityNumber = 235)
+  val testasset = ValluCsvMassTransitStop(nationalId = 1, lon = 2.1, lat = 2.2, bearing = Some(3), validityDirection = None,
+      created = Modification(None, None), modified = Modification(None, None), propertyData = Nil, administrativeClass = Unknown)
   it must "recalculate bearings in validity direction" in {
     AssetValluCsvFormatter.addBearing(testasset, List())._2 must equal (List("3"))
     AssetValluCsvFormatter.addBearing(testasset.copy(validityDirection = Some(3)), List())._2 must equal (List("183"))
@@ -96,7 +97,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
         case _ => property
       }
     }
-    val asset: AssetWithProperties = testAsset.copy(propertyData = testProperties)
+    val asset: ValluCsvMassTransitStop = testAsset.copy(propertyData = testProperties)
     val created = inOutputDateFormat(asset.created.modificationTime.get)
     val (validFrom: String, validTo: String) = assetValidityPeriod(asset)
 
@@ -106,7 +107,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
       + ";dr1conversion;" + validFrom + ";" + validTo + ";ELY-keskus;235;Kauniainen; lisatiedot;palauteosoite , teksti;;2")
   }
 
-  private def createStop(stopType: Seq[Long]): AssetWithProperties = {
+  private def createStop(stopType: Seq[Long]): ValluCsvMassTransitStop = {
     def typeToPropertyValue(typeCode: Long): PropertyValue = { PropertyValue(typeCode.toString, Some(typeCode.toString)) }
 
     val properties = testAsset.propertyData.map { property =>
@@ -118,13 +119,13 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     testAsset.copy(propertyData = properties)
   }
 
-  private def assetValidityPeriod(asset: AssetWithProperties): (String, String) = {
+  private def assetValidityPeriod(asset: ValluCsvMassTransitStop): (String, String) = {
     val validFrom = inOutputDateFormat(parseDate(extractPropertyValue(asset, "ensimmainen_voimassaolopaiva")))
     val validTo = inOutputDateFormat(parseDate(extractPropertyValue(asset, "viimeinen_voimassaolopaiva")))
     (validFrom, validTo)
   }
 
-  private def testAsset(): AssetWithProperties = {
+  private def testAsset(): ValluCsvMassTransitStop = {
     assetsByMunicipality.find(_.nationalId == 5).get
   }
 
@@ -137,7 +138,7 @@ class AssetValluCsvFormatterSpec extends FlatSpec with MustMatchers with BeforeA
     PropertyValue(propertyValue = value, propertyDisplayValue = Some(value))
   }
 
-  private def extractPropertyValue(asset: AssetWithProperties, propertyPublicId: String): String = {
+  private def extractPropertyValue(asset: ValluCsvMassTransitStop, propertyPublicId: String): String = {
     asset.propertyData.find(_.publicId == propertyPublicId).get.values.head.propertyDisplayValue.getOrElse("")
   }
 
