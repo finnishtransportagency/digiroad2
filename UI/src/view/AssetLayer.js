@@ -418,7 +418,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
       var busStopCenter = new OpenLayers.Pixel(pxPosition.x, pxPosition.y);
       var lonlat = map.getLonLatFromPixel(busStopCenter);
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getAllCarTrafficRoads(), lonlat.lon, lonlat.lat);
-      roadCollection.activate(nearestLine);
+      roadLayer.selectRoadLink(nearestLine);
       var angle = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       selectedAsset.data.bearing = angle;
       selectedAsset.data.roadDirection = angle;

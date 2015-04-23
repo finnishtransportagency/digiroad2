@@ -168,13 +168,14 @@ var RoadStyles = function() {
       vectorLayer.removeAllFeatures();
     };
 
-    eventbus.on('road:active', function(roadLinkId) {
-      var nearestFeature = _.find(vectorLayer.features, function(feature) {
-        return feature.attributes.roadLinkId == roadLinkId;
+    var selectRoadLink = function(roadLink) {
+      var feature = _.find(vectorLayer.features, function(feature) {
+        if (roadLink.mmlId) return feature.attributes.mmlId === roadLink.mmlId;
+        else return feature.attributes.roadLinkId === roadLink.roadLinkId;
       });
       selectControl.unselectAll();
-      selectControl.select(nearestFeature);
-    }, this);
+      selectControl.select(feature);
+    };
 
     eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
       selectControl.unselectAll();
@@ -201,6 +202,7 @@ var RoadStyles = function() {
       layer: vectorLayer,
       redraw: redraw,
       clear: clear,
+      selectRoadLink: selectRoadLink,
       setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
       setLayerSpecificStyleMap: setLayerSpecificStyleMap,
       setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,

@@ -29,7 +29,6 @@
           'map:moved',
           'map:clicked',
           'asset:saving',
-          'road:active',
           'asset:moved',
           'roadLinks:beforeDraw',
           'roadLinks:afterDraw'];
