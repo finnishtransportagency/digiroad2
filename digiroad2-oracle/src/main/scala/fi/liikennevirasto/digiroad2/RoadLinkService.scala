@@ -282,6 +282,10 @@ trait RoadLinkService {
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
+    enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
+  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point])]): Seq[VVHRoadLink] = {
     val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1))
 
     vvhRoadLinks.map { vvh =>
@@ -291,6 +295,8 @@ trait RoadLinkService {
       }
     }
   }
+
+  def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadLink]
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])]
 
@@ -364,6 +370,8 @@ object RoadLinkService extends RoadLinkService {
   override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
     throw new NotImplementedError()
   }
+
+  override def fetchVVHRoadlinks(municipalityCode: Int) = throw new NotImplementedError()
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
@@ -373,5 +381,9 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
 
   override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
     vvhClient.fetchVVHRoadlink(mmlId)
+  }
+
+  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadLink] = {
+     enrichRoadLinksFromVVH(vvhClient.fetchByMunicipality(municipalityCode))
   }
 }
