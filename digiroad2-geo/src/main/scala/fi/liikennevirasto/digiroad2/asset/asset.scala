@@ -47,6 +47,10 @@ case object Municipality extends AdministrativeClass { def value = 2}
 case object Private extends AdministrativeClass { def value = 3}
 case object Unknown extends AdministrativeClass { def value = 99 }
 
+object FunctionalClass {
+  val Unknown: Int = 99
+}
+
 sealed trait TrafficDirection {
   def value: Int
 }
