@@ -89,20 +89,18 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkData implements RowToElement<Tuple6<Long, Long, Int, Int, Int, Int>>  {
+    private static class RowToRoadLinkData implements RowToElement<Tuple5<Long, Long, Int, Int, Int>>  {
         @Override
-        public Tuple6<Long, Long, Int, Int, Int, Int> convert(ResultSet row) throws SQLException {
+        public Tuple5<Long, Long, Int, Int, Int> convert(ResultSet row) throws SQLException {
             long id = row.getLong(1);
             long mmlId = row.getLong(2);
             int administrativeClass = row.getInt(3);
             if(row.wasNull()) { administrativeClass = 99; }
-            int functionalClass = row.getInt(4);
-            if(row.wasNull()) { functionalClass = 99; }
-            int trafficDirection = row.getInt(5);
+            int trafficDirection = row.getInt(4);
             if(row.wasNull()) { trafficDirection = 99; }
-            int linkType = row.getInt(6);
+            int linkType = row.getInt(5);
             if(row.wasNull()) { linkType = 99; }
-            return new Tuple6(id, mmlId, administrativeClass, functionalClass, trafficDirection, linkType);
+            return new Tuple5(id, mmlId, administrativeClass, trafficDirection, linkType);
         }
     }
 
@@ -166,8 +164,8 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple6<Long, Long, Int, Int, Int, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
-        String query = "select dr1_id, mml_id, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi from tielinkki_ctas  WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple5<Long, Long, Int, Int, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
+        String query = "select dr1_id, mml_id, omistaja, liikennevirran_suunta, linkkityyppi from tielinkki_ctas  WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkData());
     }
 }

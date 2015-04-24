@@ -16,7 +16,7 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, linkType: Int)
-  type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, Int, TrafficDirection, Int)
+  type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, TrafficDirection, Int)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
   case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
@@ -171,7 +171,7 @@ trait RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, liikennevirran_suunta, linkkityyppi
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -270,7 +270,7 @@ trait RoadLinkService {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
       val query =
       s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, liikennevirran_suunta, linkkityyppi
               from tielinkki_ctas
               where $municipalityFilter $boundingBoxFilter
       """
@@ -297,8 +297,8 @@ trait RoadLinkService {
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
-      val roadLinkData: Seq[(Long, Long, Int, Int, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
-      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3), TrafficDirection(x._5), x._6 ) }
+      val roadLinkData: Seq[(Long, Long, Int, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
+      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3), TrafficDirection(x._4), x._5 ) }
       adjustedRoadLinks(basicRoadLinks)
     }
   }
@@ -313,12 +313,12 @@ trait RoadLinkService {
   def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
     val kalpaRoadLinks = Database.forDataSource(dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id, to_2d(shape), omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi
+        select dr1_id, mml_id, to_2d(shape), omistaja, liikennevirran_suunta, linkkityyppi
           from tielinkki_ctas
           where kunta_nro = $municipality
         """.as[KalpaRoadLink].list()
     }
-    val roadLinks: Seq[BasicRoadLink] = kalpaRoadLinks.map { k => BasicRoadLink(k._1, k._2, k._3, 0.0, k._4, k._6, k._7) }
+    val roadLinks: Seq[BasicRoadLink] = kalpaRoadLinks.map { k => BasicRoadLink(k._1, k._2, k._3, 0.0, k._4, k._5, k._6) }
     adjustedRoadLinks(roadLinks).map { roadLink =>
       Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
           "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._8)
