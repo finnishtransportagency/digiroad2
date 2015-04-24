@@ -128,7 +128,7 @@ object DataFixture {
 
   def importRoadLinkData() = {
     println("\nCommencing functional classes import from conversion DB\n")
-    RoadLinkDataImporter.importFunctionalClasses()
+    RoadLinkDataImporter.importFromConversionDB()
   }
 
   def main(args:Array[String]) : Unit = {
