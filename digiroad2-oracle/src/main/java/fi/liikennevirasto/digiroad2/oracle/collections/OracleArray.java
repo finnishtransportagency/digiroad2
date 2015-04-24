@@ -157,7 +157,7 @@ public class OracleArray {
     }
 
     public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 

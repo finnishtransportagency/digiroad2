@@ -29,7 +29,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   after {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from adjusted_functional_class where mml_id = 388565458""".execute()
+      sqlu"""delete from functional_class where mml_id = 388565458""".execute()
       sqlu"""delete from adjusted_link_type where mml_id = 388565458""".execute()
       sqlu"""delete from adjusted_traffic_direction where mml_id = 388565458""".execute()
     }

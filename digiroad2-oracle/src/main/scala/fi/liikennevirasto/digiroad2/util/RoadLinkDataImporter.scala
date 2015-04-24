@@ -21,8 +21,8 @@ object RoadLinkDataImporter {
         .list
     }
     Database.forDataSource(ds).withDynTransaction {
-      val statement = dynamicSession.prepareStatement("insert into adjusted_functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
-      val existingFunctionalClasses = Q.queryNA[Long]("Select mml_id from adjusted_functional_class").list
+      val statement = dynamicSession.prepareStatement("insert into functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
+      val existingFunctionalClasses = Q.queryNA[Long]("Select mml_id from functional_class").list
       functionalClasses
         .filterNot(x => existingFunctionalClasses.contains(x._1))
         .foreach { x =>
