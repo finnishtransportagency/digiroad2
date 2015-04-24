@@ -162,7 +162,7 @@ public class OracleArray {
     }
 
     public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedLinkTypesMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, link_type, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_LINK_TYPE where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+        String query = "SELECT mml_id, link_type, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM LINK_TYPE where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
