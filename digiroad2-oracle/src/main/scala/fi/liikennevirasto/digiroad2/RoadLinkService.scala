@@ -199,7 +199,7 @@ trait RoadLinkService {
   def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink.mmlId, unadjustedRoadLink.trafficDirection)
-    addAdjustment("adjusted_traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId, username)
+    addAdjustment("traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId, username)
   }
 
   def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
