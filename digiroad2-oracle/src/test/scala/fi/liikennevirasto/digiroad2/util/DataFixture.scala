@@ -57,6 +57,7 @@ object DataFixture {
       "adjusted_traffic_directions.sql",
       "kauniainen_manoeuvres.sql",
       "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
       "kauniainen_link_types.sql"))
   }
 
