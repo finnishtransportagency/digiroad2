@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io._
 
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
@@ -69,6 +70,12 @@ object ValluExport {
   }
 
   def main(args:Array[String]) : Unit = {
-    ValluExport.writeCsvToFile()
+    if (Digiroad2Context.useVVHGeometry) {
+      println("*** Vallu CSV export is currently disabled on a system using geometry from VVH server ***")
+      System.exit(1)
+    } else {
+      ValluExport.writeCsvToFile()
+      System.exit(0)
+    }
   }
 }

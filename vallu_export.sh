@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 ./sbt ${1} 'project digiroad2' "runMain fi.liikennevirasto.digiroad2.util.ValluExport"
 zip digiroad_stops digiroad_stops.csv
 set -- $(<ftp.conf)
