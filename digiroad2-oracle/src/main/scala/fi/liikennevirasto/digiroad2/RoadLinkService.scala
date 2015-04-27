@@ -227,7 +227,7 @@ trait RoadLinkService {
 
   def adjustLinkType(id: Long, linkType: Int, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    addAdjustment("link_type", "link_type", linkType, UnknownLinkType.value, unadjustedRoadLink.mmlId, username)
+    setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
   }
 
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int): AdjustedRoadLink = {
