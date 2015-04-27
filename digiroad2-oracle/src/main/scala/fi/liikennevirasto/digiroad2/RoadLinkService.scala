@@ -176,6 +176,7 @@ trait RoadLinkService {
       .as[BasicRoadLink].first()
   }
 
+  // TODO: remove after all properties use setLinkProperty
   private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long, username: String) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val optionalAdjustment: Option[Int] = sql"""select #$adjustmentColumn from #$adjustmentTable where mml_id = $mmlId""".as[Int].firstOption
@@ -196,6 +197,23 @@ trait RoadLinkService {
     }
   }
 
+  private def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
+      optionalExistingValue match {
+        case Some(existingValue) =>
+          if (existingValue != value) {
+            sqlu"""update #$table
+                     set #$column = $value,
+                         modified_date = current_timestamp,
+                         modified_by = $username
+                     where mml_id = $mmlId""".execute()
+          }
+        case None => sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
+      }
+    }
+  }
+
   def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink.mmlId, unadjustedRoadLink.trafficDirection)
@@ -204,7 +222,7 @@ trait RoadLinkService {
 
   def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    addAdjustment("functional_class", "functional_class", functionalClass, FunctionalClass.Unknown, unadjustedRoadLink.mmlId, username)
+    setLinkProperty("functional_class", "functional_class", functionalClass, unadjustedRoadLink.mmlId, username)
   }
 
   def adjustLinkType(id: Long, linkType: Int, username: String): Unit = {
