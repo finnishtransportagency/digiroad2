@@ -56,7 +56,8 @@ object DataFixture {
       "kauniainen_total_weight_limits.sql",
       "adjusted_traffic_directions.sql",
       "kauniainen_manoeuvres.sql",
-      "kauniainen_functional_classes.sql"))
+      "kauniainen_functional_classes.sql",
+      "kauniainen_link_types.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
