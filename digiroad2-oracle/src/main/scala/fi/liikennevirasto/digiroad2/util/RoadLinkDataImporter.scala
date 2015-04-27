@@ -16,17 +16,21 @@ import Database.dynamicSession
 object RoadLinkDataImporter {
   def importFromConversionDB() {
     val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
-      sql"""select mml_id, toiminnallinen_luokka, linkkityyppi from tielinkki_ctas"""
-        .as[(Long, Int, Int)]
+      sql"""select mml_id, toiminnallinen_luokka, linkkityyppi, liikennevirran_suunta from tielinkki_ctas"""
+        .as[(Long, Int, Int, Int)]
         .list
     }
     Database.forDataSource(ds).withDynTransaction {
+      println("insert functional classes")
       insertFunctionalClasses(existingRoadLinkData)
+      println("insert link types")
       insertLinkTypes(existingRoadLinkData)
+      println("insert traffic directions")
+      insertTrafficDirections(existingRoadLinkData)
     }
   }
 
-  private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int)]) {
+  private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
     val statement = dynamicSession.prepareStatement("insert into functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
     val existingFunctionalClasses = Q.queryNA[Long]("Select mml_id from functional_class").list
     functionalClasses
@@ -40,7 +44,7 @@ object RoadLinkDataImporter {
     statement.close()
   }
 
-  private def insertLinkTypes(data: List[(Long, Int, Int)]) = {
+  private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("insert into link_type(mml_id, link_type, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
     val existingData = Q.queryNA[Long]("Select mml_id from link_type").list
     data
@@ -48,6 +52,20 @@ object RoadLinkDataImporter {
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._3)
+      statement.addBatch()
+    }
+    statement.executeBatch()
+    statement.close()
+  }
+
+  private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
+    val statement = dynamicSession.prepareStatement("insert into traffic_direction(mml_id, traffic_direction, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
+    val existingData = Q.queryNA[Long]("Select mml_id from traffic_direction").list
+    data
+      .filterNot(x => existingData.contains(x._1))
+      .foreach { x =>
+      statement.setLong(1, x._1)
+      statement.setInt(2, x._4)
       statement.addBatch()
     }
     statement.executeBatch()
