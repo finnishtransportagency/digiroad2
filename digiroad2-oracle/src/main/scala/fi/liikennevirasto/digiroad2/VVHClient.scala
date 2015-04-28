@@ -34,7 +34,7 @@ class VVHClient(hostname: String) {
   def fetchByMunicipality(municipality: Int): Seq[(Long, Int, Seq[Point])] = {
     val municipalityFilter = URLEncoder.encode(s"""{"0":"Kuntatunnus=$municipality"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
-      s"layerDefs=$municipalityFilter&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
+      s"layerDefs=$municipalityFilter&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
 
