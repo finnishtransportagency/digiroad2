@@ -149,7 +149,7 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
     }
 
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchTrafficDirections(List ids, Connection connection) throws SQLException {
         String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }

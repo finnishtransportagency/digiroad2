@@ -15,8 +15,8 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 trait RoadLinkService {
-  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
-  type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass, TrafficDirection, Int)
+  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass)
+  type KalpaRoadLink = (Long, Long, Seq[Point], AdministrativeClass)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
   case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
@@ -144,7 +144,7 @@ trait RoadLinkService {
     }
   }
 
-  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<, r.<<) )
+  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<) )
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -171,7 +171,7 @@ trait RoadLinkService {
   }
 
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, liikennevirran_suunta
+    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja
             from tielinkki_ctas where dr1_id = $id"""
       .as[BasicRoadLink].first()
   }
@@ -216,8 +216,7 @@ trait RoadLinkService {
 
   def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    val (mmlId, unadjustedTrafficDirection) = (unadjustedRoadLink.mmlId, unadjustedRoadLink.trafficDirection)
-    addAdjustment("traffic_direction", "traffic_direction", trafficDirection.value, unadjustedTrafficDirection.value, mmlId, username)
+    addAdjustment("traffic_direction", "traffic_direction", trafficDirection.value, UnknownDirection.value, unadjustedRoadLink.mmlId, username)
   }
 
   def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
@@ -230,15 +229,15 @@ trait RoadLinkService {
     setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
   }
 
-  private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int): AdjustedRoadLink = {
+  private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int, trafficDirection: TrafficDirection): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
     (basic.id, basic.mmlId, basic.geometry, basic.length,
-     basic.administrativeClass, functionalClass, basic.trafficDirection, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, linkType)
+     basic.administrativeClass, functionalClass, trafficDirection, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, linkType)
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchAdjustedTrafficDirectionsByMMLId(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
+      val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchTrafficDirections(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchFunctionalClasses(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedLinkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchLinkTypes(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
 
@@ -252,7 +251,7 @@ trait RoadLinkService {
         val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
         val trafficDirectionValue = trafficDirection.map( trafficDirection =>
           TrafficDirection(trafficDirection._2)
-        ).getOrElse(basicRoadLink.trafficDirection)
+        ).getOrElse(UnknownDirection)
 
         def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
           (a, b) match {
@@ -271,7 +270,7 @@ trait RoadLinkService {
           case _ => None
         }
 
-        basicToAdjusted(basicRoadLink.copy(trafficDirection = trafficDirectionValue), modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue)
+        basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
       }
     }
   }
@@ -315,7 +314,7 @@ trait RoadLinkService {
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val roadLinkData: Seq[(Long, Long, Int, Int, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
-      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3), TrafficDirection(x._4) ) }
+      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3)) }
       adjustedRoadLinks(basicRoadLinks)
     }
   }
@@ -330,15 +329,15 @@ trait RoadLinkService {
   def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
     val kalpaRoadLinks = Database.forDataSource(dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id, to_2d(shape), omistaja, liikennevirran_suunta, linkkityyppi
+        select dr1_id, mml_id, to_2d(shape), omistaja
           from tielinkki_ctas
           where kunta_nro = $municipality
         """.as[KalpaRoadLink].list()
     }
-    val roadLinks: Seq[BasicRoadLink] = kalpaRoadLinks.map { k => BasicRoadLink(k._1, k._2, k._3, 0.0, k._4, k._5) }
+    val roadLinks: Seq[BasicRoadLink] = kalpaRoadLinks.map { k => BasicRoadLink(k._1, k._2, k._3, 0.0, k._4) }
     adjustedRoadLinks(roadLinks).map { roadLink =>
       Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
-          "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._8)
+          "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._10)
     }
   }
 
