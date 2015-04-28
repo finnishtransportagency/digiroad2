@@ -2,9 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-import fi.liikennevirasto.digiroad2.asset.{AgainstDigitizing, TowardsDigitizing, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.asset._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, AdministrativeClass, TrafficDirection}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import scala.slick.driver.JdbcDriver.backend.Database
 import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -54,8 +53,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Adjust link type") {
-    RoadLinkService.adjustLinkType(5925952, 111, "testuser")
-
+    RoadLinkService.updateProperties(5925952, 5, 111, BothDirections, "testuser")
     val roadLink = RoadLinkService.getRoadLink(5925952)
     val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
     linkType should be (111)

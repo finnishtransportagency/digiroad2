@@ -193,18 +193,10 @@ trait RoadLinkService {
     }
   }
 
-  def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
+  def updateProperties(id: Long, functionalClass: Int, linkType: Int, direction: TrafficDirection, username: String) = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    setLinkProperty("traffic_direction", "traffic_direction", trafficDirection.value, unadjustedRoadLink.mmlId, username)
-  }
-
-  def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
-    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+    setLinkProperty("traffic_direction", "traffic_direction", direction.value, unadjustedRoadLink.mmlId, username)
     setLinkProperty("functional_class", "functional_class", functionalClass, unadjustedRoadLink.mmlId, username)
-  }
-
-  def adjustLinkType(id: Long, linkType: Int, username: String): Unit = {
-    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
     setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
   }
 
