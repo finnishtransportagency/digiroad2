@@ -53,34 +53,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     modifiedBy should be (Some("test"))
   }
 
-  test("Override road link type with adjusted value") {
-    addLinkTypeAdjustment(99, 896628487)
-
-    val roadLink = RoadLinkService.getRoadLink(5925952)
-    val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
-    linkType should be (99)
-  }
-
   test("Adjust link type") {
     RoadLinkService.adjustLinkType(5925952, 111, "testuser")
 
     val roadLink = RoadLinkService.getRoadLink(5925952)
     val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
     linkType should be (111)
-  }
-
-  test("Link type adjustment should return latest modification") {
-    addLinkTypeAdjustment(99, 896628487)
-
-    val roadLink = RoadLinkService.getRoadLink(5925952)
-    val (_, _, _, _, _, _, _, modifiedAt, modifiedBy, _) = roadLink
-    modifiedBy should be (Some("testuser"))
-    modifiedAt should be (Some("12.12.2014 00:00:00"))
-  }
-
-  def addLinkTypeAdjustment(linkTypeAdjustment: Int, mmlId: Int): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""insert into link_type (mml_id, link_type, modified_by, modified_date) values ($mmlId, $linkTypeAdjustment, 'testuser', to_timestamp('2014-12-12', 'YYYY-MM-DD'))""".execute()
-    }
   }
 }
