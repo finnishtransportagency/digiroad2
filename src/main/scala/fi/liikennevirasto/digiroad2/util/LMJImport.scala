@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.asset.AssetWithProperties
@@ -30,26 +31,35 @@ object LMJImport {
     }
   }
 
+  def writeLmjCsvToFile(args: Array[String]): Unit = {
+    printer.write(AssetLMJFormatter.fields + "\n")
+    println("Get assets for municipality:")
+    Database.forDataSource(ds).withDynSession {
+      if (args.head == "all") {
+        getMunicipalities.foreach {
+          x =>
+            writeAssetByMunicipality(x)
+        }
+      } else args.foreach {
+        x =>
+          writeAssetByMunicipality(x.toInt)
+      }
+    }
+    printer.close()
+    System.exit(0)
+  }
+
   def main(args:Array[String]) : Unit = {
     if (args.length > 0) {
-      printer.write(AssetLMJFormatter.fields + "\n")
-      println("Get assets for municipality:")
-      Database.forDataSource(ds).withDynSession {
-        if (args.head == "all") {
-          getMunicipalities.foreach {
-            x =>
-              writeAssetByMunicipality(x)
-          }
-        } else args.foreach {
-          x =>
-            writeAssetByMunicipality(x.toInt)
-        }
+      if (Digiroad2Context.useVVHGeometry) {
+        println("*** LMJ CSV export is currently disabled on a system using geometry from VVH server ***")
+        System.exit(1)
+      } else {
+        writeLmjCsvToFile(args)
       }
-      printer.close()
     } else {
       println("Usage: parameters <env> <all> or <env> <municipalitycode1> <municipalitycode2>")
       println("example './LMJ_import.sh dev 179 167'")
-
     }
   }
 }
