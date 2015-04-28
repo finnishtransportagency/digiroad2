@@ -176,27 +176,6 @@ trait RoadLinkService {
       .as[BasicRoadLink].first()
   }
 
-  // TODO: remove after all properties use setLinkProperty
-  private def addAdjustment(adjustmentTable: String, adjustmentColumn: String, adjustment: Int, unadjustedValue: Int, mmlId: Long, username: String) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val optionalAdjustment: Option[Int] = sql"""select #$adjustmentColumn from #$adjustmentTable where mml_id = $mmlId""".as[Int].firstOption
-      optionalAdjustment match {
-        case Some(existingAdjustment) =>
-          if (existingAdjustment != adjustment) {
-            sqlu"""update #$adjustmentTable
-                     set #$adjustmentColumn = $adjustment,
-                         modified_date = current_timestamp,
-                         modified_by = $username
-                     where mml_id = $mmlId""".execute()
-          }
-        case None =>
-          if (unadjustedValue != adjustment) {
-            sqlu"""insert into #$adjustmentTable (mml_id, #$adjustmentColumn, modified_by) values ($mmlId, $adjustment, $username)""".execute()
-          }
-      }
-    }
-  }
-
   private def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
@@ -216,7 +195,7 @@ trait RoadLinkService {
 
   def adjustTrafficDirection(id: Long, trafficDirection: TrafficDirection, username: String): Unit = {
     val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    addAdjustment("traffic_direction", "traffic_direction", trafficDirection.value, UnknownDirection.value, unadjustedRoadLink.mmlId, username)
+    setLinkProperty("traffic_direction", "traffic_direction", trafficDirection.value, unadjustedRoadLink.mmlId, username)
   }
 
   def adjustFunctionalClass(id: Long, functionalClass: Int, username: String): Unit = {
