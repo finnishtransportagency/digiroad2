@@ -281,6 +281,7 @@ class AssetDataImporter {
   }
 
   def importManoeuvres(database: DatabaseDef): Unit = {
+    throw new NotImplementedError("TODO: Fix importManoeuvres to fetch manoeuvre ids from manoeuvre sequence. Current implementation imports manoeuvres with clashing ids")
     val query =
       sql"""
         select kaan_id, kaan_tyyppi, tl_dr1_id, elem_jarjestyslaji
