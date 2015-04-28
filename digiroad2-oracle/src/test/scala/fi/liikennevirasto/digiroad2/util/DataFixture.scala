@@ -54,7 +54,6 @@ object DataFixture {
       "insert_users.sql",
       "kauniainen_production_speed_limits.sql",
       "kauniainen_total_weight_limits.sql",
-      "adjusted_traffic_directions.sql",
       "kauniainen_manoeuvres.sql",
       "kauniainen_functional_classes.sql",
       "kauniainen_traffic_directions.sql",
