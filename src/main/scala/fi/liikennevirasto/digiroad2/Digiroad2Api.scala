@@ -361,9 +361,9 @@ with GZipSupport {
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = (parsedBody \ "linkType").extract[Int]
-    RoadLinkService.adjustTrafficDirection(id, trafficDirection, user.username)
-    RoadLinkService.adjustFunctionalClass(id, functionalClass, user.username)
-    RoadLinkService.adjustLinkType(id, linkType, user.username)
+
+    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
+
     val (_, mmlId, points, length, administrativeClass,
          updatedFunctionalClass, updatedTrafficDirection,
          modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)

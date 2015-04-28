@@ -89,20 +89,14 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkData implements RowToElement<Tuple6<Long, Long, Int, Int, Int, Int>>  {
+    private static class RowToRoadLinkData implements RowToElement<Tuple3<Long, Long, Int>>  {
         @Override
-        public Tuple6<Long, Long, Int, Int, Int, Int> convert(ResultSet row) throws SQLException {
+        public Tuple3<Long, Long, Int> convert(ResultSet row) throws SQLException {
             long id = row.getLong(1);
             long mmlId = row.getLong(2);
             int administrativeClass = row.getInt(3);
             if(row.wasNull()) { administrativeClass = 99; }
-            int functionalClass = row.getInt(4);
-            if(row.wasNull()) { functionalClass = 99; }
-            int trafficDirection = row.getInt(5);
-            if(row.wasNull()) { trafficDirection = 99; }
-            int linkType = row.getInt(6);
-            if(row.wasNull()) { linkType = 99; }
-            return new Tuple6(id, mmlId, administrativeClass, functionalClass, trafficDirection, linkType);
+            return new Tuple3(id, mmlId, administrativeClass);
         }
     }
 
@@ -151,23 +145,23 @@ public class OracleArray {
         return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
     }
 
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedTrafficDirectionsByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchTrafficDirections(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedFunctionalClassesByMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchFunctionalClasses(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchAdjustedLinkTypesMMLId(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, link_type, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM ADJUSTED_LINK_TYPE where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple4<Long, Int, DateTime, String>> fetchLinkTypes(List ids, Connection connection) throws SQLException {
+        String query = "SELECT mml_id, link_type, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM LINK_TYPE where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
-    public static List<Tuple6<Long, Long, Int, Int, Int, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
-        String query = "select dr1_id, mml_id, omistaja, toiminnallinen_luokka, liikennevirran_suunta, linkkityyppi from tielinkki_ctas  WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+    public static List<Tuple3<Long, Long, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
+        String query = "select dr1_id, mml_id, omistaja from tielinkki_ctas  WHERE mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToRoadLinkData());
     }
 }

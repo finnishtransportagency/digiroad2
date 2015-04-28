@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{Conversion, TemporaryTables}
+import fi.liikennevirasto.digiroad2.util.RoadLinkDataImporter._
 import org.joda.time.DateTime
 import scala.concurrent.forkjoin.ForkJoinPool
 import java.util.Properties
@@ -53,9 +54,10 @@ object DataFixture {
       "insert_users.sql",
       "kauniainen_production_speed_limits.sql",
       "kauniainen_total_weight_limits.sql",
-      "adjusted_traffic_directions.sql",
-      "adjusted_functional_classes.sql",
-      "kauniainen_manoeuvres.sql"))
+      "kauniainen_manoeuvres.sql",
+      "kauniainen_functional_classes.sql",
+      "kauniainen_traffic_directions.sql",
+      "kauniainen_link_types.sql"))
   }
 
   def importSpeedLimitsFromConversion(taskPool: ForkJoinPool) {
@@ -125,6 +127,11 @@ object DataFixture {
     println("\n")
   }
 
+  def importRoadLinkData() = {
+    println("\nCommencing functional classes import from conversion DB\n")
+    RoadLinkDataImporter.importFromConversionDB()
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -162,9 +169,11 @@ object DataFixture {
         importManoeuvresFromConversion()
       case Some("mml_masstransitstops") =>
         importMMLIdsOnMassTransitStops()
+      case Some("import_roadlink_data") =>
+        importRoadLinkData()
       case Some("repair") =>
         flyway.repair()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | repair")
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | repair")
     }
   }
 }
