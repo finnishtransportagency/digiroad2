@@ -16,10 +16,11 @@ import Database.dynamicSession
 object RoadLinkDataImporter {
   def importFromConversionDB() {
     val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
-      sql"""select mml_id, toiminnallinen_luokka, linkkityyppi, liikennevirran_suunta from tielinkki_ctas"""
+      sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by mml_id"""
         .as[(Long, Int, Int, Int)]
         .list
     }
+
     Database.forDataSource(ds).withDynTransaction {
       println("insert functional classes")
       insertFunctionalClasses(existingRoadLinkData)
