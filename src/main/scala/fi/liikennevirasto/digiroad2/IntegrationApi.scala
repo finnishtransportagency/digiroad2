@@ -5,7 +5,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Property}
+import fi.liikennevirasto.digiroad2.asset.{RoadLinkStop, AssetWithProperties, Property}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
@@ -102,6 +102,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
 
+  def extractMmlId(massTransitStop: RoadLinkStop): (String, Long) = { "mml_id" -> massTransitStop.mmlId }
+
   private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
@@ -115,6 +117,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
+            extractMmlId(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
@@ -150,7 +153,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
     MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
       bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
-      modified = asset.modified, floating = asset.floating)
+      modified = asset.modified, mmlId = 0, floating = asset.floating)
   }
 
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
