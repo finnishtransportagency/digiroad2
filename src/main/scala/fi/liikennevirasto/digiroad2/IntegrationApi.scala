@@ -96,6 +96,12 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         .getOrElse(""))
   }
 
+  def extractModifier(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
+    "muokannut_viimeksi" ->  massTransitStop.modified.modifier
+      .getOrElse(massTransitStop.created.modifier
+      .getOrElse(""))
+  }
+
   def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
 
   def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
@@ -111,6 +117,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
           "properties" -> Map(
+            extractModifier(massTransitStop),
             extractModificationTime(massTransitStop),
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
