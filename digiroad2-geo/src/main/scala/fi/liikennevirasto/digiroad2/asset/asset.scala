@@ -75,7 +75,7 @@ case object TowardsDigitizing extends TrafficDirection { def value = 4 }
 case object UnknownDirection extends TrafficDirection { def value = 99 }
 
 trait NationalStop { val nationalId: Long }
-trait RoadLinkStop { val mmlId: Long }
+trait RoadLinkStop { val mmlId: Option[Long] }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long,
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
