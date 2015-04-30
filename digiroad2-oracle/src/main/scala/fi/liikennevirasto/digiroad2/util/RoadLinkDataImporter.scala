@@ -16,7 +16,7 @@ import Database.dynamicSession
 object RoadLinkDataImporter {
   def importFromConversionDB() {
     val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
-      sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by mml_id"""
+      sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by mml_id """
         .as[(Long, Int, Int, Int)]
         .list
     }
@@ -32,10 +32,8 @@ object RoadLinkDataImporter {
   }
 
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
-    val statement = dynamicSession.prepareStatement("insert into functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
-    val existingFunctionalClasses = Q.queryNA[Long]("Select mml_id from functional_class").list
+    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(FUNCTIONAL_CLASS, PK_FUNCTIONAL_CLASS)  */ into functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
     functionalClasses
-      .filterNot(x => existingFunctionalClasses.contains(x._1))
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._2)
@@ -46,10 +44,8 @@ object RoadLinkDataImporter {
   }
 
   private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
-    val statement = dynamicSession.prepareStatement("insert into link_type(mml_id, link_type, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
-    val existingData = Q.queryNA[Long]("Select mml_id from link_type").list
+    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(LINK_TYPE, PK_LINK_TYPE) */ into link_type(mml_id, link_type, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
     data
-      .filterNot(x => existingData.contains(x._1))
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._3)
@@ -60,10 +56,8 @@ object RoadLinkDataImporter {
   }
 
   private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
-    val statement = dynamicSession.prepareStatement("insert into traffic_direction(mml_id, traffic_direction, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
-    val existingData = Q.queryNA[Long]("Select mml_id from traffic_direction").list
+    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(TRAFFIC_DIRECTION, PK_TRAFFIC_DIRECTION) */ into traffic_direction(mml_id, traffic_direction, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
     data
-      .filterNot(x => existingData.contains(x._1))
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._4)
