@@ -13,32 +13,21 @@ import Q.interpolation
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
-import scala.slick.util.CloseableIterator
-
 object RoadLinkDataImporter {
   def importFromConversionDB() {
-
-    val municipalityCodes: CloseableIterator[Int] = Database.forDataSource(ds).withDynSession {
-      sql"""select id from municipality""".as[Int].iterator()
+    val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
+      sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas group by mml_id"""
+        .as[(Long, Int, Int, Int)]
+        .list
     }
 
-    municipalityCodes.foreach { municipalityCode =>
-      val existingRoadLinkData = Database.forDataSource(ConversionDatabase.dataSource).withDynSession {
-        sql"""select mml_id, max(toiminnallinen_luokka), max(linkkityyppi), max(liikennevirran_suunta) from tielinkki_ctas where kunta_nro = $municipalityCode group by mml_id"""
-          .as[(Long, Int, Int, Int)]
-          .list
-      }
-      
-      println(s"commencing road link data import for municipality $municipalityCode, data rows ${existingRoadLinkData.length}")
-
-      Database.forDataSource(ds).withDynTransaction {
-        println("insert functional classes")
-        insertFunctionalClasses(existingRoadLinkData)
-        println("insert link types")
-        insertLinkTypes(existingRoadLinkData)
-        println("insert traffic directions")
-        insertTrafficDirections(existingRoadLinkData)
-      }
+    Database.forDataSource(ds).withDynTransaction {
+      println("insert functional classes")
+      insertFunctionalClasses(existingRoadLinkData)
+      println("insert link types")
+      insertLinkTypes(existingRoadLinkData)
+      println("insert traffic directions")
+      insertTrafficDirections(existingRoadLinkData)
     }
   }
 
