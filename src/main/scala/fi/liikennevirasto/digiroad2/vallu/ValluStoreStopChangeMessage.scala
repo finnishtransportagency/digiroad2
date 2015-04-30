@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Property
 import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.format.ISODateTimeFormat
+import scala.language.reflectiveCalls
 
 object ValluStoreStopChangeMessage extends AssetPropertiesReader {
   def create(stop: EventBusMassTransitStop): String = {
