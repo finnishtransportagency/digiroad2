@@ -80,7 +80,7 @@ trait NumericalLimitOperations {
         }
 
       val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
-        val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = link
+        val (assetId, roadLinkId, _, sideCode, value, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
         NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
       }
@@ -97,24 +97,19 @@ trait NumericalLimitOperations {
       val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
 
       val linkGeometries: Map[Long, Seq[Point]] =
-      roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
+        roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
           acc + (roadLink._1 -> roadLink._2)
         }
 
-      val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
-        val (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) = link
+      numericalLimits.map { link =>
+        val (assetId, roadLinkId, mmlId, sideCode, value, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
-        NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+        Map("id" -> (assetId+ "-" + roadLinkId),
+          "points" -> geometry,
+          "value" -> value,
+          "side_code" -> sideCode,
+          "mmlId" -> mmlId)
       }
-
-      numericalLimitsWithGeometry
-        .map { numericalLimit =>
-          Map("id" -> (numericalLimit.id + "-" + numericalLimit.roadLinkId),
-              "points" -> numericalLimit.points,
-              "value" -> numericalLimit.value,
-              "side_code" -> numericalLimit.sideCode)
-        }
-        .toSeq
     }
   }
 
