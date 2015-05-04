@@ -111,7 +111,8 @@ trait NumericalLimitOperations {
         .map { numericalLimit =>
           Map("id" -> (numericalLimit.id + "-" + numericalLimit.roadLinkId),
               "points" -> numericalLimit.points,
-              "value" -> numericalLimit.value)
+              "value" -> numericalLimit.value,
+              "side_code" -> numericalLimit.sideCode)
         }
         .toSeq
     }
