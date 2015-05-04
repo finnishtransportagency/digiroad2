@@ -154,6 +154,16 @@ object DataFixture {
     println("\n")
   }
 
+  def importMMLIdsOnSpeedLimits(): Unit = {
+    println("\nCommencing MML ID import on speed limits at time: ")
+    println(DateTime.now())
+    println("import mml ids for speed limits")
+    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 20)
+    println("MML ID import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -193,6 +203,8 @@ object DataFixture {
         importMMLIdsOnMassTransitStops()
       case Some("mml_numericallimits") =>
         importMMLIdsOnNumericalLimits()
+      case Some("mml_speedlimits") =>
+        importMMLIdsOnSpeedLimits()
       case Some("import_roadlink_data") =>
         importRoadLinkData()
       case Some("repair") =>
