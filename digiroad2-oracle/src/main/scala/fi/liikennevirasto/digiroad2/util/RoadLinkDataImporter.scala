@@ -32,11 +32,17 @@ object RoadLinkDataImporter {
   }
 
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
-    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(FUNCTIONAL_CLASS, PK_FUNCTIONAL_CLASS)  */ into functional_class(mml_id, functional_class, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
+    val statement = dynamicSession.prepareStatement("""
+        insert into functional_class(mml_id, functional_class, modified_date, modified_by)
+        select ?, ?, sysdate, 'dr1_conversion'
+        from dual
+        where not exists (select * from functional_class where mml_id = ?)
+      """)
     functionalClasses
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._2)
+      statement.setLong(3, x._1)
       statement.addBatch()
     }
     statement.executeBatch()
@@ -44,11 +50,17 @@ object RoadLinkDataImporter {
   }
 
   private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
-    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(LINK_TYPE, PK_LINK_TYPE) */ into link_type(mml_id, link_type, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
+    val statement = dynamicSession.prepareStatement("""
+        insert into link_type(mml_id, link_type, modified_date, modified_by)
+        select ?, ?, sysdate, 'dr1_conversion'
+        from dual
+        where not exists (select * from link_type where mml_id = ?)
+      """)
     data
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._3)
+      statement.setLong(3, x._1)
       statement.addBatch()
     }
     statement.executeBatch()
@@ -56,11 +68,17 @@ object RoadLinkDataImporter {
   }
 
   private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
-    val statement = dynamicSession.prepareStatement("insert /*+ IGNORE_ROW_ON_DUPKEY_INDEX(TRAFFIC_DIRECTION, PK_TRAFFIC_DIRECTION) */ into traffic_direction(mml_id, traffic_direction, modified_date, modified_by) values(?, ?, sysdate, 'dr1_conversion')")
+    val statement = dynamicSession.prepareStatement("""
+        insert into traffic_direction(mml_id, traffic_direction, modified_date, modified_by)
+        select ?, ?, sysdate, 'dr1_conversion'
+        from dual
+        where not exists (select * from traffic_direction where mml_id = ?)
+      """)
     data
       .foreach { x =>
       statement.setLong(1, x._1)
       statement.setInt(2, x._4)
+      statement.setLong(3, x._1)
       statement.addBatch()
     }
     statement.executeBatch()
