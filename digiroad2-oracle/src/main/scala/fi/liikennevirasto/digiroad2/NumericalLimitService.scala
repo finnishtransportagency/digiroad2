@@ -108,7 +108,9 @@ trait NumericalLimitOperations {
           "points" -> geometry,
           "value" -> value,
           "side_code" -> sideCode,
-          "mmlId" -> mmlId)
+          "mmlId" -> mmlId,
+          "startMeasure" -> startMeasure,
+          "endMeasure" -> endMeasure)
       }
     }
   }
