@@ -104,7 +104,7 @@ trait NumericalLimitOperations {
       numericalLimits.map { link =>
         val (assetId, roadLinkId, mmlId, sideCode, value, startMeasure, endMeasure) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
-        Map("id" -> (assetId+ "-" + roadLinkId),
+        Map("id" -> (assetId + "-" + mmlId),
           "points" -> geometry,
           "value" -> value,
           "side_code" -> sideCode,
