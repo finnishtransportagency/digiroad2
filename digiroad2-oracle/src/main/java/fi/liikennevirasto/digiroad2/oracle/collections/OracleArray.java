@@ -42,19 +42,6 @@ public class OracleArray {
         }
     }
 
-    private static class RowToLinearAsset implements RowToElement<Tuple6<Long,Long,Int,Int,Double,Double>> {
-        @Override
-        public Tuple6<Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
-            long id = row.getLong(1);
-            long roadLinkId = row.getLong(2);
-            int sideCode = row.getInt(3);
-            int limitValue = row.getInt(4);
-            double startMeasure = row.getDouble(5);
-            double endMeasure = row.getDouble(6);
-            return new Tuple6(id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure);
-        }
-    }
-
     private static class RowToLinearAssetWithMmlId implements RowToElement<Tuple7<Long,Long,Long,Int,Int,Double,Double>> {
         @Override
         public Tuple7<Long, Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
@@ -112,18 +99,6 @@ public class OracleArray {
             if(row.wasNull()) { administrativeClass = 99; }
             return new Tuple3(id, mmlId, administrativeClass);
         }
-    }
-
-    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchAssetLinksByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
-                "FROM ASSET a " +
-                "JOIN ASSET_LINK al ON a.id = al.asset_id " +
-                "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
-                "JOIN PROPERTY p ON a.asset_type_id = p.asset_type_id AND p.public_id = 'rajoitus' " +
-                "JOIN SINGLE_CHOICE_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
-                "JOIN ENUMERATED_VALUE e ON s.enumerated_value_id = e.id " +
-                "WHERE a.asset_type_id = 20 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
     }
 
     public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchSpeedLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
