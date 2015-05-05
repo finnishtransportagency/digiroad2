@@ -110,6 +110,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
 
+  def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
+
   private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
@@ -125,6 +127,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
             extractMmlId(massTransitStop),
+            extractMvalue(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
@@ -160,7 +163,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
     MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
       bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
-      modified = asset.modified, mmlId = None, floating = asset.floating)
+      modified = asset.modified, mmlId = None, mValue = None, floating = asset.floating)
   }
 
   private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)

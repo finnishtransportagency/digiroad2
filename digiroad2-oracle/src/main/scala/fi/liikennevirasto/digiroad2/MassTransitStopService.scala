@@ -28,7 +28,7 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
 case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double, lat: Double,
                               bearing: Option[Int], floating: Boolean,
                               created: Modification, modified: Modification,
-                              mmlId: Option[Long],
+                              mmlId: Option[Long], mValue: Option[Double],
                               propertyData: Seq[Property]) extends FloatingStop with RoadLinkStop
 
 trait MassTransitStopService {
@@ -273,7 +273,7 @@ trait MassTransitStopService {
         lon = persistedStop.lon, lat = persistedStop.lat,
         bearing = persistedStop.bearing, floating = floating,
         created = persistedStop.created, modified = persistedStop.modified,
-        mmlId = Some(persistedStop.mmlId),
+        mmlId = Some(persistedStop.mmlId), mValue = Some(persistedStop.mValue),
         propertyData = persistedStop.propertyData)
     }
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)

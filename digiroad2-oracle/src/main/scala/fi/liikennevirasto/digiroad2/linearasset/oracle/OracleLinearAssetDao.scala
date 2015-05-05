@@ -74,7 +74,9 @@ object OracleLinearAssetDao {
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Int, Seq[Point])], Map[Long, (Seq[Point], Double, AdministrativeClass)]) = {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds = bounds, municipalities = municipalities)
 
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray
+      .fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
 
     val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, linkWithGeometry) =>
@@ -105,7 +107,7 @@ object OracleLinearAssetDao {
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
     val linksWithGeometries = RoadLinkService.getByMunicipality(municipality)
 
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray.fetchAssetLinksByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+    val assetLinks: Seq[(Long, Long, Long, Int, Int, Double, Double)] = OracleArray.fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
     val linkGeometries: Map[Long, Seq[Point]] =
       linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
@@ -113,9 +115,15 @@ object OracleLinearAssetDao {
       }
 
     val speedLimits: Seq[Map[String, Any]] = assetLinks.map { link =>
-      val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
+      val (assetId, roadLinkId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
-      Map ("id" -> (assetId + "-" + roadLinkId), "sideCode" -> sideCode, "points" -> geometry, "value" -> speedLimit)
+      Map ("id" -> (assetId + "-" + mmlId),
+        "sideCode" -> sideCode,
+        "points" -> geometry,
+        "value" -> speedLimit,
+        "startMeasure" -> startMeasure,
+        "endMeasure" -> endMeasure,
+        "mmlId" -> mmlId)
     }
 
     speedLimits
@@ -311,7 +319,10 @@ object OracleLinearAssetDao {
   }
 
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass)]): Unit = {
-    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = timed("fetchAssetLinks", { OracleArray.fetchAssetLinksByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn)) })
+    val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = timed("fetchAssetLinks", { OracleArray.
+      fetchSpeedLimitsByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
+      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
+    })
 
     val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
     val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Int, Double, Double)] = timed("roadLinksUncoveredBySpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>

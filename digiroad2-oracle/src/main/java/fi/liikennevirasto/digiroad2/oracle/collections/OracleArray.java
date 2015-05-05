@@ -42,16 +42,17 @@ public class OracleArray {
         }
     }
 
-    private static class RowToLinearAsset implements RowToElement<Tuple6<Long,Long,Int,Int,Double,Double>> {
+    private static class RowToLinearAssetWithMmlId implements RowToElement<Tuple7<Long,Long,Long,Int,Int,Double,Double>> {
         @Override
-        public Tuple6<Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
+        public Tuple7<Long, Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
             long id = row.getLong(1);
             long roadLinkId = row.getLong(2);
-            int sideCode = row.getInt(3);
-            int limitValue = row.getInt(4);
-            double startMeasure = row.getDouble(5);
-            double endMeasure = row.getDouble(6);
-            return new Tuple6(id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure);
+            long mmlId = row.getLong(3);
+            int sideCode = row.getInt(4);
+            int limitValue = row.getInt(5);
+            double startMeasure = row.getDouble(6);
+            double endMeasure = row.getDouble(7);
+            return new Tuple7(id, roadLinkId, mmlId, sideCode, limitValue, startMeasure, endMeasure);
         }
     }
 
@@ -100,8 +101,8 @@ public class OracleArray {
         }
     }
 
-    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchAssetLinksByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
+    public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchSpeedLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
+        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +
                 "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
@@ -109,11 +110,11 @@ public class OracleArray {
                 "JOIN SINGLE_CHOICE_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "JOIN ENUMERATED_VALUE e ON s.enumerated_value_id = e.id " +
                 "WHERE a.asset_type_id = 20 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
+        return queryWithIdArray(ids, connection, query, new RowToLinearAssetWithMmlId());
     }
 
-    public static List<Tuple6<Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure " +
+    public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
+        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +
                 "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
@@ -121,7 +122,7 @@ public class OracleArray {
                 "JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
                 "AND (a.valid_to >= sysdate OR a.valid_to is null)";
-        return queryWithIdArray(ids, connection, query, new RowToLinearAsset());
+        return queryWithIdArray(ids, connection, query, new RowToLinearAssetWithMmlId());
     }
 
     public static List<Tuple7<Long, Int, Long, Int, DateTime, String, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
