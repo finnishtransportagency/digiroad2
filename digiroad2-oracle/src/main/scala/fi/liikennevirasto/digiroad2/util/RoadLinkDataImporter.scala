@@ -34,7 +34,7 @@ object RoadLinkDataImporter {
   private def insertFunctionalClasses(functionalClasses: List[(Long, Int, Int, Int)]) {
     val statement = dynamicSession.prepareStatement("""
         insert into functional_class(mml_id, functional_class, modified_date, modified_by)
-        select ?, ?, sysdate, 'dr1_conversion'
+        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
         where not exists (select * from functional_class where mml_id = ?)
       """)
@@ -52,7 +52,7 @@ object RoadLinkDataImporter {
   private def insertLinkTypes(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
         insert into link_type(mml_id, link_type, modified_date, modified_by)
-        select ?, ?, sysdate, 'dr1_conversion'
+        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
         where not exists (select * from link_type where mml_id = ?)
       """)
@@ -70,7 +70,7 @@ object RoadLinkDataImporter {
   private def insertTrafficDirections(data: List[(Long, Int, Int, Int)]) = {
     val statement = dynamicSession.prepareStatement("""
         insert into traffic_direction(mml_id, traffic_direction, modified_date, modified_by)
-        select ?, ?, sysdate, 'dr1_conversion'
+        select ?, ?, to_timestamp('08-JAN-15','DD-MON-RR'), 'dr1_conversion'
         from dual
         where not exists (select * from traffic_direction where mml_id = ?)
       """)
