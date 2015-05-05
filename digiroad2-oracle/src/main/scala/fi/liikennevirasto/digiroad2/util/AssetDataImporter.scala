@@ -379,24 +379,24 @@ class AssetDataImporter {
   def importMMLIdsOnNumericalLimit(conversionDB: DatabaseDef, assetTypeId: Int) {
     Database.forDataSource(ds).withSession { dbSession =>
       conversionDB.withSession { conversionSession =>
-        val roadLinkIds: CloseableIterator[(Long, Long, Option[Long])] =
-          sql"""select a.id, lrm.id, lrm.road_link_id
+        val roadLinkIds: CloseableIterator[(Long, Option[Long])] =
+          sql"""select lrm.id, lrm.road_link_id
                 from asset a
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = $assetTypeId"""
-            .as[(Long, Long, Option[Long])].iterator()(dbSession)
-        val mmlIds: CloseableIterator[(Long, Long, Option[Long])] =
+            .as[(Long, Option[Long])].iterator()(dbSession)
+        val mmlIds: CloseableIterator[(Long, Option[Long])] =
           roadLinkIds.map { roadLink =>
-            val (assetId, lrmId, roadLinkId) = roadLink
+            val (lrmId, roadLinkId) = roadLink
             val mmlId: Option[Long] = roadLinkId match {
               case Some(dr1Id) => sql"""select mml_id from tielinkki_ctas where dr1_id = $dr1Id""".as[Long].firstOption()(conversionSession)
               case _ => None
             }
-            (assetId, lrmId, mmlId)
+            (lrmId, mmlId)
           }
         dbSession.withTransaction {
-          mmlIds.foreach { case (assetId, lrmId, mmlId) =>
+          mmlIds.foreach { case (lrmId, mmlId) =>
             sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
           }
         }
