@@ -115,7 +115,7 @@ object OracleLinearAssetDao {
     val speedLimits: Seq[Map[String, Any]] = assetLinks.map { link =>
       val (assetId, roadLinkId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
-      Map ("id" -> (assetId + "-" + roadLinkId),
+      Map ("id" -> (assetId + "-" + mmlId),
         "sideCode" -> sideCode,
         "points" -> geometry,
         "value" -> speedLimit,
