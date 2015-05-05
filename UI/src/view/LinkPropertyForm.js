@@ -28,7 +28,8 @@
       [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
       [13, 'Huoltoaukko moottoritiellä'],
-      [21, 'Lautta/lossi']
+      [21, 'Lautta/lossi'],
+      [99, 'Tuntematon']
     ];
 
     var disabled = 'disabled';
@@ -78,7 +79,7 @@
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
-        linkProperties.localizedLinkTypes = _.find(linkTypes, function(x) { return x[0] === linkProperties.linkType; })[1] || 'Tuntematon';
+        linkProperties.localizedLinkTypes = _.find(linkTypes, function(x) { return x[0] === linkProperties.linkType; })[1];
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
