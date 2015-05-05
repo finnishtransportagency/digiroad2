@@ -305,7 +305,11 @@ with GZipSupport {
         "mmlId" -> roadLink.mmlId,
         "points" -> roadLink.geometry,
         "administrativeClass" -> roadLink.administrativeClass.toString,
-        "linkType" -> roadLink.linkType.value)
+        "linkType" -> roadLink.linkType.value,
+        "functionalClass" -> roadLink.functionalClass,
+        "trafficDirection" -> roadLink.trafficDirection.toString,
+        "modifiedAt" -> roadLink.modifiedAt,
+        "modifiedBy" -> roadLink.modifiedBy)
     }
   }
 
