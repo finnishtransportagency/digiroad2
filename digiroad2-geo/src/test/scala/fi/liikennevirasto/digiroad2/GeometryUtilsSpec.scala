@@ -161,4 +161,36 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val result = subtractIntervalFromIntervals(Seq((3.0, 6.0)), (2.0, 7.0))
     result shouldBe Seq()
   }
+
+  test("Calculate linear reference point") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val point: Point = calculatePointFromLinearReference(linkGeometry, 0.5).get
+    point.x should be(0.5)
+    point.y should be(0.0)
+  }
+
+  test("Calculate linear reference point on three-point geometry") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val point: Point = calculatePointFromLinearReference(linkGeometry, 1.5).get
+    point.x should be(1.0)
+    point.y should be(0.5)
+  }
+
+  test("Linear reference point on less than two-point geometry should be undefined") {
+    val linkGeometry = Nil
+    val point: Option[Point] = calculatePointFromLinearReference(linkGeometry, 1.5)
+    point should be(None)
+  }
+
+  test("Linear reference point on negative measurement should be undefined") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val point: Option[Point] = calculatePointFromLinearReference(linkGeometry, -1.5)
+    point should be(None)
+  }
+
+  test("Linear reference point outside geometry should be undefined") {
+    val linkGeometry = List(Point(0.0, 0.0), Point(1.0, 0.0))
+    val point: Option[Point] = calculatePointFromLinearReference(linkGeometry, 1.5)
+    point should be(None)
+  }
 }
