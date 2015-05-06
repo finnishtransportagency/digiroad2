@@ -366,15 +366,16 @@ with GZipSupport {
 //    val (_, mmlId, points, length, administrativeClass,
 //         updatedFunctionalClass, updatedTrafficDirection,
 //         modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
-    val roadLink = roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
-    Map("mmlId" -> roadLink.mmlId,
-      "points" -> roadLink.geometry,
-      "administrativeClass" -> roadLink.administrativeClass.toString,
-      "functionalClass" -> roadLink.functionalClass,
-      "trafficDirection" -> roadLink.trafficDirection.toString,
-      "modifiedAt" -> roadLink.modifiedAt,
-      "modifiedBy" -> roadLink.modifiedBy,
-      "linkType" -> roadLink.linkType)
+    roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username).map { roadLink =>
+      Map("mmlId" -> roadLink.mmlId,
+        "points" -> roadLink.geometry,
+        "administrativeClass" -> roadLink.administrativeClass.toString,
+        "functionalClass" -> roadLink.functionalClass,
+        "trafficDirection" -> roadLink.trafficDirection.toString,
+        "modifiedAt" -> roadLink.modifiedAt,
+        "modifiedBy" -> roadLink.modifiedBy,
+        "linkType" -> roadLink.linkType)
+    }.getOrElse(NotFound("Road link with MML ID " + id + " not found"))
   }
 
   get("/assetTypeProperties/:assetTypeId") {

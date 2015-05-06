@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.mockito.Mockito._
 
 import fi.liikennevirasto.digiroad2.asset._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
@@ -55,8 +56,17 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Adjust link type") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
     val service = new VVHRoadLinkService(mockVVHClient)
-    val roadLink = service.updateProperties(5925952, 5, PedestrianZone, BothDirections, "testuser")
-    roadLink.linkType should be (PedestrianZone)
+    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser")
+    roadLink.map(_.linkType) should be (Some(PedestrianZone))
+  }
+
+  test("Adjust non-existent road link") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
+    val service = new VVHRoadLinkService(mockVVHClient)
+    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser")
+    roadLink.map(_.linkType) should be(None)
   }
 }
