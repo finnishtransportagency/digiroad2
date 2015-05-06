@@ -52,8 +52,6 @@
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label class="control-label">MML ID</label>' +
-            '<p class="form-control-static"><%- mmlId %></p>' +
             '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
