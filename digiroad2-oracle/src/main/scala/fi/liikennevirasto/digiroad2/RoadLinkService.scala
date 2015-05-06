@@ -181,12 +181,7 @@ trait RoadLinkService {
     }
   }
 
-  def updateProperties(id: Long, functionalClass: Int, linkType: Int, direction: TrafficDirection, username: String) = {
-    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-    setLinkProperty("traffic_direction", "traffic_direction", direction.value, unadjustedRoadLink.mmlId, username)
-    setLinkProperty("functional_class", "functional_class", functionalClass, unadjustedRoadLink.mmlId, username)
-    setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
-  }
+  def updateProperties(id: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): VVHRoadLink
 
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int, trafficDirection: TrafficDirection): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
@@ -347,6 +342,8 @@ object RoadLinkService extends RoadLinkService {
   override def fetchVVHRoadlinks(municipalityCode: Int) = throw new NotImplementedError()
 
   override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = throw new NotImplementedError()
+
+  override def updateProperties(id: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): VVHRoadLink = throw new NotImplementedError()
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
@@ -369,5 +366,15 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
       GeometryUtils.calculatePointFromLinearReference(geometry, GeometryUtils.geometryLength(geometry) / 2.0)
     }
     middlePoint.map((mmlId, _))
+  }
+
+  override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): VVHRoadLink = {
+//    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
+//    setLinkProperty("traffic_direction", "traffic_direction", direction.value, unadjustedRoadLink.mmlId, username)
+//    setLinkProperty("functional_class", "functional_class", functionalClass, unadjustedRoadLink.mmlId, username)
+//    setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
+    VVHRoadLink(mmlId = mmlId, geometry = Nil, administrativeClass = Unknown,
+      functionalClass = functionalClass, trafficDirection = direction, linkType = linkType,
+      modifiedAt = None, modifiedBy = Some(username))
   }
 }

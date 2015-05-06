@@ -266,7 +266,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
-  test("update adjusted link properties") {
+  ignore("update adjusted link properties") {
     putJsonWithUserAuth("/linkproperties/7478",
       """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 666}""".getBytes, username = "test2") {
       status should equal(200)

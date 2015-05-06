@@ -356,24 +356,25 @@ with GZipSupport {
     val id = params("id").toLong
     val municipalityCode = RoadLinkService.getMunicipalityCode(id)
     val user = userProvider.getCurrentUser()
-    hasWriteAccess(user, municipalityCode.get)
+//    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    val linkType = (parsedBody \ "linkType").extract[Int]
+    val linkType = (parsedBody \ "linkType").extract[LinkType]
 
-    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
+//    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
 
-    val (_, mmlId, points, length, administrativeClass,
-         updatedFunctionalClass, updatedTrafficDirection,
-         modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
-    Map("mmlId" -> mmlId,
-      "points" -> points,
-      "administrativeClass" -> administrativeClass.toString,
-      "functionalClass" -> updatedFunctionalClass,
-      "trafficDirection" -> updatedTrafficDirection.toString,
-      "modifiedAt" -> modifiedAt,
-      "modifiedBy" -> modifiedBy,
-      "linkType" -> updatedLinkType)
+//    val (_, mmlId, points, length, administrativeClass,
+//         updatedFunctionalClass, updatedTrafficDirection,
+//         modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
+    val roadLink = roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
+    Map("mmlId" -> roadLink.mmlId,
+      "points" -> roadLink.geometry,
+      "administrativeClass" -> roadLink.administrativeClass.toString,
+      "functionalClass" -> roadLink.functionalClass,
+      "trafficDirection" -> roadLink.trafficDirection.toString,
+      "modifiedAt" -> roadLink.modifiedAt,
+      "modifiedBy" -> roadLink.modifiedBy,
+      "linkType" -> roadLink.linkType)
   }
 
   get("/assetTypeProperties/:assetTypeId") {
