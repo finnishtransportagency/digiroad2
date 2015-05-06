@@ -109,7 +109,7 @@
       });
     };
 
-    this.fetchFromVVH = function(boundingBox, zoom) {
+    this.fetchFromVVH = function(boundingBox) {
       backend.getRoadLinksFromVVH(boundingBox, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();

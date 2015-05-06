@@ -551,7 +551,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
           assetsModel.refreshAssets(mapMoveEvent);
         });
-        roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+        roadCollection.fetchFromVVH(map.getExtent());
       }
     } else {
       if (applicationModel.getSelectedLayer() === 'massTransitStop') {
@@ -611,7 +611,7 @@ window.AssetLayer = function(map, roadCollection, mapOverlay, assetGrouping, roa
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getZoom());
         assetsModel.fetchAssets(map.getExtent());
       });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent());
     }
   };
 

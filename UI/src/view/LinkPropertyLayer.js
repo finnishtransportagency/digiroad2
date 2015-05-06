@@ -54,7 +54,7 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function() { draw(); });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent());
     };
 
     this.isDirty = function() {
