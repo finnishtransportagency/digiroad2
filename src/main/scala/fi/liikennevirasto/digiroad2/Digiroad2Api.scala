@@ -366,10 +366,8 @@ with GZipSupport {
     val (_, mmlId, points, length, administrativeClass,
          updatedFunctionalClass, updatedTrafficDirection,
          modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
-    Map("roadLinkId" -> id,
-      "mmlId" -> mmlId,
+    Map("mmlId" -> mmlId,
       "points" -> points,
-      "length" -> length,
       "administrativeClass" -> administrativeClass.toString,
       "functionalClass" -> updatedFunctionalClass,
       "trafficDirection" -> updatedTrafficDirection.toString,
