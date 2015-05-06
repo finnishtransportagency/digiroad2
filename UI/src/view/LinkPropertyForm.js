@@ -96,9 +96,10 @@
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
-        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
-                                                                           functionalClassOptionTags: functionalClassOptionTags,
-                                                                           linkTypesOptionTags: linkTypesOptionTags }}));
+        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>"';
+        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+                                                                           functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+                                                                           linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }}));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
