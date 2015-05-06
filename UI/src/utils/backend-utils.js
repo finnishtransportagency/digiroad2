@@ -71,7 +71,7 @@
     }, 1000);
 
     this.getRoadLinkByMMLId = _.throttle(function(mmlId, callback) {
-      $.getJSON('api/roadlinks/' + mmlId + '?mmlId=true', function(data) {
+      $.getJSON('api/roadlinks/' + mmlId, function(data) {
         callback(data);
       });
     }, 1000);
