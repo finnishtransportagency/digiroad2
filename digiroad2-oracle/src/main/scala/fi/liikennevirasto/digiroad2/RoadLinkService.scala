@@ -145,18 +145,7 @@ trait RoadLinkService {
 
   implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<) )
 
-  def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = {
-    Database.forDataSource(dataSource).withDynTransaction {
-      val query = sql"""
-        select dr1_id, to_2d(sdo_lrs.dynamic_segment(shape, sdo_lrs.geom_segment_length(shape) / 2, sdo_lrs.geom_segment_length(shape) / 2))
-          from tielinkki_ctas
-          where mml_id = $mmlId
-        """
-      query.as[(Long, Seq[Point])].firstOption.map {
-        case(id, geometry) => (id, geometry.head)
-      }
-    }
-  }
+  def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
   def getRoadLinkLength(id: Long): Option[Double] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -356,6 +345,8 @@ object RoadLinkService extends RoadLinkService {
   }
 
   override def fetchVVHRoadlinks(municipalityCode: Int) = throw new NotImplementedError()
+
+  override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = throw new NotImplementedError()
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
@@ -369,5 +360,14 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
 
   override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point])] = {
      vvhClient.fetchByMunicipality(municipalityCode)
+  }
+
+  override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = {
+    val middlePoint: Option[Point] = vvhClient.fetchVVHRoadlink(mmlId)
+      .map(_._2)
+      .flatMap { geometry =>
+      GeometryUtils.calculatePointFromLinearReference(geometry, GeometryUtils.geometryLength(geometry) / 2.0)
+    }
+    middlePoint.map((mmlId, _))
   }
 }

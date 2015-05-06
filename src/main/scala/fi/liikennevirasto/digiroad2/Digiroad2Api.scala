@@ -344,7 +344,7 @@ with GZipSupport {
     val withMMLId = params.get("mmlId").getOrElse("false")
     if (withMMLId == "true") {
       val mmlId = params("id").toLong
-      RoadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
+      roadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
         case(id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
       }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
     } else {
