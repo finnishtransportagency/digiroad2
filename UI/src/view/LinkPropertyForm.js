@@ -28,9 +28,13 @@
       [11, 'Liitännäisliikennealue'],
       [12, 'Ajopolku'],
       [13, 'Huoltoaukko moottoritiellä'],
-      [21, 'Lautta/lossi'],
-      [99, 'Tuntematon']
+      [21, 'Lautta/lossi']
     ];
+
+    var getLocalizedLinkType = function(linkType) {
+      var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
+      return localizedLinkType && localizedLinkType[1];
+    };
 
     var disabled = 'disabled';
     var buttons =
@@ -79,9 +83,9 @@
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
-        linkProperties.localizedLinkTypes = _.find(linkTypes, function(x) { return x[0] === linkProperties.linkType; })[1];
-        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
-        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
+        linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
+        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
+        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
