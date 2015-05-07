@@ -158,6 +158,8 @@ trait RoadLinkService {
     }
   }
 
+  def withDynTransaction[T](f: => T): T
+
   private def getRoadLinkProperties(id: Long): BasicRoadLink = {
     sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja
             from tielinkki_ctas where dr1_id = $id"""
@@ -165,7 +167,7 @@ trait RoadLinkService {
   }
 
   private def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    withDynTransaction {
       val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
       optionalExistingValue match {
         case Some(existingValue) =>
@@ -330,6 +332,8 @@ trait RoadLinkService {
 }
 
 object RoadLinkService extends RoadLinkService {
+  override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+
   override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
     throw new NotImplementedError()
   }
@@ -346,6 +350,8 @@ object RoadLinkService extends RoadLinkService {
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
+  override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+
   override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
