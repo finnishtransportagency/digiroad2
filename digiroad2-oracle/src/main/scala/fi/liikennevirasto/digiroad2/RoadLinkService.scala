@@ -257,13 +257,9 @@ trait RoadLinkService {
   }
 
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point])]): Seq[VVHRoadLink] = {
-    val localRoadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks.map(_._1))
-
-    vvhRoadLinks.map { vvh =>
-      localRoadLinkDataByMmlId.find(_._2 == vvh._1) match {
-        case Some(adjusted) => VVHRoadLink(vvh._1, vvh._3, adjusted._5, adjusted._6, adjusted._7, LinkType(adjusted._10), adjusted._8, adjusted._9)
-        case None => VVHRoadLink(vvh._1, vvh._3, Unknown, 99, UnknownDirection, UnknownLinkType, None, None)
-      }
+    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
+    roadLinkDataByMmlId.map { roadLink =>
+      VVHRoadLink(roadLink._2, roadLink._3, roadLink._5, roadLink._6, roadLink._7, LinkType(roadLink._10), roadLink._8, roadLink._9)
     }
   }
 
@@ -273,8 +269,11 @@ trait RoadLinkService {
 
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
 
-  def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
-    val basicRoadLinks = mmlIds.map { x => BasicRoadLink(0, x, List(), 0.0, Unknown)}
+  def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point])]): Seq[AdjustedRoadLink] = {
+    val basicRoadLinks = vvhRoadLinks.map { roadLink =>
+      val (mmlId, _, geometry) = roadLink
+      BasicRoadLink(0, mmlId, geometry, 0.0, Unknown)
+    }
     adjustedRoadLinks(basicRoadLinks)
   }
 
