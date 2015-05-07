@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
@@ -20,18 +21,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
-  when(mockRoadLinkService.fetchVVHRoadlink(2l)).thenReturn(Some((235, Nil)))
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+  when(mockVVHClient.fetchVVHRoadlink(2l)).thenReturn(Some((235, Nil)))
+  when(mockVVHClient.fetchVVHRoadlink(7478l)).thenReturn(Some((235, Nil)))
+  when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List((7478l, 235, Nil)))
+  val roadLinkService = new VVHRoadLinkService(mockVVHClient)
 
-  addServlet(new Digiroad2Api(mockRoadLinkService), "/*")
+  addServlet(new Digiroad2Api(roadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   after {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from functional_class where mml_id = 388565458""".execute()
-      sqlu"""delete from link_type where mml_id = 388565458""".execute()
-      sqlu"""delete from traffic_direction where mml_id = 388565458""".execute()
+      sqlu"""delete from functional_class where mml_id = 7478""".execute()
+      sqlu"""delete from link_type where mml_id = 7478""".execute()
+      sqlu"""delete from traffic_direction where mml_id = 7478""".execute()
     }
   }
 
@@ -262,20 +266,20 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  case class RoadLinkHelper(roadLinkId: Long, mmlId: Long, points: Seq[Point], length: Double,
+  case class RoadLinkHelper(mmlId: Long, points: Seq[Point],
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
   test("update adjusted link properties") {
     putJsonWithUserAuth("/linkproperties/7478",
-      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 666}""".getBytes, username = "test2") {
+      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 6}""".getBytes, username = "test2") {
       status should equal(200)
-      getWithUserAuth("roadlinks?bbox=373118,6676151,373888,6677474") {
-        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.roadLinkId == 7478)
+      getWithUserAuth("roadlinks2?bbox=373118,6676151,373888,6677474") {
+        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.mmlId == 7478)
         adjustedLinkOpt.map { adjustedLink =>
           TrafficDirection(adjustedLink.trafficDirection) should be (TowardsDigitizing)
           adjustedLink.functionalClass should be (333)
-          adjustedLink.linkType should be (666)
+          adjustedLink.linkType should be (6)
         }.getOrElse(fail())
       }
     }

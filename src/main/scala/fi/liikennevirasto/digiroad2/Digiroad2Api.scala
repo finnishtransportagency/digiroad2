@@ -305,7 +305,11 @@ with GZipSupport {
         "mmlId" -> roadLink.mmlId,
         "points" -> roadLink.geometry,
         "administrativeClass" -> roadLink.administrativeClass.toString,
-        "linkType" -> roadLink.linkType.value)
+        "linkType" -> roadLink.linkType.value,
+        "functionalClass" -> roadLink.functionalClass,
+        "trafficDirection" -> roadLink.trafficDirection.toString,
+        "modifiedAt" -> roadLink.modifiedAt,
+        "modifiedBy" -> roadLink.modifiedBy)
     }
   }
 
@@ -336,16 +340,11 @@ with GZipSupport {
       .getOrElse (BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-  get("/roadlinks/:id") {
-    val withMMLId = params.get("mmlId").getOrElse("false")
-    if (withMMLId == "true") {
-      val mmlId = params("id").toLong
-      RoadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
-        case(id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
-      }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
-    } else {
-      BadRequest("Roadlinks can be fetched with MML ID only")
-    }
+  get("/roadlinks/:mmlId") {
+    val mmlId = params("mmlId").toLong
+    roadLinkService.getRoadLinkMiddlePointByMMLId(mmlId).map {
+      case (id, middlePoint) => Map("id" -> id, "middlePoint" -> middlePoint)
+    }.getOrElse(NotFound("Road link with MML ID " + mmlId + " not found"))
   }
 
   get("/roadlinks/adjacent/:id"){
@@ -355,28 +354,22 @@ with GZipSupport {
 
   put("/linkproperties/:id") {
     val id = params("id").toLong
-    val municipalityCode = RoadLinkService.getMunicipalityCode(id)
     val user = userProvider.getCurrentUser()
-    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    val linkType = (parsedBody \ "linkType").extract[Int]
+    val linkType = LinkType((parsedBody \ "linkType").extract[Int])
+    def municipalityValidation(municipalityCode: Int) = hasWriteAccess(user, municipalityCode)
 
-    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
-
-    val (_, mmlId, points, length, administrativeClass,
-         updatedFunctionalClass, updatedTrafficDirection,
-         modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
-    Map("roadLinkId" -> id,
-      "mmlId" -> mmlId,
-      "points" -> points,
-      "length" -> length,
-      "administrativeClass" -> administrativeClass.toString,
-      "functionalClass" -> updatedFunctionalClass,
-      "trafficDirection" -> updatedTrafficDirection.toString,
-      "modifiedAt" -> modifiedAt,
-      "modifiedBy" -> modifiedBy,
-      "linkType" -> updatedLinkType)
+    roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
+      Map("mmlId" -> roadLink.mmlId,
+        "points" -> roadLink.geometry,
+        "administrativeClass" -> roadLink.administrativeClass.toString,
+        "functionalClass" -> roadLink.functionalClass,
+        "trafficDirection" -> roadLink.trafficDirection.toString,
+        "modifiedAt" -> roadLink.modifiedAt,
+        "modifiedBy" -> roadLink.modifiedBy,
+        "linkType" -> roadLink.linkType.value)
+    }.getOrElse(NotFound("Road link with MML ID " + id + " not found"))
   }
 
   get("/assetTypeProperties/:assetTypeId") {

@@ -31,6 +31,11 @@
       [21, 'Lautta/lossi']
     ];
 
+    var getLocalizedLinkType = function(linkType) {
+      var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
+      return localizedLinkType && localizedLinkType[1];
+    };
+
     var disabled = 'disabled';
     var buttons =
       '<div class="link-properties form-controls">' +
@@ -39,7 +44,7 @@
       '</div>';
     var template = '' +
       '<header>' +
-        '<span>Linkin ID: <%- roadLinkId %></span>' + buttons +
+        '<span>Linkin MML ID: <%- mmlId %></span>' + buttons +
       '</header>' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -47,8 +52,6 @@
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label class="control-label">MML ID</label>' +
-            '<p class="form-control-static"><%- mmlId %></p>' +
             '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
@@ -78,9 +81,9 @@
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
-        linkProperties.localizedLinkTypes = _.find(linkTypes, function(x) { return x[0] === linkProperties.linkType; })[1] || 'Tuntematon';
-        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass];
-        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection];
+        linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
+        linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
+        linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
@@ -93,9 +96,10 @@
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
-        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: trafficDirectionOptionTags,
-                                                                           functionalClassOptionTags: functionalClassOptionTags,
-                                                                           linkTypesOptionTags: linkTypesOptionTags }}));
+        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>"';
+        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+                                                                           functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+                                                                           linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }}));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });

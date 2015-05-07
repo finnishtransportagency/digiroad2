@@ -114,4 +114,36 @@ object GeometryUtils {
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
   }
+
+  def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
+    case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
+    if (geometry.size < 2 || measure < 0) { None }
+    else {
+      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
+        if (acc.result.isDefined) {
+          acc
+        } else {
+          val distance = point.distanceTo(acc.previousPoint)
+          if (acc.remainingMeasure <= distance) {
+            val directionVector = (point - acc.previousPoint).normalize()
+            val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
+            AlgorithmState(point, acc.remainingMeasure - distance, result)
+          } else {
+            AlgorithmState(point, acc.remainingMeasure - distance, None)
+          }
+        }
+      }
+      state.result
+    }
+  }
+
+  def geometryLength(geometry: Seq[Point]): Double = {
+    case class AlgorithmState(previousPoint: Point, length: Double)
+    if (geometry.size < 2) { 0.0 }
+    else {
+      geometry.tail.foldLeft(AlgorithmState(geometry.head, 0.0)) { (acc, point) =>
+        AlgorithmState(point, acc.length + acc.previousPoint.distanceTo(point))
+      }.length
+    }
+  }
 }

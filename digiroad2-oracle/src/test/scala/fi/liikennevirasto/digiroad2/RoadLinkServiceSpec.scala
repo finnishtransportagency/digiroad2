@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.mockito.Mockito._
 
 import fi.liikennevirasto.digiroad2.asset._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
@@ -11,13 +13,6 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-
-  after {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from link_type""".execute()
-    }
-  }
-
   test("Get production road link with test id that maps to one production road link") {
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
@@ -53,9 +48,35 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Adjust link type") {
-    RoadLinkService.updateProperties(5925952, 5, 111, BothDirections, "testuser")
-    val roadLink = RoadLinkService.getRoadLink(5925952)
-    val (_, _, _, _, _, _, _, _, _, linkType) = roadLink
-    linkType should be (111)
+    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+      val service = new TestService(mockVVHClient)
+      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+      roadLink.map(_.linkType) should be(Some(PedestrianZone))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Adjust non-existent road link") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
+    val service = new VVHRoadLinkService(mockVVHClient)
+    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+    roadLink.map(_.linkType) should be(None)
+  }
+
+  test("Validate access rights to municipality") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+    val service = new VVHRoadLinkService(mockVVHClient)
+    var validatedCode = 0
+    service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
+      validatedCode = municipalityCode
+    })
+    validatedCode should be(91)
   }
 }

@@ -90,7 +90,7 @@ trait MassTransitStopService {
     roadLink match {
       case None => true
       case Some((municipalityCode, geometry)) => municipalityCode != persistedStop.municipalityCode ||
-        !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, persistedStop.mValue))
+        !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, persistedStop.mValue))
     }
   }
 
@@ -227,7 +227,7 @@ trait MassTransitStopService {
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
       val nationalId = OracleSpatialAssetDao.getNationalBusStopId
-      val floating = !coordinatesWithinThreshold(Some(point), calculatePointFromLinearReference(geometry, mValue))
+      val floating = !coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
       insertLrmPosition(lrmPositionId, mValue, mmlId)
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
@@ -294,28 +294,6 @@ trait MassTransitStopService {
     }
     val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
-  }
-
-  def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {
-    case class AlgorithmState(previousPoint: Point, remainingMeasure: Double, result: Option[Point])
-    if (geometry.size < 2 || measure < 0) { None }
-    else {
-      val state = geometry.tail.foldLeft(AlgorithmState(geometry.head, measure, None)) { (acc, point) =>
-        if (acc.result.isDefined) {
-          acc
-        } else {
-          val distance = point.distanceTo(acc.previousPoint)
-          if (acc.remainingMeasure <= distance) {
-            val directionVector = (point - acc.previousPoint).normalize()
-            val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
-            AlgorithmState(point, acc.remainingMeasure - distance, result)
-          } else {
-            AlgorithmState(point, acc.remainingMeasure - distance, None)
-          }
-        }
-      }
-      state.result
-    }
   }
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {

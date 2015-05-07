@@ -5,7 +5,7 @@
     var original = _.clone(data);
 
     var getId = function() {
-      return data.roadLinkId;
+      return data.roadLinkId || data.mmlId;
     };
 
     var getData = function() {
@@ -57,7 +57,7 @@
     };
 
     var save = function(backend) {
-      backend.updateLinkProperties(data.roadLinkId, data, function(linkProperties) {
+      backend.updateLinkProperties(getId(), data, function(linkProperties) {
         dirty = false;
         data = _.merge({}, data, linkProperties);
         eventbus.trigger('linkProperties:saved', data);
@@ -109,7 +109,7 @@
       });
     };
 
-    this.fetchFromVVH = function(boundingBox, zoom) {
+    this.fetchFromVVH = function(boundingBox) {
       backend.getRoadLinksFromVVH(boundingBox, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();

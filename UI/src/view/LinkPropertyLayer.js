@@ -20,7 +20,7 @@
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
       onSelect: function(feature) {
-        selectedLinkProperty.open(feature.attributes.roadLinkId);
+        selectedLinkProperty.open(feature.attributes.mmlId);
         currentRenderIntent = 'select';
         roadLayer.redraw();
         highlightFeatures(feature);
@@ -34,7 +34,7 @@
 
     var highlightFeatures = function(feature) {
       _.each(roadLayer.layer.features, function(x) {
-        if (feature && (x.attributes.roadLinkId === feature.attributes.roadLinkId)) {
+        if (feature && (x.attributes.mmlId === feature.attributes.mmlId)) {
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -54,7 +54,7 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function() { draw(); });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent());
     };
 
     this.isDirty = function() {
@@ -68,7 +68,7 @@
         });
         var attributes = {
           dashedLineFeature: roadLink[dashedLineFeature],
-          roadLinkId: roadLink.roadLinkId,
+          mmlId: roadLink.mmlId,
           type: 'overlay',
           linkType: roadLink.linkType
         };
@@ -96,7 +96,7 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === selectedLinkProperty.getId(); });
+      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === selectedLinkProperty.getId(); });
       if (feature) {
         currentRenderIntent = 'select';
         selectControl.select(feature);
@@ -127,7 +127,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.roadLinkId === link.roadLinkId;
+          return feature.attributes.mmlId === link.mmlId;
         });
         if (feature) {
           selectControl.select(feature);
@@ -153,7 +153,7 @@
 
     var redrawSelected = function() {
       var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
-        return feature.attributes.roadLinkId === selectedLinkProperty.getId();
+        return feature.attributes.mmlId === selectedLinkProperty.getId();
       });
       roadLayer.layer.removeFeatures(selectedFeatures);
       var data = selectedLinkProperty.get().getData();
