@@ -359,7 +359,7 @@ with GZipSupport {
 //    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    val linkType = (parsedBody \ "linkType").extract[LinkType]
+    val linkType = LinkType((parsedBody \ "linkType").extract[Int])
 
 //    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
 
@@ -374,7 +374,7 @@ with GZipSupport {
         "trafficDirection" -> roadLink.trafficDirection.toString,
         "modifiedAt" -> roadLink.modifiedAt,
         "modifiedBy" -> roadLink.modifiedBy,
-        "linkType" -> roadLink.linkType)
+        "linkType" -> roadLink.linkType.value)
     }.getOrElse(NotFound("Road link with MML ID " + id + " not found"))
   }
 

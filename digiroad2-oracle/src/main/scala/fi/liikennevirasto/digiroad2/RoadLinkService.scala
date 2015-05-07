@@ -166,7 +166,7 @@ trait RoadLinkService {
       .as[BasicRoadLink].first()
   }
 
-  private def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
+  protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
     withDynTransaction {
       val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
       optionalExistingValue match {
@@ -373,10 +373,10 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): Option[VVHRoadLink] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { case (municipalityCode, geometry) =>
-      //    val unadjustedRoadLink: BasicRoadLink = Database.forDataSource(dataSource).withDynTransaction { getRoadLinkProperties(id) }
-      //    setLinkProperty("traffic_direction", "traffic_direction", direction.value, unadjustedRoadLink.mmlId, username)
-      //    setLinkProperty("functional_class", "functional_class", functionalClass, unadjustedRoadLink.mmlId, username)
-      //    setLinkProperty("link_type", "link_type", linkType, unadjustedRoadLink.mmlId, username)
+      setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
+      setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
+      setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
+      // TODO: Fetch link administrative class
       VVHRoadLink(mmlId = mmlId, geometry = geometry, administrativeClass = Unknown,
         functionalClass = functionalClass, trafficDirection = direction, linkType = linkType,
         modifiedAt = None, modifiedBy = Some(username))
