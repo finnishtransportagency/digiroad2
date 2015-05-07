@@ -274,10 +274,8 @@ trait RoadLinkService {
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])]
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
-    Database.forDataSource(dataSource).withDynTransaction {
-      val basicRoadLinks = mmlIds.map { x => BasicRoadLink(0, x, List(), 0.0, Unknown) }
-      adjustedRoadLinks(basicRoadLinks)
-    }
+    val basicRoadLinks = mmlIds.map { x => BasicRoadLink(0, x, List(), 0.0, Unknown)}
+    adjustedRoadLinks(basicRoadLinks)
   }
 
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
