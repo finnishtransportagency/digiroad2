@@ -381,9 +381,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
       // TODO: Fetch link administrative class
-      VVHRoadLink(mmlId = mmlId, geometry = geometry, administrativeClass = Unknown,
-        functionalClass = functionalClass, trafficDirection = direction, linkType = linkType,
-        modifiedAt = None, modifiedBy = Some(username))
+      enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry))).head
     }
   }
 }

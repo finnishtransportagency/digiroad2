@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.sun.javaws.exceptions.InvalidArgumentException
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.mockito.Mockito._
