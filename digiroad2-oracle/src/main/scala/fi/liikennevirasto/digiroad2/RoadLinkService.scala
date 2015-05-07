@@ -273,8 +273,7 @@ trait RoadLinkService {
 
   def getRoadLinkDataByMmlIds(mmlIds: Seq[Long]): Seq[AdjustedRoadLink] = {
     Database.forDataSource(dataSource).withDynTransaction {
-      val roadLinkData: Seq[(Long, Long, Int)] = OracleArray.fetchRoadLinkDataByMmlIds(mmlIds, Queries.bonecpToInternalConnection(dynamicSession.conn))
-      val basicRoadLinks = roadLinkData.map{ x => BasicRoadLink(x._1, x._2, List(), 0.0, AdministrativeClass(x._3)) }
+      val basicRoadLinks = mmlIds.map { x => BasicRoadLink(0, x, List(), 0.0, Unknown) }
       adjustedRoadLinks(basicRoadLinks)
     }
   }
