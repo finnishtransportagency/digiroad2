@@ -183,7 +183,8 @@ trait RoadLinkService {
     }
   }
 
-  def updateProperties(id: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): Option[VVHRoadLink]
+  def updateProperties(id: Long, functionalClass: Int, linkType: LinkType,
+                       direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLink]
 
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int, trafficDirection: TrafficDirection): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
@@ -343,7 +344,8 @@ object RoadLinkService extends RoadLinkService {
 
   override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = throw new NotImplementedError()
 
-  override def updateProperties(id: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): Option[VVHRoadLink] = throw new NotImplementedError()
+  override def updateProperties(id: Long, functionalClass: Int, linkType: LinkType,
+                                direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLink] = throw new NotImplementedError()
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
@@ -370,9 +372,11 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     middlePoint.map((mmlId, _))
   }
 
-  override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType, direction: TrafficDirection, username: String): Option[VVHRoadLink] = {
+  override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
+                                direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLink] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { case (municipalityCode, geometry) =>
+      municipalityValidation(municipalityCode)
       setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)

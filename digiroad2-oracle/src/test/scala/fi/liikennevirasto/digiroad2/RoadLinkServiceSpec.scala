@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.mockito.Mockito._
@@ -55,7 +56,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
       val service = new TestService(mockVVHClient)
-      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser")
+      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
       dynamicSession.rollback()
     }
@@ -65,7 +66,18 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
     val service = new VVHRoadLinkService(mockVVHClient)
-    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser")
+    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
     roadLink.map(_.linkType) should be(None)
+  }
+
+  test("Validate access rights to municipality") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil)))
+    val service = new VVHRoadLinkService(mockVVHClient)
+    var validatedCode = 0
+    service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
+      validatedCode = municipalityCode
+    })
+    validatedCode should be(91)
   }
 }

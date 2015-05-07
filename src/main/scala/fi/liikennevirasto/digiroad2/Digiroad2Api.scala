@@ -354,19 +354,13 @@ with GZipSupport {
 
   put("/linkproperties/:id") {
     val id = params("id").toLong
-    val municipalityCode = RoadLinkService.getMunicipalityCode(id)
     val user = userProvider.getCurrentUser()
-//    hasWriteAccess(user, municipalityCode.get)
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = LinkType((parsedBody \ "linkType").extract[Int])
+    def municipalityValidation(municipalityCode: Int) = hasWriteAccess(user, municipalityCode)
 
-//    RoadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username)
-
-//    val (_, mmlId, points, length, administrativeClass,
-//         updatedFunctionalClass, updatedTrafficDirection,
-//         modifiedAt, modifiedBy, updatedLinkType) = RoadLinkService.getRoadLink(id)
-    roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username).map { roadLink =>
+    roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
       Map("mmlId" -> roadLink.mmlId,
         "points" -> roadLink.geometry,
         "administrativeClass" -> roadLink.administrativeClass.toString,
