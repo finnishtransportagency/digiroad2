@@ -80,7 +80,7 @@ class VVHClient(hostname: String) {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-    val administrativeClass = attributes("HALLINNOLLINENLUOKKA").asInstanceOf[Int]
+    val administrativeClass = attributes("HALLINNOLLINENLUOKKA").asInstanceOf[BigInt].toInt
     (mmlId, municipalityCode, linkGeometry, administrativeClass)
   }
 }
