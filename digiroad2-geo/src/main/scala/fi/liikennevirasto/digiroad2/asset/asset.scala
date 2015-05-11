@@ -43,8 +43,8 @@ object AdministrativeClass {
   }
 }
 case object State extends AdministrativeClass { def value = 1 }
-case object Municipality extends AdministrativeClass { def value = 2}
-case object Private extends AdministrativeClass { def value = 3}
+case object Municipality extends AdministrativeClass { def value = 2 }
+case object Private extends AdministrativeClass { def value = 3 }
 case object Unknown extends AdministrativeClass { def value = 99 }
 
 object FunctionalClass {

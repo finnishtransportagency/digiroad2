@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
@@ -9,7 +9,8 @@ import java.net.URLEncoder
 
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point])] = {
+
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass)] = {
     val municipalityFilter = {
       if(municipalities.isEmpty) {
         "0"
@@ -41,10 +42,10 @@ class VVHClient(hostname: String) {
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.map(feature => {
       extractVVHFeature(feature)
-    })
+    }).map { x => (x._1, x._2, x._3) }
   }
 
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -54,7 +55,7 @@ class VVHClient(hostname: String) {
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.headOption.map(feature => {
       extractVVHFeature(feature)
-    }).map{ x => (x._2, x._3)}
+    }).map{ x => (x._2, x._3, x._4)}
   }
 
   private def fetchVVHFeatureMap(url: String): Map[String, Any] = {
@@ -69,7 +70,7 @@ class VVHClient(hostname: String) {
     featureMap
   }
 
-  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point]) = {
+  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point], AdministrativeClass) = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
     val path: List[List[Double]] = paths.head
@@ -79,6 +80,18 @@ class VVHClient(hostname: String) {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-    (mmlId, municipalityCode, linkGeometry)
+    (mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes))
+  }
+
+  private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
+    12155 -> State,
+    12156 -> Municipality,
+    12157 -> Private)
+
+  private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
+    Option(attributes("HALLINNOLLINENLUOKKA").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(vvhAdministrativeClassToAdministrativeClass.getOrElse(_, Unknown))
+      .getOrElse(Unknown)
   }
 }

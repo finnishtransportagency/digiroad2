@@ -74,7 +74,7 @@ trait MassTransitStopService {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      persistedStop.map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkService.fetchVVHRoadlink)))
+      persistedStop.map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink)))
     }
   }
 
@@ -193,7 +193,7 @@ trait MassTransitStopService {
         case Some(position) => position.roadLinkId
         case _ => persistedStop.get.mmlId
       }
-      val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+      val (municipalityCode, geometry) = fetchRoadLink(mmlId).getOrElse(throw new NoSuchElementException)
       OracleSpatialAssetDao.updateAssetLastModified(id, username)
       if (properties.nonEmpty) {
         OracleSpatialAssetDao.updateAssetProperties(id, properties)
@@ -218,9 +218,13 @@ trait MassTransitStopService {
     }
   }
 
+  private def fetchRoadLink(mmlId: Long): Option[(Int, Seq[Point])] = {
+    roadLinkService.fetchVVHRoadlink(mmlId).map{ x => (x._1, x._2) }
+  }
+
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
     val point = Point(lon, lat)
-    val (municipalityCode, geometry) = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+    val (municipalityCode, geometry) = fetchRoadLink(mmlId).getOrElse(throw new NoSuchElementException)
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
 
     withDynTransaction {
