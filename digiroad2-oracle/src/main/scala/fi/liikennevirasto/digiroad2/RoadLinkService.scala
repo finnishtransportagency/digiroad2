@@ -264,7 +264,7 @@ trait RoadLinkService {
     }
   }
 
-  def fetchVVHRoadlinks(municipalityCode: Int):  Seq[(Long, Int, Seq[Point], Int)]
+  def fetchVVHRoadlinks(municipalityCode: Int):  Seq[(Long, Int, Seq[Point])]
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], Int)]
 
@@ -359,7 +359,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
-  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], Int)] = {
+  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point])] = {
      vvhClient.fetchByMunicipality(municipalityCode)
   }
 
