@@ -193,7 +193,7 @@ trait RoadLinkService {
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    withDynTransaction {
       val adjustedTrafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchTrafficDirections(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedFunctionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchFunctionalClasses(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
       val adjustedLinkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = OracleArray.fetchLinkTypes(basicRoadLinks.map(_.mmlId), Queries.bonecpToInternalConnection(dynamicSession.conn)).groupBy(_._1)
