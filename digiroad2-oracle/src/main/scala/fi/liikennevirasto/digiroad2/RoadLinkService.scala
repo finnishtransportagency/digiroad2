@@ -257,7 +257,7 @@ trait RoadLinkService {
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], Int)]): Seq[VVHRoadLink] = {
+  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass)]): Seq[VVHRoadLink] = {
     val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
     roadLinkDataByMmlId.map { roadLink =>
       VVHRoadLink(roadLink._2, roadLink._3, roadLink._5, roadLink._6, roadLink._7, LinkType(roadLink._10), roadLink._8, roadLink._9)
@@ -266,14 +266,14 @@ trait RoadLinkService {
 
   def fetchVVHRoadlinks(municipalityCode: Int):  Seq[(Long, Int, Seq[Point])]
 
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], Int)]
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass)]
 
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], Int)]
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)]
 
-  def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], Int)]): Seq[AdjustedRoadLink] = {
+  def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass)]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
       val (mmlId, _, geometry, administrativeClass) = roadLink
-      BasicRoadLink(0, mmlId, geometry, 0.0, AdministrativeClass(administrativeClass))
+      BasicRoadLink(0, mmlId, geometry, 0.0, administrativeClass)
     }
     adjustedRoadLinks(basicRoadLinks)
   }
@@ -332,11 +332,11 @@ trait RoadLinkService {
 object RoadLinkService extends RoadLinkService {
   override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
 
-  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], Int)] = {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass)] = {
     throw new NotImplementedError()
   }
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], Int)] = {
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
     throw new NotImplementedError()
   }
 
@@ -351,11 +351,11 @@ object RoadLinkService extends RoadLinkService {
 class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
   override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
 
-  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], Int)] = {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass)] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], Int)] = {
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
