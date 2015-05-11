@@ -69,6 +69,11 @@ class VVHClient(hostname: String) {
     }).get
     featureMap
   }
+  
+  private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+    0 -> BothDirections,
+    1 -> TowardsDigitizing,
+    2 -> AgainstDigitizing)
 
   private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point], AdministrativeClass) = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
@@ -80,9 +85,12 @@ class VVHClient(hostname: String) {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
+    val trafficDirection = vvhTrafficDirectionToTrafficDirection
+      .getOrElse(attributes("YKSISUUNTAISUUS").asInstanceOf[BigInt].intValue(), UnknownDirection)
+    println("*** TRAFFIC DIRECTION: " + trafficDirection)
     (mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes))
   }
-
+  
   private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
     12155 -> State,
     12156 -> Municipality,
