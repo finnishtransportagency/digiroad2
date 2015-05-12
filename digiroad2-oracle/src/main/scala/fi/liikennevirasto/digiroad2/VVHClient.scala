@@ -10,7 +10,7 @@ import java.net.URLEncoder
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass)] = {
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     val municipalityFilter = {
       if(municipalities.isEmpty) {
         "0"
@@ -70,12 +70,7 @@ class VVHClient(hostname: String) {
     featureMap
   }
   
-  private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
-    0 -> BothDirections,
-    1 -> TowardsDigitizing,
-    2 -> AgainstDigitizing)
-
-  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point], AdministrativeClass) = {
+  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point], AdministrativeClass, TrafficDirection) = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
     val path: List[List[Double]] = paths.head
@@ -85,10 +80,8 @@ class VVHClient(hostname: String) {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-    val trafficDirection = vvhTrafficDirectionToTrafficDirection
-      .getOrElse(attributes("YKSISUUNTAISUUS").asInstanceOf[BigInt].intValue(), UnknownDirection)
-    println("*** TRAFFIC DIRECTION: " + trafficDirection)
-    (mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes))
+    (mmlId, municipalityCode, linkGeometry,
+      extractAdministrativeClass(attributes), extractTrafficDirection(attributes))
   }
   
   private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
@@ -101,5 +94,17 @@ class VVHClient(hostname: String) {
       .map(_.toInt)
       .map(vvhAdministrativeClassToAdministrativeClass.getOrElse(_, Unknown))
       .getOrElse(Unknown)
+  }
+
+  private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+    0 -> BothDirections,
+    1 -> TowardsDigitizing,
+    2 -> AgainstDigitizing)
+
+  private def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
+    Option(attributes("YKSISUUNTAISUUS").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, UnknownDirection))
+      .getOrElse(UnknownDirection)
   }
 }
