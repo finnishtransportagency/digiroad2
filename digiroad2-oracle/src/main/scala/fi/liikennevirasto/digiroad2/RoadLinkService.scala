@@ -15,7 +15,7 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 trait RoadLinkService {
-  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass)
+  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
   type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
   case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
@@ -143,7 +143,7 @@ trait RoadLinkService {
     }
   }
 
-  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<) )
+  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<,UnknownDirection) )
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
@@ -208,7 +208,7 @@ trait RoadLinkService {
         val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
         val trafficDirectionValue = trafficDirection.map( trafficDirection =>
           TrafficDirection(trafficDirection._2)
-        ).getOrElse(UnknownDirection)
+        ).getOrElse(basicRoadLink.trafficDirection)
 
         def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
           (a, b) match {
@@ -272,8 +272,8 @@ trait RoadLinkService {
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
-      val (mmlId, _, geometry, administrativeClass, _) = roadLink
-      BasicRoadLink(0, mmlId, geometry, 0.0, administrativeClass)
+      val (mmlId, _, geometry, administrativeClass, trafficDirection) = roadLink
+      BasicRoadLink(0, mmlId, geometry, 0.0, administrativeClass, trafficDirection)
     }
     adjustedRoadLinks(basicRoadLinks)
   }
