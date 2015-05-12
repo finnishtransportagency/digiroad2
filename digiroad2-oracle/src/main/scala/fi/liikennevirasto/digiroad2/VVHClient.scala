@@ -45,7 +45,7 @@ class VVHClient(hostname: String) {
     }).map { x => (x._1, x._2, x._3) }
   }
 
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -55,7 +55,7 @@ class VVHClient(hostname: String) {
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
     features.headOption.map(feature => {
       extractVVHFeature(feature)
-    }).map{ x => (x._2, x._3, x._4)}
+    }).map{ x => (x._2, x._3, x._4, x._5)}
   }
 
   private def fetchVVHFeatureMap(url: String): Map[String, Any] = {

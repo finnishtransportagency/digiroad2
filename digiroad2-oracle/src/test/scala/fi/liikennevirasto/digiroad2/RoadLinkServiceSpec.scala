@@ -53,7 +53,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil, Municipality)))
+      when(mockVVHClient.fetchVVHRoadlink(1l))
+        .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
@@ -71,7 +72,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Validate access rights to municipality") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some((91, Nil, Municipality)))
+    when(mockVVHClient.fetchVVHRoadlink(1l))
+      .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
     val service = new VVHRoadLinkService(mockVVHClient)
     var validatedCode = 0
     service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>

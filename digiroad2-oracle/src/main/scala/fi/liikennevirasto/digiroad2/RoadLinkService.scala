@@ -268,7 +268,7 @@ trait RoadLinkService {
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]
 
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)]
+  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)]
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
@@ -336,7 +336,7 @@ object RoadLinkService extends RoadLinkService {
     throw new NotImplementedError()
   }
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     throw new NotImplementedError()
   }
 
@@ -355,7 +355,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
 
-  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass)] = {
+  override def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
@@ -375,13 +375,12 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLink] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
-    vvhRoadLink.map { case (municipalityCode, geometry, administrativeClass) =>
+    vvhRoadLink.map { case (municipalityCode, geometry, administrativeClass, trafficDirection) =>
       municipalityValidation(municipalityCode)
-      setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
+      if (direction != trafficDirection) setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
-      // TODO: Fetch traffic direction from VVH
-      enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, UnknownDirection))).head
+      enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, trafficDirection))).head
     }
   }
 }
