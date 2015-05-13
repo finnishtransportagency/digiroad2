@@ -180,11 +180,8 @@ trait RoadLinkService {
     withDynTransaction {
       val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
       (optionalExistingValue, optionalVVHValue) match {
-        case (Some(existingValue), None) =>
+        case (Some(existingValue), _) =>
           updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
-        case (Some(existingValue), Some(vvhValue)) =>
-          if (vvhValue == value) { sqlu"""delete from #$table where mml_id = $mmlId""".execute() }
-          else { updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value) }
         case (None, None) => sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
         case (None, Some(vvhValue)) =>
           if (vvhValue != value) sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
