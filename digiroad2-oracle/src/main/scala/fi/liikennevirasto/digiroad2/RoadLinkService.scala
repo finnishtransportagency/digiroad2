@@ -262,6 +262,11 @@ trait RoadLinkService {
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
+  def getRoadLinksFromVVH(municipality: Int): Seq[VVHRoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(municipality)
+    enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[VVHRoadLink] = {
     def setIncompleteness(roadLink: (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)) {
       if (roadLink._6 == FunctionalClass.Unknown || roadLink._10 == UnknownLinkType.value) {
@@ -284,7 +289,7 @@ trait RoadLinkService {
     roadLinkDataByMmlId.map(toVVHRoadLink)
   }
 
-  def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point])]
+  def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]
 
@@ -387,7 +392,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
-  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point])] = {
+  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
 
