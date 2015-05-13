@@ -269,7 +269,9 @@ trait RoadLinkService {
         val mmlId: Long = roadLink._2
         val municipality: Int = vvhRoadlink.get._2
         withDynTransaction {
-          sqlu"""insert into incomplete_link(mml_id, municipality_code) values($mmlId, $municipality)""".execute()
+          sqlu"""insert into incomplete_link(mml_id, municipality_code)
+                 select $mmlId, $municipality from dual
+                 where not exists (select * from incomplete_link where mml_id = $mmlId)""".execute()
         }
       }
     }
