@@ -420,6 +420,12 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     middlePoint.map((mmlId, _))
   }
 
+  def removeIncompleteness(mmlId: Long, linkType: LinkType, functionalClass: Int) = {
+    withDynTransaction {
+      sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
+    }
+  }
+
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLink] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
@@ -428,6 +434,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
       if (direction != trafficDirection) setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
+      if (functionalClass != FunctionalClass.Unknown && linkType != UnknownLinkType.value) removeIncompleteness(mmlId, linkType, functionalClass)
       enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, trafficDirection))).head
     }
   }
