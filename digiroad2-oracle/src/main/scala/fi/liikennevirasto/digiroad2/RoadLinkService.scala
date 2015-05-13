@@ -166,19 +166,28 @@ trait RoadLinkService {
       .as[BasicRoadLink].first()
   }
 
-  protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String) = {
+  private def updateExistingLinkPropertyRow(table: String, column: String, mmlId: Long, username: String, existingValue: Int, value: Int) = {
+    if (existingValue != value) {
+      sqlu"""update #$table
+               set #$column = $value,
+                   modified_date = current_timestamp,
+                   modified_by = $username
+               where mml_id = $mmlId""".execute()
+    }
+  }
+
+  protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String, optionalVVHValue: Option[Int] = None) = {
     withDynTransaction {
       val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
-      optionalExistingValue match {
-        case Some(existingValue) =>
-          if (existingValue != value) {
-            sqlu"""update #$table
-                     set #$column = $value,
-                         modified_date = current_timestamp,
-                         modified_by = $username
-                     where mml_id = $mmlId""".execute()
-          }
-        case None => sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
+      (optionalExistingValue, optionalVVHValue) match {
+        case (Some(existingValue), None) =>
+          updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
+        case (Some(existingValue), Some(vvhValue)) =>
+          if (vvhValue == value) { sqlu"""delete from #$table where mml_id = $mmlId""".execute() }
+          else { updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value) }
+        case (None, None) => sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
+        case (None, Some(vvhValue)) =>
+          if (vvhValue != value) sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
       }
     }
   }
@@ -377,7 +386,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { case (municipalityCode, geometry, administrativeClass, trafficDirection) =>
       municipalityValidation(municipalityCode)
-      if (direction != trafficDirection) setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username)
+      setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(trafficDirection.value))
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
       enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, trafficDirection))).head

@@ -62,6 +62,23 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Adjust link traffic direction to value that is in VVH") {
+    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlink(1l))
+        .thenReturn(Some((91, Nil, Municipality, TowardsDigitizing)))
+      val service = new TestService(mockVVHClient)
+      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+      roadLink.map(_.trafficDirection) should be(Some(BothDirections))
+      val roadLink2 = service.updateProperties(1, 5, PedestrianZone, TowardsDigitizing, "testuser", { _ => })
+      roadLink2.map(_.trafficDirection) should be(Some(TowardsDigitizing))
+      dynamicSession.rollback()
+    }
+  }
+
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
