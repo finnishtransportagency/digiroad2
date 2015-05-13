@@ -352,6 +352,16 @@ with GZipSupport {
     RoadLinkService.getAdjacent(id)
   }
 
+  get("/incompleteLinks") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    println("*** INCLUDED MUNICIPALITIES: " + includedMunicipalities)
+    roadLinkService.getIncompleteLinks(includedMunicipalities)
+  }
+
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val user = userProvider.getCurrentUser()
