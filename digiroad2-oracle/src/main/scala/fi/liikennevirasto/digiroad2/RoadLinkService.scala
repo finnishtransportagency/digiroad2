@@ -234,6 +234,12 @@ trait RoadLinkService {
     }
   }
 
+  def setIncomplete(mmlId: Long, municipality: Int) = {
+    withDynTransaction {
+      sqlu"""insert into incomplete_link(mml_id, municipality_code) values($mmlId, $municipality)""".execute()
+    }
+  }
+
   def getRoadLink(id: Long): AdjustedRoadLink = {
     val roadLink = Database.forDataSource(dataSource).withDynTransaction {
       getRoadLinkProperties(id)
@@ -264,6 +270,10 @@ trait RoadLinkService {
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[VVHRoadLink] = {
     val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
     roadLinkDataByMmlId.map { roadLink =>
+      if(roadLink._6 == FunctionalClass.Unknown || roadLink._10 == UnknownLinkType.value) {
+        val municipality = vvhRoadLinks.find { x => x._1 == roadLink._2 }
+        setIncomplete(roadLink._2, municipality.get._2)
+      }
       VVHRoadLink(roadLink._2, roadLink._3, roadLink._5, roadLink._6, roadLink._7, LinkType(roadLink._10), roadLink._8, roadLink._9)
     }
   }
