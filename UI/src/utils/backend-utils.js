@@ -236,6 +236,10 @@
       $.getJSON('api/floatingMassTransitStops', callback);
     };
 
+    this.getIncompleteLinksWithCallBack = function(callback) {
+      $.getJSON('api/incompleteLinks', callback);
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
