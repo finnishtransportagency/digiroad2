@@ -234,11 +234,6 @@ trait RoadLinkService {
     }
   }
 
-  def setIncomplete(mmlId: Long, municipality: Int) = {
-    withDynTransaction {
-      sqlu"""insert into incomplete_link(mml_id, municipality_code) values($mmlId, $municipality)""".execute()
-    }
-  }
 
   def getRoadLink(id: Long): AdjustedRoadLink = {
     val roadLink = Database.forDataSource(dataSource).withDynTransaction {
@@ -268,14 +263,23 @@ trait RoadLinkService {
   }
 
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[VVHRoadLink] = {
-    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
-    roadLinkDataByMmlId.map { roadLink =>
-      if(roadLink._6 == FunctionalClass.Unknown || roadLink._10 == UnknownLinkType.value) {
-        val municipality = vvhRoadLinks.find { x => x._1 == roadLink._2 }
-        setIncomplete(roadLink._2, municipality.get._2)
+    def setIncompleteness(roadLink: (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)) {
+      if (roadLink._6 == FunctionalClass.Unknown || roadLink._10 == UnknownLinkType.value) {
+        val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink._2}
+        val mmlId: Long = roadLink._2
+        val municipality: Int = vvhRoadlink.get._2
+        withDynTransaction {
+          sqlu"""insert into incomplete_link(mml_id, municipality_code) values($mmlId, $municipality)""".execute()
+        }
       }
+    }
+    def toVVHRoadLink(roadLink: (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)): VVHRoadLink = {
       VVHRoadLink(roadLink._2, roadLink._3, roadLink._5, roadLink._6, roadLink._7, LinkType(roadLink._10), roadLink._8, roadLink._9)
     }
+
+    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
+    roadLinkDataByMmlId.foreach(setIncompleteness)
+    roadLinkDataByMmlId.map(toVVHRoadLink)
   }
 
   def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point])]
