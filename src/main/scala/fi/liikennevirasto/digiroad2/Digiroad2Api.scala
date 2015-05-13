@@ -358,7 +358,6 @@ with GZipSupport {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    println("*** INCLUDED MUNICIPALITIES: " + includedMunicipalities)
     roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
