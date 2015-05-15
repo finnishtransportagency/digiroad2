@@ -70,6 +70,13 @@
       '</div>' +
       '<footer>' + buttons + '</footer>';
 
+    var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks(rootElement) {
+      var notRendered = !$('#incomplete-links-link').length;
+      if(notRendered) {
+        rootElement.append('<a id="incomplete-links-link" href="incomplete_links.html">Korjattavien linkkien lista</a>');
+      }
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -110,6 +117,7 @@
           selectedLinkProperty.get().setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
+        renderLinkToIncompleteLinks(rootElement);
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
@@ -123,6 +131,10 @@
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
         selectedLinkProperty.cancel();
+      });
+
+      eventbus.on('linkProperties:available', function() {
+        renderLinkToIncompleteLinks(rootElement);
       });
     };
 
