@@ -473,7 +473,6 @@
 
       eventbus.on('layer:selected', function(layer) {
         activeLayer = layer;
-        closeAsset();
       });
 
       eventbus.on('application:readOnly', function(data) {

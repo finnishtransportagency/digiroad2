@@ -110,13 +110,6 @@
       }
     };
 
-    // TODO: Better solution is to unbind all events when layer not 'massTransitStop'
-    eventbus.on('layer:selected', function(layer) {
-      if (layer !== 'massTransitStop') {
-        close();
-      }
-    });
-
     eventbus.on('application:readOnly', function() {
       if (currentAsset.id) {
         backend.getAsset(currentAsset.payload.nationalId);
