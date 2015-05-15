@@ -73,7 +73,10 @@
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks(rootElement) {
       var notRendered = !$('#incomplete-links-link').length;
       if(notRendered) {
-        rootElement.append('<a id="incomplete-links-link" href="incomplete_links.html">Korjattavien linkkien lista</a>');
+        rootElement.append('' +
+          '<div class="form form-horizontal">' +
+              '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">KORJATTAVIEN LINKKIEN LISTA</a>' +
+          '</div>');
       }
     };
 
