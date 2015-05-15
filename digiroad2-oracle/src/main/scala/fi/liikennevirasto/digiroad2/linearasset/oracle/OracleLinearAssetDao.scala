@@ -75,12 +75,12 @@ object OracleLinearAssetDao {
     val linksWithGeometries = RoadLinkService.getRoadLinks(bounds = bounds, municipalities = municipalities)
 
     val assetLinks: Seq[(Long, Long, Int, Int, Double, Double)] = OracleArray
-      .fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+      .fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_.id), bonecpToInternalConnection(dynamicSession.conn))
       .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
 
     val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry._1 -> (linkWithGeometry._3, linkWithGeometry._4, linkWithGeometry._5, linkWithGeometry._6))
+        acc + (linkWithGeometry.id -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass))
       }
 
     val speedLimits: Seq[(Long, Long, Int, Int, Seq[Point])] = assetLinks.map { link =>

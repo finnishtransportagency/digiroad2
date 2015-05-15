@@ -14,9 +14,13 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],
+                            length: Double, administrativeClass: AdministrativeClass,
+                            functionalClass: Int, trafficDirection: TrafficDirection,
+                            modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
+
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
-  type AdjustedRoadLink = (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)
   case class VVHRoadLink(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
@@ -190,7 +194,7 @@ trait RoadLinkService {
 
   private def basicToAdjusted(basic: BasicRoadLink, modification: Option[(DateTime, String)], functionalClass: Int, linkType: Int, trafficDirection: TrafficDirection): AdjustedRoadLink = {
     val (modifiedAt, modifiedBy) = (modification.map(_._1), modification.map(_._2))
-    (basic.id, basic.mmlId, basic.geometry, basic.length,
+    AdjustedRoadLink(basic.id, basic.mmlId, basic.geometry, basic.length,
       basic.administrativeClass, functionalClass, trafficDirection, modifiedAt.map(DateTimePropertyFormat.print), modifiedBy, linkType)
   }
 
@@ -268,10 +272,10 @@ trait RoadLinkService {
   }
 
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[VVHRoadLink] = {
-    def setIncompleteness(roadLink: (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)) {
-      if (roadLink._6 == FunctionalClass.Unknown || roadLink._10 == UnknownLinkType.value) {
-        val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink._2}
-        val mmlId: Long = roadLink._2
+    def setIncompleteness(roadLink: AdjustedRoadLink) {
+      if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
+        val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink.mmlId}
+        val mmlId: Long = roadLink.mmlId
         val municipality: Int = vvhRoadlink.get._2
         withDynTransaction {
           sqlu"""insert into incomplete_link(mml_id, municipality_code)
@@ -280,8 +284,8 @@ trait RoadLinkService {
         }
       }
     }
-    def toVVHRoadLink(roadLink: (Long, Long, Seq[Point], Double, AdministrativeClass, Int, TrafficDirection, Option[String], Option[String], Int)): VVHRoadLink = {
-      VVHRoadLink(roadLink._2, roadLink._3, roadLink._5, roadLink._6, roadLink._7, LinkType(roadLink._10), roadLink._8, roadLink._9)
+    def toVVHRoadLink(roadLink: AdjustedRoadLink): VVHRoadLink = {
+      VVHRoadLink(roadLink.mmlId, roadLink.geometry, roadLink.administrativeClass, roadLink.functionalClass, roadLink.trafficDirection, LinkType(roadLink.linkType), roadLink.modifiedAt, roadLink.modifiedBy)
     }
 
     val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
@@ -321,8 +325,8 @@ trait RoadLinkService {
         """.as[BasicRoadLink].list()
     }
     adjustedRoadLinks(roadLinks).map { roadLink =>
-      Map("id" -> roadLink._1, "mmlId" -> roadLink._2, "points" -> roadLink._3, "administrativeClass" -> roadLink._5.value,
-        "functionalClass" -> roadLink._6, "trafficDirection" -> roadLink._7.value, "linkType" -> roadLink._10)
+      Map("id" -> roadLink.id, "mmlId" -> roadLink.mmlId, "points" -> roadLink.geometry, "administrativeClass" -> roadLink.administrativeClass.value,
+        "functionalClass" -> roadLink.functionalClass, "trafficDirection" -> roadLink.trafficDirection.value, "linkType" -> roadLink.linkType)
     }
   }
 

@@ -45,7 +45,7 @@ object ManoeuvreService {
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-        .map(link => (link._1, link._2))
+        .map(link => (link.id, link.mmlId))
         .toMap
 
       getByRoadlinks(roadLinks)
@@ -114,8 +114,8 @@ object ManoeuvreService {
     }.map { case (id, links) =>
       val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
       val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
-      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId)._2)
-      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId)._2)
+      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId).mmlId)
+      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId).mmlId)
       val modifiedTimeStamp = AssetPropertyConfiguration.DateTimePropertyFormat.print(modifiedDate)
 
       Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)

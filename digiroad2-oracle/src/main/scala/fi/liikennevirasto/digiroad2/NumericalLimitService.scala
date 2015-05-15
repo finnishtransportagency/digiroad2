@@ -70,13 +70,13 @@ trait NumericalLimitOperations {
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
     withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-      val roadLinkIds = roadLinks.map(_._1).toList
+      val roadLinkIds = roadLinks.map(_.id).toList
 
       val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
 
       val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
       roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
-          acc + (roadLink._1 -> (roadLink._3, roadLink._4, roadLink._5, roadLink._6))
+          acc + (roadLink.id -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
         }
 
       val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
