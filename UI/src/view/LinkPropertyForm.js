@@ -70,10 +70,10 @@
       '</div>' +
       '<footer>' + buttons + '</footer>';
 
-    var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks(rootElement) {
+    var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
       var notRendered = !$('#incomplete-links-link').length;
       if(notRendered) {
-        rootElement.append('' +
+        $('#information-content').append('' +
           '<div class="form form-horizontal">' +
               '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">KORJATTAVIEN LINKKIEN LISTA</a>' +
           '</div>');
@@ -120,7 +120,6 @@
           selectedLinkProperty.get().setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
-        renderLinkToIncompleteLinks(rootElement);
       });
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
@@ -136,9 +135,20 @@
         selectedLinkProperty.cancel();
       });
 
-      eventbus.on('linkProperties:available', function() {
-        renderLinkToIncompleteLinks(rootElement);
+
+      eventbus.on('layer:selected', function(layer) {
+        if(layer === 'linkProperties') {
+          renderLinkToIncompleteLinks();
+        }
+        else {
+          $('#incomplete-links-link').parent().remove();
+
+          //renderLinkToIncompleteLinks(rootElement);
+          //eventbus.on('application:initialized', function() {
+          //});
+        }
       });
+
     };
 
     bindEvents();
