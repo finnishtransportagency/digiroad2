@@ -64,7 +64,7 @@
       drawCenterMarker(position);
     }, this);
 
-    eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
+    eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
