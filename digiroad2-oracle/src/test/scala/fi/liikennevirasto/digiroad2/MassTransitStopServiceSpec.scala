@@ -21,8 +21,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
-    (1140018963l, 90, Nil, Municipality, UnknownDirection),
-    (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection)))
+    (1140018963l, 90, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers),
+    (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(388554364l))
     .thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection)))
   when(mockRoadLinkService.fetchVVHRoadlink(123l))

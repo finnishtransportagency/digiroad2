@@ -277,7 +277,7 @@ trait RoadLinkService {
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[VVHRoadLink] = {
+  protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)]): Seq[VVHRoadLink] = {
     def setIncompleteness(roadLink: AdjustedRoadLink) {
       if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
         val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink.mmlId}
@@ -299,17 +299,17 @@ trait RoadLinkService {
     roadLinkDataByMmlId.map(toVVHRoadLink)
   }
 
-  def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]
+  def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)]
 
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)]
 
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)]
 
   def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]]
 
-  def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)]): Seq[AdjustedRoadLink] = {
+  def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
-      val (mmlId, _, geometry, administrativeClass, trafficDirection) = roadLink
+      val (mmlId, _, geometry, administrativeClass, trafficDirection, _) = roadLink
       BasicRoadLink(0, mmlId, geometry, 0.0, administrativeClass, trafficDirection)
     }
     adjustedRoadLinks(basicRoadLinks)
@@ -371,7 +371,7 @@ object RoadLinkService extends RoadLinkService {
 
   override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
 
-  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
     throw new NotImplementedError()
   }
 
@@ -394,7 +394,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
 
   override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
 
-  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
 
@@ -402,7 +402,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
-  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  override def fetchVVHRoadlinks(municipalityCode: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)] = {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
 
@@ -450,7 +450,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
       if (functionalClass != FunctionalClass.Unknown && linkType != UnknownLinkType.value) removeIncompleteness(mmlId, linkType, functionalClass)
-      enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, trafficDirection))).head
+      enrichRoadLinksFromVVH(Seq((mmlId, municipalityCode, geometry, administrativeClass, trafficDirection, FeatureClass.AllOthers))).head
     }
   }
 }
