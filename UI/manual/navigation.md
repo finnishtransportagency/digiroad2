@@ -1,4 +1,4 @@
-[K&auml;tt&ouml;ohje suomeksi](index.md)
+[K&auml;ytt&ouml;ohje suomeksi](index.md)
 [Användarmanual på svenska](svmanual.md)
 
 
