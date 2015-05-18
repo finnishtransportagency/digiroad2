@@ -282,7 +282,7 @@ trait MassTransitStopService {
     }
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
     def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
-      val roadLink: Option[(Long, Int, Seq[Point])] = roadLinks.find(_._1 == mmlId)
+      val roadLink: Option[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = roadLinks.find(_._1 == mmlId)
       roadLink.map(x => (x._2, x._3))
     }
     withDynSession {

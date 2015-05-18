@@ -32,7 +32,7 @@ class VVHClient(hostname: String) {
     })
   }
 
-  def fetchByMunicipality(municipality: Int): Seq[(Long, Int, Seq[Point])] = {
+  def fetchByMunicipality(municipality: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
     val municipalityFilter = URLEncoder.encode(s"""{"0":"Kuntatunnus=$municipality"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$municipalityFilter&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -40,9 +40,7 @@ class VVHClient(hostname: String) {
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
 
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.map(feature => {
-      extractVVHFeature(feature)
-    }).map { x => (x._1, x._2, x._3) }
+    features.map(extractVVHFeature)
   }
 
   def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {

@@ -98,6 +98,17 @@
       color: @input-color-placeholder-dark;
     }
 
+    a {
+      color: @input-color-placeholder-dark;
+      text-decoration: underline;
+    }
+
+    a.incomplete-links {
+      position:absolute;
+      right: 10px;
+      bottom: 130px;
+    }
+
     .undefined {
       font-style: italic;
       color: @gray-dark;
@@ -210,5 +221,19 @@
     color: @warning;
     padding-right: (@line-height-modifier*2) * 1px;
     font-size: @font-size-small;
+  }
+}
+
+#information-content {
+  a {
+    z-index: 1011;
+    color: @input-color-placeholder-dark;
+    text-decoration: underline;
+  }
+
+  a.incomplete-links {
+    position:absolute;
+    right: 10px;
+    bottom: 145px;
   }
 }

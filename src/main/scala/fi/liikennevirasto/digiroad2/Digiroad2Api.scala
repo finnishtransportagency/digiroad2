@@ -280,18 +280,16 @@ with GZipSupport {
     RoadLinkService.getRoadLinks(
       bounds = boundingRectangle,
       municipalities = municipalities).map { roadLink =>
-      val (id, mmlId, points, length, administrativeClass, functionalClass,
-      trafficDirection, modifiedAt, modifiedBy, linkType) = roadLink
-      Map("roadLinkId" -> id,
-        "mmlId" -> mmlId,
-        "points" -> points,
-        "length" -> length,
-        "administrativeClass" -> administrativeClass.toString,
-        "functionalClass" -> functionalClass,
-        "trafficDirection" -> trafficDirection.toString,
-        "modifiedAt" -> modifiedAt,
-        "modifiedBy" -> modifiedBy,
-        "linkType" -> linkType)
+      Map("roadLinkId" -> roadLink.id,
+        "mmlId" -> roadLink.mmlId,
+        "points" -> roadLink.geometry,
+        "length" -> roadLink.length,
+        "administrativeClass" -> roadLink.administrativeClass.toString,
+        "functionalClass" -> roadLink.functionalClass,
+        "trafficDirection" -> roadLink.trafficDirection.toString,
+        "modifiedAt" -> roadLink.modifiedAt,
+        "modifiedBy" -> roadLink.modifiedBy,
+        "linkType" -> roadLink.linkType)
     }
   }
 
@@ -350,6 +348,15 @@ with GZipSupport {
   get("/roadlinks/adjacent/:id"){
     val id = params("id").toLong
     RoadLinkService.getAdjacent(id)
+  }
+
+  get("/incompleteLinks") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
   put("/linkproperties/:id") {

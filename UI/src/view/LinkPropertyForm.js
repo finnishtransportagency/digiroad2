@@ -70,6 +70,16 @@
       '</div>' +
       '<footer>' + buttons + '</footer>';
 
+    var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
+      var notRendered = !$('#incomplete-links-link').length;
+      if(notRendered) {
+        $('#information-content').append('' +
+          '<div class="form form-horizontal">' +
+              '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">KORJATTAVIEN LINKKIEN LISTA</a>' +
+          '</div>');
+      }
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -124,6 +134,17 @@
       rootElement.on('click', '.link-properties button.cancel', function() {
         selectedLinkProperty.cancel();
       });
+
+
+      eventbus.on('layer:selected', function(layer) {
+        if(layer === 'linkProperties') {
+          renderLinkToIncompleteLinks();
+        }
+        else {
+          $('#incomplete-links-link').parent().remove();
+        }
+      });
+
     };
 
     bindEvents();
