@@ -75,7 +75,7 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-              '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">KORJATTAVIEN LINKKIEN LISTA</a>' +
+              '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">Korjattavien linkkien lista</a>' +
           '</div>');
       }
     };
