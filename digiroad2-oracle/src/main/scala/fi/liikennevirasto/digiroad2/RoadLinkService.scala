@@ -288,8 +288,8 @@ trait RoadLinkService {
         val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink.mmlId }
 
         val (newFunctionalClass, newLinkType) = vvhRoadlink.get._6 match {
-          case FeatureClass.TractorRoad => withPropertyUpdate(roadLink.mmlId, 8, TractorRoad.value)
-          case FeatureClass.DrivePath => withPropertyUpdate(roadLink.mmlId, 8, SingleCarriageway.value)
+          case FeatureClass.TractorRoad => withPropertyUpdate(roadLink.mmlId, 6, TractorRoad.value)
+          case FeatureClass.DrivePath => withPropertyUpdate(roadLink.mmlId, 7, SingleCarriageway.value)
           case FeatureClass.AllOthers =>  (roadLink.functionalClass, roadLink.linkType)
         }
 
