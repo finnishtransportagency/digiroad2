@@ -142,10 +142,6 @@
         }
         else {
           $('#incomplete-links-link').parent().remove();
-
-          //renderLinkToIncompleteLinks(rootElement);
-          //eventbus.on('application:initialized', function() {
-          //});
         }
       });
 
