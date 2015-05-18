@@ -278,6 +278,26 @@ trait RoadLinkService {
   }
 
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, FeatureClass)]): Seq[VVHRoadLink] = {
+    def withPropertyUpdate(mmlId: Long, functionalClass: Int, linkType: Int) = {
+      setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, "automatic_generation")
+      setLinkProperty("link_type", "link_type", linkType, mmlId, "automatic_generation")
+      (functionalClass, linkType)
+    }
+    def autoGenerateProperties(roadLink: AdjustedRoadLink): AdjustedRoadLink = {
+      if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
+        val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink.mmlId }
+
+        val (newFunctionalClass, newLinkType) = vvhRoadlink.get._6 match {
+          case FeatureClass.TractorRoad => withPropertyUpdate(roadLink.mmlId, 8, TractorRoad.value)
+          case FeatureClass.DrivePath => withPropertyUpdate(roadLink.mmlId, 8, SingleCarriageway.value)
+          case FeatureClass.AllOthers =>  (roadLink.functionalClass, roadLink.linkType)
+        }
+
+        roadLink.copy(functionalClass = newFunctionalClass, linkType = newLinkType)
+      } else {
+        roadLink
+      }
+    }
     def setIncompleteness(roadLink: AdjustedRoadLink) {
       if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
         val vvhRoadlink = vvhRoadLinks.find { x => x._1 == roadLink.mmlId}
@@ -294,7 +314,7 @@ trait RoadLinkService {
       VVHRoadLink(roadLink.mmlId, roadLink.geometry, roadLink.administrativeClass, roadLink.functionalClass, roadLink.trafficDirection, LinkType(roadLink.linkType), roadLink.modifiedAt, roadLink.modifiedBy)
     }
 
-    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
+    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks).map(autoGenerateProperties)
     roadLinkDataByMmlId.foreach(setIncompleteness)
     roadLinkDataByMmlId.map(toVVHRoadLink)
   }
