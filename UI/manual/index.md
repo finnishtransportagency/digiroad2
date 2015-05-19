@@ -168,6 +168,20 @@ Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja ti
 
 _Tielinkin ominaisuustietojen muokkaus._
 
+####Korjattavat tielinkit####
+
+Uudet linkit ovat korjattavien linkkien listalla (3), koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkki-tasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
+
+Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot voi korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi.
+
+![Korjattava linkki](k47.jpg)
+
+_Korjattava linkki._
+
+![Korjattavien linkkien lista](k48.jpg)
+
+_Korjattavien linkkien lista._
+
 4. Joukkoliikenteen pys&auml;kit
 --------------------------------
 
