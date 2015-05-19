@@ -97,4 +97,34 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     })
     validatedCode should be(91)
   }
+
+  test("Autogenerate properties for tractor road and drive path") {
+    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
+        .thenReturn(List(
+          (123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
+          (456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
+          (789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+
+      val roadLinks = service.getRoadLinksFromVVH(boundingBox)
+
+      roadLinks.find(_.mmlId == 123).get.functionalClass should be(6)
+      roadLinks.find(_.mmlId == 123).get.linkType should be(SingleCarriageway)
+
+      roadLinks.find(_.mmlId == 456).get.functionalClass should be(7)
+      roadLinks.find(_.mmlId == 456).get.linkType should be(TractorRoad)
+
+      roadLinks.find(_.mmlId == 789).get.functionalClass should be(FunctionalClass.Unknown)
+      roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
+
+      dynamicSession.rollback()
+    }
+  }
 }
