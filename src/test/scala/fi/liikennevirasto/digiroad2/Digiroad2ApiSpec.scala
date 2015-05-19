@@ -23,13 +23,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val CreatedTestAssetId = 300004
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlink(1l))
-    .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(2l))
-    .thenReturn(Some((235, Nil, Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(2l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(7478l))
-    .thenReturn(Some((235, Nil, Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
-    .thenReturn(List((7478l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+    .thenReturn(List(VVHRoadlink(7478l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
   val roadLinkService = new VVHRoadLinkService(mockVVHClient)
 
   addServlet(new Digiroad2Api(roadLinkService), "/*")

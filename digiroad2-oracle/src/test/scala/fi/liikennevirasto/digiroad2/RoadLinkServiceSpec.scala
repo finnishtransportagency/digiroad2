@@ -53,7 +53,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
@@ -68,7 +68,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some((91, Nil, Municipality, TowardsDigitizing)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.trafficDirection) should be(Some(BothDirections))
@@ -89,7 +89,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Validate access rights to municipality") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l))
-      .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
+      .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
     val service = new VVHRoadLinkService(mockVVHClient)
     var validatedCode = 0
     service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
@@ -108,9 +108,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
         .thenReturn(List(
-          (123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
-          (456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
-          (789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+        VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
+        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
 
       val roadLinks = service.getRoadLinksFromVVH(boundingBox)

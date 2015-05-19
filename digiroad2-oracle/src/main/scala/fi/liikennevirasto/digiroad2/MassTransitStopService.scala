@@ -219,7 +219,7 @@ trait MassTransitStopService {
   }
 
   private def fetchRoadLink(mmlId: Long): Option[(Int, Seq[Point])] = {
-    roadLinkService.fetchVVHRoadlink(mmlId).map{ x => (x._1, x._2) }
+    roadLinkService.fetchVVHRoadlink(mmlId).map{ x => (x.municipalityCode, x.geometry) }
   }
 
   def createNew(lon: Double, lat: Double, mmlId: Long, bearing: Int, username: String, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
@@ -255,7 +255,7 @@ trait MassTransitStopService {
       val stopsBeforeUpdate = persistedMassTransitStops.filter { persistedStop =>
         user.isAuthorizedToRead(persistedStop.municipalityCode)
       }.map { persistedStop =>
-        val floating = isFloating(persistedStop, roadLinks.find(_._1 == persistedStop.mmlId).map(link => (link._2, link._3)))
+        val floating = isFloating(persistedStop, roadLinks.find(_.mmlId == persistedStop.mmlId).map(link => (link.municipalityCode, link.geometry)))
         MassTransitStopBeforeUpdate(MassTransitStop(persistedStop.id, persistedStop.nationalId,
           persistedStop.lon, persistedStop.lat, persistedStop.bearing, persistedStop.validityDirection.get,
           persistedStop.municipalityCode, persistedStop.validityPeriod.get, floating, persistedStop.stopTypes), persistedStop.floating)
@@ -281,10 +281,9 @@ trait MassTransitStopService {
         propertyData = persistedStop.propertyData)
     }
     val roadLinks = roadLinkService.fetchVVHRoadlinks(municipalityCode)
-    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] = {
-      val roadLink: Option[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection, _)] = roadLinks.find(_._1 == mmlId)
-      roadLink.map(x => (x._2, x._3))
-    }
+    def findRoadlink(mmlId: Long): Option[(Int, Seq[Point])] =
+      roadLinks.find(_.mmlId == mmlId).map(x => (x.municipalityCode, x.geometry))
+
     withDynSession {
       getPersistedMassTransitStops(withMunicipality(municipalityCode))
         .map(withFloatingUpdate(convertPersistedStop(toMassTransitStopWithTimeStamps, findRoadlink)))
