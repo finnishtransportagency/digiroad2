@@ -236,7 +236,7 @@ with GZipSupport {
   }
   private def validateUserRights(roadLinkId: Long) = {
     if(useVVHGeometry) {
-      val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_._1).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+      val authorized: Boolean = roadLinkService.fetchVVHRoadlink(roadLinkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
       if (!authorized) halt(Unauthorized("User not authorized"))
     }
   }

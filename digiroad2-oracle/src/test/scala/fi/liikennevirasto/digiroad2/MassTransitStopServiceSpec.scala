@@ -21,14 +21,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(
-    (1140018963l, 90, Nil, Municipality, UnknownDirection),
-    (388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection)))
+    VVHRoadlink(1140018963l, 90, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(388554364l))
-    .thenReturn(Some((235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(388554364l, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(123l))
-    .thenReturn(Some((91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(388553080l))
-    .thenReturn(Some((235, Nil, Municipality, UnknownDirection)))
+    .thenReturn(Some(VVHRoadlink(388553080l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
 
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f

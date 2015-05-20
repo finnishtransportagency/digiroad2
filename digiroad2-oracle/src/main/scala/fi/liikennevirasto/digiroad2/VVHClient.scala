@@ -7,10 +7,23 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import java.net.URLEncoder
 
+
+
+sealed trait FeatureClass
+object FeatureClass {
+  case object TractorRoad extends FeatureClass
+  case object DrivePath extends FeatureClass
+  case object AllOthers extends FeatureClass
+}
+
+case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
+                      administrativeClass: AdministrativeClass,trafficDirection: TrafficDirection,
+                      featureClass: FeatureClass)
+
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val municipalityFilter = {
       if(municipalities.isEmpty) {
         "0"
@@ -27,12 +40,10 @@ class VVHClient(hostname: String) {
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
 
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.map(feature => {
-      extractVVHFeature(feature)
-    })
+    features.map(extractVVHFeature)
   }
 
-  def fetchByMunicipality(municipality: Int): Seq[(Long, Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val municipalityFilter = URLEncoder.encode(s"""{"0":"Kuntatunnus=$municipality"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$municipalityFilter&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -43,7 +54,7 @@ class VVHClient(hostname: String) {
     features.map(extractVVHFeature)
   }
 
-  def fetchVVHRoadlink(mmlId: Long): Option[(Int, Seq[Point], AdministrativeClass, TrafficDirection)] = {
+  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = {
     val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
@@ -51,9 +62,7 @@ class VVHClient(hostname: String) {
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
 
     val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.headOption.map(feature => {
-      extractVVHFeature(feature)
-    }).map{ x => (x._2, x._3, x._4, x._5)}
+    features.headOption.map(extractVVHFeature)
   }
 
   private def fetchVVHFeatureMap(url: String): Map[String, Any] = {
@@ -68,7 +77,7 @@ class VVHClient(hostname: String) {
     featureMap
   }
   
-  private def extractVVHFeature(feature: Map[String, Any]): (Long, Int, Seq[Point], AdministrativeClass, TrafficDirection) = {
+  private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
     val path: List[List[Double]] = paths.head
@@ -78,9 +87,16 @@ class VVHClient(hostname: String) {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-    (mmlId, municipalityCode, linkGeometry,
-      extractAdministrativeClass(attributes), extractTrafficDirection(attributes))
+    val featureClassCode = attributes("KOHDELUOKKA").asInstanceOf[BigInt].intValue()
+    val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
+    VVHRoadlink(mmlId, municipalityCode, linkGeometry,
+      extractAdministrativeClass(attributes), extractTrafficDirection(attributes), featureClass)
   }
+
+  private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+    12316 -> FeatureClass.TractorRoad,
+    12141 -> FeatureClass.DrivePath
+  )
   
   private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
     12155 -> State,
@@ -106,3 +122,5 @@ class VVHClient(hostname: String) {
       .getOrElse(UnknownDirection)
   }
 }
+
+

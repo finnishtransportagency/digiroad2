@@ -53,7 +53,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
@@ -68,7 +68,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some((91, Nil, Municipality, TowardsDigitizing)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.trafficDirection) should be(Some(BothDirections))
@@ -89,12 +89,42 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Validate access rights to municipality") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l))
-      .thenReturn(Some((91, Nil, Municipality, UnknownDirection)))
+      .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
     val service = new VVHRoadLinkService(mockVVHClient)
     var validatedCode = 0
     service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
       validatedCode = municipalityCode
     })
     validatedCode should be(91)
+  }
+
+  test("Autogenerate properties for tractor road and drive path") {
+    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
+        .thenReturn(List(
+        VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
+        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+
+      val roadLinks = service.getRoadLinksFromVVH(boundingBox)
+
+      roadLinks.find(_.mmlId == 123).get.functionalClass should be(6)
+      roadLinks.find(_.mmlId == 123).get.linkType should be(SingleCarriageway)
+
+      roadLinks.find(_.mmlId == 456).get.functionalClass should be(7)
+      roadLinks.find(_.mmlId == 456).get.linkType should be(TractorRoad)
+
+      roadLinks.find(_.mmlId == 789).get.functionalClass should be(FunctionalClass.Unknown)
+      roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
+
+      dynamicSession.rollback()
+    }
   }
 }

@@ -30,12 +30,12 @@
     ];
 
     var linkTypeSizeRules = [
-      new OpenLayersRule().where('linkType').isIn([8, 9, 21]).use({ strokeWidth: 6 }),
-      new OpenLayersRule().where('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 2 }),
-      new OpenLayersRule().where('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 4 }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 16' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
-      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).use({ strokeWidth: 6 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeWidth: 2 }),
+      new OpenLayersRule().where('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeWidth: 4 }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 16' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(10).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 8' }),
+      new OpenLayersRule().where('type').is('overlay').and('linkType').isIn([8, 9, 12, 21]).and('zoomLevel', roadLayer.uiState).is(11).use({ strokeColor: '#fff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 8' })
     ];
 
     var overlayDefaultOpacity = [
