@@ -340,9 +340,10 @@ trait RoadLinkService {
       val vvhRoadLink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
       val mmlId: Long = roadLink.mmlId
       val municipality: Int = vvhRoadLink.get.municipalityCode
+      val administrativeClass: Int = roadLink.administrativeClass.value
       withDynTransaction {
-        sqlu"""insert into incomplete_link(mml_id, municipality_code)
-                 select $mmlId, $municipality from dual
+        sqlu"""insert into incomplete_link(mml_id, municipality_code, administrative_class)
+                 select $mmlId, $municipality, $administrativeClass from dual
                  where not exists (select * from incomplete_link where mml_id = $mmlId)""".execute()
       }
     }
@@ -479,7 +480,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val incompleteLinksQuery = """
-        select l.mml_id, m.name_fi
+        select l.mml_id, m.name_fi, l.administrative_class
         from incomplete_link l
         join municipality m on l.municipality_code = m.id
       """
