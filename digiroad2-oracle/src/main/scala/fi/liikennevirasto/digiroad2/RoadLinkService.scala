@@ -376,7 +376,7 @@ trait RoadLinkService {
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink]
 
-  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]]
+  def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
@@ -451,7 +451,7 @@ object RoadLinkService extends RoadLinkService {
 
   override def fetchVVHRoadlinks(municipalityCode: Int) = throw new NotImplementedError()
 
-  override def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]] = throw new NotImplementedError()
+  override def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = throw new NotImplementedError()
 
   override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = throw new NotImplementedError()
 
@@ -476,7 +476,10 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
 
-  override def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]] = {
+  override def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class IncompleteLink(mmlId: Long, municipality: String, administrativeClass: String)
+    def toIncompleteLink(x: (Long, String, Int)) = IncompleteLink(x._1, x._2, AdministrativeClass(x._3).toString)
+
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val incompleteLinksQuery = """
@@ -490,9 +493,11 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
         case _ => incompleteLinksQuery
       }
 
-      Q.queryNA[(Long, String)](sql).list()
-        .groupBy(_._2)
-        .mapValues(_.map(_._1))
+      Q.queryNA[(Long, String, Int)](sql).list()
+        .map(toIncompleteLink)
+        .groupBy(_.municipality)
+        .mapValues { _.groupBy(_.administrativeClass)
+                      .mapValues(_.map(_.mmlId)) }
     }
   }
 
