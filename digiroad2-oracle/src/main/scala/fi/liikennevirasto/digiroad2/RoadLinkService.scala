@@ -277,46 +277,56 @@ trait RoadLinkService {
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
+  protected def removeIncompleteness(mmlId: Long) = {
+    withDynTransaction {
+      sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
+    }
+  }
+
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink]): Seq[VVHRoadLinkWithProperties] = {
-    def withPropertyUpdate(mmlId: Long, functionalClass: Int, linkType: Int) = {
-      setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, "automatic_generation")
-      setLinkProperty("link_type", "link_type", linkType, mmlId, "automatic_generation")
-      (functionalClass, linkType)
+    def updateProperties(roadLink: AdjustedRoadLink) = {
+      setLinkProperty("functional_class", "functional_class", roadLink.functionalClass, roadLink.mmlId, "automatic_generation")
+      setLinkProperty("link_type", "link_type", roadLink.linkType, roadLink.mmlId, "automatic_generation")
     }
     def autoGenerateProperties(roadLink: AdjustedRoadLink): AdjustedRoadLink = {
-      if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
-        val vvhRoadlink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
-
-        val (newFunctionalClass, newLinkType) = vvhRoadlink.get.featureClass match {
-          case FeatureClass.TractorRoad => withPropertyUpdate(roadLink.mmlId, 7, TractorRoad.value)
-          case FeatureClass.DrivePath => withPropertyUpdate(roadLink.mmlId, 6, SingleCarriageway.value)
-          case FeatureClass.AllOthers =>  (roadLink.functionalClass, roadLink.linkType)
-        }
-
-        roadLink.copy(functionalClass = newFunctionalClass, linkType = newLinkType)
-      } else {
-        roadLink
+      val vvhRoadLink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
+      vvhRoadLink.get.featureClass match {
+        case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad.value)
+        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway.value)
+        case FeatureClass.AllOthers => roadLink
       }
     }
     def setIncompleteness(roadLink: AdjustedRoadLink) {
-      if (roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value) {
-        val vvhRoadlink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
-        val mmlId: Long = roadLink.mmlId
-        val municipality: Int = vvhRoadlink.get.municipalityCode
-        withDynTransaction {
-          sqlu"""insert into incomplete_link(mml_id, municipality_code)
+      val vvhRoadLink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
+      val mmlId: Long = roadLink.mmlId
+      val municipality: Int = vvhRoadLink.get.municipalityCode
+      withDynTransaction {
+        sqlu"""insert into incomplete_link(mml_id, municipality_code)
                  select $mmlId, $municipality from dual
                  where not exists (select * from incomplete_link where mml_id = $mmlId)""".execute()
-        }
       }
     }
     def toVVHRoadLinkWithProperties(roadLink: AdjustedRoadLink): VVHRoadLinkWithProperties = {
       VVHRoadLinkWithProperties(roadLink.mmlId, roadLink.geometry, roadLink.administrativeClass, roadLink.functionalClass, roadLink.trafficDirection, LinkType(roadLink.linkType), roadLink.modifiedAt, roadLink.modifiedBy)
     }
+    def isIncomplete(roadLink: AdjustedRoadLink): Boolean = {
+      roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value
+    }
+    def isTractorRoadOrDrivePath(roadLink: AdjustedRoadLink): Boolean = {
+      val vvhRoadLink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
+      vvhRoadLink.get.featureClass == FeatureClass.TractorRoad || vvhRoadLink.get.featureClass == FeatureClass.DrivePath
+    }
 
-    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks).map(autoGenerateProperties)
-    roadLinkDataByMmlId.foreach(setIncompleteness)
-    roadLinkDataByMmlId.map(toVVHRoadLinkWithProperties)
+    val roadLinkDataByMmlId = getRoadLinkDataByMmlIds(vvhRoadLinks)
+    val (incompleteLinks, completeLinks) = roadLinkDataByMmlId.partition(isIncomplete)
+    val (incompleteTractorRoadAndDrivePathLinks, incompleteOtherLinks) = incompleteLinks.partition(isTractorRoadOrDrivePath)
+    val fixedTractorRoadAndDrivePathLinks = incompleteTractorRoadAndDrivePathLinks.map(autoGenerateProperties)
+
+    fixedTractorRoadAndDrivePathLinks.foreach(updateProperties)
+    fixedTractorRoadAndDrivePathLinks.foreach( link => removeIncompleteness(link.mmlId) )
+    incompleteOtherLinks.foreach(setIncompleteness)
+
+    (completeLinks ++ fixedTractorRoadAndDrivePathLinks ++ incompleteOtherLinks).map(toVVHRoadLinkWithProperties)
   }
 
   def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink]
@@ -453,12 +463,6 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
     middlePoint.map((mmlId, _))
   }
 
-  def removeIncompleteness(mmlId: Long, linkType: LinkType, functionalClass: Int) = {
-    withDynTransaction {
-      sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
-    }
-  }
-
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLinkWithProperties] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
@@ -467,7 +471,7 @@ class VVHRoadLinkService(vvhClient: VVHClient) extends RoadLinkService {
       setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
-      if (functionalClass != FunctionalClass.Unknown && linkType != UnknownLinkType) removeIncompleteness(mmlId, linkType, functionalClass)
+      if (functionalClass != FunctionalClass.Unknown && linkType != UnknownLinkType) removeIncompleteness(mmlId)
       enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
     }
   }

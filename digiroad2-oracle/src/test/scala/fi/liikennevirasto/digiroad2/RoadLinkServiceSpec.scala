@@ -101,6 +101,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Autogenerate properties for tractor road and drive path") {
     class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
@@ -113,6 +114,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
 
+      sqlu"""delete from incomplete_link where municipality_code = 91""".execute()
+      sqlu"""insert into incomplete_link(mml_id, municipality_code) values(456, 91)""".execute()
       val roadLinks = service.getRoadLinksFromVVH(boundingBox)
 
       roadLinks.find(_.mmlId == 123).get.functionalClass should be(6)
@@ -123,6 +126,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       roadLinks.find(_.mmlId == 789).get.functionalClass should be(FunctionalClass.Unknown)
       roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
+
+      val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
+      incompleteLinks.get("Helsinki") should be(Some(Seq(789)))
 
       dynamicSession.rollback()
     }
