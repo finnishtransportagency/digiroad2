@@ -27,19 +27,24 @@
     </div>
     <script type="application/javascript">
         var incompleteLinksTableForMunicipality = function(municipalityName, mmlIds) {
-            var tableHeaderRow = function(municipalityName) {
-                return $('<caption/>').html(municipalityName);
+            var tableHeaderRow = function(administrativeClass) {
+                return $('<caption/>').html(administrativeClass);
+            };
+            var municiPalityHeader = function(municipalityName) {
+                return $('<h2/>').html(municipalityName);
             };
             var assetLink = function(mmlId) {
                 var link =  Environment.urlPath() + '/#linkProperties/' + mmlId;
                 return $('<a/>').attr('href', link).html(link);
             };
-            var tableContentRows = function(mmlIds) {
-                return _.map(mmlIds, function(id) {
-                    return $('<tr/>').append($('<td/>').append(assetLink(id)));
+            var tablesForAdministrativeClasses = function(mmlIds) {
+                return _.map(mmlIds, function(ids, administrativeClass) {
+                    return $('<table/>').addClass('table').append(tableHeaderRow(administrativeClass)).append(_.map(ids, function(id) {
+                        return $('<tr/>').append($('<td/>').append(assetLink(id)));
+                    }));
                 });
             };
-            return $('<table/>').addClass('table').append(tableHeaderRow(municipalityName)).append(tableContentRows(mmlIds));
+            return $('<div/>').append(municiPalityHeader(municipalityName)).append(tablesForAdministrativeClasses(mmlIds));
         };
 
         var fetchIncompleteLinks = function() {
