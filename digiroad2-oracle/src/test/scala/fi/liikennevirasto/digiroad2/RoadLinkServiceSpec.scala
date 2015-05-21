@@ -128,7 +128,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
 
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
-      incompleteLinks.get("Helsinki") should be(Some(Seq(789)))
+      incompleteLinks.get("Helsinki").get("Municipality") should be(Seq(789))
 
       dynamicSession.rollback()
     }
