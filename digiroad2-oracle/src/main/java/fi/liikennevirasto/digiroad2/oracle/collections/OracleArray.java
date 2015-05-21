@@ -56,17 +56,6 @@ public class OracleArray {
         }
     }
 
-    private static class RowToRoadLinkAdjustment implements RowToElement<Tuple4<Long, Int, DateTime, String>> {
-        @Override
-        public Tuple4<Long, Int, DateTime, String> convert(ResultSet row) throws SQLException {
-            long mmlId = row.getLong(1);
-            int value = row.getInt(2);
-            DateTime modifiedAt = DateTime.parse(row.getString(3));
-            String modifiedBy = row.getString(4);
-            return new Tuple4(mmlId, value, modifiedAt, modifiedBy);
-        }
-    }
-
     private static class RowToManoeuvre implements RowToElement<Tuple7<Long, Int, Long, Int, DateTime, String, String>> {
         @Override
         public Tuple7<Long, Int, Long, Int, DateTime, String, String> convert(ResultSet row) throws SQLException {
@@ -144,21 +133,6 @@ public class OracleArray {
                 "WHERE m.manoeuvre_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
 
         return queryWithIdArray(ids, connection, query, new RowToManoeuvreException());
-    }
-
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchTrafficDirections(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, traffic_direction, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM TRAFFIC_DIRECTION where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
-    }
-
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchFunctionalClasses(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, functional_class, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM FUNCTIONAL_CLASS where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
-    }
-
-    public static List<Tuple4<Long, Int, DateTime, String>> fetchLinkTypes(List ids, Connection connection) throws SQLException {
-        String query = "SELECT mml_id, link_type, to_char(modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), modified_by FROM LINK_TYPE where mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToRoadLinkAdjustment());
     }
 
     public static List<Tuple3<Long, Long, Int>> fetchRoadLinkDataByMmlIds(List ids, Connection connection) throws SQLException {
