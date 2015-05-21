@@ -210,32 +210,32 @@ trait RoadLinkService {
     }
   }
 
-  private def fetchTrafficDirections(mmlIds: Seq[Long]): Seq[(Long, Int, DateTime, String)] = {
+  private def fetchTrafficDirections(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select t.mml_id, t.traffic_direction, t.modified_date, t.modified_by
             from traffic_direction t
-            join temporary_id i on i.id = t.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = t.mml_id""".as[(Long, Int, DateTime, String)].list()
   }
 
-  private def fetchFunctionalClasses(mmlIds: Seq[Long]): Seq[(Long, Int, DateTime, String)] = {
+  private def fetchFunctionalClasses(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select f.mml_id, f.functional_class, f.modified_date, f.modified_by
             from functional_class f
-            join temporary_id i on i.id = f.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = f.mml_id""".as[(Long, Int, DateTime, String)].list()
   }
 
-  private def fetchLinkTypes(mmlIds: Seq[Long]): Seq[(Long, Int, DateTime, String)] = {
+  private def fetchLinkTypes(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select l.mml_id, l.link_type, l.modified_date, l.modified_by
             from link_type l
-            join temporary_id i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list()
   }
 
-  private def withIds[T](ids: Seq[Long])(f: () => T): T = {
+  private def withIds[T](ids: Seq[Long])(f: String => T): T = {
     val insertMmlIdPS = dynamicSession.prepareStatement("insert into temporary_id (id) values (?)")
     ids.foreach { id =>
       insertMmlIdPS.setLong(1, id)
       insertMmlIdPS.addBatch()
     }
     insertMmlIdPS.executeBatch()
-    val ret = f()
+    val ret = f("temporary_id")
     sqlu"""delete from temporary_id""".execute()
     ret
   }
@@ -243,10 +243,10 @@ trait RoadLinkService {
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     withDynTransaction {
       val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
-      withIds(basicRoadLinks.map(_.mmlId)) { () =>
-        val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(basicRoadLinks.map(_.mmlId)).groupBy(_._1)
-        val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(basicRoadLinks.map(_.mmlId)).groupBy(_._1)
-        val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(basicRoadLinks.map(_.mmlId)).groupBy(_._1)
+      withIds(basicRoadLinks.map(_.mmlId)) { idTableName =>
+        val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
+        val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
+        val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(idTableName).groupBy(_._1)
         (trafficDirections, functionalClasses, linkTypes)
       }
 
