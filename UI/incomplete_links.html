@@ -26,32 +26,40 @@
         </div>
     </div>
     <script type="application/javascript">
-        var incompleteLinksTableForMunicipality = function(municipalityName, mmlIds) {
+        var incompleteLinksTableForMunicipality = function(municipalityName, mmlIdsByAdministrativeClass) {
+            var municipalityHeader = function(municipalityName) {
+                return $('<h2/>').html(municipalityName);
+            };
             var tableHeaderRow = function(administrativeClass) {
                 return $('<caption/>').html(administrativeClass);
             };
-            var municiPalityHeader = function(municipalityName) {
-                return $('<h2/>').html(municipalityName);
+            var tableContentRows = function(mmlIds) {
+                return _.map(mmlIds, function(id) {
+                    return $('<tr/>').append($('<td/>').append(assetLink(id)));
+                });
             };
             var assetLink = function(mmlId) {
                 var link =  Environment.urlPath() + '/#linkProperties/' + mmlId;
                 return $('<a/>').attr('href', link).html(link);
             };
-            var tablesForAdministrativeClasses = function(mmlIds) {
-                return _.map(mmlIds, function(ids, administrativeClass) {
-                    return $('<table/>').addClass('table').append(tableHeaderRow(administrativeClass)).append(_.map(ids, function(id) {
-                        return $('<tr/>').append($('<td/>').append(assetLink(id)));
-                    }));
-                });
+            var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
+                if (!mmlIds || mmlIds.length === 0) return '';
+                return $('<table/>').addClass('table')
+                        .append(tableHeaderRow(administrativeClass))
+                        .append(tableContentRows(mmlIds));
             };
-            return $('<div/>').append(municiPalityHeader(municipalityName)).append(tablesForAdministrativeClasses(mmlIds));
+            return $('<div/>').append(municipalityHeader(municipalityName))
+                    .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State))
+                    .append(tableForAdministrativeClass('Kunnan omistama', mmlIdsByAdministrativeClass.Municipality))
+                    .append(tableForAdministrativeClass('Yksityisen omistama', mmlIdsByAdministrativeClass.Private))
+                    .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
         };
 
         var fetchIncompleteLinks = function() {
             var backend = new Backend();
             backend.getIncompleteLinksWithCallBack(function(links) {
-                _.map(links, function(mmlIds, municipalityName) {
-                    $('.incomplete-links').append(incompleteLinksTableForMunicipality(municipalityName, mmlIds));
+                _.map(links, function(mmlIdsByAdministrativeClass, municipalityName) {
+                    $('.incomplete-links').append(incompleteLinksTableForMunicipality(municipalityName, mmlIdsByAdministrativeClass));
                 });
             });
         };
