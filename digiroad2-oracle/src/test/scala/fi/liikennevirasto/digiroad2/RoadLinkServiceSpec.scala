@@ -111,7 +111,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         .thenReturn(List(
         VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
         VVHRoadlink(456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
-        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers),
+        VVHRoadlink(111l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.CycleOrPedestrianPath)))
       val service = new TestService(mockVVHClient)
 
       sqlu"""delete from incomplete_link where municipality_code = 91""".execute()
@@ -126,6 +127,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       roadLinks.find(_.mmlId == 789).get.functionalClass should be(FunctionalClass.Unknown)
       roadLinks.find(_.mmlId == 789).get.linkType should be(UnknownLinkType)
+
+      roadLinks.find(_.mmlId == 111).get.functionalClass should be(8)
+      roadLinks.find(_.mmlId == 111).get.linkType should be(CycleOrPedestrianPath)
 
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
       incompleteLinks.get("Helsinki").get("Municipality") should be(Seq(789))

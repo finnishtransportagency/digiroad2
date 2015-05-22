@@ -7,12 +7,11 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import java.net.URLEncoder
 
-
-
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
   case object DrivePath extends FeatureClass
+  case object CycleOrPedestrianPath extends FeatureClass
   case object AllOthers extends FeatureClass
 }
 
@@ -95,7 +94,8 @@ class VVHClient(hostname: String) {
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
     12316 -> FeatureClass.TractorRoad,
-    12141 -> FeatureClass.DrivePath
+    12141 -> FeatureClass.DrivePath,
+    12314 -> FeatureClass.CycleOrPedestrianPath
   )
   
   private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
