@@ -22,18 +22,26 @@ case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val municipalityFilter = {
+  private def layerDefinition(municipalities: Set[Int]): String = {
+    val definitionStart = "[{"
+    val layerSelection = """"layerId":0,"""
+    val municipalityFilter =
       if(municipalities.isEmpty) {
-        "0"
+        ""
       } else {
         val municipalityQuery = municipalities.tail.foldLeft("Kuntatunnus=" + municipalities.head){ (acc, m) => acc + " or Kuntatunnus=" + m }
-        URLEncoder.encode(s"""{"0":"$municipalityQuery"}""", "UTF-8")
+        s""""where":"$municipalityQuery","""
       }
-    }
+    val fieldSelection = s""""outFields":"MTK_ID,KUNTATUNNUS,KOHDELUOKKA,HALLINNOLLINENLUOKKA,YKSISUUNTAISUUS""""
+    val definitionEnd = "}]"
+    definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
+  }
 
+  def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(municipalities)
+    val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
-      s"layerDefs=$municipalityFilter&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
+      s"layerDefs=$encodedLayerDefinition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
@@ -43,9 +51,10 @@ class VVHClient(hostname: String) {
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
-    val municipalityFilter = URLEncoder.encode(s"""{"0":"Kuntatunnus=$municipality"}""", "UTF-8")
+    val definition = layerDefinition(Set(municipality))
+    val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
-      s"layerDefs=$municipalityFilter&returnGeometry=true&geometryPrecision=3&f=pjson"
+      s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
 
