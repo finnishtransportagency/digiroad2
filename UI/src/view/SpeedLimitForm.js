@@ -1,10 +1,11 @@
 (function (root) {
   var template = function(selectedSpeedLimit) {
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
-    var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
+    var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
+    var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
       var selected = value === selectedSpeedLimit.getValue() ? " selected" : "";
       return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-    });
+    }));
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
@@ -28,7 +29,7 @@
                '</div>' +
                '<div class="form-group editable">' +
                  '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static">' + selectedSpeedLimit.getValue() + '</p>' +
+                 '<p class="form-control-static">' + (selectedSpeedLimit.getValue() || 'Tuntematon') + '</p>' +
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
              '</div>' +

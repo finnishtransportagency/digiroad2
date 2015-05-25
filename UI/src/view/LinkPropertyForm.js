@@ -106,7 +106,7 @@
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
-        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>"';
+        var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
         rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
                                                                            functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
                                                                            linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }}));
