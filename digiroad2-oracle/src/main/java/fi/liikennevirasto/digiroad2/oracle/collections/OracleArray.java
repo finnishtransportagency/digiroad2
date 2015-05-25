@@ -91,7 +91,7 @@ public class OracleArray {
     }
 
     public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchSpeedLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure " +
+        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +
                 "JOIN LRM_POSITION pos ON al.position_id = pos.id " +

@@ -131,7 +131,7 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point])] = {
     val speedLimits = sql"""
-      select a.id, pos.road_link_id, pos.side_code, e.name_fi as speed_limit, pos.start_measure, pos.end_measure
+      select a.id, pos.road_link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -148,7 +148,7 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Int, Seq[(Long, Long, Int, Int, Seq[Point])]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, name) = sql"""
-      select a.modified_by, a.modified_date, a.created_by, a.created_date, e.name_fi
+      select a.modified_by, a.modified_date, a.created_by, a.created_date, e.value
       from ASSET a
       join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
       join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
@@ -273,6 +273,9 @@ object OracleLinearAssetDao {
 
   private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass): (Long, Long, Int, Int, Double, Double) = {
     val assetId = Sequences.nextPrimaryKeySeqValue
+    if (roadLinkType == Unknown) {
+      println("*** UNKNOWN ROADLINK TYPE: " + roadLinkId)
+    }
     val value = limitValueLookup(roadLinkType)
     (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
   }
