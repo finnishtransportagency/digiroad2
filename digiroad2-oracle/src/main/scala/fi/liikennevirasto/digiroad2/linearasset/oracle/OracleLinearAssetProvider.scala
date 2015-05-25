@@ -21,7 +21,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Int, Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
+  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
     val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
 
     val towardsLinkChain = geometryDirection match {
@@ -32,12 +32,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber, towardsLinkChain)
   }
 
-  private def getLinkEndpoints(link: (Long, Long, Int, Int, Seq[Point])): (Point, Point) = {
+  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point])): (Point, Point) = {
     val (_, _, _, _, points) = link
     GeometryUtils.geometryEndpoints(points)
   }
 
-  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Int, Seq[Point])]): Seq[SpeedLimitLink] = {
+  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point])]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val (id, roadLinkId, sideCode, limit, points) = chainedLink.rawLink
