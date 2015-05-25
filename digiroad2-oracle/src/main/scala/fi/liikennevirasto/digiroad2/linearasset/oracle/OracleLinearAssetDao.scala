@@ -266,31 +266,21 @@ object OracleLinearAssetDao {
     roadLinks intersect speedLimitLinks.map(_._2).toSet
   }
 
-  private val limitValueLookup: Map[AdministrativeClass, Int] = Map(
-      State -> 80,
-      Municipality -> 50,
-      Private -> 80)
-
-  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass): (Long, Long, Int, Int, Double, Double) = {
+  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass): (Long, Long, Int, Double, Double) = {
     val assetId = Sequences.nextPrimaryKeySeqValue
-    if (roadLinkType == Unknown) {
-      println("*** UNKNOWN ROADLINK TYPE: " + roadLinkId)
-    }
-    val value = limitValueLookup(roadLinkType)
-    (assetId, roadLinkId, sideCode, value, linkMeasures._1, linkMeasures._2)
+    (assetId, roadLinkId, sideCode, linkMeasures._1, linkMeasures._2)
   }
 
-  private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Int, Double, Double)]): Unit = {
+  private def createSpeedLimits(speedLimits: Seq[(Long, Long, Int, Double, Double)]): Unit = {
     if (speedLimits.nonEmpty) {
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
       logger.info("creating " + speedLimits.size + " speed limits")
 
-      val enumeratedValues = sql"select value, id from enumerated_value where property_id = $propertyId".as[(Int, Long)].list.toMap
+      val enumeratedValueId = sql"select id from enumerated_value where property_id = $propertyId and value is null".as[Long].first()
 
-      speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
+      speedLimits.foreach { case (speedLimitId, roadLinkId, sideCode, startMeasure, endMeasure) =>
         val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-        val enumeratedValueId = enumeratedValues(value)
         val sb = new StringBuilder()
         sb.append("insert all")
         sb.append(
@@ -328,7 +318,7 @@ object OracleLinearAssetDao {
     })
 
     val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
-    val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Int, Double, Double)] = timed("roadLinksUncoveredBySpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>
+    val roadLinksUncoveredBySpeedLimits: Seq[(Long, Long, Int, Double, Double)] = timed("roadLinksUncoveredBySpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>
       val length = linkGeometries(roadLinkId)._2
       val roadLinkType = linkGeometries(roadLinkId)._3
       generateSpeedLimit(roadLinkId, (0.0, length), 1, roadLinkType)
