@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 
 case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], position: Int, towardsLinkChain: Boolean)
 case class SpeedLimit(id: Long, value: Option[Int], endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String], createdBy: Option[String], createdDateTime: Option[String], speedLimitLinks: Seq[SpeedLimitLink])
-case class RoadLinkUncoveredBySpeedLimit(roadLinkId: Long, sideCode: Int, speedLimitValue: Int, startMeasure: Double, endMeasure: Double)
+case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
 case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, mmlId: Long)
 
 trait LinearAssetProvider {
