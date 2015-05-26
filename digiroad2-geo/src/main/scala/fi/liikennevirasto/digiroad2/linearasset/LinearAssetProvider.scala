@@ -14,5 +14,5 @@ trait LinearAssetProvider {
   def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Seq[SpeedLimit]
   def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink]
   def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
-  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass)]): Unit
+  def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Long)]): Unit
 }

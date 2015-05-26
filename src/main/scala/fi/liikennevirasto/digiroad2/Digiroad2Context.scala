@@ -21,7 +21,7 @@ class ValluActor extends Actor {
 
 class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case x: Map[Long, (Seq[Point], Double, AdministrativeClass)] => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
+    case x: Map[Long, (Seq[Point], Double, AdministrativeClass, Long)] => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
     case _                                                => println("speedLimitFiller: Received unknown message")
   }
 }
