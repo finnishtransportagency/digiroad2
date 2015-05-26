@@ -5,7 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, LinearAssetProvider}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -21,8 +21,8 @@ class ValluActor extends Actor {
 
 class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case x: Map[Long, (Seq[Point], Double, AdministrativeClass, Long)] => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
-    case _                                                => println("speedLimitFiller: Received unknown message")
+    case x: Map[Long, RoadLinkForSpeedLimit]  => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
+    case _                                    => println("speedLimitFiller: Received unknown message")
   }
 }
 
