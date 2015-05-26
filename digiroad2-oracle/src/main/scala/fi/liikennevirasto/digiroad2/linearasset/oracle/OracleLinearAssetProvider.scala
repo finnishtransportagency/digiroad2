@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
-import fi.liikennevirasto.digiroad2.{GeometryUtils, LinkChain, DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -18,7 +18,10 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 // FIXME:
 // - rename to speed limit service
 // - move common asset functionality to asset service
-class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
+class OracleLinearAssetProvider(eventbus: DigiroadEventBus, productionRoadLinkService: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+  val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
+    override val roadLinkService: RoadLinkService = productionRoadLinkService
+  }
   val logger = LoggerFactory.getLogger(getClass)
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
@@ -47,7 +50,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      val (speedLimits, linkGeometries) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
+      val (speedLimits, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }

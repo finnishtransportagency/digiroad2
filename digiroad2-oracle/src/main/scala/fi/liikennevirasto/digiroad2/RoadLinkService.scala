@@ -19,9 +19,10 @@ case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],
                             functionalClass: Int, trafficDirection: TrafficDirection,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
+case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
+
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
-  case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass, functionalClass: Int, trafficDirection: TrafficDirection, linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String])
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -349,7 +350,7 @@ trait RoadLinkService {
       }
     }
     def toVVHRoadLinkWithProperties(roadLink: AdjustedRoadLink): VVHRoadLinkWithProperties = {
-      VVHRoadLinkWithProperties(roadLink.mmlId, roadLink.geometry, roadLink.administrativeClass, roadLink.functionalClass, roadLink.trafficDirection, LinkType(roadLink.linkType), roadLink.modifiedAt, roadLink.modifiedBy)
+      VVHRoadLinkWithProperties(roadLink.mmlId, roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass, roadLink.trafficDirection, LinkType(roadLink.linkType), roadLink.modifiedAt, roadLink.modifiedBy)
     }
     def isIncomplete(roadLink: AdjustedRoadLink): Boolean = {
       roadLink.functionalClass == FunctionalClass.Unknown || roadLink.linkType == UnknownLinkType.value
@@ -383,7 +384,7 @@ trait RoadLinkService {
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdjustedRoadLink] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
-      BasicRoadLink(0, roadLink.mmlId, roadLink.geometry, 0.0, roadLink.administrativeClass, roadLink.trafficDirection)
+      BasicRoadLink(0, roadLink.mmlId, roadLink.geometry, GeometryUtils.geometryLength(roadLink.geometry), roadLink.administrativeClass, roadLink.trafficDirection)
     }
     adjustedRoadLinks(basicRoadLinks)
   }

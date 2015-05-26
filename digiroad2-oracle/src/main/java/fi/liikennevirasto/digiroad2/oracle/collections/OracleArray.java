@@ -105,7 +105,7 @@ public class OracleArray {
         }
     }
 
-    public static List<Tuple7<Long, Long, Long, Int, Option<Int>, Double, Double>> fetchSpeedLimitsByRoadLinkIds(List ids, Connection connection) throws SQLException {
+    public static List<Tuple7<Long, Long, Long, Int, Option<Int>, Double, Double>> fetchSpeedLimitsByMmlIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure " +
                 "FROM ASSET a " +
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +
@@ -113,7 +113,7 @@ public class OracleArray {
                 "JOIN PROPERTY p ON a.asset_type_id = p.asset_type_id AND p.public_id = 'rajoitus' " +
                 "JOIN SINGLE_CHOICE_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "JOIN ENUMERATED_VALUE e ON s.enumerated_value_id = e.id " +
-                "WHERE a.asset_type_id = 20 AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
+                "WHERE a.asset_type_id = 20 AND pos.mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
         return queryWithIdArray(ids, connection, query, new RowToSpeedLimit());
     }
 

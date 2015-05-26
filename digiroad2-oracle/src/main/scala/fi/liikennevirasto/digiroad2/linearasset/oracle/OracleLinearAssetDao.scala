@@ -18,7 +18,8 @@ import scala.collection.JavaConversions._
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-object OracleLinearAssetDao {
+trait OracleLinearAssetDao {
+  val roadLinkService: RoadLinkService
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -73,21 +74,21 @@ object OracleLinearAssetDao {
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Option[Int], Seq[Point])], Map[Long, RoadLinkForSpeedLimit]) = {
-    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds = bounds, municipalities = municipalities)
+    val linksWithGeometries = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
 
     val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = OracleArray
-      .fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_.id), bonecpToInternalConnection(dynamicSession.conn))
-      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
+      .fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId), bonecpToInternalConnection(dynamicSession.conn))
+      .map { case (id, _, mmlId, sideCode, limitValue, startMeasure, endMeasure) => (id, mmlId, sideCode, limitValue, startMeasure, endMeasure) }
 
     val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry.id -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
+        acc + (linkWithGeometry.mmlId -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
       }
 
     val speedLimits: Seq[(Long, Long, Int, Option[Int], Seq[Point])] = assetLinks.map { link =>
-      val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-      (assetId, roadLinkId, sideCode, speedLimit, geometry)
+      val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
+      (assetId, mmlId, sideCode, speedLimit, geometry)
     }
     // FIXME: Remove filtering once speed limits fetched from DR1 production
     val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
@@ -108,7 +109,7 @@ object OracleLinearAssetDao {
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
     val linksWithGeometries = RoadLinkService.getByMunicipality(municipality)
 
-    val assetLinks: Seq[(Long, Long, Long, Int, Option[Int], Double, Double)] = OracleArray.fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+    val assetLinks: Seq[(Long, Long, Long, Int, Option[Int], Double, Double)] = OracleArray.fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
     val linkGeometries: Map[Long, Seq[Point]] =
       linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
@@ -315,7 +316,7 @@ object OracleLinearAssetDao {
 
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit = {
     val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = timed("fetchAssetLinks", { OracleArray.
-      fetchSpeedLimitsByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
+      fetchSpeedLimitsByMmlIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
       .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
     })
 
@@ -338,4 +339,8 @@ object OracleLinearAssetDao {
     })
     timed("createSpeedLimitsForPartialLinks", { createSpeedLimits(generatedPartialLinkSpeedLimits) })
   }
+}
+
+object OracleLinearAssetDao extends OracleLinearAssetDao {
+  override val roadLinkService: RoadLinkService = RoadLinkService
 }
