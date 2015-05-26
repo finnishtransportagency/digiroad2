@@ -179,6 +179,13 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
+  private def speedLimitsToApi(speedLimits: Seq[Map[String, Any]]): Seq[Map[String, Any]] = {
+    speedLimits.map { speedLimit =>
+      val value: Option[Int] = speedLimit("value").asInstanceOf[Option[Int]]
+      speedLimit + ("value" -> value.getOrElse(0))
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -186,7 +193,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val assetType = params("assetType")
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
-        case "speed_limits" => withDynSession { OracleLinearAssetDao.getByMunicipality(municipalityNumber) }
+        case "speed_limits" => withDynSession { speedLimitsToApi(OracleLinearAssetDao.getByMunicipality(municipalityNumber)) }
         case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
         case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
         case "axle_weight_limits" => NumericalLimitService.getByMunicipality(50, municipalityNumber)
