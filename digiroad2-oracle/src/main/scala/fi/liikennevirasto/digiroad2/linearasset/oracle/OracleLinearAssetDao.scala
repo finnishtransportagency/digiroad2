@@ -150,7 +150,7 @@ trait OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point])] = {
     val speedLimits = sql"""
-      select a.id, pos.road_link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -159,13 +159,13 @@ trait OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
-    speedLimits.map { case (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
-      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (assetId, roadLinkId, sideCode, value, points)
+    speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
+      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure))
     }
   }
 
-  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int], Seq[(Long, Long, Int, Option[Int], Seq[Point])]) = {
+  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, value) = sql"""
       select a.modified_by, a.modified_date, a.created_by, a.created_date, e.value
       from ASSET a
@@ -174,8 +174,7 @@ trait OracleLinearAssetDao {
       join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
       where a.id = $id
     """.as[(Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int])].first
-    val speedLimitLinks = getSpeedLimitLinksById(id)
-    (modifiedBy, modifiedDate, createdBy, createdDate, value, speedLimitLinks)
+    (modifiedBy, modifiedDate, createdBy, createdDate, value)
   }
 
   def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
