@@ -317,7 +317,7 @@ trait OracleLinearAssetDao {
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit = {
     val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = timed("fetchAssetLinks", { OracleArray.
       fetchSpeedLimitsByMmlIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
-      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
+      .map { case (id, _, mmlId, sideCode, limitValue, startMeasure, endMeasure) => (id, mmlId, sideCode, limitValue, startMeasure, endMeasure) }
     })
 
     val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
