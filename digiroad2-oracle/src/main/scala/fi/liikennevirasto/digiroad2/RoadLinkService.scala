@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.ConversionDatabase._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
@@ -229,22 +229,10 @@ trait RoadLinkService {
             join #$idTableName i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list()
   }
 
-  private def withIds[T](ids: Seq[Long])(f: String => T): T = {
-    val insertMmlIdPS = dynamicSession.prepareStatement("insert into temporary_id (id) values (?)")
-    ids.foreach { id =>
-      insertMmlIdPS.setLong(1, id)
-      insertMmlIdPS.addBatch()
-    }
-    insertMmlIdPS.executeBatch()
-    val ret = f("temporary_id")
-    sqlu"""delete from temporary_id""".execute()
-    ret
-  }
-
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     withDynTransaction {
       val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
-      withIds(basicRoadLinks.map(_.mmlId)) { idTableName =>
+      MassQuery.withIds(basicRoadLinks.map(_.mmlId)) { idTableName =>
         val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
         val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
         val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(idTableName).groupBy(_._1)
