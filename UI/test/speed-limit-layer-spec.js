@@ -42,7 +42,7 @@ define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollectio
           geometryUtils: new GeometryUtils(),
           linearAsset: new LinearAsset(),
           roadCollection: {
-            fetch: function() {  eventbus.trigger('roadLinks:fetched'); },
+            fetchFromVVH: function() {  eventbus.trigger('roadLinks:fetched'); },
             getAll: function() {}
           },
           roadLayer: {
