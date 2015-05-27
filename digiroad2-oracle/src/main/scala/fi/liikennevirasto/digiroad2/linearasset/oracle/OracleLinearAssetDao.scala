@@ -61,14 +61,14 @@ trait OracleLinearAssetDao {
 
 
 
-  private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
-    val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
-    val partiallyCoveredLinks = roadLinkIds.map { roadLinkId =>
-      val length = roadLinks(roadLinkId).length
-      val administrativeClass = roadLinks(roadLinkId).administrativeClass
-      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByRoadLinkId(roadLinkId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
+  private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
+    val speedLimitLinksByMmlId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
+    val partiallyCoveredLinks = mmlIds.map { mmlId =>
+      val length = roadLinks(mmlId).length
+      val administrativeClass = roadLinks(mmlId).administrativeClass
+      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByMmlId(mmlId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
       val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
-      (roadLinkId, administrativeClass, remainders)
+      (mmlId, administrativeClass, remainders)
     }
     partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
