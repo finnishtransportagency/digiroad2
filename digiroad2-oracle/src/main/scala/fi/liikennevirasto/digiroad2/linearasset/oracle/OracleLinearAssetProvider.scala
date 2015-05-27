@@ -69,8 +69,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, productionRoadLinkSe
       val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
       val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit) = dao.getSpeedLimitDetails(speedLimitId)
-      // TODO: Find out if the limitEndpoints are not needed anymore. Then we wouldn't need to fetch the road links
-      //       from VVH in getSpeedLimitLinksById
       Some(SpeedLimit(speedLimitId, limit, limitEndpoints,
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
