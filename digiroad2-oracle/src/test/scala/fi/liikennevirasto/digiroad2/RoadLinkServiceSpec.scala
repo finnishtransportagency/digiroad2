@@ -13,6 +13,12 @@ import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
+
+  class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
+
   test("Get production road link with test id that maps to one production road link") {
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
@@ -47,9 +53,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Adjust link type") {
-    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
@@ -62,9 +65,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Adjust link traffic direction to value that is in VVH") {
-    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
@@ -87,25 +87,24 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Validate access rights to municipality") {
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    when(mockVVHClient.fetchVVHRoadlink(1l))
-      .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
-    val service = new VVHRoadLinkService(mockVVHClient)
-    var validatedCode = 0
-    service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
-      validatedCode = municipalityCode
-    })
-    validatedCode should be(91)
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlink(1l))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      var validatedCode = 0
+      service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
+        validatedCode = municipalityCode
+      })
+      validatedCode should be(91)
+      dynamicSession.rollback()
+    }
   }
 
+
   test("Autogenerate properties for tractor road and drive path") {
-    class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient) {
-      override def withDynTransaction[T](f: => T): T = f
-      override def withDynSession[T](f: => T): T = f
-    }
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
         .thenReturn(List(
