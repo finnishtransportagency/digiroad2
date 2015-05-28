@@ -207,7 +207,7 @@ trait OracleLinearAssetDao {
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
         where a.id = $id and lrm.mml_id = $mmlId
-    """.as[(Double, Double, Int)].list.head
+    """.as[(Double, Double, Int)].first()
   }
   
   def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
