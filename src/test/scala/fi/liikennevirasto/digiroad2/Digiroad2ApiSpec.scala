@@ -134,29 +134,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("update asset property", Tag("db")) {
-    val body1 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
-    val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
-    putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body1.getBytes) {
-      status should equal(200)
-      getWithUserAuth("/massTransitStops/2") {
-        val parsedBody = parse(body)
-        val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
-        val prop = properties.find(_.publicId == TestPropertyId2).get
-        prop.values.size should be (1)
-        prop.values.head.propertyValue should be ("3")
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body2.getBytes) {
-          status should equal(200)
-          getWithUserAuth("/massTransitStops/2") {
-            val parsedBody = parse(body)
-            val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
-            properties.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
-          }
-        }
-      }
-    }
-  }
-
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
     val requestPayload = """{"lon": 0, "lat": 0, "mmlId": 2, "bearing": 0}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
@@ -273,21 +250,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   case class RoadLinkHelper(mmlId: Long, points: Seq[Point],
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
-
-  test("update adjusted link properties") {
-    putJsonWithUserAuth("/linkproperties/7478",
-      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 6}""".getBytes, username = "test2") {
-      status should equal(200)
-      getWithUserAuth("roadlinks2?bbox=373118,6676151,373888,6677474") {
-        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.mmlId == 7478)
-        adjustedLinkOpt.map { adjustedLink =>
-          TrafficDirection(adjustedLink.trafficDirection) should be (TowardsDigitizing)
-          adjustedLink.functionalClass should be (333)
-          adjustedLink.linkType should be (6)
-        }.getOrElse(fail())
-      }
-    }
-  }
 
   ignore("split speed limits requires an operator role") {
     postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":388569874, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
