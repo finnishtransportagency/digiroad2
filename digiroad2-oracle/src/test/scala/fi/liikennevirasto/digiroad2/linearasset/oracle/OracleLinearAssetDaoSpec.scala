@@ -50,7 +50,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   
   def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
 
-  test("should fail") {
+  test("Split should fail when user is not authorized for municipality") {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
       intercept[IllegalArgumentException] {
