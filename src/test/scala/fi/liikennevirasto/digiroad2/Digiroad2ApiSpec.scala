@@ -35,14 +35,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   addServlet(new Digiroad2Api(roadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
-  after {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from functional_class where mml_id = 7478""".execute()
-      sqlu"""delete from link_type where mml_id = 7478""".execute()
-      sqlu"""delete from traffic_direction where mml_id = 7478""".execute()
-    }
-  }
-
   test("require authentication", Tag("db")) {
     get("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
       status should equal(401)
