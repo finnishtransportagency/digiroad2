@@ -234,7 +234,22 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
-  ignore("split speed limits requires an operator role") {
+  test("update adjusted link properties") {
+    putJsonWithUserAuth("/linkproperties/7478",
+      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 6}""".getBytes, username = "test2") {
+      status should equal(200)
+      getWithUserAuth("roadlinks2?bbox=373118,6676151,373888,6677474") {
+        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.mmlId == 7478)
+        adjustedLinkOpt.map { adjustedLink =>
+          TrafficDirection(adjustedLink.trafficDirection) should be (TowardsDigitizing)
+          adjustedLink.functionalClass should be (333)
+          adjustedLink.linkType should be (6)
+        }.getOrElse(fail())
+      }
+    }
+  }
+
+  test("split speed limits requires an operator role") {
     postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":388569874, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
       status should equal(401)
     }

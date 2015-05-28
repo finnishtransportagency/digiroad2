@@ -46,13 +46,27 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     expectedEndPoints._2.distanceTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
 
+  def passingMunicipalityValidation(code: Int): Unit = {}
+  
+  def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+
+  test("should fail") {
+    Database.forDataSource(ds).withDynTransaction {
+      val dao = daoWithRoadLinks(List(roadLink))
+      intercept[IllegalArgumentException] {
+        dao.splitSpeedLimit(200097, 388562360, 100, 120, "test", failingMunicipalityValidation)
+      }
+      dynamicSession.rollback()
+    }
+  }
+
   test("splitting one link speed limit " +
     "where split measure is after link middle point " +
     "modifies end measure of existing speed limit " +
     "and creates new speed limit for second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 388562360, 100, 120, "test")
+      val createdId = dao.splitSpeedLimit(200097, 388562360, 100, 120, "test", passingMunicipalityValidation)
       val (existingModifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
       val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
 
@@ -71,7 +85,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 388562360, 50, 120, "test")
+      val createdId = dao.splitSpeedLimit(200097, 388562360, 50, 120, "test", passingMunicipalityValidation)
       val (modifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
       val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
 
@@ -93,7 +107,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink3 = VVHRoadlink(362959521, 0, List(Point(0.0, 245.119), Point(0.0, 470.0)), Municipality, UnknownDirection, AllOthers)
 
       val dao = daoWithRoadLinks(List(roadLink2, roadLink3, roadLink4))
-      dao.splitSpeedLimit(200217, 362959407, 10, 120, "test")
+      dao.splitSpeedLimit(200217, 362959407, 10, 120, "test", passingMunicipalityValidation)
       val existingLinks = dao.getLinksWithLengthFromVVH(20, 200217)
 
       existingLinks.length shouldBe 2
@@ -114,7 +128,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink10 = VVHRoadlink(388552354, 0, List(Point(583.881, 0.0), Point(716.0, 0.0)), Municipality, UnknownDirection, AllOthers)
 
       val dao = daoWithRoadLinks(List(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
-      val createdId = dao.splitSpeedLimit(200363, 388569874, 148, 120, "test")
+      val createdId = dao.splitSpeedLimit(200363, 388569874, 148, 120, "test", passingMunicipalityValidation)
       val createdLinks = dao.getLinksWithLengthFromVVH(20, createdId)
 
       createdLinks.length shouldBe 3

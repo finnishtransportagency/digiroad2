@@ -12,7 +12,7 @@ case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administr
 trait LinearAssetProvider {
   def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long]
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String): Seq[Long]
-  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String): Seq[SpeedLimit]
+  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
   def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink]
   def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit

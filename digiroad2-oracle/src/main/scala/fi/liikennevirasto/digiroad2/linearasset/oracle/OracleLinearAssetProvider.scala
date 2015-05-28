@@ -88,9 +88,9 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, productionRoadLinkSe
     }
   }
 
-  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String): Seq[SpeedLimit] = {
+  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
-      val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username)
+      val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }

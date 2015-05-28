@@ -62,7 +62,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point])] = {
+  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int)] = {
     val links = sql"""
       select pos.mml_id, pos.start_measure, pos.end_measure
         from ASSET a
@@ -71,9 +71,9 @@ trait OracleLinearAssetDao {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
     links.map { case (mmlId, startMeasure, endMeasure) =>
-      val points = roadLinkService.fetchVVHRoadlink(mmlId).get.geometry
-      val truncatedGeometry = GeometryUtils.truncateGeometry(points, startMeasure, endMeasure)
-      (mmlId, endMeasure - startMeasure, truncatedGeometry)
+      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).get
+      val truncatedGeometry = GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure)
+      (mmlId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
     }
   }
 
@@ -298,13 +298,19 @@ trait OracleLinearAssetDao {
     """.execute()
   }
   
-  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String): Long = {
+  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Long = {
+    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]) = {
+      vvhLinks.find(_._1 == mmlId).foreach(vvhLink => municipalityValidation(vvhLink._4))
+      vvhLinks
+    }
+
     Queries.updateAssetModified(id, username).execute()
     val (startMeasure, endMeasure, sideCode) = getLinkGeometryDataWithMmlId(id, mmlId)
-    val links: Seq[(Long, Double, (Point, Point))] = getLinksWithLengthFromVVH(20, id).map { link =>
-      val (mmlId, length, geometry) = link
-      (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
-    }
+    val links: Seq[(Long, Double, (Point, Point))] =
+      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).map { case (mmlId, length, geometry, _) =>
+        (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
+      }
+
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasuresByMmlId(id, mmlId, existingLinkMeasures)
