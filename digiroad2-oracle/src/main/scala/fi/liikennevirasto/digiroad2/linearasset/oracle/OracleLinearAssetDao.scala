@@ -62,7 +62,20 @@ trait OracleLinearAssetDao {
     }
   }
 
-
+  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point])] = {
+    val links = sql"""
+      select pos.mml_id, pos.start_measure, pos.end_measure
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        where a.asset_type_id = $assetTypeId and a.id = $id
+        """.as[(Long, Double, Double)].list
+    links.map { case (mmlId, startMeasure, endMeasure) =>
+      val points = roadLinkService.fetchVVHRoadlink(mmlId).get.geometry
+      val truncatedGeometry = GeometryUtils.truncateGeometry(points, startMeasure, endMeasure)
+      (mmlId, endMeasure - startMeasure, truncatedGeometry)
+    }
+  }
 
   private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
     val speedLimitLinksByMmlId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
@@ -186,13 +199,19 @@ trait OracleLinearAssetDao {
         where a.id = $id and lrm.road_link_id = $roadLinkId
     """.as[(Double, Double, Int)].list.head
   }
-
-  def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
+  
+  def getLinkGeometryDataWithMmlId(id: Long, mmlId: Long): (Double, Double, Int) = {
+    sql"""
+      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
+        from asset a
+        join asset_link al on a.ID = al.ASSET_ID
+        join lrm_position lrm on lrm.id = al.POSITION_ID
+        where a.id = $id and lrm.mml_id = $mmlId
+    """.as[(Double, Double, Int)].list.head
   }
-
-  def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
+  
+  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
+    val speedLimitId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val (startMeasure, endMeasure) = linkMeasures
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
@@ -203,8 +222,8 @@ trait OracleLinearAssetDao {
         into asset(id, asset_type_id, created_by, created_date)
         values ($speedLimitId, 20, '$creator', sysdate)
 
-        into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
 
         into asset_link(asset_id, position_id)
         values ($speedLimitId, $lrmPositionId)
@@ -230,6 +249,17 @@ trait OracleLinearAssetDao {
     Q.update[Seq[Long]](sql).list(roadLinkIds)
   }
 
+  def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
+    val roadLinks = mmlIds.mkString(",")
+    sqlu"""
+      update ASSET_LINK
+      set
+        asset_id = $targetId
+      where asset_id = $sourceId and position_id in (
+        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
+    """.execute()
+  }
+
   def updateLinkStartAndEndMeasures(id: Long,
                                     roadLinkId: Long,
                                     linkMeasures: (Double, Double)): Unit = {
@@ -248,19 +278,38 @@ trait OracleLinearAssetDao {
           where a.id = $id and lrm.road_link_id = $roadLinkId)
     """.execute()
   }
+  
+  def updateLinkStartAndEndMeasuresByMmlId(id: Long,
+                                           mmlId: Long,
+                                           linkMeasures: (Double, Double)): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
 
-  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
+    sqlu"""
+      update LRM_POSITION
+      set
+        start_measure = $startMeasure,
+        end_measure = $endMeasure
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id and lrm.mml_id = $mmlId)
+    """.execute()
+  }
+  
+  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String): Long = {
     Queries.updateAssetModified(id, username).execute()
-    val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id, roadLinkId)
-    val links: Seq[(Long, Double, (Point, Point))] = getLinksWithLength(20, id).map { link =>
-      val (roadLinkId, length, geometry) = link
-      (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
+    val (startMeasure, endMeasure, sideCode) = getLinkGeometryDataWithMmlId(id, mmlId)
+    val links: Seq[(Long, Double, (Point, Point))] = getLinksWithLengthFromVVH(20, id).map { link =>
+      val (mmlId, length, geometry) = link
+      (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
     }
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
 
-    updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
-    if (linksToMove.nonEmpty) moveLinks(id, createdId, linksToMove.map(_._1))
+    updateLinkStartAndEndMeasuresByMmlId(id, mmlId, existingLinkMeasures)
+    val createdId = createSpeedLimit(username, mmlId, createdLinkMeasures, sideCode, value)
+    if (linksToMove.nonEmpty) moveLinksByMmlId(id, createdId, linksToMove.map(_._1))
     createdId
   }
 

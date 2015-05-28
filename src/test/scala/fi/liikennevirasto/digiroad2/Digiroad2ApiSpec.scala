@@ -289,8 +289,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("split speed limits requires an operator role") {
-    postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":7230, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
+  ignore("split speed limits requires an operator role") {
+    postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":388569874, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
