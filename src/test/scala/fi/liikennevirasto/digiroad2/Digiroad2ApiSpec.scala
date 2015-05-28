@@ -224,23 +224,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     propIds should be(assetPropNames)
   }
 
-  test("update speed limit value", Tag("db")) {
-    putJsonWithUserAuth("/speedlimits/200276", """{"limit":60}""".getBytes, username = "test2") {
-      status should equal(200)
-      getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-        val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
-        speedLimitLinks.foreach(link => link.value should equal(60))
-        putJsonWithUserAuth("/speedlimits/200276", """{"limit":100}""".getBytes, username = "test2") {
-          status should equal(200)
-          getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-            val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
-            speedLimitLinks.foreach(link => link.value should equal(100))
-          }
-        }
-      }
-    }
-  }
-
   test("updating speed limits requires an operator role") {
     putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test") {
       status should equal(401)
