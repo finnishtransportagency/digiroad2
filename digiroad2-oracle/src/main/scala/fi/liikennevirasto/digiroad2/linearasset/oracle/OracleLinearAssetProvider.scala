@@ -103,4 +103,9 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  override def getSpeedLimits(municipality: Int): Seq[Map[String, Any]] = {
+    Database.forDataSource(ds).withDynTransaction {
+      dao.getByMunicipality(municipality)
+    }
+  }
 }
