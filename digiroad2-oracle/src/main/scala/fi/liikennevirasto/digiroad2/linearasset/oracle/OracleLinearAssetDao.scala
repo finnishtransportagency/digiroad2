@@ -297,7 +297,7 @@ trait OracleLinearAssetDao {
           where a.id = $id and lrm.mml_id = $mmlId)
     """.execute()
   }
-  
+
   def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Long = {
     def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]) = {
       vvhLinks.find(_._1 == mmlId).foreach(vvhLink => municipalityValidation(vvhLink._4))
@@ -319,7 +319,12 @@ trait OracleLinearAssetDao {
     createdId
   }
 
-  def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]): Unit = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+    }
+
+    validateMunicipalities(getLinksWithLengthFromVVH(20, id))
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first

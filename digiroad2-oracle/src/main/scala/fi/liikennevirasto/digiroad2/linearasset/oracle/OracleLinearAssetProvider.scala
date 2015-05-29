@@ -76,15 +76,15 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  override def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.updateSpeedLimitValue(id, value, username)
+      dao.updateSpeedLimitValue(id, value, username, municipalityValidation)
     }
   }
 
-  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String): Seq[Long] = {
+  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      ids.map(OracleLinearAssetDao.updateSpeedLimitValue(_, value, username)).flatten
+      ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
 

@@ -140,9 +140,9 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("can update speedlimit value") {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
-      dao.updateSpeedLimitValue(200097, 60, "test")
+      dao.updateSpeedLimitValue(200097, 60, "test", _ => ())
       dao.getSpeedLimitDetails(200097)._5 should equal(Some(60))
-      dao.updateSpeedLimitValue(200097, 100, "test")
+      dao.updateSpeedLimitValue(200097, 100, "test", _ => ())
       dao.getSpeedLimitDetails(200097)._5 should equal(Some(100))
       dynamicSession.rollback()
     }
