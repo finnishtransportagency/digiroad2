@@ -14,7 +14,9 @@ import fi.liikennevirasto.digiroad2.user.{User}
 import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
 
-class Digiroad2Api(val roadLinkService: RoadLinkService, val linearAssetProvider: LinearAssetProvider) extends ScalatraServlet
+class Digiroad2Api(val roadLinkService: RoadLinkService,
+                   val linearAssetProvider: LinearAssetProvider,
+                   val massTransitStopService: MassTransitStopService) extends ScalatraServlet
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication

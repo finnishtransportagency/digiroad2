@@ -22,6 +22,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
+  val roadLinkGeometry = List(Point(374567.632,6677255.6,0.0), Point(374603.57,6677262.009,0.0), Point(374631.683,6677267.545,0.0), Point(374651.471,6677270.245,0.0), Point(374669.739,6677273.332,0.0), Point(374684.567,6677277.323,0.0))
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchVVHRoadlink(1l))
     .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
@@ -37,12 +38,21 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(362955339))
     .thenReturn(Some(VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(1140018963))
+    .thenReturn(Some(VVHRoadlink(1140018963, 235, roadLinkGeometry, Municipality, UnknownDirection, FeatureClass.AllOthers)))
 
-  val roadLinkService = new VVHRoadLinkService(mockVVHClient)
+  val testRoadLinkService = new VVHRoadLinkService(mockVVHClient)
+  val testLinearAssetProvider = new OracleLinearAssetProvider(new DummyEventBus, testRoadLinkService)
+  val testMassTransitStopService: MassTransitStopService = {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
+      override def roadLinkService: RoadLinkService = testRoadLinkService
+      override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+    }
+    new ProductionMassTransitStopService(new DummyEventBus)
+  }
 
-  val linearAssetProvider = new OracleLinearAssetProvider(new DummyEventBus, roadLinkService)
-
-  addServlet(new Digiroad2Api(roadLinkService, linearAssetProvider), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testLinearAssetProvider, testMassTransitStopService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("require authentication", Tag("db")) {
