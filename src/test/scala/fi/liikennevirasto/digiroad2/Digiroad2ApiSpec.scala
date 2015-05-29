@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -30,9 +31,18 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(List(VVHRoadlink(7478l, 235, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(362964704))
+    .thenReturn(Some(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(362955345))
+    .thenReturn(Some(VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchVVHRoadlink(362955339))
+    .thenReturn(Some(VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+
   val roadLinkService = new VVHRoadLinkService(mockVVHClient)
 
-  addServlet(new Digiroad2Api(roadLinkService), "/*")
+  val linearAssetProvider = new OracleLinearAssetProvider(new DummyEventBus, roadLinkService)
+
+  addServlet(new Digiroad2Api(roadLinkService, linearAssetProvider), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("require authentication", Tag("db")) {
@@ -217,7 +227,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits/200309", """{"limit":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits/200114", """{"limit":60}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
@@ -227,7 +237,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
   test("split speed limits requires an operator role") {
-    postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":388569874, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits/200114", """{"roadLinkId":362955345, "splitMeasure":5 , "limit":120}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

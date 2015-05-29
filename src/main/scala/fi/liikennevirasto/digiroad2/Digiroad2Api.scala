@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import org.scalatra._
 import org.json4s._
 import org.scalatra.json._
@@ -13,7 +14,7 @@ import fi.liikennevirasto.digiroad2.user.{User}
 import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
 
-class Digiroad2Api(val roadLinkService: RoadLinkService) extends ScalatraServlet
+class Digiroad2Api(val roadLinkService: RoadLinkService, val linearAssetProvider: LinearAssetProvider) extends ScalatraServlet
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
