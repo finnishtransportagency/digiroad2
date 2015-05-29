@@ -35,14 +35,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   addServlet(new Digiroad2Api(roadLinkService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
-  after {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from functional_class where mml_id = 7478""".execute()
-      sqlu"""delete from link_type where mml_id = 7478""".execute()
-      sqlu"""delete from traffic_direction where mml_id = 7478""".execute()
-    }
-  }
-
   test("require authentication", Tag("db")) {
     get("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
       status should equal(401)
@@ -131,29 +123,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body.getBytes, username = "testviewer") {
       status should equal(401)
-    }
-  }
-
-  test("update asset property", Tag("db")) {
-    val body1 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
-    val body2 = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("2"))))
-    putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body1.getBytes) {
-      status should equal(200)
-      getWithUserAuth("/massTransitStops/2") {
-        val parsedBody = parse(body)
-        val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
-        val prop = properties.find(_.publicId == TestPropertyId2).get
-        prop.values.size should be (1)
-        prop.values.head.propertyValue should be ("3")
-        putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body2.getBytes) {
-          status should equal(200)
-          getWithUserAuth("/massTransitStops/2") {
-            val parsedBody = parse(body)
-            val properties = (parsedBody \ "propertyData").extract[Seq[Property]]
-            properties.find(_.publicId == TestPropertyId2).get.values.head.propertyValue should be ("2")
-          }
-        }
-      }
     }
   }
 
@@ -247,25 +216,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     propIds should be(assetPropNames)
   }
 
-  test("update speed limit value", Tag("db")) {
-    putJsonWithUserAuth("/speedlimits/200276", """{"limit":60}""".getBytes, username = "test2") {
-      status should equal(200)
-      getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-        val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
-        speedLimitLinks.foreach(link => link.value should equal(60))
-        putJsonWithUserAuth("/speedlimits/200276", """{"limit":100}""".getBytes, username = "test2") {
-          status should equal(200)
-          getWithUserAuth("/speedlimits?bbox=371375,6676711,372093,6677147") {
-            val speedLimitLinks = parse(body).extract[Seq[SpeedLimitLink]].filter(link => link.id == 200276l)
-            speedLimitLinks.foreach(link => link.value should equal(100))
-          }
-        }
-      }
-    }
-  }
-
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits/700898", """{"limit":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits/200309", """{"limit":60}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
@@ -274,23 +226,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
-  test("update adjusted link properties") {
-    putJsonWithUserAuth("/linkproperties/7478",
-      """{"trafficDirection": "TowardsDigitizing", "functionalClass":333, "linkType": 6}""".getBytes, username = "test2") {
-      status should equal(200)
-      getWithUserAuth("roadlinks2?bbox=373118,6676151,373888,6677474") {
-        val adjustedLinkOpt = parse(body).extract[Seq[RoadLinkHelper]].find(link => link.mmlId == 7478)
-        adjustedLinkOpt.map { adjustedLink =>
-          TrafficDirection(adjustedLink.trafficDirection) should be (TowardsDigitizing)
-          adjustedLink.functionalClass should be (333)
-          adjustedLink.linkType should be (6)
-        }.getOrElse(fail())
-      }
-    }
-  }
-
   test("split speed limits requires an operator role") {
-    postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":7230, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits/200363", """{"roadLinkId":388569874, "splitMeasure":148 , "limit":120}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

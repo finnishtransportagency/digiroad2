@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
-import fi.liikennevirasto.digiroad2.{GeometryUtils, LinkChain, DigiroadEventBus, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -18,7 +18,10 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 // FIXME:
 // - rename to speed limit service
 // - move common asset functionality to asset service
-class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetProvider {
+class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+  val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
+    override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
+  }
   val logger = LoggerFactory.getLogger(getClass)
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
@@ -47,7 +50,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      val (speedLimits, linkGeometries) = OracleLinearAssetDao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
+      val (speedLimits, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
@@ -60,34 +63,34 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus) extends LinearAssetP
   }
 
   private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
-    val links = OracleLinearAssetDao.getSpeedLimitLinksById(speedLimitId)
+    val links = dao.getSpeedLimitLinksById(speedLimitId)
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
       val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
-      val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit, speedLimitLinks) = OracleLinearAssetDao.getSpeedLimitDetails(speedLimitId)
+      val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit) = dao.getSpeedLimitDetails(speedLimitId)
       Some(SpeedLimit(speedLimitId, limit, limitEndpoints,
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
-        getLinksWithPositions(speedLimitLinks)))
+        getLinksWithPositions(links)))
     }
   }
 
-  override def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  override def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      OracleLinearAssetDao.updateSpeedLimitValue(id, value, username)
+      dao.updateSpeedLimitValue(id, value, username, municipalityValidation)
     }
   }
 
-  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String): Seq[Long] = {
+  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     Database.forDataSource(ds).withDynTransaction {
-      ids.map(OracleLinearAssetDao.updateSpeedLimitValue(_, value, username)).flatten
+      ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
 
-  override def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, limit: Int, username: String): Seq[SpeedLimit] = {
+  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
-      val newId = OracleLinearAssetDao.splitSpeedLimit(id, roadLinkId, splitMeasure, limit, username)
+      val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }

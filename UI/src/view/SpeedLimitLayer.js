@@ -422,7 +422,7 @@ window.SpeedLimitLayer = function(params) {
         roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
         collection.fetch(boundingBox);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     }
   };
 
@@ -515,7 +515,7 @@ window.SpeedLimitLayer = function(params) {
         roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
         collection.fetch(state.bbox);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     } else {
       vectorLayer.setVisibility(false);
       stop();

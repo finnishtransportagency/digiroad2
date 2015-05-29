@@ -515,13 +515,11 @@ with GZipSupport {
 
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
+
     val speedLimitId = params("speedLimitId").toLong
-    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(speedLimitId).forall(user.isAuthorizedToWrite(_))) {
-      halt(Unauthorized("User not authorized"))
-    }
     (parsedBody \ "limit").extractOpt[Int] match {
       case Some(limit) =>
-        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username) match {
+        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
           case Some(id) => linearAssetProvider.getSpeedLimit(id)
           case _ => NotFound("Speed limit " + speedLimitId + " not found")
         }
@@ -531,31 +529,35 @@ with GZipSupport {
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
+
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
-    val authorizedForMunicipalities: Boolean = optionalIds
-      .map(_.forall(assetService.getMunicipalityCodes(_).forall(user.isAuthorizedToWrite)))
-      .getOrElse(halt(BadRequest("Speed limit id list not provided")))
 
-    if (!user.hasEarlyAccess() || !authorizedForMunicipalities) {
-      halt(Unauthorized("User not authorized"))
-    }
     optionalValue match {
-      case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get, value, user.username)
+      case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get,
+        value,
+        user.username,
+        validateUserMunicipalityAccess(user))
       case _ => BadRequest("Speed limit value not provided")
     }
   }
 
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    hasWriteAccess(user, municipalityCode.get)
+
+    val mmlId = (parsedBody \ "roadLinkId").extract[Long]
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
-                                        roadLinkId,
+                                        mmlId,
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "limit").extract[Int],
-                                        userProvider.getCurrentUser().username)
+                                        user.username,
+                                        validateUserMunicipalityAccess(user))
+  }
+
+  private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
+    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+      halt(Unauthorized("User not authorized"))
+    }
   }
 
   def hasWriteAccess(user: User, municipality: Int) {

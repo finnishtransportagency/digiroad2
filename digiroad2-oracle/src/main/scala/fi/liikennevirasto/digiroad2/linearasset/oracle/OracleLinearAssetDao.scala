@@ -1,10 +1,13 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import java.sql.Connection
+
 import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{GeneratedSpeedLimitLink, RoadLinkForSpeedLimit}
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
@@ -18,7 +21,8 @@ import scala.collection.JavaConversions._
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-object OracleLinearAssetDao {
+trait OracleLinearAssetDao {
+  val roadLinkService: RoadLinkService
   val logger = LoggerFactory.getLogger(getClass)
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
@@ -58,38 +62,65 @@ object OracleLinearAssetDao {
     }
   }
 
+  def getLinksWithLengthFromVVH(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point], Int)] = {
+    val links = sql"""
+      select pos.mml_id, pos.start_measure, pos.end_measure
+        from ASSET a
+        join ASSET_LINK al on a.id = al.asset_id
+        join LRM_POSITION pos on al.position_id = pos.id
+        where a.asset_type_id = $assetTypeId and a.id = $id
+        """.as[(Long, Double, Double)].list
+    links.map { case (mmlId, startMeasure, endMeasure) =>
+      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).get
+      val truncatedGeometry = GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure)
+      (mmlId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
+    }
+  }
 
-
-  private def findPartiallyCoveredRoadLinks(roadLinkIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
-    val speedLimitLinksByRoadLinkId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
-    val partiallyCoveredLinks = roadLinkIds.map { roadLinkId =>
-      val length = roadLinks(roadLinkId).length
-      val administrativeClass = roadLinks(roadLinkId).administrativeClass
-      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByRoadLinkId(roadLinkId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
+  private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
+    val speedLimitLinksByMmlId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
+    val partiallyCoveredLinks = mmlIds.map { mmlId =>
+      val length = roadLinks(mmlId).length
+      val administrativeClass = roadLinks(mmlId).administrativeClass
+      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByMmlId(mmlId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
       val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
-      (roadLinkId, administrativeClass, remainders)
+      (mmlId, administrativeClass, remainders)
     }
     partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Option[Int], Seq[Point])], Map[Long, RoadLinkForSpeedLimit]) = {
-    val linksWithGeometries = RoadLinkService.getRoadLinks(bounds = bounds, municipalities = municipalities)
+  private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
+    MassQuery.withIds(mmlIds) { idTableName =>
+      sql"""
+        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+           from asset a
+           join asset_link al on a.id = al.asset_id
+           join lrm_position pos on al.position_id = pos.id
+           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+           join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+           join enumerated_value e on s.enumerated_value_id = e.id
+           join  #$idTableName i on i.id = pos.mml_id
+           where a.asset_type_id = 20""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+    }
+  }
 
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = OracleArray
-      .fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_.id), bonecpToInternalConnection(dynamicSession.conn))
-      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Option[Int], Seq[Point])], Map[Long, RoadLinkForSpeedLimit]) = {
+    val linksWithGeometries = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+
+    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
 
     val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)] =
       linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry.id -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
+        acc + (linkWithGeometry.mmlId -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
       }
 
     val speedLimits: Seq[(Long, Long, Int, Option[Int], Seq[Point])] = assetLinks.map { link =>
-      val (assetId, roadLinkId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-      (assetId, roadLinkId, sideCode, speedLimit, geometry)
+      val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
+      (assetId, mmlId, sideCode, speedLimit, geometry)
     }
-    // FIXME: Remove filtering once speed limits fetched from DR1 production
+
+    // FIXME: Remove filtering once speed limits that reside outside link geometry are removed
     val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
       speedLimit._5.isEmpty
     }
@@ -108,7 +139,7 @@ object OracleLinearAssetDao {
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
     val linksWithGeometries = RoadLinkService.getByMunicipality(municipality)
 
-    val assetLinks: Seq[(Long, Long, Long, Int, Option[Int], Double, Double)] = OracleArray.fetchSpeedLimitsByRoadLinkIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+    val assetLinks: Seq[(Long, Long, Long, Int, Option[Int], Double, Double)] = OracleArray.fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
 
     val linkGeometries: Map[Long, Seq[Point]] =
       linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
@@ -132,7 +163,7 @@ object OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point])] = {
     val speedLimits = sql"""
-      select a.id, pos.road_link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -141,13 +172,13 @@ object OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
-    speedLimits.map { case (assetId, roadLinkId, sideCode, value, startMeasure, endMeasure) =>
-      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (assetId, roadLinkId, sideCode, value, points)
+    speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
+      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure))
     }
   }
 
-  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int], Seq[(Long, Long, Int, Option[Int], Seq[Point])]) = {
+  def getSpeedLimitDetails(id: Long): (Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int]) = {
     val (modifiedBy, modifiedDate, createdBy, createdDate, value) = sql"""
       select a.modified_by, a.modified_date, a.created_by, a.created_date, e.value
       from ASSET a
@@ -156,8 +187,7 @@ object OracleLinearAssetDao {
       join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
       where a.id = $id
     """.as[(Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int])].first
-    val speedLimitLinks = getSpeedLimitLinksById(id)
-    (modifiedBy, modifiedDate, createdBy, createdDate, value, speedLimitLinks)
+    (modifiedBy, modifiedDate, createdBy, createdDate, value)
   }
 
   def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
@@ -169,13 +199,19 @@ object OracleLinearAssetDao {
         where a.id = $id and lrm.road_link_id = $roadLinkId
     """.as[(Double, Double, Int)].list.head
   }
-
-  def createSpeedLimit(creator: String, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    createSpeedLimit(creator, assetId, roadLinkId, linkMeasures, sideCode, value)
+  
+  def getLinkGeometryDataWithMmlId(id: Long, mmlId: Long): (Double, Double, Int) = {
+    sql"""
+      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
+        from asset a
+        join asset_link al on a.ID = al.ASSET_ID
+        join lrm_position lrm on lrm.id = al.POSITION_ID
+        where a.id = $id and lrm.mml_id = $mmlId
+    """.as[(Double, Double, Int)].first()
   }
-
-  def createSpeedLimit(creator: String, speedLimitId: Long, roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
+  
+  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
+    val speedLimitId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val (startMeasure, endMeasure) = linkMeasures
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
@@ -186,8 +222,8 @@ object OracleLinearAssetDao {
         into asset(id, asset_type_id, created_by, created_date)
         values ($speedLimitId, 20, '$creator', sysdate)
 
-        into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
+        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCode)
 
         into asset_link(asset_id, position_id)
         values ($speedLimitId, $lrmPositionId)
@@ -213,6 +249,17 @@ object OracleLinearAssetDao {
     Q.update[Seq[Long]](sql).list(roadLinkIds)
   }
 
+  def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
+    val roadLinks = mmlIds.mkString(",")
+    sqlu"""
+      update ASSET_LINK
+      set
+        asset_id = $targetId
+      where asset_id = $sourceId and position_id in (
+        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
+    """.execute()
+  }
+
   def updateLinkStartAndEndMeasures(id: Long,
                                     roadLinkId: Long,
                                     linkMeasures: (Double, Double)): Unit = {
@@ -231,23 +278,53 @@ object OracleLinearAssetDao {
           where a.id = $id and lrm.road_link_id = $roadLinkId)
     """.execute()
   }
+  
+  def updateLinkStartAndEndMeasuresByMmlId(id: Long,
+                                           mmlId: Long,
+                                           linkMeasures: (Double, Double)): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
 
-  def splitSpeedLimit(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, username: String): Long = {
-    Queries.updateAssetModified(id, username).execute()
-    val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id, roadLinkId)
-    val links: Seq[(Long, Double, (Point, Point))] = getLinksWithLength(20, id).map { link =>
-      val (roadLinkId, length, geometry) = link
-      (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
+    sqlu"""
+      update LRM_POSITION
+      set
+        start_measure = $startMeasure,
+        end_measure = $endMeasure
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id and lrm.mml_id = $mmlId)
+    """.execute()
+  }
+
+  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Long = {
+    def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]) = {
+      vvhLinks.find(_._1 == mmlId).foreach(vvhLink => municipalityValidation(vvhLink._4))
+      vvhLinks
     }
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
-    updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-    val createdId = createSpeedLimit(username, roadLinkId, createdLinkMeasures, sideCode, value)
-    if (linksToMove.nonEmpty) moveLinks(id, createdId, linksToMove.map(_._1))
+    val (startMeasure, endMeasure, sideCode) = getLinkGeometryDataWithMmlId(id, mmlId)
+    val links: Seq[(Long, Double, (Point, Point))] =
+      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).map { case (mmlId, length, geometry, _) =>
+        (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
+      }
+
+    Queries.updateAssetModified(id, username).execute()
+    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
+
+    updateLinkStartAndEndMeasuresByMmlId(id, mmlId, existingLinkMeasures)
+    val createdId = createSpeedLimit(username, mmlId, createdLinkMeasures, sideCode, value)
+    if (linksToMove.nonEmpty) moveLinksByMmlId(id, createdId, linksToMove.map(_._1))
     createdId
   }
 
-  def updateSpeedLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
+    def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]): Unit = {
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
+    }
+
+    validateMunicipalities(getLinksWithLengthFromVVH(20, id))
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
@@ -314,10 +391,7 @@ object OracleLinearAssetDao {
   }
 
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit = {
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = timed("fetchAssetLinks", { OracleArray.
-      fetchSpeedLimitsByRoadLinkIds(linkGeometries.keys.toSeq, bonecpToInternalConnection(dynamicSession.conn))
-      .map { case (id, roadLinkId, _, sideCode, limitValue, startMeasure, endMeasure) => (id, roadLinkId, sideCode, limitValue, startMeasure, endMeasure) }
-    })
+    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = timed("fetchAssetLinks", { fetchSpeedLimitsByMmlIds(linkGeometries.keys.toSeq) })
 
     val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
     val generatedSingleLinkSpeedLimits: Seq[GeneratedSpeedLimitLink] = timed("generatedSingleLinkSpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>
@@ -338,4 +412,8 @@ object OracleLinearAssetDao {
     })
     timed("createSpeedLimitsForPartialLinks", { createSpeedLimits(generatedPartialLinkSpeedLimits) })
   }
+}
+
+object OracleLinearAssetDao extends OracleLinearAssetDao {
+  override val roadLinkService: RoadLinkService = RoadLinkService
 }
