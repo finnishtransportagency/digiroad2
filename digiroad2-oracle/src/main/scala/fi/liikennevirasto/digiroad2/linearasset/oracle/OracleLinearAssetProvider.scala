@@ -18,9 +18,9 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 // FIXME:
 // - rename to speed limit service
 // - move common asset functionality to asset service
-class OracleLinearAssetProvider(eventbus: DigiroadEventBus, productionRoadLinkService: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
-    override val roadLinkService: RoadLinkService = productionRoadLinkService
+    override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
   val logger = LoggerFactory.getLogger(getClass)
 
