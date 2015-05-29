@@ -32,8 +32,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     user.isOperator() || user.isAuthorizedToWrite(municipalityNumber)
   }
 
-  private def userCanModifyAsset(assetId: Long): Boolean = getAssetById(assetId).exists(userCanModifyAsset)
-
   private def userCanModifyAsset(asset: AssetWithProperties): Boolean =
     userCanModifyMunicipality(asset.municipalityNumber)
 
