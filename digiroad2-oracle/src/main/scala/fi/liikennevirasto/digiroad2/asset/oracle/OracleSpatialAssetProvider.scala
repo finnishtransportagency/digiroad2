@@ -155,12 +155,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def removeAsset(assetId: Long): Unit = {
-    databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.removeAsset(assetId)
-    }
-  }
-
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {

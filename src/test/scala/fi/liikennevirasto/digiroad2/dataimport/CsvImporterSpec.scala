@@ -373,15 +373,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  private def removeAsset(assetId: Long, provider: OracleSpatialAssetProvider) = {
-    try {
-      assetProvider.removeAsset(assetId)
-    } catch {
-      // TODO: Remove handling of this exception once LRM position removal does not fail in test runs
-      case e: LRMPositionDeletionFailed => println("Removing LRM Position of asset " + assetId + " failed: " + e.reason)
-    }
-  }
-
   // TODO: Warn about nonused fields
   // TODO: Should vallu message be sent when assets are updated using csv?
 }

@@ -195,27 +195,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     }
   }
 
-  test("remove asset from database", Tag("db")) {
-    runWithCleanup {
-      val asset = provider.createAsset(
-        TestAssetTypeId,
-        0, 0, 7445, 180,
-        AssetCreator,
-        mandatoryBusStopProperties)
-      val assetId = asset.id
-      val lrmPositionId = sql"""select position_id from asset_link where asset_id = $assetId""".as[Int].first
-      amountOfSingleChoiceValues(assetId) should be > 0
-      amountOfLrmPositions(lrmPositionId) should equal(1)
-      amountOfAssets(assetId) should be(1)
-
-      provider.removeAsset(assetId)
-
-      amountOfSingleChoiceValues(assetId) should be(0)
-      amountOfLrmPositions(lrmPositionId) should equal(0)
-      amountOfAssets(assetId) should be(0)
-    }
-  }
-
   private def mandatoryBusStopProperties: Seq[SimpleProperty] = {
     Seq(
       SimpleProperty(publicId = "vaikutussuunta", values = Seq(PropertyValue("2"))),
