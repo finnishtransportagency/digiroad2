@@ -515,13 +515,11 @@ with GZipSupport {
 
   put("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    def validateMunicipalityAuthorization(municipalityCode: Int): Unit =
-      hasWriteAccess(user, municipalityCode)
 
     val speedLimitId = params("speedLimitId").toLong
     (parsedBody \ "limit").extractOpt[Int] match {
       case Some(limit) =>
-        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateMunicipalityAuthorization) match {
+        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
           case Some(id) => linearAssetProvider.getSpeedLimit(id)
           case _ => NotFound("Speed limit " + speedLimitId + " not found")
         }
@@ -531,8 +529,6 @@ with GZipSupport {
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
-    def validateMunicipalityAuthorization(municipalityCode: Int): Unit =
-      hasWriteAccess(user, municipalityCode)
 
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
@@ -541,15 +537,13 @@ with GZipSupport {
       case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get,
         value,
         user.username,
-        validateMunicipalityAuthorization)
+        validateUserMunicipalityAccess(user))
       case _ => BadRequest("Speed limit value not provided")
     }
   }
 
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
-    def validateMunicipalityAuthorization(municipalityCode: Int): Unit =
-      hasWriteAccess(user, municipalityCode)
 
     val mmlId = (parsedBody \ "roadLinkId").extract[Long]
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
@@ -557,7 +551,13 @@ with GZipSupport {
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "limit").extract[Int],
                                         user.username,
-                                        validateMunicipalityAuthorization)
+                                        validateUserMunicipalityAccess(user))
+  }
+
+  private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
+    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
+      halt(Unauthorized("User not authorized"))
+    }
   }
 
   def hasWriteAccess(user: User, municipality: Int) {
