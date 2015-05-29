@@ -304,13 +304,13 @@ trait OracleLinearAssetDao {
       vvhLinks
     }
 
-    Queries.updateAssetModified(id, username).execute()
     val (startMeasure, endMeasure, sideCode) = getLinkGeometryDataWithMmlId(id, mmlId)
     val links: Seq[(Long, Double, (Point, Point))] =
       withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).map { case (mmlId, length, geometry, _) =>
         (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
       }
 
+    Queries.updateAssetModified(id, username).execute()
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
 
     updateLinkStartAndEndMeasuresByMmlId(id, mmlId, existingLinkMeasures)
