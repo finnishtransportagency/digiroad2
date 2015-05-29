@@ -18,6 +18,8 @@ import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
 import scala.language.implicitConversions
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.util.Random
+import scala.slick.jdbc.StaticQuery.interpolation
+
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -193,26 +195,26 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     }
   }
 
-//  test("remove asset from database", Tag("db")) {
-//    runWithCleanup {
-//      val asset = provider.createAsset(
-//        TestAssetTypeId,
-//        0, 0, 7445, 180,
-//        AssetCreator,
-//        mandatoryBusStopProperties)
-//      val assetId = asset.id
-//      val lrmPositionId = executeIntQuery(s"select position_id from asset_link where asset_id = $assetId")
-//      amountOfSingleChoiceValues(assetId) should be > 0
-//      amountOfLrmPositions(lrmPositionId) should equal(1)
-//      amountOfAssets(assetId) should be(1)
-//
-//      deleteCreatedTestAsset(assetId)
-//
-//      amountOfSingleChoiceValues(assetId) should be(0)
-//      amountOfLrmPositions(lrmPositionId) should equal(0)
-//      amountOfAssets(assetId) should be(0)
-//    }
-//  }
+  test("remove asset from database", Tag("db")) {
+    runWithCleanup {
+      val asset = provider.createAsset(
+        TestAssetTypeId,
+        0, 0, 7445, 180,
+        AssetCreator,
+        mandatoryBusStopProperties)
+      val assetId = asset.id
+      val lrmPositionId = sql"""select position_id from asset_link where asset_id = $assetId""".as[Int].first
+      amountOfSingleChoiceValues(assetId) should be > 0
+      amountOfLrmPositions(lrmPositionId) should equal(1)
+      amountOfAssets(assetId) should be(1)
+
+      provider.removeAsset(assetId)
+
+      amountOfSingleChoiceValues(assetId) should be(0)
+      amountOfLrmPositions(lrmPositionId) should equal(0)
+      amountOfAssets(assetId) should be(0)
+    }
+  }
 
   private def mandatoryBusStopProperties: Seq[SimpleProperty] = {
     Seq(
@@ -222,24 +224,15 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   private def amountOfSingleChoiceValues(assetId: Long): Int = {
-    executeIntQuery(s"select count(*) from single_choice_value where asset_id = $assetId")
+    sql"""select count(*) from single_choice_value where asset_id = $assetId""".as[Int].first
   }
 
   private def amountOfLrmPositions(lrmPositionId: Long): Int = {
-    executeIntQuery(s"select count(*) from lrm_position where id = $lrmPositionId")
+    sql"""select count(*) from lrm_position where id = $lrmPositionId""".as[Int].first
   }
 
   private def amountOfAssets(assetId: Long): Int = {
-    executeIntQuery(s"select count(*) from asset where id = $assetId")
-  }
-
-  private def deleteCreatedTestAsset(assetId: Long) {
-    try {
-      provider.removeAsset(assetId)
-    } catch {
-      // TODO: Remove handling of this exception once LRM position removal does not fail in test runs
-      case e: LRMPositionDeletionFailed => println("Removing LRM Position of asset " + assetId + " failed: " + e.reason)
-    }
+    sql"""select count(*) from asset where id = $assetId""".as[Int].first
   }
 
   test("update the position of an asset within a road link", Tag("db")) {
