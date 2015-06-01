@@ -146,11 +146,9 @@ trait OracleLinearAssetDao {
         acc + (linkWithGeometry.mmlId -> linkWithGeometry.geometry)
       }
 
-    val speedLimits: Seq[Map[String, Any]] = assetLinks.map { link =>
+    assetLinks.map { link =>
       val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometries: Seq[Point] = linkGeometries(mmlId)
-
-      val geometry = GeometryUtils.truncateGeometry(geometries, startMeasure, endMeasure)
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
       Map ("id" -> (assetId + "-" + mmlId),
         "sideCode" -> sideCode,
         "points" -> geometry,
@@ -159,8 +157,6 @@ trait OracleLinearAssetDao {
         "endMeasure" -> endMeasure,
         "mmlId" -> mmlId)
     }
-
-    speedLimits
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point])] = {
