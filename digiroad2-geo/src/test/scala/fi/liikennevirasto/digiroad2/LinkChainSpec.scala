@@ -39,4 +39,13 @@ class LinkChainSpec extends FunSuite with Matchers {
     )
     identityLinkChain(segments).map{ link => (link.linkIndex, link.linkPosition) }.sortBy(_._1).map(_._2).length shouldBe 5
   }
+
+  test("generate position indices and calculate gap for two segment sequence with a gap") {
+    val segments = List(
+      (Point(0, 0), Point(0, 100)),
+      (Point(0, 200), Point(0, 300))
+    )
+    identityLinkChain(segments).linkGaps(identity[(Point, Point)]) shouldBe Seq(100.0)
+    identityLinkChain(segments).map{ link => (link.linkIndex, link.linkPosition) }.sortBy(_._1).map(_._2) shouldBe Seq(0, 1)
+  }
 }

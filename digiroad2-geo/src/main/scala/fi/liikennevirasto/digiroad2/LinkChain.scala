@@ -122,6 +122,21 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
     }
   }
 
+  def linkGaps(linkEndPoints: (T) => (Point, Point)): Seq[Double] = {
+    links.zip(links.tail).map { case (current, next) =>
+      val firstLinkEndPoints = linkEndPoints(current.rawLink)
+      val secondLinkEndPoints = linkEndPoints(next.rawLink)
+
+      val points = (current.geometryDirection, next.geometryDirection) match {
+        case (TowardsLinkChain, TowardsLinkChain) => (firstLinkEndPoints._2, secondLinkEndPoints._1)
+        case (TowardsLinkChain, AgainstLinkChain) => (firstLinkEndPoints._2, secondLinkEndPoints._2)
+        case (AgainstLinkChain, TowardsLinkChain) => (firstLinkEndPoints._1, secondLinkEndPoints._1)
+        case (AgainstLinkChain, AgainstLinkChain) => (firstLinkEndPoints._1, secondLinkEndPoints._2)
+      }
+      points._1.distanceTo(points._2)
+    }
+  }
+
   def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
     links.map(transformation)
   }
