@@ -138,14 +138,9 @@ trait OracleLinearAssetDao {
 
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
     val linksWithGeometries: Seq[VVHRoadlink] = roadLinkService.fetchVVHRoadlinks(municipality)
+    val linkGeometries = linksWithGeometries.groupBy(_.mmlId).mapValues(_.head.geometry)
 
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
-
-    val linkGeometries: Map[Long, Seq[Point]] =
-      linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry.mmlId -> linkWithGeometry.geometry)
-      }
-
+    val assetLinks = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
     assetLinks.map { link =>
       val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
