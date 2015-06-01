@@ -6,7 +6,6 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset.{RoadLinkStop, AssetWithProperties, Property}
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -193,7 +192,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val assetType = params("assetType")
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
-        case "speed_limits" => withDynSession { speedLimitsToApi(OracleLinearAssetDao.getByMunicipality(municipalityNumber)) }
+        case "speed_limits" => withDynSession { speedLimitsToApi(linearAssetProvider.getSpeedLimits(municipalityNumber)) }
         case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
         case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
         case "axle_weight_limits" => NumericalLimitService.getByMunicipality(50, municipalityNumber)

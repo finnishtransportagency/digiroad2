@@ -137,18 +137,18 @@ trait OracleLinearAssetDao {
   }
 
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
-    val linksWithGeometries = RoadLinkService.getByMunicipality(municipality)
+    val linksWithGeometries: Seq[VVHRoadlink] = roadLinkService.fetchVVHRoadlinks(municipality)
 
-    val assetLinks: Seq[(Long, Long, Long, Int, Option[Int], Double, Double)] = OracleArray.fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_._1), bonecpToInternalConnection(dynamicSession.conn))
+    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
 
     val linkGeometries: Map[Long, Seq[Point]] =
       linksWithGeometries.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry._1 -> linkWithGeometry._2)
+        acc + (linkWithGeometry.mmlId -> linkWithGeometry.geometry)
       }
 
-    val speedLimits: Seq[Map[String, Any]] = assetLinks.map { link =>
-      val (assetId, roadLinkId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
+    assetLinks.map { link =>
+      val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
       Map ("id" -> (assetId + "-" + mmlId),
         "sideCode" -> sideCode,
         "points" -> geometry,
@@ -157,8 +157,6 @@ trait OracleLinearAssetDao {
         "endMeasure" -> endMeasure,
         "mmlId" -> mmlId)
     }
-
-    speedLimits
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point])] = {
