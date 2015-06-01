@@ -38,6 +38,11 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     truncatedGeometry should be (Seq(Point(2.0, 0.0), Point(3.0, 0.0)))
   }
 
+  test("truncate geometry where start and end point are outside geometry") {
+    val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 11.0, 15.0)
+    truncatedGeometry should be(empty)
+  }
+
   test("splitting three link speed limit where first split is longer than second should allocate first split to existing limit") {
     val link1 = (0l, 154.0, (Point(372530, 6676811), Point(372378, 6676808)))
     val link2 = (1l, 87.0, (Point(372614, 6676793), Point(372530, 6676811)))
