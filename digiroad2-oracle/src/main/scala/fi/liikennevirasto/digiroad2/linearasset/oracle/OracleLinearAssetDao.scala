@@ -100,7 +100,7 @@ trait OracleLinearAssetDao {
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.mml_id
-           where a.asset_type_id = 20""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double)].list
     }
   }
 
