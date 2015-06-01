@@ -42,21 +42,6 @@ public class OracleArray {
         }
     }
 
-    private static class RowToSpeedLimit implements RowToElement<Tuple7<Long,Long,Long,Int,Option<Int>,Double,Double>> {
-        @Override
-        public Tuple7<Long, Long, Long, Int, Option<Int>, Double, Double> convert(ResultSet row) throws SQLException {
-            long id = row.getLong(1);
-            long roadLinkId = row.getLong(2);
-            long mmlId = row.getLong(3);
-            int sideCode = row.getInt(4);
-            scala.Option<Integer> limitValue = scala.Option.apply(row.getInt(5));
-            if (row.wasNull()) { limitValue = scala.Option.apply(null); }
-            double startMeasure = row.getDouble(6);
-            double endMeasure = row.getDouble(7);
-            return new Tuple7(id, roadLinkId, mmlId, sideCode, limitValue, startMeasure, endMeasure);
-        }
-    }
-
     private static class RowToNumericalLimit implements RowToElement<Tuple7<Long,Long,Long,Int,Int,Double,Double>> {
         @Override
         public Tuple7<Long, Long, Long, Int, Int, Double, Double> convert(ResultSet row) throws SQLException {
@@ -103,18 +88,6 @@ public class OracleArray {
             if(row.wasNull()) { administrativeClass = 99; }
             return new Tuple3(id, mmlId, administrativeClass);
         }
-    }
-
-    public static List<Tuple7<Long, Long, Long, Int, Option<Int>, Double, Double>> fetchSpeedLimitsByMmlIds(List ids, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure " +
-                "FROM ASSET a " +
-                "JOIN ASSET_LINK al ON a.id = al.asset_id " +
-                "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
-                "JOIN PROPERTY p ON a.asset_type_id = p.asset_type_id AND p.public_id = 'rajoitus' " +
-                "JOIN SINGLE_CHOICE_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
-                "JOIN ENUMERATED_VALUE e ON s.enumerated_value_id = e.id " +
-                "WHERE a.asset_type_id = 20 AND pos.mml_id IN (SELECT COLUMN_VALUE FROM TABLE(?))";
-        return queryWithIdArray(ids, connection, query, new RowToSpeedLimit());
     }
 
     public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {

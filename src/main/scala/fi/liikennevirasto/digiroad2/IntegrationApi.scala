@@ -6,7 +6,6 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset.{RoadLinkStop, AssetWithProperties, Property}
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
