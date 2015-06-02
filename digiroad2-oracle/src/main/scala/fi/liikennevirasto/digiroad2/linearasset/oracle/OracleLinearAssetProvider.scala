@@ -71,7 +71,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       loadSpeedLimit(speedLimitId)
     }
   }

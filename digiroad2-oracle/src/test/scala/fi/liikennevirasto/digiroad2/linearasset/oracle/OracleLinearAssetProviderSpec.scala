@@ -41,13 +41,17 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   }
 
   test("load speed limits with spatial bounds", Tag("db")) {
-    val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)), municipalities = Set())
-    speedLimits.size shouldBe 1
+    runWithCleanup {
+      val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)), municipalities = Set())
+      speedLimits.size shouldBe 1
+    }
   }
 
   test("get speed limit endpoints by id", Tag("db")) {
-    val speedLimit = provider.getSpeedLimit(200114)
-    speedLimit.get.endpoints shouldBe Set(Point(0.0,0.0,0.0), Point(146.9,0.0,0.0))
+    runWithCleanup {
+      val speedLimit = provider.getSpeedLimit(200114)
+      speedLimit.get.endpoints shouldBe Set(Point(0.0, 0.0, 0.0), Point(146.9, 0.0, 0.0))
+    }
   }
 
   test("should ignore speed limits with segments outside link geometry") {
