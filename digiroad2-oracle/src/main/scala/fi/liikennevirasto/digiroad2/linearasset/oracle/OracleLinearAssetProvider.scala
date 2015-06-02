@@ -54,9 +54,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     val isEmpty = links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
 
     val maximumGapThreshold = 1
-    val hasGaps = LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
-
-    isEmpty || hasGaps
+    isEmpty || LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
