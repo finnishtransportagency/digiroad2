@@ -49,19 +49,14 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  private def partitionSpeedLimitsByEmptySegments(speedLimits: Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]):
-  (Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]], Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]) = {
-    speedLimits.partition { case (id, links) =>
-      links.exists { case (assetId, mmlId, sideCode, speedLimit, geometry) =>
-        geometry.isEmpty
-      }
-    }
-  }
+  def isFloating(speedLimit:  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
+    val (_, links) = speedLimit
+    val isEmpty = links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
 
-  private def partitionSpeedLimitsByGaps(speedLimits: Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]) = {
-    speedLimits.partition { case (id, links) =>
-      LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > 1)
-    }
+    val maximumGapThreshold = 1
+    val hasGaps = LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
+
+    isEmpty || hasGaps
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
@@ -69,12 +64,11 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       val speedLimits = speedLimitLinks.groupBy(_._1)
 
-      val (speedLimitsWithEmptySegments, speedLimitsWithNonEmptySegments) = partitionSpeedLimitsByEmptySegments(speedLimits)
-      val (floatingSpeedLimits, goodLimits) = partitionSpeedLimitsByGaps(speedLimitsWithNonEmptySegments)
-      dao.markSpeedLimitsFloating(speedLimitsWithEmptySegments.keySet ++ floatingSpeedLimits.keySet)
+      val (floatingSpeedLimits, validLimits) = speedLimits.partition(isFloating)
+      if (floatingSpeedLimits.nonEmpty) dao.markSpeedLimitsFloating(floatingSpeedLimits.keySet)
 
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
-      goodLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
+      validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
