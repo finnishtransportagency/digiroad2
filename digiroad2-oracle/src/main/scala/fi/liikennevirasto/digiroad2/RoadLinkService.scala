@@ -7,6 +7,8 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
+import com.newrelic.api.agent.NewRelic
 
 import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -23,6 +25,7 @@ case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point], length: 
 
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
+  val logger = LoggerFactory.getLogger(getClass)
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     Database.forDataSource(dataSource).withDynTransaction {
@@ -184,14 +187,29 @@ trait RoadLinkService {
   }
 
   protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String, optionalVVHValue: Option[Int] = None) = {
-    withDynTransaction {
-      val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
-      (optionalExistingValue, optionalVVHValue) match {
-        case (Some(existingValue), _) =>
-          updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
-        case (None, None) => sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
-        case (None, Some(vvhValue)) =>
-          if (vvhValue != value) sqlu"""insert into #$table (mml_id, #$column, modified_by) values ($mmlId, $value, $username)""".execute()
+    try {
+      withDynTransaction {
+        val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
+        (optionalExistingValue, optionalVVHValue) match {
+          case (Some(existingValue), _) =>
+            updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
+          case (None, None) =>
+            sqlu"""insert into #$table (mml_id, #$column, modified_by)
+                   select $mmlId, $value, $username
+                   from dual
+                   where not exists (select * from #$table where mml_id = $mmlId)""".execute()
+          case (None, Some(vvhValue)) =>
+            if (vvhValue != value)
+              sqlu"""insert into #$table (mml_id, #$column, modified_by)
+                     select $mmlId, $value, $username
+                     from dual
+                     where not exists (select * from #$table where mml_id = $mmlId)""".execute()
+        }
+      }
+    } catch {
+      case cve: java.sql.SQLIntegrityConstraintViolationException => {
+        logger.warn(cve.getMessage)
+        NewRelic.noticeError(cve)
       }
     }
   }
