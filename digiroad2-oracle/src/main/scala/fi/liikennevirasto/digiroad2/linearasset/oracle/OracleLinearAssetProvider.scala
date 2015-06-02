@@ -48,11 +48,22 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  private def partitionSpeedLimitsByEmptySegments(speedLimits: Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]):
+  (Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]], Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]) = {
+    speedLimits.partition { case (id, links) =>
+      links.exists { case (assetId, mmlId, sideCode, speedLimit, geometry) =>
+        geometry.isEmpty
+      }
+    }
+  }
+
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
-      val (speedLimits, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
+      val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
-      speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
+      val speedLimits = speedLimitLinks.groupBy(_._1)
+      val (speedLimitsWithEmptySegments, speedLimitsWithNonEmptySegments) = partitionSpeedLimitsByEmptySegments(speedLimits)
+      speedLimitsWithNonEmptySegments.mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 

@@ -120,11 +120,6 @@ trait OracleLinearAssetDao {
       (assetId, mmlId, sideCode, speedLimit, geometry)
     }
 
-    // FIXME: Remove filtering once speed limits that reside outside link geometry are removed
-    val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
-      speedLimit._5.isEmpty
-    }
-
     val linksOnRoads = linkGeometries.filter { link =>
       val (_, _, _, functionalClass, _) = link._2
       Set(1, 2, 3, 4, 5, 6).contains(functionalClass % 10)
@@ -133,7 +128,7 @@ trait OracleLinearAssetDao {
       link._1 -> RoadLinkForSpeedLimit(geometry, length, roadLinkType, mmlId)
     }
 
-    (filteredSpeedLimits, linksOnRoads)
+    (speedLimits, linksOnRoads)
   }
 
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
