@@ -23,6 +23,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
   val logger = LoggerFactory.getLogger(getClass)
+  def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
     val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
@@ -58,11 +59,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       val speedLimits = speedLimitLinks.groupBy(_._1)
       val (speedLimitsWithEmptySegments, speedLimitsWithNonEmptySegments) = partitionSpeedLimitsByEmptySegments(speedLimits)
+      dao.markSpeedLimitsFloating(speedLimitsWithEmptySegments.keySet)
       speedLimitsWithNonEmptySegments.mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }

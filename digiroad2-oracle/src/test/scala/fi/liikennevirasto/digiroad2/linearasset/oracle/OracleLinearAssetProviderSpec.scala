@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, UnknownDirection, Municipality, BoundingRectangle}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -11,12 +13,15 @@ import scala.language.implicitConversions
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.Tag
-
-import fi.liikennevirasto.digiroad2.asset.{UnknownLinkType, UnknownDirection, Municipality, BoundingRectangle}
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import scala.slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService)
+  val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService) {
+    override def withDynTransaction[T](f: => T): T = f
+  }
 
   val roadLink = VVHRoadLinkWithProperties(1105998302l, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
@@ -27,6 +32,13 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
     .thenReturn(Some(VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(362955339))
     .thenReturn(Some(VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+
+  private def runWithCleanup(test: => Unit): Unit = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      test
+      dynamicSession.rollback()
+    }
+  }
 
   test("load speed limits with spatial bounds", Tag("db")) {
     val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(374700, 6677595), Point(374750, 6677560)), municipalities = Set())
@@ -39,12 +51,16 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   }
 
   test("should ignore speed limits with segments outside link geometry") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService)
-    val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(80.0, 0.0)), 80.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
-    val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
-    val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-    speedLimits.map(_.id) should be(Seq(200204))
+    runWithCleanup {
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService)
+      val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(80.0, 0.0)), 80.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
+      val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
+      speedLimits.map(_.id) should be(Seq(200204))
+      val floating = sql"""select floating from asset where id = 200205""".as[(Boolean)].first
+      floating should be(true)
+    }
   }
 }

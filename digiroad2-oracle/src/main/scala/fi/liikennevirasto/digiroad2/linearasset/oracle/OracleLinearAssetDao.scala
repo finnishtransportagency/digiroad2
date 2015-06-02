@@ -329,6 +329,11 @@ trait OracleLinearAssetDao {
     }
   }
 
+  def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+    val speedLimitIds = ids.mkString(",")
+    sqlu"""update asset set floating = 1 where id in ($speedLimitIds)""".execute()
+  }
+
   private def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
     roadLinks -- speedLimitLinks.map(_._2).toSet
   }
