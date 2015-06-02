@@ -26,7 +26,7 @@ object LinkChain {
       .sortBy(_._2)
       .zip(geometryRunningDirections).map { case (((link, linkIndex), linkPosition), geometryRunningDirection) => new ChainedLink[T](link, linkIndex, linkPosition, geometryRunningDirection) }
 
-    new LinkChain[T](chainedLinks)
+    new LinkChain[T](chainedLinks, fetchLinkEndPoints)
   }
 
   private def pointIndexToSegmentIndex(pointIndex: PointIndex): SegmentIndex = {
@@ -110,10 +110,10 @@ object LinkChain {
 
 class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryDirection: GeometryDirection)
 
-class LinkChain[T](val links: Seq[ChainedLink[T]]) {
-  def endPoints(linkEndPoints: (T) => (Point, Point)): (Point, Point) = {
-    val firstLinkEndPoints = linkEndPoints(links.head.rawLink)
-    val lastLinkEndPoints = linkEndPoints(links.last.rawLink)
+class LinkChain[T](val links: Seq[ChainedLink[T]], val fetchLinkEndPoints: (T) => (Point, Point)) {
+  def endPoints(): (Point, Point) = {
+    val firstLinkEndPoints = fetchLinkEndPoints(links.head.rawLink)
+    val lastLinkEndPoints = fetchLinkEndPoints(links.last.rawLink)
     (links.head.geometryDirection, links.last.geometryDirection) match {
       case (TowardsLinkChain, TowardsLinkChain) => (firstLinkEndPoints._1, lastLinkEndPoints._2)
       case (TowardsLinkChain, AgainstLinkChain) => (firstLinkEndPoints._1, lastLinkEndPoints._1)
@@ -122,10 +122,10 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
     }
   }
 
-  def linkGaps(linkEndPoints: (T) => (Point, Point)): Seq[Double] = {
+  def linkGaps(): Seq[Double] = {
     links.zip(links.tail).map { case (current, next) =>
-      val firstLinkEndPoints = linkEndPoints(current.rawLink)
-      val secondLinkEndPoints = linkEndPoints(next.rawLink)
+      val firstLinkEndPoints = fetchLinkEndPoints(current.rawLink)
+      val secondLinkEndPoints = fetchLinkEndPoints(next.rawLink)
 
       val points = (current.geometryDirection, next.geometryDirection) match {
         case (TowardsLinkChain, TowardsLinkChain) => (firstLinkEndPoints._2, secondLinkEndPoints._1)
@@ -142,8 +142,8 @@ class LinkChain[T](val links: Seq[ChainedLink[T]]) {
   }
 
   def splitBy(isSplitLink: (T) => Boolean): (LinkChain[T], ChainedLink[T], LinkChain[T]) = {
-    val linksBeforeSplit: LinkChain[T] = new LinkChain[T](links.takeWhile { link => !isSplitLink(link.rawLink) })
-    val linksAfterSplit: LinkChain[T] = new LinkChain[T](links.dropWhile { link => !isSplitLink(link.rawLink) }.tail)
+    val linksBeforeSplit: LinkChain[T] = new LinkChain[T](links.takeWhile { link => !isSplitLink(link.rawLink) }, fetchLinkEndPoints)
+    val linksAfterSplit: LinkChain[T] = new LinkChain[T](links.dropWhile { link => !isSplitLink(link.rawLink) }.tail, fetchLinkEndPoints)
     val splitLink: ChainedLink[T] = links.find { link => isSplitLink(link.rawLink) }.get
 
     (linksBeforeSplit, splitLink, linksAfterSplit)
