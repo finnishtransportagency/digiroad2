@@ -137,6 +137,18 @@ class LinkChain[T](val links: Seq[ChainedLink[T]], val fetchLinkEndPoints: (T) =
     }
   }
 
+  def withoutEndSegments(): LinkChain[T] = {
+    val tailLinks = links match {
+      case x :: xs => xs
+      case _ => Nil
+    }
+    val middleLinks = tailLinks match {
+      case Nil => Nil
+      case xs => xs.init
+    }
+    new LinkChain[T](middleLinks, fetchLinkEndPoints)
+  }
+
   def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
     links.map(transformation)
   }

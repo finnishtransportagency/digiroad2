@@ -52,4 +52,19 @@ class LinkChainSpec extends FunSuite with Matchers {
       identityLinkChain(segments).map{ link => (link.linkIndex, link.linkPosition) }.sortBy(_._1).map(_._2) shouldBe Seq(0, 1)
     }
   }
+
+  test("provides empty middle segment sequence on one segment sequence") {
+    val segments = List((Point(0, 0), Point(100, 0)))
+    identityLinkChain(segments).withoutEndSegments().links should be(empty)
+  }
+
+  test("provides empty middle segment sequence on two segment sequence") {
+    val segments = List((Point(0, 0), Point(100, 0)), (Point(100, 0), Point(150, 0)))
+    identityLinkChain(segments).withoutEndSegments().links should be(empty)
+  }
+
+  test("provides one middle segment on three segment sequence") {
+    val segments = List((Point(0, 0), Point(100, 0)), (Point(100, 0), Point(150, 0)), (Point(150, 0), Point(200, 0)))
+    identityLinkChain(segments).withoutEndSegments().links.map(_.rawLink) should be(List((Point(100, 0), Point(150, 0))))
+  }
 }
