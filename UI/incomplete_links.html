@@ -49,8 +49,8 @@
                         .append(tableContentRows(mmlIds));
             };
             return $('<div/>').append(municipalityHeader(municipalityName))
-                    .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State))
                     .append(tableForAdministrativeClass('Kunnan omistama', mmlIdsByAdministrativeClass.Municipality))
+                    .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State))
                     .append(tableForAdministrativeClass('Yksityisen omistama', mmlIdsByAdministrativeClass.Private))
                     .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
         };
