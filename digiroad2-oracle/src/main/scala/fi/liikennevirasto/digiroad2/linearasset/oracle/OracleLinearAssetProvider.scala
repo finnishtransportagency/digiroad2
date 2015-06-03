@@ -48,22 +48,26 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       toSpeedLimit((id, roadLinkId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
     }
   }
-
-  def isFloating(speedLimit:  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
+  
+  private def hasEmptySegments(speedLimit:  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])): Boolean = {
     val (_, links) = speedLimit
-    val isEmpty = links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
+    links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
+  }
 
+  private def hasGaps(speedLimit:  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
+    val (_, links) = speedLimit
     val maximumGapThreshold = 1
-    isEmpty || LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
+    LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
   }
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       val speedLimits = speedLimitLinks.groupBy(_._1)
-
-      val (floatingSpeedLimits, validLimits) = speedLimits.partition(isFloating)
-      if (floatingSpeedLimits.nonEmpty) dao.markSpeedLimitsFloating(floatingSpeedLimits.keySet)
+      
+      val (speedLimitsWithEmptySegments, speedLimitsWithoutEmptySegments) = speedLimits.partition(hasEmptySegments)
+      val (speedLimitsWithGaps, validLimits) = speedLimitsWithoutEmptySegments.partition(hasGaps)
+      dao.markSpeedLimitsFloating(speedLimitsWithEmptySegments.keySet ++ speedLimitsWithGaps.keySet)
 
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
