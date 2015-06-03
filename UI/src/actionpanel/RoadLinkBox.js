@@ -47,11 +47,20 @@
       '</div>');
 
     var functionalClassLegend = $('<div class="panel-section panel-legend linear-asset-legend functional-class-legend"></div>');
-    var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
+    var functionalClasses = [
+      [1, '1'],
+      [2, '2'],
+      [3, '3'],
+      [4, '4'],
+      [5, '5'],
+      [6, '6: Muu yksityistie'],
+      [7, '7: Ajopolku'],
+      [8, '8: Kevyen liikenteen väylä']
+    ];
     var functionalClassLegendEntries = _.map(functionalClasses, function(functionalClass) {
       return '<div class="legend-entry">' +
-        '<div class="label">Luokka ' + functionalClass + '</div>' +
-        '<div class="symbol linear linear-asset-' + functionalClass + '" />' +
+        '<div class="label">Luokka ' + functionalClass[1] + '</div>' +
+        '<div class="symbol linear linear-asset-' + functionalClass[0] + '" />' +
         '</div>';
     }).join('');
     functionalClassLegend.append(functionalClassLegendEntries);
