@@ -67,4 +67,17 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       floating should be(true)
     }
   }
+
+  test("should fill speed limit gaps in the middle of a speed limit") {
+    runWithCleanup {
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService)
+      val roadLink = VVHRoadLinkWithProperties(362959521, List(Point(0.0, 0.0), Point(223.834, 0.0)), 223.834, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink2 = VVHRoadLinkWithProperties(362959407, List(Point(223.834, 0.0), Point(383.834, 0.0)), 160.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink3 = VVHRoadLinkWithProperties(362964776, List(Point(474.567, 0.0), Point(383.834, 0.0)), 90.733, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2, roadLink3))
+      val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
+      speedLimits.filter(_.id == 200217).map(_.points).apply(1) should be(List(Point(223.834, 0.0), Point(383.834, 0.0)))
+    }
+  }
 }

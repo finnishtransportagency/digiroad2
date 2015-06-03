@@ -149,6 +149,10 @@ class LinkChain[T](val links: Seq[ChainedLink[T]], val fetchLinkEndPoints: (T) =
     new LinkChain[T](middleLinks, fetchLinkEndPoints)
   }
 
+  def head(): ChainedLink[T] = links.head
+
+  def last(): ChainedLink[T] = links.last
+
   def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
     links.map(transformation)
   }
