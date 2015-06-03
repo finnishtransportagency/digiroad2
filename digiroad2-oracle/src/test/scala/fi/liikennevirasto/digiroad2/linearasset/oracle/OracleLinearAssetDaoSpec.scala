@@ -1,19 +1,20 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.{VVHRoadlink, GeometryUtils, RoadLinkService, Point}
-import fi.liikennevirasto.digiroad2.asset.{UnknownDirection, Municipality, BoundingRectangle}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.{MultipleCarriageway, UnknownDirection, Municipality, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import oracle.jdbc.OracleConnection
+import _root_.oracle.jdbc.OracleConnection
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.Tag
 
-import oracle.spatial.geometry.JGeometry
+import _root_.oracle.spatial.geometry.JGeometry
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -144,6 +145,21 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dao.getSpeedLimitDetails(200097)._5 should equal(Some(60))
       dao.updateSpeedLimitValue(200097, 100, "test", _ => ())
       dao.getSpeedLimitDetails(200097)._5 should equal(Some(100))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("filter out floating speed limits") {
+    Database.forDataSource(ds).withDynTransaction {
+      sqlu"""update asset set floating = 1 where id=200097""".execute()
+      val roadLink = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 0, UnknownDirection, MultipleCarriageway, None, None)
+      val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
+      val dao = new OracleLinearAssetDao {
+        override val roadLinkService: RoadLinkService = mockedRoadLinkService
+      }
+      val speedLimits = dao.getSpeedLimitLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
+      speedLimits._1 should be(empty)
       dynamicSession.rollback()
     }
   }

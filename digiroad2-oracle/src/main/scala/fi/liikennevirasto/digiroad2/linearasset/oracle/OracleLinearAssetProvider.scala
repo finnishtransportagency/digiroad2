@@ -23,6 +23,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
   val logger = LoggerFactory.getLogger(getClass)
+  def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
     val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
@@ -48,16 +49,29 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  def isFloating(speedLimit:  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
+    val (_, links) = speedLimit
+    val isEmpty = links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
+
+    val maximumGapThreshold = 1
+    isEmpty || LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
+  }
+
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
-    Database.forDataSource(ds).withDynTransaction {
-      val (speedLimits, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
+    withDynTransaction {
+      val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
+      val speedLimits = speedLimitLinks.groupBy(_._1)
+
+      val (floatingSpeedLimits, validLimits) = speedLimits.partition(isFloating)
+      if (floatingSpeedLimits.nonEmpty) dao.markSpeedLimitsFloating(floatingSpeedLimits.keySet)
+
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
-      speedLimits.groupBy(_._1).mapValues(getLinksWithPositions).values.flatten.toSeq
+      validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
   override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       loadSpeedLimit(speedLimitId)
     }
   }

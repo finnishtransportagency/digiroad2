@@ -100,7 +100,7 @@ trait OracleLinearAssetDao {
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.mml_id
-           where a.asset_type_id = 20""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double)].list
     }
   }
 
@@ -120,11 +120,6 @@ trait OracleLinearAssetDao {
       (assetId, mmlId, sideCode, speedLimit, geometry)
     }
 
-    // FIXME: Remove filtering once speed limits that reside outside link geometry are removed
-    val filteredSpeedLimits = speedLimits.filterNot { speedLimit =>
-      speedLimit._5.isEmpty
-    }
-
     val linksOnRoads = linkGeometries.filter { link =>
       val (_, _, _, functionalClass, _) = link._2
       Set(1, 2, 3, 4, 5, 6).contains(functionalClass % 10)
@@ -133,7 +128,7 @@ trait OracleLinearAssetDao {
       link._1 -> RoadLinkForSpeedLimit(geometry, length, roadLinkType, mmlId)
     }
 
-    (filteredSpeedLimits, linksOnRoads)
+    (speedLimits, linksOnRoads)
   }
 
   def getByMunicipality(municipality: Int): Seq[Map[String, Any]] = {
@@ -327,6 +322,11 @@ trait OracleLinearAssetDao {
       dynamicSession.rollback()
       None
     }
+  }
+
+  def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+    val speedLimitIds = ids.mkString(",")
+    sqlu"""update asset set floating = 1 where id in (#$speedLimitIds)""".execute()
   }
 
   private def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
