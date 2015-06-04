@@ -6,7 +6,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{ RoadLinkForSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, RoadLinkForSpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions._
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+
 
 trait OracleLinearAssetDao {
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
@@ -106,7 +107,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[(Long, Long, Int, Option[Int], Seq[Point])], Map[Long, RoadLinkForSpeedLimit]) = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
     val linksWithGeometries = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
 
     val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
@@ -116,10 +117,10 @@ trait OracleLinearAssetDao {
         acc + (linkWithGeometry.mmlId -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
       }
 
-    val speedLimits: Seq[(Long, Long, Int, Option[Int], Seq[Point])] = assetLinks.map { link =>
+    val speedLimits = assetLinks.map { link =>
       val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
-      (assetId, mmlId, sideCode, speedLimit, geometry)
+      SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry)
     }
 
     val linksOnRoads = linkGeometries.filter { link =>

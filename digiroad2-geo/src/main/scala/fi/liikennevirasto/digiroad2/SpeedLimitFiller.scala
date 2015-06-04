@@ -1,31 +1,30 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitLink, RoadLinkForSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, SpeedLimitLink, RoadLinkForSpeedLimit}
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
 
 object SpeedLimitFiller {
-  private def hasEmptySegments(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])): Boolean = {
+  private def hasEmptySegments(speedLimit: (Long, Seq[SpeedLimitDTO])): Boolean = {
     val (_, links) = speedLimit
-    links.exists { case (_, _, _, _, geometry) => geometry.isEmpty}
+    links.exists { _.geometry.isEmpty}
   }
 
-  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point])): (Point, Point) = {
-    val (_, _, _, _, points) = link
-    GeometryUtils.geometryEndpoints(points)
+  private def getLinkEndpoints(link: SpeedLimitDTO): (Point, Point) = {
+    GeometryUtils.geometryEndpoints(link.geometry)
   }
 
-  private def adjustSpeedLimit(linkGeometries: Map[Long, RoadLinkForSpeedLimit])(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])):
-  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]) = {
+  private def adjustSpeedLimit(linkGeometries: Map[Long, RoadLinkForSpeedLimit])(speedLimit: (Long, Seq[SpeedLimitDTO])):
+  (Long, Seq[SpeedLimitDTO]) = {
     val (id, links) = speedLimit
     if (links.length > 2) {
       val linkChain = LinkChain(links, getLinkEndpoints)
       val middleSegments = linkChain.withoutEndSegments()
       val adjustedSegments = middleSegments.map { chainedLink =>
-        val roadLinkGeometry = linkGeometries.get(chainedLink.rawLink._2).map(_.geometry)
+        val roadLinkGeometry = linkGeometries.get(chainedLink.rawLink.mmlId).map(_.geometry)
         roadLinkGeometry.map { newGeometry =>
-          chainedLink.rawLink.copy(_5 = newGeometry)
+          chainedLink.rawLink.copy(geometry = newGeometry)
         }.getOrElse(chainedLink.rawLink)
       }
       id -> (Seq(linkChain.head().rawLink) ++ adjustedSegments ++ Seq(linkChain.last().rawLink))
@@ -35,7 +34,7 @@ object SpeedLimitFiller {
     }
   }
 
-  private def hasGaps(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
+  private def hasGaps(speedLimit: (Long, Seq[SpeedLimitDTO])) = {
     val (_, links) = speedLimit
     val maximumGapThreshold = 1
     LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
@@ -52,15 +51,15 @@ object SpeedLimitFiller {
     SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber, towardsLinkChain)
   }
 
-  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point])]): Seq[SpeedLimitLink] = {
+  private def getLinksWithPositions(links: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
-      val (id, roadLinkId, sideCode, limit, points) = chainedLink.rawLink
-      toSpeedLimit((id, roadLinkId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
+      val link = chainedLink.rawLink
+      toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, chainedLink.linkPosition, chainedLink.geometryDirection))
     }
   }
 
-  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]]): (Seq[SpeedLimitLink], Set[Long]) = {
+  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], Set[Long]) = {
     val (speedLimitsWithEmptySegments, speedLimitsWithoutEmptySegments) = speedLimits.partition(hasEmptySegments)
     val adjustedSpeedLimits = speedLimitsWithoutEmptySegments.map(adjustSpeedLimit(topology))
     val (speedLimitsWithGaps, validLimits) = adjustedSpeedLimits.partition(hasGaps)
