@@ -113,4 +113,10 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       dao.getByMunicipality(municipality)
     }
   }
+
+  override def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      dao.markSpeedLimitsFloating(ids)
+    }
+  }
 }

@@ -5,6 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, LinearAssetProvider}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -26,6 +27,13 @@ class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
   }
 }
 
+class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
+  def receive = {
+    case x: Set[Long]          => linearAssetProvider.markSpeedLimitsFloating(x)
+    case _                     => println("speedLimitFiller: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val Digiroad2ServerOriginatedResponseHeader = "Digiroad2-Server-Originated-Response"
   lazy val properties: Properties = {
@@ -41,6 +49,9 @@ object Digiroad2Context {
 
   val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
   eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
+
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
