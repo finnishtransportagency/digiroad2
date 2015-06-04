@@ -108,30 +108,22 @@ trait OracleLinearAssetDao {
   }
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
-    val linksWithGeometries = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
 
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linksWithGeometries.map(_.mmlId))
+    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(roadLinksByMmlId.keys.toSeq)
 
-    val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)] =
-      linksWithGeometries.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int, Long)]) { (acc, linkWithGeometry) =>
-        acc + (linkWithGeometry.mmlId -> (linkWithGeometry.geometry, linkWithGeometry.length, linkWithGeometry.administrativeClass, linkWithGeometry.functionalClass, linkWithGeometry.mmlId))
-      }
-
-    val speedLimits = assetLinks.map { link =>
+    val speedLimitLinks = assetLinks.map { link =>
       val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
+      val geometry = GeometryUtils.truncateGeometry(roadLinksByMmlId(mmlId).geometry, startMeasure, endMeasure)
       SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
     }
 
-    val linksOnRoads = linkGeometries.filter { link =>
-      val (_, _, _, functionalClass, _) = link._2
-      Set(1, 2, 3, 4, 5, 6).contains(functionalClass % 10)
-    }.map { link =>
-      val (geometry, length, roadLinkType, _, mmlId) = link._2
-      link._1 -> RoadLinkForSpeedLimit(geometry, length, roadLinkType, mmlId)
-    }
+    val linksOnRoads = roadLinksByMmlId
+      .filter { case (_ ,link) => Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10) }
+      .mapValues { link => RoadLinkForSpeedLimit(link.geometry, link.length, link.administrativeClass, link.mmlId) }
 
-    (speedLimits, linksOnRoads)
+    (speedLimitLinks, linksOnRoads)
   }
 
   def getByMunicipality(municipality: Int): Seq[SpeedLimitDTO] = {
