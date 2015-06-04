@@ -48,49 +48,16 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       toSpeedLimit((id, roadLinkId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
     }
   }
-  
-  private def hasEmptySegments(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])): Boolean = {
-    val (_, links) = speedLimit
-    links.exists { case (_, _, _, _, geometry) => geometry.isEmpty }
-  }
-
-  private def hasGaps(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])) = {
-    val (_, links) = speedLimit
-    val maximumGapThreshold = 1
-    LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
-  }
-
-  private def adjustSpeedLimit(linkGeometries: Map[Long, RoadLinkForSpeedLimit])(speedLimit: (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])])):
-  (Long, Seq[(Long, Long, Int, Option[Int], Seq[Point])]) = {
-    val (id, links) = speedLimit
-    if (links.length > 2) {
-      val linkChain = LinkChain(links, getLinkEndpoints)
-      val middleSegments = linkChain.withoutEndSegments()
-      val adjustedSegments = middleSegments.map { chainedLink =>
-        val roadLinkGeometry = linkGeometries.get(chainedLink.rawLink._2).map(_.geometry)
-        roadLinkGeometry.map { newGeometry =>
-          chainedLink.rawLink.copy(_5 = newGeometry)
-        }.getOrElse(chainedLink.rawLink)
-      }
-      id -> (Seq(linkChain.head().rawLink) ++ adjustedSegments ++ Seq(linkChain.last().rawLink))
-    }
-    else {
-      speedLimit
-    }
-  }
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       val speedLimits = speedLimitLinks.groupBy(_._1)
-      
-      val (speedLimitsWithEmptySegments, speedLimitsWithoutEmptySegments) = speedLimits.partition(hasEmptySegments)
-      val adjustedSpeedLimits = speedLimitsWithoutEmptySegments.map(adjustSpeedLimit(linkGeometries))
-      val (speedLimitsWithGaps, validLimits) = adjustedSpeedLimits.partition(hasGaps)
-      dao.markSpeedLimitsFloating(speedLimitsWithEmptySegments.keySet ++ speedLimitsWithGaps.keySet)
 
+      val (filledTopology, droppedSpeedLimitIds) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
+      eventbus.publish("speedLimits:update", droppedSpeedLimitIds)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
-      validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
+      filledTopology
     }
   }
 

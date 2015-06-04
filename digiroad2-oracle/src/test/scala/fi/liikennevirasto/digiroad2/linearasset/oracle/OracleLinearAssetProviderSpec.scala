@@ -57,14 +57,14 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   test("should ignore speed limits with segments outside link geometry") {
     runWithCleanup {
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService)
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val provider = new OracleLinearAssetProvider(eventbus, mockRoadLinkService)
       val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(80.0, 0.0)), 80.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
       val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 0, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
       val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
       speedLimits.map(_.id) should be(Seq(200204))
-      val floating = sql"""select floating from asset where id = 200205""".as[(Boolean)].first
-      floating should be(true)
+      verify(eventbus).publish(org.mockito.Matchers.eq("speedLimits:update"), org.mockito.Matchers.eq(Set(200205)))
     }
   }
 
