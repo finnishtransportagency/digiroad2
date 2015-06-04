@@ -6,6 +6,12 @@ import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
 import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
 
 object SpeedLimitFiller {
+  case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimitDTO, adjustedMValue: Option[Double])
+  case class MValueAdjustment(assetId: Long, mmlId: Long, endMeasure: Double)
+  case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment])
+
+  private val MaxAllowedMValueError = 0.5
+
   private def hasEmptySegments(speedLimit: (Long, Seq[SpeedLimitDTO])): Boolean = {
     val (_, links) = speedLimit
     links.exists { _.geometry.isEmpty}
@@ -16,21 +22,27 @@ object SpeedLimitFiller {
   }
 
   private def adjustSpeedLimit(linkGeometries: Map[Long, RoadLinkForSpeedLimit])(speedLimit: (Long, Seq[SpeedLimitDTO])):
-  (Long, Seq[SpeedLimitDTO]) = {
+  (Long, Seq[AdjustedSpeedLimitSegment]) = {
     val (id, links) = speedLimit
     if (links.length > 2) {
       val linkChain = LinkChain(links, getLinkEndpoints)
       val middleSegments = linkChain.withoutEndSegments()
       val adjustedSegments = middleSegments.map { chainedLink =>
-        val roadLinkGeometry = linkGeometries.get(chainedLink.rawLink.mmlId).map(_.geometry)
-        roadLinkGeometry.map { newGeometry =>
-          chainedLink.rawLink.copy(geometry = newGeometry)
-        }.getOrElse(chainedLink.rawLink)
+        val optionalRoadLinkGeometry = linkGeometries.get(chainedLink.rawLink.mmlId).map(_.geometry)
+        optionalRoadLinkGeometry.map { roadLinkGeometry =>
+          val mValueError = Math.abs(GeometryUtils.geometryLength(roadLinkGeometry) - GeometryUtils.geometryLength(chainedLink.rawLink.geometry))
+          if (mValueError > MaxAllowedMValueError)
+            AdjustedSpeedLimitSegment(chainedLink.rawLink.copy(geometry = roadLinkGeometry), Some(GeometryUtils.geometryLength(roadLinkGeometry)))
+          else
+            AdjustedSpeedLimitSegment(chainedLink.rawLink, None)
+        }.getOrElse(AdjustedSpeedLimitSegment(chainedLink.rawLink, None))
       }
-      id -> (Seq(linkChain.head().rawLink) ++ adjustedSegments ++ Seq(linkChain.last().rawLink))
+      val headSegment = AdjustedSpeedLimitSegment(linkChain.head().rawLink, None)
+      val lastSegment = AdjustedSpeedLimitSegment(linkChain.last().rawLink, None)
+      id -> (Seq(headSegment) ++ adjustedSegments ++ Seq(lastSegment))
     }
     else {
-      speedLimit
+      (id, links.map(AdjustedSpeedLimitSegment(_, None)))
     }
   }
 
@@ -59,14 +71,26 @@ object SpeedLimitFiller {
     }
   }
 
-  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], Set[Long]) = {
+  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], SpeedLimitChangeSet) = {
     val (speedLimitsWithEmptySegments, speedLimitsWithoutEmptySegments) = speedLimits.partition(hasEmptySegments)
-    val adjustedSpeedLimits = speedLimitsWithoutEmptySegments.map(adjustSpeedLimit(topology))
+    val (adjustedSpeedLimits, adjustedMValues) =  speedLimitsWithoutEmptySegments
+      .foldLeft(Map.empty[Long, Seq[SpeedLimitDTO]], Seq.empty[MValueAdjustment]) { case (acc, speedLimit) =>
+      val (id, adjustedSegments) = adjustSpeedLimit(topology)(speedLimit)
+      val (speedLimits, mValues) = acc
+      val mValueAdjustments = adjustedSegments.flatMap { segment =>
+        segment.adjustedMValue.map { mValue =>
+          MValueAdjustment(segment.speedLimitSegment.assetId, segment.speedLimitSegment.mmlId, mValue)
+        }
+      }
+      (speedLimits + (id -> adjustedSegments.map(_.speedLimitSegment)), mValues ++ mValueAdjustments)
+    }
     val (speedLimitsWithGaps, validLimits) = adjustedSpeedLimits.partition(hasGaps)
 
     val filledTopology = validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
-    val droppedSpeedLimitIds = speedLimitsWithEmptySegments.keySet ++ speedLimitsWithGaps.keySet
 
-    (filledTopology, droppedSpeedLimitIds)
+    val droppedSpeedLimitIds = speedLimitsWithEmptySegments.keySet ++ speedLimitsWithGaps.keySet
+    val changeSet = SpeedLimitChangeSet(droppedSpeedLimitIds, adjustedMValues)
+
+    (filledTopology, changeSet)
   }
 }

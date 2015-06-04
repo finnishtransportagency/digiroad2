@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.SpeedLimitChangeSet
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -20,7 +21,7 @@ class ValluActor extends Actor {
   }
 }
 
-class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
+class SpeedLimitFillerActor(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
     case x: Map[Long, RoadLinkForSpeedLimit]  => linearAssetProvider.fillPartiallyFilledRoadLinks(x)
     case _                                    => println("speedLimitFiller: Received unknown message")
@@ -29,8 +30,9 @@ class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
 
 class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case x: Set[Long]          => linearAssetProvider.markSpeedLimitsFloating(x)
-    case _                     => println("speedLimitFiller: Received unknown message")
+    case x: SpeedLimitChangeSet =>
+      linearAssetProvider.markSpeedLimitsFloating(x.droppedSpeedLimitIds)
+    case _                      => println("speedLimitFiller: Received unknown message")
   }
 }
 
@@ -47,7 +49,7 @@ object Digiroad2Context {
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
 
-  val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
+  val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFillerActor], linearAssetProvider), name = "speedLimitFiller")
   eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")

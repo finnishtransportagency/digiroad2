@@ -54,8 +54,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       val speedLimits = speedLimitLinks.groupBy(_.assetId)
 
-      val (filledTopology, droppedSpeedLimitIds) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
-      eventbus.publish("speedLimits:update", droppedSpeedLimitIds)
+      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
+      eventbus.publish("speedLimits:update", speedLimitChangeSet)
       eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       filledTopology
     }
