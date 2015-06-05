@@ -132,11 +132,10 @@ object SpeedLimitFiller {
   def fillTopology2(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], SpeedLimitChangeSet) = {
     val roadLinks = topology.values
     val speedLimitSegments: Seq[SpeedLimitDTO] = speedLimits.values.flatten.toSeq
-    val adjustedSpeedLimits: Map[Long, LinkChain[SpeedLimitDTO]] = Map.empty
 
-    val (fittedSpeedLimitSegments: Seq[SpeedLimitDTO], changeSet: SpeedLimitChangeSet) =
-      roadLinks.foldLeft(Seq.empty[SpeedLimitDTO], SpeedLimitChangeSet(Set.empty[Long], Nil)) { case (acc, roadLink) =>
-        val (existingSegments, changeSet) = acc
+    val (fittedSpeedLimitSegments: Seq[SpeedLimitDTO], changeSet: SpeedLimitChangeSet, adjustedSpeedLimits: Map[Long, LinkChain[SpeedLimitDTO]]) =
+      roadLinks.foldLeft(Seq.empty[SpeedLimitDTO], SpeedLimitChangeSet(Set.empty[Long], Nil), Map.empty[Long, LinkChain[SpeedLimitDTO]]) { case (acc, roadLink) =>
+        val (existingSegments, changeSet, adjustedSpeedLimits) = acc
         val segments = speedLimitSegments.filter(_.mmlId == roadLink.mmlId)
         val validSegments = segments.filterNot { segment => changeSet.droppedSpeedLimitIds.contains(segment.assetId) }
 
@@ -149,7 +148,8 @@ object SpeedLimitFiller {
         val newChangeSet = changeSet.copy(
           droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ speedLimitDrops,
           adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments)
-        (existingSegments ++ maintainedSegments.map(_.rawLink), newChangeSet)
+        val newAdjustedSpeedLimits = adjustedSpeedLimits ++ adjustedSpeedLimitsOnLink.map { sl => sl.head().rawLink.assetId -> sl }
+        (existingSegments ++ maintainedSegments.map(_.rawLink), newChangeSet, newAdjustedSpeedLimits)
     }
 
     (getLinksWithPositions(fittedSpeedLimitSegments), changeSet)
