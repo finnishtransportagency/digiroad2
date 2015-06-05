@@ -109,10 +109,19 @@ trait OracleLinearAssetDao {
 
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    getSpeedLimitLinksByRoadLinks(roadLinks)
+  }
+
+  def getByMunicipality(municipality: Int): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
+    val roadLinks: Seq[VVHRoadLinkWithProperties] = roadLinkService.getRoadLinksFromVVH(municipality)
+    getSpeedLimitLinksByRoadLinks(roadLinks)
+  }
+
+  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties])
+  : (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
 
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(roadLinksByMmlId.keys.toSeq)
-    val speedLimitLinks = assetLinks.map { link =>
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(roadLinksByMmlId.keys.toSeq).map { link =>
       val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
       val geometry = GeometryUtils.truncateGeometry(roadLinksByMmlId(mmlId).geometry, startMeasure, endMeasure)
       SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
@@ -121,23 +130,13 @@ trait OracleLinearAssetDao {
     (speedLimitLinks, roadLinksForSpeedLimits(roadLinks))
   }
 
-  def getByMunicipality(municipality: Int): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinks: Seq[VVHRoadLinkWithProperties] = roadLinkService.getRoadLinksFromVVH(municipality)
-    val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
-
-    val speedLimits = fetchSpeedLimitsByMmlIds(roadLinks.map(_.mmlId)).map { link =>
-      val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(roadLinksByMmlId(mmlId).geometry, startMeasure, endMeasure)
-      SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
-    }
-
-    (speedLimits, roadLinksForSpeedLimits(roadLinks))
-  }
-
   private def roadLinksForSpeedLimits(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
+    def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
+    def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(link.geometry, link.length, link.administrativeClass, link.mmlId)
+
     roadLinks
-      .filter { link => Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10) }
-      .map { link => RoadLinkForSpeedLimit(link.geometry, link.length, link.administrativeClass, link.mmlId) }
+      .filter(isCarTrafficRoad)
+      .map(toRoadLinkForSpeedLimit)
       .groupBy(_.mmlId).mapValues(_.head)
   }
 
