@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink}
 
 object GeometryUtils {

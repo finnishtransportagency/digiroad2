@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
+import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
@@ -19,6 +17,8 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 // - rename to speed limit service
 // - move common asset functionality to asset service
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+  import GeometryDirection._
+
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
