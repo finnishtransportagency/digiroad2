@@ -53,14 +53,14 @@ object SpeedLimitFiller {
   }
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
-    val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
+    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
 
     val towardsLinkChain = geometryDirection match {
       case TowardsLinkChain => true
       case AgainstLinkChain => false
     }
 
-    SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber, towardsLinkChain)
+    SpeedLimitLink(id, mmlId, sideCode, limit, points, positionNumber, towardsLinkChain)
   }
 
   private def getLinksWithPositions(links: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {

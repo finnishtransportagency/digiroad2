@@ -3,7 +3,7 @@
     var data = [
       {
         "id": 111,
-        "roadLinkId": 555,
+        "mmlId": 555,
         "value": 40,
         "sideCode": 1,
         "position": 0,
@@ -21,7 +21,7 @@
       },
       {
         "id": 111,
-        "roadLinkId": 666,
+        "mmlId": 666,
         "value": 40,
         "sideCode": 1,
         "position": 1,
@@ -39,7 +39,7 @@
       },
       {
         "id": 111,
-        "roadLinkId": 777,
+        "mmlId": 777,
         "value": 40,
         "sideCode": 1,
         "position": 2,
@@ -62,7 +62,7 @@
   var generateRoadLinks = function() {
     return [
       {
-        "roadLinkId": 555,
+        "mmlId": 555,
         "type": "Private",
         "points": [
           {
@@ -76,7 +76,7 @@
         ]
       },
       {
-        "roadLinkId": 666,
+        "mmlId": 666,
         "type": "Private",
         "points": [
           {
@@ -90,7 +90,7 @@
         ]
       },
       {
-        "roadLinkId": 777,
+        "mmlId": 777,
         "type": "Private",
         "points": [
           {

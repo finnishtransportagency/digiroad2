@@ -103,12 +103,12 @@ window.SpeedLimitLayer = function(params) {
                         }));
       };
 
-      var lineString = pointsToLineString(roadCollection.get(nearest.feature.attributes.roadLinkId).getPoints());
+      var lineString = pointsToLineString(roadCollection.get(nearest.feature.attributes.mmlId).getPoints());
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
 
-      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
+      collection.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
       remove();
     };
   };
@@ -585,7 +585,7 @@ window.SpeedLimitLayer = function(params) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
         var data = _.cloneDeep(speedLimit);
-        data.roadLinkId = link.roadLinkId;
+        data.mmlId = link.mmlId;
         data.points = link.originalPoints || points;
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
       });

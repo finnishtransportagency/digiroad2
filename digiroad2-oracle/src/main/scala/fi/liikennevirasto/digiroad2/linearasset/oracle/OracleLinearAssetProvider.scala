@@ -26,14 +26,14 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
-    val (id, roadLinkId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
+    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
 
     val towardsLinkChain = geometryDirection match {
       case TowardsLinkChain => true
       case AgainstLinkChain => false
     }
 
-    SpeedLimitLink(id, roadLinkId, sideCode, limit, points, positionNumber, towardsLinkChain)
+    SpeedLimitLink(id, mmlId, sideCode, limit, points, positionNumber, towardsLinkChain)
   }
 
   private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point])): (Point, Point) = {
@@ -44,8 +44,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point])]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
-      val (id, roadLinkId, sideCode, limit, points) = chainedLink.rawLink
-      toSpeedLimit((id, roadLinkId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
+      val (id, mmlId, sideCode, limit, points) = chainedLink.rawLink
+      toSpeedLimit((id, mmlId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
     }
   }
 
@@ -118,13 +118,13 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
       val speedLimitLinksByMmlId = speedLimitLinks.groupBy(_.mmlId).mapValues(_.head)
       filledTopology.map { link =>
-        Map ("id" -> (link.id + "-" + link.roadLinkId),
+        Map ("id" -> (link.id + "-" + link.mmlId),
           "sideCode" -> link.sideCode,
           "points" -> link.points,
           "value" -> link.value,
-          "startMeasure" -> speedLimitLinksByMmlId(link.roadLinkId).startMeasure,
-          "endMeasure" -> speedLimitLinksByMmlId(link.roadLinkId).endMeasure,
-          "mmlId" -> link.roadLinkId)
+          "startMeasure" -> speedLimitLinksByMmlId(link.mmlId).startMeasure,
+          "endMeasure" -> speedLimitLinksByMmlId(link.mmlId).endMeasure,
+          "mmlId" -> link.mmlId)
       }
     }
   }

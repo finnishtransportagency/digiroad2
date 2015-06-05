@@ -27,7 +27,7 @@
         .map(function(values, key) {
           return [key, { id: values[0].id, links: _.map(values, function(value) {
             return {
-              roadLinkId: value.roadLinkId,
+              mmlId: value.mmlId,
               position: value.position,
               points: value.points
             };
@@ -97,11 +97,11 @@
       }, 0);
     };
 
-    this.splitSpeedLimit = function(id, roadLinkId, split) {
+    this.splitSpeedLimit = function(id, mmlId, split) {
       backend.getSpeedLimit(id, function(speedLimit) {
         var speedLimitLinks = speedLimit.speedLimitLinks;
         var splitLink = _.find(speedLimitLinks, function(link) {
-          return link.roadLinkId === roadLinkId;
+          return link.mmlId === mmlId;
         });
         var position = splitLink.position;
         var towardsLinkChain = splitLink.towardsLinkChain;
@@ -119,11 +119,11 @@
 
         left.links = leftLinks.concat([{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
                                         position: position,
-                                        roadLinkId: roadLinkId}]);
+                                        mmlId: mmlId}]);
 
         right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
                         position: position,
-                        roadLinkId: roadLinkId}].concat(rightLinks);
+                        mmlId: mmlId}].concat(rightLinks);
 
         if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
           splitSpeedLimits.created = left;
@@ -135,7 +135,7 @@
 
         splitSpeedLimits.created.id = null;
         splitSpeedLimits.splitMeasure = split.splitMeasure;
-        splitSpeedLimits.splitRoadLinkId = roadLinkId;
+        splitSpeedLimits.splitMmlId = mmlId;
         dirty = true;
         eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
         eventbus.trigger('speedLimit:split');
@@ -143,7 +143,7 @@
     };
 
     this.saveSplit = function() {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitRoadLinkId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
         dirty = false;

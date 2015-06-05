@@ -548,7 +548,7 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
 
-    val mmlId = (parsedBody \ "roadLinkId").extract[Long]
+    val mmlId = (parsedBody \ "mmlId").extract[Long]
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         mmlId,
                                         (parsedBody \ "splitMeasure").extract[Double],
