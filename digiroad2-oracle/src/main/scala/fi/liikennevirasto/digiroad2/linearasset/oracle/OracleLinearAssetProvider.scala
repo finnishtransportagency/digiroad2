@@ -110,16 +110,21 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
   override def getSpeedLimits(municipality: Int): Seq[Map[String, Any]] = {
     Database.forDataSource(ds).withDynTransaction {
-      val speedLimits = dao.getByMunicipality(municipality)
+      val (speedLimitLinks, roadLinksByMmlId) = dao.getByMunicipality(municipality)
 
-      speedLimits.map { link =>
-        Map ("id" -> (link.assetId + "-" + link.mmlId),
+      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.assetId))
+      eventbus.publish("speedLimits:update", speedLimitChangeSet)
+      eventbus.publish("speedLimits:linkGeometriesRetrieved", roadLinksByMmlId)
+
+      val speedLimitLinksByMmlId = speedLimitLinks.groupBy(_.mmlId).mapValues(_.head)
+      filledTopology.map { link =>
+        Map ("id" -> (link.id + "-" + link.roadLinkId),
           "sideCode" -> link.sideCode,
-          "points" -> link.geometry,
+          "points" -> link.points,
           "value" -> link.value,
-          "startMeasure" -> link.startMeasure,
-          "endMeasure" -> link.endMeasure,
-          "mmlId" -> link.mmlId)
+          "startMeasure" -> speedLimitLinksByMmlId(link.roadLinkId).startMeasure,
+          "endMeasure" -> speedLimitLinksByMmlId(link.roadLinkId).endMeasure,
+          "mmlId" -> link.roadLinkId)
       }
     }
   }
