@@ -8,6 +8,7 @@ case class SpeedLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Opti
 case class SpeedLimit(id: Long, value: Option[Int], endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String], createdBy: Option[String], createdDateTime: Option[String], speedLimitLinks: Seq[SpeedLimitLink])
 case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
 case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, mmlId: Long)
+case class LinkGeometryWrapper(linkGeometries: Map[Long, RoadLinkForSpeedLimit])
 
 trait LinearAssetProvider {
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long]

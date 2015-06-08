@@ -65,7 +65,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val (floatingSpeedLimits, validLimits) = speedLimits.partition(isFloating)
       if (floatingSpeedLimits.nonEmpty) dao.markSpeedLimitsFloating(floatingSpeedLimits.keySet)
 
-      eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
+      eventbus.publish("speedLimits:linkGeometriesRetrieved", LinkGeometryWrapper(linkGeometries))
       validLimits.mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
