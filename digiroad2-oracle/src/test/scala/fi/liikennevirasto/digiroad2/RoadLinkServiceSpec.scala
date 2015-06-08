@@ -14,8 +14,8 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val dummyEventBus = new DummyEventBus
-  class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient, dummyEventBus) {
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -82,7 +82,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Adjust non-existent road link") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
-    val service = new VVHRoadLinkService(mockVVHClient, dummyEventBus)
+    val service = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
     val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
     roadLink.map(_.linkType) should be(None)
   }
@@ -131,9 +131,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find(_.mmlId == 111).get.functionalClass should be(8)
       roadLinks.find(_.mmlId == 111).get.linkType should be(CycleOrPedestrianPath)
 
-      val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
-      incompleteLinks.get("Helsinki").get("Municipality") should be(Seq(789))
-
+      verify(mockEventBus).publish(
+        org.mockito.Matchers.eq("linkProperties:changed"),
+        org.mockito.Matchers.eq(RoadLinkChangeSet(List(AdjustedRoadLink(0,123,List(),0.0,Municipality,6,TowardsDigitizing,None,None,3), AdjustedRoadLink(0,456,List(),0.0,Municipality,7,TowardsDigitizing,None,None,12), AdjustedRoadLink(0,111,List(),0.0,Municipality,8,TowardsDigitizing,None,None,8)),List(IncompleteLink(789,91,Municipality))))
+      )
       dynamicSession.rollback()
     }
   }
