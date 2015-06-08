@@ -21,4 +21,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       Seq(Point(2.0, 0.0), Point(3.0, 0.0))))
     changeSet.adjustedMValues should be (Seq(MValueAdjustment(1, 2, 1.0)))
   }
+
+  test("drop segment outside of link geometry") {
+    val topology = Map(1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
+      2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, Unknown, 2))
+    val speedLimits = Map(1l -> Seq(
+      SpeedLimitDTO(1, 1, 0, None, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0),
+      SpeedLimitDTO(1, 2, 0, None, Nil, 0.0, 0.2)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+
+  }
 }
