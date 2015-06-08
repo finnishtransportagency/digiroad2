@@ -147,7 +147,7 @@ object SpeedLimitFiller {
 
   // TODO: Implement me.
   def dropSpeedLimits2(adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]], adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]]): (Seq[ChainedLink[SpeedLimitDTO]], Set[Long]) = {
-    (Nil, Set.empty[Long])
+    (adjustedSegments, Set.empty[Long])
   }
 
   def fillTopology2(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], SpeedLimitChangeSet) = {
