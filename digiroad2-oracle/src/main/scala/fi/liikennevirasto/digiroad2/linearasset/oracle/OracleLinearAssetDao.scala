@@ -75,17 +75,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
-    val speedLimitLinksByMmlId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
-    val partiallyCoveredLinks = mmlIds.map { mmlId =>
-      val length = roadLinks(mmlId).length
-      val administrativeClass = roadLinks(mmlId).administrativeClass
-      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByMmlId(mmlId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
-      val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
-      (mmlId, administrativeClass, remainders)
-    }
-    partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
-  }
+
 
   private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds) { idTableName =>
@@ -330,13 +320,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  private def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
-    roadLinks -- speedLimitLinks.map(_._2).toSet
-  }
-
-  private def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
-    roadLinks intersect speedLimitLinks.map(_._2).toSet
-  }
 
   private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass, mmlId: Long): GeneratedSpeedLimitLink = {
     val assetId = Sequences.nextPrimaryKeySeqValue
@@ -377,34 +360,52 @@ trait OracleLinearAssetDao {
     }
   }
 
-  private def timed[A](s: String, f: => A): A = {
-    val start = System.currentTimeMillis()
-    val retval = f
-    logger.info(s + " finished in: " + (System.currentTimeMillis - start) + "ms")
-    retval
+//  private def timed[A](s: String, f: => A): A = {
+//    val start = System.currentTimeMillis()
+//    val retval = f
+//    logger.info(s + " finished in: " + (System.currentTimeMillis - start) + "ms")
+//    retval
+//  }
+
+  private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Seq[(Long, AdministrativeClass, Seq[(Double, Double)])] = {
+    val speedLimitLinksByMmlId: Map[Long, Seq[(Long, Long, Int, Option[Int], Double, Double)]] = speedLimitLinks.groupBy(_._2)
+    val partiallyCoveredLinks = mmlIds.map { mmlId =>
+      val length = roadLinks(mmlId).length
+      val administrativeClass = roadLinks(mmlId).administrativeClass
+      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByMmlId(mmlId).map { case (_, _, _, _, startMeasure, endMeasure) => (startMeasure, endMeasure) }
+      val remainders = lrmPositions.foldLeft(Seq((0.0, length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+      (mmlId, administrativeClass, remainders)
+    }
+    partiallyCoveredLinks.filterNot(_._3.isEmpty).toSeq
   }
+//
+//  private def findUncoveredLinkIds(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
+//    roadLinks -- speedLimitLinks.map(_._2).toSet
+//  }
+
+//  private def findCoveredRoadLinks(roadLinks: Set[Long], speedLimitLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)]): Set[Long] = {
+//    roadLinks intersect speedLimitLinks.map(_._2).toSet
+//  }
+
 
   def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit = {
-    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = timed("fetchAssetLinks", { fetchSpeedLimitsByMmlIds(linkGeometries.keys.toSeq) })
+    val assetLinks: Seq[(Long, Long, Int, Option[Int], Double, Double)] = fetchSpeedLimitsByMmlIds(linkGeometries.keys.toSeq)
 
-    val uncoveredLinkIds = timed("findUncoveredLinks", { findUncoveredLinkIds(linkGeometries.keySet, assetLinks) })
-    val generatedSingleLinkSpeedLimits: Seq[GeneratedSpeedLimitLink] = timed("generatedSingleLinkSpeedLimits", { uncoveredLinkIds.toSeq.map { roadLinkId =>
+    val uncoveredLinkIds = linkGeometries.keySet -- assetLinks.map(_._2).toSet
+
+    val generatedSingleLinkSpeedLimits: Seq[GeneratedSpeedLimitLink] = uncoveredLinkIds.toSeq.map { roadLinkId =>
       val link = linkGeometries(roadLinkId)
       generateSpeedLimit(roadLinkId, (0.0, link.length), 1, link.administrativeClass, link.mmlId)
     }
-    })
-    timed("createSpeedLimitsForUncoveredLinks", { createSpeedLimits(generatedSingleLinkSpeedLimits) })
 
-    val coveredLinkIds = timed("findCoveredLinks", { findCoveredRoadLinks(linkGeometries.keySet, assetLinks) })
-    val partiallyCoveredLinks = timed("findPartiallyCoveredLinks", { findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks) })
-    val generatedPartialLinkSpeedLimits = timed("generatedPartialLink", { partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+    val coveredLinkIds = linkGeometries.keySet intersect assetLinks.map(_._2).toSet
+    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, linkGeometries, assetLinks)
+    val generatedPartialLinkSpeedLimits = partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
       val (roadLinkId, roadLinkType, unfilledSegments) = partiallyCoveredLink
       unfilledSegments.map { segment =>
         generateSpeedLimit(roadLinkId, segment, 1, roadLinkType, linkGeometries(roadLinkId).mmlId)
       }
     }
-    })
-    timed("createSpeedLimitsForPartialLinks", { createSpeedLimits(generatedPartialLinkSpeedLimits) })
   }
 }
 

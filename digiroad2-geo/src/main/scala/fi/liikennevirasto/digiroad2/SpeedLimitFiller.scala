@@ -159,6 +159,17 @@ object SpeedLimitFiller {
         (existingSegments ++ maintainedSegments.map(_.rawLink), newChangeSet, newAdjustedSpeedLimits)
     }
 
-    (fittedSpeedLimitSegments.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq, changeSet)
+
+
+    val filledTopology: Seq[SpeedLimitLink] = fittedSpeedLimitSegments.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
+
+    val uncoveredLinkMmlIds = topology.keySet -- filledTopology.map(_.mmlId).toSet
+    val generatedSingleLinkSpeedLimits = uncoveredLinkMmlIds.toSeq.map { mmlId =>
+      val link = topology(mmlId)
+      SpeedLimitLink(0, mmlId, 1, None, link.geometry, 0, true)
+    }
+
+
+    (filledTopology ++ generatedSingleLinkSpeedLimits, changeSet)
   }
 }
