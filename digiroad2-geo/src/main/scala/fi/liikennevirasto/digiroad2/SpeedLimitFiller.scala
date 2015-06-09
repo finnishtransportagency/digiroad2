@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, SpeedLimitLink, RoadLinkForSpeedLimit}
 
+import scala.collection.immutable
+
 object SpeedLimitFiller {
   import GeometryDirection._
 
@@ -36,32 +38,62 @@ object SpeedLimitFiller {
     }
   }
 
+  private def adjustMiddleSegments(middleSegments: Seq[ChainedLink[SpeedLimitDTO]], topology: Map[Long, RoadLinkForSpeedLimit]): (Seq[ChainedLink[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
+    middleSegments.foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[MValueAdjustment]) { case (acc, segment) =>
+      val (accModifiedMiddleLinks, accMValueAdjustments) = acc
+      val optionalRoadLinkGeometry = topology.get(segment.rawLink.mmlId).map(_.geometry)
+
+      val (newGeometry, mValueAdjustments) = optionalRoadLinkGeometry.map { roadLinkGeometry =>
+        val mValueError = Math.abs(GeometryUtils.geometryLength(roadLinkGeometry) - GeometryUtils.geometryLength(segment.rawLink.geometry))
+        if (mValueError > MaxAllowedMValueError) {
+          (roadLinkGeometry, Seq(MValueAdjustment(segment.rawLink.assetId, segment.rawLink.mmlId, GeometryUtils.geometryLength(roadLinkGeometry))))
+        } else {
+          (roadLinkGeometry, Nil)
+        }
+      }.getOrElse((segment.rawLink.geometry, Nil))
+
+      val newDTO = segment.rawLink.copy(geometry = newGeometry)
+      val newMiddleLink = new ChainedLink[SpeedLimitDTO](newDTO, segment.linkIndex, segment.linkPosition, segment.geometryDirection)
+      (accModifiedMiddleLinks ++ Seq(newMiddleLink), accMValueAdjustments ++ mValueAdjustments)
+    }
+  }
+
+  private def adjustEndSegment(link: ChainedLink[SpeedLimitDTO], roadLink: RoadLinkForSpeedLimit): (ChainedLink[SpeedLimitDTO], Seq[MValueAdjustment]) = {
+    val rawLink = link.rawLink
+    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val mError = roadLinkLength - rawLink.endMeasure
+    val mAdjustment =
+      if (mError > MaxAllowedMValueError)
+        Seq(MValueAdjustment(rawLink.assetId, rawLink.mmlId, roadLinkLength))
+      else
+        Nil
+    val modifiedSegment = rawLink.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, rawLink.startMeasure, roadLinkLength))
+    val modifiedLink = new ChainedLink[SpeedLimitDTO](modifiedSegment, link.linkIndex, link.linkPosition, link.geometryDirection)
+    (modifiedLink, mAdjustment)
+  }
+
+  private def adjustEndSegments(headLink: ChainedLink[SpeedLimitDTO], lastLink: ChainedLink[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (ChainedLink[SpeedLimitDTO], ChainedLink[SpeedLimitDTO], Seq[MValueAdjustment]) = {
+    val (modifiedHeadLink, mValueAdjustments) = headLink.geometryDirection match {
+      case AgainstLinkChain => (headLink, Nil)
+      case TowardsLinkChain => adjustEndSegment(headLink, topology.get(headLink.rawLink.mmlId).get)
+    }
+    val (modifiedLastLink, lastLinkMValueAdjustments) = lastLink.geometryDirection match {
+      case TowardsLinkChain => (lastLink, Nil)
+      case AgainstLinkChain => adjustEndSegment(lastLink, topology.get(lastLink.rawLink.mmlId).get)
+    }
+    (modifiedHeadLink, modifiedLastLink, mValueAdjustments ++ lastLinkMValueAdjustments)
+  }
+
   def adjustSpeedLimit(speedLimit: LinkChain[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
     if (speedLimit.links.length > 2) {
       val headLink = speedLimit.head()
       val lastLink = speedLimit.last()
       val middleSegments = speedLimit.withoutEndSegments().links
 
-      val (modifiedMiddleLinks: Seq[ChainedLink[SpeedLimitDTO]], mValueAdjustments: Seq[MValueAdjustment]) = middleSegments
-        .foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[MValueAdjustment]) { case (acc, segment) =>
-        val (accModifiedMiddleLinks, accMValueAdjustments) = acc
-        val optionalRoadLinkGeometry = topology.get(segment.rawLink.mmlId).map(_.geometry)
+      val (modifiedHeadLink: ChainedLink[SpeedLimitDTO], modifiedLastLink: ChainedLink[SpeedLimitDTO], mValueAdjustments: Seq[MValueAdjustment]) = adjustEndSegments(headLink, lastLink, topology)
+      val (modifiedMiddleLinks: Seq[ChainedLink[SpeedLimitDTO]], middleSegmentMValueAdjustments: Seq[MValueAdjustment]) = adjustMiddleSegments(middleSegments, topology)
 
-        val (newGeometry, mValueAdjustments) = optionalRoadLinkGeometry.map { roadLinkGeometry =>
-          val mValueError = Math.abs(GeometryUtils.geometryLength(roadLinkGeometry) - GeometryUtils.geometryLength(segment.rawLink.geometry))
-          if (mValueError > MaxAllowedMValueError) {
-            (roadLinkGeometry, Seq(MValueAdjustment(segment.rawLink.assetId, segment.rawLink.mmlId, GeometryUtils.geometryLength(roadLinkGeometry))))
-          } else {
-            (roadLinkGeometry, Nil)
-          }
-        }.getOrElse((segment.rawLink.geometry, Nil))
-
-        val newDTO = segment.rawLink.copy(geometry = newGeometry)
-        val newMiddleLink = new ChainedLink[SpeedLimitDTO](newDTO, segment.linkIndex, segment.linkPosition, segment.geometryDirection)
-        (accModifiedMiddleLinks ++ Seq(newMiddleLink), accMValueAdjustments ++ mValueAdjustments)
-      }
-
-      (new LinkChain[SpeedLimitDTO](Seq(headLink) ++ modifiedMiddleLinks ++ Seq(lastLink), speedLimit.fetchLinkEndPoints), mValueAdjustments)
+      (new LinkChain[SpeedLimitDTO](Seq(modifiedHeadLink) ++ modifiedMiddleLinks ++ Seq(modifiedLastLink), speedLimit.fetchLinkEndPoints), mValueAdjustments ++ middleSegmentMValueAdjustments)
     } else {
       (speedLimit, Nil)
     }

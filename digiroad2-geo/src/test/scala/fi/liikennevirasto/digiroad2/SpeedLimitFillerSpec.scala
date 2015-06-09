@@ -32,7 +32,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("drop speed limit with a gap") {
-     val topology = Map(1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
+    val topology = Map(1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
       2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(3.0, 0.0)), 2.0, Unknown, 2),
       3l -> RoadLinkForSpeedLimit(Seq(Point(3.0, 0.0), Point(4.0, 0.0)), 1.0, Unknown, 3))
     val speedLimits = Map(1l -> Seq(
@@ -41,5 +41,20 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should be (empty)
     changeSet.droppedSpeedLimitIds should be(Set(1))
+  }
+
+  test("fill speed limit end segments") {
+    val topology = Map(1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
+      2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, Unknown, 2),
+      3l -> RoadLinkForSpeedLimit(Seq(Point(3.0, 0.0), Point(2.0, 0.0)), 1.0, Unknown, 3))
+    val speedLimits = Map(1l -> Seq(
+      SpeedLimitDTO(1, 1, 0, None, Seq(Point(0.0, 0.0), Point(0.8, 0.0)), 0.0, 0.8),
+      SpeedLimitDTO(1, 2, 0, None, Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 0.0, 1.0),
+      SpeedLimitDTO(1, 3, 0, None, Seq(Point(3.0, 0.0), Point(2.2, 0.0)), 0.0, 0.8)))
+    val (filledTopology, _) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology.map(_.mmlId) should be (Seq(1, 2, 3))
+    filledTopology.map(_.points) should be (Seq(Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
+      Seq(Point(3.0, 0.0), Point(2.0, 0.0))))
   }
 }
