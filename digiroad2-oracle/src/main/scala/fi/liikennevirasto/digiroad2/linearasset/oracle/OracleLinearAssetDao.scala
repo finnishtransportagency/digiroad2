@@ -92,11 +92,43 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    getSpeedLimitLinksByRoadLinks(roadLinks)
+  private def fetchSpeedLimitSegmentsByAssetIds(assetIds: Set[Long]): Seq[(Long, Long, Int, Option[Int], Double, Double)] = {
+    MassQuery.withIds(assetIds.toSeq) { idTableName =>
+      sql"""
+        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+           from asset a
+           join asset_link al on a.id = al.asset_id
+           join lrm_position pos on al.position_id = pos.id
+           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+           join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+           join enumerated_value e on s.enumerated_value_id = e.id
+           join  #$idTableName i on i.id = a.id
+           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+    }
   }
 
+  private def getSpeedLimitSegmentsOutsideTopology(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
+    val missingSegments = fetchSpeedLimitSegmentsByAssetIds(speedLimits).filterNot { link => topology.keySet.contains(link._2) }
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
+    val segmentsOutsideTopology =
+      for (segment <- missingSegments; roadLink <- roadLinks; if roadLink.mmlId == segment._2)
+      yield {
+        val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = segment
+        val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
+        SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
+      }
+    (segmentsOutsideTopology, roadLinksForSpeedLimits(roadLinks))
+  }
+
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val (speedLimitSegments, topology) = getSpeedLimitLinksByRoadLinks(roadLinks)
+    val speedLimits = speedLimitSegments.map(_.assetId).toSet
+    val (segmentsOutsideBounds, topologyOutsideBounds) = getSpeedLimitSegmentsOutsideTopology(speedLimits, topology)
+    (speedLimitSegments ++ segmentsOutsideBounds, topology ++ topologyOutsideBounds)
+  }
+
+  // TODO: Verify that speed limits do not continue over municipality border
   def getByMunicipality(municipality: Int): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks: Seq[VVHRoadLinkWithProperties] = roadLinkService.getRoadLinksFromVVH(municipality)
     getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -315,6 +347,7 @@ trait OracleLinearAssetDao {
 
   def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
+      if (ids.contains(200157l)) println("*** Floating speed limit 200157")
       val speedLimitIds = ids.mkString(",")
       sqlu"""update asset set floating = 1 where id in (#$speedLimitIds)""".execute()
     }

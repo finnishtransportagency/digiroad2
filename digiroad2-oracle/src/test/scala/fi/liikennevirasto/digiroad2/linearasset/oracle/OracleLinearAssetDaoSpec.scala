@@ -163,4 +163,21 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("retrieve speed limit segments outside bounding box") {
+    Database.forDataSource(ds).withDynTransaction {
+      val roadLink1 = VVHRoadLinkWithProperties(747414831, List(Point(0.0, 0.0), Point(12.51, 0.0)), 12.51, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None)
+      val roadLink2 = VVHRoadLinkWithProperties(747414877, List(Point(12.51, 0.0), Point(27.882, 0.0)), 15.372, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None)
+      val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1))
+      when(mockedRoadLinkService.getRoadLinksFromVVH(Seq(747414877l))).thenReturn(Seq(roadLink2))
+      val dao = new OracleLinearAssetDao {
+        override val roadLinkService: RoadLinkService = mockedRoadLinkService
+      }
+      val (speedLimitSegments, topology) = dao.getSpeedLimitLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
+      speedLimitSegments.length should be(2)
+      topology.values.toSeq.length should be(2)
+      dynamicSession.rollback()
+    }
+  }
 }
