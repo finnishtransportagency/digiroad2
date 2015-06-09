@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
@@ -78,6 +79,14 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         getLinksWithPositions(links)))
+    }
+  }
+
+  override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      adjustments.foreach { adjustment =>
+        dao.updateEndMeasure(adjustment.assetId, adjustment.mmlId, adjustment.endMeasure)
+      }
     }
   }
 

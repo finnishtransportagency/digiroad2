@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import java.sql.Connection
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
@@ -237,6 +238,19 @@ trait OracleLinearAssetDao {
       where asset_id = $sourceId and position_id in (
         select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
     """.execute()
+  }
+
+  def updateEndMeasure(assetId: Long, mmlId: Long, endMeasure: Double) = {
+    sqlu"""
+        update LRM_POSITION
+        set
+          end_measure = $endMeasure
+        where id = (
+          select lrm.id
+            from asset a
+            join asset_link al on a.ID = al.ASSET_ID
+            join lrm_position lrm on lrm.id = al.POSITION_ID
+            where a.id = $assetId and lrm.mml_id = $mmlId)""".execute()
   }
 
   def updateLinkStartAndEndMeasures(id: Long,

@@ -30,9 +30,13 @@ class SpeedLimitFillerActor(linearAssetProvider: LinearAssetProvider) extends Ac
 
 class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case x: SpeedLimitChangeSet =>
-      linearAssetProvider.markSpeedLimitsFloating(x.droppedSpeedLimitIds)
+    case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
     case _                      => println("speedLimitFiller: Received unknown message")
+  }
+
+  def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
+    linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
+    linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
   }
 }
 
