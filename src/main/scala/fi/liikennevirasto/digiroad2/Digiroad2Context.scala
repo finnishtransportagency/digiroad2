@@ -15,7 +15,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 class ValluActor extends Actor {
   def receive = {
     case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
-    case _                               => println("received unknown message")
+    case _                                          => println("received unknown message")
   }
 }
 
@@ -29,7 +29,7 @@ class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
 class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
   def receive = {
     case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
-    case _                          => println("linkPropertyUpdater: Received unknown message")
+    case _                    => println("linkPropertyUpdater: Received unknown message")
   }
 }
 
