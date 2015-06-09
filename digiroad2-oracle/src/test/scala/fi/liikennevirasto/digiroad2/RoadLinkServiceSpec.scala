@@ -14,8 +14,7 @@ import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  class TestService(vvhClient: VVHClient) extends VVHRoadLinkService(vvhClient, mockEventBus) {
+  class TestService(vvhClient: VVHClient, eventBus: DigiroadEventBus = new DummyEventBus) extends VVHRoadLinkService(vvhClient, eventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -131,10 +130,30 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find(_.mmlId == 111).get.functionalClass should be(8)
       roadLinks.find(_.mmlId == 111).get.linkType should be(CycleOrPedestrianPath)
 
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Changes should cause event") {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
+        .thenReturn(List(
+        VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+
+      val service = new TestService(mockVVHClient, mockEventBus)
+      val adjustedRoadLink: List[AdjustedRoadLink] = List(AdjustedRoadLink(0, 123, List(), 0.0, Municipality, 6, TowardsDigitizing, None, None, 3))
+      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(adjustedRoadLink, List(IncompleteLink(789,91,Municipality)))
+
+      service.getRoadLinksFromVVH(boundingBox)
+
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
-        org.mockito.Matchers.eq(RoadLinkChangeSet(List(AdjustedRoadLink(0,123,List(),0.0,Municipality,6,TowardsDigitizing,None,None,3), AdjustedRoadLink(0,456,List(),0.0,Municipality,7,TowardsDigitizing,None,None,12), AdjustedRoadLink(0,111,List(),0.0,Municipality,8,TowardsDigitizing,None,None,8)),List(IncompleteLink(789,91,Municipality))))
-      )
+        org.mockito.Matchers.eq(changeSet))
+
       dynamicSession.rollback()
     }
   }
