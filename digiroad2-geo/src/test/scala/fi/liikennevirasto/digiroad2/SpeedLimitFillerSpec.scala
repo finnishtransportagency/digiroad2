@@ -57,4 +57,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       Seq(Point(1.0, 0.0), Point(2.0, 0.0)),
       Seq(Point(3.0, 0.0), Point(2.0, 0.0))))
   }
+
+  test("adjust end segments of a two segment speed limit") {
+    val topology = Map(
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
+      2l -> RoadLinkForSpeedLimit(Seq(Point(2.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 2))
+    val speedLimits = Map(1l -> Seq(
+      SpeedLimitDTO(1, 1, 0, None, Seq(Point(0.0, 0.0), Point(0.8, 0.0)), 0.0, 0.8),
+      SpeedLimitDTO(1, 2, 0, None, Seq(Point(2.0, 0.0), Point(1.5, 0.0)), 0.0, 0.5)))
+    val (filledTopology, _) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology.map(_.mmlId) should be(Seq(1, 2))
+    filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(1.0, 0.0)),
+      Seq(Point(2.0, 0.0), Point(1.0, 0.0))))
+  }
 }

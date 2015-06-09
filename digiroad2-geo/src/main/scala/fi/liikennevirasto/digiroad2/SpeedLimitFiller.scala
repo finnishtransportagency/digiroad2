@@ -85,7 +85,7 @@ object SpeedLimitFiller {
   }
 
   def adjustSpeedLimit(speedLimit: LinkChain[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
-    if (speedLimit.links.length > 2) {
+    if (speedLimit.links.length > 1) {
       val headLink = speedLimit.head()
       val lastLink = speedLimit.last()
       val middleSegments = speedLimit.withoutEndSegments().links
