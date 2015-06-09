@@ -11,15 +11,10 @@ object SpeedLimitFiller {
   case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment])
 
   private val MaxAllowedMValueError = 0.5
+  private val MaxAllowedGapSize = 1.0
 
   private def getLinkEndpoints(link: SpeedLimitDTO): (Point, Point) = {
     GeometryUtils.geometryEndpoints(link.geometry)
-  }
-
-  private def hasGaps(speedLimit: (Long, Seq[SpeedLimitDTO])) = {
-    val (_, links) = speedLimit
-    val maximumGapThreshold = 1
-    LinkChain(links, getLinkEndpoints).linkGaps().exists(_ > maximumGapThreshold)
   }
 
   private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
@@ -96,9 +91,10 @@ object SpeedLimitFiller {
     segment.rawLink.geometry.isEmpty
   }
 
-  // TODO: Implement me.
   def dropSpeedLimits(adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]], adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]]): (Seq[ChainedLink[SpeedLimitDTO]], Set[Long]) = {
-    (adjustedSegments, Set.empty[Long])
+    val droppedSpeedLimits = adjustedSpeedLimitsOnLink.filter { sl => sl.linkGaps().exists(_ > MaxAllowedGapSize) }.map(_.head().rawLink.assetId).toSet
+    val maintainedSegments = adjustedSegments.filterNot { segment => droppedSpeedLimits.contains(segment.rawLink.assetId) }
+    (maintainedSegments, droppedSpeedLimits)
   }
 
   def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimitDTO]]): Set[Long] = {

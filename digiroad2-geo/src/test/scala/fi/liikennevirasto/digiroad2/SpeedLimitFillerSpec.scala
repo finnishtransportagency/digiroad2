@@ -29,6 +29,17 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       SpeedLimitDTO(1, 1, 0, None, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0),
       SpeedLimitDTO(1, 2, 0, None, Nil, 0.0, 0.2)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+  }
 
+  test("drop speed limit with a gap") {
+     val topology = Map(1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1),
+      2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(3.0, 0.0)), 2.0, Unknown, 2),
+      3l -> RoadLinkForSpeedLimit(Seq(Point(3.0, 0.0), Point(4.0, 0.0)), 1.0, Unknown, 3))
+    val speedLimits = Map(1l -> Seq(
+      SpeedLimitDTO(1, 1, 0, None, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 0.0, 1.0),
+      SpeedLimitDTO(1, 3, 0, None, Seq(Point(3.0, 0.0), Point(4.0, 0.0)), 0.0, 1.0)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology should be (empty)
+    changeSet.droppedSpeedLimitIds should be(Set(1))
   }
 }
