@@ -57,7 +57,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      eventbus.publish("speedLimits:linkGeometriesRetrieved", linkGeometries)
       filledTopology
     }
   }
@@ -109,21 +108,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def fillPartiallyFilledRoadLinks(linkGeometries: Map[Long, RoadLinkForSpeedLimit]): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
-      logger.info("Filling partially filled road links, road link count in bounding box: " + linkGeometries.size)
-      OracleLinearAssetDao.fillPartiallyFilledRoadLinks(linkGeometries)
-      logger.info("...done with filling.")
-    }
-  }
-
   override def getSpeedLimits(municipality: Int): Seq[Map[String, Any]] = {
     Database.forDataSource(ds).withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getByMunicipality(municipality)
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.assetId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      eventbus.publish("speedLimits:linkGeometriesRetrieved", roadLinksByMmlId)
 
       val speedLimitLinksByMmlId = speedLimitLinks.groupBy(_.mmlId).mapValues(_.head)
       filledTopology.map { link =>

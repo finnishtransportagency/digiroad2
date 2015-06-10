@@ -21,13 +21,6 @@ class ValluActor extends Actor {
   }
 }
 
-class SpeedLimitFillerActor(linearAssetProvider: LinearAssetProvider) extends Actor {
-  def receive = {
-    case x: Map[Long, RoadLinkForSpeedLimit]  => "bal"//linearAssetProvider.fillPartiallyFilledRoadLinks(x)
-    case _                                    => println("speedLimitFiller: Received unknown message")
-  }
-}
-
 class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
     case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
@@ -52,9 +45,6 @@ object Digiroad2Context {
 
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
-
-  val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFillerActor], linearAssetProvider), name = "speedLimitFiller")
-  eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
