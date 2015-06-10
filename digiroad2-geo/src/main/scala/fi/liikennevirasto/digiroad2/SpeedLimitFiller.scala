@@ -1,10 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, SpeedLimitLink, RoadLinkForSpeedLimit}
-
-import scala.collection.immutable
 
 object SpeedLimitFiller {
   import GeometryDirection._
