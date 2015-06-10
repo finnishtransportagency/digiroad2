@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, SpeedLimitLink, RoadLinkForSpeedLimit}
 
 import scala.collection.immutable
@@ -133,6 +134,36 @@ object SpeedLimitFiller {
     speedLimits.filter { case (id, segments) => segments.exists(_.geometry.isEmpty) }.keySet
   }
 
+  private def generateSingleLinkSpeedLimits(topology:  Map[Long, RoadLinkForSpeedLimit], speedLimitSegments: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
+    val uncoveredLinkMmlIds = topology.keySet -- speedLimitSegments.map(_.mmlId).toSet
+    uncoveredLinkMmlIds.toSeq.map { mmlId =>
+      val link = topology(mmlId)
+      SpeedLimitLink(0, mmlId, 1, None, link.geometry, 0, true)
+    }
+  }
+
+  private def findPartiallyCoveredRoadLinks(mmlIds: Set[Long], roadLinks: Map[Long, RoadLinkForSpeedLimit], speedLimitLinks: Seq[SpeedLimitDTO]): Seq[(Long, Seq[(Double, Double)])] = {
+    val speedLimitLinksByMmlId = speedLimitLinks.groupBy(_.mmlId)
+    val partiallyCoveredLinks = mmlIds.map { mmlId =>
+      val lrmPositions: Seq[(Double, Double)] = speedLimitLinksByMmlId(mmlId).map { x => (x.startMeasure, x.endMeasure) }
+      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLinks(mmlId).length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+      (mmlId, remainders)
+    }
+    partiallyCoveredLinks.filterNot(_._2.isEmpty).toSeq
+  }
+
+  private def generatePartialLinkSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit], fittedSpeedLimitSegments: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
+    val coveredLinkIds = topology.keySet intersect fittedSpeedLimitSegments.map(_.mmlId).toSet
+    val partiallyCoveredLinks = findPartiallyCoveredRoadLinks(coveredLinkIds, topology, fittedSpeedLimitSegments)
+    partiallyCoveredLinks.flatMap { partiallyCoveredLink =>
+      val (mmlId, unfilledSegments) = partiallyCoveredLink
+      unfilledSegments.map { segment =>
+        val geometry = GeometryUtils.truncateGeometry(topology(mmlId).geometry, segment._1, segment._2)
+        SpeedLimitLink(0, mmlId, 1, None, geometry, 0, true)
+      }
+    }
+  }
+
   def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], SpeedLimitChangeSet) = {
     val roadLinks = topology.values
     val speedLimitSegments: Seq[SpeedLimitDTO] = speedLimits.values.flatten.toSeq
@@ -160,16 +191,10 @@ object SpeedLimitFiller {
     }
 
 
+    val filledTopology = fittedSpeedLimitSegments.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
+    val generatedSingleLinkSpeedLimits = generateSingleLinkSpeedLimits(topology, fittedSpeedLimitSegments)
+    val generatedPartialLinkSpeedLimits = generatePartialLinkSpeedLimits(topology, fittedSpeedLimitSegments)
 
-    val filledTopology: Seq[SpeedLimitLink] = fittedSpeedLimitSegments.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
-
-    val uncoveredLinkMmlIds = topology.keySet -- filledTopology.map(_.mmlId).toSet
-    val generatedSingleLinkSpeedLimits = uncoveredLinkMmlIds.toSeq.map { mmlId =>
-      val link = topology(mmlId)
-      SpeedLimitLink(0, mmlId, 1, None, link.geometry, 0, true)
-    }
-
-
-    (filledTopology ++ generatedSingleLinkSpeedLimits, changeSet)
+    (filledTopology ++ generatedSingleLinkSpeedLimits ++ generatedPartialLinkSpeedLimits, changeSet)
   }
 }
