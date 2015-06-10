@@ -82,7 +82,7 @@ object SpeedLimitFiller {
     (modifiedHeadLink, modifiedLastLink, mValueAdjustments ++ lastLinkMValueAdjustments)
   }
 
-  def adjustSpeedLimit(speedLimit: LinkChain[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
+  private def adjustSpeedLimit(speedLimit: LinkChain[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
     if (speedLimit.links.length > 1) {
       val headLink = speedLimit.head()
       val lastLink = speedLimit.last()
@@ -97,7 +97,7 @@ object SpeedLimitFiller {
     }
   }
 
-  def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
+  private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
                          speedLimits: Map[Long, Seq[SpeedLimitDTO]],
                          segments: Seq[SpeedLimitDTO],
                          adjustedSpeedLimits: Map[Long, LinkChain[SpeedLimitDTO]]):
@@ -117,17 +117,13 @@ object SpeedLimitFiller {
     }
   }
 
-  def hasEmptyGeometry(segment: ChainedLink[SpeedLimitDTO]): Boolean = {
-    segment.rawLink.geometry.isEmpty
-  }
-
-  def dropSpeedLimits(adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]], adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]]): (Seq[ChainedLink[SpeedLimitDTO]], Set[Long]) = {
+  private def dropSpeedLimits(adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]], adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]]): (Seq[ChainedLink[SpeedLimitDTO]], Set[Long]) = {
     val droppedSpeedLimits = adjustedSpeedLimitsOnLink.filter { sl => sl.linkGaps().exists(_ > MaxAllowedGapSize) }.map(_.head().rawLink.assetId).toSet
     val maintainedSegments = adjustedSegments.filterNot { segment => droppedSpeedLimits.contains(segment.rawLink.assetId) }
     (maintainedSegments, droppedSpeedLimits)
   }
 
-  def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimitDTO]]): Set[Long] = {
+  private def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimitDTO]]): Set[Long] = {
     speedLimits.filter { case (id, segments) => segments.exists(_.geometry.isEmpty) }.keySet
   }
 
