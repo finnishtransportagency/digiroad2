@@ -155,6 +155,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 0, UnknownDirection, MultipleCarriageway, None, None)
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
       when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
+      when(mockedRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }

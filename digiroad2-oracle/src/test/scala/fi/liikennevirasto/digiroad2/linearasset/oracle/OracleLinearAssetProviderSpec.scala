@@ -26,6 +26,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
 
   val roadLink = VVHRoadLinkWithProperties(1105998302l, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
+  when(mockRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
 
   when(mockRoadLinkService.fetchVVHRoadlink(362964704))
     .thenReturn(Some(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
@@ -55,16 +56,18 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("should ignore speed limits with segments outside link geometry") {
+  test("should complete topology with speed limit segments outside bounding box") {
     runWithCleanup {
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new OracleLinearAssetProvider(eventbus, mockRoadLinkService)
       val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(80.0, 0.0)), 80.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val linkOutsideBounds = VVHRoadLinkWithProperties(388552024, List(Point(80.0, 0.0), Point(80.0, 14.587)), 14.587, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
+      when(mockRoadLinkService.getRoadLinksFromVVH(Seq(388552024l))).thenReturn(Seq(linkOutsideBounds))
       val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-      speedLimits.map(_.id) should be(Seq(200204))
+      speedLimits.map(_.id) should be(Seq(200204, 200204, 0))
       verify(eventbus).publish(
         org.mockito.Matchers.eq("speedLimits:update"),
         org.mockito.Matchers.eq(SpeedLimitChangeSet(Set(200205), Nil))
@@ -77,15 +80,16 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new OracleLinearAssetProvider(eventbus, mockRoadLinkService)
-      val roadLink = VVHRoadLinkWithProperties(362959521, List(Point(0.0, 0.0), Point(223.834, 0.0)), 223.834, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
-      val roadLink2 = VVHRoadLinkWithProperties(362959407, List(Point(223.834, 0.0), Point(383.834, 0.0)), 160.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
-      val roadLink3 = VVHRoadLinkWithProperties(362964776, List(Point(474.567, 0.0), Point(383.834, 0.0)), 90.733, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink3 = VVHRoadLinkWithProperties(388552024, List(Point(0.0, 0.0), Point(14.587, 0.0)), 14.587, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
+      val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(100.0, 0.0), Point(130.0, 0.0)), 30.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
       val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-      speedLimits.filter(_.id == 200217).map(_.points).apply(1) should be(List(Point(223.834, 0.0), Point(383.834, 0.0)))
+      speedLimits.filter(_.id == 200205).map(_.points).apply(1) should be(List(Point(82.489, 0.0), Point(100.0, 0.0)))
       verify(eventbus).publish(
         org.mockito.Matchers.eq("speedLimits:update"),
-        org.mockito.Matchers.eq(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(200217, 362959407, 160.0))))
+        org.mockito.Matchers.eq(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(200205, 389010100, 100.0))))
       )
     }
   }
