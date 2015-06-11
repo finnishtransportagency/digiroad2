@@ -19,14 +19,14 @@
       collection.fetchSpeedLimit(id, function(speedLimit) {
         current = speedLimit;
         originalSpeedLimit = speedLimit.value;
-        collection.markAsSelected(speedLimit.id);
+        collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       });
     };
 
     this.close = function() {
       if (current && !dirty) {
-        collection.markAsDeselected(current.id);
+        collection.setSelection(null);
         var id = current.id;
         current = null;
         eventbus.trigger('speedLimit:unselected', id);
@@ -116,10 +116,14 @@
       return current.id === null;
     };
 
+    this.selectedFromMap = function(speedLimits) {
+      return speedLimits[self.getId()];
+    };
+
     eventbus.on('speedLimit:saved', function(speedLimit) {
       current = speedLimit;
       originalSpeedLimit = speedLimit.value;
-      collection.markAsSelected(speedLimit.id);
+      collection.setSelection(self);
       dirty = false;
     });
   };

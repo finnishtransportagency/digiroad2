@@ -2,6 +2,7 @@
   root.SpeedLimitsCollection = function(backend) {
     var speedLimits = {};
     var dirty = false;
+    var selection = null;
 
     var splitSpeedLimits = {};
 
@@ -39,7 +40,7 @@
 
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-        var selected = _.find(_.values(speedLimits), function(speedLimit) { return speedLimit.isSelected; });
+        var selected = selection && selection.selectedFromMap(speedLimits);
 
         speedLimits = transformSpeedLimits(fetchedSpeedLimits);
 
@@ -47,7 +48,6 @@
           speedLimits[selected.id] = selected;
         } else if (selected) {
           var selectedInCollection = speedLimits[selected.id];
-          selectedInCollection.isSelected = selected.isSelected;
           selectedInCollection.value = selected.value;
         }
 
@@ -69,12 +69,8 @@
       }
     };
 
-    this.markAsSelected = function(id) {
-      speedLimits[id].isSelected = true;
-    };
-
-    this.markAsDeselected = function(id) {
-      speedLimits[id].isSelected = false;
+    this.setSelection = function(sel) {
+      selection = sel;
     };
 
     this.changeValue = function(id, value) {
