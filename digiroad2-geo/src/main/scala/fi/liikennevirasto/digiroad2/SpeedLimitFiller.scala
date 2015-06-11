@@ -49,8 +49,7 @@ object SpeedLimitFiller {
         }
       }.getOrElse((segment.rawLink.geometry, None))
 
-      val newEndMeasure = mValueAdjustment.map(_.endMeasure).getOrElse(segment.rawLink.endMeasure)
-      val newDTO = segment.rawLink.copy(geometry = newGeometry, endMeasure = newEndMeasure)
+      val newDTO = segment.rawLink.copy(geometry = newGeometry, endMeasure = GeometryUtils.geometryLength(newGeometry))
       val newMiddleLink = new ChainedLink[SpeedLimitDTO](newDTO, segment.linkIndex, segment.linkPosition, segment.geometryDirection)
       (accModifiedMiddleLinks ++ Seq(newMiddleLink), accMValueAdjustments ++ mValueAdjustment)
     }
@@ -65,7 +64,7 @@ object SpeedLimitFiller {
         Seq(MValueAdjustment(rawLink.assetId, rawLink.mmlId, roadLinkLength))
       else
         Nil
-    val modifiedSegment = rawLink.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, rawLink.startMeasure, roadLinkLength))
+    val modifiedSegment = rawLink.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, rawLink.startMeasure, roadLinkLength), endMeasure = roadLinkLength)
     val modifiedLink = new ChainedLink[SpeedLimitDTO](modifiedSegment, link.linkIndex, link.linkPosition, link.geometryDirection)
     (modifiedLink, mAdjustment)
   }
