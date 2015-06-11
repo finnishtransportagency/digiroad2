@@ -164,9 +164,9 @@ object SpeedLimitFiller {
     }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.assetId == 0)
-    val generatedTopolgy = generatedLimits.map(link => toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, 0, TowardsLinkChain)))
-    val fittedTopolgy = existingLimits.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
-    val filledTopology = fittedTopolgy ++ generatedTopolgy
+    val generatedTopology = generatedLimits.map(link => toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, 0, TowardsLinkChain)))
+    val fittedTopology = existingLimits.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
+    val filledTopology = fittedTopology ++ generatedTopology
 
     (filledTopology, changeSet)
   }
