@@ -113,7 +113,8 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var showMassUpdateDialog = function(selectedIds) {
+  var showMassUpdateDialog = function(selectedSpeedLimits) {
+    var selectedIds = _.pluck(selectedSpeedLimits, 'id');
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
       var selected = value === 50 ? " selected" : "";
@@ -153,7 +154,8 @@ window.SpeedLimitLayer = function(params) {
 
     var activateSelectionStyle = function() {
       vectorLayer.styleMap = selectionStyle;
-      highlightMultipleSpeedLimitFeatures(selectedIds);
+      selectedSpeedLimit.openMultiple(selectedSpeedLimits);
+      highlightMultipleSpeedLimitFeatures();
       vectorLayer.redraw();
     };
 
@@ -186,6 +188,7 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var purge = function() {
+      selectedSpeedLimit.closeMultiple();
       $('.mass-update-modal').remove();
     };
     show();
@@ -324,14 +327,14 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection);
 
-  var highlightMultipleSpeedLimitFeatures = function(ids) {
-    _.each(vectorLayer.features, function(x) {
-      if (_.contains(ids, x.attributes.id)) {
-        selectControl.highlight(x);
-      } else {
-        selectControl.unhighlight(x);
-      }
+  var highlightMultipleSpeedLimitFeatures = function() {
+    var partitioned = _.groupBy(vectorLayer.features, function(feature) {
+      return selectedSpeedLimit.isSelected(feature.attributes);
     });
+    var selected = partitioned[true];
+    var unSelected = partitioned[false];
+    _.each(selected, function(feature) { selectControl.highlight(feature); });
+    _.each(unSelected, function(feature) { selectControl.unhighlight(feature); });
   };
 
   var highlightSpeedLimitFeatures = function(feature) {
@@ -349,8 +352,8 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var speedLimitOnSelect = function(feature) {
+    selectedSpeedLimit.open(feature.attributes);
     setSelectionStyleAndHighlightFeature(feature);
-    selectedSpeedLimit.open(feature.attributes.id);
   };
 
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
@@ -374,18 +377,14 @@ window.SpeedLimitLayer = function(params) {
       displayConfirmMessage();
     } else {
       var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
-      var selectedIds = _.chain(vectorLayer.features)
-        .filter(function(feature) {
-          return coordinateBounds.toGeometry().intersects(feature.geometry);
-        })
-        .map(function(feature) {
-          return feature.attributes.id;
-        })
-        .unique()
+      var selectedSpeedLimits = _.chain(vectorLayer.features)
+        .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
+        .map(function(feature) { return feature.attributes; })
+        .unique('id')
         .value();
-      if (selectedIds.length > 0) {
+      if (selectedSpeedLimits.length > 0) {
         selectedSpeedLimit.close();
-        showMassUpdateDialog(selectedIds);
+        showMassUpdateDialog(selectedSpeedLimits);
       }
     }
   };
@@ -550,11 +549,11 @@ window.SpeedLimitLayer = function(params) {
 
     if (selectedSpeedLimit.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+      var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
       if (feature) {
         selectControl.select(feature);
-        highlightSpeedLimitFeatures(feature);
       }
+      highlightMultipleSpeedLimitFeatures();
       selectControl.onSelect = speedLimitOnSelect;
     }
   };
