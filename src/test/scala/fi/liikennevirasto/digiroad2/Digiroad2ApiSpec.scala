@@ -41,7 +41,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlink(1140018963))
     .thenReturn(Some(VVHRoadlink(1140018963, 235, roadLinkGeometry, Municipality, UnknownDirection, FeatureClass.AllOthers)))
 
-  val testRoadLinkService = new VVHRoadLinkService(mockVVHClient)
+  val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
   val testLinearAssetProvider = new OracleLinearAssetProvider(new DummyEventBus, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def roadLinkService: RoadLinkService = testRoadLinkService

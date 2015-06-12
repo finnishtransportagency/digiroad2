@@ -5,9 +5,8 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.SpeedLimitFiller.SpeedLimitChangeSet
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, LinearAssetProvider}
+import fi.liikennevirasto.digiroad2.asset.AssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -17,7 +16,7 @@ import scala.slick.driver.JdbcDriver.backend.Database
 class ValluActor extends Actor {
   def receive = {
     case (massTransitStop: EventBusMassTransitStop) => ValluSender.postToVallu(massTransitStop)
-    case _                               => println("received unknown message")
+    case _                                          => println("received unknown message")
   }
 }
 
@@ -30,6 +29,13 @@ class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor 
   def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
     linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
     linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
+  }
+}
+
+class LinkPropertyUpdater(roadLinkService: RoadLinkService) extends Actor {
+  def receive = {
+    case w: RoadLinkChangeSet => roadLinkService.updateRoadLinkChanges(w)
+    case _                    => println("linkPropertyUpdater: Received unknown message")
   }
 }
 
@@ -48,6 +54,9 @@ object Digiroad2Context {
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
+
+  val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
+  eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
@@ -85,7 +94,7 @@ object Digiroad2Context {
 
   lazy val roadLinkService: RoadLinkService = {
     if (useVVHGeometry) {
-      new VVHRoadLinkService(vvhClient)
+      new VVHRoadLinkService(vvhClient, eventbus)
     } else RoadLinkService
   }
 

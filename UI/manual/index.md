@@ -170,9 +170,9 @@ _Tielinkin ominaisuustietojen muokkaus._
 
 ####Korjattavat tielinkit####
 
-Uudet linkit ovat korjattavien linkkien listalla (3), koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkki-tasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
+Uudet linkit ovat korjattavien linkkien listalla (3), koska niilt&auml; puuttuu toiminnallinen luokka tai linkin tyyppi (1). Korjattavien linkkien lista on luokiteltu tien omistajuuden mukaan. Linkki on kartalla musta, kunnes tieto on lis&auml;tty. Korjattavien linkkien listaan p&auml;&auml;see tielinkki-tasolta ominaisuustietotaulun alareunassa olevan painikkeen kautta (2). Listasta voi klikata korjattavaa tielinkki&auml; (4), jolloin sovellus avautuu kyseisen linkin kohdalta. Korjattava linkki poistuu listalta vasta sitten, kun sille on lis&auml;tty sek&auml; toiminnallinen luokka ett&auml; linkkityyppi. 
 
-Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot voi korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi.
+Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tulee Maanmittauslaitokselta geometriatiedon yhteydess&auml;. Jos tiedoissa on virheit&auml;, voi virheelliset liikennevirran suunta -tiedot voi korjata k&auml;ytt&ouml;liittym&auml;ss&auml; samalla kun linkille lis&auml;t&auml;&auml;n toiminnallinen luokka ja linkkityyppi. Korjattavien linkkien listaan ei tule uusia kevyen liikenteen v&auml;ylien, ajopolkujen ja ajoteiden tielinkkej&auml;, koska n&auml;iden tiedot saadaan Maanmittauslaitokselta. Toiminnallinen luokka ja tielinkin tyyppi t&auml;ydennet&auml;&auml;n n&auml;ille tielinkille automaattisesti. 
 
 ![Korjattava linkki](k47.jpg)
 
@@ -375,7 +375,7 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 
 Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. Lis&auml;ksi nopeusrajoituksilla on ympyr&auml;, joka kertoo nopeusrajoituksen arvon. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
 
-Jos tielinkill&auml; ei ole nopeusrajoitusta, sovellus generoi sen itse siten, ett&auml; katujen nopeusrajoitus on 50km/h ja maanteiden sek&auml; yksityisteiden 80km/h. Nopeusrajoitus tulee n&auml;kyviin, kun sovellus on generoinut sen.
+Jos tielinkill&auml; ei ole ollut aiemmin nopeusrajoitusta, sovellus generoi sille tuntemattoman nopeusrajoituksen. Tuntematon nopeusrajoitus n&auml;kyy mustana.
 
 ![Nopeusrajoitusten valinta](k18.jpg)
 
