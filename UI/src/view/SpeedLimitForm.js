@@ -53,7 +53,7 @@
       });
       toggleMode(applicationModel.isReadOnly());
     });
-    eventbus.on('speedLimit:unselected', function() {
+    eventbus.on('speedLimit:unselect', function() {
       rootElement.empty();
     });
     eventbus.on('application:readOnly', toggleMode);

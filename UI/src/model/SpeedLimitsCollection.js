@@ -1,6 +1,7 @@
 (function(root) {
   root.SpeedLimitsCollection = function(backend) {
     var speedLimits = {};
+    var unknownSpeedLimits = {};
     var dirty = false;
     var selection = null;
 
@@ -38,11 +39,31 @@
         .value();
     };
 
+     var transformUnknownSpeedLimits = function(speedLimits) {
+       return _.chain(speedLimits)
+         .groupBy('mmlId')
+         .map(function(values, key) {
+           return [key, { links: _.map(values, function(value) {
+             return {
+               mmlId: value.mmlId,
+               position: value.position,
+               points: value.points
+             };
+           }), sideCode: values[0].sideCode, value: values[0].value }];
+         })
+         .object()
+         .value();
+    };
+
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
         var selected = selection && selection.selectedFromMap(speedLimits);
 
-        speedLimits = transformSpeedLimits(fetchedSpeedLimits);
+        var partitionedSpeedLimits = _.groupBy(fetchedSpeedLimits, function(speedLimit) {
+          return _.has(speedLimit, "id");
+        });
+        speedLimits = transformSpeedLimits(partitionedSpeedLimits[true]);
+        unknownSpeedLimits = transformUnknownSpeedLimits(partitionedSpeedLimits[false]);
 
         if (selected && !speedLimits[selected.id]) {
           speedLimits[selected.id] = selected;
@@ -54,7 +75,7 @@
         if (splitSpeedLimits.existing) {
           eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
         } else {
-          eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+          eventbus.trigger('speedLimits:fetched', _.values(speedLimits).concat(_.values(unknownSpeedLimits)));
         }
       });
     };
@@ -67,6 +88,10 @@
       } else {
         callback(_.merge({}, splitSpeedLimits.created));
       }
+    };
+
+    this.getUnknown = function(mmlId) {
+      return unknownSpeedLimits[mmlId];
     };
 
     this.setSelection = function(sel) {

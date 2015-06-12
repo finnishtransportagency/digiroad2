@@ -401,9 +401,9 @@ window.SpeedLimitLayer = function(params) {
   map.addControl(boxControl);
   var boxHandler = new OpenLayers.Handler.Box(boxControl, { done: massUpdateSpeedLimits }, { keyMask: getModifierKey() });
 
-  var handleSpeedLimitUnSelected = function(id) {
+  var handleSpeedLimitUnSelected = function(selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
-      return feature.attributes.id === id;
+      return selection.isSelected(feature.attributes);
     }), function(feature) {
       selectControl.unhighlight(feature);
     });
@@ -472,7 +472,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
-    eventListener.listenTo(eventbus, 'speedLimit:unselected', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
   };
 

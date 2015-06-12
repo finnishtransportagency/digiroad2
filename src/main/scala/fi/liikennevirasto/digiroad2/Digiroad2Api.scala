@@ -429,7 +429,17 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { link =>
+        Map(
+          "id" -> (if (link.id == 0) None else Some(link.id)),
+          "mmlId" -> link.mmlId,
+          "sideCode" -> link.sideCode,
+          "value" -> link.value,
+          "points" -> link.points,
+          "position" -> link.position,
+          "towardsLinkChain" -> link.towardsLinkChain
+        )
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }

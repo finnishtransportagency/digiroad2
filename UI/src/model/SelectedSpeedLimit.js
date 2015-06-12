@@ -16,13 +16,19 @@
 
     this.open = function(speedLimit) {
       self.close();
-      selection = [speedLimit];
-      collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
-        selection = [fetchedSpeedLimit];
-        originalSpeedLimit = fetchedSpeedLimit.value;
+      if (_.has(speedLimit, 'id')) {
+        selection = [speedLimit];
+        collection.fetchSpeedLimit(speedLimit.id, function (fetchedSpeedLimit) {
+          selection = [fetchedSpeedLimit];
+          originalSpeedLimit = fetchedSpeedLimit.value;
+          collection.setSelection(self);
+          eventbus.trigger('speedLimit:selected', self);
+        });
+      } else {
+        selection = [collection.getUnknown(speedLimit.links[0].mmlId)];
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
-      });
+      }
     };
 
     this.openMultiple = function(speedLimits) {
@@ -31,10 +37,10 @@
 
     this.close = function() {
       if (!_.isEmpty(selection) && !dirty) {
+        eventbus.trigger('speedLimit:unselect', self);
         collection.setSelection(null);
         var id = selection[0].id;
         selection = [];
-        eventbus.trigger('speedLimit:unselected', id);
       }
     };
 
@@ -76,32 +82,36 @@
       return !_.isEmpty(selection);
     };
 
+    var getProperty = function(propertyName) {
+      return _.has(selection[0], propertyName) && selection[0][propertyName];
+    };
+
     this.getId = function() {
-      return selection[0].id;
+      return getProperty('id');
     };
 
     this.getEndpoints = function() {
-      return selection[0].endpoints;
+      return getProperty('endpoints');
     };
 
     this.getValue = function() {
-      return selection[0].value;
+      return getProperty('value');
     };
 
     this.getModifiedBy = function() {
-      return selection[0].modifiedBy;
+      return getProperty('modifiedBy');
     };
 
     this.getModifiedDateTime = function() {
-      return selection[0].modifiedDateTime;
+      return getProperty('modifiedDateTime');
     };
 
     this.getCreatedBy = function() {
-      return selection[0].createdBy;
+      return getProperty('createdBy');
     };
 
     this.getCreatedDateTime = function() {
-      return selection[0].createdDateTime;
+      return getProperty('createdDateTime');
     };
 
     this.get = function() {
@@ -122,12 +132,13 @@
     };
 
     this.isNew = function() {
-      return selection[0].id === null;
+      return this.getId() === null;
     };
 
     this.isSelected = function(speedLimit) {
       return _.some(selection, function(selectedSpeedLimit) {
-        return selectedSpeedLimit.id === speedLimit.id;
+        return (_.has(selectedSpeedLimit, 'id') && selectedSpeedLimit.id === speedLimit.id) ||
+               (selectedSpeedLimit.links[0].mmlId === speedLimit.links[0].mmlId);
       });
     };
 
