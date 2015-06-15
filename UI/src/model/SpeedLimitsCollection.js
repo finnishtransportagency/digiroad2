@@ -8,7 +8,18 @@
     var splitSpeedLimits = {};
 
     this.getAll = function() {
-      return _.values(speedLimits);
+      var unknowns = unknownSpeedLimits;
+      var knowns = speedLimits;
+      if (selection) {
+        if (selection.isUnknown()) {
+          unknowns = _.omit(unknowns, selection.get().links[0].mmlId);
+          unknowns[selection.get().links[0].mmlId] = selection.get();
+        } else {
+          knowns = _.omit(knowns, selection.getId());
+          knowns[selection.getId()] = _.merge({}, knowns[selection.getId()], selection.get());
+        }
+      }
+      return _.values(knowns).concat(_.values(unknowns));
     };
 
     var buildPayload = function(speedLimits, splitSpeedLimits) {

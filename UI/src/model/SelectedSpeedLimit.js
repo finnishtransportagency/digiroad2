@@ -26,6 +26,7 @@
         });
       } else {
         selection = [collection.getUnknown(speedLimit.links[0].mmlId)];
+        originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       }
@@ -95,7 +96,9 @@
     };
 
     var cancelUnknown = function() {
-      console.log('cancelling unknown speedlimit'); // TODO
+      selection[0].value = originalSpeedLimit;
+      dirty = false;
+      eventbus.trigger('speedLimit:cancelled', self);
     };
 
     var cancelSplit = function() {
