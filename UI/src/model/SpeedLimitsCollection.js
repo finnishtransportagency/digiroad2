@@ -4,34 +4,26 @@
     var unknownSpeedLimits = {};
     var dirty = false;
     var selection = null;
-
+    var self = this;
     var splitSpeedLimits = {};
 
     this.getAll = function() {
       var unknowns = unknownSpeedLimits;
       var knowns = speedLimits;
+      var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
+      var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
       if (selection) {
         if (selection.isUnknown()) {
-          unknowns = _.omit(unknowns, selection.get().links[0].mmlId);
+          unknowns = _.omit(unknowns, selection.get().links[0].mmlId.toString());
           unknowns[selection.get().links[0].mmlId] = selection.get();
+        } else if (selection.isSplit()) {
+          knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
         } else {
-          knowns = _.omit(knowns, selection.getId());
+          knowns = _.omit(knowns, selection.getId().toString());
           knowns[selection.getId()] = _.merge({}, knowns[selection.getId()], selection.get());
         }
       }
-      return _.values(knowns).concat(_.values(unknowns));
-    };
-
-    var buildPayload = function(speedLimits, splitSpeedLimits) {
-      var payload = _.chain(speedLimits)
-                     .reject(function(speedLimit, id) {
-                       return id === splitSpeedLimits.existing.id.toString();
-                     })
-                     .values()
-                     .value();
-      payload.push(splitSpeedLimits.existing);
-      payload.push(splitSpeedLimits.created);
-      return payload;
+      return _.values(knowns).concat(_.values(unknowns)).concat(existingSplit).concat(createdSplit);
     };
 
     var transformSpeedLimits = function(speedLimits) {
@@ -73,31 +65,14 @@
         });
         speedLimits = transformSpeedLimits(partitionedSpeedLimits[true]);
         unknownSpeedLimits = transformUnknownSpeedLimits(partitionedSpeedLimits[false]);
-
-        if (selection) {
-           if (selection.isUnknown()) {
-             unknownSpeedLimits[selection.get().links[0].mmlId] = selection.get();
-           } else {
-             speedLimits[selection.getId()] = _.merge({}, speedLimits[selection.getId()], selection.get());
-           }
-        }
-
-        if (splitSpeedLimits.existing) {
-          eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
-        } else {
-          eventbus.trigger('speedLimits:fetched', _.values(speedLimits).concat(_.values(unknownSpeedLimits)));
-        }
+        eventbus.trigger('speedLimits:fetched', self.getAll());
       });
     };
 
     this.fetchSpeedLimit = function(id, callback) {
-      if (id) {
-        backend.getSpeedLimit(id, function(speedLimit) {
-          callback(_.merge({}, speedLimits[id], speedLimit));
-        });
-      } else {
-        callback(_.merge({}, splitSpeedLimits.created));
-      }
+      backend.getSpeedLimit(id, function(speedLimit) {
+        callback(_.merge({}, speedLimits[id], speedLimit));
+      });
     };
 
     this.getUnknown = function(mmlId) {
@@ -128,7 +103,7 @@
       }, 0);
     };
 
-    this.splitSpeedLimit = function(id, mmlId, split) {
+    this.splitSpeedLimit = function(id, mmlId, split, callback) {
       backend.getSpeedLimit(id, function(speedLimit) {
         var speedLimitLinks = speedLimit.speedLimitLinks;
         var splitLink = _.find(speedLimitLinks, function(link) {
@@ -168,8 +143,8 @@
         splitSpeedLimits.splitMeasure = split.splitMeasure;
         splitSpeedLimits.splitMmlId = mmlId;
         dirty = true;
-        eventbus.trigger('speedLimits:fetched', buildPayload(speedLimits, splitSpeedLimits));
-        eventbus.trigger('speedLimit:split');
+        callback(splitSpeedLimits.created);
+        eventbus.trigger('speedLimits:fetched', self.getAll());
       });
     };
 
@@ -187,10 +162,10 @@
           speedLimits[speedLimit.id] = speedLimit;
         });
 
-        eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
-
         var newId = _.find(_.pluck(updatedSpeedLimits, 'id'), function(id) { return id !== existingId; });
         callback(newId);
+
+        eventbus.trigger('speedLimits:fetched', self.getAll());
 
         eventbus.trigger('speedLimit:saved');
         applicationModel.setSelectedTool('Select');
@@ -200,7 +175,7 @@
     this.cancelSplit = function() {
       dirty = false;
       splitSpeedLimits = {};
-      eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
+      eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     this.isDirty = function() {

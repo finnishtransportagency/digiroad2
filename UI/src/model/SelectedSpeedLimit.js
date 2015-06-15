@@ -5,14 +5,15 @@
     var dirty = false;
     var originalSpeedLimit = null;
 
-    eventbus.on('speedLimit:split', function() {
-      collection.fetchSpeedLimit(null, function(speedLimit) {
-        selection = [speedLimit];
-        originalSpeedLimit = speedLimit.value;
+    this.splitSpeedLimit = function(id, mmlId, split) {
+      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
+        selection = [createdSpeedLimit];
+        originalSpeedLimit = createdSpeedLimit.value;
         dirty = true;
+        collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       });
-    });
+    };
 
     this.open = function(speedLimit) {
       self.close();
@@ -103,6 +104,7 @@
 
     var cancelSplit = function() {
       eventbus.trigger('speedLimit:unselect', self);
+      collection.setSelection(null);
       selection = [];
       dirty = false;
       collection.cancelSplit();
