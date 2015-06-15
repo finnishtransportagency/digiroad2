@@ -240,6 +240,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
+  test("creating speed limit requires an operator role") {
+    postJsonWithUserAuth("/speedlimits", """{"mmlId":362964704, "startMeasure":0.0, "endMeasure":50.0, "limit":40}""".getBytes, username = "test") {
+      status should equal(401)
+    }
+  }
+
   case class RoadLinkHelper(mmlId: Long, points: Seq[Point],
                             administrativeClass: String, functionalClass: Int, trafficDirection: String,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)

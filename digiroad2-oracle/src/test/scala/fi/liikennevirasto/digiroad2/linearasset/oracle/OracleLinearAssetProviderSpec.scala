@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
+import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -84,6 +85,22 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
         org.mockito.Matchers.eq("speedLimits:update"),
         org.mockito.Matchers.eq(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(200205, 389010100, 100.0))))
       )
+    }
+  }
+
+  test("create new speed limit") {
+    runWithCleanup {
+      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      val provider = new OracleLinearAssetProvider(null, mockRoadLinkService)
+      val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+      when(mockRoadLinkService.fetchVVHRoadlink(1)).thenReturn(Some(roadLink))
+
+      val id = provider.createSpeedLimit(1, (0.0, 150.0), 30, "test", (_) => Unit)
+
+      val createdLimit = provider.getSpeedLimit(id).get
+      createdLimit.value should equal(Some(30))
+      createdLimit.createdBy should equal(Some("test"))
+      createdLimit.speedLimitLinks.length should equal(1)
     }
   }
 }
