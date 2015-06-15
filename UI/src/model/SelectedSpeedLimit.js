@@ -166,10 +166,13 @@
     };
 
     this.isSelected = function(speedLimit) {
-      return _.some(selection, function(selectedSpeedLimit) {
-        return (_.has(selectedSpeedLimit, 'id') && selectedSpeedLimit.id === speedLimit.id) ||
-               (selectedSpeedLimit.links[0].mmlId === speedLimit.links[0].mmlId);
-      });
+      if (self.isUnknown()) {
+        return !_.has(speedLimit, 'id') && (selection[0].links[0].mmlId === speedLimit.links[0].mmlId);
+      } else if (self.isSplit()) {
+        return speedLimit.id === null;
+      } else {
+        return _.some(selection, { id: speedLimit.id });
+      }
     };
 
     this.selectedFromMap = function(speedLimits) {

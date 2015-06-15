@@ -492,7 +492,7 @@ window.SpeedLimitLayer = function(params) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === selectedSpeedLimit.getId(); });
+    var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits([selectedSpeedLimit.get()]);
   };
