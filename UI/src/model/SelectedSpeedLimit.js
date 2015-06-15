@@ -76,13 +76,6 @@
       });
     };
 
-    this.cancelSplit = function() {
-      eventbus.trigger('speedLimit:unselect', self);
-      selection = [];
-      dirty = false;
-      collection.cancelSplit();
-    };
-
     this.isUnknown = function() {
       return !_.has(selection[0], 'id');
     };
@@ -101,11 +94,32 @@
       }
     };
 
-    this.cancel = function() {
+    var cancelUnknown = function() {
+      console.log('cancelling unknown speedlimit'); // TODO
+    };
+
+    var cancelSplit = function() {
+      eventbus.trigger('speedLimit:unselect', self);
+      selection = [];
+      dirty = false;
+      collection.cancelSplit();
+    };
+
+    var cancelExisting = function() {
       selection[0].value = originalSpeedLimit;
       collection.changeValue(selection[0].id, originalSpeedLimit);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
+    };
+
+    this.cancel = function() {
+      if (self.isUnknown()) {
+        cancelUnknown();
+      } else if (self.isSplit()) {
+        cancelSplit();
+      } else {
+        cancelExisting();
+      }
     };
 
     this.exists = function() {

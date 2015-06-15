@@ -61,14 +61,7 @@
       rootElement.find('.speed-limit button').attr('disabled', false);
     });
     rootElement.on('click', '.speed-limit button.save', function() { selectedSpeedLimit.save(); });
-    rootElement.on('click', '.speed-limit button.cancel', function() {
-      // TODO: Move branching to SelectedSpeedLimit
-      if (selectedSpeedLimit.isSplit()) {
-        selectedSpeedLimit.cancelSplit();
-      } else {
-        selectedSpeedLimit.cancel();
-      }
-    });
+    rootElement.on('click', '.speed-limit button.cancel', function() { selectedSpeedLimit.cancel(); });
   };
 
   root.SpeedLimitForm = {
