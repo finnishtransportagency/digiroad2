@@ -57,19 +57,18 @@
 
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-        var selected = selection && selection.selectedFromMap(speedLimits);
-
         var partitionedSpeedLimits = _.groupBy(fetchedSpeedLimits, function(speedLimit) {
           return _.has(speedLimit, "id");
         });
         speedLimits = transformSpeedLimits(partitionedSpeedLimits[true]);
         unknownSpeedLimits = transformUnknownSpeedLimits(partitionedSpeedLimits[false]);
 
-        if (selected && !speedLimits[selected.id]) {
-          speedLimits[selected.id] = selected;
-        } else if (selected) {
-          var selectedInCollection = speedLimits[selected.id];
-          selectedInCollection.value = selected.value;
+        if (selection) {
+           if (selection.isUnknown()) {
+             unknownSpeedLimits[selection.get().links[0].mmlId] = selection.get();
+           } else {
+             speedLimits[selection.getId()] = _.merge({}, speedLimits[selection.getId()], selection.get());
+           }
         }
 
         if (splitSpeedLimits.existing) {
