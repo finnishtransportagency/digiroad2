@@ -48,27 +48,57 @@
       selection = [];
     };
 
-    this.saveSplit = function() {
-      collection.saveSplit();
+    var saveSplit = function() {
+      collection.saveSplit(function(newId) {
+        selection[0].id = newId;
+        originalSpeedLimit = self.getValue();
+        collection.setSelection(self);
+        dirty = false;
+      });
     };
 
-    this.cancelSplit = function() {
-      var id = selection[0].id;
-      selection = [];
+    var saveUnknown = function() {
+      // TODO: Save unknown speed limit to backend
+      console.log('Saving speed limit to backend');
       dirty = false;
-      collection.cancelSplit();
-      eventbus.trigger('speedLimit:unselected', id);
+      originalSpeedLimit = selection[0].value;
+      eventbus.trigger('speedLimit:saved');
     };
 
-    this.save = function() {
+    var saveExisting = function() {
       backend.updateSpeedLimit(selection[0].id, selection[0].value, function(speedLimit) {
         dirty = false;
         selection = [_.merge({}, selection[0], speedLimit)];
         originalSpeedLimit = selection[0].value;
-        eventbus.trigger('speedLimit:saved', selection[0]);
+        eventbus.trigger('speedLimit:saved');
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
+    };
+
+    this.cancelSplit = function() {
+      eventbus.trigger('speedLimit:unselect', self);
+      selection = [];
+      dirty = false;
+      collection.cancelSplit();
+    };
+
+    this.isUnknown = function() {
+      return !_.has(selection[0], 'id');
+    };
+
+    this.isSplit = function() {
+      return selection[0].id === null;
+    };
+
+    this.save = function() {
+      if (self.isUnknown()) {
+        saveUnknown();
+      } else if (self.isSplit()) {
+        saveSplit();
+      } else {
+        saveExisting();
+      }
     };
 
     this.cancel = function() {
@@ -83,7 +113,7 @@
     };
 
     var getProperty = function(propertyName) {
-      return _.has(selection[0], propertyName) && selection[0][propertyName];
+      return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
     this.getId = function() {
@@ -120,8 +150,8 @@
 
     this.setValue = function(value) {
       if (value != selection[0].value) {
-        collection.changeValue(selection[0].id, value);
-        selection[0].value = value;
+        selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
+        if (!self.isUnknown()) collection.changeValue(selection[0].id, value);
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }
@@ -132,7 +162,7 @@
     };
 
     this.isNew = function() {
-      return this.getId() === null;
+      return !_.isNumber(self.getId());
     };
 
     this.isSelected = function(speedLimit) {
@@ -145,12 +175,5 @@
     this.selectedFromMap = function(speedLimits) {
       return speedLimits[self.getId()];
     };
-
-    eventbus.on('speedLimit:saved', function(speedLimit) {
-      selection = [speedLimit];
-      originalSpeedLimit = speedLimit.value;
-      collection.setSelection(self);
-      dirty = false;
-    });
   };
 })(this);

@@ -46,7 +46,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
     };
-    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function(speedLimit) {
+    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function() {
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setValue(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
@@ -60,15 +60,10 @@
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
       rootElement.find('.speed-limit button').attr('disabled', false);
     });
-    rootElement.on('click', '.speed-limit button.save', function() {
-      if (selectedSpeedLimit.isNew()) {
-        selectedSpeedLimit.saveSplit();
-      } else {
-        selectedSpeedLimit.save();
-      }
-    });
+    rootElement.on('click', '.speed-limit button.save', function() { selectedSpeedLimit.save(); });
     rootElement.on('click', '.speed-limit button.cancel', function() {
-      if (selectedSpeedLimit.isNew()) {
+      // TODO: Move branching to SelectedSpeedLimit
+      if (selectedSpeedLimit.isSplit()) {
         selectedSpeedLimit.cancelSplit();
       } else {
         selectedSpeedLimit.cancel();

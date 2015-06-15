@@ -337,13 +337,13 @@ window.SpeedLimitLayer = function(params) {
     _.each(unSelected, function(feature) { selectControl.unhighlight(feature); });
   };
 
-  var highlightSpeedLimitFeatures = function(feature) {
-    highlightMultipleSpeedLimitFeatures([feature.attributes.id]);
+  var highlightSpeedLimitFeatures = function() {
+    highlightMultipleSpeedLimitFeatures();
   };
 
-  var setSelectionStyleAndHighlightFeature = function(feature) {
+  var setSelectionStyleAndHighlightFeature = function() {
     vectorLayer.styleMap = selectionStyle;
-    highlightSpeedLimitFeatures(feature);
+    highlightSpeedLimitFeatures();
     vectorLayer.redraw();
   };
 
@@ -353,7 +353,7 @@ window.SpeedLimitLayer = function(params) {
 
   var speedLimitOnSelect = function(feature) {
     selectedSpeedLimit.open(feature.attributes);
-    setSelectionStyleAndHighlightFeature(feature);
+    setSelectionStyleAndHighlightFeature();
   };
 
   var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
@@ -478,14 +478,12 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
     if (selectedSpeedLimit.isNew()) {
-      var feature = findFeatureById(selectedSpeedLimit.getId());
-      setSelectionStyleAndHighlightFeature(feature);
+      setSelectionStyleAndHighlightFeature();
     }
   };
 
-  var handleSpeedLimitSaved = function(speedLimit) {
-    var feature = findFeatureById(speedLimit.id);
-    setSelectionStyleAndHighlightFeature(feature);
+  var handleSpeedLimitSaved = function() {
+    setSelectionStyleAndHighlightFeature();
   };
 
   var displayConfirmMessage = function() { new Confirm(); };

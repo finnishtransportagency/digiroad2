@@ -163,7 +163,7 @@
       });
     };
 
-    this.saveSplit = function() {
+    this.saveSplit = function(callback) {
       backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
@@ -178,9 +178,11 @@
         });
 
         eventbus.trigger('speedLimits:fetched', _.values(speedLimits));
-        eventbus.trigger('speedLimit:saved', (_.find(updatedSpeedLimits, function(speedLimit) {
-          return existingId !== speedLimit.id;
-        })));
+
+        var newId = _.find(_.pluck(updatedSpeedLimits, 'id'), function(id) { return id !== existingId; });
+        callback(newId);
+
+        eventbus.trigger('speedLimit:saved');
         applicationModel.setSelectedTool('Select');
       });
     };
