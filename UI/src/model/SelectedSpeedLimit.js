@@ -60,11 +60,22 @@
     };
 
     var saveUnknown = function() {
-      // TODO: Save unknown speed limit to backend
-      console.log('Saving speed limit to backend');
-      dirty = false;
-      originalSpeedLimit = selection[0].value;
-      eventbus.trigger('speedLimit:saved');
+      var link = self.get().links[0];
+      var singleLinkSpeedLimit = {
+        mmlId: link.mmlId,
+        startMeasure: link.startMeasure,
+        endMeasure: link.endMeasure,
+        limit: self.getValue()
+      };
+      backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimitId) {
+        dirty = false;
+        selection[0].id = speedLimitId;
+        originalSpeedLimit = selection[0].value;
+        collection.createSpeedLimitForUnknown(self.get());
+        eventbus.trigger('speedLimit:saved');
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
     };
 
     var saveExisting = function() {

@@ -34,7 +34,9 @@
             return {
               mmlId: value.mmlId,
               position: value.position,
-              points: value.points
+              points: value.points,
+              startMeasure: value.startMeasure,
+              endMeasure: value.endMeasure
             };
           }), sideCode: values[0].sideCode, value: values[0].value }];
         })
@@ -50,7 +52,9 @@
              return {
                mmlId: value.mmlId,
                position: value.position,
-               points: value.points
+               points: value.points,
+               startMeasure: value.startMeasure,
+               endMeasure: value.endMeasure
              };
            }), sideCode: values[0].sideCode, value: values[0].value }];
          })
@@ -77,6 +81,11 @@
 
     this.getUnknown = function(mmlId) {
       return unknownSpeedLimits[mmlId];
+    };
+
+    this.createSpeedLimitForUnknown = function(speedLimit) {
+      unknownSpeedLimits = _.omit(unknownSpeedLimits, speedLimit.links[0].mmlId.toString());
+      speedLimits[speedLimit.id] = speedLimit;
     };
 
     this.setSelection = function(sel) {
