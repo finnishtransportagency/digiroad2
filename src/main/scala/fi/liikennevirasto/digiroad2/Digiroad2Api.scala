@@ -437,7 +437,9 @@ with GZipSupport {
           "value" -> link.value,
           "points" -> link.points,
           "position" -> link.position,
-          "towardsLinkChain" -> link.towardsLinkChain
+          "towardsLinkChain" -> link.towardsLinkChain,
+          "startMeasure" -> link.startMeasure,
+          "endMeasure" -> link.endMeasure
         )
       }
     } getOrElse {

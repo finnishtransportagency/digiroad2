@@ -26,27 +26,27 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
-  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
-    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
+  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection, Double, Double)): SpeedLimitLink = {
+    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection, startMeasure, endMeasure) = linkAndPositionNumber
 
     val towardsLinkChain = geometryDirection match {
       case TowardsLinkChain => true
       case AgainstLinkChain => false
     }
 
-    SpeedLimitLink(id, mmlId, sideCode, limit, points, positionNumber, towardsLinkChain)
+    SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure, positionNumber, towardsLinkChain)
   }
 
-  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point])): (Point, Point) = {
-    val (_, _, _, _, points) = link
+  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point], Double, Double)): (Point, Point) = {
+    val (_, _, _, _, points, _, _) = link
     GeometryUtils.geometryEndpoints(points)
   }
 
-  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point])]): Seq[SpeedLimitLink] = {
+  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double)]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
-      val (id, mmlId, sideCode, limit, points) = chainedLink.rawLink
-      toSpeedLimit((id, mmlId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection))
+      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure) = chainedLink.rawLink
+      toSpeedLimit((id, mmlId, sideCode, limit, points, chainedLink.linkPosition, chainedLink.geometryDirection, startMeasure, endMeasure))
     }
   }
 
@@ -115,14 +115,13 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.assetId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
 
-      val speedLimitLinksByMmlId = speedLimitLinks.groupBy(_.mmlId).mapValues(_.head)
       filledTopology.map { link =>
         Map ("id" -> (link.id + "-" + link.mmlId),
           "sideCode" -> link.sideCode,
           "points" -> link.points,
           "value" -> link.value,
-          "startMeasure" -> speedLimitLinksByMmlId(link.mmlId).startMeasure,
-          "endMeasure" -> speedLimitLinksByMmlId(link.mmlId).endMeasure,
+          "startMeasure" -> link.startMeasure,
+          "endMeasure" -> link.endMeasure,
           "mmlId" -> link.mmlId)
       }
     }

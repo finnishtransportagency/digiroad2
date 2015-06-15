@@ -157,7 +157,7 @@ trait OracleLinearAssetDao {
       .groupBy(_.mmlId).mapValues(_.head)
   }
 
-  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point])] = {
+  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double)] = {
     val speedLimits = sql"""
       select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
         from ASSET a
@@ -170,7 +170,7 @@ trait OracleLinearAssetDao {
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
-      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure))
+      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure)
     }
   }
 

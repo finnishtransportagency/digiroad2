@@ -16,22 +16,22 @@ object SpeedLimitFiller {
     GeometryUtils.geometryEndpoints(link.geometry)
   }
 
-  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection)): SpeedLimitLink = {
-    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection) = linkAndPositionNumber
+  private def toSpeedLimit(linkAndPositionNumber: (Long, Long, Int, Option[Int], Seq[Point], Int, GeometryDirection, Double, Double)): SpeedLimitLink = {
+    val (id, mmlId, sideCode, limit, points, positionNumber, geometryDirection, startMeasure, endMeasure) = linkAndPositionNumber
 
     val towardsLinkChain = geometryDirection match {
       case TowardsLinkChain => true
       case AgainstLinkChain => false
     }
 
-    SpeedLimitLink(id, mmlId, sideCode, limit, points, positionNumber, towardsLinkChain)
+    SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure, positionNumber, towardsLinkChain)
   }
 
   private def getLinksWithPositions(links: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val link = chainedLink.rawLink
-      toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, chainedLink.linkPosition, chainedLink.geometryDirection))
+      toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, chainedLink.linkPosition, chainedLink.geometryDirection, link.startMeasure, link.endMeasure))
     }
   }
 
@@ -164,7 +164,7 @@ object SpeedLimitFiller {
     }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.assetId == 0)
-    val generatedTopology = generatedLimits.map(link => toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, 0, TowardsLinkChain)))
+    val generatedTopology = generatedLimits.map(link => toSpeedLimit((link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, 0, TowardsLinkChain, link.startMeasure, link.endMeasure)))
     val fittedTopology = existingLimits.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
 
     (fittedTopology ++ generatedTopology, changeSet)
