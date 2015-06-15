@@ -569,6 +569,17 @@ with GZipSupport {
                                         validateUserMunicipalityAccess(user))
   }
 
+  post("/speedlimits") {
+    val user = userProvider.getCurrentUser()
+
+    linearAssetProvider.createSpeedLimit((parsedBody \ "mmlId").extract[Long],
+                                         ((parsedBody \ "startMeasure").extract[Double],
+                                          (parsedBody \ "endMeasure").extract[Double]),
+                                         (parsedBody \ "limit").extract[Int],
+                                         user.username,
+                                         validateUserMunicipalityAccess(user))
+  }
+
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
     if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))

@@ -11,6 +11,7 @@ case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administr
 case class SpeedLimitDTO(assetId: Long, mmlId: Long, sideCode: Int, value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetProvider {
+  def createSpeedLimit(mmlId: Long, linkMeasures: (Double, Double), value: Int, username: String, municipalityValidation: (Int) => Unit): Long
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long]
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
