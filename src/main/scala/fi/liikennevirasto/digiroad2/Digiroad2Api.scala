@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, LinearAssetProvider}
 import org.scalatra._
 import org.json4s._
 import org.scalatra.json._
@@ -544,15 +544,15 @@ with GZipSupport {
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
-
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
-    val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
-
+    val ids = (parsedBody \ "ids").extract[Seq[Long]]
+    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
-      case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get,
-        value,
-        user.username,
-        validateUserMunicipalityAccess(user))
+      case Some(value) => {
+        val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
+        val createdIds = newLimits.map { limit => linearAssetProvider.createSpeedLimit(limit.mmlId, (limit.startMeasure, limit.endMeasure), value, user.username, validateUserMunicipalityAccess(user)) }
+        updatedIds ++ createdIds
+      }
       case _ => BadRequest("Speed limit value not provided")
     }
   }
