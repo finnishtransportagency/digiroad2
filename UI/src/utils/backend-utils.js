@@ -123,12 +123,12 @@
       });
     }, 1000);
 
-     this.updateSpeedLimits = _.throttle(function(ids, value, success, failure) {
+     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/speedlimits",
-        data: JSON.stringify({value: value, ids: ids}),
+        data: JSON.stringify(payload),
         dataType: "json",
         success: success,
         error: failure

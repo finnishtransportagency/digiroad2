@@ -114,7 +114,6 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var showMassUpdateDialog = function(selectedSpeedLimits) {
-    var selectedIds = _.pluck(selectedSpeedLimits, 'id');
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
       var selected = value === 50 ? " selected" : "";
@@ -124,7 +123,7 @@ window.SpeedLimitLayer = function(params) {
       '<div class="modal-overlay mass-update-modal">' +
         '<div class="modal-dialog">' +
           '<div class="content">' +
-            'Olet valinnut <%- selectedIds.length %> nopeusrajoitusta' +
+            'Olet valinnut <%- speedLimitCount %> nopeusrajoitusta' +
           '</div>' +
           '<div class="form-group editable">' +
             '<label class="control-label">Rajoitus</label>' +
@@ -139,7 +138,7 @@ window.SpeedLimitLayer = function(params) {
 
     var renderDialog = function() {
       $('.container').append(_.template(confirmDiv, {
-        selectedIds: selectedIds
+        speedLimitCount: selectedSpeedLimit.count()
       }));
       var modal = $('.modal-dialog');
     };
@@ -160,6 +159,11 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var bindEvents = function() {
+      eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed', purge);
+      eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded', function() {
+        collection.fetch(map.getExtent());
+      });
+
       $('.mass-update-modal .close').on('click', function() {
         activateBrowseStyle();
         purge();
@@ -167,16 +171,9 @@ window.SpeedLimitLayer = function(params) {
       $('.mass-update-modal .save').on('click', function() {
         var modal = $('.modal-dialog');
         modal.find('.actions button').attr('disabled', true);
-        var value = parseInt($('.mass-update-modal select').val(), 10);
         activateBrowseStyle();
-        backend.updateSpeedLimits(selectedIds, value, function() {
-          collection.fetch(map.getExtent());
-          eventbus.trigger('speedLimits:massUpdateSucceeded', selectedIds.length);
-          purge();
-        }, function() {
-          eventbus.trigger('speedLimits:massUpdateFailed', selectedIds.length);
-          purge();
-        });
+        var value = parseInt($('.mass-update-modal select').val(), 10);
+        selectedSpeedLimit.saveMultiple(value);
       });
     };
 
@@ -190,6 +187,7 @@ window.SpeedLimitLayer = function(params) {
     var purge = function() {
       selectedSpeedLimit.closeMultiple();
       $('.mass-update-modal').remove();
+      eventListener.stopListening(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed');
     };
     show();
   };
@@ -380,7 +378,6 @@ window.SpeedLimitLayer = function(params) {
       var selectedSpeedLimits = _.chain(vectorLayer.features)
         .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
         .map(function(feature) { return feature.attributes; })
-        .unique('id')
         .value();
       if (selectedSpeedLimits.length > 0) {
         selectedSpeedLimit.close();

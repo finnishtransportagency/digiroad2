@@ -34,7 +34,13 @@
     };
 
     this.openMultiple = function(speedLimits) {
-      selection = speedLimits;
+      var partitioned = _.groupBy(speedLimits, isUnknown);
+      var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
+      var unknownSpeedLimits = _.unique(partitioned[true] || [], function(speedLimit) {
+        return speedLimit.links[0].mmlId;
+      });
+
+      selection = existingSpeedLimits.concat(unknownSpeedLimits);
     };
 
     this.close = function() {
@@ -48,6 +54,23 @@
 
     this.closeMultiple = function() {
       selection = [];
+    };
+
+    this.saveMultiple = function(value) {
+      var partition = _.groupBy(selection, isUnknown);
+      var unknownSpeedLimits = partition[true];
+      var knownSpeedLimits = partition[false];
+
+      var payload = {
+        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x.links[0], 'mmlId', 'startMeasure', 'endMeasure'); }),
+        ids: _.pluck(knownSpeedLimits, 'id'),
+        value: value
+      };
+      backend.updateSpeedLimits(payload, function() {
+        eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
+      }, function() {
+        eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
+      });
     };
 
     var saveSplit = function() {
@@ -89,8 +112,12 @@
       });
     };
 
+    var isUnknown = function(speedLimit) {
+      return !_.has(speedLimit, 'id');
+    };
+
     this.isUnknown = function() {
-      return !_.has(selection[0], 'id');
+      return isUnknown(selection[0]);
     };
 
     this.isSplit = function() {
@@ -178,6 +205,10 @@
       return selection[0];
     };
 
+    this.count = function() {
+      return selection.length;
+    };
+
     this.setValue = function(value) {
       if (value != selection[0].value) {
         selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
@@ -196,17 +227,21 @@
     };
 
     this.isSelected = function(speedLimit) {
-      if (self.isUnknown()) {
-        return !_.has(speedLimit, 'id') && (selection[0].links[0].mmlId === speedLimit.links[0].mmlId);
-      } else if (self.isSplit()) {
+      if (self.isSplit()) {
         return speedLimit.id === null;
       } else {
-        return _.some(selection, { id: speedLimit.id });
+        return _.some(selection, function(selectedSpeedLimit) {
+          return isEqual(speedLimit, selectedSpeedLimit);
+        });
       }
     };
 
-    this.selectedFromMap = function(speedLimits) {
-      return speedLimits[self.getId()];
+    var isEqual = function(a, b) {
+      if (isUnknown(a) && isUnknown(b)) {
+        return a.links[0].mmlId === b.links[0].mmlId;
+      } else {
+        return (isUnknown(a) === isUnknown(b)) && (a.id === b.id);
+      }
     };
   };
 })(this);
