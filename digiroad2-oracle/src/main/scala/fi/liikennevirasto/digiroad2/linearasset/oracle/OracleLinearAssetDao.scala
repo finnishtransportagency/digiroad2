@@ -372,7 +372,6 @@ trait OracleLinearAssetDao {
 
   def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
-      if (ids.contains(200157l)) println("*** Floating speed limit 200157")
       val speedLimitIds = ids.mkString(",")
       sqlu"""update asset set floating = 1 where id in (#$speedLimitIds)""".execute()
     }
