@@ -60,6 +60,7 @@ window.SpeedLimitLayer = function(params) {
     var findNearestSpeedLimitLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
+        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && collection.getUnknown(feature.attributes.generatedId); })
         .map(function(feature) {
           return {feature: feature,
                   distanceObject: feature.geometry.distanceTo(point, {details: true})};

@@ -579,7 +579,7 @@ with GZipSupport {
     linearAssetProvider.createSpeedLimits(Seq(newLimit),
                                          (parsedBody \ "value").extract[Int],
                                          user.username,
-                                         validateUserMunicipalityAccess(user))
+                                         validateUserMunicipalityAccess(user)).headOption
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
