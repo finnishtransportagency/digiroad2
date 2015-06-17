@@ -113,7 +113,7 @@ trait OracleLinearAssetDao {
       SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
     }
 
-    val topology = toTopolgy(roadLinks)
+    val topology = toTopology(roadLinks)
     val speedLimitIds = speedLimitLinks.map(_.assetId).toSet
     val missingSegments = findMissingSegments(speedLimitIds, topology)
     val missingLinks = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
@@ -125,7 +125,7 @@ trait OracleLinearAssetDao {
     (speedLimitLinks ++ segmentsOutsideBounds, topology ++ topologyOutsideBounds)
   }
 
-  private def toTopolgy(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
+  private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(link.geometry, link.length, link.administrativeClass, link.mmlId)
 
@@ -156,7 +156,7 @@ trait OracleLinearAssetDao {
           val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
           SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
         }
-    (segmentsOutsideTopology, toTopolgy(roadLinks))
+    (segmentsOutsideTopology, toTopology(roadLinks))
   }
 
   private def findMissingSegments(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]) = {
