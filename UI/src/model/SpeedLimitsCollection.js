@@ -14,8 +14,8 @@
       var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
       if (selection) {
         if (selection.isUnknown()) {
-          unknowns = _.omit(unknowns, selection.get().links[0].mmlId.toString());
-          unknowns[selection.get().links[0].mmlId] = selection.get();
+          unknowns = _.omit(unknowns, selection.get().generatedId);
+          unknowns[selection.get().generatedId] = selection.get();
         } else if (selection.isSplit()) {
           knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
         } else {
@@ -44,11 +44,17 @@
         .value();
     };
 
+    var generateUnknownLimitId = function(speedLimit) {
+      return speedLimit.mmlId.toString() +
+        speedLimit.startMeasure.toFixed(2) +
+        speedLimit.endMeasure.toFixed(2);
+    };
+
      var transformUnknownSpeedLimits = function(speedLimits) {
        return _.chain(speedLimits)
-         .groupBy('mmlId')
+         .groupBy(generateUnknownLimitId)
          .map(function(values, key) {
-           return [key, { links: _.map(values, function(value) {
+           return [key, { generatedId: key, links: _.map(values, function(value) {
              return {
                mmlId: value.mmlId,
                position: value.position,
@@ -79,12 +85,12 @@
       });
     };
 
-    this.getUnknown = function(mmlId) {
-      return unknownSpeedLimits[mmlId];
+    this.getUnknown = function(generatedId) {
+      return unknownSpeedLimits[generatedId];
     };
 
     this.createSpeedLimitForUnknown = function(speedLimit) {
-      unknownSpeedLimits = _.omit(unknownSpeedLimits, speedLimit.links[0].mmlId.toString());
+      unknownSpeedLimits = _.omit(unknownSpeedLimits, speedLimit.generatedId);
       speedLimits[speedLimit.id] = speedLimit;
     };
 

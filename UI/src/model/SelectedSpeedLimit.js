@@ -26,7 +26,7 @@
           eventbus.trigger('speedLimit:selected', self);
         });
       } else {
-        selection = [collection.getUnknown(speedLimit.links[0].mmlId)];
+        selection = [collection.getUnknown(speedLimit.generatedId)];
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -36,9 +36,7 @@
     this.openMultiple = function(speedLimits) {
       var partitioned = _.groupBy(speedLimits, isUnknown);
       var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
-      var unknownSpeedLimits = _.unique(partitioned[true] || [], function(speedLimit) {
-        return speedLimit.links[0].mmlId;
-      });
+      var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
 
       selection = existingSpeedLimits.concat(unknownSpeedLimits);
     };
@@ -237,11 +235,8 @@
     };
 
     var isEqual = function(a, b) {
-      if (isUnknown(a) && isUnknown(b)) {
-        return a.links[0].mmlId === b.links[0].mmlId;
-      } else {
-        return (isUnknown(a) === isUnknown(b)) && (a.id === b.id);
-      }
+      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
+        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
   };
 })(this);
