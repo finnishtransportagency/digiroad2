@@ -346,10 +346,6 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var findFeatureById = function(id) {
-    return _.find(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
-  };
-
   var speedLimitOnSelect = function(feature) {
     selectedSpeedLimit.open(feature.attributes);
     setSelectionStyleAndHighlightFeature();
