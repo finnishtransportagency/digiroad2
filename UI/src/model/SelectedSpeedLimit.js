@@ -45,7 +45,6 @@
       if (!_.isEmpty(selection) && !dirty) {
         eventbus.trigger('speedLimit:unselect', self);
         collection.setSelection(null);
-        var id = selection[0].id;
         selection = [];
       }
     };
