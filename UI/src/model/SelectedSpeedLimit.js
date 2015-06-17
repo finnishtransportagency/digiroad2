@@ -17,19 +17,19 @@
 
     this.open = function(speedLimit) {
       self.close();
-      if (_.has(speedLimit, 'id')) {
+      if (isUnknown(speedLimit)) {
+        selection = [collection.getUnknown(speedLimit.generatedId)];
+        originalSpeedLimit = self.getValue();
+        collection.setSelection(self);
+        eventbus.trigger('speedLimit:selected', self);
+      } else {
         selection = [speedLimit];
-        collection.fetchSpeedLimit(speedLimit.id, function (fetchedSpeedLimit) {
+        collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
           selection = [fetchedSpeedLimit];
           originalSpeedLimit = fetchedSpeedLimit.value;
           collection.setSelection(self);
           eventbus.trigger('speedLimit:selected', self);
         });
-      } else {
-        selection = [collection.getUnknown(speedLimit.generatedId)];
-        originalSpeedLimit = self.getValue();
-        collection.setSelection(self);
-        eventbus.trigger('speedLimit:selected', self);
       }
     };
 
