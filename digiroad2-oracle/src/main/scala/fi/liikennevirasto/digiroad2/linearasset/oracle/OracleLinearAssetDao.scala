@@ -107,6 +107,19 @@ trait OracleLinearAssetDao {
     }
   }
 
+  private def removeOrphanLink(orphan: (Long, Long, Int, Option[Int], Double, Double)) = {
+    val (assetId, mmlId, _, _, _, _) = orphan
+    val optionalPositionId = sql"""
+      select al.position_id from asset_link al
+      join LRM_POSITION pos on al.position_id = pos.id
+      where  al.ASSET_ID = $assetId and pos.mml_id = $mmlId""".as[Long].firstOption()
+
+    optionalPositionId.foreach { positionId =>
+      sqlu"""delete from asset_link where position_id = $positionId""".execute()
+      sqlu"""delete from lrm_position where id = $positionId""".execute()
+    }
+  }
+
   private def getSpeedLimitSegmentsOutsideTopology(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
     val missingSegments = fetchSpeedLimitSegmentsByAssetIds(speedLimits).filterNot { link => topology.keySet.contains(link._2) }
     val roadLinks = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
@@ -117,6 +130,9 @@ trait OracleLinearAssetDao {
         val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
         SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
       }
+
+    missingSegments.filterNot { segment => roadLinks.exists(_.mmlId == segment._2) }.foreach(removeOrphanLink)
+
     (segmentsOutsideTopology, roadLinksForSpeedLimits(roadLinks))
   }
 
@@ -168,6 +184,8 @@ trait OracleLinearAssetDao {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
+
+    println("**** " + speedLimits.length)
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
       (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure)
