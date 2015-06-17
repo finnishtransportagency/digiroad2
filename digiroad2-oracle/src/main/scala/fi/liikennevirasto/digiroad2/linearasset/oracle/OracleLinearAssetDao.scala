@@ -113,19 +113,19 @@ trait OracleLinearAssetDao {
       SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
     }
 
-    val topology = roadLinksForSpeedLimits(roadLinks)
+    val topology = toTopolgy(roadLinks)
     val speedLimitIds = speedLimitLinks.map(_.assetId).toSet
     val missingSegments = findMissingSegments(speedLimitIds, topology)
-    val links = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
+    val missingLinks = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
 
-    val (segmentsOutsideBounds, topologyOutsideBounds) = getSpeedLimitSegmentsOutsideTopology(missingSegments, links)
+    val (segmentsOutsideBounds, topologyOutsideBounds) = getSpeedLimitSegmentsOutsideTopology(missingSegments, missingLinks)
 
-    missingSegments.filterNot { segment => links.exists(_.mmlId == segment._2) }.foreach(removeOrphanLink)
+    missingSegments.filterNot { segment => missingLinks.exists(_.mmlId == segment._2) }.foreach(removeOrphanLink)
 
     (speedLimitLinks ++ segmentsOutsideBounds, topology ++ topologyOutsideBounds)
   }
 
-  private def roadLinksForSpeedLimits(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
+  private def toTopolgy(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(link.geometry, link.length, link.administrativeClass, link.mmlId)
 
@@ -156,7 +156,7 @@ trait OracleLinearAssetDao {
           val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
           SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
         }
-    (segmentsOutsideTopology, roadLinksForSpeedLimits(roadLinks))
+    (segmentsOutsideTopology, toTopolgy(roadLinks))
   }
 
   private def findMissingSegments(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]) = {
