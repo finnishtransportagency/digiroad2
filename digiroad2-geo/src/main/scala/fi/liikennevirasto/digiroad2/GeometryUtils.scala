@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, RoadLink}
 
 object GeometryUtils {
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
