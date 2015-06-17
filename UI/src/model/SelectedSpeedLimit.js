@@ -65,7 +65,7 @@
         mmlId: link.mmlId,
         startMeasure: link.startMeasure,
         endMeasure: link.endMeasure,
-        limit: self.getValue()
+        value: self.getValue()
       };
       backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimitId) {
         dirty = false;

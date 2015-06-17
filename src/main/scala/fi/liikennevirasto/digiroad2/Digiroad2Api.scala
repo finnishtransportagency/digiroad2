@@ -532,7 +532,7 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
 
     val speedLimitId = params("speedLimitId").toLong
-    (parsedBody \ "limit").extractOpt[Int] match {
+    (parsedBody \ "value").extractOpt[Int] match {
       case Some(limit) =>
         linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
           case Some(id) => linearAssetProvider.getSpeedLimit(id)
@@ -564,7 +564,7 @@ with GZipSupport {
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         mmlId,
                                         (parsedBody \ "splitMeasure").extract[Double],
-                                        (parsedBody \ "limit").extract[Int],
+                                        (parsedBody \ "value").extract[Int],
                                         user.username,
                                         validateUserMunicipalityAccess(user))
   }
@@ -577,7 +577,7 @@ with GZipSupport {
                             (parsedBody \ "endMeasure").extract[Double])
 
     linearAssetProvider.createSpeedLimits(Seq(newLimit),
-                                         (parsedBody \ "limit").extract[Int],
+                                         (parsedBody \ "value").extract[Int],
                                          user.username,
                                          validateUserMunicipalityAccess(user))
   }

@@ -116,7 +116,7 @@
         contentType: "application/json",
         type: "PUT",
         url: "api/speedlimits/" + id,
-        data: JSON.stringify({limit: limit}),
+        data: JSON.stringify({value: limit}),
         dataType: "json",
         success: success,
         error: failure
@@ -152,7 +152,7 @@
         contentType: "application/json",
         type: "POST",
         url: "api/speedlimits/" + id,
-        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, limit: limit}),
+        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: limit}),
         dataType: "json",
         success: success,
         error: failure
