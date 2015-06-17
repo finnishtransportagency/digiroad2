@@ -133,9 +133,11 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def createSpeedLimit(mmlId: Long, linkMeasures: (Double, Double), value: Int, username: String, municipalityValidation: (Int) => Unit): Long = {
+  override def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      dao.createSpeedLimit(username, mmlId, linkMeasures, 1, value, municipalityValidation)
+      newLimits.map { limit =>
+        dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), 1, value, municipalityValidation)
+      }
     }
   }
 

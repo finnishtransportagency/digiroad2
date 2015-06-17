@@ -550,7 +550,7 @@ with GZipSupport {
     optionalValue match {
       case Some(value) => {
         val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
-        val createdIds = newLimits.map { limit => linearAssetProvider.createSpeedLimit(limit.mmlId, (limit.startMeasure, limit.endMeasure), value, user.username, validateUserMunicipalityAccess(user)) }
+        val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
         updatedIds ++ createdIds
       }
       case _ => BadRequest("Speed limit value not provided")
@@ -572,9 +572,11 @@ with GZipSupport {
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
 
-    linearAssetProvider.createSpeedLimit((parsedBody \ "mmlId").extract[Long],
-                                         ((parsedBody \ "startMeasure").extract[Double],
-                                          (parsedBody \ "endMeasure").extract[Double]),
+    val newLimit = NewLimit((parsedBody \ "mmlId").extract[Long],
+                            (parsedBody \ "startMeasure").extract[Double],
+                            (parsedBody \ "endMeasure").extract[Double])
+
+    linearAssetProvider.createSpeedLimits(Seq(newLimit),
                                          (parsedBody \ "limit").extract[Int],
                                          user.username,
                                          validateUserMunicipalityAccess(user))

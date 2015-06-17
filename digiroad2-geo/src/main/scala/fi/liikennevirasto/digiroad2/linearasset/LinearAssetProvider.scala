@@ -12,7 +12,7 @@ case class SpeedLimitDTO(assetId: Long, mmlId: Long, sideCode: Int, value: Optio
 case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 
 trait LinearAssetProvider {
-  def createSpeedLimit(mmlId: Long, linkMeasures: (Double, Double), value: Int, username: String, municipalityValidation: (Int) => Unit): Long
+  def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long]
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
