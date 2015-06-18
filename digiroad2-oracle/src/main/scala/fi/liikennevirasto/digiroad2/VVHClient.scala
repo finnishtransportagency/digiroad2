@@ -32,7 +32,7 @@ class VVHClient(hostname: String) {
         val municipalityQuery = municipalities.tail.foldLeft("Kuntatunnus=" + municipalities.head){ (acc, m) => acc + " or Kuntatunnus=" + m }
         s""""where":"$municipalityQuery","""
       }
-    val fieldSelection = s""""outFields":"MTK_ID,KUNTATUNNUS,KOHDELUOKKA,HALLINNOLLINENLUOKKA,YKSISUUNTAISUUS""""
+    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE""""
     val definitionEnd = "}]"
     definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
   }
@@ -40,7 +40,7 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(municipalities)
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
@@ -53,7 +53,7 @@ class VVHClient(hostname: String) {
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(Set(municipality))
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
@@ -63,8 +63,8 @@ class VVHClient(hostname: String) {
   }
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = {
-    val layerDefs = URLEncoder.encode(s"""{"0":"MTK_ID=$mmlId"}""", "UTF-8")
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Basic_data/FeatureServer/query?" +
+    val layerDefs = URLEncoder.encode(s"""{"0":"MTKID=$mmlId"}""", "UTF-8")
+    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
 
     val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
@@ -93,9 +93,9 @@ class VVHClient(hostname: String) {
       Point(point(0), point(1))
     })
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-    val mmlId = attributes("MTK_ID").asInstanceOf[BigInt].longValue()
-    val municipalityCode = attributes("KUNTATUNNUS").asInstanceOf[String].toInt
-    val featureClassCode = attributes("KOHDELUOKKA").asInstanceOf[BigInt].intValue()
+    val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
+    val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
+    val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
     VVHRoadlink(mmlId, municipalityCode, linkGeometry,
       extractAdministrativeClass(attributes), extractTrafficDirection(attributes), featureClass)
@@ -113,7 +113,7 @@ class VVHClient(hostname: String) {
     12157 -> Private)
 
   private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
-    Option(attributes("HALLINNOLLINENLUOKKA").asInstanceOf[BigInt])
+    Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(vvhAdministrativeClassToAdministrativeClass.getOrElse(_, Unknown))
       .getOrElse(Unknown)
@@ -125,7 +125,7 @@ class VVHClient(hostname: String) {
     2 -> AgainstDigitizing)
 
   private def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
-    Option(attributes("YKSISUUNTAISUUS").asInstanceOf[BigInt])
+    Option(attributes("DIRECTIONTYPE").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, UnknownDirection))
       .getOrElse(UnknownDirection)
