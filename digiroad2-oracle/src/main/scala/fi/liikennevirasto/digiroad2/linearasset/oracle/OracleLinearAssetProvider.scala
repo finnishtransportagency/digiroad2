@@ -1,24 +1,21 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 import fi.liikennevirasto.digiroad2.SpeedLimitFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, Queries}
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.user.UserProvider
-import scala.slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+
+import scala.slick.driver.JdbcDriver.backend.Database
+import scala.slick.jdbc.{StaticQuery => Q}
 
 // FIXME:
 // - rename to speed limit service
 // - move common asset functionality to asset service
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
-  import GeometryDirection._
+  import fi.liikennevirasto.digiroad2.GeometryDirection._
 
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
@@ -98,22 +95,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimits(municipality: Int): Seq[Map[String, Any]] = {
+  override def getSpeedLimits(municipality: Int): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getByMunicipality(municipality)
-
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.assetId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-
-      filledTopology.map { link =>
-        Map ("id" -> (link.id + "-" + link.mmlId),
-          "sideCode" -> link.sideCode,
-          "points" -> link.points,
-          "value" -> link.value,
-          "startMeasure" -> link.startMeasure,
-          "endMeasure" -> link.endMeasure,
-          "mmlId" -> link.mmlId)
-      }
+      filledTopology
     }
   }
 
