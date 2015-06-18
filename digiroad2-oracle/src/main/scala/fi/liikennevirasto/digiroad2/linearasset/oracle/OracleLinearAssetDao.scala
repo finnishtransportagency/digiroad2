@@ -105,24 +105,16 @@ trait OracleLinearAssetDao {
   }
 
   private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinksByMmlId = roadLinks.groupBy(_.mmlId).mapValues(_.head)
-
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(roadLinksByMmlId.keys.toSeq).map { link =>
-      val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = link
-      val geometry = GeometryUtils.truncateGeometry(roadLinksByMmlId(mmlId).geometry, startMeasure, endMeasure)
-      SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
-    }
-
     val topology = toTopology(roadLinks)
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
     val speedLimitIds = speedLimitLinks.map(_.assetId).toSet
     val missingSegments = findMissingSegments(speedLimitIds, topology)
-    val missingLinks = roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2))
+    val topologyOutsideBounds = toTopology(roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2)))
+    val (segmentsOutsideBounds, orphanSegments) = missingSegments.partition { case(_, mmlId, _, _, _, _) => topologyOutsideBounds.get(mmlId).isDefined }
+    orphanSegments.foreach(removeSegment)
+    val geometrizedSegmentsOutsideBounds = segmentsOutsideBounds.map(createGeometryForSegment(topologyOutsideBounds))
 
-    val (segmentsOutsideBounds, topologyOutsideBounds) = getSpeedLimitSegmentsOutsideTopology(missingSegments, missingLinks)
-
-    missingSegments.filterNot { segment => missingLinks.exists(_.mmlId == segment._2) }.foreach(removeOrphanLink)
-
-    (speedLimitLinks ++ segmentsOutsideBounds, topology ++ topologyOutsideBounds)
+    (speedLimitLinks ++ geometrizedSegmentsOutsideBounds, topology ++ topologyOutsideBounds)
   }
 
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
@@ -135,7 +127,7 @@ trait OracleLinearAssetDao {
       .groupBy(_.mmlId).mapValues(_.head)
   }
 
-  private def removeOrphanLink(orphan: (Long, Long, Int, Option[Int], Double, Double)) = {
+  private def removeSegment(orphan: (Long, Long, Int, Option[Int], Double, Double)) = {
     val (assetId, mmlId, _, _, _, _) = orphan
     val optionalPositionId = sql"""
       select al.position_id from asset_link al
@@ -148,15 +140,11 @@ trait OracleLinearAssetDao {
     }
   }
 
-  private def getSpeedLimitSegmentsOutsideTopology(missingSegments: Seq[(Long, Long, Int, Option[Int], Double, Double)], roadLinks: Seq[VVHRoadLinkWithProperties]) = {
-    val segmentsOutsideTopology =
-      for (segment <- missingSegments; roadLink <- roadLinks; if roadLink.mmlId == segment._2)
-        yield {
-          val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = segment
-          val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-          SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
-        }
-    (segmentsOutsideTopology, toTopology(roadLinks))
+  private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, Int, Option[Int], Double, Double)) = {
+    val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = segment
+    val roadLink = topology.get(mmlId).get
+    val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
+    SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
   }
 
   private def findMissingSegments(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]) = {
