@@ -3,9 +3,10 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.SpeedLimitChangeSet
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, AssetProvider}
-import fi.liikennevirasto.digiroad2.linearasset.{LinkGeometryWrapper, RoadLinkForSpeedLimit, LinearAssetProvider}
+import fi.liikennevirasto.digiroad2.asset.AssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -19,10 +20,15 @@ class ValluActor extends Actor {
   }
 }
 
-class SpeedLimitFiller(linearAssetProvider: LinearAssetProvider) extends Actor {
+class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
-    case w: LinkGeometryWrapper => linearAssetProvider.fillPartiallyFilledRoadLinks(w.linkGeometries)
+    case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
     case _                      => println("speedLimitFiller: Received unknown message")
+  }
+
+  def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
+    linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
+    linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
   }
 }
 
@@ -46,8 +52,8 @@ object Digiroad2Context {
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
 
-  val speedLimitFiller = system.actorOf(Props(classOf[SpeedLimitFiller], linearAssetProvider), name = "speedLimitFiller")
-  eventbus.subscribe(speedLimitFiller, "speedLimits:linkGeometriesRetrieved")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")

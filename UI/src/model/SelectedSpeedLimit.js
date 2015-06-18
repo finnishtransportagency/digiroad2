@@ -1,108 +1,215 @@
 (function(root) {
   root.SelectedSpeedLimit = function(backend, collection) {
-    var current = null;
+    var selection = [];
     var self = this;
     var dirty = false;
     var originalSpeedLimit = null;
 
-    eventbus.on('speedLimit:split', function() {
-      collection.fetchSpeedLimit(null, function(speedLimit) {
-        current = speedLimit;
-        originalSpeedLimit = speedLimit.value;
+    this.splitSpeedLimit = function(id, mmlId, split) {
+      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
+        selection = [createdSpeedLimit];
+        originalSpeedLimit = createdSpeedLimit.value;
         dirty = true;
-        eventbus.trigger('speedLimit:selected', self);
-      });
-    });
-
-    this.open = function(id) {
-      self.close();
-      collection.fetchSpeedLimit(id, function(speedLimit) {
-        current = speedLimit;
-        originalSpeedLimit = speedLimit.value;
-        collection.markAsSelected(speedLimit.id);
+        collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       });
     };
 
-    this.close = function() {
-      if (current && !dirty) {
-        collection.markAsDeselected(current.id);
-        var id = current.id;
-        current = null;
-        eventbus.trigger('speedLimit:unselected', id);
+    this.open = function(speedLimit) {
+      self.close();
+      if (isUnknown(speedLimit)) {
+        selection = [collection.getUnknown(speedLimit.generatedId)];
+        originalSpeedLimit = self.getValue();
+        collection.setSelection(self);
+        eventbus.trigger('speedLimit:selected', self);
+      } else {
+        selection = [speedLimit];
+        collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
+          selection = [fetchedSpeedLimit];
+          originalSpeedLimit = fetchedSpeedLimit.value;
+          collection.setSelection(self);
+          eventbus.trigger('speedLimit:selected', self);
+        });
       }
     };
 
-    this.saveSplit = function() {
-      collection.saveSplit();
+    this.openMultiple = function(speedLimits) {
+      var partitioned = _.groupBy(speedLimits, isUnknown);
+      var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
+      var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
+
+      selection = existingSpeedLimits.concat(unknownSpeedLimits);
     };
 
-    this.cancelSplit = function() {
-      var id = current.id;
-      current = null;
-      dirty = false;
-      collection.cancelSplit();
-      eventbus.trigger('speedLimit:unselected', id);
+    this.close = function() {
+      if (!_.isEmpty(selection) && !dirty) {
+        eventbus.trigger('speedLimit:unselect', self);
+        collection.setSelection(null);
+        selection = [];
+      }
     };
 
-    this.save = function() {
-      backend.updateSpeedLimit(current.id, current.value, function(speedLimit) {
+    this.closeMultiple = function() {
+      selection = [];
+    };
+
+    this.saveMultiple = function(value) {
+      var partition = _.groupBy(selection, isUnknown);
+      var unknownSpeedLimits = partition[true];
+      var knownSpeedLimits = partition[false];
+
+      var payload = {
+        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x.links[0], 'mmlId', 'startMeasure', 'endMeasure'); }),
+        ids: _.pluck(knownSpeedLimits, 'id'),
+        value: value
+      };
+      backend.updateSpeedLimits(payload, function() {
+        eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
+      }, function() {
+        eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
+      });
+    };
+
+    var saveSplit = function() {
+      collection.saveSplit(function(newId) {
+        selection[0].id = newId;
+        originalSpeedLimit = self.getValue();
+        collection.setSelection(self);
         dirty = false;
-        current = _.merge({}, current, speedLimit);
-        originalSpeedLimit = current.value;
-        eventbus.trigger('speedLimit:saved', current);
+      });
+    };
+
+    var saveUnknown = function() {
+      var link = self.get().links[0];
+      var singleLinkSpeedLimit = {
+        mmlId: link.mmlId,
+        startMeasure: link.startMeasure,
+        endMeasure: link.endMeasure,
+        value: self.getValue()
+      };
+      backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimitId) {
+        dirty = false;
+        selection[0].id = speedLimitId;
+        originalSpeedLimit = selection[0].value;
+        collection.createSpeedLimitForUnknown(self.get());
+        eventbus.trigger('speedLimit:saved');
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
     };
 
-    this.cancel = function() {
-      current.value = originalSpeedLimit;
-      collection.changeValue(current.id, originalSpeedLimit);
+    var saveExisting = function() {
+      backend.updateSpeedLimit(selection[0].id, selection[0].value, function(speedLimit) {
+        dirty = false;
+        selection = [_.merge({}, selection[0], speedLimit)];
+        originalSpeedLimit = selection[0].value;
+        eventbus.trigger('speedLimit:saved');
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
+    var isUnknown = function(speedLimit) {
+      return !_.has(speedLimit, 'id');
+    };
+
+    this.isUnknown = function() {
+      return isUnknown(selection[0]);
+    };
+
+    this.isSplit = function() {
+      return selection[0].id === null;
+    };
+
+    this.save = function() {
+      if (self.isUnknown()) {
+        saveUnknown();
+      } else if (self.isSplit()) {
+        saveSplit();
+      } else {
+        saveExisting();
+      }
+    };
+
+    var cancelUnknown = function() {
+      selection[0].value = originalSpeedLimit;
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
 
+    var cancelSplit = function() {
+      eventbus.trigger('speedLimit:unselect', self);
+      collection.setSelection(null);
+      selection = [];
+      dirty = false;
+      collection.cancelSplit();
+    };
+
+    var cancelExisting = function() {
+      selection[0].value = originalSpeedLimit;
+      collection.changeValue(selection[0].id, originalSpeedLimit);
+      dirty = false;
+      eventbus.trigger('speedLimit:cancelled', self);
+    };
+
+    this.cancel = function() {
+      if (self.isUnknown()) {
+        cancelUnknown();
+      } else if (self.isSplit()) {
+        cancelSplit();
+      } else {
+        cancelExisting();
+      }
+    };
+
     this.exists = function() {
-      return current !== null;
+      return !_.isEmpty(selection);
+    };
+
+    var getProperty = function(propertyName) {
+      return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
     this.getId = function() {
-      return current.id;
+      return getProperty('id');
     };
 
     this.getEndpoints = function() {
-      return current.endpoints;
+      return getProperty('endpoints');
     };
 
     this.getValue = function() {
-      return current.value;
+      return getProperty('value');
     };
 
     this.getModifiedBy = function() {
-      return current.modifiedBy;
+      return getProperty('modifiedBy');
     };
 
     this.getModifiedDateTime = function() {
-      return current.modifiedDateTime;
+      return getProperty('modifiedDateTime');
     };
 
     this.getCreatedBy = function() {
-      return current.createdBy;
+      return getProperty('createdBy');
     };
 
     this.getCreatedDateTime = function() {
-      return current.createdDateTime;
+      return getProperty('createdDateTime');
     };
 
     this.get = function() {
-      return current;
+      return selection[0];
+    };
+
+    this.count = function() {
+      return selection.length;
     };
 
     this.setValue = function(value) {
-      if (value != current.value) {
-        collection.changeValue(current.id, value);
-        current.value = value;
+      if (value != selection[0].value) {
+        selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
+        if (!self.isUnknown()) collection.changeValue(selection[0].id, value);
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }
@@ -113,14 +220,22 @@
     };
 
     this.isNew = function() {
-      return current.id === null;
+      return !_.isNumber(self.getId());
     };
 
-    eventbus.on('speedLimit:saved', function(speedLimit) {
-      current = speedLimit;
-      originalSpeedLimit = speedLimit.value;
-      collection.markAsSelected(speedLimit.id);
-      dirty = false;
-    });
+    this.isSelected = function(speedLimit) {
+      if (self.isSplit()) {
+        return speedLimit.id === null;
+      } else {
+        return _.some(selection, function(selectedSpeedLimit) {
+          return isEqual(speedLimit, selectedSpeedLimit);
+        });
+      }
+    };
+
+    var isEqual = function(a, b) {
+      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
+        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+    };
   };
 })(this);

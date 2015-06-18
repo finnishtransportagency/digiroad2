@@ -235,7 +235,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits/200114", """{"limit":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits/200114", """{"value":60}""".getBytes, username = "test") {
+      status should equal(401)
+    }
+  }
+
+  test("creating speed limit requires an operator role") {
+    postJsonWithUserAuth("/speedlimits", """{"mmlId":362964704, "startMeasure":0.0, "endMeasure":50.0, "value":40}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
@@ -245,7 +251,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
   test("split speed limits requires an operator role") {
-    postJsonWithUserAuth("/speedlimits/200114", """{"roadLinkId":362955345, "splitMeasure":5 , "limit":120}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits/200114", """{"mmlId":362955345, "splitMeasure":5 , "value":120}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

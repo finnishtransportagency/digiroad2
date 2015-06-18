@@ -1,9 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.GeometryDirection
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.TowardsLinkChain
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.AgainstLinkChain
-import fi.liikennevirasto.digiroad2.LinkChain.{GeometryDirection, LinkIndex, LinkPosition}
+import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
+import fi.liikennevirasto.digiroad2.LinkChain.{LinkIndex, LinkPosition}
+
+object GeometryDirection extends Enumeration {
+  type GeometryDirection = Value
+  val TowardsLinkChain, AgainstLinkChain = Value
+}
 
 object LinkChain {
   type PointIndex = Int
@@ -11,11 +14,6 @@ object LinkChain {
   type SegmentIndex = Int
   type LinkPosition = Int
   type LinkIndex = Int
-
-  object GeometryDirection extends Enumeration {
-    type GeometryDirection = Value
-    val TowardsLinkChain, AgainstLinkChain = Value
-  }
 
   def apply[T](rawLinks: Seq[T], fetchLinkEndPoints: (T) => (Point, Point)): LinkChain[T] = {
     val endPoints: Seq[(Point, Point)] = rawLinks.map(fetchLinkEndPoints)
@@ -85,7 +83,7 @@ object LinkChain {
     }
 
     val indexedSegments = segments.zipWithIndex
-    if (indexedSegments.length == 1) (Seq(0), Seq(TowardsLinkChain))
+    if (indexedSegments.length == 1) (Seq(0), Seq(GeometryDirection.TowardsLinkChain))
     else {
       val shortestDistances: Seq[(PointIndex, (PointIndex, Double))] = shortestDistancesBetweenLinkEndPoints(indexedSegments)
 
@@ -97,7 +95,7 @@ object LinkChain {
         val (_, segmentPosition) = indexedSegment
         val (pointIndex, (segmentIndices, geometryDirections)) = acc
         val friend = findFriendIndex(pointIndex)
-        val geometryDirection = if (friend > pointIndex) TowardsLinkChain else AgainstLinkChain
+        val geometryDirection = if (friend > pointIndex) GeometryDirection.TowardsLinkChain else GeometryDirection.AgainstLinkChain
         val closestNeighbourOfFriend = shortestDistances(friend)._2._1
         (closestNeighbourOfFriend, (segmentIndices :+ (pointIndexToSegmentIndex(pointIndex) -> segmentPosition), geometryDirections :+ geometryDirection))
       }._2
@@ -111,6 +109,8 @@ object LinkChain {
 class ChainedLink[T](val rawLink: T, val linkIndex: LinkIndex, val linkPosition: LinkPosition, val geometryDirection: GeometryDirection)
 
 class LinkChain[T](val links: Seq[ChainedLink[T]], val fetchLinkEndPoints: (T) => (Point, Point)) {
+  import GeometryDirection._
+
   def endPoints(): (Point, Point) = {
     val firstLinkEndPoints = fetchLinkEndPoints(links.head.rawLink)
     val lastLinkEndPoints = fetchLinkEndPoints(links.last.rawLink)
@@ -136,6 +136,30 @@ class LinkChain[T](val links: Seq[ChainedLink[T]], val fetchLinkEndPoints: (T) =
       points._1.distanceTo(points._2)
     }
   }
+
+  def withoutEndSegments(): LinkChain[T] = {
+    val tailLinks = links match {
+      case x :: xs => xs
+      case _ => Nil
+    }
+    val middleLinks = tailLinks match {
+      case Nil => Nil
+      case xs => xs.init
+    }
+    new LinkChain[T](middleLinks, fetchLinkEndPoints)
+  }
+
+  def existsOnMiddleSegments(p: (ChainedLink[T]) => Boolean) : Boolean = {
+    withoutEndSegments().links.exists(p)
+  }
+
+  def find(p: (ChainedLink[T]) => Boolean) : Option[ChainedLink[T]] = {
+    links.find(p)
+  }
+
+  def head(): ChainedLink[T] = links.head
+
+  def last(): ChainedLink[T] = links.last
 
   def map[A](transformation: (ChainedLink[T]) => A): Seq[A] = {
     links.map(transformation)

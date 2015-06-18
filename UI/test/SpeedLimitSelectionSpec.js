@@ -35,9 +35,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
       expect(feature.attributes.value).to.equal(limitValue);
-      expect(feature.attributes.isSelected).to.be.true;
     });
     expect($('#feature-attributes .speed-limit :selected')).to.have.text(limitValue.toString());
+    expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
   };
 
   describe('when loading application with speed limit data', function() {

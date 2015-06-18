@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, LinearAssetProvider}
 import org.scalatra._
 import org.json4s._
 import org.scalatra.json._
@@ -429,7 +429,19 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities)
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { link =>
+        Map(
+          "id" -> (if (link.id == 0) None else Some(link.id)),
+          "mmlId" -> link.mmlId,
+          "sideCode" -> link.sideCode,
+          "value" -> link.value,
+          "points" -> link.points,
+          "position" -> link.position,
+          "towardsLinkChain" -> link.towardsLinkChain,
+          "startMeasure" -> link.startMeasure,
+          "endMeasure" -> link.endMeasure
+        )
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -520,7 +532,7 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
 
     val speedLimitId = params("speedLimitId").toLong
-    (parsedBody \ "limit").extractOpt[Int] match {
+    (parsedBody \ "value").extractOpt[Int] match {
       case Some(limit) =>
         linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
           case Some(id) => linearAssetProvider.getSpeedLimit(id)
@@ -532,15 +544,15 @@ with GZipSupport {
 
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
-
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
-    val optionalIds = (parsedBody \ "ids").extractOpt[Seq[Long]]
-
+    val ids = (parsedBody \ "ids").extract[Seq[Long]]
+    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
-      case Some(value) => linearAssetProvider.updateSpeedLimitValues(optionalIds.get,
-        value,
-        user.username,
-        validateUserMunicipalityAccess(user))
+      case Some(value) => {
+        val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
+        val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
+        updatedIds ++ createdIds
+      }
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -548,13 +560,26 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
 
-    val mmlId = (parsedBody \ "roadLinkId").extract[Long]
+    val mmlId = (parsedBody \ "mmlId").extract[Long]
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
                                         mmlId,
                                         (parsedBody \ "splitMeasure").extract[Double],
-                                        (parsedBody \ "limit").extract[Int],
+                                        (parsedBody \ "value").extract[Int],
                                         user.username,
                                         validateUserMunicipalityAccess(user))
+  }
+
+  post("/speedlimits") {
+    val user = userProvider.getCurrentUser()
+
+    val newLimit = NewLimit((parsedBody \ "mmlId").extract[Long],
+                            (parsedBody \ "startMeasure").extract[Double],
+                            (parsedBody \ "endMeasure").extract[Double])
+
+    linearAssetProvider.createSpeedLimits(Seq(newLimit),
+                                         (parsedBody \ "value").extract[Int],
+                                         user.username,
+                                         validateUserMunicipalityAccess(user)).headOption
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {

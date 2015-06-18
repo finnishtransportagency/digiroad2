@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.LinkChain.GeometryDirection.{AgainstLinkChain, TowardsLinkChain}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
@@ -26,6 +25,8 @@ case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set
                        numericalLimitLinks: Seq[NumericalLimitLink], typeId: Int)
 
 trait NumericalLimitOperations {
+  import GeometryDirection._
+
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T

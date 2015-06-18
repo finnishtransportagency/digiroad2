@@ -99,24 +99,36 @@
       });
     }, 1000);
 
+    this.createSingleLinkSpeedLimit = function(singleLinkSpeedLimit, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/speedlimits",
+        data: JSON.stringify(singleLinkSpeedLimit),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/speedlimits/" + id,
-        data: JSON.stringify({limit: limit}),
+        data: JSON.stringify({value: limit}),
         dataType: "json",
         success: success,
         error: failure
       });
     }, 1000);
 
-     this.updateSpeedLimits = _.throttle(function(ids, value, success, failure) {
+     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/speedlimits",
-        data: JSON.stringify({value: value, ids: ids}),
+        data: JSON.stringify(payload),
         dataType: "json",
         success: success,
         error: failure
@@ -135,12 +147,12 @@
       });
     }, 1000);
 
-    this.splitSpeedLimit = function(id, roadLinkId, splitMeasure, limit, success, failure) {
+    this.splitSpeedLimit = function(id, mmlId, splitMeasure, limit, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/speedlimits/" + id,
-        data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, limit: limit}),
+        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: limit}),
         dataType: "json",
         success: success,
         error: failure
