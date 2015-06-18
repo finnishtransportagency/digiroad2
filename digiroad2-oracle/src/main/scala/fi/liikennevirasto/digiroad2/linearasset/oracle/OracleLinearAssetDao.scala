@@ -68,8 +68,11 @@ trait OracleLinearAssetDao {
         join LRM_POSITION pos on al.position_id = pos.id
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
+
+    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(links.map(_._1))
+
     links.map { case (mmlId, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).get
+      val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
       val truncatedGeometry = GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure)
       (mmlId, endMeasure - startMeasure, truncatedGeometry, vvhRoadLink.municipalityCode)
     }
@@ -176,8 +179,10 @@ trait OracleLinearAssetDao {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
 
+    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(speedLimits.map(_._2))
+
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
-      val vvhRoadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new NoSuchElementException)
+      val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
       (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure)
     }
   }

@@ -324,8 +324,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinksFromVVH(mmlIds: Seq[Long]): Seq[VVHRoadLinkWithProperties] = {
-    // TODO: Retrieve all vvh road links in one query when indexing is fixed in VVH
-    enrichRoadLinksFromVVH(mmlIds.flatMap(fetchVVHRoadlink))
+    enrichRoadLinksFromVVH(fetchVVHRoadlinks(mmlIds))
   }
 
   protected def removeIncompleteness(mmlId: Long) = {
@@ -402,6 +401,7 @@ trait RoadLinkService {
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink]
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink]
+  def fetchVVHRoadlinks(mmlIds: Seq[Long]): Seq[VVHRoadlink]
 
   def getIncompleteLinks(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
 
@@ -484,6 +484,7 @@ object RoadLinkService extends RoadLinkService {
 
   override def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)] = throw new NotImplementedError()
 
+  override def fetchVVHRoadlinks(mmlIds: Seq[Long]) = throw new NotImplementedError
   override def updateProperties(id: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLinkWithProperties] = throw new NotImplementedError()
 }
@@ -501,6 +502,10 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
     vvhClient.fetchVVHRoadlink(mmlId)
   }
 
+  override def fetchVVHRoadlinks(mmlIds: Seq[Long]): Seq[VVHRoadlink] = {
+    if (mmlIds.nonEmpty) vvhClient.fetchVVHRoadlinks(mmlIds)
+    else Seq()
+  }
   override def fetchVVHRoadlinks(municipalityCode: Int): Seq[VVHRoadlink] = {
     vvhClient.fetchByMunicipality(municipalityCode)
   }
