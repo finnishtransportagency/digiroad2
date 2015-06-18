@@ -106,17 +106,12 @@ class VVHClient(hostname: String) {
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath
   )
-  
-  private val vvhAdministrativeClassToAdministrativeClass: Map[Int, AdministrativeClass] = Map(
-    12155 -> State,
-    12156 -> Municipality,
-    12157 -> Private)
 
   private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(vvhAdministrativeClassToAdministrativeClass.getOrElse(_, Unknown))
-      .getOrElse(Unknown)
+      .map(AdministrativeClass.apply)
+      .get
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
