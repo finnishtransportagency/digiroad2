@@ -129,12 +129,6 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  class SequenceArgMatcher(referenceSeq: Seq[Long]) extends ArgumentMatcher[Seq[Long]] {
-    override def matches(argument: scala.Any): Boolean = {
-      argument.asInstanceOf[Seq[Long]].sameElements(referenceSeq)
-    }
-  }
-  
   test("splitting speed limit " +
     "so that shorter split contains multiple linear references " +
     "moves all linear references to newly created speed limit", Tag("db")) {
@@ -146,11 +140,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink7 = VVHRoadlink(388552348, 0, List(Point(568.899, 0.0), Point(583.881, 0.0)), Municipality, UnknownDirection, AllOthers)
       val roadLink10 = VVHRoadlink(388552354, 0, List(Point(583.881, 0.0), Point(716.0, 0.0)), Municipality, UnknownDirection, AllOthers)
 
-      // TODO: fix test mocking
+      // TODO: tests might break if links are returned in a different order from database
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      when(mockedRoadLinkService.fetchVVHRoadlinks(argThat(new SequenceArgMatcher(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10).map(_.mmlId)))))
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10).map(_.mmlId)))
         .thenReturn(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
-      when(mockedRoadLinkService.fetchVVHRoadlinks(argThat(new SequenceArgMatcher(Seq(roadLink6, roadLink8, roadLink9).map(_.mmlId)))))
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink6, roadLink9, roadLink8).map(_.mmlId)))
         .thenReturn(Seq(roadLink6, roadLink8, roadLink9))
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
