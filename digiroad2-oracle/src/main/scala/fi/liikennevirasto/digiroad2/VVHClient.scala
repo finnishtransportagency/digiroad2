@@ -76,10 +76,10 @@ class VVHClient(hostname: String) {
     layers
       .find(map => { map.contains("features") })
       .get("features").asInstanceOf[List[Map[String, Any]]]
-      .filter(RoadLinkInUse)
+      .filter(roadLinkInUse)
   }
 
-  private def RoadLinkInUse(feature: Map[String, Any]): Boolean = {
+  private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == BigInt(0)
   }
