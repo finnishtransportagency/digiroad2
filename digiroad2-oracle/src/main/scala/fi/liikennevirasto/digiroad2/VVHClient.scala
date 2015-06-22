@@ -32,9 +32,10 @@ class VVHClient(hostname: String) {
         val municipalityQuery = municipalities.tail.foldLeft("MUNICIPALITYCODE=" + municipalities.head){ (acc, m) => acc + " or MUNICIPALITYCODE=" + m }
         s""""where":"$municipalityQuery","""
       }
+    val constructionTypeFilter = s""" "where":"CONSTRUCTIONTYPE=0", """
     val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE""""
     val definitionEnd = "}]"
-    definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
+    definitionStart + layerSelection + municipalityFilter + constructionTypeFilter + fieldSelection + definitionEnd
   }
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
