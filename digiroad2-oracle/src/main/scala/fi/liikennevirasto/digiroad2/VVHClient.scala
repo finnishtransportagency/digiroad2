@@ -16,7 +16,7 @@ object FeatureClass {
 }
 
 case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
-                      administrativeClass: AdministrativeClass,trafficDirection: TrafficDirection,
+                      administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                       featureClass: FeatureClass)
 
 class VVHClient(hostname: String) {
@@ -32,7 +32,7 @@ class VVHClient(hostname: String) {
         val municipalityQuery = municipalities.tail.foldLeft("MUNICIPALITYCODE=" + municipalities.head){ (acc, m) => acc + " or MUNICIPALITYCODE=" + m }
         s""""where":"$municipalityQuery","""
       }
-    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE""""
+    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE""""
     val definitionEnd = "}]"
     definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
   }
@@ -44,10 +44,7 @@ class VVHClient(hostname: String) {
       s"layerDefs=$encodedLayerDefinition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
-
-    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
@@ -56,10 +53,7 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
-
-    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Seq(mmlId)).headOption
@@ -70,24 +64,26 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val featureMap: Map[String, Any] = fetchVVHFeatureMap(url)
-
-    val features = featureMap("features").asInstanceOf[List[Map[String, Any]]]
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
-  private def fetchVVHFeatureMap(url: String): Map[String, Any] = {
+  private def fetchVVHFeatures(url: String): List[Map[String, Any]] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
     val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-    val featureMap: Map[String, Any] = layers.find(map => {
-      map.contains("features")
-    }).get
-    featureMap
+    layers
+      .find(map => { map.contains("features") })
+      .get("features").asInstanceOf[List[Map[String, Any]]]
+      .filter(roadLinkInUse)
   }
-  
+
+  private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
+    val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
+    attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == BigInt(0)
+  }
+
   private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
@@ -100,8 +96,8 @@ class VVHClient(hostname: String) {
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
-    VVHRoadlink(mmlId, municipalityCode, linkGeometry,
-      extractAdministrativeClass(attributes), extractTrafficDirection(attributes), featureClass)
+    VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
+      extractTrafficDirection(attributes), featureClass)
   }
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
