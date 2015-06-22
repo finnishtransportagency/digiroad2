@@ -30,12 +30,10 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
   when(mockRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
 
-  when(mockRoadLinkService.fetchVVHRoadlink(362964704))
-    .thenReturn(Some(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(362955345))
-    .thenReturn(Some(VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlink(362955339))
-    .thenReturn(Some(VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(Seq(362964704l, 362955345l, 362955339l)))
+    .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers),
+                    VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers),
+                    VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
 
   private def runWithCleanup(test: => Unit): Unit = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
@@ -117,7 +115,8 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
       val provider = new OracleLinearAssetProvider(null, mockRoadLinkService)
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
-      when(mockRoadLinkService.fetchVVHRoadlink(1)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(Seq(1l))).thenReturn(Seq(roadLink))
 
       val id = provider.createSpeedLimits(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
