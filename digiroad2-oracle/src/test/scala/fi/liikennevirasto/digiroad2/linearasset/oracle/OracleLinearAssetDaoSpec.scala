@@ -140,17 +140,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink7 = VVHRoadlink(388552348, 0, List(Point(568.899, 0.0), Point(583.881, 0.0)), Municipality, UnknownDirection, AllOthers)
       val roadLink10 = VVHRoadlink(388552354, 0, List(Point(583.881, 0.0), Point(716.0, 0.0)), Municipality, UnknownDirection, AllOthers)
 
-      // TODO: tests might break if links are returned in a different order from database
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10).map(_.mmlId)))
-        .thenReturn(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
-      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink6, roadLink9, roadLink8).map(_.mmlId)))
-        .thenReturn(Seq(roadLink6, roadLink8, roadLink9))
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }
 
+      when(mockedRoadLinkService.fetchVVHRoadlinks(any[Seq[Long]])).thenReturn(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
       val createdId = dao.splitSpeedLimit(200363, 388569874, 148, 120, "test", passingMunicipalityValidation)
+
+      when(mockedRoadLinkService.fetchVVHRoadlinks(any[Seq[Long]])).thenReturn(Seq(roadLink6, roadLink8, roadLink9))
       val createdLinks = dao.getLinksWithLengthFromVVH(20, createdId)
 
       createdLinks.length shouldBe 3
