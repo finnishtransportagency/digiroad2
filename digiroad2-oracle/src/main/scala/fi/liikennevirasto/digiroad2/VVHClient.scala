@@ -44,8 +44,7 @@ class VVHClient(hostname: String) {
       s"layerDefs=$encodedLayerDefinition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val features = fetchVVHFeatures(url)
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
@@ -54,8 +53,7 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val features = fetchVVHFeatures(url)
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Seq(mmlId)).headOption
@@ -66,11 +64,8 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$layerDefs&returnGeometry=true&geometryPrecision=3&f=pjson"
 
-    val features = fetchVVHFeatures(url)
-    features.map(extractVVHFeature)
+    fetchVVHFeatures(url).map(extractVVHFeature)
   }
-
-  private val RoadLinkIsInUse = 0
 
   private def fetchVVHFeatures(url: String): List[Map[String, Any]] = {
     val request = new HttpGet(url)
@@ -78,16 +73,17 @@ class VVHClient(hostname: String) {
     val response = client.execute(request)
     val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
     val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-    val featureMap: Map[String, Any] = layers.find(map => {
-      map.contains("features")
-    }).get
-
-    featureMap("features").asInstanceOf[List[Map[String, Any]]].filter { feature =>
-      val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
-      attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == RoadLinkIsInUse
-    }
+    layers
+      .find(map => { map.contains("features") })
+      .get("features").asInstanceOf[List[Map[String, Any]]]
+      .filter(RoadLinkInUse)
   }
-  
+
+  private def RoadLinkInUse(feature: Map[String, Any]): Boolean = {
+    val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
+    attributes("CONSTRUCTIONTYPE").asInstanceOf[BigInt] == BigInt(0)
+  }
+
   private def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
     val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
