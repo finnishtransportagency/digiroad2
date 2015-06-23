@@ -69,7 +69,7 @@ trait OracleLinearAssetDao {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(links.map(_._1))
+    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(links.map(_._1).toSet)
 
     links.map { case (mmlId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
@@ -112,7 +112,7 @@ trait OracleLinearAssetDao {
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
     val speedLimitIds = speedLimitLinks.map(_.assetId).toSet
     val missingSegments = findMissingSegments(speedLimitIds, topology)
-    val topologyOutsideBounds = toTopology(roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2)))
+    val topologyOutsideBounds = toTopology(roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2).toSet))
     val (segmentsOutsideBounds, orphanSegments) = missingSegments.partition { case(_, mmlId, _, _, _, _) => topologyOutsideBounds.get(mmlId).isDefined }
     orphanSegments.foreach(removeSegment)
     val geometrizedSegmentsOutsideBounds = segmentsOutsideBounds.map(createGeometryForSegment(topologyOutsideBounds))
@@ -179,7 +179,7 @@ trait OracleLinearAssetDao {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, Int, Option[Int], Double, Double)].list
 
-    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(speedLimits.map(_._2))
+    val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)

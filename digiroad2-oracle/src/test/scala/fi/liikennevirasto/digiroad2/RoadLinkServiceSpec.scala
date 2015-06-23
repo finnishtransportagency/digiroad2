@@ -145,8 +145,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val adjustedRoadLink: List[AdjustedRoadLink] = List(AdjustedRoadLink(0, 123, List(), 0.0, Municipality, 6, TowardsDigitizing, None, None, 3))
-      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(adjustedRoadLink, List(IncompleteLink(789,91,Municipality)))
+      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TowardsDigitizing, SingleCarriageway, None, None))
+
+      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 
       service.getRoadLinksFromVVH(boundingBox)
 
