@@ -191,9 +191,9 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
-  private def roadLinkPropertiesToApi(roadLinks: (Seq[VVHRoadLinkWithProperties], Seq[VVHRoadlink])): Seq[Map[String, Any]] = {
-    roadLinks._1.map{ roadLink => Map("mmlId" -> roadLink.mmlId, "points" -> roadLink.geometry, "administrativeClass" -> roadLink.administrativeClass.value,
-      "functionalClass" -> roadLink.functionalClass, "trafficDirection" -> roadLink.trafficDirection.value, "linkType" -> roadLink.linkType.value) ++ roadLinks._2.find(_.mmlId == roadLink.mmlId).get.attributes
+  private def roadLinkPropertiesToApi(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[Map[String, Any]] = {
+    roadLinks.map{ roadLink => Map("mmlId" -> roadLink.mmlId, "points" -> roadLink.geometry, "administrativeClass" -> roadLink.administrativeClass.value,
+      "functionalClass" -> roadLink.functionalClass, "trafficDirection" -> roadLink.trafficDirection.value, "linkType" -> roadLink.linkType.value) ++ roadLink.attributes
     }
   }
 
