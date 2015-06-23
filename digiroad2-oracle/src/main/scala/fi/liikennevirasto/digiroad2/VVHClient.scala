@@ -51,7 +51,7 @@ class VVHClient(hostname: String) {
     val definition = layerDefinition(Set(municipality))
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
-      s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
+      s"layerDefs=$encodedLayerDefinition&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
 
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
@@ -91,13 +91,14 @@ class VVHClient(hostname: String) {
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(point(0), point(1))
     })
+    val linkGeometryForApi = Map( "points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2))))
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
     VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractAttributes(attributes))
+      extractTrafficDirection(attributes), featureClass, extractAttributes(attributes) ++ linkGeometryForApi)
   }
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
