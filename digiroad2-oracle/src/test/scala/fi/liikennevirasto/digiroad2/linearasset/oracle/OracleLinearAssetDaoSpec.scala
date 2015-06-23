@@ -27,7 +27,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
-    when(mockedRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.mmlId)))
+    when(mockedRoadLinkService.fetchVVHRoadlinks(roadLinks.map(_.mmlId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
@@ -112,9 +112,9 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink3 = VVHRoadlink(362959521, 0, List(Point(0.0, 245.119), Point(0.0, 470.0)), Municipality, UnknownDirection, AllOthers)
 
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink2.mmlId, roadLink4.mmlId, roadLink3.mmlId)))
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Set(roadLink2.mmlId, roadLink4.mmlId, roadLink3.mmlId)))
         .thenReturn(Seq(roadLink2, roadLink3, roadLink4))
-      when(mockedRoadLinkService.fetchVVHRoadlinks(Seq(roadLink2.mmlId, roadLink3.mmlId)))
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Set(roadLink2.mmlId, roadLink3.mmlId)))
         .thenReturn(Seq(roadLink2, roadLink3))
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
@@ -141,14 +141,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink10 = VVHRoadlink(388552354, 0, List(Point(583.881, 0.0), Point(716.0, 0.0)), Municipality, UnknownDirection, AllOthers)
 
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Set(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10).map(_.mmlId)))
+        .thenReturn(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
+      when(mockedRoadLinkService.fetchVVHRoadlinks(Set(roadLink6, roadLink9, roadLink8).map(_.mmlId)))
+        .thenReturn(Seq(roadLink6, roadLink8, roadLink9))
+
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }
-
-      when(mockedRoadLinkService.fetchVVHRoadlinks(any[Seq[Long]])).thenReturn(Seq(roadLink5, roadLink6, roadLink7, roadLink8, roadLink9, roadLink10))
       val createdId = dao.splitSpeedLimit(200363, 388569874, 148, 120, "test", passingMunicipalityValidation)
-
-      when(mockedRoadLinkService.fetchVVHRoadlinks(any[Seq[Long]])).thenReturn(Seq(roadLink6, roadLink8, roadLink9))
       val createdLinks = dao.getLinksWithLengthFromVVH(20, createdId)
 
       createdLinks.length shouldBe 3
@@ -174,7 +175,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 0, UnknownDirection, MultipleCarriageway, None, None)
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
       when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
-      when(mockedRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
+      when(mockedRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }
@@ -190,7 +191,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadLinkWithProperties(747414877, List(Point(12.51, 0.0), Point(27.882, 0.0)), 15.372, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None)
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
       when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink1))
-      when(mockedRoadLinkService.getRoadLinksFromVVH(Seq(747414877l))).thenReturn(Seq(roadLink2))
+      when(mockedRoadLinkService.getRoadLinksFromVVH(Set(747414877l))).thenReturn(Seq(roadLink2))
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }

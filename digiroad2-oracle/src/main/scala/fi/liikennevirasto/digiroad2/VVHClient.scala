@@ -56,9 +56,9 @@ class VVHClient(hostname: String) {
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
-  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Seq(mmlId)).headOption
+  def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(mmlId)).headOption
 
-  def fetchVVHRoadlinks(mmlIds: Seq[Long]): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     val mmlIdsStr = mmlIds.mkString(",")
     val layerDefs = URLEncoder.encode(s"""{"0":"MTKID IN ($mmlIdsStr)"}""", "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +

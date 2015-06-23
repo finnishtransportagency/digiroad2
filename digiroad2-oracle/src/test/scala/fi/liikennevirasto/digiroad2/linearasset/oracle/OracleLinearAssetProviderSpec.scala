@@ -28,9 +28,9 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
 
   val roadLink = VVHRoadLinkWithProperties(1105998302l, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
-  when(mockRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
+  when(mockRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
 
-  when(mockRoadLinkService.fetchVVHRoadlinks(Seq(362964704l, 362955345l, 362955339l)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, UnknownDirection, FeatureClass.AllOthers)))
@@ -58,7 +58,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       val linkOutsideBounds = VVHRoadLinkWithProperties(388552024, List(Point(80.0, 0.0), Point(80.0, 14.587)), 14.587, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
-      when(mockRoadLinkService.getRoadLinksFromVVH(Seq(388552024l))).thenReturn(Seq(linkOutsideBounds))
+      when(mockRoadLinkService.getRoadLinksFromVVH(Set(388552024l))).thenReturn(Seq(linkOutsideBounds))
       val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
       speedLimits.map(_.id) should be(Seq(200204, 200204, 0))
       verify(eventbus).publish(
@@ -77,7 +77,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(100.0, 0.0), Point(130.0, 0.0)), 30.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2, roadLink3))
-      when(mockRoadLinkService.getRoadLinksFromVVH(Seq.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
+      when(mockRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
       val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
       speedLimits.filter(_.id == 200205).map(_.points).apply(1) should be(List(Point(82.489, 0.0), Point(100.0, 0.0)))
       verify(eventbus).publish(
@@ -102,7 +102,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val roadLink2 = VVHRoadLinkWithProperties(388553392, List(Point(143.725, 0.0), Point(211.627, 0.0)), 67.902, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       val roadLink3 = VVHRoadLinkWithProperties(388553398, List(Point(211.627, 0.0), Point(293.504, 0.0)), 81.877, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink1, roadLink2, roadLink3))
-      when(mockRoadLinkService.getRoadLinksFromVVH(Seq(388553188l))).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
+      when(mockRoadLinkService.getRoadLinksFromVVH(Set(388553188l))).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
 
       getSpeedLimitSegmentMmlIds(200160) should contain(388553188l)
       provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
@@ -116,7 +116,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       val provider = new OracleLinearAssetProvider(null, mockRoadLinkService)
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(Seq(1l))).thenReturn(Seq(roadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
 
       val id = provider.createSpeedLimits(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
