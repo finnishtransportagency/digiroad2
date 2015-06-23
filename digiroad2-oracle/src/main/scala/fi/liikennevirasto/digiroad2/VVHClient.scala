@@ -22,26 +22,23 @@ case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  private def withMunicipalityFilter(municipalities: Set[Int]): String = {
-    val municipalityFilter =
-      if (municipalities.isEmpty) {
-        ""
-      } else {
-        val query = municipalities.mkString(",")
-        s""""where":"MUNICIPALITYCODE IN ($query)","""
-      }
-    municipalityFilter
-  }
-
-  private def withMMLIdFilter(mmlIds: Set[Long]): String = {
+  private def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
-      if (mmlIds.isEmpty) {
+      if (ids.isEmpty) {
         ""
       } else {
-        val query = mmlIds.mkString(",")
-        s""""where":"MTKID IN ($query)","""
+        val query = ids.mkString(",")
+        s""""where":"$attributeName IN ($query)","""
       }
     filter
+  }
+
+  private def withMunicipalityFilter(municipalities: Set[Int]): String = {
+    withFilter("MUNICIPALITYCODE", municipalities)
+  }
+
+  private def withMmlIdFilter(mmlIds: Set[Long]): String = {
+    withFilter("MTKID", mmlIds)
   }
 
   private def layerDefinition(filter: String): String = {
@@ -74,7 +71,7 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(mmlId)).headOption
 
   def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(withMMLIdFilter(mmlIds))
+    val definition = layerDefinition(withMmlIdFilter(mmlIds))
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&returnGeometry=true&geometryPrecision=3&f=pjson"
