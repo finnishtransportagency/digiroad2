@@ -369,46 +369,6 @@ trait OracleLinearAssetDao {
       sqlu"""update asset set floating = 1 where id in (#$speedLimitIds)""".execute()
     }
   }
-
-
-  private def generateSpeedLimit(roadLinkId: Long, linkMeasures: (Double, Double), sideCode: Int, roadLinkType: AdministrativeClass, mmlId: Long): GeneratedSpeedLimitLink = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    GeneratedSpeedLimitLink(id = assetId, mmlId = mmlId, roadLinkId = roadLinkId, sideCode = sideCode, startMeasure = linkMeasures._1, endMeasure = linkMeasures._2)
-  }
-
-  private def createSpeedLimits(speedLimits: Seq[GeneratedSpeedLimitLink]): Unit = {
-    if (speedLimits.nonEmpty) {
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
-
-      logger.info("creating " + speedLimits.size + " speed limits")
-
-      val enumeratedValueId = sql"select id from enumerated_value where property_id = $propertyId and value is null".as[Long].first()
-
-      speedLimits.foreach { speedLimit =>
-        val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-        val sb = new StringBuilder()
-        sb.append("insert all")
-        sb.append(
-          s"""
-            into asset(id, asset_type_id, created_by, created_date)
-            values (${speedLimit.id}, 20, 'automatic_speed_limit_generation', sysdate)
-
-            into lrm_position(id, start_measure, end_measure, road_link_id, side_code, mml_id)
-            values ($lrmPositionId, ${speedLimit.startMeasure}, ${speedLimit.endMeasure}, ${speedLimit.roadLinkId},
-                    ${speedLimit.sideCode}, ${speedLimit.mmlId})
-
-            into asset_link(asset_id, position_id)
-            values (${speedLimit.id}, $lrmPositionId)
-
-            into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-            values (${speedLimit.id}, $enumeratedValueId, $propertyId, current_timestamp)
-          """)
-        sb.append("\nSELECT * FROM DUAL\n")
-        val sql = sb.toString()
-        Q.updateNA(sql).execute()
-      }
-    }
-  }
 }
 
 object OracleLinearAssetDao extends OracleLinearAssetDao {
