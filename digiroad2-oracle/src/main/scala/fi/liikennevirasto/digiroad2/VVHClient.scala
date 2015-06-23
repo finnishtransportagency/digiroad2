@@ -101,7 +101,7 @@ class VVHClient(hostname: String) {
   }
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    attributesMap.filterKeys{ x => Seq("CONSTRUCTIONTYPE","ROADNAME_FI","ROADNAME_SM","ROADNAME_SE","MINANLEFT","MAXANLEFT","MINANRIGHT","MAXANRIGHT").contains(x) }
+    attributesMap.filterKeys{ x => Set("CONSTRUCTIONTYPE","ROADNAME_FI","ROADNAME_SM","ROADNAME_SE","MINANLEFT","MAXANLEFT","MINANRIGHT","MAXANRIGHT").contains(x) }
   }
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
