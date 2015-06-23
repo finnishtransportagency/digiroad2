@@ -17,7 +17,7 @@ object FeatureClass {
 
 case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
                       administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                      featureClass: FeatureClass)
+                      featureClass: FeatureClass, attributes: Map[String, Any] = Map())
 
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -32,7 +32,7 @@ class VVHClient(hostname: String) {
         val municipalityQuery = municipalities.tail.foldLeft("MUNICIPALITYCODE=" + municipalities.head){ (acc, m) => acc + " or MUNICIPALITYCODE=" + m }
         s""""where":"$municipalityQuery","""
       }
-    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE""""
+    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT""""
     val definitionEnd = "}]"
     definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
   }
@@ -97,7 +97,11 @@ class VVHClient(hostname: String) {
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
     VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass)
+      extractTrafficDirection(attributes), featureClass, extractAttributes(attributes))
+  }
+
+  private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
+    attributesMap.filterKeys{ x => Seq("CONSTRUCTIONTYPE","ROADNAME_FI","ROADNAME_SM","ROADNAME_SE","MINANLEFT","MAXANLEFT","MINANRIGHT","MAXANRIGHT").contains(x) }
   }
 
   private val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(

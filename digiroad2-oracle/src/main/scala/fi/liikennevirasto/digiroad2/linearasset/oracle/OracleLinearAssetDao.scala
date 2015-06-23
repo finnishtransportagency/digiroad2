@@ -103,7 +103,7 @@ trait OracleLinearAssetDao {
   }
 
   def getByMunicipality(municipality: Int): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
+    val (roadLinks, _) = roadLinkService.getRoadLinksFromVVH(municipality)
     getSpeedLimitLinksByRoadLinks(roadLinks)
   }
 
