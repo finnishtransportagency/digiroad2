@@ -29,7 +29,7 @@ case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double
                               bearing: Option[Int], floating: Boolean,
                               created: Modification, modified: Modification,
                               mmlId: Option[Long], mValue: Option[Double],
-                              propertyData: Seq[Property]) extends FloatingStop with RoadLinkStop
+                              propertyData: Seq[Property]) extends FloatingStop with RoadLinkStop with TimeStamps
 
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T

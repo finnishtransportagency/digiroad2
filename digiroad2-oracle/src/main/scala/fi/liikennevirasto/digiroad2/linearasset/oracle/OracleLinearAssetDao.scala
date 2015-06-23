@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, SpeedLimitDTO}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimitDTO}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 
@@ -197,6 +197,19 @@ trait OracleLinearAssetDao {
       where a.id = $id
     """.as[(Option[String], Option[DateTime], Option[String], Option[DateTime], Option[Int])].first
     (modifiedBy, modifiedDate, createdBy, createdDate, value)
+  }
+
+  def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps] = {
+    MassQuery.withIds(ids.toSeq) { idTableName =>
+      val timeStamps = sql"""
+        select a.id, a.modified_by, a.modified_date, a.created_by, a.created_date
+        from ASSET a
+        join  #$idTableName i on i.id = a.id
+      """.as[(Long, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
+      timeStamps.map { case(id, modifiedBy, modifiedDate, createdBy, createdDate) =>
+        SpeedLimitTimeStamps(id, Modification(createdDate, createdBy), Modification(modifiedDate, modifiedBy))
+      }
+    }
   }
 
   def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
