@@ -54,7 +54,7 @@ class VVHClient(hostname: String) {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&geometryPrecision=3&f=pjson"
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
 
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
@@ -72,7 +72,7 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMmlIdFilter(mmlIds))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
-      s"layerDefs=$definition&returnGeometry=true&geometryPrecision=3&f=pjson"
+      s"layerDefs=$definition&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
 
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
