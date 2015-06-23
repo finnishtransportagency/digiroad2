@@ -9,9 +9,11 @@ Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&a
 K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&auml; seuraavat tiedot:
 
 1. K&auml;ytt&auml;j&auml;tunnus: K&auml;ytt&auml;j&auml;n tunnus Liikenneviraston j&auml;rjestelmiin
-1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3)
+1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3).
 1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092)
-1. Oikeuden tyyppi: Muokkausoikeus tai Katseluoikeus
+1. Oikeuden tyyppi: Muokkausoikeus (tai Katseluoikeus)*
+
+*Katseluoikeuksia ei lis&auml;t&auml; toistaiseksi. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia. Katselemaan p&auml;&auml;see kirjautumalla sovellukseen.
 
 Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus ilmoittaa onnistuneesta k&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml;. Jos k&auml;ytt&auml;j&auml;ksi lis&auml;t&auml;&auml;n jo olemassa olevan k&auml;ytt&auml;j&auml;, sovellus poistaa vanhan ja korvaa sen uudella k&auml;ytt&auml;j&auml;ll&auml;. K&auml;ytt&auml;j&auml;n lis&auml;&auml;misest&auml; ei l&auml;hde automaattista viesti&auml; loppuk&auml;ytt&auml;j&auml;lle. Operaattorin tulee itse ilmoittaa k&auml;ytt&auml;j&auml;lle, kun k&auml;ytt&ouml;oikeus on luotu. T&auml;m&auml;n j&auml;lkeen k&auml;ytt&auml;j&auml; p&auml;&auml;see kirjautumaan Liikenneviraston tunnuksilla j&auml;rjestelm&auml;&auml;n.
 
@@ -43,7 +45,7 @@ Tuonnin onnistuessa j&auml;rjestelm&auml; ilmoittaa:"CSV tiedosto k&auml;sitelty
 
 Huomioita csv-tiedostosta:
 
-- .csv-tiedoston encoding-valinnan tulee olla "Encode in UTF-8 without BOM"
+- .csv-tiedoston encoding-valinnan tulee olla "Encode in UTF-8 without BOM", encodingin saa vaihettua esimerkiksi Notepad++:lla
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
@@ -88,44 +90,8 @@ K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedo
 
 ###Vallu CSV:n tietolajit###
 
-|DR2 tietolaji|Vallu CSV|Kuvaus|
-|-------------|---------|------|
-|Valtakunnallinen tunnus| STOP_ID|PAKOLLINEN TIETO. Valtakunnallinen tunnus. Jos puuttuu niin Digiroad tuottaa omasta numeroavaruudesta.|
-|Yll&auml;pit&auml;j&auml;n tunnus|ADMIN_STOP_ID| Yll&auml;pit&auml;j&auml;n tunnus|
-|Matkustajatunnus|STOP_CODE|Pys&auml;kin ID matkustajalle|
-|Nimi suomeksi| NAME_FI| Pys&auml;kin nimi suomeksi|
-|Nimi ruotsiksi|NAME_SV|Pys&auml;kin nimi ruotsiksi|
-|Maastokoordinaatti X|COORDINATE_X|Mitattu sijaintitieto: EUREF FIN ETRS89-TM35FIN|
-|Maastokoordinaatti Y|COORDINATE_Y|Mitattu sijaintitieto: EUREF FIN ETRS89-TM35FIN|
-|Pys&auml;kin osoite|ADRESS|Pys&auml;kin osoite|
-|Tienumero|ROAD_NUMBER|Pys&auml;kin tien numero|
-|Liikenn&ouml;intisuuntima|BEARING|Liikenn&ouml;intisuunta. Pohjoinen on nolla astetta, koko kierros my&ouml;t&auml;p&auml;iv&auml;&auml;n 360 astetta. Lasketaan importin yhteydess&auml; tiegeometriasta.|
-|Liikenn&ouml;intisuuntiman kuvaus|BEARING_DESCRIPTION|Pohjoinen, koillinen, It&auml;, kaakko, etel&auml;, lounas, l&auml;nsi, luode|
-|Liikenn&ouml;intisuunta|DIRECTION|Suunnan vapaampi sanallinen kuvaus|
-|Tyyppi(kaukoliikenne)|EXPRESS_BUS|0 tai 1|
-|Tyyppi(paikallisliikenne)|LOCAL_BUS|0 tai 1|
-|Tyyppi(pikavuoro)|NON_STOP_EXPRESS_BUS|0 tai 1|
-|Tyyppi(Virtuaalipys&auml;kki)|VIRTUAL_STOP|0 tai 1|
-|Varusteet(Aikataulu)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(Katos)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(Mainoskatos)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(Penkki)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(Py&ouml;r&auml;teline)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Varusteet(Valaistus)|Concatenoidaan EQUIPMENTSiin|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Saattomahdollisuus henkil&ouml;autolla|Concatenoidaan REACHABILITYyn|1 - Ei, 2 - On, 99 - Ei tietoa|
-|Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|Concatenoidaan REACHABILITYyn|Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|
-|Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|Concatenoidaan REACHABILITYyn|Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|
-|Esteett&ouml;myys liikuntarajoitteiselle|SPECIAL_NEEDS|P&auml;&auml;sy py&ouml;r&auml;tuolilla|
-|Muokattu viimeksi|MODIFIED_TIMESTAMP|Tiedon muokkaushetki|
-|Muokattu viimeksi|MODIFIED_BY|Muokkaajan k&auml;ytt&auml;j&auml;tunnus|
-|Ensimm&auml;inen voimassaolop&auml;iv&auml;|VALID_FROM|Pys&auml;kin ensimm&auml;inen voimassaolop&auml;iv&auml;|
-|Viimeinen voimassaolop&auml;iv&auml;|VALID_TO|Pys&auml;kin viimeinen voimassaolop&auml;iv&auml;|
-|Tietojen yll&auml;pit&auml;j&auml;|ADMINISTRATOR_CODE|Yll&auml;pit&auml;v&auml; viranomainen: 1 - Kunta, 2 - ELY-keskus, 3 - Toimivaltainen viranomainen, 4 - Liikennevirasto|
-|Kuntanumero|MUNICIPALITY_CODE|Kuntanumero|
-|Kunta|MUNICIPALITY_NAME|Kunnan nimi|
-|Lis&auml;tiedot|COMMENTS|Julkiset kommentit|
-|Palauteosoite|CONTACT_EMAILS|Yhteystiedot vihje-/muutostietojen toimittamiseksi|
+Vallu-CSV:n tietolajit voi lukea Digiroadin nettisivuilla olevasta taulukosta: http://www.digiroad.fi/Uusi_DR/pysakki/fi_FI/pysakki/
+
 
 ###3.1.1 Pys&auml;kkimuutosten p&auml;ivitys Vallu-j&auml;rjestelm&auml;&auml;n###
 
@@ -149,7 +115,7 @@ L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vall
 3.2 Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------------------------
 
-Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle.
+Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle. LMJ-exportin voi tehd&auml; my&ouml;s asentamatta kehitysymp&auml;rist&ouml;&auml;. Kysy Emmilt&auml;, jos t&auml;h&auml;n on tarvetta.
 
 Tarvittavat tiedostot ovat bonecp.properties ja LMJ-import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; digiroad2@reaktor.fi. Bonecp.properties tallennetaan sijaintiin:
 
@@ -317,4 +283,4 @@ digiroad2@reaktor.fi
 
 __Palaute operaattorin manuaalista:__
 
-taru.vainikainen@karttakeskus.fi
+emmi.sallinen@karttakeskus.fi
