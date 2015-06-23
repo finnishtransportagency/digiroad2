@@ -22,23 +22,27 @@ case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
 
-  private def layerDefinition(municipalities: Set[Int]): String = {
-    val definitionStart = "[{"
-    val layerSelection = """"layerId":0,"""
+  private def withMunicipalityFilter(municipalities: Set[Int]): String = {
     val municipalityFilter =
-      if(municipalities.isEmpty) {
+      if (municipalities.isEmpty) {
         ""
       } else {
-        val municipalityQuery = municipalities.tail.foldLeft("MUNICIPALITYCODE=" + municipalities.head){ (acc, m) => acc + " or MUNICIPALITYCODE=" + m }
-        s""""where":"$municipalityQuery","""
+        val query = municipalities.mkString(",")
+        s""""where":"MUNICIPALITYCODE IN ($query)","""
       }
+    municipalityFilter
+  }
+
+  private def layerDefinition(filter: String): String = {
+    val definitionStart = "[{"
+    val layerSelection = """"layerId":0,"""
     val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT""""
     val definitionEnd = "}]"
-    definitionStart + layerSelection + municipalityFilter + fieldSelection + definitionEnd
+    definitionStart + layerSelection + filter + fieldSelection + definitionEnd
   }
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(municipalities)
+    val definition = layerDefinition(withMunicipalityFilter(municipalities))
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
@@ -48,7 +52,7 @@ class VVHClient(hostname: String) {
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(Set(municipality))
+    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
     val encodedLayerDefinition = URLEncoder.encode(definition, "UTF-8")
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$encodedLayerDefinition&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
