@@ -14,7 +14,6 @@ import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
-import scala.language.reflectiveCalls
 
 import scala.slick.driver.JdbcDriver.backend.Database
 
