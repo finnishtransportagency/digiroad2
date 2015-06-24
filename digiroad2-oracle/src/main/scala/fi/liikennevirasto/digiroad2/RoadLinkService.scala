@@ -33,7 +33,7 @@ case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point],
                                      attributes: Map[String, Any] = Map())
 
 trait RoadLinkService {
-  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection)
+  case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[DateTime])
   val logger = LoggerFactory.getLogger(getClass)
 
   def eventbus: DigiroadEventBus
@@ -162,7 +162,7 @@ trait RoadLinkService {
     }
   }
 
-  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<,UnknownDirection) )
+  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<,UnknownDirection, None) )
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
@@ -288,7 +288,7 @@ trait RoadLinkService {
         val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
           case Some((_, _, at, by)) => Some((at, by))
           case _ => None
-        }
+        } :+ basicRoadLink.modifiedAt.map(at => (at, "vvh"))
 
         basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
       }
@@ -410,7 +410,7 @@ trait RoadLinkService {
 
   def getRoadLinkDataByMmlIds(vvhRoadLinks: Seq[VVHRoadlink]): Seq[VVHRoadLinkWithProperties] = {
     val basicRoadLinks = vvhRoadLinks.map { roadLink =>
-      BasicRoadLink(0, roadLink.mmlId, roadLink.geometry, GeometryUtils.geometryLength(roadLink.geometry), roadLink.administrativeClass, roadLink.trafficDirection)
+      BasicRoadLink(0, roadLink.mmlId, roadLink.geometry, GeometryUtils.geometryLength(roadLink.geometry), roadLink.administrativeClass, roadLink.trafficDirection, roadLink.modifiedAt)
     }
     val adjustedLinks = adjustedRoadLinks(basicRoadLinks)
     adjustedLinks.map{ link => VVHRoadLinkWithProperties(link.mmlId, link.geometry,
