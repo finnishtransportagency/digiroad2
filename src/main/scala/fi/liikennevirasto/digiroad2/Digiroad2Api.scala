@@ -311,7 +311,10 @@ with GZipSupport {
         "trafficDirection" -> roadLink.trafficDirection.toString,
         "modifiedAt" -> roadLink.modifiedAt,
         "modifiedBy" -> roadLink.modifiedBy,
-        "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"))
+        "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+        "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
+        "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
+        "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"))
     }
   }
 

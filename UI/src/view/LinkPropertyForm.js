@@ -56,6 +56,18 @@
             '<p class="form-control-static"><%- municipalityCode %></p>' +
           '</div>' +
           '<div class="form-group">' +
+            '<label class="control-label">Tien nimi (Suomi)</label>' +
+            '<p class="form-control-static"><%= roadNameFi %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="control-label">Tien nimi (Ruotsi)</label>' +
+            '<p class="form-control-static"><%= roadNameSe %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="control-label">Tien nimi (Saame)</label>' +
+            '<p class="form-control-static"><%= roadNameSm %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
             '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
@@ -98,6 +110,9 @@
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
+        linkProperties.roadNameFi = linkProperties.roadNameFi || '';
+        linkProperties.roadNameSe = linkProperties.roadNameSe || '';
+        linkProperties.roadNameSm = linkProperties.roadNameSm || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
