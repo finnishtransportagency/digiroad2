@@ -107,12 +107,9 @@ class VVHClient(hostname: String) {
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
-    val modifiedAtOption = Option(attributes("LAST_EDITED_DATE")).map { raw =>
-      new DateTime(raw.asInstanceOf[BigInt].longValue())
-    }
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
     VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, modifiedAtOption, extractAttributes(attributes) ++ linkGeometryForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
   }
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
@@ -124,6 +121,11 @@ class VVHClient(hostname: String) {
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath
   )
+
+  private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
+    Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt])
+      .map(modifiedTime => new DateTime(modifiedTime.longValue()))
+  }
 
   private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
