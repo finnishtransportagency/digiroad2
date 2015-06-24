@@ -68,6 +68,14 @@
             '<p class="form-control-static"><%= roadNameSm %></p>' +
           '</div>' +
           '<div class="form-group">' +
+            '<label class="control-label">Osoitenumerot oikealla</label>' +
+            '<p class="form-control-static"><%= addressNumbersRight %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="control-label">Osoitenumerot vasemmalla</label>' +
+            '<p class="form-control-static"><%= addressNumbersLeft %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
             '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
@@ -96,6 +104,16 @@
       }
     };
 
+    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
+      if(!minAddressNumber && !maxAddressNumber) {
+        return '';
+      } else {
+        var min = minAddressNumber || '';
+        var max = maxAddressNumber || '';
+        return min + '-' + max;
+      }
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -113,6 +131,8 @@
         linkProperties.roadNameFi = linkProperties.roadNameFi || '';
         linkProperties.roadNameSe = linkProperties.roadNameSe || '';
         linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+        linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
+        linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
