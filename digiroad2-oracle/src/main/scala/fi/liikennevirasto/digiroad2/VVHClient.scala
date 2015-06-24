@@ -49,12 +49,13 @@ class VVHClient(hostname: String) {
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
     URLEncoder.encode(definition, "UTF-8")
   }
+  private def queryParameters(): String = "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
 
   def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(municipalities))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
-      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
+      "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters
 
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
@@ -62,8 +63,7 @@ class VVHClient(hostname: String) {
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
-      s"layerDefs=$definition&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
-
+      s"layerDefs=$definition&$queryParameters"
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
 
@@ -72,7 +72,7 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMmlIdFilter(mmlIds))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
-      s"layerDefs=$definition&returnGeometry=true&returnZ=true&geometryPrecision=3&f=pjson"
+      s"layerDefs=$definition&$queryParameters"
 
     fetchVVHFeatures(url).map(extractVVHFeature)
   }
@@ -101,7 +101,7 @@ class VVHClient(hostname: String) {
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(point(0), point(1))
     })
-    val linkGeometryForApi = Map( "points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2))))
+    val linkGeometryForApi = Map( "points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
     val attributes = feature("attributes").asInstanceOf[Map[String, Any]]
     val mmlId = attributes("MTKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
