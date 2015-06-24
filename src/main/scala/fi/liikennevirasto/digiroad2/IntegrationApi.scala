@@ -5,8 +5,8 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
-import fi.liikennevirasto.digiroad2.asset.{RoadLinkStop, AssetWithProperties, Property}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, SpeedLimitLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -14,6 +14,7 @@ import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
+import scala.language.reflectiveCalls
 
 import scala.slick.driver.JdbcDriver.backend.Database
 
@@ -89,10 +90,10 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     key -> transformation(values)
   }
 
-  def extractModificationTime(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
+  def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-      massTransitStop.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(massTransitStop.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+        .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
         .getOrElse(""))
   }
 
@@ -180,6 +181,11 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   }
 
   private def speedLimitsToApi(speedLimits: Seq[SpeedLimitLink]): Seq[Map[String, Any]] = {
+    val timeStamps = linearAssetProvider.getSpeedLimitTimeStamps(speedLimits.map(_.id).distinct.toSet.filterNot(_ == 0))
+      .map(t => t.id -> t)
+      .toMap
+    val unknownTimeStamps = SpeedLimitTimeStamps(0, Modification(None, None), Modification(None, None))
+
     speedLimits.map { speedLimit =>
       Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
         "sideCode" -> speedLimit.sideCode,
@@ -187,7 +193,9 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         "value" -> speedLimit.value.getOrElse(0),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
-        "mmlId" -> speedLimit.mmlId)
+        "mmlId" -> speedLimit.mmlId,
+        extractModificationTime(timeStamps.getOrElse(speedLimit.id, unknownTimeStamps))
+      )
     }
   }
 

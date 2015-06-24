@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -107,6 +108,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   override def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       dao.markSpeedLimitsFloating(ids)
+    }
+  }
+
+  override def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps] = {
+    withDynTransaction{
+      dao.getSpeedLimitTimeStamps(ids)
     }
   }
 
