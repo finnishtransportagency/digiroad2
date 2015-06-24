@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import java.net.URLEncoder
@@ -17,7 +18,7 @@ object FeatureClass {
 
 case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
                       administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
-                      featureClass: FeatureClass, attributes: Map[String, Any] = Map())
+                      featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
 class VVHClient(hostname: String) {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -44,7 +45,7 @@ class VVHClient(hostname: String) {
   private def layerDefinition(filter: String): String = {
     val definitionStart = "[{"
     val layerSelection = """"layerId":0,"""
-    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT""""
+    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE""""
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
     URLEncoder.encode(definition, "UTF-8")
@@ -108,7 +109,7 @@ class VVHClient(hostname: String) {
     val featureClassCode = attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     val featureClass = featureClassCodeToFeatureClass.getOrElse(featureClassCode, FeatureClass.AllOthers)
     VVHRoadlink(mmlId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
-      extractTrafficDirection(attributes), featureClass, extractAttributes(attributes) ++ linkGeometryForApi)
+      extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes), extractAttributes(attributes) ++ linkGeometryForApi)
   }
 
   private def extractAttributes(attributesMap: Map[String, Any]): Map[String, Any] = {
@@ -120,6 +121,11 @@ class VVHClient(hostname: String) {
     12141 -> FeatureClass.DrivePath,
     12314 -> FeatureClass.CycleOrPedestrianPath
   )
+
+  private def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
+    Option(attributes("LAST_EDITED_DATE").asInstanceOf[BigInt])
+      .map(modifiedTime => new DateTime(modifiedTime.longValue()))
+  }
 
   private def extractAdministrativeClass(attributes: Map[String, Any]): AdministrativeClass = {
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
