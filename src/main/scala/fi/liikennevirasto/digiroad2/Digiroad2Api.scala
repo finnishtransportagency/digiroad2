@@ -310,7 +310,8 @@ with GZipSupport {
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.toString,
         "modifiedAt" -> roadLink.modifiedAt,
-        "modifiedBy" -> roadLink.modifiedBy)
+        "modifiedBy" -> roadLink.modifiedBy,
+        "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"))
     }
   }
 

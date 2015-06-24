@@ -52,6 +52,10 @@
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
           '<div class="form-group">' +
+            '<label class="control-label">Kuntanumero</label>' +
+            '<p class="form-control-static"><%- municipalityCode %></p>' +
+          '</div>' +
+          '<div class="form-group">' +
             '<label class="control-label">Hallinnollinen luokka</label>' +
             '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
           '</div>' +
