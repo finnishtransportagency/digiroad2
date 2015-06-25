@@ -36,6 +36,13 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
+    var staticField = function(labelText, dataField) {
+      return '<div class="form-group">' +
+               '<label class="control-label">' + labelText + '</label>' +
+               '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+             '</div>';
+    };
+
     var disabled = 'disabled';
     var buttons =
       '<div class="link-properties form-controls">' +
@@ -51,34 +58,13 @@
           '<div class="form-group">' +
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Kuntanumero</label>' +
-            '<p class="form-control-static"><%- municipalityCode %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Tien nimi (Suomi)</label>' +
-            '<p class="form-control-static"><%= roadNameFi %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Tien nimi (Ruotsi)</label>' +
-            '<p class="form-control-static"><%= roadNameSe %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Tien nimi (Saame)</label>' +
-            '<p class="form-control-static"><%= roadNameSm %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Osoitenumerot oikealla</label>' +
-            '<p class="form-control-static"><%= addressNumbersRight %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Osoitenumerot vasemmalla</label>' +
-            '<p class="form-control-static"><%= addressNumbersLeft %></p>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Hallinnollinen luokka</label>' +
-            '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
-          '</div>' +
+          staticField('Kuntanumero', 'municipalityCode') +
+          staticField('Tien nimi (Suomi)', 'roadNameFi') +
+          staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
+          staticField('Tien nimi (Saame)', 'roadNameSm') +
+          staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
+          staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+          staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
           '<div class="form-group editable">' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
             '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
