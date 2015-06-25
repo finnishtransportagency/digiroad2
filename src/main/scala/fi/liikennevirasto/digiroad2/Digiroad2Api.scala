@@ -310,7 +310,15 @@ with GZipSupport {
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.toString,
         "modifiedAt" -> roadLink.modifiedAt,
-        "modifiedBy" -> roadLink.modifiedBy)
+        "modifiedBy" -> roadLink.modifiedBy,
+        "municipalityCode" -> roadLink.attributes.get("MUNICIPALITYCODE"),
+        "roadNameFi" -> roadLink.attributes.get("ROADNAME_FI"),
+        "roadNameSe" -> roadLink.attributes.get("ROADNAME_SE"),
+        "roadNameSm" -> roadLink.attributes.get("ROADNAME_SM"),
+        "minAddressNumberRight" -> roadLink.attributes.get("MINANRIGHT"),
+        "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
+        "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
+        "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"))
     }
   }
 

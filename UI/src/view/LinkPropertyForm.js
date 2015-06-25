@@ -36,6 +36,13 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
+    var staticField = function(labelText, dataField) {
+      return '<div class="form-group">' +
+               '<label class="control-label">' + labelText + '</label>' +
+               '<p class="form-control-static"><%- ' + dataField + ' %></p>' +
+             '</div>';
+    };
+
     var disabled = 'disabled';
     var buttons =
       '<div class="link-properties form-controls">' +
@@ -51,10 +58,13 @@
           '<div class="form-group">' +
             '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
           '</div>' +
-          '<div class="form-group">' +
-            '<label class="control-label">Hallinnollinen luokka</label>' +
-            '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
-          '</div>' +
+          staticField('Kuntanumero', 'municipalityCode') +
+          staticField('Tien nimi (Suomi)', 'roadNameFi') +
+          staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
+          staticField('Tien nimi (Saame)', 'roadNameSm') +
+          staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
+          staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
+          staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
           '<div class="form-group editable">' +
             '<label class="control-label">Toiminnallinen luokka</label>' +
             '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
@@ -80,6 +90,16 @@
       }
     };
 
+    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
+      if(!minAddressNumber && !maxAddressNumber) {
+        return '';
+      } else {
+        var min = minAddressNumber || '';
+        var max = maxAddressNumber || '';
+        return min + '-' + max;
+      }
+    };
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
@@ -94,6 +114,11 @@
         linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
         linkProperties.localizedAdministrativeClass = localizedAdministrativeClasses[linkProperties.administrativeClass] || 'Tuntematon';
         linkProperties.localizedTrafficDirection = localizedTrafficDirections[linkProperties.trafficDirection] || 'Tuntematon';
+        linkProperties.roadNameFi = linkProperties.roadNameFi || '';
+        linkProperties.roadNameSe = linkProperties.roadNameSe || '';
+        linkProperties.roadNameSm = linkProperties.roadNameSm || '';
+        linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
+        linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';
