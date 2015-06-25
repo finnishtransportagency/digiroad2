@@ -131,7 +131,7 @@ class VVHClient(hostname: String) {
     Option(attributes("ADMINCLASS").asInstanceOf[BigInt])
       .map(_.toInt)
       .map(AdministrativeClass.apply)
-      .get
+      .getOrElse(Unknown)
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
