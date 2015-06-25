@@ -237,7 +237,7 @@ trait OracleLinearAssetDao {
     createSpeedLimit(creator, mmlId, linkMeasures, sideCode, value)
   }
 
-  private def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
+  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
     val speedLimitId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val (startMeasure, endMeasure) = linkMeasures

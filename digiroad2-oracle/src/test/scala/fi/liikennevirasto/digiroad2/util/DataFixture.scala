@@ -164,6 +164,16 @@ object DataFixture {
     println("\n")
   }
 
+  def splitSpeedLimitChains(): Unit = {
+    println("\nCommencing Speed limit splitting at time: ")
+    println(DateTime.now())
+    println("split limits")
+    dataImporter.splitMultiLinkSpeedLimitsToSingleLinkLimits()
+    println("splitting complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -209,7 +219,9 @@ object DataFixture {
         importRoadLinkData()
       case Some("repair") =>
         flyway.repair()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | repair")
+      case Some("split_speedlimitchains") =>
+        splitSpeedLimitChains()
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | split_speedlimitchains | repair")
     }
   }
 }
