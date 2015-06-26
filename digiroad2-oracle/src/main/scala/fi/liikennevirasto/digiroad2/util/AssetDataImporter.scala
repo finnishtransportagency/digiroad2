@@ -406,9 +406,19 @@ class AssetDataImporter {
     }
   }
 
-  def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
+  private def getSpeedLimitIdRange: (Long, Long) = {
+    Database.forDataSource(ds).withDynSession {
+      sql"""
+        select min(a.id), max(a.id)
+        from asset a
+        where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+      """.as[(Long, Long)].first()
+    }
+  }
+
+  private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
     val dao = new OracleLinearAssetDao {
-        override val roadLinkService: RoadLinkService = null
+      override val roadLinkService: RoadLinkService = null
     }
 
     Database.forDataSource(ds).withDynTransaction {
@@ -420,7 +430,11 @@ class AssetDataImporter {
             join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
             join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
             join enumerated_value e on s.enumerated_value_id = e.id
-            where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+            where a.asset_type_id = 20
+            and floating = 0
+            and (select count(*) from asset_link where asset_id = a.id) > 1
+            and a.id between $chunkStart and $chunkEnd
+          """.as[(Long, Long, Int, Option[Int], Double, Double)].list
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
@@ -430,8 +444,20 @@ class AssetDataImporter {
 
       val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
       dao.markSpeedLimitsFloating(speedLimitsToFloat)
-      println(s"removed ${speedLimitsToFloat.size} multilink speed limits" )
+      println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
     }
+  }
+
+  def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
+    val chunkSize = 1000
+    val (minId, maxId) = getSpeedLimitIdRange
+    val chunks: Seq[(Long, Long)] = (minId to maxId by chunkSize).sliding(2).map(x => (x(0), x(1) - 1)).toSeq
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      splitSpeedLimits(chunkStart, chunkEnd)
+      println("*** Processed speed limits between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+    splitSpeedLimits(chunks.last._2 + 1, maxId)
   }
 
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
