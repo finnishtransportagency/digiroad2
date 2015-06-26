@@ -4,15 +4,17 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, TrafficDirection, LinkType}
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
-import oracle.sql.STRUCT
+import _root_.oracle.sql.STRUCT
 import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -402,6 +404,60 @@ class AssetDataImporter {
         }
       }
     }
+  }
+
+  private def getSpeedLimitIdRange: (Long, Long) = {
+    Database.forDataSource(ds).withDynSession {
+      sql"""
+        select min(a.id), max(a.id)
+        from asset a
+        where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
+      """.as[(Long, Long)].first()
+    }
+  }
+
+  private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
+    val dao = new OracleLinearAssetDao {
+      override val roadLinkService: RoadLinkService = null
+    }
+
+    Database.forDataSource(ds).withDynTransaction {
+      val speedLimitLinks = sql"""
+            select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+            join enumerated_value e on s.enumerated_value_id = e.id
+            where a.asset_type_id = 20
+            and floating = 0
+            and (select count(*) from asset_link where asset_id = a.id) > 1
+            and a.id between $chunkStart and $chunkEnd
+          """.as[(Long, Long, Int, Option[Int], Double, Double)].list
+
+      speedLimitLinks.foreach { speedLimitLink =>
+        val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
+        dao.createSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), sideCode, value.get)
+      }
+      println(s"created ${speedLimitLinks.length} new single link speed limits")
+
+      val speedLimitsToFloat = speedLimitLinks.map(_._1).toSet
+      dao.markSpeedLimitsFloating(speedLimitsToFloat)
+      println(s"removed ${speedLimitsToFloat.size} multilink speed limits")
+    }
+  }
+
+  def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
+    val chunkSize = 1000
+    val (minId, maxId) = getSpeedLimitIdRange
+    val chunks: Seq[(Long, Long)] = (minId to maxId by chunkSize).sliding(2).map(x => (x(0), x(1) - 1)).toSeq
+    chunks.foreach { case(chunkStart, chunkEnd) =>
+      val start = System.currentTimeMillis()
+      splitSpeedLimits(chunkStart, chunkEnd)
+      println("*** Processed speed limits between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
+    }
+    splitSpeedLimits(chunks.last._2 + 1, maxId)
   }
 
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
