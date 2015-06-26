@@ -94,7 +94,7 @@ class AssetDataImporter {
   }
 
   private def getBatchDrivers(n: Int, m: Int, step: Int): List[(Int, Int)] = {
-    if (m < step) {
+    if ((m - n) < step) {
       List((n, m))
     } else {
       val x = ((n to m by step).sliding(2).map(x => (x(0), x(1) - 1))).toList
@@ -406,13 +406,13 @@ class AssetDataImporter {
     }
   }
 
-  private def getSpeedLimitIdRange: (Long, Long) = {
+  private def getSpeedLimitIdRange: (Int, Int) = {
     Database.forDataSource(ds).withDynSession {
       sql"""
         select min(a.id), max(a.id)
         from asset a
         where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
-      """.as[(Long, Long)].first()
+      """.as[(Int, Int)].first()
     }
   }
 
@@ -451,13 +451,12 @@ class AssetDataImporter {
   def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
     val chunkSize = 1000
     val (minId, maxId) = getSpeedLimitIdRange
-    val chunks: Seq[(Long, Long)] = (minId to maxId by chunkSize).sliding(2).map(x => (x(0), x(1) - 1)).toSeq
+    val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case(chunkStart, chunkEnd) =>
       val start = System.currentTimeMillis()
       splitSpeedLimits(chunkStart, chunkEnd)
       println("*** Processed speed limits between " + chunkStart + " and " + chunkEnd + " in " + (System.currentTimeMillis() - start) + " ms.")
     }
-    splitSpeedLimits(chunks.last._2 + 1, maxId)
   }
 
   def insertTextPropertyData(propertyId: Long, assetId: Long, text:String) {
