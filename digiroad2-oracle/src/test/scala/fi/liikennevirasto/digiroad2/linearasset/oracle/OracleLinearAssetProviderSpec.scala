@@ -49,25 +49,6 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("should complete topology with speed limit segments outside bounding box") {
-    runWithCleanup {
-      val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val provider = new OracleLinearAssetProvider(eventbus, mockRoadLinkService)
-      val roadLink = VVHRoadLinkWithProperties(389010100, List(Point(0.0, 0.0), Point(80.0, 0.0)), 80.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
-      val roadLink2 = VVHRoadLinkWithProperties(388551994, List(Point(80.0, 0.0), Point(110.0, 0.0)), 30.0, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
-      val linkOutsideBounds = VVHRoadLinkWithProperties(388552024, List(Point(80.0, 0.0), Point(80.0, 14.587)), 14.587, Municipality, 1, UnknownDirection, UnknownLinkType, None, None)
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink, roadLink2))
-      when(mockRoadLinkService.getRoadLinksFromVVH(Set(388552024l))).thenReturn(Seq(linkOutsideBounds))
-      val speedLimits = provider.getSpeedLimits(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-      speedLimits.map(_.id) should be(Seq(200204, 200204, 0))
-      verify(eventbus).publish(
-        org.mockito.Matchers.eq("speedLimits:update"),
-        org.mockito.Matchers.eq(SpeedLimitChangeSet(Set(200205), Nil))
-      )
-    }
-  }
-
   test("should fill speed limit gaps in the middle of a speed limit") {
     runWithCleanup {
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
