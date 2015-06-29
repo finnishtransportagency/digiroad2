@@ -201,4 +201,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("speed limit creation fails if speed limit is already defined on link segment") {
+    Database.forDataSource(ds).withDynTransaction {
+      val dao = daoWithRoadLinks(Nil)
+      val id = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40)
+      id shouldBe defined
+      val id2 = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40)
+      id2 shouldBe None
+      dynamicSession.rollback()
+    }
+  }
 }
