@@ -237,9 +237,7 @@ trait OracleLinearAssetDao {
     val (startMeasure, endMeasure) = linkMeasures
     val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).map{ case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
-    if (remainders.length != 1) {
-      None
-    } else {
+    if (remainders.length == 1) {
       val speedLimitId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
@@ -263,6 +261,8 @@ trait OracleLinearAssetDao {
       Q.updateNA(insertAll).execute()
 
       Some(speedLimitId)
+    } else {
+      None
     }
   }
 
