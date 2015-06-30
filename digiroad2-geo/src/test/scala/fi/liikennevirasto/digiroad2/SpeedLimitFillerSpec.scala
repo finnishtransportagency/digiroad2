@@ -28,4 +28,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.endMeasure should be(10.0)
     changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0))))
   }
+
+  // TODO: Consider speed limit side code when adjusting speed limit
 }
