@@ -60,22 +60,22 @@ object SpeedLimitFiller {
     (modifiedLink, mAdjustment)
   }
 
-  private def adjustEndSegments(headLink: ChainedLink[SpeedLimitDTO], lastLink: ChainedLink[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (ChainedLink[SpeedLimitDTO], ChainedLink[SpeedLimitDTO], Seq[MValueAdjustment]) = {
-    val (modifiedHeadLink, mValueAdjustments) = headLink.geometryDirection match {
-      case AgainstLinkChain => (headLink, Nil)
-      case TowardsLinkChain => adjustEndSegment(headLink, topology.get(headLink.rawLink.mmlId).get)
-    }
-    val (modifiedLastLink, lastLinkMValueAdjustments) = lastLink.geometryDirection match {
-      case TowardsLinkChain => (lastLink, Nil)
-      case AgainstLinkChain => adjustEndSegment(lastLink, topology.get(lastLink.rawLink.mmlId).get)
-    }
-    (modifiedHeadLink, modifiedLastLink, mValueAdjustments ++ lastLinkMValueAdjustments)
+  private def adjustSegment(link: SpeedLimitDTO, roadLink: RoadLinkForSpeedLimit): (ChainedLink[SpeedLimitDTO], Seq[MValueAdjustment]) = {
+    val startError = link.startMeasure
+    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val endError = roadLinkLength - link.endMeasure
+    val mAdjustment =
+      if (startError > MaxAllowedMValueError || endError > MaxAllowedMValueError)
+        Seq(MValueAdjustment(link.assetId, link.mmlId, 0, roadLinkLength))
+      else
+        Nil
+    val modifiedSegment = link.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
+    val modifiedLink = new ChainedLink[SpeedLimitDTO](modifiedSegment, 0, 0, TowardsLinkChain)
+    (modifiedLink, mAdjustment)
   }
 
   private def adjustSpeedLimit(speedLimit: SpeedLimitDTO, topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
-    val link = new ChainedLink[SpeedLimitDTO](speedLimit, 0, 0, TowardsLinkChain)
-    val (modifiedLink: ChainedLink[SpeedLimitDTO], mValueAdjustments: Seq[MValueAdjustment]) = adjustEndSegment(link, topology.get(link.rawLink.mmlId).get)
-
+    val (modifiedLink: ChainedLink[SpeedLimitDTO], mValueAdjustments: Seq[MValueAdjustment]) = adjustSegment(speedLimit, topology.get(speedLimit.mmlId).get)
     (new LinkChain[SpeedLimitDTO](Seq(modifiedLink), getLinkEndpoints), mValueAdjustments)
   }
 
