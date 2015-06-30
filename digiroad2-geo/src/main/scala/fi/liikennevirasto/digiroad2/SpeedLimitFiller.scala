@@ -72,19 +72,11 @@ object SpeedLimitFiller {
     (modifiedHeadLink, modifiedLastLink, mValueAdjustments ++ lastLinkMValueAdjustments)
   }
 
-  private def adjustSpeedLimit(speedLimit: LinkChain[SpeedLimitDTO], topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
-    if (speedLimit.links.length > 1) {
-      val headLink = speedLimit.head()
-      val lastLink = speedLimit.last()
-      val middleSegments = speedLimit.withoutEndSegments().links
+  private def adjustSpeedLimit(speedLimit: SpeedLimitDTO, topology: Map[Long, RoadLinkForSpeedLimit]): (LinkChain[SpeedLimitDTO], Seq[MValueAdjustment]) = {
+    val link = new ChainedLink[SpeedLimitDTO](speedLimit, 0, 0, TowardsLinkChain)
+    val (modifiedLink: ChainedLink[SpeedLimitDTO], mValueAdjustments: Seq[MValueAdjustment]) = adjustEndSegment(link, topology.get(link.rawLink.mmlId).get)
 
-      val (modifiedHeadLink: ChainedLink[SpeedLimitDTO], modifiedLastLink: ChainedLink[SpeedLimitDTO], mValueAdjustments: Seq[MValueAdjustment]) = adjustEndSegments(headLink, lastLink, topology)
-      val (modifiedMiddleLinks: Seq[ChainedLink[SpeedLimitDTO]], middleSegmentMValueAdjustments: Seq[MValueAdjustment]) = adjustMiddleSegments(middleSegments, topology)
-
-      (new LinkChain[SpeedLimitDTO](Seq(modifiedHeadLink) ++ modifiedMiddleLinks ++ Seq(modifiedLastLink), speedLimit.fetchLinkEndPoints), mValueAdjustments ++ middleSegmentMValueAdjustments)
-    } else {
-      (speedLimit, Nil)
-    }
+    (new LinkChain[SpeedLimitDTO](Seq(modifiedLink), getLinkEndpoints), mValueAdjustments)
   }
 
   private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
@@ -92,18 +84,19 @@ object SpeedLimitFiller {
                          segments: Seq[SpeedLimitDTO],
                          adjustedSpeedLimits: Map[Long, LinkChain[SpeedLimitDTO]]):
   (Seq[ChainedLink[SpeedLimitDTO]], Seq[LinkChain[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
-
-    segments.foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]], Seq.empty[MValueAdjustment]) { case(acc, segment) =>
-      val (accAdjustedSegments, accAdjustedSpeedLimits, accMValueAdjustments) = acc
-      val (adjustedSegment, adjustedSpeedLimit, mValueAdjustments) = adjustedSpeedLimits
-        .get(segment.assetId)
-        .map { sl => (sl.find(_.rawLink.mmlId == segment.mmlId), sl, Nil) }
-        .getOrElse {
+    if (segments.length == 1) {
+      val (adjustedSpeedLimit, mValueAdjustments) = adjustSpeedLimit(segments.head, topology)
+      (Seq(adjustedSpeedLimit.head()), Seq(adjustedSpeedLimit), mValueAdjustments)
+    } else {
+      val (adjustedSegments, adjustedSpeedLimits) = segments.foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case(acc, segment) =>
+        val (accAdjustedSegments, accAdjustedSpeedLimits) = acc
         val speedLimit = LinkChain(speedLimits.get(segment.assetId).get, getLinkEndpoints)
-        val (adjustedSpeedLimit, mValueAdjustments) = adjustSpeedLimit(speedLimit, topology)
-        (adjustedSpeedLimit.find(_.rawLink.mmlId == segment.mmlId), adjustedSpeedLimit, mValueAdjustments)
+        val adjustedSegment = speedLimit.find(_.rawLink.mmlId == segment.mmlId)
+        val adjustedSpeedLimit = speedLimit
+
+        (accAdjustedSegments ++ adjustedSegment.toList, accAdjustedSpeedLimits ++ Seq(adjustedSpeedLimit))
       }
-      (accAdjustedSegments ++ adjustedSegment.toList, accAdjustedSpeedLimits ++ Seq(adjustedSpeedLimit), accMValueAdjustments ++ mValueAdjustments)
+      (adjustedSegments, adjustedSpeedLimits, Nil)
     }
   }
 
