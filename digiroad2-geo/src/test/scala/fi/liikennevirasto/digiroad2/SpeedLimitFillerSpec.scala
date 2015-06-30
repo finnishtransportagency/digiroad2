@@ -18,13 +18,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
      val topology = Map(
-      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1))
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1))
     val speedLimits = Map(1l -> Seq(
-      SpeedLimitDTO(1, 1, 1, Some(40), Seq(Point(0.0, 0.0), Point(0.8, 0.0)), 0.0, 0.8)))
-    val (filledTopology, _) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      SpeedLimitDTO(1, 1, 1, Some(40), Seq(Point(0.0, 0.0), Point(9, 0.0)), 0.0, 9)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology.length should be(1)
-    filledTopology.head.points should be(Seq(Point(0.0, 0.0), Point(1.0, 0.0)))
+    filledTopology.head.points should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
-    filledTopology.head.endMeasure should be(1.0)
+    filledTopology.head.endMeasure should be(10.0)
+    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 10.0))))
   }
 }
