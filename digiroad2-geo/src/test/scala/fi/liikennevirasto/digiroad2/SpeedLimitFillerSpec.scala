@@ -26,6 +26,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.points should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 10.0))))
+    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0))))
   }
 }

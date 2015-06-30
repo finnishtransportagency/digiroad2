@@ -6,7 +6,7 @@ object SpeedLimitFiller {
   import GeometryDirection._
 
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimitDTO, adjustedMValue: Option[Double])
-  case class MValueAdjustment(assetId: Long, mmlId: Long, endMeasure: Double)
+  case class MValueAdjustment(assetId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double)
   case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment])
 
   private val MaxAllowedMValueError = 0.5
@@ -34,7 +34,7 @@ object SpeedLimitFiller {
       val (newGeometry, mValueAdjustment) = optionalRoadLinkGeometry.map { roadLinkGeometry =>
         val mValueError = Math.abs(GeometryUtils.geometryLength(roadLinkGeometry) - GeometryUtils.geometryLength(segment.rawLink.geometry))
         if (mValueError > MaxAllowedMValueError) {
-          (roadLinkGeometry, Some(MValueAdjustment(segment.rawLink.assetId, segment.rawLink.mmlId, GeometryUtils.geometryLength(roadLinkGeometry))))
+          (roadLinkGeometry, Some(MValueAdjustment(segment.rawLink.assetId, segment.rawLink.mmlId, 0, GeometryUtils.geometryLength(roadLinkGeometry))))
         } else {
           (roadLinkGeometry, None)
         }
@@ -52,7 +52,7 @@ object SpeedLimitFiller {
     val mError = roadLinkLength - rawLink.endMeasure
     val mAdjustment =
       if (mError > MaxAllowedMValueError)
-        Seq(MValueAdjustment(rawLink.assetId, rawLink.mmlId, roadLinkLength))
+        Seq(MValueAdjustment(rawLink.assetId, rawLink.mmlId, 0, roadLinkLength))
       else
         Nil
     val modifiedSegment = rawLink.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, rawLink.startMeasure, roadLinkLength), endMeasure = roadLinkLength)
