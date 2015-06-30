@@ -106,14 +106,7 @@ trait OracleLinearAssetDao {
   private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
     val topology = toTopology(roadLinks)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
-    val speedLimitIds = speedLimitLinks.map(_.assetId).toSet
-    val missingSegments = findMissingSegments(speedLimitIds, topology)
-    val topologyOutsideBounds = toTopology(roadLinkService.getRoadLinksFromVVH(missingSegments.map(_._2).toSet))
-    val (segmentsOutsideBounds, orphanSegments) = missingSegments.partition { case(_, mmlId, _, _, _, _) => topologyOutsideBounds.get(mmlId).isDefined }
-    orphanSegments.foreach(removeSegment)
-    val geometrizedSegmentsOutsideBounds = segmentsOutsideBounds.map(createGeometryForSegment(topologyOutsideBounds))
-
-    (speedLimitLinks ++ geometrizedSegmentsOutsideBounds, topology ++ topologyOutsideBounds)
+    (speedLimitLinks, topology)
   }
 
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
@@ -126,41 +119,11 @@ trait OracleLinearAssetDao {
       .groupBy(_.mmlId).mapValues(_.head)
   }
 
-  private def removeSegment(orphan: (Long, Long, Int, Option[Int], Double, Double)) = {
-    val (assetId, mmlId, _, _, _, _) = orphan
-    val optionalPositionId = sql"""
-      select al.position_id from asset_link al
-      join LRM_POSITION pos on al.position_id = pos.id
-      where  al.ASSET_ID = $assetId and pos.mml_id = $mmlId""".as[Long].firstOption()
-
-    optionalPositionId.foreach { positionId =>
-      sqlu"""delete from asset_link where position_id = $positionId""".execute()
-      sqlu"""delete from lrm_position where id = $positionId""".execute()
-    }
-  }
-
   private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, Int, Option[Int], Double, Double)) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure) = segment
     val roadLink = topology.get(mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
     SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure)
-  }
-
-  private def findMissingSegments(speedLimits: Set[Long], topology: Map[Long, RoadLinkForSpeedLimit]) = {
-    val limits =
-      MassQuery.withIds(speedLimits.toSeq) { idTableName =>
-        sql"""
-        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
-           from asset a
-           join asset_link al on a.id = al.asset_id
-           join lrm_position pos on al.position_id = pos.id
-           join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
-           join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-           join enumerated_value e on s.enumerated_value_id = e.id
-           join  #$idTableName i on i.id = a.id
-           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double)].list
-      }
-    limits.filterNot { link => topology.keySet.contains(link._2) }
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double)] = {
