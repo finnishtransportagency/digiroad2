@@ -72,7 +72,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       adjustments.foreach { adjustment =>
-        dao.updateEndMeasure(adjustment.assetId, adjustment.mmlId, adjustment.endMeasure)
+        dao.updateMValues(adjustment.assetId, adjustment.mmlId, (adjustment.startMeasure, adjustment.endMeasure))
       }
     }
   }

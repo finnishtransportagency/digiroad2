@@ -252,19 +252,6 @@ trait OracleLinearAssetDao {
     """.execute()
   }
 
-  def updateEndMeasure(assetId: Long, mmlId: Long, endMeasure: Double) = {
-    sqlu"""
-        update LRM_POSITION
-        set
-          end_measure = $endMeasure
-        where id = (
-          select lrm.id
-            from asset a
-            join asset_link al on a.ID = al.ASSET_ID
-            join lrm_position lrm on lrm.id = al.POSITION_ID
-            where a.id = $assetId and lrm.mml_id = $mmlId)""".execute()
-  }
-
   def updateLinkStartAndEndMeasures(id: Long,
                                     roadLinkId: Long,
                                     linkMeasures: (Double, Double)): Unit = {
@@ -284,11 +271,8 @@ trait OracleLinearAssetDao {
     """.execute()
   }
   
-  def updateLinkStartAndEndMeasuresByMmlId(id: Long,
-                                           mmlId: Long,
-                                           linkMeasures: (Double, Double)): Unit = {
+  def updateMValues(id: Long, mmlId: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
-
     sqlu"""
       update LRM_POSITION
       set
@@ -318,7 +302,7 @@ trait OracleLinearAssetDao {
     Queries.updateAssetModified(id, username).execute()
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
 
-    updateLinkStartAndEndMeasuresByMmlId(id, mmlId, existingLinkMeasures)
+    updateMValues(id, mmlId, existingLinkMeasures)
     val createdId = createSpeedLimit(username, mmlId, createdLinkMeasures, sideCode, value).get
     if (linksToMove.nonEmpty) moveLinksByMmlId(id, createdId, linksToMove.map(_._1))
     createdId
