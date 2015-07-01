@@ -81,8 +81,7 @@ object SpeedLimitFiller {
 
   private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
                          speedLimits: Map[Long, Seq[SpeedLimitDTO]],
-                         segments: Seq[SpeedLimitDTO],
-                         adjustedSpeedLimits: Map[Long, LinkChain[SpeedLimitDTO]]):
+                         segments: Seq[SpeedLimitDTO]):
   (Seq[ChainedLink[SpeedLimitDTO]], Seq[LinkChain[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
     if (segments.length == 1) {
       val (adjustedSpeedLimit, mValueAdjustments) = adjustSpeedLimit(segments.head, topology)
@@ -134,7 +133,7 @@ object SpeedLimitFiller {
 
         val (adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]],
         adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]],
-        mValueAdjustments: Seq[MValueAdjustment]) = adjustSpeedLimits(topology, validLimits, validSegments, adjustedSpeedLimits)
+        mValueAdjustments: Seq[MValueAdjustment]) = adjustSpeedLimits(topology, validLimits, validSegments)
 
         val (maintainedSegments: Seq[ChainedLink[SpeedLimitDTO]], speedLimitDrops: Set[Long]) = dropSpeedLimits(adjustedSpeedLimitsOnLink, adjustedSegments)
 
