@@ -79,6 +79,12 @@ object SpeedLimitFiller {
     (new LinkChain[SpeedLimitDTO](Seq(modifiedLink), getLinkEndpoints), mValueAdjustments)
   }
 
+  private def segmentToLinkChain(segment: SpeedLimitDTO): (ChainedLink[SpeedLimitDTO], LinkChain[SpeedLimitDTO]) = {
+    val linkChain = LinkChain(Seq(segment), getLinkEndpoints)
+    val chainedLink = linkChain.head()
+    (chainedLink, linkChain)
+  }
+
   private def adjustTwoWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
                                    speedLimits: Map[Long, Seq[SpeedLimitDTO]],
                                    segments: Seq[SpeedLimitDTO]):
@@ -91,11 +97,8 @@ object SpeedLimitFiller {
       val (adjustedSegments, adjustedSpeedLimits) = twoWaySegments
         .foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case(acc, segment) =>
         val (accAdjustedSegments, accAdjustedSpeedLimits) = acc
-        val speedLimit = LinkChain(speedLimits.get(segment.assetId).get, getLinkEndpoints)
-        val adjustedSegment = speedLimit.find(_.rawLink.mmlId == segment.mmlId)
-        val adjustedSpeedLimit = speedLimit
-
-        (accAdjustedSegments ++ adjustedSegment.toList, accAdjustedSpeedLimits ++ Seq(adjustedSpeedLimit))
+        val (chainedLink, linkChain) = segmentToLinkChain(segment)
+        (chainedLink +: accAdjustedSegments, linkChain +: accAdjustedSpeedLimits)
       }
       (adjustedSegments, adjustedSpeedLimits, Nil)
     }
@@ -114,11 +117,8 @@ object SpeedLimitFiller {
       val (adjustedSegments, adjustedSpeedLimits) = segmentsTowardsRunningDirection
         .foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case (acc, segment) =>
         val (accAdjustedSegments, accAdjustedSpeedLimits) = acc
-        val speedLimit = LinkChain(speedLimits.get(segment.assetId).get, getLinkEndpoints)
-        val adjustedSegment = speedLimit.find(_.rawLink.mmlId == segment.mmlId)
-        val adjustedSpeedLimit = speedLimit
-
-        (accAdjustedSegments ++ adjustedSegment.toList, accAdjustedSpeedLimits ++ Seq(adjustedSpeedLimit))
+        val (chainedLink, linkChain) = segmentToLinkChain(segment)
+        (chainedLink +: accAdjustedSegments, linkChain +: accAdjustedSpeedLimits)
       }
       (adjustedSegments, adjustedSpeedLimits, Nil)
     }
