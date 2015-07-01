@@ -17,7 +17,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
-     val topology = Map(
+    val topology = Map(
       1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1))
     val speedLimits = Map(1l -> Seq(
       SpeedLimitDTO(1, 1, 1, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)))
@@ -29,5 +29,21 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0))))
   }
 
-  // TODO: Consider speed limit side code when adjusting speed limit
+  test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
+    val topology = Map(
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1))
+    val speedLimits = Map(
+      1l -> Seq(SpeedLimitDTO(1, 1, 2, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)),
+      2l -> Seq(SpeedLimitDTO(2, 1, 3, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    println(filledTopology)
+    filledTopology should have size 2
+    filledTopology.map(_.points) should be(Seq(
+      Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
+      Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    filledTopology.map(_.startMeasure) should be(Seq(0.0, 0.0))
+    filledTopology.map(_.endMeasure) should be(Seq(10.0, 10.0))
+    changeSet.adjustedMValues should have size 2
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0, 10.0), MValueAdjustment(2, 1, 0, 10.0)))
+  }
 }

@@ -79,15 +79,17 @@ object SpeedLimitFiller {
     (new LinkChain[SpeedLimitDTO](Seq(modifiedLink), getLinkEndpoints), mValueAdjustments)
   }
 
-  private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
-                         speedLimits: Map[Long, Seq[SpeedLimitDTO]],
-                         segments: Seq[SpeedLimitDTO]):
+  private def adjustTwoWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
+                                   speedLimits: Map[Long, Seq[SpeedLimitDTO]],
+                                   segments: Seq[SpeedLimitDTO]):
   (Seq[ChainedLink[SpeedLimitDTO]], Seq[LinkChain[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
-    if (segments.length == 1) {
+    val twoWaySegments = segments.filter(_.sideCode == 1)
+    if (twoWaySegments.length == 1 && segments.forall(_.sideCode == 1)) {
       val (adjustedSpeedLimit, mValueAdjustments) = adjustSpeedLimit(segments.head, topology)
       (Seq(adjustedSpeedLimit.head()), Seq(adjustedSpeedLimit), mValueAdjustments)
     } else {
-      val (adjustedSegments, adjustedSpeedLimits) = segments.foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case(acc, segment) =>
+      val (adjustedSegments, adjustedSpeedLimits) = twoWaySegments
+        .foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case(acc, segment) =>
         val (accAdjustedSegments, accAdjustedSpeedLimits) = acc
         val speedLimit = LinkChain(speedLimits.get(segment.assetId).get, getLinkEndpoints)
         val adjustedSegment = speedLimit.find(_.rawLink.mmlId == segment.mmlId)
@@ -97,6 +99,41 @@ object SpeedLimitFiller {
       }
       (adjustedSegments, adjustedSpeedLimits, Nil)
     }
+  }
+
+  private def adjustOneWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
+                                   speedLimits: Map[Long, Seq[SpeedLimitDTO]],
+                                   segments: Seq[SpeedLimitDTO],
+                                   runningDirection: Int):
+  (Seq[ChainedLink[SpeedLimitDTO]], Seq[LinkChain[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
+    val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection)
+    if (segmentsTowardsRunningDirection.length == 1 && segments.filter(_.sideCode == 1).isEmpty) {
+      val (adjustedSpeedLimit, mValueAdjustments) = adjustSpeedLimit(segmentsTowardsRunningDirection.head, topology)
+      (Seq(adjustedSpeedLimit.head()), Seq(adjustedSpeedLimit), mValueAdjustments)
+    } else {
+      val (adjustedSegments, adjustedSpeedLimits) = segmentsTowardsRunningDirection
+        .foldLeft(Seq.empty[ChainedLink[SpeedLimitDTO]], Seq.empty[LinkChain[SpeedLimitDTO]]) { case (acc, segment) =>
+        val (accAdjustedSegments, accAdjustedSpeedLimits) = acc
+        val speedLimit = LinkChain(speedLimits.get(segment.assetId).get, getLinkEndpoints)
+        val adjustedSegment = speedLimit.find(_.rawLink.mmlId == segment.mmlId)
+        val adjustedSpeedLimit = speedLimit
+
+        (accAdjustedSegments ++ adjustedSegment.toList, accAdjustedSpeedLimits ++ Seq(adjustedSpeedLimit))
+      }
+      (adjustedSegments, adjustedSpeedLimits, Nil)
+    }
+  }
+
+  private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
+                         speedLimits: Map[Long, Seq[SpeedLimitDTO]],
+                         segments: Seq[SpeedLimitDTO]):
+  (Seq[ChainedLink[SpeedLimitDTO]], Seq[LinkChain[SpeedLimitDTO]], Seq[MValueAdjustment]) = {
+    val (towardsGeometrySegments, towardsGeometrySpeedLimits, towardsGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, 2)
+    val (againstGeometrySegments, againstGeometrySpeedLimits, againstGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, 3)
+    val (twoWayGeometrySegments, twoWayGeometrySpeedLimits, twoWayGeometryAdjustments) = adjustTwoWaySegments(topology, speedLimits, segments)
+    (towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
+      towardsGeometrySpeedLimits ++ againstGeometrySpeedLimits ++ twoWayGeometrySpeedLimits,
+      towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments)
   }
 
   private def dropSpeedLimits(adjustedSpeedLimitsOnLink: Seq[LinkChain[SpeedLimitDTO]], adjustedSegments: Seq[ChainedLink[SpeedLimitDTO]]): (Seq[ChainedLink[SpeedLimitDTO]], Set[Long]) = {
