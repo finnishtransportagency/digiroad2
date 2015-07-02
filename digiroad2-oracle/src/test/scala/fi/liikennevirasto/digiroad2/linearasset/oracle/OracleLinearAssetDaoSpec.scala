@@ -124,7 +124,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit creation fails if speed limit is already defined on link segment") {
     Database.forDataSource(ds).withDynTransaction {
-      val dao = daoWithRoadLinks(Nil)
+      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+      val dao = daoWithRoadLinks(List(roadLink))
       val id = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
       id shouldBe defined
       val id2 = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
