@@ -108,16 +108,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("filter out floating speed limits") {
     Database.forDataSource(ds).withDynTransaction {
-      sqlu"""update asset set floating = 1 where id=200097""".execute()
-      val roadLink = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 0, UnknownDirection, MultipleCarriageway, None, None)
+      val roadLinks = Seq(
+        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None),
+        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None))
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
-      when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(roadLink))
+      when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
       when(mockedRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = mockedRoadLinkService
       }
+      dao.markSpeedLimitsFloating(Set(300100, 300101))
       val speedLimits = dao.getSpeedLimitLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-      speedLimits._1 should be(empty)
+      speedLimits._1.map(_.assetId) should equal(Seq(200352))
       dynamicSession.rollback()
     }
   }

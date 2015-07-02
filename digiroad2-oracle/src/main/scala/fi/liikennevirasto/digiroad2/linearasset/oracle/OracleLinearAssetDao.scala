@@ -332,8 +332,9 @@ trait OracleLinearAssetDao {
 
   def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
-      val speedLimitIds = ids.mkString(",")
-      sqlu"""update asset set floating = 1 where id in (#$speedLimitIds)""".execute()
+      MassQuery.withIds(ids.toSeq) { idTableName =>
+        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute()
+      }
     }
   }
 }
