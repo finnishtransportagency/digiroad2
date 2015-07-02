@@ -81,7 +81,7 @@ trait OracleLinearAssetDao {
   private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+        select /*+ INDEX(s SINGLE_CHOICE_PK) */ a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
