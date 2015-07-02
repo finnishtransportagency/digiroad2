@@ -176,8 +176,6 @@ object DataFixture {
   }
 
   def main(args:Array[String]) : Unit = {
-    // TODO: Uncomment safety check once production is updated
-/*
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
     if (!username.startsWith("dr2dev")) {
@@ -193,7 +191,6 @@ object DataFixture {
         }
       }
     }
-*/
 
     args.headOption match {
       case Some("test") =>
