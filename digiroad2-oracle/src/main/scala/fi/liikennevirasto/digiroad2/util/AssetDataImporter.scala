@@ -438,7 +438,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.createSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), sideCode, value.get)
+        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), sideCode, value.get)
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 

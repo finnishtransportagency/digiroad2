@@ -193,20 +193,17 @@ trait OracleLinearAssetDao {
   
   def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
     municipalityValidation(roadLinkService.fetchVVHRoadlink(mmlId).get.municipalityCode)
-    createSpeedLimit(creator, mmlId, linkMeasures, sideCode, value)
+    createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
   }
 
-  def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Option[Long] = {
+  def forceCreateSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Long = {
     val (startMeasure, endMeasure) = linkMeasures
-    val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).map{ case(_, _, _, _, start, end) => (start, end) }
-    val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
-    if (remainders.length == 1) {
-      val speedLimitId = Sequences.nextPrimaryKeySeqValue
-      val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+    val speedLimitId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
 
-      val insertAll =
-        s"""
+    val insertAll =
+      s"""
       INSERT ALL
         into asset(id, asset_type_id, created_by, created_date)
         values ($speedLimitId, 20, '$creator', sysdate)
@@ -221,9 +218,17 @@ trait OracleLinearAssetDao {
         values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
       SELECT * FROM DUAL
       """
-      Q.updateNA(insertAll).execute()
+    Q.updateNA(insertAll).execute()
 
-      Some(speedLimitId)
+    speedLimitId
+  }
+  
+  private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Option[Long] = {
+    val (startMeasure, endMeasure) = linkMeasures
+    val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).map{ case(_, _, _, _, start, end) => (start, end) }
+    val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+    if (remainders.length == 1) {
+      Some(forceCreateSpeedLimit(creator, mmlId, linkMeasures, sideCode, value))
     } else {
       None
     }
@@ -303,7 +308,7 @@ trait OracleLinearAssetDao {
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
 
     updateMValues(id, mmlId, existingLinkMeasures)
-    val createdId = createSpeedLimit(username, mmlId, createdLinkMeasures, sideCode, value).get
+    val createdId = createSpeedLimitWithoutDuplicates(username, mmlId, createdLinkMeasures, sideCode, value).get
     if (linksToMove.nonEmpty) moveLinksByMmlId(id, createdId, linksToMove.map(_._1))
     createdId
   }
