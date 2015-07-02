@@ -82,12 +82,16 @@ class VVHClient(hostname: String) {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
-    val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-    val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-    layers
-      .find(map => { map.contains("features") })
-      .get("features").asInstanceOf[List[Map[String, Any]]]
-      .filter(roadLinkInUse)
+    try {
+      val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
+      layers
+        .find(map => { map.contains("features")})
+        .get("features").asInstanceOf[List[Map[String, Any]]]
+        .filter(roadLinkInUse)
+    } finally {
+      response.close()
+    }
   }
 
   private def roadLinkInUse(feature: Map[String, Any]): Boolean = {
