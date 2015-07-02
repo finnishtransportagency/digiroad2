@@ -204,7 +204,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
-        "linkType" -> roadLink.linkType.value) ++ roadLink.attributes
+        "linkType" -> roadLink.linkType.value,
+        "modifiedAt" -> roadLink.modifiedAt) ++ roadLink.attributes
     }
   }
 
