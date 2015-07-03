@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 
 import fi.liikennevirasto.digiroad2.asset._
@@ -154,6 +155,25 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
         org.mockito.Matchers.eq(changeSet))
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Remove road link from incomplete link list once functional class and link type are specified") {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val roadLink = VVHRoadlink(1l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)
+      when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
+      val service = new TestService(mockVVHClient)
+
+      sqlu"""insert into incomplete_link (mml_id, municipality_code, administrative_class) values (1, 91, 1)""".execute()
+
+      service.updateProperties(1, FunctionalClass.Unknown, Freeway, BothDirections, "test", _ => ())
+      service.updateProperties(1, 4, UnknownLinkType, BothDirections, "test", _ => ())
+
+      val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
+      incompleteLinks should be(empty)
 
       dynamicSession.rollback()
     }

@@ -549,6 +549,17 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
     middlePoint.map((mmlId, _))
   }
 
+  private def getFunctionalClassAndLinkType(mmlId: Long): (Option[Int], Option[Int]) = {
+    withDynSession {
+      sql"""
+        select functional_class, link_type
+        from functional_class f
+        full outer join link_type l on l.mml_id = f.mml_id
+        where $mmlId in (f.mml_id, l.mml_id)
+      """.as[(Option[Int], Option[Int])].first()
+    }
+  }
+
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
                                 direction: TrafficDirection, username: String, municipalityValidation: Int => Unit): Option[VVHRoadLinkWithProperties] = {
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
@@ -557,7 +568,9 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
       setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
       setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
       setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
-      if (functionalClass != FunctionalClass.Unknown && linkType != UnknownLinkType) removeIncompleteness(mmlId)
+      getFunctionalClassAndLinkType(mmlId) match {
+        case (Some(f), Some(l)) => removeIncompleteness(mmlId)
+      }
       enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
     }
   }
