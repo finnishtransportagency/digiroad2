@@ -254,7 +254,7 @@ trait RoadLinkService {
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
     withDynTransaction {
       val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
-      MassQuery.withIds(basicRoadLinks.map(_.mmlId)) { idTableName =>
+      MassQuery.withIds(basicRoadLinks.map(_.mmlId).toSet) { idTableName =>
         val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
         val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
         val linkTypes: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchLinkTypes(idTableName).groupBy(_._1)

@@ -79,9 +79,9 @@ trait OracleLinearAssetDao {
   }
 
   private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
-    MassQuery.withIds(mmlIds) { idTableName =>
+    MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select /*+ INDEX(s SINGLE_CHOICE_PK) */ a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
@@ -159,7 +159,7 @@ trait OracleLinearAssetDao {
   }
 
   def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps] = {
-    MassQuery.withIds(ids.toSeq) { idTableName =>
+    MassQuery.withIds(ids) { idTableName =>
       val timeStamps = sql"""
         select a.id, a.modified_by, a.modified_date, a.created_by, a.created_date
         from ASSET a
@@ -332,7 +332,7 @@ trait OracleLinearAssetDao {
 
   def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
-      MassQuery.withIds(ids.toSeq) { idTableName =>
+      MassQuery.withIds(ids) { idTableName =>
         sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute()
       }
     }
