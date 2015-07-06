@@ -221,13 +221,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Create new mass transit stop") {
     runWithCleanup {
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopService(eventbus)
       val values = List(PropertyValue("1"))
       val properties = List(SimpleProperty("pysakin_tyyppi", values))
-      val massTransitStop = RollbackMassTransitStopService.createNew(60.0, 0.0, 123l, 100, "test", properties)
+      val massTransitStop = service.createNew(60.0, 0.0, 123l, 100, "test", properties)
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(ValidityPeriod.Current))
+      verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
 

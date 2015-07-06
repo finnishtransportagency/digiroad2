@@ -207,14 +207,7 @@ trait MassTransitStopService {
         updateMunicipality(id, municipalityCode)
         updateAssetGeometry(id, point)
       }
-      val updatedStop = getPersistedMassTransitStops(withId(id)).headOption
-      updatedStop.foreach { persistedStop =>
-        val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
-        eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
-      }
-      updatedStop
-        .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})))
-        .get
+      getPersistedStopWithPropertiesAndPublishEvent(id, municipalityCode, geometry)
     }
   }
 
@@ -237,10 +230,19 @@ trait MassTransitStopService {
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
       OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
-      getPersistedMassTransitStops(withId(assetId)).headOption
-        .map(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))}))
-        .get
+      getPersistedStopWithPropertiesAndPublishEvent(assetId, municipalityCode, geometry)
     }
+  }
+
+  private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, municipalityCode: Int, geometry: Seq[Point]) = {
+    val persistedStop = getPersistedMassTransitStops(withId(assetId)).headOption
+    persistedStop.foreach { stop =>
+      val municipalityName = OracleSpatialAssetDao.getMunicipalityNameByCode(stop.municipalityCode)
+      eventbus.publish("asset:saved", eventBusMassTransitStop(stop, municipalityName))
+    }
+    persistedStop
+      .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties({_ => Some((municipalityCode, geometry))})))
+      .get
   }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[MassTransitStop] = {
