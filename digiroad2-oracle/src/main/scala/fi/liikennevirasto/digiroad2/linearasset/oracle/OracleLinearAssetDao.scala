@@ -225,7 +225,7 @@ trait OracleLinearAssetDao {
   
   private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
-    val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).map{ case(_, _, _, _, start, end) => (start, end) }
+    val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).filter(sl => sideCode == 1 || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
       Some(forceCreateSpeedLimit(creator, mmlId, linkMeasures, sideCode, value))
