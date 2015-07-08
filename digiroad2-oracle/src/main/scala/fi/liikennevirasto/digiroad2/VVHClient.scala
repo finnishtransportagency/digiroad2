@@ -21,6 +21,7 @@ case class VVHRoadlink(mmlId: Long, municipalityCode: Int, geometry: Seq[Point],
                       featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map())
 
 class VVHClient(hostname: String) {
+  class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   private def withFilter[T](attributeName: String, ids: Set[T]): String = {
@@ -58,14 +59,21 @@ class VVHClient(hostname: String) {
       s"layerDefs=$definition&geometry=" + bounds.leftBottom.x + "," + bounds.leftBottom.y + "," + bounds.rightTop.x + "," + bounds.rightTop.y +
       "&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters
 
-    fetchVVHFeatures(url).map(extractVVHFeature)
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.content.toString())
+    }
   }
 
   def fetchByMunicipality(municipality: Int): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$definition&$queryParameters"
-    fetchVVHFeatures(url).map(extractVVHFeature)
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.content.toString())
+    }
   }
 
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(mmlId)).headOption
@@ -75,20 +83,24 @@ class VVHClient(hostname: String) {
     val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
       s"layerDefs=$definition&$queryParameters"
 
-    fetchVVHFeatures(url).map(extractVVHFeature)
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.content.toString())
+    }
   }
 
-  private def fetchVVHFeatures(url: String): List[Map[String, Any]] = {
+  case class VVHError(content: Map[String, Any])
+
+  private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
-      val content = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-      val layers = content("layers").asInstanceOf[List[Map[String, Any]]]
-      layers
-        .find(map => { map.contains("features")})
-        .get("features").asInstanceOf[List[Map[String, Any]]]
-        .filter(roadLinkInUse)
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
+      val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
+      val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
+      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content)))
     } finally {
       response.close()
     }
