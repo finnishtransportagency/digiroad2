@@ -198,23 +198,21 @@ trait RoadLinkService {
   }
 
   protected def setLinkProperty(table: String, column: String, value: Int, mmlId: Long, username: String, optionalVVHValue: Option[Int] = None) = {
-    withDynTransaction {
-      val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
-      (optionalExistingValue, optionalVVHValue) match {
-        case (Some(existingValue), _) =>
-          updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
-        case (None, None) =>
+    val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where mml_id = $mmlId""".as[Int].firstOption
+    (optionalExistingValue, optionalVVHValue) match {
+      case (Some(existingValue), _) =>
+        updateExistingLinkPropertyRow(table, column, mmlId, username, existingValue, value)
+      case (None, None) =>
+        sqlu"""insert into #$table (mml_id, #$column, modified_by)
+                 select $mmlId, $value, $username
+                 from dual
+                 where not exists (select * from #$table where mml_id = $mmlId)""".execute()
+      case (None, Some(vvhValue)) =>
+        if (vvhValue != value)
           sqlu"""insert into #$table (mml_id, #$column, modified_by)
                    select $mmlId, $value, $username
                    from dual
                    where not exists (select * from #$table where mml_id = $mmlId)""".execute()
-        case (None, Some(vvhValue)) =>
-          if (vvhValue != value)
-            sqlu"""insert into #$table (mml_id, #$column, modified_by)
-                     select $mmlId, $value, $username
-                     from dual
-                     where not exists (select * from #$table where mml_id = $mmlId)""".execute()
-      }
     }
   }
 
@@ -333,9 +331,7 @@ trait RoadLinkService {
   }
 
   protected def removeIncompleteness(mmlId: Long) = {
-    withDynTransaction {
-      sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
-    }
+    sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
   }
 
   def updateRoadLinkChanges(roadLinkChangeSet: RoadLinkChangeSet): Unit = {
@@ -348,8 +344,10 @@ trait RoadLinkService {
       setLinkProperty("functional_class", "functional_class", roadLink.functionalClass, roadLink.mmlId, "automatic_generation")
       setLinkProperty("link_type", "link_type", roadLink.linkType.value, roadLink.mmlId, "automatic_generation")
     }
-    adjustedRoadLinks.foreach(updateProperties)
-    adjustedRoadLinks.foreach(link => removeIncompleteness(link.mmlId))
+    withDynTransaction {
+      adjustedRoadLinks.foreach(updateProperties)
+      adjustedRoadLinks.foreach(link => removeIncompleteness(link.mmlId))
+    }
   }
 
   protected def updateIncompleteLinks(incompleteLinks: Seq[IncompleteLink]) = {
@@ -550,14 +548,12 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
   }
 
   private def getFunctionalClassAndLinkType(mmlId: Long): (Option[Int], Option[Int]) = {
-    withDynSession {
-      sql"""
-        select functional_class, link_type
-        from functional_class f
-        full outer join link_type l on l.mml_id = f.mml_id
-        where $mmlId in (f.mml_id, l.mml_id)
-      """.as[(Option[Int], Option[Int])].first()
-    }
+    sql"""
+      select functional_class, link_type
+      from functional_class f
+      full outer join link_type l on l.mml_id = f.mml_id
+      where $mmlId in (f.mml_id, l.mml_id)
+    """.as[(Option[Int], Option[Int])].first()
   }
 
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
@@ -565,11 +561,13 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
     val vvhRoadLink = fetchVVHRoadlink(mmlId)
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)
-      setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
-      setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
-      setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
-      getFunctionalClassAndLinkType(mmlId) match {
-        case (Some(f), Some(l)) => removeIncompleteness(mmlId)
+      withDynTransaction {
+        setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
+        setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
+        setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
+        getFunctionalClassAndLinkType(mmlId) match {
+          case (Some(f), Some(l)) => removeIncompleteness(mmlId)
+        }
       }
       enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
     }
