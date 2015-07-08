@@ -548,14 +548,12 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
   }
 
   private def getFunctionalClassAndLinkType(mmlId: Long): (Option[Int], Option[Int]) = {
-    withDynSession {
-      sql"""
-        select functional_class, link_type
-        from functional_class f
-        full outer join link_type l on l.mml_id = f.mml_id
-        where $mmlId in (f.mml_id, l.mml_id)
-      """.as[(Option[Int], Option[Int])].first()
-    }
+    sql"""
+      select functional_class, link_type
+      from functional_class f
+      full outer join link_type l on l.mml_id = f.mml_id
+      where $mmlId in (f.mml_id, l.mml_id)
+    """.as[(Option[Int], Option[Int])].first()
   }
 
   override def updateProperties(mmlId: Long, functionalClass: Int, linkType: LinkType,
