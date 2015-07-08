@@ -38,6 +38,19 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  private def constructLinkChains(speedLimitLinks: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
+    def getLinkEndpoints(link: SpeedLimitDTO): (Point, Point) = {
+      GeometryUtils.geometryEndpoints(link.geometry)
+    }
+    val linkChain = LinkChain(speedLimitLinks, getLinkEndpoints)
+    linkChain.map { chainedLink =>
+      val link = chainedLink.rawLink
+      SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value,
+        link.geometry, link.startMeasure, link.endMeasure,
+        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain)
+    }
+  }
+
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink] = {
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
@@ -45,7 +58,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      filledTopology
+      constructLinkChains(filledTopology)
     }
   }
 
@@ -101,7 +114,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val (speedLimitLinks, roadLinksByMmlId) = dao.getByMunicipality(municipality)
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.assetId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      filledTopology
+      constructLinkChains(filledTopology)
     }
   }
 

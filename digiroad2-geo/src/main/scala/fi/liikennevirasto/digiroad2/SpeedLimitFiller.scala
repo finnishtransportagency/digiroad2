@@ -1,10 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, SpeedLimitLink, RoadLinkForSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitDTO, RoadLinkForSpeedLimit}
 
 object SpeedLimitFiller {
-  import GeometryDirection._
-
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimitDTO, adjustedMValue: Option[Double])
   case class MValueAdjustment(assetId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double)
   case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment])
@@ -14,16 +12,6 @@ object SpeedLimitFiller {
 
   private def getLinkEndpoints(link: SpeedLimitDTO): (Point, Point) = {
     GeometryUtils.geometryEndpoints(link.geometry)
-  }
-
-  private def getLinksWithPositions(links: Seq[SpeedLimitDTO]): Seq[SpeedLimitLink] = {
-    val linkChain = LinkChain(links, getLinkEndpoints)
-    linkChain.map { chainedLink =>
-      val link = chainedLink.rawLink
-      SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value,
-        link.geometry, link.startMeasure, link.endMeasure,
-        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain)
-    }
   }
 
   private def adjustSegment(link: SpeedLimitDTO, roadLink: RoadLinkForSpeedLimit): (SpeedLimitDTO, Seq[MValueAdjustment]) = {
@@ -119,7 +107,7 @@ object SpeedLimitFiller {
     }
   }
 
-  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitLink], SpeedLimitChangeSet) = {
+  def fillTopology(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimitDTO]]): (Seq[SpeedLimitDTO], SpeedLimitChangeSet) = {
     val roadLinks = topology.values
     val speedLimitSegments: Seq[SpeedLimitDTO] = speedLimits.values.flatten.toSeq
 
@@ -147,11 +135,6 @@ object SpeedLimitFiller {
       }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.assetId == 0)
-    val generatedTopology = generatedLimits.map { link =>
-      SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value, link.geometry, link.startMeasure, link.endMeasure, 0, true)
-    }
-    val fittedTopology = existingLimits.groupBy(_.assetId).values.map(getLinksWithPositions).flatten.toSeq
-
-    (fittedTopology ++ generatedTopology, changeSet)
+    (existingLimits ++ generatedLimits, changeSet)
   }
 }
