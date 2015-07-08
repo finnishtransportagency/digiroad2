@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, MultipleCarriageway, Municipality, UnknownDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -135,4 +135,19 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
+  test("speed limit creation succeeds when speed limit is already defined on segment iff speed limits have opposing sidecodes") {
+    Database.forDataSource(ds).withDynTransaction {
+      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+      val dao = daoWithRoadLinks(List(roadLink))
+      val id = dao.createSpeedLimit("test", 123, (0.0, 100.0), TowardsDigitizing.value, 40, _ => ())
+      id shouldBe defined
+      val id2 = dao.createSpeedLimit("test", 123, (0.0, 100.0), AgainstDigitizing.value, 40, _ => ())
+      id2 shouldBe defined
+      val id3 = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      id3 shouldBe None
+      dynamicSession.rollback()
+    }
+  }
+
 }
