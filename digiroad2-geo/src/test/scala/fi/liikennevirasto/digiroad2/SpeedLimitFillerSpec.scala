@@ -9,7 +9,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("drop segment outside of link geometry") {
     val topology = Map(
-      2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, Unknown, 2))
+      2l -> RoadLinkForSpeedLimit(Seq(Point(1.0, 0.0), Point(2.0, 0.0)), 1.0, Unknown, 2, None))
     val speedLimits = Map(1l -> Seq(
       SpeedLimitDTO(1, 2, 0, None, Nil, 0.0, 0.2)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
@@ -18,7 +18,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
     val topology = Map(
-      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1))
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1, None))
     val speedLimits = Map(1l -> Seq(
       SpeedLimitDTO(1, 1, 1, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
@@ -31,7 +31,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
     val topology = Map(
-      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1))
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1, None))
     val speedLimits = Map(
       1l -> Seq(SpeedLimitDTO(1, 1, 2, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)),
       2l -> Seq(SpeedLimitDTO(2, 1, 3, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0)))
