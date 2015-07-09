@@ -27,7 +27,6 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     created = Modification(Some(createdDateTime), Some("creator")),
     modified = Modification(Some(modifiedDatetime), Some("testUser")),
     propertyData = List(
-        Property(id = 1, publicId = "tietojen_yllapitaja", propertyType = "text", values = List(PropertyValue("1", Some("Ei tiedossa")))),
         Property(id = 1, publicId = "pysakin_tyyppi", propertyType = "text", values = List())
     )
   )
@@ -159,9 +158,14 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "ModifiedTimestamp").text must equal("2013-04-18T10:21:00")
   }
 
-  it must "specify administrator  code" in {
-    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("tietojen_yllapitaja", "Ei tiedossa"))))
+  it must "provide default for administrator  code" in {
+    val xml = validateAndParseTestAssetMessage(testAsset)
     (xml \ "AdministratorCode").text must equal("Ei tiedossa")
+  }
+
+  it must "specify administrator  code" in {
+    val xml = validateAndParseTestAssetMessage(testAssetWithProperties(List(("tietojen_yllapitaja", "Kunta"))))
+    (xml \ "AdministratorCode").text must equal("Kunta")
   }
 
   it must "specify municipality code" in {
