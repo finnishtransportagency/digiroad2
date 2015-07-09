@@ -203,11 +203,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val position = Some(Position(60.0, 0.0, 123l, None))
-      val stop = service.updateExisting(300002, position, Nil, "user", _ => Unit)
-      val eventBusStop = EventBusMassTransitStop(municipalityNumber = 91, municipalityName = "Helsinki",
-        nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = Some(358),
-        validityDirection = Some(3), created = Modification(None, None), modified = Modification(None, None),
-        propertyData = stop.propertyData)
+      service.updateExisting(300002, position, Nil, "user", _ => Unit)
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
