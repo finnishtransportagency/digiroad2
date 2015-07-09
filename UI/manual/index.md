@@ -131,7 +131,7 @@ jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml
 
 ##Tielinkin tietojen katselu##
 
-Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi.
+Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame) ja osoitenumerot vasemmalla ja oikealla.
 
 Tielinkeille voi valita visualisoinnin Tietolajit -paletista (1) tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin tai hallinnollisen luokan mukaan. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t Tietolajit-paletissa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
@@ -375,8 +375,6 @@ _Joukkoliikenteen pys&auml;kin poistaminen._
 
 Nopeusrajoitus on liikennev&auml;yl&auml;lle asetettu ajoneuvon suurin sallittu nopeus. Karttan&auml;kym&auml;&auml;n voi valita nopeusrajoitukset valitsemalla tietolajit-paletista (1) Nopeusrajoitukset. Karttaa tarkennettaessa nopeusrajoitukset paksuuntuvat, jotta niiden erottaminen on helpompaa. Nopeusrajoitukset on visualisoitu eri v&auml;rein nopeusrajoituksen arvon mukaan. Lis&auml;ksi nopeusrajoituksilla on ympyr&auml;, joka kertoo nopeusrajoituksen arvon. V&auml;rikoodien selitteet n&auml;kyv&auml;t Nopeusrajoitukset-valinnan alla, kun valitsee Nopeusrajoitukset.
 
-Jos tielinkill&auml; ei ole ollut aiemmin nopeusrajoitusta, sovellus generoi sille tuntemattoman nopeusrajoituksen. Tuntematon nopeusrajoitus n&auml;kyy mustana.
-
 ![Nopeusrajoitusten valinta](k18.jpg)
 
 _Nopeusrajoitusten valinta._
@@ -429,7 +427,20 @@ Katkaistun nopeusrajoituksen osista pidemm&auml;lle j&auml;&auml; alkuper&auml;i
 
 Uusi nopeusrajoitus tallennetaan Tallenna-painikkeesta. Tallentamisen j&auml;lkeen nopeusrajoitukselle generoidaan taustaj&auml;rjestelm&auml;ss&auml; ID.
 
-Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan. 
+Nopeusrajoituksen katkaisemisen voi perua Peruuta-Painikkeesta, joka palauttaa alkuper&auml;isen nopeusrajoituksen voimaan.
+
+###Tuntemattomat nopeusrajoitukset###
+
+Jos nopeusrajoitus ko. linkill&auml; ei ole tiedossa, n&auml;kyy se k&auml;ytt&ouml;liittym&auml;ss&auml; mustana eli tuntemattomana nopeusrajoituksena. Tuntemattomia nopeusrajoituksia on kahdenlaisia:
+
+1. Nopeusrajoitustieto on poistunut, kun alla olevan tielinkin geometria on p&auml;ivittynyt.
+1. Nopeusrajoitustietoa ei ole koskaan toimitettu Digiroad-j&auml;rjestelm&auml;&auml;n.
+
+Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&auml; voi muokata my&ouml;s monivalintaty&ouml;kalun avulla. Tuntemattomia nopeusrajoituksia ei kuitenkaan voi katkaista katkaisuty&ouml;kalulla, joten katkaisemista varten tulee tuntematomalle nopeusrajoitukselle ensin antaa joku arvo.
+
+![Tuntematon nopeusrajoitus.](k48.jpg)
+
+_Tuntematon nopeusrajoitus._
 
 6. K&auml;&auml;ntymisrajoitukset
 ----------------------------------
