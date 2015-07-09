@@ -178,7 +178,7 @@ Korjattavilla linkeill&auml; on liikennevirran suunta -tieto valmiina. Tieto tul
 
 _Korjattava linkki._
 
-![Korjattavien linkkien lista](k49.jpg)
+![Korjattavien linkkien lista](k50.jpg)
 
 _Korjattavien linkkien lista._
 
