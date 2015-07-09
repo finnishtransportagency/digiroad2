@@ -71,8 +71,8 @@
     };
 
     var saveSplit = function() {
-      collection.saveSplit(function(newId) {
-        selection[0].id = newId;
+      collection.saveSplit(function(speedLimit) {
+        selection = [_.merge({}, selection[0], speedLimit)];
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         dirty = false;

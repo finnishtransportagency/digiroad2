@@ -177,8 +177,8 @@
           speedLimits[speedLimit.id] = speedLimit;
         });
 
-        var newId = _.find(_.pluck(updatedSpeedLimits, 'id'), function(id) { return id !== existingId; });
-        callback(newId);
+        var newSpeedLimit = _.find(updatedSpeedLimits, function(speedLimit) { return speedLimit.id !== existingId; });
+        callback(newSpeedLimit);
 
         eventbus.trigger('speedLimits:fetched', self.getAll());
 
