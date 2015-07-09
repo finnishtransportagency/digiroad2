@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
+import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.mockito.Matchers._
@@ -61,6 +64,19 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Provide last edited date from VVH on road link modification date if there are no overrides") {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val lastEditedDate = DateTime.now()
+      val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TowardsDigitizing, AllOthers, Some(lastEditedDate)))
+      when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
+      val service = new TestService(mockVVHClient)
+      val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
+      results.head.modifiedAt should be(Some(DateTimePropertyFormat.print(lastEditedDate)))
       dynamicSession.rollback()
     }
   }
