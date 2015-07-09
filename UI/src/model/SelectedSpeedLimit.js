@@ -87,9 +87,9 @@
         endMeasure: link.endMeasure,
         value: self.getValue()
       };
-      backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimitId) {
+      backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimit) {
         dirty = false;
-        selection[0].id = speedLimitId;
+        selection = [_.merge({}, selection[0], speedLimit)];
         originalSpeedLimit = selection[0].value;
         collection.createSpeedLimitForUnknown(self.get());
         eventbus.trigger('speedLimit:saved');

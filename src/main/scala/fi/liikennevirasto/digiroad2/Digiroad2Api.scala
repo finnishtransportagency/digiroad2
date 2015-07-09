@@ -587,7 +587,10 @@ with GZipSupport {
     linearAssetProvider.createSpeedLimits(Seq(newLimit),
                                          (parsedBody \ "value").extract[Int],
                                          user.username,
-                                         validateUserMunicipalityAccess(user)).headOption
+                                         validateUserMunicipalityAccess(user)).headOption match {
+      case Some(id) => linearAssetProvider.getSpeedLimit(id)
+      case _ => BadRequest("Speed limit creation failed")
+    }
   }
 
   private def validateUserMunicipalityAccess(user: User)(municipality: Int): Unit = {
