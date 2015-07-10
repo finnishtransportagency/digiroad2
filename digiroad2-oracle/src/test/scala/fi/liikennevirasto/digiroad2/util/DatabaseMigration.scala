@@ -9,5 +9,7 @@ object DatabaseMigration {
     flyway.setDataSource(ds)
     flyway.setLocations("db.migration")
     flyway.migrate()
+    // TODO: Remove temp_id table recreate once temp_id table stays performant over several deployments
+    SqlScriptRunner.runScript("recreate_temp_id_table.sql")
   }
 }

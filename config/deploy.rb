@@ -36,10 +36,9 @@ set :pty, true
 
 namespace :deploy do
 
-  task :restart do
+  task :start do
     on roles(:all), in: :parallel do
       execute "cp #{deploy_to}/newrelic/* #{release_path}/."
-      execute "killall -q java; exit 0"
       execute "cd #{release_path} && chmod 700 start.sh"
       execute "cd #{release_path} && nohup ./start.sh"
     end
@@ -58,11 +57,12 @@ namespace :deploy do
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/"
       execute "cd #{release_path} && rsync -a bower_components src/main/webapp/"
+      execute "killall -q java; exit 0"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DatabaseMigration'"
     end
   end
 
   before :publishing, :prepare_release
 
-  after :publishing, :restart
+  after :publishing, :start
 end
