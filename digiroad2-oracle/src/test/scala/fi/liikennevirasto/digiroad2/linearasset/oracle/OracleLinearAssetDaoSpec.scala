@@ -47,6 +47,12 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   
   def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
 
+  private def simulateQuery[T](f: => T): T = {
+    val result = f
+    sqlu"""delete from temp_id""".execute()
+    result
+  }
+
   test("Split should fail when user is not authorized for municipality") {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
@@ -128,9 +134,13 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     Database.forDataSource(ds).withDynTransaction {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
-      val id = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      val id = simulateQuery {
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      }
       id shouldBe defined
-      val id2 = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      val id2 = simulateQuery {
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      }
       id2 shouldBe None
       dynamicSession.rollback()
     }
@@ -140,11 +150,17 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     Database.forDataSource(ds).withDynTransaction {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
-      val id = dao.createSpeedLimit("test", 123, (0.0, 100.0), TowardsDigitizing.value, 40, _ => ())
+      val id = simulateQuery {
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), TowardsDigitizing.value, 40, _ => ())
+      }
       id shouldBe defined
-      val id2 = dao.createSpeedLimit("test", 123, (0.0, 100.0), AgainstDigitizing.value, 40, _ => ())
+      val id2 = simulateQuery {
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), AgainstDigitizing.value, 40, _ => ())
+      }
       id2 shouldBe defined
-      val id3 = dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      val id3 = simulateQuery {
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+      }
       id3 shouldBe None
       dynamicSession.rollback()
     }

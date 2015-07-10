@@ -23,6 +23,12 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynSession[T](f: => T): T = f
   }
 
+  private def simulateQuery[T](f: => T): T = {
+    val result = f
+    sqlu"""delete from temp_id""".execute()
+    result
+  }
+
   test("Get production road link with test id that maps to one production road link") {
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._1) should be (Some(57))
     RoadLinkService.getByTestIdAndMeasure(48l, 50.0).map(_._2) should be (Some(18))
@@ -87,9 +93,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchVVHRoadlink(1l))
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+      val roadLink = simulateQuery {
+        service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+      }
       roadLink.map(_.trafficDirection) should be(Some(BothDirections))
-      val roadLink2 = service.updateProperties(1, 5, PedestrianZone, TowardsDigitizing, "testuser", { _ => })
+      val roadLink2 = simulateQuery {
+        service.updateProperties(1, 5, PedestrianZone, TowardsDigitizing, "testuser", { _ => })
+      }
       roadLink2.map(_.trafficDirection) should be(Some(TowardsDigitizing))
       dynamicSession.rollback()
     }
@@ -185,8 +195,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       sqlu"""insert into incomplete_link (mml_id, municipality_code, administrative_class) values (1, 91, 1)""".execute()
 
-      service.updateProperties(1, FunctionalClass.Unknown, Freeway, BothDirections, "test", _ => ())
-      service.updateProperties(1, 4, UnknownLinkType, BothDirections, "test", _ => ())
+      simulateQuery { service.updateProperties(1, FunctionalClass.Unknown, Freeway, BothDirections, "test", _ => ()) }
+      simulateQuery { service.updateProperties(1, 4, UnknownLinkType, BothDirections, "test", _ => ()) }
 
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
       incompleteLinks should be(empty)
