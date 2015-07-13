@@ -554,8 +554,8 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
       municipalityValidation(vvhRoadLink.municipalityCode)
       withDynTransaction {
         setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
-        setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
-        setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
+        if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
+        if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
       }
       val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
       if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
