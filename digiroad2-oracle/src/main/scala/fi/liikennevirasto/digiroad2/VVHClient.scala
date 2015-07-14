@@ -46,7 +46,7 @@ class VVHClient(hostname: String) {
   private def layerDefinition(filter: String): String = {
     val definitionStart = "[{"
     val layerSelection = """"layerId":0,"""
-    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE""""
+    val fieldSelection = s""""outFields":"MTKID,MUNICIPALITYCODE,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,MINANLEFT,MAXANLEFT,MINANRIGHT,MAXANRIGHT,LAST_EDITED_DATE,ROADNUMBER""""
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
     URLEncoder.encode(definition, "UTF-8")
@@ -134,6 +134,7 @@ class VVHClient(hostname: String) {
       "ROADNAME_FI",
       "ROADNAME_SM",
       "ROADNAME_SE",
+      "ROADNUMBER",
       "MINANLEFT",
       "MAXANLEFT",
       "MINANRIGHT",

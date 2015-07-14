@@ -112,11 +112,11 @@ trait OracleLinearAssetDao {
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
-      link.geometry,
-      link.length,
-      link.administrativeClass,
-      link.mmlId,
-      link.attributes.get("ROADNAME_FI").map(_.asInstanceOf[String]))
+        link.geometry,
+        link.length,
+        link.administrativeClass,
+        link.mmlId,
+      Option(link.attributes("ROADNUMBER").asInstanceOf[BigInt]).map(_.intValue()))
 
     roadLinks
       .filter(isCarTrafficRoad)
