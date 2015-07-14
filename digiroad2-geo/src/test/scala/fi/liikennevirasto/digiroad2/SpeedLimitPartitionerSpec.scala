@@ -17,9 +17,9 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadNumbers = Map(1l -> 1, 2l -> 1)
 
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
-    groupedLinks.length should be(2)
-    groupedLinks(0).id should not be 0
-    groupedLinks(0).id should be(groupedLinks(1).id)
+    groupedLinks should have size 1
+    groupedLinks.head should have size 2
+    groupedLinks.head.map(_.mmlId) should equal(speedLimitLinks.map(_.mmlId))
   }
 
   test("separate link with different limit value") {
@@ -29,10 +29,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadNumbers = Map(1l -> 1, 2l -> 1)
 
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
-    groupedLinks.length should be(2)
-    groupedLinks(0).id should not be 0
-    groupedLinks(1).id should not be 0
-    groupedLinks(0).id should not be groupedLinks(1).id
+    groupedLinks should have size 2
   }
 
   test("separate link with different road number") {
@@ -42,8 +39,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadNumbers = Map(1l -> 1)
 
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
-    groupedLinks.length should be(2)
-    groupedLinks(0).id should not be groupedLinks(1).id
+    groupedLinks should have size 2
   }
 
   test("separate links with gap in between") {
@@ -53,9 +49,6 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadNumbers = Map(1l -> 1, 2l -> 1)
 
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
-    groupedLinks.length should be(2)
-    groupedLinks(0).id should not be 0
-    groupedLinks(1).id should not be 0
-    groupedLinks(0).id should not be groupedLinks(1).id
+    groupedLinks should have size 2
   }
 }

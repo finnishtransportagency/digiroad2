@@ -9,7 +9,7 @@ import org.geotools.graph.util.graph.GraphPartitioner
 import scala.collection.JavaConversions._
 
 object SpeedLimitPartitioner {
-  private def clusterLinks(links: Seq[SpeedLimitDTO]): Seq[(Graph, Int)] = {
+  private def clusterLinks(links: Seq[SpeedLimitDTO]): Seq[Graph] = {
     val generator = new BasicLineGraphGenerator(1.0)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
@@ -17,7 +17,7 @@ object SpeedLimitPartitioner {
       val graphable = generator.add(segment)
       graphable.setObject(link)
     }
-    clusterGraph(generator.getGraph).zipWithIndex
+    clusterGraph(generator.getGraph)
   }
 
   private def clusterGraph(graph: Graph): Seq[Graph] = {
@@ -26,31 +26,29 @@ object SpeedLimitPartitioner {
     partitioner.getPartitions.toList.asInstanceOf[List[Graph]]
   }
 
-  private def linksFromCluster(groupIndex: Int, cluster: (Graph, Int)): Seq[SpeedLimitLink] = {
-    val edges = cluster._1.getEdges.toList.asInstanceOf[List[BasicEdge]]
+  private def linksFromCluster(cluster: Graph): Seq[SpeedLimitLink] = {
+    val edges = cluster.getEdges.toList.asInstanceOf[List[BasicEdge]]
     edges.map { edge: BasicEdge =>
       val dto = edge.getObject.asInstanceOf[SpeedLimitDTO]
-      speedLimitLinkFromDTO(dto, Some((groupIndex + 1) * 100 + cluster._2 + 10))
+      speedLimitLinkFromDTO(dto)
     }
   }
 
-  private def speedLimitLinkFromDTO(link: SpeedLimitDTO, id: Option[Long] = None): SpeedLimitLink = {
-    val assetId = id.getOrElse(link.assetId)
-    SpeedLimitLink(assetId, link.mmlId, link.sideCode, link.value,
+  private def speedLimitLinkFromDTO(link: SpeedLimitDTO): SpeedLimitLink = {
+    SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value,
       link.geometry, link.startMeasure, link.endMeasure, 0, true)
   }
 
-  def partition(links: Seq[SpeedLimitDTO], roadNumbers: Map[Long, Int]): Seq[SpeedLimitLink] = {
+  def partition(links: Seq[SpeedLimitDTO], roadNumbers: Map[Long, Int]): Seq[Seq[SpeedLimitLink]] = {
     val twoWayLinks = links.filter(_.sideCode == 1)
     val linkGroups = twoWayLinks.groupBy { link => (roadNumbers.get(link.mmlId), link.value) }
     val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined && key._2.isDefined }
 
-    val partitionedLinks: Seq[SpeedLimitLink] =
-      for (linkGroupWithIndex <- linksToPartition.values.zipWithIndex.toSeq;
-      cluster <- clusterLinks(linkGroupWithIndex._1);
-      links <- linksFromCluster(linkGroupWithIndex._2, cluster)) yield links
+    val clusters = for (linkGroupWithIndex <- linksToPartition.values.toSeq;
+                        cluster <- clusterLinks(linkGroupWithIndex)) yield cluster
+    val linkPartitions = clusters.map(linksFromCluster)
 
-    partitionedLinks ++ linksToPass.values.toSeq.flatten.map(speedLimitLinkFromDTO(_))
+    linkPartitions ++ linksToPass.values.map(x => x.map(speedLimitLinkFromDTO))
   }
 
 }
