@@ -24,10 +24,13 @@ object Digiroad2Build extends Build {
       scalaVersion := ScalaVersion,
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers += Classpaths.typesafeReleases,
+      resolvers += "opengeo" at "http://repo.opengeo.org/",
+      resolvers += "osgeo" at "http://download.osgeo.org/webdav/geotools/",
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
+        "org.geotools" % "gt-graph" % "13.1",
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
       )
     )
