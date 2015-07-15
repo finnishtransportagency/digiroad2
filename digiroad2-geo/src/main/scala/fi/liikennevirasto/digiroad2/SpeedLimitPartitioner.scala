@@ -44,8 +44,8 @@ object SpeedLimitPartitioner {
     val linkGroups = twoWayLinks.groupBy { link => (roadNumbers.get(link.mmlId), link.value) }
     val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined && key._2.isDefined }
 
-    val clusters = for (linkGroupWithIndex <- linksToPartition.values.toSeq;
-                        cluster <- clusterLinks(linkGroupWithIndex)) yield cluster
+    val clusters = for (linkGroup <- linksToPartition.values.toSeq;
+                        cluster <- clusterLinks(linkGroup)) yield cluster
     val linkPartitions = clusters.map(linksFromCluster)
 
     linkPartitions ++ linksToPass.values.map(x => x.map(speedLimitLinkFromDTO))

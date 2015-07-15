@@ -20,6 +20,7 @@ trait LinearAssetProvider {
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
   def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
   def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink]
+  def getSpeedLimits2(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimitLink]]
   def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
   def markSpeedLimitsFloating(ids: Set[Long]): Unit
   def getSpeedLimits(municipality: Int): Seq[SpeedLimitLink]
