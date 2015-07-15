@@ -61,7 +61,7 @@ class VVHClient(hostname: String) {
 
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.content.toString())
+      case Right(error) => throw new VVHClientException(error.toString)
     }
   }
 
@@ -72,7 +72,7 @@ class VVHClient(hostname: String) {
 
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.content.toString())
+      case Right(error) => throw new VVHClientException(error.toString)
     }
   }
 
@@ -85,11 +85,11 @@ class VVHClient(hostname: String) {
 
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.content.toString())
+      case Right(error) => throw new VVHClientException(error.toString)
     }
   }
 
-  case class VVHError(content: Map[String, Any])
+  case class VVHError(content: Map[String, Any], url: String)
 
   private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
@@ -100,7 +100,7 @@ class VVHClient(hostname: String) {
       val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
       val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content)))
+      optionalFeatures.map(_.filter(roadLinkInUse)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     } finally {
       response.close()
     }
