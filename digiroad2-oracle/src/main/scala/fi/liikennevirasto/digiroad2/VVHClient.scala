@@ -92,6 +92,7 @@ class VVHClient(hostname: String) {
 
   case class VVHError(content: Map[String, Any], url: String)
 
+  @Trace
   private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
