@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.newrelic.api.agent.Trace
 import fi.liikennevirasto.digiroad2.asset._
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
@@ -92,7 +91,6 @@ class VVHClient(hostname: String) {
 
   case class VVHError(content: Map[String, Any], url: String)
 
-  @Trace
   private def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()

@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
-import com.newrelic.api.agent.{Trace, NewRelic}
+import com.newrelic.api.agent.NewRelic
 
 import scala.collection.JavaConversions._
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -316,7 +316,6 @@ trait RoadLinkService {
     adjustedRoadLinks(roadLinks)
   }
 
-  @Trace
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLinkWithProperties] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
     enrichRoadLinksFromVVH(vvhRoadLinks)
@@ -362,7 +361,6 @@ trait RoadLinkService {
     incompleteLinks.foreach(setIncompleteness)
   }
 
-  @Trace
   protected def enrichRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink]): Seq[VVHRoadLinkWithProperties] = {
     def autoGenerateProperties(roadLink: VVHRoadLinkWithProperties): VVHRoadLinkWithProperties = {
       val vvhRoadLink = vvhRoadLinks.find(_.mmlId == roadLink.mmlId)
