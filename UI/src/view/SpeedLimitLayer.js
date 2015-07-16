@@ -573,10 +573,7 @@ window.SpeedLimitLayer = function(params) {
       var points = _.map(speedLimit.points, function(point) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      var data = _.cloneDeep(speedLimit);
-      data.mmlId = speedLimit.mmlId;
-      data.points = speedLimit.originalPoints || points;
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), _.cloneDeep(speedLimit));
     });
   };
 
