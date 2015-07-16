@@ -23,9 +23,9 @@
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       } else {
-        selection = [speedLimit];
+        selection = collection.getGroupBySegmentId(speedLimit.id);
+        // TODO: Fetch details of all links. Fail if group has different links
         collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
-          selection = [fetchedSpeedLimit];
           originalSpeedLimit = fetchedSpeedLimit.value;
           collection.setSelection(self);
           eventbus.trigger('speedLimit:selected', self);
@@ -200,6 +200,11 @@
 
     this.get = function() {
       return selection[0];
+    };
+
+    // TODO: Remove get of single link from selection
+    this.getAll = function() {
+      return selection;
     };
 
     this.count = function() {

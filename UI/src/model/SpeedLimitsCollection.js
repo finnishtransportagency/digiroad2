@@ -19,8 +19,11 @@
         } else if (selection.isSplit()) {
           knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
         } else {
-          knowns = _.omit(knowns, selection.getId().toString());
-          knowns[selection.getId()] = _.merge({}, knowns[selection.getId()], selection.get());
+          knowns = _.reject(knowns, function(speedLimitGroup) {
+            return _.some(speedLimitGroup, function(speedLimit) {
+              return selection.isSelected(speedLimit);
+            });
+          }).concat(selection.getAll());
         }
       }
       return knowns.concat(unknowns).concat(existingSplit).concat(createdSplit);
@@ -86,6 +89,12 @@
 
     this.getUnknown = function(generatedId) {
       return unknownSpeedLimits[generatedId];
+    };
+
+    this.getGroupBySegmentId = function(segmentId) {
+      return _.find(speedLimits, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, { id: segmentId });
+      });
     };
 
     this.createSpeedLimitForUnknown = function(speedLimit) {
