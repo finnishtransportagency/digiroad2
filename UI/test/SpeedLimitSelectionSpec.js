@@ -40,7 +40,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
   };
 
-  describe('when loading application with speed limit data', function() {
+  xdescribe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -102,7 +102,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
-  describe('when loading application in edit mode with speed limits', function() {
+  xdescribe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) { return link.id === speedLimitId; });
@@ -140,7 +140,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
-  describe('when loading application in edit mode with speed limits', function() {
+  xdescribe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) {

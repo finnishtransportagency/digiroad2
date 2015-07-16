@@ -23,7 +23,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     };
   };
 
-  describe('when loading application in edit mode with speed limit data', function() {
+  xdescribe('when loading application in edit mode with speed limit data', function() {
     before(function (done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
