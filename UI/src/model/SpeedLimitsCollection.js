@@ -29,47 +29,6 @@
       return knowns.concat(unknowns).concat(existingSplit).concat(createdSplit);
     };
 
-    var transformSpeedLimits = function(speedLimitGroups) {
-      return _.chain(speedLimitGroups)
-        .map(function(group, index) {
-          return [index, { id: index, links: _.map(group, function(value) {
-            return {
-              mmlId: value.mmlId,
-              position: value.position,
-              points: value.points,
-              startMeasure: value.startMeasure,
-              endMeasure: value.endMeasure
-            };
-          }), sideCode: group[0].sideCode, value: group[0].value }];
-        })
-        .object()
-        .value();
-    };
-
-    var generateUnknownLimitId = function(speedLimit) {
-      return speedLimit.mmlId.toString() +
-        speedLimit.startMeasure.toFixed(2) +
-        speedLimit.endMeasure.toFixed(2);
-    };
-
-     var transformUnknownSpeedLimits = function(speedLimits) {
-       return _.chain(speedLimits)
-         .groupBy(generateUnknownLimitId)
-         .map(function(values, key) {
-           return [key, { generatedId: key, links: _.map(values, function(value) {
-             return {
-               mmlId: value.mmlId,
-               position: value.position,
-               points: value.points,
-               startMeasure: value.startMeasure,
-               endMeasure: value.endMeasure
-             };
-           }), sideCode: values[0].sideCode, value: values[0].value }];
-         })
-         .object()
-         .value();
-    };
-
     this.fetch = function(boundingBox) {
       backend.getSpeedLimits(boundingBox, function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
