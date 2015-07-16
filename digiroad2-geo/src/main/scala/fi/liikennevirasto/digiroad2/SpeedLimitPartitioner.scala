@@ -48,7 +48,7 @@ object SpeedLimitPartitioner {
                         cluster <- clusterLinks(linkGroup)) yield cluster
     val linkPartitions = clusters.map(linksFromCluster)
 
-    linkPartitions ++ linksToPass.values.map(x => x.map(speedLimitLinkFromDTO))
+    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(speedLimitLinkFromDTO(x)))
   }
 
 }

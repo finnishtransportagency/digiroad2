@@ -51,4 +51,14 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
     groupedLinks should have size 2
   }
+
+  test("group links without road numbers into separate groups") {
+     val speedLimitLinks = Seq(
+      speedLimitDTO(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
+      speedLimitDTO(2, 50, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
+    val roadNumbers = Map.empty[Long, Int]
+
+    val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadNumbers)
+    groupedLinks should have size 2
+  }
 }
