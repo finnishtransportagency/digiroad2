@@ -34,8 +34,8 @@
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });
-        speedLimits = partitionedSpeedLimitGroups[true];
-        unknownSpeedLimits = partitionedSpeedLimitGroups[false];
+        speedLimits = partitionedSpeedLimitGroups[true] || [];
+        unknownSpeedLimits = partitionedSpeedLimitGroups[false] || [];
         eventbus.trigger('speedLimits:fetched', self.getAll());
       });
     };
