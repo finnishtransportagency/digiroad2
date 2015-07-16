@@ -515,13 +515,14 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
-  var redrawSpeedLimits = function(speedLimits) {
+  var redrawSpeedLimits = function(speedLimitChains) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectControl.activate();
     }
 
+    var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits);
   };
 
@@ -557,30 +558,26 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var limitSigns = function(speedLimits) {
-    return _.flatten(_.map(speedLimits, function(speedLimit) {
-      return _.map(speedLimit.links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = geometryUtils.calculateMidpointOfLineString(road);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
+    return _.map(speedLimits, function(speedLimit) {
+      var points = _.map(speedLimit.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-    }));
+      var road = new OpenLayers.Geometry.LineString(points);
+      var signPosition = geometryUtils.calculateMidpointOfLineString(road);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
+    });
   };
 
   var lineFeatures = function(speedLimits) {
-    return _.flatten(_.map(speedLimits, function(speedLimit) {
-      return _.map(speedLimit.links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var data = _.cloneDeep(speedLimit);
-        data.mmlId = link.mmlId;
-        data.points = link.originalPoints || points;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
+    return _.map(speedLimits, function(speedLimit) {
+      var points = _.map(speedLimit.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-    }));
+      var data = _.cloneDeep(speedLimit);
+      data.mmlId = speedLimit.mmlId;
+      data.points = speedLimit.originalPoints || points;
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
+    });
   };
 
   var reset = function() {

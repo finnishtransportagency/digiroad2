@@ -1,7 +1,7 @@
 (function(root) {
   root.SpeedLimitsCollection = function(backend) {
-    var speedLimits = {};
-    var unknownSpeedLimits = {};
+    var speedLimits = [];
+    var unknownSpeedLimits = [];
     var dirty = false;
     var selection = null;
     var self = this;
@@ -23,14 +23,13 @@
           knowns[selection.getId()] = _.merge({}, knowns[selection.getId()], selection.get());
         }
       }
-      return _.values(knowns).concat(_.values(unknowns)).concat(existingSplit).concat(createdSplit);
+      return knowns.concat(unknowns).concat(existingSplit).concat(createdSplit);
     };
 
-    var transformSpeedLimits = function(speedLimits) {
-      return _.chain(speedLimits)
-        .groupBy('id')
-        .map(function(values, key) {
-          return [key, { id: values[0].id, links: _.map(values, function(value) {
+    var transformSpeedLimits = function(speedLimitGroups) {
+      return _.chain(speedLimitGroups)
+        .map(function(group, index) {
+          return [index, { id: index, links: _.map(group, function(value) {
             return {
               mmlId: value.mmlId,
               position: value.position,
@@ -38,7 +37,7 @@
               startMeasure: value.startMeasure,
               endMeasure: value.endMeasure
             };
-          }), sideCode: values[0].sideCode, value: values[0].value }];
+          }), sideCode: group[0].sideCode, value: group[0].value }];
         })
         .object()
         .value();
@@ -69,12 +68,12 @@
     };
 
     this.fetch = function(boundingBox) {
-      backend.getSpeedLimits(boundingBox, function(fetchedSpeedLimits) {
-        var partitionedSpeedLimits = _.groupBy(fetchedSpeedLimits, function(speedLimit) {
-          return _.has(speedLimit, "id");
+      backend.getSpeedLimits(boundingBox, function(speedLimitGroups) {
+        var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
+          return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });
-        speedLimits = transformSpeedLimits(partitionedSpeedLimits[true]);
-        unknownSpeedLimits = transformUnknownSpeedLimits(partitionedSpeedLimits[false]);
+        speedLimits = partitionedSpeedLimitGroups[true];
+        unknownSpeedLimits = partitionedSpeedLimitGroups[false];
         eventbus.trigger('speedLimits:fetched', self.getAll());
       });
     };
