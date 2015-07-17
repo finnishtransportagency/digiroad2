@@ -7,26 +7,30 @@
     var self = this;
     var splitSpeedLimits = {};
 
+    var maintainSelectedSpeedLimitChain = function(collection) {
+      if (!selection) return collection;
+      return _.reject(collection, function (speedLimitGroup) {
+        return _.some(speedLimitGroup, function (speedLimit) {
+          return selection.isSelected(speedLimit);
+        });
+      }).concat(selection.getAll());
+    };
+
     this.getAll = function() {
-      var unknowns = unknownSpeedLimits;
-      var knowns = speedLimits;
       var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
       var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      if (selection) {
-        if (selection.isUnknown()) {
-          unknowns = _.omit(unknowns, selection.get().generatedId);
-          unknowns[selection.get().generatedId] = selection.get();
-        } else if (selection.isSplit()) {
-          knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
-        } else {
-          knowns = _.reject(knowns, function(speedLimitGroup) {
-            return _.some(speedLimitGroup, function(speedLimit) {
-              return selection.isSelected(speedLimit);
-            });
-          }).concat(selection.getAll());
-        }
+      if (selection && selection.isSplit()) {
+        throw "Split is not yet implemented for speed limit chains";
+        // knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
       }
-      return knowns.concat(unknowns).concat(existingSplit).concat(createdSplit);
+      var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits.concat(unknownSpeedLimits));
+      return allWithSelectedSpeedLimitChain.concat(existingSplit).concat(createdSplit);
+    };
+
+    var generateUnknownLimitId = function(speedLimit) {
+      return speedLimit.mmlId.toString() +
+          speedLimit.startMeasure.toFixed(2) +
+          speedLimit.endMeasure.toFixed(2);
     };
 
     this.fetch = function(boundingBox) {
@@ -35,7 +39,11 @@
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });
         speedLimits = partitionedSpeedLimitGroups[true] || [];
-        unknownSpeedLimits = partitionedSpeedLimitGroups[false] || [];
+        unknownSpeedLimits = _.map(partitionedSpeedLimitGroups[false], function(speedLimitGroup) {
+          return _.map(speedLimitGroup, function(speedLimit) {
+            return _.merge({}, speedLimit, { generatedId: generateUnknownLimitId(speedLimit) });
+          });
+        }) || [];
         eventbus.trigger('speedLimits:fetched', self.getAll());
       });
     };
@@ -53,6 +61,12 @@
     this.getGroupBySegmentId = function(segmentId) {
       return _.find(speedLimits, function(speedLimitGroup) {
         return _.some(speedLimitGroup, { id: segmentId });
+      });
+    };
+
+    this.getGroupByGeneratedId = function(generatedId) {
+      return _.find(unknownSpeedLimits, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, { generatedId: generatedId });
       });
     };
 

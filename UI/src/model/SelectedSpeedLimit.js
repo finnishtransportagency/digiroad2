@@ -18,7 +18,7 @@
     this.open = function(speedLimit) {
       self.close();
       if (isUnknown(speedLimit)) {
-        selection = [collection.getUnknown(speedLimit.generatedId)];
+        selection = collection.getGroupByGeneratedId(speedLimit.generatedId);
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
