@@ -12,7 +12,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   };
 
-  xdescribe('when loading application with speed limit data', function() {
+  describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
