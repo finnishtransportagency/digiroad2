@@ -99,10 +99,17 @@
     };
 
     var saveExisting = function() {
-      backend.updateSpeedLimit(selection[0].id, selection[0].value, function(speedLimit) {
+      var payloadContents = function() {
+        if (self.isUnknown()) {
+          return { newLimits: _.pluck(selection, 'mmlId', 'startMeasure', 'endMeasure') };
+        } else {
+          return {ids: _.pluck(selection, 'id')};
+        }
+      };
+      var payload = _.merge({value: self.getValue()}, payloadContents());
+
+      backend.updateSpeedLimits(payload, function() {
         dirty = false;
-        selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimit = selection[0].value;
         eventbus.trigger('speedLimit:saved');
       }, function() {
         eventbus.trigger('asset:updateFailed');
@@ -146,8 +153,7 @@
     };
 
     var cancelExisting = function() {
-      selection[0].value = originalSpeedLimit;
-      collection.changeValue(selection[0].id, originalSpeedLimit);
+      selection = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
@@ -199,11 +205,6 @@
     };
 
     this.get = function() {
-      return selection[0];
-    };
-
-    // TODO: Remove get of single link from selection
-    this.getAll = function() {
       return selection;
     };
 
@@ -214,7 +215,6 @@
     this.setValue = function(value) {
       if (value != selection[0].value) {
         selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
-        if (!self.isUnknown()) collection.changeValue(selection[0].id, value);
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }

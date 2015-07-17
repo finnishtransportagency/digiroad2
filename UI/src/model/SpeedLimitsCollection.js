@@ -13,7 +13,7 @@
         return _.some(speedLimitGroup, function (speedLimit) {
           return selection.isSelected(speedLimit);
         });
-      }).concat(selection.getAll());
+      }).concat(selection.get());
     };
 
     this.getAll = function() {
