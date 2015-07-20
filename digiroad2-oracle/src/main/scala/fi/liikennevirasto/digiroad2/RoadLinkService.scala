@@ -181,12 +181,6 @@ trait RoadLinkService {
 
   def withDynTransaction[T](f: => T): T
 
-  private def getRoadLinkProperties(id: Long): BasicRoadLink = {
-    sql"""select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja
-            from tielinkki_ctas where dr1_id = $id"""
-      .as[BasicRoadLink].first()
-  }
-
   private def updateExistingLinkPropertyRow(table: String, column: String, mmlId: Long, username: String, existingValue: Int, value: Int) = {
     if (existingValue != value) {
       sqlu"""update #$table
@@ -293,12 +287,10 @@ trait RoadLinkService {
     }
   }
 
-
-  def getRoadLink(id: Long): AdjustedRoadLink = {
-    val roadLink = Database.forDataSource(dataSource).withDynTransaction {
-      getRoadLinkProperties(id)
+  def getRoadLinkMmlId(id: Long): Long = {
+    Database.forDataSource(dataSource).withDynTransaction {
+      sql"""select mml_id from tielinkki_ctas where dr1_id = $id""".as[Long].first()
     }
-    adjustedRoadLinks(Seq(roadLink)).head
   }
 
   def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {

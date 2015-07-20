@@ -114,8 +114,8 @@ object ManoeuvreService {
     }.map { case (id, links) =>
       val (_, _, sourceRoadLinkId, _, modifiedDate, modifiedBy, additionalInfo) = links.find(_._4 == FirstElement).get
       val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
-      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLink(sourceRoadLinkId).mmlId)
-      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLink(destRoadLinkId).mmlId)
+      val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLinkMmlId(sourceRoadLinkId))
+      val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLinkMmlId(destRoadLinkId))
       val modifiedTimeStamp = AssetPropertyConfiguration.DateTimePropertyFormat.print(modifiedDate)
 
       Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)

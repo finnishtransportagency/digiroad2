@@ -57,9 +57,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Overriden road link adjustments return latest modification") {
-    val roadLink = RoadLinkService.getRoadLink(7886262)
-    roadLink.modifiedAt should be (Some("12.12.2014 00:00:00"))
-    roadLink.modifiedBy should be (Some("test"))
+    val mmlId = RoadLinkService.getRoadLinkMmlId(7886262)
+    mmlId should be (1068804929)
   }
 
   test("Adjust link type") {
