@@ -34,10 +34,7 @@ object ManoeuvreService {
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val roadLinks = RoadLinkService.getByMunicipalityWithProperties(municipalityNumber)
-        .map(link => (link("id").asInstanceOf[Long], link("mmlId").asInstanceOf[Long]))
-        .toMap
-
+      val roadLinks = RoadLinkService.getIdsAndMmlIdsByMunicipality(municipalityNumber).toMap
       getByRoadlinks(roadLinks)
     }
   }

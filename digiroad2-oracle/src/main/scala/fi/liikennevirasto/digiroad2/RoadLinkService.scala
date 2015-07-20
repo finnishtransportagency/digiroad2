@@ -415,17 +415,13 @@ trait RoadLinkService {
     }
   }
 
-  def getByMunicipalityWithProperties(municipality: Int): Seq[Map[String, Any]] = {
-    val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+  def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
+    Database.forDataSource(dataSource).withDynTransaction {
       sql"""
-        select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja
+        select dr1_id, mml_id
           from tielinkki_ctas
           where kunta_nro = $municipality
-        """.as[BasicRoadLink].list()
-    }
-    adjustedRoadLinks(roadLinks).map { roadLink =>
-      Map("id" -> roadLink.id, "mmlId" -> roadLink.mmlId, "points" -> roadLink.geometry, "administrativeClass" -> roadLink.administrativeClass.value,
-        "functionalClass" -> roadLink.functionalClass, "trafficDirection" -> roadLink.trafficDirection.value, "linkType" -> roadLink.linkType)
+        """.as[(Long, Long)].list()
     }
   }
 
