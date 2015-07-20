@@ -93,6 +93,18 @@ trait OracleLinearAssetDao {
     }
   }
 
+  private def fetchSpeedLimitsByMmlId(mmlId: Long) = {
+    sql"""
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+         from asset a
+         join asset_link al on a.id = al.asset_id
+         join lrm_position pos on al.position_id = pos.id
+         join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
+         join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+         join enumerated_value e on s.enumerated_value_id = e.id
+         where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, Int, Option[Int], Double, Double)].list
+  }
+
   def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -230,7 +242,7 @@ trait OracleLinearAssetDao {
   
   private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: Int, value: Int): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
-    val existingLrmPositions = fetchSpeedLimitsByMmlIds(Seq(mmlId)).filter(sl => sideCode == 1 || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
+    val existingLrmPositions = fetchSpeedLimitsByMmlId(mmlId).filter(sl => sideCode == 1 || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
       Some(forceCreateSpeedLimit(creator, mmlId, linkMeasures, sideCode, value))
