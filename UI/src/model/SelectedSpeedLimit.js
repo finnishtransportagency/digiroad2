@@ -103,7 +103,7 @@
         if (self.isUnknown()) {
           return { newLimits: _.pluck(selection, 'mmlId', 'startMeasure', 'endMeasure') };
         } else {
-          return {ids: _.pluck(selection, 'id')};
+          return { ids: _.pluck(selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue()}, payloadContents());
