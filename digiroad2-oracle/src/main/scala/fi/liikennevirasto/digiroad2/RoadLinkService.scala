@@ -162,7 +162,7 @@ trait RoadLinkService {
     }
   }
 
-  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<,r.<<,UnknownDirection, None) )
+  implicit val getBasicRoadLink = GetResult( r => BasicRoadLink(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<, None) )
 
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
@@ -299,7 +299,7 @@ trait RoadLinkService {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
       val query =
         s"""
-            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape) as length, omistaja, liikennevirran_suunta, linkkityyppi
+            select dr1_id, mml_id, to_2d(shape), sdo_lrs.geom_segment_length(shape), omistaja, liikennevirran_suunta
               from tielinkki_ctas
               where $municipalityFilter $boundingBoxFilter
       """
