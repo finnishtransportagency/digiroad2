@@ -90,6 +90,7 @@
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
       backend.updateSpeedLimits(payload, function() {
+        originalSpeedLimit = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
       }, function() {

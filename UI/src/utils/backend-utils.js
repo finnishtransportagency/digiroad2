@@ -340,6 +340,9 @@
       self.updateSpeedLimit = function(id, limit, success) {
         success(speedLimitData);
       };
+      self.updateSpeedLimits = function(payload, success, failure) {
+        success(payload.ids || _.map(payload.newLimits, function(x, i) { return i; }) );
+      };
       return self;
     };
 

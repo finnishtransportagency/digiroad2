@@ -130,38 +130,18 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         .withSpeedLimitUpdate(speedLimitConstructor(speedLimitId)));
     });
 
-    describe('and changing value of speed limit', function () {
-      before(function () {
+    describe('and changing value of speed limit, saving, changing it again, and cancelling', function() {
+      before(function() {
         testHelpers.selectSpeedLimit(openLayersMap, speedLimitId);
         $('#feature-attributes .form-control.speed-limit').val('100').change();
+        $('#feature-attributes button.save').click();
+
+        $('#feature-attributes .form-control.speed-limit').val('40').change();
+        $('#feature-attributes button.cancel').click();
       });
 
-      describe('and saving the change', function () {
-        before(function () {
-          $('#feature-attributes .speed-limit button.cancel').click();
-          $('#feature-attributes button.save').click();
-        });
-        it('disables save and cancel buttons', function () {
-          expect($('#feature-attributes button')).to.be.disabled;
-        });
-      });
-
-      describe('and changing value of speed limit back to original', function () {
-        before(function () {
-          $('#feature-attributes .speed-limit button.cancel').click();
-          $('#feature-attributes .form-control.speed-limit').val('60').change();
-        });
-
-        // TODO: Un-ignore when cancel is implemented
-        xdescribe('and cancelling the change', function () {
-          before(function () {
-            $('#feature-attributes button.cancel').click();
-          });
-
-          it('resets back to saved speed limit value', function () {
-            assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 100);
-          });
-        });
+      it('resets back to saved speed limit value', function() {
+        assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 100);
       });
     });
   });
