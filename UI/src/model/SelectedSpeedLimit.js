@@ -215,6 +215,7 @@
     this.setValue = function(value) {
       if (value != selection[0].value) {
         selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
+        if (!self.isUnknown()) collection.updateFromSelection();
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }

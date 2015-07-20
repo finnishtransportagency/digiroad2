@@ -13,7 +13,7 @@
         return _.some(speedLimitGroup, function (speedLimit) {
           return selection.isSelected(speedLimit);
         });
-      }).concat(selection.get());
+      }).concat([selection.get()]);
     };
 
     this.getAll = function() {
@@ -86,6 +86,10 @@
       } else {
         speedLimits[id].value = value;
       }
+    };
+
+    this.updateFromSelection = function() {
+      speedLimits = maintainSelectedSpeedLimitChain(speedLimits);
     };
 
     var calculateMeasure = function(links) {
