@@ -79,29 +79,10 @@
       });
     };
 
-    var saveUnknown = function() {
-      var link = self.get().links[0];
-      var singleLinkSpeedLimit = {
-        mmlId: link.mmlId,
-        startMeasure: link.startMeasure,
-        endMeasure: link.endMeasure,
-        value: self.getValue()
-      };
-      backend.createSingleLinkSpeedLimit(singleLinkSpeedLimit, function(speedLimit) {
-        dirty = false;
-        selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimit = selection[0].value;
-        collection.createSpeedLimitForUnknown(self.get());
-        eventbus.trigger('speedLimit:saved');
-      }, function() {
-        eventbus.trigger('asset:updateFailed');
-      });
-    };
-
     var saveExisting = function() {
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: _.pluck(selection, 'mmlId', 'startMeasure', 'endMeasure') };
+          return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }
@@ -129,9 +110,7 @@
     };
 
     this.save = function() {
-      if (self.isUnknown()) {
-        saveUnknown();
-      } else if (self.isSplit()) {
+      if (self.isSplit()) {
         saveSplit();
       } else {
         saveExisting();
@@ -215,7 +194,7 @@
     this.setValue = function(value) {
       if (value != selection[0].value) {
         selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
-        if (!self.isUnknown()) collection.updateFromSelection();
+        collection.updateFromSelection(self.isUnknown());
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }

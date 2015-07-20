@@ -71,11 +71,6 @@
       });
     };
 
-    this.createSpeedLimitForUnknown = function(speedLimit) {
-      unknownSpeedLimits = _.omit(unknownSpeedLimits, speedLimit.generatedId);
-      speedLimits[speedLimit.id] = speedLimit;
-    };
-
     this.setSelection = function(sel) {
       selection = sel;
     };
@@ -88,8 +83,12 @@
       }
     };
 
-    this.updateFromSelection = function() {
-      speedLimits = maintainSelectedSpeedLimitChain(speedLimits);
+    this.updateFromSelection = function(updateUnknown) {
+      if (updateUnknown) {
+        unknownSpeedLimits = maintainSelectedSpeedLimitChain(unknownSpeedLimits);
+      } else {
+        speedLimits = maintainSelectedSpeedLimitChain(speedLimits);
+      }
     };
 
     var calculateMeasure = function(links) {

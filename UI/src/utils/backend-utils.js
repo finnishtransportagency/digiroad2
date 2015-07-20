@@ -99,18 +99,6 @@
       });
     }, 1000);
 
-    this.createSingleLinkSpeedLimit = function(singleLinkSpeedLimit, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "POST",
-        url: "api/speedlimits",
-        data: JSON.stringify(singleLinkSpeedLimit),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    };
-
     this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
       $.ajax({
         contentType: "application/json",
