@@ -125,6 +125,20 @@ define(['AssetsTestData',
     .value();
   };
 
+ var selectSpeedLimit = function(map, speedLimitId) {
+   var control = _.find(map.controls, function(control) { return control.layer && control.layer.name === 'speedLimit'; });
+   var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
+     return feature.attributes.id === speedLimitId;
+   });
+   control.select(feature);
+ };
+
+ var clickElement = function(element) {
+   var event = document.createEvent('MouseEvent');
+   event.initMouseEvent('click', true, true, window, null, 0, 0, 0, 0, false, false, false, false, 0, null);
+   element.dispatchEvent(event);
+ };
+
   return {
     restartApplication: restartApplication,
     defaultBackend: defaultBackend,
@@ -136,6 +150,8 @@ define(['AssetsTestData',
     getAssetMarkers: getAssetMarkers,
     getLineStringFeatures: getLineStringFeatures,
     getSpeedLimitFeatures: getSpeedLimitFeatures,
-    getSpeedLimitVertices: getSpeedLimitVertices
+    getSpeedLimitVertices: getSpeedLimitVertices,
+    selectSpeedLimit: selectSpeedLimit,
+    clickElement: clickElement
   };
 });

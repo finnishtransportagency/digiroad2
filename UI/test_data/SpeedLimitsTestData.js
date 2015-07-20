@@ -3,7 +3,6 @@
     var data = [
       [{
         "id": 1123812,
-        "roadLinkId": 5540,
         "value": 40,
         "sideCode": 1,
         "position": 0,
@@ -13,11 +12,11 @@
         }, {
           "x": 374945.976,
           "y": 6677538.7
-        }]
+        }],
+        "mmlId": 1
       }],
       [{
         "id": 1123107,
-        "roadLinkId": 1,
         "value": 60,
         "sideCode": 1,
         "position": 0,
@@ -33,11 +32,11 @@
         }, {
           "x": 374742.99,
           "y": 6677588.138
-        }]
+        }],
+        "mmlId": 2
       }],
       [{
         "id": 0,
-        "roadLinkId": 1,
         "value": 20,
         "sideCode": 1,
         "position": 0,
@@ -80,11 +79,11 @@
         }, {
           "x": 374732.09,
           "y": 6677787.428
-        }]
+        }],
+        "mmlId": 3
       }],
       [{
         "id": 1,
-        "roadLinkId": 1,
         "value": 30,
         "sideCode": 1,
         "position": 0,
@@ -109,11 +108,11 @@
         }, {
           "x": 374783.504,
           "y": 6677723.802
-        }]
+        }],
+        "mmlId": 4
       }],
       [{
         "id": 2,
-        "roadLinkId": 1,
         "value": 40,
         "sideCode": 1,
         "position": 0,
@@ -135,11 +134,11 @@
         }, {
           "x": 374916.644,
           "y": 6677735.948
-        }]
+        }],
+        "mmlId": 5
       }],
       [{
         "id": 3,
-        "roadLinkId": 1,
         "value": 50,
         "sideCode": 1,
         "position": 0,
@@ -161,11 +160,11 @@
         }, {
           "x": 374783.504,
           "y": 6677723.802
-        }]
+        }],
+        "mmlId": 6
       }],
       [{
         "id": 4,
-        "roadLinkId": 1,
         "value": 60,
         "sideCode": 1,
         "position": 0,
@@ -190,11 +189,11 @@
         }, {
           "x": 374851.69,
           "y": 6677719.112
-        }]
+        }],
+        "mmlId": 7
       }],
       [{
         "id": 5,
-        "roadLinkId": 1,
         "value": 70,
         "sideCode": 1,
         "position": 0,
@@ -213,11 +212,11 @@
         }, {
           "x": 374838.456,
           "y": 6677794.435
-        }]
+        }],
+        "mmlId": 8
       }],
       [{
         "id": 6,
-        "roadLinkId": 1,
         "value": 80,
         "sideCode": 1,
         "position": 0,
@@ -242,11 +241,11 @@
         }, {
           "x": 374732.09,
           "y": 6677787.428
-        }]
+        }],
+        "mmlId": 9
       }],
       [{
         "id": 7,
-        "roadLinkId": 1,
         "value": 100,
         "sideCode": 1,
         "position": 0,
@@ -292,11 +291,11 @@
         }, {
           "x": 374662.801,
           "y": 6677496.622
-        }]
+        }],
+        "mmlId": 10
       }],
       [{
         "id": 8,
-        "roadLinkId": 1,
         "value": 120,
         "sideCode": 1,
         "position": 0,
@@ -318,11 +317,11 @@
         }, {
           "x": 374662.801,
           "y": 6677496.622
-        }]
+        }],
+        "mmlId": 11
       }],
       [{
         "id": 9,
-        "roadLinkId": 1,
         "value": 20,
         "sideCode": 1,
         "position": 0,
@@ -350,11 +349,11 @@
         }, {
           "x": 374714.962,
           "y": 6677504.905
-        }]
+        }],
+        "mmlId": 12
       }],
       [{
         "id": 10,
-        "roadLinkId": 1,
         "value": 30,
         "sideCode": 1,
         "position": 0,
@@ -376,11 +375,11 @@
         }, {
           "x": 374640.964,
           "y": 6677527.584
-        }]
+        }],
+        "mmlId": 13
       }],
       [{
         "id": 11,
-        "roadLinkId": 1,
         "value": 40,
         "sideCode": 1,
         "position": 0,
@@ -408,11 +407,11 @@
         }, {
           "x": 374695.469,
           "y": 6677610.487
-        }]
+        }],
+        "mmlId": 14
       }],
       [{
         "id": 120,
-        "roadLinkId": 1,
         "value": 50,
         "sideCode": 2,
         "position": 0,
@@ -452,11 +451,11 @@
         }, {
           "x": 374841.639,
           "y": 6677380.704
-        }]
+        }],
+        "mmlId": 15
       }],
       [{
         "id": 121,
-        "roadLinkId": 1,
         "value": 50,
         "sideCode": 3,
         "position": 0,
@@ -496,11 +495,11 @@
         }, {
           "x": 374841.639,
           "y": 6677380.704
-        }]
+        }],
+        "mmlId": 16
       }],
       [{
         "id": 13,
-        "roadLinkId": 1,
         "value": 60,
         "sideCode": 1,
         "position": 0,
@@ -531,11 +530,10 @@
         }, {
           "x": 374748.721,
           "y": 6677440.912
-        }]
-      }],
-      [{
-        "id": 13,
-        "roadLinkId": 2,
+        }],
+        "mmlId": 17
+      }, {
+        "id": 14,
         "value": 60,
         "sideCode": 1,
         "position": 1,
@@ -575,11 +573,11 @@
         }, {
           "x": 374862.933,
           "y": 6677654.303
-        }]
+        }],
+        "mmlId": 18
       }],
       [{
         "id": 15,
-        "roadLinkId": 1,
         "value": 80,
         "sideCode": 1,
         "position": 0,
@@ -595,11 +593,11 @@
         }, {
           "x": 374867.016,
           "y": 6677649.193
-        }]
+        }],
+        "mmlId": 19
       }],
       [{
         "id": 16,
-        "roadLinkId": 1,
         "value": 100,
         "sideCode": 1,
         "position": 0,
@@ -621,11 +619,11 @@
         }, {
           "x": 374809.404,
           "y": 6677673.867
-        }]
+        }],
+        "mmlId": 20
       }],
       [{
         "id": 17,
-        "roadLinkId": 1,
         "value": 120,
         "sideCode": 1,
         "position": 0,
@@ -635,7 +633,8 @@
         }, {
           "x": 374862.933,
           "y": 6677654.303
-        }]
+        }],
+        "mmlId": 21
       }]
     ];
     if (amount) {
@@ -646,11 +645,13 @@
 
   var generateSpeedLimitConstructor = function(speedLimitsTestData) {
     return function(id) {
-      var points = _.find(speedLimitsTestData, function(x) { return x.id === id; }).points;
+      var speedLimit = _.find(_.flatten(speedLimitsTestData), { id: id });
+      var points = speedLimit.points;
       return {
         id: id,
         endpoints: [_.first(points), _.last(points)],
-        modifiedBy: id === 16 ? 'test' : null
+        modifiedBy: id === 16 ? 'test' : null,
+        value: speedLimit.value
       };
     };
   };
