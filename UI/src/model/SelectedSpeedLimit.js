@@ -17,13 +17,12 @@
 
     this.open = function(speedLimit) {
       self.close();
+      selection = collection.getGroup(speedLimit);
       if (isUnknown(speedLimit)) {
-        selection = collection.getGroupByGeneratedId(speedLimit.generatedId);
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       } else {
-        selection = collection.getGroupBySegmentId(speedLimit.id);
         // TODO: Fetch details of all links. Fail if group has different links
         collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
           originalSpeedLimit = fetchedSpeedLimit.value;
@@ -89,7 +88,12 @@
       };
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
-      backend.updateSpeedLimits(payload, function() {
+      backend.updateSpeedLimits(payload, function(ids) {
+        // TODO: Assert that ids are assigned to correct speed limits
+        var newGroup = _.map(selection, function(speedLimit, i) {
+          return _.merge({}, _.omit(speedLimit, 'generatedId'), { id: ids[i] });
+        });
+        selection = collection.replaceGroup(selection[0], newGroup);
         originalSpeedLimit = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
@@ -194,8 +198,8 @@
 
     this.setValue = function(value) {
       if (value != selection[0].value) {
-        selection = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
-        collection.updateFromSelection(self.isUnknown());
+        var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
+        selection = collection.replaceGroup(selection[0], newGroup);
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }

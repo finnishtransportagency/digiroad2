@@ -59,15 +59,19 @@
       return unknownSpeedLimits[generatedId];
     };
 
-    this.getGroupBySegmentId = function(segmentId) {
-      return _.find(speedLimits, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, { id: segmentId });
-      });
+    var isUnknown = function(speedLimit) {
+      return !_.has(speedLimit, 'id');
     };
 
-    this.getGroupByGeneratedId = function(generatedId) {
-      return _.find(unknownSpeedLimits, function(speedLimitGroup) {
-        return _.some(speedLimitGroup, { generatedId: generatedId });
+    var isEqual = function(a, b) {
+      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
+        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+    };
+
+    this.getGroup = function(segment) {
+      var all = speedLimits.concat(unknownSpeedLimits);
+      return _.find(all, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, function(s) { return isEqual(s, segment); });
       });
     };
 
@@ -83,12 +87,21 @@
       }
     };
 
-    this.updateFromSelection = function(updateUnknown) {
-      if (updateUnknown) {
-        unknownSpeedLimits = maintainSelectedSpeedLimitChain(unknownSpeedLimits);
-      } else {
-        speedLimits = maintainSelectedSpeedLimitChain(speedLimits);
-      }
+    this.replaceGroup = function(segment, newGroup) {
+      var replaceInCollection = function(collection, segment, newGroup) {
+        return _.reject(collection, function(speedLimitGroup) {
+          return _.some(speedLimitGroup, function(s) {
+            return isEqual(s, segment);
+          });
+        }).concat([newGroup]);
+      };
+      var allLimits = replaceInCollection(speedLimits.concat(unknownSpeedLimits), segment, newGroup);
+      var partitionedSpeedLimitGroups = _.groupBy(allLimits, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
+      });
+      speedLimits = partitionedSpeedLimitGroups[true] || [];
+      unknownSpeedLimits = partitionedSpeedLimitGroups[false] || [];
+      return newGroup;
     };
 
     var calculateMeasure = function(links) {
