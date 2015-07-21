@@ -6,11 +6,5 @@ target/
 .DS_Store
 logs/
 bower_components/
-flag.txt
-ftp.conf
-digiroad_stops.csv
-digiroad_stops.zip
-valluNamesAndBusStopIds.csv
 stops.txt
-vallu_export_history/
 UI/index.html
