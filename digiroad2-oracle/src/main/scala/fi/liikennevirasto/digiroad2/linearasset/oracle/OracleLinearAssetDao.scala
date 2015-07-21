@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
+import scala.util.Try
+
 
 trait OracleLinearAssetDao {
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
@@ -122,13 +124,18 @@ trait OracleLinearAssetDao {
   }
 
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
+    def roadIdentifierFromAttributes(attributes: Map[String, Any]): Option[Either[Int, String]] = {
+      Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
+        .orElse(Try(Right(attributes("ROADNAME_FI").asInstanceOf[String])))
+        .toOption
+    }
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
         link.geometry,
         link.length,
         link.administrativeClass,
         link.mmlId,
-      Option(link.attributes("ROADNUMBER").asInstanceOf[BigInt]).map(_.intValue()))
+        roadIdentifierFromAttributes(link.attributes))
 
     roadLinks
       .filter(isCarTrafficRoad)

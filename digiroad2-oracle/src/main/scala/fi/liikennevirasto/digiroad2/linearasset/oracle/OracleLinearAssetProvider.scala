@@ -69,8 +69,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      val roadNumbers = linkGeometries.mapValues(_.roadNumber).filter(_._2.isDefined).mapValues(_.get)
-      SpeedLimitPartitioner.partition(filledTopology, roadNumbers)
+      val roadIdentifiers = linkGeometries.mapValues(_.roadIdentifier).filter(_._2.isDefined).mapValues(_.get)
+      SpeedLimitPartitioner.partition(filledTopology, roadIdentifiers)
     }
   }
 
