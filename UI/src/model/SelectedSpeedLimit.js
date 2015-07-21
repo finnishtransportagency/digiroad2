@@ -127,12 +127,6 @@
       }
     };
 
-    var cancelUnknown = function() {
-      selection[0].value = originalSpeedLimit;
-      dirty = false;
-      eventbus.trigger('speedLimit:cancelled', self);
-    };
-
     var cancelSplit = function() {
       throw "Split is not yet supported on speed limit chains";
 /*      eventbus.trigger('speedLimit:unselect', self);
@@ -143,15 +137,14 @@
     };
 
     var cancelExisting = function() {
-      selection = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
+      selection = collection.replaceGroup(selection[0], newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
 
     this.cancel = function() {
-      if (self.isUnknown()) {
-        cancelUnknown();
-      } else if (self.isSplit()) {
+      if (self.isSplit()) {
         cancelSplit();
       } else {
         cancelExisting();
