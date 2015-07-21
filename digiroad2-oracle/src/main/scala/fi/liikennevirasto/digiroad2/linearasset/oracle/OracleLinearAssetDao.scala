@@ -125,10 +125,11 @@ trait OracleLinearAssetDao {
 
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
     def roadIdentifierFromAttributes(attributes: Map[String, Any]): Option[Either[Int, String]] = {
+      def getAttributeWithoutNull(attribute: String) = attributes(attribute).asInstanceOf[String].toString
       Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
-        .orElse(Try(Right(attributes("ROADNAME_FI").asInstanceOf[String])))
-        .orElse(Try(Right(attributes("ROADNAME_SE").asInstanceOf[String])))
-        .orElse(Try(Right(attributes("ROADNAME_SM").asInstanceOf[String])))
+        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_FI"))))
+        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SE"))))
+        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SM"))))
         .toOption
     }
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
