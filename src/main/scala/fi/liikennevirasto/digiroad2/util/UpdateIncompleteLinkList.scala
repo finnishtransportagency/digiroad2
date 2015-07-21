@@ -20,7 +20,11 @@ object UpdateIncompleteLinkList {
   }
 
   def main(args:Array[String]) : Unit = {
-    UpdateIncompleteLinkList.runUpdate()
-    System.exit(0)
+    try {
+      UpdateIncompleteLinkList.runUpdate()
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+    Digiroad2Context.system.shutdown()
   }
 }
