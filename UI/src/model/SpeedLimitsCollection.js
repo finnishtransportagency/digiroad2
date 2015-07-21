@@ -80,16 +80,6 @@
       selection = sel;
     };
 
-    this.changeValue = function(id, value) {
-      // TODO: Fix me
-      throw "Not Implemented";
-/*      if (splitSpeedLimits.created) {
-        splitSpeedLimits.created.value = value;
-      } else {
-        speedLimits[id].value = value;
-      }*/
-    };
-
     this.replaceGroup = function(segment, newGroup) {
       var replaceInCollection = function(collection, segment, newGroup) {
         return _.reject(collection, function(speedLimitGroup) {
