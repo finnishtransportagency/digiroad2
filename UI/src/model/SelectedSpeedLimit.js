@@ -6,13 +6,14 @@
     var originalSpeedLimit = null;
 
     this.splitSpeedLimit = function(id, mmlId, split) {
-      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
+      throw "Splitting it not yet supported on speed limit chains";
+/*      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
         selection = [createdSpeedLimit];
         originalSpeedLimit = createdSpeedLimit.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
-      });
+      });*/
     };
 
     this.open = function(speedLimit) {
@@ -33,11 +34,12 @@
     };
 
     this.openMultiple = function(speedLimits) {
-      var partitioned = _.groupBy(speedLimits, isUnknown);
+      throw "Multiselect is not yet supported on speed limit chains";
+/*      var partitioned = _.groupBy(speedLimits, isUnknown);
       var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
       var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
 
-      selection = existingSpeedLimits.concat(unknownSpeedLimits);
+      selection = existingSpeedLimits.concat(unknownSpeedLimits);*/
     };
 
     this.close = function() {
@@ -49,11 +51,13 @@
     };
 
     this.closeMultiple = function() {
-      selection = [];
+      throw "Multiselect is not yet supported on speed limit chains";
+//      selection = [];
     };
 
     this.saveMultiple = function(value) {
-      var partition = _.groupBy(selection, isUnknown);
+      throw "Multiselect is not yet supported on speed limit chains";
+/*      var partition = _.groupBy(selection, isUnknown);
       var unknownSpeedLimits = partition[true];
       var knownSpeedLimits = partition[false];
 
@@ -66,16 +70,17 @@
         eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
       }, function() {
         eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
-      });
+      });*/
     };
 
     var saveSplit = function() {
-      collection.saveSplit(function(speedLimit) {
+      throw "Split is not yet supported on speed limit chains";
+/*      collection.saveSplit(function(speedLimit) {
         selection = [_.merge({}, selection[0], speedLimit)];
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
         dirty = false;
-      });
+      });*/
     };
 
     var saveExisting = function() {
@@ -129,11 +134,12 @@
     };
 
     var cancelSplit = function() {
-      eventbus.trigger('speedLimit:unselect', self);
+      throw "Split is not yet supported on speed limit chains";
+/*      eventbus.trigger('speedLimit:unselect', self);
       collection.setSelection(null);
       selection = [];
       dirty = false;
-      collection.cancelSplit();
+      collection.cancelSplit();*/
     };
 
     var cancelExisting = function() {
