@@ -24,9 +24,13 @@
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       } else {
-        // TODO: Fetch details of all links. Fail if group has different links
-        collection.fetchSpeedLimit(speedLimit.id, function(fetchedSpeedLimit) {
-          originalSpeedLimit = fetchedSpeedLimit.value;
+        var ids = _.pluck(selection, 'id');
+        collection.fetchSpeedLimits(ids, function(fetchedSpeedLimits) {
+          var speedLimitsById = _.groupBy(fetchedSpeedLimits, 'id');
+          selection = _.map(selection, function(s) {
+            return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime'));
+          });
+          originalSpeedLimit = fetchedSpeedLimits[0].value;
           collection.setSelection(self);
           eventbus.trigger('speedLimit:selected', self);
         });
@@ -167,12 +171,18 @@
       return getProperty('value');
     };
 
+    var segmentWithLatestModifications = function() {
+      return _.last(_.sortBy(selection, function(s) {
+        return moment(s.modifiedDateTime, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
+      }));
+    };
+
     this.getModifiedBy = function() {
-      return getProperty('modifiedBy');
+      return segmentWithLatestModifications().modifiedBy;
     };
 
     this.getModifiedDateTime = function() {
-      return getProperty('modifiedDateTime');
+      return segmentWithLatestModifications().modifiedDateTime;
     };
 
     this.getCreatedBy = function() {

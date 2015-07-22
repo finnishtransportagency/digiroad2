@@ -74,6 +74,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimit] = {
+    withDynTransaction {
+      ids.flatMap(loadSpeedLimit)
+    }
+  }
+
   override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
       loadSpeedLimit(speedLimitId)

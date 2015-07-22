@@ -558,9 +558,9 @@ with GZipSupport {
     NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
-  get("/speedlimits/:segmentId") {
-    val segmentId = params("segmentId")
-    linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
+  get("/speedlimits/:segmentIds") {
+    val ids = params("segmentIds").split(",").map(_.toLong)
+    linearAssetProvider.getSpeedLimits(ids)
   }
 
   put("/speedlimits/:speedLimitId") {

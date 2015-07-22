@@ -99,6 +99,12 @@
       });
     }, 1000);
 
+    this.getSpeedLimitDetails = _.throttle(function(ids, callback) {
+      $.getJSON('api/speedlimits/' + ids, function(speedLimits) {
+        callback(speedLimits);
+      });
+    }, 1000);
+
     this.updateSpeedLimit = _.throttle(function(id, limit, success, failure) {
       $.ajax({
         contentType: "application/json",

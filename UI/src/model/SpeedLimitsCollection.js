@@ -49,11 +49,8 @@
       });
     };
 
-    this.fetchSpeedLimit = function(id, callback) {
-      // TODO: Fix this
-      backend.getSpeedLimit(id, function(speedLimit) {
-        callback(_.merge({}, speedLimits[id], speedLimit));
-      });
+    this.fetchSpeedLimits = function(ids, callback) {
+      backend.getSpeedLimitDetails(ids, callback);
     };
 
     this.getUnknown = function(generatedId) {
