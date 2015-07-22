@@ -1,4 +1,4 @@
-Operaattorin manuaali
+Operaattorin k&auml;ytt&ouml;ohje
 =========================
 
 1. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
@@ -9,8 +9,8 @@ Vain operaattori-k&auml;ytt&auml;j&auml; voi lis&auml;t&auml; uuden k&auml;ytt&a
 K&auml;ytt&ouml;liittym&auml;ss&auml; on lomake, johon tulee t&auml;ydent&auml;&auml; seuraavat tiedot:
 
 1. K&auml;ytt&auml;j&auml;tunnus: K&auml;ytt&auml;j&auml;n tunnus Liikenneviraston j&auml;rjestelmiin
-1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3).
-1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092)
+1. Ely nro: ELY:n numero tai pilkulla erotettuna useamman ELY:n numerot (esimerkiksi 1, 2, 3), Ely-taulukko alla
+1. Kunta nro: Kunnan numero tai pilkulla erotettuna useamman kunnan numerot (esimerkiksi 091, 092). TVV-alueiden kuntanumerot alla.
 1. Oikeuden tyyppi: Muokkausoikeus (tai Katseluoikeus)*
 
 *Katseluoikeuksia ei lis&auml;t&auml; toistaiseksi. Kaikilla k&auml;ytt&auml;jill&auml;, joilla on Livin extranet-tunnus, on oikeudet katsella Digiroadia. Katselemaan p&auml;&auml;see kirjautumalla sovellukseen.
@@ -21,12 +21,37 @@ Kun lomake on t&auml;ytetty, painetaan "Luo k&auml;ytt&auml;j&auml;". Sovellus i
 
 _Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen._
 
+|Ely|Elyn numero|
+|---|-----------|
+|Ahvenanmaa|0|
+|Lapin ELY-keskus|1|
+|Pohjois-Pohjanmaan ELY-keskus|2|
+|Etel&auml;-Pohjanmaan ELY-keskus|3|
+|Keski-Suomen ELY-keskus|4|
+|Pohjois-Savon ELY-keskus|5|
+|Pirkanmaan ELY-keskus|6|
+|Varsinais-Suomen ELY-keskus|7|
+|Kaakkois-Suomen ELY-keskus|8|
+|Uudenmaan ELY-keskus|9|
+
+
+|TVV|Kuntanumerot|
+|---|------------|
+|Oulun TVV|436,244,425,494,859,139,564|
+|Jyv&auml;skyl&auml;n TVV|179,500,410|
+|Turun TVV|202,853,529,423,704,680|
+|Porin TVV|271,609,531,79,886|
+|Lahden TVV|316,398,81,98,16,576,781,532,283,111,560|
+|Tampereen TVV|211,980,837,562,604,922,418,536|
+|Kuopion TVV|297,749|
+|Joensuun TVV|167,276,426|
+
 2. Importit
 -----------
 
 Importeilla tuodaan aineistoja j&auml;rjestelm&auml;&auml;n.
 
-2.1 CSV-tuonti
+2.1 CSV-tuonti (pois k&auml;yt&ouml;st&auml; toistaiseksi)
 --------------
 
 Joukkoliikenteen pys&auml;kkien suomenkielist&auml; nime&auml;, ruotsinkielist&auml; nime&auml;, liikenn&ouml;intisuuntaa, yll&auml;pit&auml;j&auml;n tunnusta, LiVi-tunnusta, matkustajatunnusta, tyyppi&auml; ja varusteita voi p&auml;ivitt&auml;&auml; tuomalla .csv-tiedoston [k&auml;ytt&ouml;liittym&auml;n](https://testiextranet.liikennevirasto.fi/digiroad/excel_import.html ) kautta j&auml;rjestelm&auml;&auml;n. Oletusarvoisesti j&auml;rjestelm&auml; p&auml;ivitt&auml;&auml; kaikilla v&auml;yl&auml;tyypeill&auml; olevia pys&auml;kkej&auml;. P&auml;ivitett&auml;vi&auml; pys&auml;kkej&auml; voi rajata my&ouml;s sen mukaan, mill&auml; v&auml;yl&auml;tyypill&auml; ne sijaitsevat. Rajoitus tehd&auml;&auml;n valitsemalla k&auml;ytt&ouml;liittym&auml;st&auml; halutut v&auml;yl&auml;tyypit.
@@ -69,72 +94,33 @@ Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&a
 
 Exporteilla vied&auml;&auml;n aineistoja j&auml;rjestelm&auml;st&auml; ulos.
 
-3.1 Pys&auml;kkitietojen vienti Vallu-j&auml;rjestelm&auml;&auml;n
+3.1 Pys&auml;kkitietojen CSV (ns. Vallu-CSV)
 ---------------------------------------------
+Vallu-j&auml;rjestelm&auml; ei en&auml;&auml; hy&ouml;dynn&auml; t&auml;t&auml; CSV-tiedostoa, mutta CSV-tiedosto luodaan joka y&ouml; operaattorin omaan k&auml;ytt&ouml;&ouml;n ja jaettavaksi Digiroadin nettisivuille. Pys&auml;kki-CSV export k&auml;ynnistyy klo 00:00 joka y&ouml; Livin FME Serverill&auml;. CSV:n tekeminen kest&auml;&auml; noin 5 tuntia. Lopputulos vied&auml;&auml;n Digiroad2:sen ftp-palvelimelle. Jos export ep&auml;onnistuu, FME-ajo katkeaa eik&auml; tiedostoa vied&auml; ftp:lle.
 
-J&auml;rjestelm&auml; tukee pys&auml;kkitietojen vienti&auml; Vallu-j&auml;rjestelm&auml;&auml;n. Pys&auml;kkitiedot toimitetaan .csv-tiedostona FTP-palvelimelle. Vienti k&auml;ynnistet&auml;&auml;n automaattisesti Jenkins-palvelimella joka p&auml;iv&auml; klo 19:00 ajamalla 'vallu_import.sh' skripti. Skripti hakee pys&auml;kkitiedot tietokannasta k&auml;ytt&auml;en projektille m&auml;&auml;ritelty&auml; kohdetieto-tietol&auml;hdett&auml;.
+###Pys&auml;kki-CSV:n tietolajit###
 
-FTP-yhteys ja kohdekansio tulee m&auml;&auml;ritell&auml; 'ftp.conf'-tiedostossa joka on tallennettu samaan 'vallu_import.sh' skriptin kanssa. 'ftp.conf'-tiedostossa yhteys ja kohdekansio m&auml;&auml;ritell&auml;&auml;n seuraavalla tavalla:
-```
-<k&auml;ytt&auml;j&auml;nimi> <salasana> <palvelin ja kohdehakemisto>
-```
-
-Esimerkiksi:
-```
-username password localhost/valluexport
-```
-
-Vienti luo FTP-palvelimelle ftp://files.navici.com/tuotanto/dr2_stops/ (vaatii kirjautumisen) pys&auml;kkitiedot zip-pakattuna .csv-tiedostona nimell&auml; 'all.zip' sek&auml; 'flag.txt'-tiedoston, joka sis&auml;lt&auml;&auml; Vallu-viennin aikaleiman muodossa vuosi (4 merkki&auml;), kuukausi (2 merkki&auml;), p&auml;iv&auml; (2 merkki&auml;), tunti (2 merkki&auml;), minuutti (2 merkki&auml;), sekunti (2 merkki&auml;). Esimerkiksi '20140417133227'.
-
-K&auml;ytt&ouml;&ouml;notto kopioi ymp&auml;rist&ouml;kohtaisen 'ftp.conf'-tiedoston k&auml;ytt&ouml;&ouml;nottoymp&auml;rist&ouml;n deployment-hakemistosta release-hakemistoon osana k&auml;ytt&ouml;&ouml;nottoa. N&auml;in ymp&auml;rist&ouml;kohtaista 'ftp.conf'-tiedostoa, joka sis&auml;lt&auml;&auml; kirjautumistietoja, voidaan yll&auml;pit&auml;&auml; tietoturvallisesti k&auml;ytt&ouml;&ouml;nottopalvelimella. 
-
-###Vallu CSV:n tietolajit###
-
-Vallu-CSV:n tietolajit voi lukea Digiroadin nettisivuilla olevasta taulukosta: http://www.digiroad.fi/Uusi_DR/pysakki/fi_FI/pysakki/
+Pys&auml;kki-CSV:n tietolajit voi lukea Digiroadin nettisivuilla olevasta taulukosta: http://www.digiroad.fi/Uusi_DR/pysakki/fi_FI/pysakki/
 
 
-###3.1.1 Pys&auml;kkimuutosten p&auml;ivitys Vallu-j&auml;rjestelm&auml;&auml;n###
+3.2 Pys&auml;kkimuutosten l&auml;hetys Vallu-j&auml;rjestelm&auml;&auml;n
+---------------------------------------------
+Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee v&auml;litt&ouml;m&auml;sti Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
 
-Pys&auml;kin tietoja muokattaessa muutoksista l&auml;htee joka y&ouml; Vallu-j&auml;rjestelm&auml;&auml;n XML-sanoma, jossa ovat muutettujen pys&auml;kkien tiedot.
-
-Muuttuneita tietoja voi tarkastella lokista: https://devtest.liikennevirasto.fi/digiroad/vallu-server.log 
-
-
-### 3.1.2 XML- viestin l&auml;hetys VALLUun###
-
-Tallentamisen yhteydess&auml; l&auml;hetet&auml;&auml;n VALLU- j&auml;rjestelm&auml;&auml;n xml- viesti.
+Muuttuneita tietoja voi tarkastella lokista: https://testiextranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi).
+Vallu-XML-logiin eiv&auml;t mene raitiovaunupys&auml;keille tehdyt muutokset. Lis&auml;ksi Digiroadin ja Vallun Pys&auml;kkieditorin v&auml;lill&auml; on s&auml;&auml;nt&ouml;j&auml;, jotka est&auml;v&auml;t Vallu-XML:st&auml; tulevan muutoksen siirtymist&auml; Valluun. N&auml;ist&auml; voi tarvittaessa kysy&auml; Emmilt&auml; tai Liikenneviraston Teemu Peltoselta.
 
 Vallu l&auml;hetyksen konfiguraatio on ./conf/[ymp&auml;rist&ouml;]/digiroad2.properties tiedostossa.
 ```
 digiroad2.vallu.server.sending_enabled=true
 digiroad2.vallu.server.address=http://localhost:9002
 ```
-L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. Niit&auml; voi tarkastella my&ouml;s verkkoselaimessa osoitteessa https://testiextranet.liikennevirasto.fi/digiroad/vallu-server.log (tuotanto) ja https://devtest.liikennevirasto.fi/digiroad/vallu-server.log (testi)
-Vallu-XML-logiin eiv&auml;t mene raitiovaunupys&auml;keille tehdyt muutokset. Lis&auml;ksi Digiroadin ja Vallun Pys&auml;kkieditorin v&auml;lill&auml; on s&auml;&auml;nt&ouml;j&auml;, jotka est&auml;v&auml;t Vallu-XML:st&auml; tulevan muutoksen siirtymist&auml; Valluun. N&auml;ist&auml; voi tarvittaessa kysy&auml; Emmilt&auml; tai Liikenneviraston Teemu Peltoselta.
+L&auml;hetettyjen tietojen logitiedot l&ouml;tyv&auml;t palvelimelta ./logs/vallu-messages.log tiedostosta. 
 
-3.2 Pys&auml;kkitietojen vienti LMJ-j&auml;rjestelm&auml;&auml;n
+3.3 Pys&auml;kkitietojen vienti Waltti-j&auml;rjestelm&auml;&auml;n
 ---------------------------------------------------------------
+Waltti-j&auml;rjestelm&auml;&auml; varten ei ole tehty automaattisia exportteja, vaan Waltti-irrotus tehd&auml;&auml;n omalla koneella valmiista FME-ty&ouml;tilasta.
 
-Pys&auml;keist&auml; voi irroittaa kuntarajauksella .txt-tiedostoja LMJ-j&auml;rjestelm&auml;&auml; varten. Irroitusta varten t&auml;ytyy olla kehitysymp&auml;rist&ouml; ladattuna koneelle. LMJ-exportin voi tehd&auml; my&ouml;s asentamatta kehitysymp&auml;rist&ouml;&auml;. Kysy Emmilt&auml;, jos t&auml;h&auml;n on tarvetta.
-
-Tarvittavat tiedostot ovat bonecp.properties ja LMJ-import.sh -skripti. Bonecp.properties ei ole avointa l&auml;hdekoodia eli sit&auml; ei voi julkaista GitHubissa eik&auml; siten t&auml;ss&auml; k&auml;ytt&ouml;ohjeessa. Tarvittaessa tiedostoa voi kysy&auml; digiroad2@reaktor.fi. Bonecp.properties tallennetaan sijaintiin:
-
-```
-digi-road-2\digiroad2-oracle\conf\properties\
-```
-
-Kun bonecp.properties on tallennettu, voidaan LMJ-import.sh-skripti ajaa Linux-ymp&auml;rist&ouml;ss&auml; komentorivill&auml;. Jos k&auml;yt&ouml;ss&auml; on Windows-ymp&auml;rist&ouml;, skriptin&auml; ajetaan:
-
-```
-sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport <kuntanumerot v&auml;lill&auml; erotettuna>"
-```
-
-Esimerkiksi:
-```
- sbt -Ddigiroad2.env=production "runMain fi.liikennevirasto.digiroad2.util.LMJImport 89 90 91"
-```
- 
-Sovellus luo Stops.txt-tiedoston samaan hakemistoon LMJ_import.sh-skriptin kanssa.
 
 4. Kehitysymp&auml;rist&ouml;n asennus
 ----------------------------
@@ -282,10 +268,12 @@ Joillekin uusille tielinkeille generoidaan automaattisesti Maanmittauslaitoksen 
 -   Kohdeluokka ajotielle t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa toiminnallinen luokka muu yksityistie ja linkkityyppi yksiajoratainen tie
 -   Kohdeluokka k&auml;vely- ja py&ouml;r&auml;tie t&auml;ydennet&auml;&auml;n Digiroad-sovelluksessa kevyen liikenteen v&auml;yl&auml;ksi sek&auml; toiminnalliselta luokalta ett&auml; linkkityypilt&auml;
 
+Korjattavien linkkien lista (incomplete_links.html) p&auml;ivitet&auml;&auml;n automaattisesti joka y&ouml; tuotanto-, testi- ja koulutusymp&auml;rist&ouml;&ouml;n klo 21:00. P&auml;ivitys kest&auml;&auml; noin tunnin, eik&auml; se vaikuta ty&ouml;skentelyyn Digiroad-yll&auml;pitosovelluksessa.
+
 8.2 Joukkoliikenteen pys&auml;kki
 ---------------------------------------------
 
-Kun pys&auml;kkej&auml; tarkastellaan kartalla tai ajetaan skripti tietokannassa, sovellus tarkastaa, ovatko pys&auml;kit kiinni geometriassa. Tarkastus perustuu siihen, ett&auml; pys&auml;keille on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
+Kun pys&auml;kkej&auml; tarkastellaan kartalla tai ajetaan skripti tietokannassa, sovellus tarkastaa, ovatko pys&auml;kit kiinni geometriassa. Geometriasta irti olevaa pys&auml;kki&auml; kutsutaan "kelluvaksi" pys&auml;kiksi. Tarkastus perustuu siihen, ett&auml; pys&auml;keille on tallennettu tietokantaan x,y -koordinaatteina sijaintitieto, johon sijaintia nykyisell&auml; geometrialla voidaan verrata. Tarkastus toimii seuraavalla logiikalla:
 
 1. L&ouml;ytyyk&ouml; ko. pys&auml;kin linkin MML-ID:ll&auml; edelleen tielinkki.
     a. Ei l&ouml;ydy -> Kelluu
@@ -294,10 +282,13 @@ Kun pys&auml;kkej&auml; tarkastellaan kartalla tai ajetaan skripti tietokannassa
     a. Jos et&auml;isyys tietokantaan tallennettujen koordinaattien ja linkin geometrian + pys&auml;kin m-arvon v&auml;lill&auml; on yli 3 metri&auml; -> Kelluu
     b. Jos et&auml;isyys alle tai 3 metri&auml;, pys&auml;kki katsotaan olevan tarpeeksi l&auml;hell&auml; samaa sijaintia kuin ennen geometrian p&auml;ivittymist&auml; ja se ei kellu.
 
+Kelluvien pys&auml;kkien lista (floatingstops.html) p&auml;ivittyy automaattisesti tuotantokannassa joka y&ouml; samassa yhteydess&auml;, kun ylemp&auml;n&auml; esitelty pys&auml;kki-csv ajetaan.
+    
 8.3 Nopeusrajoitus
 ---------------------------------------------
-Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus.
-    
+Nopeusrajoitukset venytet&auml;&auml;n aina linkin mittaisiksi, jos nopeusrajoitus katkeaa ennen linkin alkua tai loppua ja linkill&auml; on vain yksi nopeusrajoitus. 
+
+Puuttuvista/korjattavista nopeusrajoituksista ei ole olemassa erillist&auml; listaa.
 
 Linkit:
 ------
