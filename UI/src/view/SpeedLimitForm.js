@@ -13,11 +13,17 @@
     var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-    var title = selectedSpeedLimit.getId() ?
-                  '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>' :
-                  '<span>Uusi nopeusrajoitus</span>';
+    var title = function() {
+      if (selectedSpeedLimit.isUnknown()) {
+        return '<span>Uusi nopeusrajoitus</span>';
+      } else if (selectedSpeedLimit.count() == 1) {
+        return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
+      } else {
+        return '<span>Nopeusrajoitus</span>';
+      }
+    };
 
-    var header = '<header>' + title + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
+    var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark">' +
