@@ -93,12 +93,8 @@
       };
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
-      backend.updateSpeedLimits(payload, function(ids) {
-        // TODO: Assert that ids are assigned to correct speed limits
-        var newGroup = _.map(selection, function(speedLimit, i) {
-          return _.merge({}, _.omit(speedLimit, 'generatedId'), { id: ids[i] });
-        });
-        selection = collection.replaceGroup(selection[0], newGroup);
+      backend.updateSpeedLimits(payload, function(updatedSpeedLimitGroup) {
+        selection = collection.replaceGroup(selection[0], updatedSpeedLimitGroup);
         originalSpeedLimit = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');

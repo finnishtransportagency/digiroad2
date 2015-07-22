@@ -340,8 +340,12 @@
       self.updateSpeedLimit = function(id, limit, success) {
         success(speedLimitData);
       };
-      self.updateSpeedLimits = function(payload, success, failure) {
-        success(payload.ids || _.map(payload.newLimits, function(x, i) { return i; }) );
+      return self;
+    };
+
+    this.withMultiSegmentSpeedLimitUpdate = function(speedLimitData) {
+      self.updateSpeedLimits = function (payload, success, failure) {
+        success(speedLimitData.map(function(s) { return _.merge({}, s, _.pick(payload, 'value')); }));
       };
       return self;
     };

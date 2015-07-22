@@ -586,7 +586,9 @@ with GZipSupport {
       case Some(value) => {
         val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
         val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        updatedIds ++ createdIds
+        (updatedIds ++ createdIds).map { id =>
+          linearAssetProvider.getSpeedLimit(id).map(_.speedLimitLinks.head)
+        }
       }
       case _ => BadRequest("Speed limit value not provided")
     }

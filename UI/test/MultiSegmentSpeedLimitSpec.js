@@ -113,11 +113,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   describe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
-    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) {
-      return _.some(link, { id:  speedLimitId });
+    var speedLimitGroup = _.filter(SpeedLimitsTestData.generate(), function(linkGroup) {
+      return _.some(linkGroup, {id: speedLimitId});
     });
+    var speedLimitsInGroup = _.flatten(speedLimitGroup);
 
-    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits);
+    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitGroup);
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -125,9 +126,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimits)
-        .withSpeedLimitConstructor(speedLimitConstructor)
-        .withSpeedLimitUpdate(speedLimitConstructor(speedLimitId)));
+          .withSpeedLimitsData(speedLimitGroup)
+          .withSpeedLimitConstructor(speedLimitConstructor)
+          .withMultiSegmentSpeedLimitUpdate(speedLimitsInGroup));
     });
 
     describe('and changing value of speed limit, saving, changing it again, and cancelling', function() {
