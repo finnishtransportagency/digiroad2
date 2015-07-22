@@ -62,6 +62,40 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
+  describe('when loading application with speed limit data', function() {
+    var speedLimitsData = SpeedLimitsTestData.generate(2);
+    var speedLimit = speedLimitsData[0][0];
+    var openLayersMap;
+    var backend;
+    before(function (done) {
+      backend = testHelpers.defaultBackend(_.take(speedLimitsData, 1))
+          .withSpeedLimitsData(speedLimitsData)
+          .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsData));
+      testHelpers.restartApplication(function (map) {
+        openLayersMap = map;
+        $('.speed-limits').click();
+        done();
+      }, backend);
+    });
+
+    describe('and selecting speed limit, and moving map with backend giving more speed limits to selected group', function() {
+      before(function() {
+        testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
+        backend.withSpeedLimitsData([_.flatten(speedLimitsData)]);
+        eventbus.trigger('map:moved', { selectedLayer: "speedLimit", zoom: 10 } );
+      });
+      it("maintains two features on map, only one of which is selected", function() {
+        var uniqueFeatures = _.unique(testHelpers.getSpeedLimitFeatures(openLayersMap), function(f) {
+          return f.attributes.id;
+        });
+
+        expect(uniqueFeatures).to.have.length(2);
+        expect(_.filter(uniqueFeatures, { renderIntent: 'select' })).to.have.length(1);
+      });
+    });
+  });
+
+
   describe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;

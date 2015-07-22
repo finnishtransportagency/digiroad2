@@ -8,11 +8,18 @@
 
     var maintainSelectedSpeedLimitChain = function(collection) {
       if (!selection) return collection;
-      return _.reject(collection, function (speedLimitGroup) {
-        return _.some(speedLimitGroup, function (speedLimit) {
-          return selection.isSelected(speedLimit);
-        });
-      }).concat([selection.get()]);
+
+      var isSelected = function (speedLimit) { return selection.isSelected(speedLimit); };
+
+      var collectionPartitionedBySelection = _.groupBy(collection, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, isSelected);
+      });
+      var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
+
+      var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
+      var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
+
+      return collectionWithoutGroup.concat([groupWithoutSelection]).concat([selection.get()]);
     };
 
     this.getAll = function() {
