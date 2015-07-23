@@ -25,12 +25,12 @@
         eventbus.trigger('speedLimit:selected', self);
       } else {
         var ids = _.pluck(selection, 'id');
-        collection.fetchSpeedLimits(ids, function(fetchedSpeedLimits) {
-          var speedLimitsById = _.groupBy(fetchedSpeedLimits, 'id');
+        backend.getSpeedLimitDetails(ids, function(speedLimits) {
+          var speedLimitsById = _.groupBy(speedLimits, 'id');
           selection = _.map(selection, function(s) {
             return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime'));
           });
-          originalSpeedLimit = fetchedSpeedLimits[0].value;
+          originalSpeedLimit = speedLimits[0].value;
           collection.setSelection(self);
           eventbus.trigger('speedLimit:selected', self);
         });

@@ -49,10 +49,6 @@
       });
     };
 
-    this.fetchSpeedLimits = function(ids, callback) {
-      backend.getSpeedLimitDetails(ids, callback);
-    };
-
     this.getUnknown = function(generatedId) {
       // TODO: Fix this when splitting is implemented
       throw "Not Implemented";
