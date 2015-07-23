@@ -583,13 +583,10 @@ with GZipSupport {
     val ids = (parsedBody \ "ids").extract[Seq[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
-      case Some(value) => {
+      case Some(value) =>
         val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
         val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        (updatedIds ++ createdIds).map { id =>
-          linearAssetProvider.getSpeedLimit(id).map(_.speedLimitLinks.head)
-        }
-      }
+        linearAssetProvider.getSpeedLimits(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }

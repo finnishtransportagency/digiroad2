@@ -16,6 +16,13 @@
       });*/
     };
 
+    var enrichWithModificationData = function(collection, speedLimits) {
+      var speedLimitsById = _.groupBy(speedLimits, 'id');
+      return _.map(collection, function(s) {
+        return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime'));
+      });
+    };
+
     this.open = function(speedLimit) {
       self.close();
       selection = collection.getGroup(speedLimit);
@@ -26,10 +33,7 @@
       } else {
         var ids = _.pluck(selection, 'id');
         backend.getSpeedLimitDetails(ids, function(speedLimits) {
-          var speedLimitsById = _.groupBy(speedLimits, 'id');
-          selection = _.map(selection, function(s) {
-            return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime'));
-          });
+          selection = enrichWithModificationData(selection, speedLimits);
           originalSpeedLimit = speedLimits[0].value;
           collection.setSelection(self);
           eventbus.trigger('speedLimit:selected', self);
@@ -97,8 +101,10 @@
       };
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
-      backend.updateSpeedLimits(payload, function(updatedSpeedLimitGroup) {
-        selection = collection.replaceGroup(selection[0], updatedSpeedLimitGroup);
+      backend.updateSpeedLimits(payload, function(speedLimits) {
+        var speedLimitGroup = _.flatten(_.pluck(speedLimits, 'speedLimitLinks'));
+        selection = collection.replaceGroup(selection[0], speedLimitGroup);
+        selection = enrichWithModificationData(selection, speedLimits);
         originalSpeedLimit = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
