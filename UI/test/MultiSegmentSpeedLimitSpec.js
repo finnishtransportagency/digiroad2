@@ -14,9 +14,28 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   };
 
   describe('when loading application with speed limit data', function() {
-    var speedLimitsData = SpeedLimitsTestData.generate(1);
+    var speedLimitsData = [_.flatten(SpeedLimitsTestData.generate(2))];
     var speedLimit = speedLimitsData[0][0];
     var openLayersMap;
+    var modificationData = {
+      1123812: {
+        modifiedDateTime: "11.07.2015 13:00:15",
+        modifiedBy: "earlier"
+      },
+      1123107: {
+        modifiedDateTime: "11.07.2015 13:30:00",
+        modifiedBy: "later"
+      }
+    };
+    var speedLimitConstructor = function(ids) {
+      return _.map(ids, function(id) {
+        var limit = {
+          id: id,
+          speedLimitLinks: [_.find(_.flatten(speedLimitsData), { id: id })]
+        };
+        return _.merge({}, limit, modificationData[id]);
+      });
+    };
     before(function (done) {
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
@@ -24,12 +43,16 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         done();
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimitsData)
-        .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsData)));
+        .withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and selecting speed limit', function() {
       before(function() {
         testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
+      });
+      it('shows the latest modification within selected speed limits', function() {
+        var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
+        expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: later 11.07.2015 13:30:00');
       });
 
       describe('and clicking on the background map', function() {
