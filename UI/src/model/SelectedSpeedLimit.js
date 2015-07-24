@@ -32,10 +32,12 @@
       } else {
         var ids = _.pluck(selection, 'id');
         backend.getSpeedLimitDetails(ids, function(speedLimits) {
-          selection = enrichWithModificationData(selection, speedLimits);
-          originalSpeedLimit = speedLimits[0].value;
-          collection.setSelection(self);
-          eventbus.trigger('speedLimit:selected', self);
+          if (!_.isEmpty(selection)) {
+            selection = enrichWithModificationData(selection, speedLimits);
+            originalSpeedLimit = speedLimits[0].value;
+            collection.setSelection(self);
+            eventbus.trigger('speedLimit:selected', self);
+          }
         });
       }
     };
