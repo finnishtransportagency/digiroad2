@@ -14,7 +14,7 @@
     var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var title = function() {
-      if (selectedSpeedLimit.isUnknown()) {
+      if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
         return '<span>Uusi nopeusrajoitus</span>';
       } else if (selectedSpeedLimit.count() == 1) {
         return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
