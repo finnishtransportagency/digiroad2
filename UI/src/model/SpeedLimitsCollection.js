@@ -22,15 +22,22 @@
       return collectionWithoutGroup.concat([groupWithoutSelection]).concat([selection.get()]);
     };
 
-    this.getAll = function() {
+    var handleSplit = function(collection) {
       var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
       var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      if (selection && selection.isSplit()) {
-        throw "Split is not yet implemented for speed limit chains";
-        // knowns = _.omit(knowns, splitSpeedLimits.existing.id.toString());
-      }
+      return _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); })
+          .concat(existingSplit)
+          .concat(createdSplit);
+    };
+
+    this.getAll = function() {
       var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits);
-      return allWithSelectedSpeedLimitChain.concat(existingSplit).concat(createdSplit);
+
+      if (selection && selection.isSplit()) {
+        return handleSplit(allWithSelectedSpeedLimitChain);
+      } else {
+        return allWithSelectedSpeedLimitChain;
+      }
     };
 
     // TODO: Add sidecode to generatedId
@@ -88,65 +95,44 @@
           });
         }).concat([newGroup]);
       };
+      if (splitSpeedLimits.created) {
+        splitSpeedLimits.created.value = newGroup[0].value;
+      }
       speedLimits = replaceInCollection(speedLimits, segment, newGroup);
       return newGroup;
     };
 
-    var calculateMeasure = function(links) {
-      var geometries = _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        return new OpenLayers.Geometry.LineString(points);
+    var calculateMeasure = function(link) {
+      var points = _.map(link.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return _.reduce(geometries, function(acc, x) {
-        return acc + x.getLength();
-      }, 0);
+      return new OpenLayers.Geometry.LineString(points).getLength();
     };
 
     this.splitSpeedLimit = function(id, mmlId, split, callback) {
-      backend.getSpeedLimit(id, function(speedLimit) {
-        var speedLimitLinks = speedLimit.speedLimitLinks;
-        var splitLink = _.find(speedLimitLinks, function(link) {
-          return link.mmlId === mmlId;
-        });
-        var position = splitLink.position;
-        var towardsLinkChain = splitLink.towardsLinkChain;
+      var link = _.find(_.flatten(speedLimits), { id: id });
+      var towardsLinkChain = link.towardsLinkChain;
 
-        var left = _.cloneDeep(speedLimits[id]);
-        var right = _.cloneDeep(speedLimits[id]);
+      var left = _.cloneDeep(link);
+      left.points = towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices;
 
-        var leftLinks = _.filter(_.cloneDeep(speedLimitLinks), function(it) {
-          return it.position < position;
-        });
+      var right = _.cloneDeep(link);
+      right.points = towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices;
 
-        var rightLinks = _.filter(_.cloneDeep(speedLimitLinks), function(it) {
-          return it.position > position;
-        });
+      if (calculateMeasure(left) < calculateMeasure(right)) {
+        splitSpeedLimits.created = left;
+        splitSpeedLimits.existing = right;
+      } else {
+        splitSpeedLimits.created = right;
+        splitSpeedLimits.existing = left;
+      }
 
-        left.links = leftLinks.concat([{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
-                                        position: position,
-                                        mmlId: mmlId}]);
-
-        right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
-                        position: position,
-                        mmlId: mmlId}].concat(rightLinks);
-
-        if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
-          splitSpeedLimits.created = left;
-          splitSpeedLimits.existing = right;
-        } else {
-          splitSpeedLimits.created = right;
-          splitSpeedLimits.existing = left;
-        }
-
-        splitSpeedLimits.created.id = null;
-        splitSpeedLimits.splitMeasure = split.splitMeasure;
-        splitSpeedLimits.splitMmlId = mmlId;
-        dirty = true;
-        callback(splitSpeedLimits.created);
-        eventbus.trigger('speedLimits:fetched', self.getAll());
-      });
+      splitSpeedLimits.created.id = null;
+      splitSpeedLimits.splitMeasure = split.splitMeasure;
+      splitSpeedLimits.splitMmlId = mmlId;
+      dirty = true;
+      callback(splitSpeedLimits.created);
+      eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     this.saveSplit = function(callback) {
@@ -154,22 +140,13 @@
         var existingId = splitSpeedLimits.existing.id;
         splitSpeedLimits = {};
         dirty = false;
-        delete speedLimits[existingId];
-
-        _.each(updatedSpeedLimits, function(speedLimit) {
-          speedLimit.links = speedLimit.speedLimitLinks;
-          delete speedLimit.speedLimitLinks;
-          speedLimit.sideCode = speedLimit.links[0].sideCode;
-          speedLimits[speedLimit.id] = speedLimit;
-        });
 
         var newSpeedLimit = _.find(updatedSpeedLimits, function(speedLimit) { return speedLimit.id !== existingId; });
         callback(newSpeedLimit);
 
-        eventbus.trigger('speedLimits:fetched', self.getAll());
-
         eventbus.trigger('speedLimit:saved');
-        applicationModel.setSelectedTool('Select');
+
+        eventbus.trigger('speedLimit:cut');
       });
     };
 

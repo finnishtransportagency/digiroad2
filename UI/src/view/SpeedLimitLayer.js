@@ -60,7 +60,7 @@ window.SpeedLimitLayer = function(params) {
     var findNearestSpeedLimitLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && collection.getUnknown(feature.attributes.generatedId); })
+        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
         .map(function(feature) {
           return {feature: feature,
                   distanceObject: feature.geometry.distanceTo(point, {details: true})};
@@ -108,7 +108,6 @@ window.SpeedLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
-
       selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
       remove();
     };
@@ -467,7 +466,13 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, 'speedLimit:cut', handleSpeedLimitCut);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
+  };
+
+  var handleSpeedLimitCut = function() {
+    collection.fetch(map.getExtent());
+    applicationModel.setSelectedTool('Select');
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
