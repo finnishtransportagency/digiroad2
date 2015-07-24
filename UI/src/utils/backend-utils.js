@@ -335,8 +335,8 @@
     };
 
     this.withSpeedLimitConstructor = function(speedLimitConstructor) {
-      self.getSpeedLimit = function(id, callback) {
-        callback(speedLimitConstructor(id));
+      self.getSpeedLimitDetails = function(ids, callback) {
+        callback(speedLimitConstructor(ids));
       };
       return self;
     };
@@ -350,7 +350,14 @@
 
     this.withMultiSegmentSpeedLimitUpdate = function(speedLimitData) {
       self.updateSpeedLimits = function (payload, success, failure) {
-        success(speedLimitData.map(function(s) { return _.merge({}, s, _.pick(payload, 'value')); }));
+        var response = _.map(payload.ids, function(id) {
+          return {
+            id: id,
+            value: _.pick(payload, 'value'),
+            speedLimitLinks: [_.merge({}, _.find(speedLimitData, { id: id }), _.pick(payload, 'value'))]
+          };
+        });
+        success(response);
       };
       return self;
     };
