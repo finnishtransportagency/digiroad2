@@ -14,16 +14,13 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       splitMeasure: splitMeasure,
       value: value
     });
-    success([{ id: id, value: 50, speedLimitLinks: [speedLimitTestData[0]]}, { id: 123456, value: value, speedLimitLinks: [speedLimitTestData[0]] }]);
+    success([
+      _.merge({}, speedLimitTestData[0][0], { id: id, value: 50 }),
+      _.merge({}, speedLimitTestData[0][0], { id: 123456, value: value })
+    ]);
   };
 
-  var speedLimitConstructor = function(id) {
-    return {
-      speedLimitLinks: _.filter(speedLimitTestData, function(limit) { return limit.id == id; })
-    };
-  };
-
-  xdescribe('when loading application in edit mode with speed limit data', function() {
+  describe('when loading application in edit mode with speed limit data', function() {
     before(function (done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -34,8 +31,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11 })
           .withRoadLinkData(roadLinkTestData)
           .withSpeedLimitsData(speedLimitTestData)
-          .withSpeedLimitSplitting(speedLimitSplitting)
-          .withSpeedLimitConstructor(speedLimitConstructor));
+          .withSpeedLimitSplitting(speedLimitSplitting));
     });
 
     describe('and selecting cut tool', function() {
@@ -45,7 +41,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and cutting a speed limit', function() {
         before(function () {
-          var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 120.0));
+          var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 40.0));
           openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
         });
 
@@ -56,10 +52,10 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           existingLimitPoints = _.sortBy(existingLimitPoints, 'y');
           newLimitPoints = _.sortBy(newLimitPoints, 'y');
 
-          expect(_.first(existingLimitPoints).y).to.equal(0);
-          expect(_.last(existingLimitPoints).y).to.be.closeTo(120.0, 0.5);
-          expect(_.first(newLimitPoints).y).to.be.closeTo(120.0, 0.5);
-          expect(_.last(newLimitPoints).y).to.equal(200);
+          expect(_.first(existingLimitPoints).y).to.be.closeTo(40.0, 0.5);
+          expect(_.last(existingLimitPoints).y).to.be.equal(100.0);
+          expect(_.first(newLimitPoints).y).to.equal(0.0);
+          expect(_.last(newLimitPoints).y).to.closeTo(40, 0.5);
         });
 
         describe('and setting limit for new speed limit', function() {
@@ -76,8 +72,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
               expect(splitBackendCalls).to.have.length(1);
               var backendCall = _.first(splitBackendCalls);
               expect(backendCall.id).to.equal(111);
-              expect(backendCall.mmlId).to.equal(666);
-              expect(backendCall.splitMeasure).to.be.closeTo(20.0, 0.5);
+              expect(backendCall.mmlId).to.equal(555);
+              expect(backendCall.splitMeasure).to.be.closeTo(40.0, 0.5);
               expect(backendCall.value).to.equal(100);
             });
           });
