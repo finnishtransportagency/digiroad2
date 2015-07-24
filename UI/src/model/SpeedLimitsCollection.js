@@ -141,6 +141,16 @@
         splitSpeedLimits = {};
         dirty = false;
 
+        var speedLimitsPartitionedBySplitGroup = _.groupBy(speedLimits, function(group) { return _.some(group, { id: existingId }); });
+        var splitGroupLimits = _.chain(speedLimitsPartitionedBySplitGroup[true] || [])
+          .flatten()
+          .reject(function(x) { return _.some(updatedSpeedLimits, { id: x.id }); })
+          .concat(updatedSpeedLimits)
+          .map(function(x) { return [x]; })
+          .value();
+
+        speedLimits = (speedLimitsPartitionedBySplitGroup[false] || []).concat(splitGroupLimits);
+
         var newSpeedLimit = _.find(updatedSpeedLimits, function(speedLimit) { return speedLimit.id !== existingId; });
         callback(newSpeedLimit);
 
