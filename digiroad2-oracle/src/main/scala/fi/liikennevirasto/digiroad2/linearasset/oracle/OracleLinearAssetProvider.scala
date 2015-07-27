@@ -24,17 +24,17 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
-  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point], Double, Double)): (Point, Point) = {
-    val (_, _, _, _, points, _, _) = link
+  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[DateTime])): (Point, Point) = {
+    val (_, _, _, _, points, _, _, _) = link
     GeometryUtils.geometryEndpoints(points)
   }
 
-  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double)]): Seq[SpeedLimitLink] = {
+  private def getLinksWithPositions(links: Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[DateTime])]): Seq[SpeedLimitLink] = {
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
-      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure) = chainedLink.rawLink
+      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure, modifiedDate) = chainedLink.rawLink
       SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure,
-        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain)
+        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain, modifiedDate)
     }
   }
 
@@ -47,7 +47,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       val link = chainedLink.rawLink
       SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value,
         link.geometry, link.startMeasure, link.endMeasure,
-        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain)
+        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain, link.modifiedDateTime)
     }
   }
 
@@ -74,9 +74,10 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimit] = {
+  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimitLink] = {
     withDynTransaction {
-      ids.flatMap(loadSpeedLimit)
+      val links = ids.flatMap(dao.getSpeedLimitLinksById)
+      getLinksWithPositions(links)
     }
   }
 

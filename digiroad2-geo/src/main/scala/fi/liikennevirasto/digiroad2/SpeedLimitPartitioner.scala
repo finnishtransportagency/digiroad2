@@ -36,7 +36,7 @@ object SpeedLimitPartitioner {
 
   private def speedLimitLinkFromDTO(link: SpeedLimitDTO): SpeedLimitLink = {
     SpeedLimitLink(link.assetId, link.mmlId, link.sideCode, link.value,
-      link.geometry, link.startMeasure, link.endMeasure, 0, true)
+      link.geometry, link.startMeasure, link.endMeasure, 0, true, link.modifiedDateTime)
   }
 
   def partition(links: Seq[SpeedLimitDTO], roadIdentifiers: Map[Long, Either[Int, String]]): Seq[Seq[SpeedLimitLink]] = {
