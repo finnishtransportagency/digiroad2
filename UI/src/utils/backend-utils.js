@@ -93,11 +93,6 @@
       });
     }, 1000);
 
-    // TODO: Remove call-through to speed limit details and use getSpeedLimitDetails directly
-    this.getSpeedLimit = function(id, callback) {
-      self.getSpeedLimitDetails([id], callback);
-    };
-
     this.getSpeedLimitDetails = _.throttle(function(ids, callback) {
       $.getJSON('api/speedlimits/' + ids, function(speedLimits) {
         callback(speedLimits);
