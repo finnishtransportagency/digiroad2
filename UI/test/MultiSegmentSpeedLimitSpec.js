@@ -56,10 +56,11 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
 
       describe('and clicking on the background map', function() {
-        before(function() {
+        before(function(done) {
           var layer = _.find(openLayersMap.layers, function(layer) {
             return layer.isBaseLayer;
           }).div;
+          eventbus.once('speedLimit:unselect', function() { done(); });
           testHelpers.clickElement(layer);
         });
         it('deselects speed limit', function() {

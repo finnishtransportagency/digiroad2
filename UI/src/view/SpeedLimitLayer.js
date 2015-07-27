@@ -360,6 +360,37 @@ window.SpeedLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
+  var selectClickHandler = new OpenLayers.Handler.Click(
+    selectControl,
+    {
+      click: function(event)
+      {
+        console.log('click');
+        var feature = selectControl.layer.getFeatureFromEvent(event);
+        if (feature) {
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else {
+          selectControl.unselectAll();
+        }
+      },
+      dblclick: function(event) {
+        console.log('dbclick');
+        var feature = selectControl.layer.getFeatureFromEvent(event);
+        if (feature) {
+          selectControl.select(_.assign({singleLinkSelect: true}, feature));
+        } else {
+          map.zoomIn();
+        }
+      }
+    },
+    {
+      single: true,
+      double: true,
+      stopDouble: true,
+      stopSingle: true
+    }
+  );
+
   var pixelBoundsToCoordinateBounds = function(bounds) {
     var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
     var topRight = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
@@ -425,11 +456,11 @@ window.SpeedLimitLayer = function(params) {
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      selectControl.deactivate();
+      selectClickHandler.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
-      selectControl.activate();
+      selectClickHandler.activate();
     }
     updateMultiSelectBoxHandlerState();
   };
@@ -451,7 +482,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var stop = function() {
-    selectControl.deactivate();
+    selectClickHandler.deactivate();
     boxHandler.deactivate();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
@@ -488,7 +519,7 @@ window.SpeedLimitLayer = function(params) {
   var displayConfirmMessage = function() { new Confirm(); };
 
   var handleSpeedLimitChanged = function(selectedSpeedLimit) {
-    selectControl.deactivate();
+    selectClickHandler.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
@@ -497,7 +528,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitCancelled = function() {
-    selectControl.activate();
+    selectClickHandler.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   };
@@ -521,10 +552,10 @@ window.SpeedLimitLayer = function(params) {
   eventbus.on('map:moved', handleMapMoved);
 
   var redrawSpeedLimits = function(speedLimitChains) {
-    selectControl.deactivate();
+    selectClickHandler.deactivate();
     vectorLayer.removeAllFeatures();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
-      selectControl.activate();
+      selectClickHandler.activate();
     }
 
     var speedLimits = _.flatten(speedLimitChains);
