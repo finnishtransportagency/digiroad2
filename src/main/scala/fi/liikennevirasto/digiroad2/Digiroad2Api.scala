@@ -600,7 +600,7 @@ with GZipSupport {
                                         (parsedBody \ "splitMeasure").extract[Double],
                                         (parsedBody \ "value").extract[Int],
                                         user.username,
-                                        validateUserMunicipalityAccess(user)).flatMap(_.speedLimitLinks)
+                                        validateUserMunicipalityAccess(user))
   }
 
   post("/speedlimits") {
