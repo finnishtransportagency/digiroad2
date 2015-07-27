@@ -42,13 +42,6 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
     }
   }
 
-  test("get speed limit endpoints by id", Tag("db")) {
-    runWithCleanup {
-      val speedLimit = provider.getSpeedLimit(200114)
-      speedLimit.get.endpoints shouldBe Set(Point(0.0, 0.0, 0.0), Point(146.9, 0.0, 0.0))
-    }
-  }
-
   test("create new speed limit") {
     runWithCleanup {
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)

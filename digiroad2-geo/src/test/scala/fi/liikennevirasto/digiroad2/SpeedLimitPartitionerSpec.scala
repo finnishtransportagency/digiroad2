@@ -19,7 +19,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadIdentifiers)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
-    groupedLinks.head.map(_.mmlId) should equal(speedLimitLinks.map(_.mmlId))
+    groupedLinks.head.map(_.mmlId) should be(speedLimitLinks.map(_.mmlId))
   }
 
   test("separate link with different limit value") {

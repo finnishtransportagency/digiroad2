@@ -90,10 +90,8 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     val links = dao.getSpeedLimitLinksById(speedLimitId)
     if (links.isEmpty) None
     else {
-      val linkEndpoints: List[(Point, Point)] = links.map(getLinkEndpoints).toList
-      val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
       val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit) = dao.getSpeedLimitDetails(speedLimitId)
-      Some(SpeedLimit(speedLimitId, limit, limitEndpoints,
+      Some(SpeedLimit(speedLimitId, limit,
         modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
         getLinksWithPositions(links)))
