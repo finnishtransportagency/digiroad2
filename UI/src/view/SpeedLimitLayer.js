@@ -251,7 +251,7 @@ window.SpeedLimitLayer = function(params) {
     oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' }),
     oneWayOverlayStyleRule(13, { strokeDashstyle: '1 16' }),
     oneWayOverlayStyleRule(14, { strokeDashstyle: '1 16' }),
-    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' }),
+    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' })
   ];
 
   var validityDirectionStyleRules = [
@@ -261,7 +261,7 @@ window.SpeedLimitLayer = function(params) {
     createZoomDependentOneWayRule(12, { strokeWidth: 5 }),
     createZoomDependentOneWayRule(13, { strokeWidth: 5 }),
     createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
-    createZoomDependentOneWayRule(15, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 8 })
   ];
 
   var speedLimitStyleLookup = {
