@@ -83,7 +83,7 @@ trait OracleLinearAssetDao {
   private def fetchSpeedLimitsByMmlIds(mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_date
+        select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
@@ -91,7 +91,7 @@ trait OracleLinearAssetDao {
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.mml_id
-           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime])].list
+           where a.asset_type_id = 20 and floating = 0""".as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
     }
   }
 
@@ -146,16 +146,16 @@ trait OracleLinearAssetDao {
       .groupBy(_.mmlId).mapValues(_.head)
   }
 
-  private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, Int, Option[Int], Double, Double, Option[DateTime])) = {
-    val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedDate) = segment
+  private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+    val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.get(mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedDate)
+    SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
-  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[DateTime])] = {
+  def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])] = {
     val speedLimits = sql"""
-      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_date
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -163,13 +163,13 @@ trait OracleLinearAssetDao {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime])].list
+        """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
 
     val roadLinksByMmlId = roadLinkService.fetchVVHRoadlinks(speedLimits.map(_._2).toSet)
 
-    speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedDate) =>
+    speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
-      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedDate)
+      (assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 

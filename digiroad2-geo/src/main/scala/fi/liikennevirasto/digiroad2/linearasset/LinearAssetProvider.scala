@@ -5,10 +5,9 @@ import fi.liikennevirasto.digiroad2.SpeedLimitFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2.asset.{TimeStamps, Modification, BoundingRectangle, AdministrativeClass}
 import org.joda.time.DateTime
 
-case class SpeedLimitLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], startMeasure: Double, endMeasure: Double, position: Int, towardsLinkChain: Boolean, modifiedDateTime: Option[DateTime])
-case class SpeedLimit(id: Long, value: Option[Int], modifiedBy: Option[String], modifiedDateTime: Option[String], createdBy: Option[String], createdDateTime: Option[String], speedLimitLinks: Seq[SpeedLimitLink])
+case class SpeedLimitLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], startMeasure: Double, endMeasure: Double, position: Int, towardsLinkChain: Boolean, modifiedBy: Option[String], modifiedDateTime: Option[DateTime], createdBy: Option[String], createdDateTime: Option[DateTime])
+case class SpeedLimitDTO(assetId: Long, mmlId: Long, sideCode: Int, value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double, modifiedBy: Option[String], modifiedDateTime: Option[DateTime], createdBy: Option[String], createdDateTime: Option[DateTime])
 case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, mmlId: Long, roadIdentifier: Option[Either[Int, String]])
-case class SpeedLimitDTO(assetId: Long, mmlId: Long, sideCode: Int, value: Option[Int], geometry: Seq[Point], startMeasure: Double, endMeasure: Double, modifiedDateTime: Option[DateTime])
 case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 

@@ -103,7 +103,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
-      SpeedLimitDTO(0, roadLink.mmlId, 1, None, geometry, segment._1, segment._2, None)
+      SpeedLimitDTO(0, roadLink.mmlId, 1, None, geometry, segment._1, segment._2, None, None, None, None)
     }
   }
 
