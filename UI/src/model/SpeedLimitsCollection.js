@@ -87,8 +87,22 @@
       selection = sel;
     };
 
-    this.replaceGroup = function(segment, newGroup) {
-      var replaceInCollection = function(collection, segment, newGroup) {
+    var replaceOneSegment = function(collection, segment, newSegment) {
+      var collectionPartitionedBySegment = _.groupBy(collection, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, function(s) {
+          return isEqual(s, segment);
+        });
+      });
+      var groupContainingSegment = _.flatten(collectionPartitionedBySegment[true] || []);
+
+      var collectionWithoutGroup = collectionPartitionedBySegment[false] || [];
+      var groupWithoutSegment = _.reject(groupContainingSegment, function(s) { return isEqual(s, segment); });
+
+      return collectionWithoutGroup.concat(_.map(groupWithoutSegment, function(s) { return [s]; })).concat([[newSegment]]);
+    };
+
+    this.replaceSegments = function(selection, newSegments) {
+      var replaceGroup = function(collection, segment, newGroup) {
         return _.reject(collection, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(s) {
             return isEqual(s, segment);
@@ -96,10 +110,12 @@
         }).concat([newGroup]);
       };
       if (splitSpeedLimits.created) {
-        splitSpeedLimits.created.value = newGroup[0].value;
+        splitSpeedLimits.created.value = newSegments[0].value;
       }
-      speedLimits = replaceInCollection(speedLimits, segment, newGroup);
-      return newGroup;
+      speedLimits = selection.length === 1 ?
+        replaceOneSegment(speedLimits, selection[0], newSegments[0]) :
+        replaceGroup(speedLimits, selection[0], newSegments);
+      return newSegments;
     };
 
     var calculateMeasure = function(link) {

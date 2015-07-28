@@ -22,9 +22,9 @@
       });
     };
 
-    this.open = function(speedLimit) {
+    this.open = function(speedLimit, singleLinkSelect) {
       self.close();
-      selection = collection.getGroup(speedLimit);
+      selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
       if (isUnknown(speedLimit)) {
         originalSpeedLimit = self.getValue();
         collection.setSelection(self);
@@ -103,7 +103,7 @@
 
       backend.updateSpeedLimits(payload, function(speedLimits) {
         var speedLimitGroup = _.flatten(_.pluck(speedLimits, 'speedLimitLinks'));
-        selection = collection.replaceGroup(selection[0], speedLimitGroup);
+        selection = collection.replaceSegments(selection, speedLimitGroup);
         selection = enrichWithModificationData(selection, speedLimits);
         originalSpeedLimit = self.getValue();
         dirty = false;
@@ -143,7 +143,7 @@
 
     var cancelExisting = function() {
       var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
-      selection = collection.replaceGroup(selection[0], newGroup);
+      selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
@@ -209,7 +209,7 @@
     this.setValue = function(value) {
       if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
-        selection = collection.replaceGroup(selection[0], newGroup);
+        selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
         eventbus.trigger('speedLimit:valueChanged', self);
       }

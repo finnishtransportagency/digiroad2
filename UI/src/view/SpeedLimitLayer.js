@@ -346,7 +346,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var speedLimitOnSelect = function(feature) {
-    selectedSpeedLimit.open(feature.attributes);
+    selectedSpeedLimit.open(feature.attributes, feature.singleLinkSelect);
     setSelectionStyleAndHighlightFeature();
   };
 
@@ -363,9 +363,7 @@ window.SpeedLimitLayer = function(params) {
   var selectClickHandler = new OpenLayers.Handler.Click(
     selectControl,
     {
-      click: function(event)
-      {
-        console.log('click');
+      click: function(event) {
         var feature = selectControl.layer.getFeatureFromEvent(event);
         if (feature) {
           selectControl.select(_.assign({singleLinkSelect: false}, feature));
@@ -374,7 +372,6 @@ window.SpeedLimitLayer = function(params) {
         }
       },
       dblclick: function(event) {
-        console.log('dbclick');
         var feature = selectControl.layer.getFeatureFromEvent(event);
         if (feature) {
           selectControl.select(_.assign({singleLinkSelect: true}, feature));
