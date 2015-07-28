@@ -330,7 +330,8 @@
           var speedLimitLink = _.find(speedLimitData, { id: id });
           return {
             id: id,
-            value: _.pick(payload, 'value'),
+            value: payload.value,
+            points: speedLimitLink.points,
             modifiedBy: modificationData ? modificationData[id].modifiedBy : undefined,
             modifiedDateTime: modificationData ? modificationData[id].modifiedDateTime : undefined,
             createdBy: modificationData ? modificationData[id].createdBy : undefined,

@@ -494,11 +494,11 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'speedLimit:cut', handleSpeedLimitCut);
+    eventListener.listenTo(eventbus, 'speedLimit:groupSplitted', regroupSpeedLimits);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
   };
 
-  var handleSpeedLimitCut = function() {
+  var regroupSpeedLimits = function() {
     collection.fetch(map.getExtent());
     applicationModel.setSelectedTool('Select');
   };

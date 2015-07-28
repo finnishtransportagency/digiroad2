@@ -87,6 +87,14 @@
       selection = sel;
     };
 
+    var replaceGroup = function(collection, segment, newGroup) {
+      return _.reject(collection, function(speedLimitGroup) {
+        return _.some(speedLimitGroup, function(s) {
+          return isEqual(s, segment);
+        });
+      }).concat([newGroup]);
+    };
+
     var replaceOneSegment = function(collection, segment, newSegment) {
       var collectionPartitionedBySegment = _.groupBy(collection, function(speedLimitGroup) {
         return _.some(speedLimitGroup, function(s) {
@@ -102,19 +110,15 @@
     };
 
     this.replaceSegments = function(selection, newSegments) {
-      var replaceGroup = function(collection, segment, newGroup) {
-        return _.reject(collection, function(speedLimitGroup) {
-          return _.some(speedLimitGroup, function(s) {
-            return isEqual(s, segment);
-          });
-        }).concat([newGroup]);
-      };
       if (splitSpeedLimits.created) {
         splitSpeedLimits.created.value = newSegments[0].value;
       }
-      speedLimits = selection.length === 1 ?
-        replaceOneSegment(speedLimits, selection[0], newSegments[0]) :
-        replaceGroup(speedLimits, selection[0], newSegments);
+      if (selection.length === 1) {
+        speedLimits = replaceOneSegment(speedLimits, selection[0], newSegments[0]);
+        eventbus.trigger('speedLimit:groupSplitted');
+      } else {
+        speedLimits = replaceGroup(speedLimits, selection[0], newSegments);
+      }
       return newSegments;
     };
 
@@ -172,7 +176,7 @@
 
         eventbus.trigger('speedLimit:saved');
 
-        eventbus.trigger('speedLimit:cut');
+        eventbus.trigger('speedLimit:groupSplitted');
       });
     };
 

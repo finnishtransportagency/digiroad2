@@ -31,7 +31,8 @@
           'asset:saving',
           'asset:moved',
           'roadLinks:beforeDraw',
-          'roadLinks:afterDraw'];
+          'roadLinks:afterDraw',
+          'speedLimit:groupSplitted'];
         if (!_.contains(excludedEvents, eventName)) {
           var splitName = eventName.split(':');
           var category = splitName[0];
