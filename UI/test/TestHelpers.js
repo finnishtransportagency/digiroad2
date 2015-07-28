@@ -125,12 +125,12 @@ define(['AssetsTestData',
     .value();
   };
 
- var selectSpeedLimit = function(map, speedLimitId) {
+ var selectSpeedLimit = function(map, speedLimitId, singleLinkSelect) {
    var control = _.find(map.controls, function(control) { return control.layer && control.layer.name === 'speedLimit'; });
    var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
      return feature.attributes.id === speedLimitId;
    });
-   control.select(feature);
+   control.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
  };
 
  var clickElement = function(element) {

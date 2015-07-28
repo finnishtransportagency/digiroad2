@@ -18,7 +18,7 @@
     var enrichWithModificationData = function(collection, speedLimits) {
       var speedLimitsById = _.groupBy(speedLimits, 'id');
       return _.map(collection, function(s) {
-        return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime'));
+        return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime', 'createdBy', 'createdDateTime'));
       });
     };
 
@@ -191,11 +191,11 @@
     };
 
     this.getCreatedBy = function() {
-      return getProperty('createdBy');
+      return selection.length === 1 ? getProperty('createdBy') : null;
     };
 
     this.getCreatedDateTime = function() {
-      return getProperty('createdDateTime');
+      return selection.length === 1 ? getProperty('createdDateTime') : null;
     };
 
     this.get = function() {

@@ -2,19 +2,18 @@
 define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var speedLimitsData = SpeedLimitsTestData.generate(1);
-  var speedLimit = _.first(speedLimitsData);
+  var speedLimit = _.first(_.flatten(speedLimitsData));
 
-  var speedLimitConstructor = function(id) {
-    var points = speedLimitsData[0].points;
-    return {
-      id: id,
-      endpoints: [_.first(points), _.last(points)],
-      modifiedBy: 'modifier',
-      createdBy: 'creator'
-    };
+  var speedLimitConstructor = function(ids) {
+    return _.map(ids, function(id) {
+      return {
+        id: id,
+        modifiedBy: 'modifier',
+        createdBy: 'creator',
+        speedLimitLinks: [_.find(_.flatten(speedLimitsData), { id: id })]
+      };
+    });
   };
-
-
 
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
@@ -28,26 +27,31 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
   };
 
-  xdescribe('when loading application with speed limit data', function() {
+  describe('when loading application with speed limit data', function() {
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         $('.speed-limits').click();
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimitsData).withSpeedLimitConstructor(speedLimitConstructor));
+      }, testHelpers.defaultBackend()
+        .withSpeedLimitsData(speedLimitsData)
+        .withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and selecting speed limit', function() {
       before(function() {
-        testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
+        testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id, true);
       });
       it('it displays speed limit segment ID in asset form', function() {
         expect($('#feature-attributes header span')).to.have.text('Segmentin ID: 1123812');
       });
-      it('it displays speed limit creator and modifier', function() {
+      it('it displays speed limit creator', function() {
         expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator');
-        expect($('#feature-attributes .asset-log-info:last')).to.have.text('Muokattu viimeksi: modifier');
+      });
+      it('it displays speed limit modifier', function() {
+        var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
+        expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier');
       });
 
       describe('and zooming in', function() {
@@ -60,8 +64,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
 
       describe('and clicking on the background map', function() {
-        before(function() {
+        before(function(done) {
           var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
+          eventbus.once('speedLimit:unselect', function() { done(); });
           testHelpers.clickElement(layer);
         });
         it('deselects speed limit', function() {
@@ -72,7 +77,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and selecting speed limit', function() {
       before(function() {
-        testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
+        testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id, true);
       });
       describe('and selecting assets layer', function() {
         before(function() {
@@ -106,7 +111,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and changing value of speed limit', function() {
       before(function() {
-        testHelpers.selectSpeedLimit(openLayersMap, speedLimitId);
+        testHelpers.selectSpeedLimit(openLayersMap, speedLimitId, true);
         $('#feature-attributes .form-control.speed-limit').val('100').change();
       });
       it('should update all speed limit links on map', function() {
@@ -150,7 +155,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and changing value of speed limit', function() {
       before(function() {
-        testHelpers.selectSpeedLimit(openLayersMap, speedLimitId);
+        testHelpers.selectSpeedLimit(openLayersMap, speedLimitId, true);
         $('#feature-attributes .form-control.speed-limit').val('100').change();
       });
 
