@@ -432,31 +432,6 @@ with GZipSupport {
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  get("/speedlimits") {
-    val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-
-    params.get("bbox").map { bbox =>
-      val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { link =>
-        Map(
-          "id" -> (if (link.id == 0) None else Some(link.id)),
-          "mmlId" -> link.mmlId,
-          "sideCode" -> link.sideCode,
-          "value" -> link.value,
-          "points" -> link.points,
-          "position" -> link.position,
-          "towardsLinkChain" -> link.towardsLinkChain,
-          "startMeasure" -> link.startMeasure,
-          "endMeasure" -> link.endMeasure
-        )
-      }
-    } getOrElse {
-      BadRequest("Missing mandatory 'bbox' parameter")
-    }
-  }
-
   get("/speedlimits2") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -464,7 +439,7 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits2(boundingRectangle, municipalities).map { linkPartition =>
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
