@@ -185,19 +185,6 @@ trait OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, value)
   }
 
-  def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps] = {
-    MassQuery.withIds(ids) { idTableName =>
-      val timeStamps = sql"""
-        select a.id, a.modified_by, a.modified_date, a.created_by, a.created_date
-        from ASSET a
-        join  #$idTableName i on i.id = a.id
-      """.as[(Long, Option[String], Option[DateTime], Option[String], Option[DateTime])].list
-      timeStamps.map { case(id, modifiedBy, modifiedDate, createdBy, createdDate) =>
-        SpeedLimitTimeStamps(id, Modification(createdDate, createdBy), Modification(modifiedDate, modifiedBy))
-      }
-    }
-  }
-
   def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
     sql"""
       select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE

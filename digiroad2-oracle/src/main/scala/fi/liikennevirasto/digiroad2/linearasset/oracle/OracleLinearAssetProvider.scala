@@ -116,12 +116,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps] = {
-    withDynTransaction{
-      dao.getSpeedLimitTimeStamps(ids)
-    }
-  }
-
   override def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       newLimits.flatMap { limit =>

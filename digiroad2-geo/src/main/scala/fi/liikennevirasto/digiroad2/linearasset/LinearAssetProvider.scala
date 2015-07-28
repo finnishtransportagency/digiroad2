@@ -12,7 +12,6 @@ case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 
 trait LinearAssetProvider {
-  def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps]
   def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]

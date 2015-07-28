@@ -180,11 +180,6 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   }
 
   private def speedLimitsToApi(speedLimits: Seq[SpeedLimitLink]): Seq[Map[String, Any]] = {
-    val timeStamps = linearAssetProvider.getSpeedLimitTimeStamps(speedLimits.map(_.id).distinct.toSet.filterNot(_ == 0))
-      .map(t => t.id -> t)
-      .toMap
-    val unknownTimeStamps = SpeedLimitTimeStamps(0, Modification(None, None), Modification(None, None))
-
     speedLimits.map { speedLimit =>
       Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
         "sideCode" -> speedLimit.sideCode,
@@ -193,7 +188,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "mmlId" -> speedLimit.mmlId,
-        extractModificationTime(timeStamps.getOrElse(speedLimit.id, unknownTimeStamps))
+        extractModificationTime(SpeedLimitTimeStamps(speedLimit.id, Modification(speedLimit.createdDateTime, speedLimit.createdBy), Modification(speedLimit.modifiedDateTime, speedLimit.modifiedBy)))
       )
     }
   }
