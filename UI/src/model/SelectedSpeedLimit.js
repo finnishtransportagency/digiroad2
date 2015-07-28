@@ -102,9 +102,7 @@
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
       backend.updateSpeedLimits(payload, function(speedLimits) {
-        var speedLimitGroup = _.flatten(_.pluck(speedLimits, 'speedLimitLinks'));
-        selection = collection.replaceSegments(selection, speedLimitGroup);
-        selection = enrichWithModificationData(selection, speedLimits);
+        selection = collection.replaceSegments(selection, speedLimits);
         originalSpeedLimit = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
