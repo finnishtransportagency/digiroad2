@@ -336,20 +336,18 @@
       return self;
     };
 
-    this.withSpeedLimitUpdate = function(speedLimitData) {
-      self.updateSpeedLimit = function(id, limit, success) {
-        success(speedLimitData);
-      };
-      return self;
-    };
-
-    this.withMultiSegmentSpeedLimitUpdate = function(speedLimitData) {
+    this.withMultiSegmentSpeedLimitUpdate = function(speedLimitData, modificationData) {
       self.updateSpeedLimits = function (payload, success, failure) {
         var response = _.map(payload.ids, function(id) {
+          var speedLimitLink = _.find(speedLimitData, { id: id });
           return {
             id: id,
             value: _.pick(payload, 'value'),
-            speedLimitLinks: [_.merge({}, _.find(speedLimitData, { id: id }), _.pick(payload, 'value'))]
+            modifiedBy: modificationData ? modificationData[id].modifiedBy : undefined,
+            modifiedDateTime: modificationData ? modificationData[id].modifiedDateTime : undefined,
+            createdBy: modificationData ? modificationData[id].createdBy : undefined,
+            createdDateTime: modificationData ? modificationData[id].createdDateTime : undefined,
+            speedLimitLinks: [_.merge({}, speedLimitLink, _.pick(payload, 'value'))]
           };
         });
         success(response);

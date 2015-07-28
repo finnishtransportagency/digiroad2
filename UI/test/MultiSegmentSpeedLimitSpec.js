@@ -137,8 +137,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         done();
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimitGroup)
-        .withSpeedLimitConstructor(speedLimitConstructor)
-        .withSpeedLimitUpdate(speedLimitConstructor(speedLimitId)));
+        .withSpeedLimitConstructor(speedLimitConstructor));
     });
 
     describe('and changing value of speed limit', function() {

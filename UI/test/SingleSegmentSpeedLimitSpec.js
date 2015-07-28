@@ -135,13 +135,16 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
-  xdescribe('when loading application in edit mode with speed limits', function() {
+  describe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
-    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) {
-      return link.id === speedLimitId;
-    });
+    var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
     var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits);
+    var updatedSpeedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
+    var modificationData = {
+      13: {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58', createdBy: 'creator', createdDateTime: '10.09.2014 13:36:57'},
+      14: {modifiedBy: null, modifiedDateTime: null, createdBy: null, createdDateTime: null}
+    };
 
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -152,7 +155,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimits)
         .withSpeedLimitConstructor(speedLimitConstructor)
-        .withSpeedLimitUpdate(_.merge(speedLimitConstructor(13), {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58', createdBy: 'creator', createdDateTime: '10.09.2014 13:36:57'})));
+        .withMultiSegmentSpeedLimitUpdate(_.flatten(speedLimits), modificationData));
     });
 
     describe('and changing value of speed limit', function() {
@@ -167,7 +170,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
         it('it updates the modified and created fields', function() {
           expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator 10.09.2014 13:36:57');
-          expect($('#feature-attributes .asset-log-info:last')).to.have.text('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
+          var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
+          expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
 
