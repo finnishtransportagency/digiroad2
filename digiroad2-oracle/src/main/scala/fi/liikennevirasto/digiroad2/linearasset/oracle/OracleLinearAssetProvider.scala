@@ -76,27 +76,19 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
   override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimitLink] = {
     withDynTransaction {
-      val links = ids.flatMap(dao.getSpeedLimitLinksById)
-      getLinksWithPositions(links)
+      ids.flatMap(loadSpeedLimit)
     }
   }
 
-  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
+  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimitLink] = {
     withDynTransaction {
-      loadSpeedLimit(speedLimitId)
+     loadSpeedLimit(speedLimitId)
     }
   }
 
-  private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
+  private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimitLink] = {
     val links = dao.getSpeedLimitLinksById(speedLimitId)
-    if (links.isEmpty) None
-    else {
-      val (modifiedBy, modifiedDateTime, createdBy, createdDateTime, limit) = dao.getSpeedLimitDetails(speedLimitId)
-      Some(SpeedLimit(speedLimitId, limit,
-        modifiedBy, modifiedDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
-        createdBy, createdDateTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print),
-        getLinksWithPositions(links)))
-    }
+    getLinksWithPositions(links).headOption
   }
 
   override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
@@ -116,7 +108,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimitLink] = {
     Database.forDataSource(ds).withDynTransaction {
       val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username, municipalityValidation)
-      Seq(loadSpeedLimit(id).get.speedLimitLinks.head, loadSpeedLimit(newId).get.speedLimitLinks.head)
+      Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }
 

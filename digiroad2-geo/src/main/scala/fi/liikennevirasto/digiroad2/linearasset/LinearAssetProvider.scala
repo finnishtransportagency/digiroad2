@@ -21,7 +21,7 @@ trait LinearAssetProvider {
   def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink]
   def getSpeedLimits2(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimitLink]]
   def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimitLink]
-  def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
+  def getSpeedLimit(segmentId: Long): Option[SpeedLimitLink]
   def markSpeedLimitsFloating(ids: Set[Long]): Unit
   def getSpeedLimits(municipality: Int): Seq[SpeedLimitLink]
 }
