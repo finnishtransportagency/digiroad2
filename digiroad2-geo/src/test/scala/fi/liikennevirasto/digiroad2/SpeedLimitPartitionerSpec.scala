@@ -7,7 +7,7 @@ import org.scalatest._
 
 class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
   private def speedLimitDTO(mmlId: Long, value: Int, geometry: Seq[Point]) = {
-    SpeedLimitDTO(0, mmlId, 1, Some(value), geometry, 0.0, 0.0, None)
+    SpeedLimitDTO(0, mmlId, 1, Some(value), geometry, 0.0, 0.0, None, None, None, None)
   }
 
   test("group speed limits with same limit value and road number") {
