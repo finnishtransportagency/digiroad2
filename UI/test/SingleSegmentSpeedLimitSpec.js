@@ -95,10 +95,10 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
   });
 
-  xdescribe('when loading application in edit mode with speed limits', function() {
+  describe('when loading application in edit mode with speed limits', function() {
     var openLayersMap;
     var speedLimitId = 13;
-    var speedLimits = _.filter(SpeedLimitsTestData.generate(), function(link) { return link.id === speedLimitId; });
+    var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
 
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -106,7 +106,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('.speed-limits').click();
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend().withSpeedLimitsData(speedLimits).withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits)));
+      }, testHelpers.defaultBackend()
+        .withSpeedLimitsData(speedLimits)
+        .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits)));
     });
 
     describe('and changing value of speed limit', function() {
