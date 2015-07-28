@@ -235,7 +235,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits/200114", """{"value":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits", """{"value":60, "ids":[200114]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

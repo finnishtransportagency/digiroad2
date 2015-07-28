@@ -16,7 +16,6 @@ trait LinearAssetProvider {
   def getSpeedLimitTimeStamps(ids: Set[Long]): Seq[SpeedLimitTimeStamps]
   def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit
-  def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long]
   def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
   def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimitLink]
   def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[SpeedLimitLink]

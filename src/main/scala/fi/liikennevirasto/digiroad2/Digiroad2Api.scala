@@ -563,20 +563,6 @@ with GZipSupport {
     linearAssetProvider.getSpeedLimits(ids)
   }
 
-  put("/speedlimits/:speedLimitId") {
-    val user = userProvider.getCurrentUser()
-
-    val speedLimitId = params("speedLimitId").toLong
-    (parsedBody \ "value").extractOpt[Int] match {
-      case Some(limit) =>
-        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
-          case Some(id) => linearAssetProvider.getSpeedLimit(id)
-          case _ => NotFound("Speed limit " + speedLimitId + " not found")
-        }
-      case _ => BadRequest("Speed limit value not provided")
-    }
-  }
-
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
