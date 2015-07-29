@@ -539,12 +539,6 @@ with GZipSupport {
     NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
-  // TODO: remove me
-  get("/speedlimits/:segmentIds") {
-    val ids = params("segmentIds").split(",").map(_.toLong)
-    linearAssetProvider.getSpeedLimits(ids)
-  }
-
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
