@@ -421,7 +421,7 @@
 
       var getAssetForm = function() {
         var properties = sortProperties(selectedAssetModel.getProperties());
-        var contents = _.first(properties, 2)
+        var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedAssetModel))
           .concat(_.rest(properties, 2));
         var components =_.map(contents, function(feature){

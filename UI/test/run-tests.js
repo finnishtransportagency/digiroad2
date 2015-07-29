@@ -2,7 +2,7 @@ require.config({
     paths: {
         'underscore':               '../bower_components/underscore/underscore',
         'jquery':                   '../bower_components/jquery/dist/jquery.min',
-        'lodash':                   '../bower_components/lodash/dist/lodash.min',
+        'lodash':                   '../bower_components/lodash/lodash.min',
         'backbone':                 '../../bower_components/backbone/backbone',
         'chai':                     '../../bower_components/chai/chai',
         'EventBus':                 '../src/utils/eventbus',
