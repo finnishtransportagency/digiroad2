@@ -43,12 +43,11 @@
     };
 
     this.openMultiple = function(speedLimits) {
-      throw "Multiselect is not yet supported on speed limit chains";
-/*      var partitioned = _.groupBy(speedLimits, isUnknown);
+      var partitioned = _.groupBy(speedLimits, isUnknown);
       var existingSpeedLimits = _.unique(partitioned[false] || [], 'id');
       var unknownSpeedLimits = _.unique(partitioned[true] || [], 'generatedId');
 
-      selection = existingSpeedLimits.concat(unknownSpeedLimits);*/
+      selection = existingSpeedLimits.concat(unknownSpeedLimits);
     };
 
     this.close = function() {
@@ -60,18 +59,16 @@
     };
 
     this.closeMultiple = function() {
-      throw "Multiselect is not yet supported on speed limit chains";
-//      selection = [];
+      selection = [];
     };
 
     this.saveMultiple = function(value) {
-      throw "Multiselect is not yet supported on speed limit chains";
-/*      var partition = _.groupBy(selection, isUnknown);
+      var partition = _.groupBy(selection, isUnknown);
       var unknownSpeedLimits = partition[true];
       var knownSpeedLimits = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x.links[0], 'mmlId', 'startMeasure', 'endMeasure'); }),
+        newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'mmlId', 'startMeasure', 'endMeasure'); }),
         ids: _.pluck(knownSpeedLimits, 'id'),
         value: value
       };
@@ -79,7 +76,7 @@
         eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
       }, function() {
         eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
-      });*/
+      });
     };
 
     var saveSplit = function() {
