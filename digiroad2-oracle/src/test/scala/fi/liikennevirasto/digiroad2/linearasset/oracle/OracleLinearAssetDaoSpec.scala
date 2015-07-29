@@ -125,7 +125,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       }
       dao.markSpeedLimitsFloating(Set(300100, 300101))
       val speedLimits = dao.getSpeedLimitLinksByBoundingBox(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set.empty)
-      speedLimits._1.map(_.assetId) should equal(Seq(200352))
+      speedLimits._1.map(_.id) should equal(Seq(200352))
       dynamicSession.rollback()
     }
   }

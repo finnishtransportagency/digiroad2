@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimitDTO}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimitLink}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 
@@ -107,17 +107,17 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, Int, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitDTO], Map[Long, RoadLinkForSpeedLimit]) = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitLink], Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     getSpeedLimitLinksByRoadLinks(roadLinks)
   }
 
-  def getByMunicipality(municipality: Int): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
+  def getByMunicipality(municipality: Int): (Seq[SpeedLimitLink],  Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
     getSpeedLimitLinksByRoadLinks(roadLinks)
   }
 
-  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimitDTO],  Map[Long, RoadLinkForSpeedLimit]) = {
+  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimitLink],  Map[Long, RoadLinkForSpeedLimit]) = {
     val topology = toTopology(roadLinks)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
@@ -150,7 +150,7 @@ trait OracleLinearAssetDao {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.get(mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimitDTO(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    SpeedLimitLink(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])] = {
