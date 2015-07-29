@@ -24,6 +24,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
+  // TODO: Pass only required data to function
   private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])): (Point, Point) = {
     val (_, _, _, _, points, _, _, _, _, _, _) = link
     GeometryUtils.geometryEndpoints(points)
