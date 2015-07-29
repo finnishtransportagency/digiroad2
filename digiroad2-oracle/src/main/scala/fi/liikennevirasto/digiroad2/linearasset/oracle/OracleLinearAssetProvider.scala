@@ -16,8 +16,6 @@ import scala.slick.jdbc.{StaticQuery => Q}
 // - rename to speed limit service
 // - move common asset functionality to asset service
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
-  type SpeedLimitLinkById = (Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])
-
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
