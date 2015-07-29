@@ -24,13 +24,6 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
-  private def getLinksWithPositions(links: Seq[SpeedLimitLinkById]): Seq[SpeedLimitLink] = {
-    links.map { link =>
-      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = link
-      SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
-    }
-  }
-
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimitLink]] = {
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
@@ -56,8 +49,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimitLink] = {
-    val links = dao.getSpeedLimitLinksById(speedLimitId)
-    getLinksWithPositions(links).headOption
+    dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
   override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
