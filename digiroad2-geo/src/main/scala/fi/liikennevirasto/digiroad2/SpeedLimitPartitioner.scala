@@ -40,7 +40,7 @@ object SpeedLimitPartitioner {
   }
 
   def partition(links: Seq[SpeedLimitDTO], roadIdentifiers: Map[Long, Either[Int, String]]): Seq[Seq[SpeedLimitLink]] = {
-    val twoWayLinks = links.filter(_.sideCode == 1)
+    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == 1)
     val linkGroups = twoWayLinks.groupBy { link => (roadIdentifiers.get(link.mmlId), link.value) }
     val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined }
 
@@ -48,7 +48,7 @@ object SpeedLimitPartitioner {
                         cluster <- clusterLinks(linkGroup)) yield cluster
     val linkPartitions = clusters.map(linksFromCluster)
 
-    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(speedLimitLinkFromDTO(x)))
+    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(speedLimitLinkFromDTO(x))) ++ oneWayLinks.map(x => Seq(speedLimitLinkFromDTO(x)))
   }
 
 }
