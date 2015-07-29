@@ -6,8 +6,6 @@
         "mmlId": 555,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
-        "towardsLinkChain": false,
         "points": [
           {
             "x": 0.0,
@@ -24,8 +22,6 @@
         "mmlId": 666,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
-        "towardsLinkChain": false,
         "points": [
           {
             "x": 0.0,
@@ -42,8 +38,6 @@
         "mmlId": 777,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
-        "towardsLinkChain": true,
         "points": [
           {
             "x": 0.0,

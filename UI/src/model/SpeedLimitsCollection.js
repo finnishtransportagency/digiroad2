@@ -131,13 +131,12 @@
 
     this.splitSpeedLimit = function(id, mmlId, split, callback) {
       var link = _.find(_.flatten(speedLimits), { id: id });
-      var towardsLinkChain = link.towardsLinkChain;
 
       var left = _.cloneDeep(link);
-      left.points = towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices;
+      left.points = split.firstSplitVertices;
 
       var right = _.cloneDeep(link);
-      right.points = towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices;
+      right.points = split.secondSplitVertices;
 
       if (calculateMeasure(left) < calculateMeasure(right)) {
         splitSpeedLimits.created = left;

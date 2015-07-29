@@ -5,7 +5,6 @@
         "id": 1123812,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374895.585,
           "y": 6677506.848
@@ -21,7 +20,6 @@
         "id": 1123107,
         "value": 60,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374695.469,
           "y": 6677610.487
@@ -43,7 +41,6 @@
         "id": 0,
         "value": 20,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374573.844,
           "y": 6677570.506
@@ -90,7 +87,6 @@
         "id": 1,
         "value": 30,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374695.469,
           "y": 6677610.487
@@ -119,7 +115,6 @@
         "id": 2,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374862.933,
           "y": 6677654.303
@@ -145,7 +140,6 @@
         "id": 3,
         "value": 50,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374809.404,
           "y": 6677673.867
@@ -171,7 +165,6 @@
         "id": 4,
         "value": 60,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374809.404,
           "y": 6677673.867
@@ -200,7 +193,6 @@
         "id": 5,
         "value": 70,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374783.504,
           "y": 6677723.802
@@ -223,7 +215,6 @@
         "id": 6,
         "value": 80,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374783.504,
           "y": 6677723.802
@@ -252,7 +243,6 @@
         "id": 7,
         "value": 100,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374512.858,
           "y": 6677381.474
@@ -302,7 +292,6 @@
         "id": 8,
         "value": 120,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374728.64,
           "y": 6677446.365
@@ -328,7 +317,6 @@
         "id": 9,
         "value": 20,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374662.801,
           "y": 6677496.622
@@ -360,7 +348,6 @@
         "id": 10,
         "value": 30,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374662.801,
           "y": 6677496.622
@@ -386,7 +373,6 @@
         "id": 11,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374640.964,
           "y": 6677527.584
@@ -418,7 +404,6 @@
         "id": 120,
         "value": 50,
         "sideCode": 2,
-        "position": 0,
         "points": [{
           "x": 374704.813,
           "y": 6677278.197
@@ -462,7 +447,6 @@
         "id": 121,
         "value": 50,
         "sideCode": 3,
-        "position": 0,
         "points": [{
           "x": 374704.813,
           "y": 6677278.197
@@ -506,7 +490,6 @@
         "id": 13,
         "value": 60,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374699.369,
           "y": 6677284.288
@@ -540,7 +523,6 @@
         "id": 14,
         "value": 60,
         "sideCode": 1,
-        "position": 1,
         "points": [{
           "x": 374748.721,
           "y": 6677440.912
@@ -584,7 +566,6 @@
         "id": 15,
         "value": 80,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374945.976,
           "y": 6677538.7
@@ -604,7 +585,6 @@
         "id": 16,
         "value": 100,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374817.814,
           "y": 6677621.636
@@ -630,7 +610,6 @@
         "id": 17,
         "value": 120,
         "sideCode": 1,
-        "position": 0,
         "points": [{
           "x": 374867.016,
           "y": 6677649.193
