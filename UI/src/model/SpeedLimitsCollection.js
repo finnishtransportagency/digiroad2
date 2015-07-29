@@ -40,7 +40,6 @@
       }
     };
 
-    // TODO: Add sidecode to generatedId
     var generateUnknownLimitId = function(speedLimit) {
       return speedLimit.mmlId.toString() +
           speedLimit.startMeasure.toFixed(2) +
