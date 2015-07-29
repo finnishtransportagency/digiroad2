@@ -15,31 +15,12 @@
       });
     };
 
-    var enrichWithModificationData = function(collection, speedLimits) {
-      var speedLimitsById = _.groupBy(speedLimits, 'id');
-      return _.map(collection, function(s) {
-        return _.merge({}, s, _.pick(speedLimitsById[s.id][0], 'modifiedBy', 'modifiedDateTime', 'createdBy', 'createdDateTime'));
-      });
-    };
-
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      if (isUnknown(speedLimit)) {
-        originalSpeedLimit = self.getValue();
-        collection.setSelection(self);
-        eventbus.trigger('speedLimit:selected', self);
-      } else {
-        var ids = _.pluck(selection, 'id');
-        backend.getSpeedLimitDetails(ids, function(speedLimits) {
-          if (!_.isEmpty(selection)) {
-            selection = enrichWithModificationData(selection, speedLimits);
-            originalSpeedLimit = speedLimits[0].value;
-            collection.setSelection(self);
-            eventbus.trigger('speedLimit:selected', self);
-          }
-        });
-      }
+      originalSpeedLimit = self.getValue();
+      collection.setSelection(self);
+      eventbus.trigger('speedLimit:selected', self);
     };
 
     this.openMultiple = function(speedLimits) {

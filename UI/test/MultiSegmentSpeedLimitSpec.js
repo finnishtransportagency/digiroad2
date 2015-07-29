@@ -17,33 +17,13 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     var speedLimitsData = [_.flatten(SpeedLimitsTestData.generate(2))];
     var speedLimit = speedLimitsData[0][0];
     var openLayersMap;
-    var modificationData = {
-      1123812: {
-        modifiedDateTime: "11.07.2015 13:00:15",
-        modifiedBy: "earlier"
-      },
-      1123107: {
-        modifiedDateTime: "11.07.2015 13:30:00",
-        modifiedBy: "later"
-      }
-    };
-    var speedLimitConstructor = function(ids) {
-      return _.map(ids, function(id) {
-        var limit = {
-          id: id,
-          speedLimitLinks: [_.find(_.flatten(speedLimitsData), { id: id })]
-        };
-        return _.merge({}, limit, modificationData[id]);
-      });
-    };
     before(function (done) {
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
         $('.speed-limits').click();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimitsData)
-        .withSpeedLimitConstructor(speedLimitConstructor));
+        .withSpeedLimitsData(speedLimitsData));
     });
 
     describe('and selecting speed limit', function() {

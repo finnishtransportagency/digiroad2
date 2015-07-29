@@ -450,7 +450,11 @@ with GZipSupport {
             "position" -> link.position,
             "towardsLinkChain" -> link.towardsLinkChain,
             "startMeasure" -> link.startMeasure,
-            "endMeasure" -> link.endMeasure
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedDateTime" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdDateTime" -> link.createdDateTime
           )
         }
       }

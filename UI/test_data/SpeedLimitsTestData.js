@@ -13,7 +13,9 @@
           "x": 374945.976,
           "y": 6677538.7
         }],
-        "mmlId": 1
+        "mmlId": 1,
+        "createdBy": "creator",
+        "modifiedBy": "modifier"
       }],
       [{
         "id": 1123107,
@@ -33,7 +35,9 @@
           "x": 374742.99,
           "y": 6677588.138
         }],
-        "mmlId": 2
+        "mmlId": 2,
+        "modifiedDateTime": "11.07.2015 13:30:00",
+        "modifiedBy": "later"
       }],
       [{
         "id": 0,
