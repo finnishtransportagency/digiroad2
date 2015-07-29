@@ -18,24 +18,18 @@ import scala.slick.jdbc.{StaticQuery => Q}
 class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
   import fi.liikennevirasto.digiroad2.GeometryDirection._
 
+  type SpeedLimitLinkById = (Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])
+
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
-  // TODO: Pass only required data to function
-  private def getLinkEndpoints(link: (Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])): (Point, Point) = {
-    val (_, _, _, _, points, _, _, _, _, _, _) = link
-    GeometryUtils.geometryEndpoints(points)
-  }
-
-  private def getLinksWithPositions(links:Seq[(Long, Long, Int, Option[Int], Seq[Point], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])]): Seq[SpeedLimitLink] = {
-    val linkChain = LinkChain(links, getLinkEndpoints)
-    linkChain.map { chainedLink =>
-      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = chainedLink.rawLink
-      SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure,
-        chainedLink.linkPosition, chainedLink.geometryDirection == TowardsLinkChain, modifiedBy, modifiedDate, createdBy, createdDate)
+  private def getLinksWithPositions(links: Seq[SpeedLimitLinkById]): Seq[SpeedLimitLink] = {
+    links.map { link =>
+      val (id, mmlId, sideCode, limit, points, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = link
+      SpeedLimitLink(id, mmlId, sideCode, limit, points, startMeasure, endMeasure, 0, true, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 
