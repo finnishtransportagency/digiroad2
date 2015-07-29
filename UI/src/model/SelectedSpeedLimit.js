@@ -163,10 +163,6 @@
       return getProperty('id');
     };
 
-    this.getEndpoints = function() {
-      return getProperty('endpoints');
-    };
-
     this.getValue = function() {
       return getProperty('value');
     };
