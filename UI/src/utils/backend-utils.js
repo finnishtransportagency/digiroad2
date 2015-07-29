@@ -93,13 +93,7 @@
       });
     }, 1000);
 
-    this.getSpeedLimitDetails = _.throttle(function(ids, callback) {
-      $.getJSON('api/speedlimits/' + ids, function(speedLimits) {
-        callback(speedLimits);
-      });
-    }, 1000);
-
-     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
+    this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -313,13 +307,6 @@
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, callback) {
         callback(speedLimitsData);
-      };
-      return self;
-    };
-
-    this.withSpeedLimitConstructor = function(speedLimitConstructor) {
-      self.getSpeedLimitDetails = function(ids, callback) {
-        callback(speedLimitConstructor(ids));
       };
       return self;
     };

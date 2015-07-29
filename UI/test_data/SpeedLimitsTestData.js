@@ -647,21 +647,7 @@
     return data;
   };
 
-  var generateSpeedLimitConstructor = function(speedLimitsTestData) {
-    return function(ids) {
-      return _.map(ids, function(id) {
-        var speedLimitLink = _.find(_.flatten(speedLimitsTestData), { id: id });
-        return {
-          id: id,
-          value: speedLimitLink.value,
-          speedLimitLinks: [speedLimitLink]
-        };
-      });
-    };
-  };
-
   root.SpeedLimitsTestData = {
-    generate: generate,
-    generateSpeedLimitConstructor: generateSpeedLimitConstructor
+    generate: generate
   };
 })(this);

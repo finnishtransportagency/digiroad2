@@ -72,9 +72,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     var openLayersMap;
     var backend;
     before(function (done) {
-      backend = testHelpers.defaultBackend(_.take(speedLimitsData, 1))
-          .withSpeedLimitsData(speedLimitsData)
-          .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsData));
+      backend = testHelpers.defaultBackend(_.take(speedLimitsData, 1)).withSpeedLimitsData(speedLimitsData);
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
         $('.speed-limits').click();
@@ -108,7 +106,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
     var speedLimitsInGroup = _.flatten(speedLimitGroup);
 
-    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitGroup);
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -116,8 +113,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimitGroup)
-        .withSpeedLimitConstructor(speedLimitConstructor));
+        .withSpeedLimitsData(speedLimitGroup));
     });
 
     describe('and changing value of speed limit', function() {
@@ -153,9 +149,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     var speedLimitGroup = _.filter(SpeedLimitsTestData.generate(), function(linkGroup) {
       return _.some(linkGroup, {id: speedLimitId});
     });
-    var speedLimitsInGroup = _.flatten(speedLimitGroup);
 
-    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitGroup);
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -163,9 +157,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-          .withSpeedLimitsData(speedLimitGroup)
-          .withSpeedLimitConstructor(speedLimitConstructor)
-          .withMultiSegmentSpeedLimitUpdate(speedLimitsInGroup));
+        .withSpeedLimitsData(speedLimitGroup)
+        .withMultiSegmentSpeedLimitUpdate(_.flatten(speedLimitGroup)));
     });
 
     describe('and changing value of speed limit, saving, changing it again, and cancelling', function() {

@@ -4,17 +4,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var speedLimitsData = SpeedLimitsTestData.generate(1);
   var speedLimit = _.first(_.flatten(speedLimitsData));
 
-  var speedLimitConstructor = function(ids) {
-    return _.map(ids, function(id) {
-      return {
-        id: id,
-        modifiedBy: 'modifier',
-        createdBy: 'creator',
-        speedLimitLinks: [_.find(_.flatten(speedLimitsData), { id: id })]
-      };
-    });
-  };
-
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
       return feature.attributes.id === speedLimitId;
@@ -35,8 +24,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('.speed-limits').click();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimitsData)
-        .withSpeedLimitConstructor(speedLimitConstructor));
+        .withSpeedLimitsData(speedLimitsData));
     });
 
     describe('and selecting speed limit', function() {
@@ -107,8 +95,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimits)
-        .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits)));
+        .withSpeedLimitsData(speedLimits));
     });
 
     describe('and changing value of speed limit', function() {
@@ -139,8 +126,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
-    var speedLimitConstructor = SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimits);
-    var updatedSpeedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
     var modificationData = {
       13: {modifiedBy: 'modifier', modifiedDateTime: '10.09.2014 13:36:58', createdBy: 'creator', createdDateTime: '10.09.2014 13:36:57'},
       14: {modifiedBy: null, modifiedDateTime: null, createdBy: null, createdDateTime: null}
@@ -154,7 +139,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         done();
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimits)
-        .withSpeedLimitConstructor(speedLimitConstructor)
         .withMultiSegmentSpeedLimitUpdate(_.flatten(speedLimits), modificationData));
     });
 

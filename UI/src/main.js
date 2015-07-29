@@ -22,8 +22,7 @@ $(function() {
       var speedLimitsData = SpeedLimitsTestData.generate();
       Application.start(new Backend()
         .withRoadLinkData(RoadLinkTestData.generate())
-        .withSpeedLimitsData(speedLimitsData)
-        .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsData)));
+        .withSpeedLimitsData(speedLimitsData));
     });
   } else {
     Application.start();

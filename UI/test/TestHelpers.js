@@ -61,7 +61,7 @@ define(['AssetsTestData',
       .withAssetsData(assetsData)
       .withAssetData(assetData)
       .withSpeedLimitsData(speedLimitsTestData)
-      .withSpeedLimitConstructor(SpeedLimitsTestData.generateSpeedLimitConstructor(speedLimitsTestData))
+      .withMultiSegmentSpeedLimitUpdate(speedLimitsTestData)
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
   };
