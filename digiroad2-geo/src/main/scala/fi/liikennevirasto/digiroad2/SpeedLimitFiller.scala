@@ -100,7 +100,7 @@ object SpeedLimitFiller {
 
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForSpeedLimit, segmentsOnLink: Seq[SpeedLimitDTO]): Seq[SpeedLimitDTO] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
-    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
       SpeedLimitDTO(0, roadLink.mmlId, 1, None, geometry, segment._1, segment._2, None, None, None, None)
