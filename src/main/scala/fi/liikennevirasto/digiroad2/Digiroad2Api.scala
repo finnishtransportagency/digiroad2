@@ -432,8 +432,7 @@ with GZipSupport {
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  // TODO: Rename to speedlimits
-  get("/speedlimits2") {
+  get("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
