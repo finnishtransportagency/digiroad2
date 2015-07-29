@@ -62,11 +62,6 @@
       });
     };
 
-    this.getUnknown = function(generatedId) {
-      // TODO: Fix this when splitting is implemented
-      throw "Not Implemented";
-    };
-
     var isUnknown = function(speedLimit) {
       return !_.has(speedLimit, 'id');
     };
