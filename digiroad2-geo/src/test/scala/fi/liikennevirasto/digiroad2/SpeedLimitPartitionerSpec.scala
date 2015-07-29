@@ -2,12 +2,12 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
 import fi.liikennevirasto.digiroad2.asset.Unknown
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, SpeedLimitLink}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, SpeedLimit}
 import org.scalatest._
 
 class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
   private def speedLimitLink(mmlId: Long, value: Int, geometry: Seq[Point]) = {
-    SpeedLimitLink(0, mmlId, 1, Some(value), geometry, 0.0, 0.0, None, None, None, None)
+    SpeedLimit(0, mmlId, 1, Some(value), geometry, 0.0, 0.0, None, None, None, None)
   }
 
   test("group speed limits with same limit value and road number") {

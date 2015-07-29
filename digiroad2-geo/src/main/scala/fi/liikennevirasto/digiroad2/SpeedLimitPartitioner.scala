@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.LineSegment
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
@@ -9,7 +9,7 @@ import org.geotools.graph.util.graph.GraphPartitioner
 import scala.collection.JavaConversions._
 
 object SpeedLimitPartitioner {
-  private def clusterLinks(links: Seq[SpeedLimitLink]): Seq[Graph] = {
+  private def clusterLinks(links: Seq[SpeedLimit]): Seq[Graph] = {
     val generator = new BasicLineGraphGenerator(1.0)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.points)
@@ -26,14 +26,14 @@ object SpeedLimitPartitioner {
     partitioner.getPartitions.toList.asInstanceOf[List[Graph]]
   }
 
-  private def linksFromCluster(cluster: Graph): Seq[SpeedLimitLink] = {
+  private def linksFromCluster(cluster: Graph): Seq[SpeedLimit] = {
     val edges = cluster.getEdges.toList.asInstanceOf[List[BasicEdge]]
     edges.map { edge: BasicEdge =>
-      edge.getObject.asInstanceOf[SpeedLimitLink]
+      edge.getObject.asInstanceOf[SpeedLimit]
     }
   }
 
-  def partition(links: Seq[SpeedLimitLink], roadIdentifiers: Map[Long, Either[Int, String]]): Seq[Seq[SpeedLimitLink]] = {
+  def partition(links: Seq[SpeedLimit], roadIdentifiers: Map[Long, Either[Int, String]]): Seq[Seq[SpeedLimit]] = {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == 1)
     val linkGroups = twoWayLinks.groupBy { link => (roadIdentifiers.get(link.mmlId), link.value) }
     val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined }

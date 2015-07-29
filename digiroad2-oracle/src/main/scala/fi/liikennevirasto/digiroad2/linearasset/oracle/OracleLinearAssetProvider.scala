@@ -24,7 +24,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   val logger = LoggerFactory.getLogger(getClass)
   def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
 
-  override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimitLink]] = {
+  override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByBoundingBox(bounds, municipalities)
       val speedLimits = speedLimitLinks.groupBy(_.id)
@@ -36,19 +36,19 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimitLink] = {
+  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimit] = {
     withDynTransaction {
       ids.flatMap(loadSpeedLimit)
     }
   }
 
-  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimitLink] = {
+  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
      loadSpeedLimit(speedLimitId)
     }
   }
 
-  private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimitLink] = {
+  private def loadSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
@@ -66,14 +66,14 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimitLink] = {
+  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
       val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }
 
-  override def getSpeedLimits(municipality: Int): Seq[SpeedLimitLink] = {
+  override def getSpeedLimits(municipality: Int): Seq[SpeedLimit] = {
     Database.forDataSource(ds).withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getByMunicipality(municipality)
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.id))

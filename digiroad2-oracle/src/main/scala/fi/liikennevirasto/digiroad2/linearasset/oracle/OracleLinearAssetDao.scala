@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimitLink}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 
@@ -107,17 +107,17 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, Int, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimitLink], Map[Long, RoadLinkForSpeedLimit]) = {
+  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimit], Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     getSpeedLimitLinksByRoadLinks(roadLinks)
   }
 
-  def getByMunicipality(municipality: Int): (Seq[SpeedLimitLink],  Map[Long, RoadLinkForSpeedLimit]) = {
+  def getByMunicipality(municipality: Int): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
     getSpeedLimitLinksByRoadLinks(roadLinks)
   }
 
-  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimitLink],  Map[Long, RoadLinkForSpeedLimit]) = {
+  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
     val topology = toTopology(roadLinks)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
@@ -150,10 +150,10 @@ trait OracleLinearAssetDao {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.get(mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimitLink(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    SpeedLimit(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
-  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimitLink] = {
+  def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
     val speedLimits = sql"""
       select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
         from ASSET a
@@ -169,7 +169,7 @@ trait OracleLinearAssetDao {
 
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
-      SpeedLimitLink(assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+      SpeedLimit(assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 

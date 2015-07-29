@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
