@@ -11,7 +11,7 @@
   ],
   "dependencies": {
     "requirejs": "2.1.13",
-    "lodash": "2.3.0",
+    "lodash": "3.10.0",
     "jquery": "1.11.0",
     "jquery-migrate": "1.2.1",
     "momentjs": "2.5.0",

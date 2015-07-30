@@ -421,9 +421,9 @@
 
       var getAssetForm = function() {
         var properties = sortProperties(selectedAssetModel.getProperties());
-        var contents = _.first(properties, 2)
+        var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedAssetModel))
-          .concat(_.rest(properties, 2));
+          .concat(_.drop(properties, 2));
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
