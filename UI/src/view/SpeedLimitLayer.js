@@ -494,13 +494,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'speedLimit:groupSplitted', regroupSpeedLimits);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
-  };
-
-  var regroupSpeedLimits = function() {
-    collection.fetch(map.getExtent());
-    applicationModel.setSelectedTool('Select');
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -511,6 +505,8 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitSaved = function() {
     setSelectionStyleAndHighlightFeature();
+    collection.fetch(map.getExtent());
+    applicationModel.setSelectedTool('Select');
   };
 
   var displayConfirmMessage = function() { new Confirm(); };

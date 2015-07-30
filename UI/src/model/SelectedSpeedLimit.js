@@ -71,6 +71,7 @@
     };
 
     var saveExisting = function() {
+      eventbus.trigger('speedLimit:saving');
       var payloadContents = function() {
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
