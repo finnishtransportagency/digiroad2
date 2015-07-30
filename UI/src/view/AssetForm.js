@@ -319,10 +319,10 @@
           .filter(function(choice){
             return choice.publicId === property.publicId;
           })
-          .flatten('values')
-          .filter(function(x){
-            return x.propertyValue !== '99';
-          }).value();
+          .pluck('values')
+          .flatten()
+          .filter(function(x) { return x.propertyValue !== '99'; })
+          .value();
 
         if (readOnly) {
           element = $('<ul />');
