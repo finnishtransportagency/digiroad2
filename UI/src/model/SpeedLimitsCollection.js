@@ -107,7 +107,7 @@
       if (splitSpeedLimits.created) {
         splitSpeedLimits.created.value = newSegments[0].value;
       }
-      if (selection.length === 1) {
+      else if (selection.length === 1) {
         speedLimits = replaceOneSegment(speedLimits, selection[0], newSegments[0]);
       } else {
         speedLimits = replaceGroup(speedLimits, selection[0], newSegments);
