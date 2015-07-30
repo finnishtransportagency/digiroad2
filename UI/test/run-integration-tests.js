@@ -36,8 +36,9 @@ require(['chai',
          'SpeedLimitVisualizationSpec',
          'RegroupingAssetsSpec',
          'GroupingInCreationSpec',
-         'SpeedLimitSelectionSpec',
-         'SpeedLimitSplitSpec'],
+         'SingleSegmentSpeedLimitSpec',
+         'SpeedLimitSplitSpec',
+         'MultiSegmentSpeedLimitSpec'],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
 

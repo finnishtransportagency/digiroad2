@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{Dat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAsset
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
@@ -68,6 +67,11 @@ trait NumericalLimitOperations {
     }
   }
 
+  def calculateEndPoints(links: List[(Point, Point)]): Set[Point] = {
+    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints()
+    Set(endPoints._1, endPoints._2)
+  }
+
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
     withDynTransaction {
       val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
@@ -121,7 +125,7 @@ trait NumericalLimitOperations {
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
-      val limitEndpoints = LinearAsset.calculateEndPoints(linkEndpoints)
+      val limitEndpoints = calculateEndPoints(linkEndpoints)
       val head = links.head
       val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
       val numericalLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _, typeId) =>

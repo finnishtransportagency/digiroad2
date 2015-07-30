@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitLink
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
@@ -235,7 +235,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits/200114", """{"value":60}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits", """{"value":60, "ids":[200114]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

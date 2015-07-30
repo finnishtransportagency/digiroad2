@@ -6,7 +6,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, SpeedLimitLink}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -179,12 +179,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
-  private def speedLimitsToApi(speedLimits: Seq[SpeedLimitLink]): Seq[Map[String, Any]] = {
-    val timeStamps = linearAssetProvider.getSpeedLimitTimeStamps(speedLimits.map(_.id).distinct.toSet.filterNot(_ == 0))
-      .map(t => t.id -> t)
-      .toMap
-    val unknownTimeStamps = SpeedLimitTimeStamps(0, Modification(None, None), Modification(None, None))
-
+  private def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
       Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
         "sideCode" -> speedLimit.sideCode,
@@ -193,7 +188,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "mmlId" -> speedLimit.mmlId,
-        extractModificationTime(timeStamps.getOrElse(speedLimit.id, unknownTimeStamps))
+        extractModificationTime(SpeedLimitTimeStamps(speedLimit.id, Modification(speedLimit.createdDateTime, speedLimit.createdBy), Modification(speedLimit.modifiedDateTime, speedLimit.modifiedBy)))
       )
     }
   }

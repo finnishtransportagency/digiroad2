@@ -60,7 +60,7 @@ window.SpeedLimitLayer = function(params) {
     var findNearestSpeedLimitLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && collection.getUnknown(feature.attributes.generatedId); })
+        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
         .map(function(feature) {
           return {feature: feature,
                   distanceObject: feature.geometry.distanceTo(point, {details: true})};
@@ -108,7 +108,6 @@ window.SpeedLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
-
       selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
       remove();
     };
@@ -252,7 +251,7 @@ window.SpeedLimitLayer = function(params) {
     oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' }),
     oneWayOverlayStyleRule(13, { strokeDashstyle: '1 16' }),
     oneWayOverlayStyleRule(14, { strokeDashstyle: '1 16' }),
-    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' }),
+    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' })
   ];
 
   var validityDirectionStyleRules = [
@@ -262,7 +261,7 @@ window.SpeedLimitLayer = function(params) {
     createZoomDependentOneWayRule(12, { strokeWidth: 5 }),
     createZoomDependentOneWayRule(13, { strokeWidth: 5 }),
     createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
-    createZoomDependentOneWayRule(15, { strokeWidth: 8 }),
+    createZoomDependentOneWayRule(15, { strokeWidth: 8 })
   ];
 
   var speedLimitStyleLookup = {
@@ -347,7 +346,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var speedLimitOnSelect = function(feature) {
-    selectedSpeedLimit.open(feature.attributes);
+    selectedSpeedLimit.open(feature.attributes, feature.singleLinkSelect);
     setSelectionStyleAndHighlightFeature();
   };
 
@@ -360,6 +359,34 @@ window.SpeedLimitLayer = function(params) {
     }
   });
   map.addControl(selectControl);
+
+  var selectClickHandler = new OpenLayers.Handler.Click(
+    selectControl,
+    {
+      click: function(event) {
+        var feature = selectControl.layer.getFeatureFromEvent(event);
+        if (feature) {
+          selectControl.select(_.assign({singleLinkSelect: false}, feature));
+        } else {
+          selectControl.unselectAll();
+        }
+      },
+      dblclick: function(event) {
+        var feature = selectControl.layer.getFeatureFromEvent(event);
+        if (feature) {
+          selectControl.select(_.assign({singleLinkSelect: true}, feature));
+        } else {
+          map.zoomIn();
+        }
+      }
+    },
+    {
+      single: true,
+      double: true,
+      stopDouble: true,
+      stopSingle: true
+    }
+  );
 
   var pixelBoundsToCoordinateBounds = function(bounds) {
     var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
@@ -426,11 +453,11 @@ window.SpeedLimitLayer = function(params) {
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      selectControl.deactivate();
+      selectClickHandler.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
-      selectControl.activate();
+      selectClickHandler.activate();
     }
     updateMultiSelectBoxHandlerState();
   };
@@ -452,7 +479,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var stop = function() {
-    selectControl.deactivate();
+    selectClickHandler.deactivate();
     boxHandler.deactivate();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
@@ -467,7 +494,13 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, 'speedLimit:groupSplitted', regroupSpeedLimits);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
+  };
+
+  var regroupSpeedLimits = function() {
+    collection.fetch(map.getExtent());
+    applicationModel.setSelectedTool('Select');
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -483,16 +516,16 @@ window.SpeedLimitLayer = function(params) {
   var displayConfirmMessage = function() { new Confirm(); };
 
   var handleSpeedLimitChanged = function(selectedSpeedLimit) {
-    selectControl.deactivate();
+    selectClickHandler.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    drawSpeedLimits([selectedSpeedLimit.get()]);
+    drawSpeedLimits(selectedSpeedLimit.get());
   };
 
   var handleSpeedLimitCancelled = function() {
-    selectControl.activate();
+    selectClickHandler.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   };
@@ -515,13 +548,14 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
-  var redrawSpeedLimits = function(speedLimits) {
-    selectControl.deactivate();
+  var redrawSpeedLimits = function(speedLimitChains) {
+    selectClickHandler.deactivate();
     vectorLayer.removeAllFeatures();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
-      selectControl.activate();
+      selectClickHandler.activate();
     }
 
+    var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits);
   };
 
@@ -557,30 +591,23 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var limitSigns = function(speedLimits) {
-    return _.flatten(_.map(speedLimits, function(speedLimit) {
-      return _.map(speedLimit.links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var road = new OpenLayers.Geometry.LineString(points);
-        var signPosition = geometryUtils.calculateMidpointOfLineString(road);
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
+    return _.map(speedLimits, function(speedLimit) {
+      var points = _.map(speedLimit.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-    }));
+      var road = new OpenLayers.Geometry.LineString(points);
+      var signPosition = geometryUtils.calculateMidpointOfLineString(road);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
+    });
   };
 
   var lineFeatures = function(speedLimits) {
-    return _.flatten(_.map(speedLimits, function(speedLimit) {
-      return _.map(speedLimit.links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        var data = _.cloneDeep(speedLimit);
-        data.mmlId = link.mmlId;
-        data.points = link.originalPoints || points;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), data);
+    return _.map(speedLimits, function(speedLimit) {
+      var points = _.map(speedLimit.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-    }));
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), _.cloneDeep(speedLimit));
+    });
   };
 
   var reset = function() {

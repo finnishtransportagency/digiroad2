@@ -1,13 +1,11 @@
 (function(root) {
   var generateSpeedLimitLinks = function() {
-    var data = [
-      {
+    return [
+      [{
         "id": 111,
         "mmlId": 555,
         "value": 40,
         "sideCode": 1,
-        "position": 0,
-        "towardsLinkChain": false,
         "points": [
           {
             "x": 0.0,
@@ -20,12 +18,10 @@
         ]
       },
       {
-        "id": 111,
+        "id": 112,
         "mmlId": 666,
         "value": 40,
         "sideCode": 1,
-        "position": 1,
-        "towardsLinkChain": false,
         "points": [
           {
             "x": 0.0,
@@ -38,12 +34,10 @@
         ]
       },
       {
-        "id": 111,
+        "id": 113,
         "mmlId": 777,
         "value": 40,
         "sideCode": 1,
-        "position": 2,
-        "towardsLinkChain": true,
         "points": [
           {
             "x": 0.0,
@@ -54,9 +48,8 @@
             "y": 150.0
           }
         ]
-      }
+      }]
     ];
-    return data;
   };
 
   var generateRoadLinks = function() {
@@ -102,8 +95,7 @@
             "y": 200.0
           }
         ]
-      }
-    ];
+      }];
   };
 
 

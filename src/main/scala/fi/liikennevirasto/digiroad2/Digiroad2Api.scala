@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, LinearAssetProvider}
 import org.scalatra._
 import org.json4s._
@@ -26,7 +27,8 @@ with GZipSupport {
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer
 
   before() {
     contentType = formats("json")
@@ -437,18 +439,22 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { link =>
-        Map(
-          "id" -> (if (link.id == 0) None else Some(link.id)),
-          "mmlId" -> link.mmlId,
-          "sideCode" -> link.sideCode,
-          "value" -> link.value,
-          "points" -> link.points,
-          "position" -> link.position,
-          "towardsLinkChain" -> link.towardsLinkChain,
-          "startMeasure" -> link.startMeasure,
-          "endMeasure" -> link.endMeasure
-        )
+      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { linkPartition =>
+        linkPartition.map { link =>
+          Map(
+            "id" -> (if (link.id == 0) None else Some(link.id)),
+            "mmlId" -> link.mmlId,
+            "sideCode" -> link.sideCode,
+            "value" -> link.value,
+            "points" -> link.points,
+            "startMeasure" -> link.startMeasure,
+            "endMeasure" -> link.endMeasure,
+            "modifiedBy" -> link.modifiedBy,
+            "modifiedDateTime" -> link.modifiedDateTime,
+            "createdBy" -> link.createdBy,
+            "createdDateTime" -> link.createdDateTime
+          )
+        }
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -531,36 +537,16 @@ with GZipSupport {
     NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
   }
 
-  get("/speedlimits/:segmentId") {
-    val segmentId = params("segmentId")
-    linearAssetProvider.getSpeedLimit(segmentId.toLong).getOrElse(NotFound("Speed limit " + segmentId + " not found"))
-  }
-
-  put("/speedlimits/:speedLimitId") {
-    val user = userProvider.getCurrentUser()
-
-    val speedLimitId = params("speedLimitId").toLong
-    (parsedBody \ "value").extractOpt[Int] match {
-      case Some(limit) =>
-        linearAssetProvider.updateSpeedLimitValue(speedLimitId, limit, user.username, validateUserMunicipalityAccess(user)) match {
-          case Some(id) => linearAssetProvider.getSpeedLimit(id)
-          case _ => NotFound("Speed limit " + speedLimitId + " not found")
-        }
-      case _ => BadRequest("Speed limit value not provided")
-    }
-  }
-
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
     val optionalValue = (parsedBody \ "value").extractOpt[Int]
     val ids = (parsedBody \ "ids").extract[Seq[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
-      case Some(value) => {
+      case Some(value) =>
         val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
         val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        updatedIds ++ createdIds
-      }
+        linearAssetProvider.getSpeedLimits(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
