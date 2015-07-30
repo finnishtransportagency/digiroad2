@@ -70,7 +70,7 @@ var URLRouter = function(map, backend, models) {
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var indicatorOverlay = function() {
-    jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
+    jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
   var bindEvents = function() {
