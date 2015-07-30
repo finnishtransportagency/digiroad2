@@ -44,6 +44,7 @@
     };
 
     this.saveMultiple = function(value) {
+      eventbus.trigger('speedLimit:saving');
       var partition = _.groupBy(selection, isUnknown);
       var unknownSpeedLimits = partition[true];
       var knownSpeedLimits = partition[false];
