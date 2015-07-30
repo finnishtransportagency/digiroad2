@@ -167,6 +167,8 @@
         callback(newSpeedLimit);
 
         eventbus.trigger('speedLimit:saved');
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
       });
     };
 

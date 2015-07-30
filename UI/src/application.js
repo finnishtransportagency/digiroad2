@@ -86,7 +86,7 @@ var URLRouter = function(map, backend, models) {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed', function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
