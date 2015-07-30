@@ -97,7 +97,7 @@
 
     var extractStopTypes = function(properties) {
       return _.chain(properties)
-              .where(function(property) { return property.publicId === 'pysakin_tyyppi'; })
+              .where({ publicId: 'pysakin_tyyppi' })
               .pluck('values')
               .flatten()
               .pluck('propertyValue')
