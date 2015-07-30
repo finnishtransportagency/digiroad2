@@ -4,13 +4,9 @@
       if (asset.sideCode === 1) {
         return asset;
       }
-      asset.links = _.map(asset.links, function(link) {
-        link.originalPoints = _.cloneDeep(link.points);
-        var baseOffset = zoom <= 12 ? -3.5 : -0.5;
-        link.points = _.map(link.points, function(point, index, geometry) {
-          return geometryUtils.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
-        });
-        return link;
+      asset.points = _.map(asset.points, function(point, index, geometry) {
+	var baseOffset = -3.5;
+        return geometryUtils.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
       });
       return asset;
     };
