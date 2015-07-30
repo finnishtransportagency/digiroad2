@@ -132,9 +132,10 @@
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
-        rootElement.html(_.template(template, linkProperties, { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
-                                                                           functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-                                                                           linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }}));
+        var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
+                                    functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
+                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
+        rootElement.html(_.template(template, options)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });

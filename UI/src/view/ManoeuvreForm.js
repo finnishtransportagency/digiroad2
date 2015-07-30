@@ -114,12 +114,12 @@
       eventbus.on('manoeuvres:selected manoeuvres:cancelled', function(roadLink) {
         roadLink.modifiedBy = roadLink.modifiedBy || '-';
         roadLink.modifiedAt = roadLink.modifiedAt || '';
-        rootElement.html(_.template(template, roadLink));
+        rootElement.html(_.template(template)(roadLink));
         _.each(roadLink.manoeuvres, function(manoeuvre) {
           var attributes = _.merge({}, manoeuvre, {
             localizedExceptions: _.map(sortExceptions(manoeuvre.exceptions), function(e) { return localizeException(e); })
           });
-          rootElement.find('.form').append(_.template(manouvreTemplate, attributes));
+          rootElement.find('.form').append(_.template(manouvreTemplate)(attributes));
         });
         _.each(roadLink.adjacent, function(adjacentLink) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.id === manoeuvre.destRoadLinkId; });
@@ -133,11 +133,11 @@
             exceptionOptions: exceptions,
             localizedExceptions: localizedExceptions,
             additionalInfo: additionalInfo,
-            newExceptionSelect: _.template(newExceptionTemplate, { exceptionOptions: exceptions, checked: checked }),
+            newExceptionSelect: _.template(newExceptionTemplate)({ exceptionOptions: exceptions, checked: checked }),
             deleteButtonTemplate: deleteButtonTemplate
           });
 
-          rootElement.find('.form').append(_.template(adjacentLinkTemplate, attributes));
+          rootElement.find('.form').append(_.template(adjacentLinkTemplate)(attributes));
         });
 
         toggleMode(applicationModel.isReadOnly());
@@ -193,7 +193,7 @@
         rootElement.find('.adjacent-link').on('change', '.new-exception', function(event) {
           var selectElement = $(event.target);
           var formGroupElement = $(event.delegateTarget);
-          selectElement.parent().after(_.template(newExceptionTemplate, {
+          selectElement.parent().after(_.template(newExceptionTemplate)({
             exceptionOptions: exceptions,
             checked: true
           }));

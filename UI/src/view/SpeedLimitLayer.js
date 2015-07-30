@@ -137,7 +137,7 @@ window.SpeedLimitLayer = function(params) {
       '</div>';
 
     var renderDialog = function() {
-      $('.container').append(_.template(confirmDiv, {
+      $('.container').append(_.template(confirmDiv)({
         speedLimitCount: selectedSpeedLimit.count()
       }));
       var modal = $('.modal-dialog');
