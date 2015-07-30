@@ -381,13 +381,23 @@ _Nopeusrajoitusten valinta._
 
 ##Nopeusrajoituksen tietojen katselu##
 
-Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. T&auml;ll&ouml;in valituksi tulevat kaikki nopeusrajoitukset, joilla on sama ID. Nopeusrajoitusketjun geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa.
 
-Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen ID ja arvo (km/h).
+Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta.
+
+Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
+
+Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+
+Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen arvo (km/h), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
 ![Nopeusrajoituksen tietojen katselu](k24.JPG)
 
-_Nopeusrajoituksen tietojen katselu._
+_Nopeusrajoituksen tietojen katselu, kun valittuna on nopeusrajoitusketju (klikattu kerran)._
+
+![Nopeusrajoituksen tietojen katselu](k51.JPG)
+
+_Nopeusrajoituksen tietojen katselu, kun valittuna on yksitt&auml;inen nopeusrajoitus (tuplaklikkaus)._
 
 Nopeusrajoitukset on visualisoitu eri tavoin riippuen vaikutussuunnasta. Nopeusrajoituksen vaikutussuunta voi olla molempiin suuntiin tai vain toiseen suuntaan. Jos vaikutussuunta on molempiin suuntiin, nopeusrajoitus on visualisoitu yhdell&auml; paksulla viivalla (23). Yksisuuntainen vaikutus on visualisoitu ohuemmalla viivalla vaikutussuunnan mukaan tielinjan reunaan (24).
 
@@ -397,15 +407,17 @@ _Nopeusrajoitusten visualisointi._
 
 ##Nopeusrajoituksen ominaisuustietojen muokkaus##
 
-Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi perua painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
+Nopeusrajoituksen tietoja muokataan muokkaustilassa muokkausty&ouml;kalulla (12). Muokattava nopeusrajoitus (4) valitaan klikkaamalla sen geometriaa. Yksitt&auml;isen nopeusrajoituksen voi valita klikkaamalla kartalta sen geometriaa. 
+
+Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusrajoitukset, joilla on sama nopeusrajoituksen arvo ja tiennumero (maantiell&auml;) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin mittaisen p&auml;tk&auml;n tarkasteluun, sen voi tehd&auml; tuplaklikkamalla nopeusrajoitusta. 
+
+Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
+
+Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusrajoitukselle uusi arvo alasvetovalikosta (6). Muutokset tallennetaan painamalla Tallenna-painiketta oikeasta alakulmasta (8). Ennen Tallenna-painikkeen painamista muutokset voi perua painamalla Peruuta-painiketta (9). Tallenna- ja peruuta –painikkeet eiv&auml;t ole aktiivisina, jos muutoksia ei ole tehty. Jos muutoksia on tehty eik&auml; niit&auml; ole peruttu tai tallennettu ja siirryt&auml;&auml;n muokkaamaan toista kohdetta tai pois auki olevan tietolajin muokkaustilasta, sovellus antaa muutos-dialogin, joka kertoo, ett&auml; muutoksia on tehty ja ne tulee tallentaa tai peruuttaa ennen kuin voi jatkaa.
 
 ![Nopeusrajoituksen muokkaus.](k26.png)
 
 _Nopeusrajoituksen ominaisuustietojen muokkaus._
-
-####Yhden nopeusrajoituksen arvon muokkaus####
-
-Uusi nopeusrajoituksen arvo valitaan Rajoitus-pudotusvalikosta. Valinnan yhteydess&auml; nopeusrajoituksen visualisointi muuttuu vastaamaan valitun nopeusrajoituksen arvoa.
 
 ####Useamman nopeusrajoituksen arvon muokkaus kerralla####
 
