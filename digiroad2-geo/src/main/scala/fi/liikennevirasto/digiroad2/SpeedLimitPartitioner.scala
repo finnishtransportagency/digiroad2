@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 
 object SpeedLimitPartitioner {
   private def clusterLinks(links: Seq[SpeedLimit]): Seq[Graph] = {
-    val generator = new BasicLineGraphGenerator(1.0)
+    val generator = new BasicLineGraphGenerator(0.5)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.points)
       val segment = new LineSegment(sp.x, sp.y, ep.x, ep.y)
