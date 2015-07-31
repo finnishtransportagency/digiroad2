@@ -66,6 +66,12 @@ object SpeedLimitFiller {
     speedLimits.filter { case (id, segments) => segments.exists(_.points.isEmpty) }.keySet
   }
 
+  private def dropShortLimits(speedLimits: Seq[SpeedLimit]): (Seq[SpeedLimit], Set[Long]) = {
+    val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.points) < MaxAllowedMValueError }.map(_.id).toSet
+    val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
+    (limits, limitsToDrop)
+  }
+
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForSpeedLimit, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
@@ -79,8 +85,7 @@ object SpeedLimitFiller {
     val roadLinks = topology.values
     val speedLimitSegments: Seq[SpeedLimit] = speedLimits.values.flatten.toSeq
 
-    val speedLimitsWithEmptySegments = dropSpeedLimitsWithEmptySegments(speedLimits)
-    val initialChangeSet = SpeedLimitChangeSet(speedLimitsWithEmptySegments, Nil)
+    val initialChangeSet = SpeedLimitChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil)
     val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet) =
       roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
         val (existingSegments, changeSet) = acc
@@ -90,8 +95,7 @@ object SpeedLimitFiller {
 
         val (adjustedSegments: Seq[SpeedLimit], mValueAdjustments: Seq[MValueAdjustment]) = adjustSpeedLimits(topology, validLimits, validSegments)
 
-        val maintainedSegments = adjustedSegments
-        val speedLimitDrops = Set.empty[Long]
+        val (maintainedSegments, speedLimitDrops) = dropShortLimits(adjustedSegments)
 
         val newChangeSet = changeSet.copy(
           droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ speedLimitDrops,
