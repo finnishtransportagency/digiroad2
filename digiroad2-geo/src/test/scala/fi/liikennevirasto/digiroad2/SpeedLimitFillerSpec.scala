@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{SideCodeAdjustment, MValueAdjustment, SpeedLimitChangeSet}
 import fi.liikennevirasto.digiroad2.asset.Unknown
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLimit}
 import org.scalatest._
@@ -26,7 +26,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.points should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0))))
+    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Seq.empty))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
@@ -76,5 +76,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(1))
+    changeSet.adjustedSideCodes should have size 1
+    changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, 1))
   }
 }
