@@ -62,6 +62,13 @@ object SpeedLimitFiller {
       towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments)
   }
 
+  private def adjustLimitSideCodes(segments: Seq[SpeedLimit]): Seq[SpeedLimit] = {
+    segments match {
+      case s :: Nil => Seq(s.copy(sideCode = 1))
+      case _ => segments
+    }
+  }
+
   private def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimit]]): Set[Long] = {
     speedLimits.filter { case (id, segments) => segments.exists(_.points.isEmpty) }.keySet
   }
@@ -94,8 +101,9 @@ object SpeedLimitFiller {
         val validLimits = speedLimits.filterNot { sl => changeSet.droppedSpeedLimitIds.contains(sl._1) }
 
         val (adjustedSegments: Seq[SpeedLimit], mValueAdjustments: Seq[MValueAdjustment]) = adjustSpeedLimits(topology, validLimits, validSegments)
+        val sideCodeAdjustedSegments = adjustLimitSideCodes(adjustedSegments)
 
-        val (maintainedSegments, speedLimitDrops) = dropShortLimits(adjustedSegments)
+        val (maintainedSegments, speedLimitDrops) = dropShortLimits(sideCodeAdjustedSegments)
 
         val newChangeSet = changeSet.copy(
           droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ speedLimitDrops,
