@@ -159,9 +159,9 @@ window.SpeedLimitLayer = function(params) {
     };
 
     var bindEvents = function() {
-      eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed', purge);
-      eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded', function() {
+      eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed', function() {
         collection.fetch(map.getExtent());
+        eventListener.stopListening(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed');
       });
 
       $('.mass-update-modal .close').on('click', function() {
@@ -174,6 +174,7 @@ window.SpeedLimitLayer = function(params) {
         activateBrowseStyle();
         var value = parseInt($('.mass-update-modal select').val(), 10);
         selectedSpeedLimit.saveMultiple(value);
+        purge();
       });
     };
 
@@ -187,7 +188,6 @@ window.SpeedLimitLayer = function(params) {
     var purge = function() {
       selectedSpeedLimit.closeMultiple();
       $('.mass-update-modal').remove();
-      eventListener.stopListening(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed');
     };
     show();
   };
@@ -494,13 +494,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'speedLimit:groupSplitted', regroupSpeedLimits);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
-  };
-
-  var regroupSpeedLimits = function() {
-    collection.fetch(map.getExtent());
-    applicationModel.setSelectedTool('Select');
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -511,6 +505,8 @@ window.SpeedLimitLayer = function(params) {
 
   var handleSpeedLimitSaved = function() {
     setSelectionStyleAndHighlightFeature();
+    collection.fetch(map.getExtent());
+    applicationModel.setSelectedTool('Select');
   };
 
   var displayConfirmMessage = function() { new Confirm(); };

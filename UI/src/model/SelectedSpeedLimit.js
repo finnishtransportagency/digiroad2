@@ -44,6 +44,7 @@
     };
 
     this.saveMultiple = function(value) {
+      eventbus.trigger('speedLimit:saving');
       var partition = _.groupBy(selection, isUnknown);
       var unknownSpeedLimits = partition[true];
       var knownSpeedLimits = partition[false];
@@ -61,6 +62,7 @@
     };
 
     var saveSplit = function() {
+      eventbus.trigger('speedLimit:saving');
       collection.saveSplit(function(speedLimit) {
         selection = [_.merge({}, selection[0], speedLimit)];
         originalSpeedLimit = self.getValue();
@@ -70,6 +72,7 @@
     };
 
     var saveExisting = function() {
+      eventbus.trigger('speedLimit:saving');
       var payloadContents = function() {
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };

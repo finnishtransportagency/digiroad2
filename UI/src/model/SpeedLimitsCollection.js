@@ -107,9 +107,8 @@
       if (splitSpeedLimits.created) {
         splitSpeedLimits.created.value = newSegments[0].value;
       }
-      if (selection.length === 1) {
+      else if (selection.length === 1) {
         speedLimits = replaceOneSegment(speedLimits, selection[0], newSegments[0]);
-        eventbus.trigger('speedLimit:groupSplitted');
       } else {
         speedLimits = replaceGroup(speedLimits, selection[0], newSegments);
       }
@@ -168,8 +167,8 @@
         callback(newSpeedLimit);
 
         eventbus.trigger('speedLimit:saved');
-
-        eventbus.trigger('speedLimit:groupSplitted');
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
       });
     };
 

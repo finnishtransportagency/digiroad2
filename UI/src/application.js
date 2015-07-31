@@ -70,15 +70,15 @@ var URLRouter = function(map, backend, models) {
   var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
 
   var indicatorOverlay = function() {
-    jQuery('.container').append('<div class="spinner-overlay"><div class="spinner"></div></div>');
+    jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
   var bindEvents = function() {
-    eventbus.on('asset:saving asset:creating', function() {
+    eventbus.on('asset:saving asset:creating speedLimit:saving', function() {
       indicatorOverlay();
     });
 
-    eventbus.on('asset:fetched asset:created', function(asset) {
+    eventbus.on('asset:fetched asset:created speedLimits:fetched', function(asset) {
       jQuery('.spinner-overlay').remove();
     });
 
@@ -86,7 +86,7 @@ var URLRouter = function(map, backend, models) {
       jQuery('.spinner-overlay').remove();
     });
 
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed', function() {
+    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed', function() {
       jQuery('.spinner-overlay').remove();
       alert(assetUpdateFailedMessage);
     });
