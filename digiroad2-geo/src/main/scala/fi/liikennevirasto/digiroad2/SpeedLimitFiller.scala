@@ -5,7 +5,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLim
 object SpeedLimitFiller {
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimit, adjustedMValue: Option[Double])
   case class MValueAdjustment(assetId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double)
-  case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment])
+  case class SideCodeAdjustment(assetId: Long, sideCode: Int)
+  case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment], adjustedSideCodes: Seq[SideCodeAdjustment])
 
   private val MaxAllowedMValueError = 0.5
 
@@ -92,7 +93,7 @@ object SpeedLimitFiller {
     val roadLinks = topology.values
     val speedLimitSegments: Seq[SpeedLimit] = speedLimits.values.flatten.toSeq
 
-    val initialChangeSet = SpeedLimitChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil)
+    val initialChangeSet = SpeedLimitChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil)
     val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet) =
       roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
         val (existingSegments, changeSet) = acc

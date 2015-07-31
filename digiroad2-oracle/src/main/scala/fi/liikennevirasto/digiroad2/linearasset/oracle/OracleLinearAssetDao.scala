@@ -306,6 +306,21 @@ trait OracleLinearAssetDao {
     """.execute()
   }
 
+  def updateSideCode(id: Long, sideCode: Int): Unit = {
+    sqlu"""
+      update LRM_POSITION
+      set
+        side_code = $sideCode
+      where id = (
+        select lrm.id
+          from asset a
+          join asset_link al on a.ID = al.ASSET_ID
+          join lrm_position lrm on lrm.id = al.POSITION_ID
+          where a.id = $id)
+    """.execute()
+  }
+
+
   def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Long = {
     def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]) = {
       vvhLinks.find(_._1 == mmlId).foreach(vvhLink => municipalityValidation(vvhLink._4))
