@@ -82,9 +82,10 @@ object SpeedLimitFiller {
         val first = headOption.get
         val rest = segments.tail
         val roadLink = topology(first.mmlId)
-        val adjustedFirst = first.copy(sideCode = SideCode.BothDirections, points = roadLink.geometry, startMeasure = 0.0, endMeasure = GeometryUtils.geometryLength(roadLink.geometry))
-        val mValueAdjustments = Seq(MValueAdjustment(first.id, first.mmlId, 0.0, 1.0))
-        val sideCodeAdjustments = if (first.sideCode != 1) Seq(SideCodeAdjustment(first.id, 1)) else Nil
+        val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+        val adjustedFirst = first.copy(sideCode = SideCode.BothDirections, points = roadLink.geometry, startMeasure = 0.0, endMeasure = roadLinkLength)
+        val mValueAdjustments = Seq(MValueAdjustment(first.id, first.mmlId, 0.0, roadLinkLength))
+        val sideCodeAdjustments = if (first.sideCode != SideCode.BothDirections) Seq(SideCodeAdjustment(first.id, SideCode.BothDirections)) else Nil
         val segmentDrops = rest.map(_.id).toSet
         (Seq(adjustedFirst), SpeedLimitChangeSet(segmentDrops, mValueAdjustments, sideCodeAdjustments))
       case false => (segments, SpeedLimitChangeSet(Set.empty[Long], Nil, Nil))
