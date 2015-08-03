@@ -94,5 +94,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.id) should be(Seq(1))
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0.0, 1.0)))
     changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, 1)))
+    changeSet.droppedSpeedLimitIds should be(Set(2, 3))
   }
 }
