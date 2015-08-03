@@ -155,7 +155,7 @@ trait OracleLinearAssetDao {
 
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
     val speedLimits = sql"""
-      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by,  a.modified_date, a.created_by, a.created_date
+      select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
