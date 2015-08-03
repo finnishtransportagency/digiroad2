@@ -5,6 +5,7 @@
     var selection = null;
     var self = this;
     var splitSpeedLimits = {};
+    var separatedLimit = {};
 
     var maintainSelectedSpeedLimitChain = function(collection) {
       if (!selection) return collection;
@@ -30,10 +31,19 @@
           .concat(createdSplit);
     };
 
+    var handleSeparation = function(collection) {
+      return _.map(collection, function(group) { return _.reject(group, { id: separatedLimit.A.id }); })
+        .concat([separatedLimit.A])
+        .concat([separatedLimit.B]);
+    };
+
     this.getAll = function() {
       var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits);
 
-      if (selection && selection.isSplit()) {
+      if(selection && selection.isSeparated()) {
+        return handleSeparation(allWithSelectedSpeedLimitChain);
+      }
+      else if (selection && selection.isSplit()) {
         return handleSplit(allWithSelectedSpeedLimitChain);
       } else {
         return allWithSelectedSpeedLimitChain;
@@ -180,6 +190,21 @@
 
     this.isDirty = function() {
       return dirty;
+    };
+
+    this.separateSpeedLimit = function(id) {
+      var originalLimit = _.find(_.flatten(speedLimits), { id: id });
+      var limitA = _.cloneDeep(originalLimit);
+      var limitB = _.cloneDeep(originalLimit);
+
+      limitA.sideCode = 2;
+      limitB.sideCode = 3;
+      limitB.id = null;
+      dirty = true;
+
+      separatedLimit.A = limitA;
+      separatedLimit.B = limitB;
+      return [limitA, limitB];
     };
 
   };

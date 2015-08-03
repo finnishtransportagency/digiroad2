@@ -4,6 +4,7 @@
     var self = this;
     var dirty = false;
     var originalSpeedLimit = null;
+    var isSeparated = false;
 
     this.splitSpeedLimit = function(id, mmlId, split) {
       collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
@@ -13,6 +14,12 @@
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       });
+    };
+
+    this.separate = function() {
+      selection = collection.separateSpeedLimit(this.getId());
+      isSeparated = true;
+      eventbus.trigger('speedlimit:fetched', collection.getAll());
     };
 
     this.open = function(speedLimit, singleLinkSelect) {
@@ -102,6 +109,10 @@
 
     this.isSplit = function() {
       return selection[0].id === null;
+    };
+
+    this.isSeparated = function() {
+      return isSeparated;
     };
 
     this.save = function() {

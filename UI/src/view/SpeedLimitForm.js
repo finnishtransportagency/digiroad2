@@ -80,6 +80,7 @@
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
       rootElement.find('.speed-limit button').attr('disabled', false);
     });
+    rootElement.on('click', '#separate-limit', function() { selectedSpeedLimit.separate(); });
     rootElement.on('click', '.speed-limit button.save', function() { selectedSpeedLimit.save(); });
     rootElement.on('click', '.speed-limit button.cancel', function() { selectedSpeedLimit.cancel(); });
   };

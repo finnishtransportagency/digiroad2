@@ -31,4 +31,13 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         expect(selectedSpeedLimit.isSeparable()).to.be.false;
       });
     });
+
+    describe('Separating speed limit', function() {
+      it('', function() {
+        selectedSpeedLimit.open(speedLimitTestData[0][0], true);
+        selectedSpeedLimit.separate();
+
+        expect(selectedSpeedLimit.get()).to.have.length(2);
+      });
+    });
   });
