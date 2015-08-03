@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLimit}
 
 object SpeedLimitFiller {
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimit, adjustedMValue: Option[Double])
   case class MValueAdjustment(assetId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double)
-  case class SideCodeAdjustment(assetId: Long, sideCode: Int)
+  case class SideCodeAdjustment(assetId: Long, sideCode: SideCode)
   case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment], adjustedSideCodes: Seq[SideCodeAdjustment])
 
   private val MaxAllowedMValueError = 0.5
@@ -27,8 +28,8 @@ object SpeedLimitFiller {
                                    speedLimits: Map[Long, Seq[SpeedLimit]],
                                    segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val twoWaySegments = segments.filter(_.sideCode == 1)
-    if (twoWaySegments.length == 1 && segments.forall(_.sideCode == 1)) {
+    val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections)
+    if (twoWaySegments.length == 1 && segments.forall(_.sideCode == SideCode.BothDirections)) {
       val segment = segments.head
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, topology.get(segment.mmlId).get)
       (Seq(adjustedSegment), mValueAdjustments)
@@ -40,10 +41,10 @@ object SpeedLimitFiller {
   private def adjustOneWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
                                    speedLimits: Map[Long, Seq[SpeedLimit]],
                                    segments: Seq[SpeedLimit],
-                                   runningDirection: Int):
+                                   runningDirection: SideCode):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
     val segmentsTowardsRunningDirection = segments.filter(_.sideCode == runningDirection)
-    if (segmentsTowardsRunningDirection.length == 1 && segments.filter(_.sideCode == 1).isEmpty) {
+    if (segmentsTowardsRunningDirection.length == 1 && segments.filter(_.sideCode == SideCode.BothDirections).isEmpty) {
       val segment = segmentsTowardsRunningDirection.head
       val (adjustedSegment, mValueAdjustments) = adjustSegment(segment, topology.get(segment.mmlId).get)
       (Seq(adjustedSegment), mValueAdjustments)
@@ -56,8 +57,8 @@ object SpeedLimitFiller {
                          speedLimits: Map[Long, Seq[SpeedLimit]],
                          segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, 2)
-    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, 3)
+    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, SideCode.TowardsDigitizing)
+    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, SideCode.AgainstDigitizing)
     val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(topology, speedLimits, segments)
     (towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
       towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments)
@@ -66,8 +67,8 @@ object SpeedLimitFiller {
   private def adjustLimitSideCodes(segments: Seq[SpeedLimit]): (Seq[SpeedLimit], Seq[SideCodeAdjustment]) = {
     segments match {
       case s :: Nil =>
-        val adjustedSegments = Seq(s.copy(sideCode = 1))
-        val adjustments = if (s.sideCode != 1) Seq(SideCodeAdjustment(s.id, 1)) else Nil
+        val adjustedSegments = Seq(s.copy(sideCode = SideCode.BothDirections))
+        val adjustments = if (s.sideCode != SideCode.BothDirections) Seq(SideCodeAdjustment(s.id, SideCode.BothDirections)) else Nil
         (adjustedSegments, adjustments)
       case _ => (segments, Nil)
     }
@@ -88,7 +89,7 @@ object SpeedLimitFiller {
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.mmlId, 1, None, geometry, segment._1, segment._2, None, None, None, None)
+      SpeedLimit(0, roadLink.mmlId, SideCode.BothDirections, None, geometry, segment._1, segment._2, None, None, None, None)
     }
   }
 

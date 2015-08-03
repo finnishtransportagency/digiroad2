@@ -4,7 +4,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, TrafficDirection, LinkType}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
 import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
@@ -438,7 +438,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), sideCode, value.get)
+        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), SideCode(sideCode), value.get)
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 

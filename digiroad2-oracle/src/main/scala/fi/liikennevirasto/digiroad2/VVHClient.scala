@@ -161,15 +161,15 @@ class VVHClient(hostname: String) {
   }
 
   private val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
-    0 -> BothDirections,
-    1 -> TowardsDigitizing,
-    2 -> AgainstDigitizing)
+    0 -> TrafficDirection.BothDirections,
+    1 -> TrafficDirection.TowardsDigitizing,
+    2 -> TrafficDirection.AgainstDigitizing)
 
   private def extractTrafficDirection(attributes: Map[String, Any]): TrafficDirection = {
     Option(attributes("DIRECTIONTYPE").asInstanceOf[BigInt])
       .map(_.toInt)
-      .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, UnknownDirection))
-      .getOrElse(UnknownDirection)
+      .map(vvhTrafficDirectionToTrafficDirection.getOrElse(_, TrafficDirection.UnknownDirection))
+      .getOrElse(TrafficDirection.UnknownDirection)
   }
 }
 

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.LineSegment
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
@@ -34,7 +35,7 @@ object SpeedLimitPartitioner {
   }
 
   def partition(links: Seq[SpeedLimit], roadIdentifiers: Map[Long, Either[Int, String]]): Seq[Seq[SpeedLimit]] = {
-    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == 1)
+    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
     val linkGroups = twoWayLinks.groupBy { link => (roadIdentifiers.get(link.mmlId), link.value) }
     val (linksToPartition, linksToPass) = linkGroups.partition { case (key, _) => key._1.isDefined }
 

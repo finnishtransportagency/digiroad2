@@ -45,8 +45,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Override road link traffic direction with adjusted value") {
     val boundingBox = BoundingRectangle(Point(373816, 6676812), Point(374634, 6677671))
     val roadLinks = RoadLinkService.getRoadLinks(boundingBox)
-    roadLinks.find { _.id == 7886262 }.map(_.trafficDirection) should be (Some(TowardsDigitizing))
-    roadLinks.find { _.mmlId == 391203482 }.map(_.trafficDirection) should be (Some(AgainstDigitizing))
+    roadLinks.find { _.id == 7886262 }.map(_.trafficDirection) should be (Some(TrafficDirection.TowardsDigitizing))
+    roadLinks.find { _.mmlId == 391203482 }.map(_.trafficDirection) should be (Some(TrafficDirection.AgainstDigitizing))
   }
 
   test("Override road link functional class with adjusted value") {
@@ -65,9 +65,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
-      val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+      val roadLink = service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { _ => })
       roadLink.map(_.linkType) should be(Some(PedestrianZone))
       dynamicSession.rollback()
     }
@@ -77,7 +77,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val lastEditedDate = DateTime.now()
-      val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TowardsDigitizing, AllOthers, Some(lastEditedDate)))
+      val roadLinks = Seq(VVHRoadlink(1l, 0, Nil, Municipality, TrafficDirection.TowardsDigitizing, AllOthers, Some(lastEditedDate)))
       when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
       val service = new TestService(mockVVHClient)
       val results = service.getRoadLinksFromVVH(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)))
@@ -90,16 +90,16 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = simulateQuery {
-        service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+        service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { _ => })
       }
-      roadLink.map(_.trafficDirection) should be(Some(BothDirections))
+      roadLink.map(_.trafficDirection) should be(Some(TrafficDirection.BothDirections))
       val roadLink2 = simulateQuery {
-        service.updateProperties(1, 5, PedestrianZone, TowardsDigitizing, "testuser", { _ => })
+        service.updateProperties(1, 5, PedestrianZone, TrafficDirection.TowardsDigitizing, "testuser", { _ => })
       }
-      roadLink2.map(_.trafficDirection) should be(Some(TowardsDigitizing))
+      roadLink2.map(_.trafficDirection) should be(Some(TrafficDirection.TowardsDigitizing))
       dynamicSession.rollback()
     }
   }
@@ -108,7 +108,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(None)
     val service = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
-    val roadLink = service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { _ => })
+    val roadLink = service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { _ => })
     roadLink.map(_.linkType) should be(None)
   }
 
@@ -116,10 +116,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlink(1l))
-        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, UnknownDirection, FeatureClass.AllOthers)))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       var validatedCode = 0
-      service.updateProperties(1, 5, PedestrianZone, BothDirections, "testuser", { municipalityCode =>
+      service.updateProperties(1, 5, PedestrianZone, TrafficDirection.BothDirections, "testuser", { municipalityCode =>
         validatedCode = municipalityCode
       })
       validatedCode should be(91)
@@ -134,10 +134,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
         .thenReturn(List(
-        VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
-        VVHRoadlink(456l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.TractorRoad),
-        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers),
-        VVHRoadlink(111l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.CycleOrPedestrianPath)))
+        VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(456l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.TractorRoad),
+        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers),
+        VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath)))
       val service = new TestService(mockVVHClient)
 
       sqlu"""delete from incomplete_link where municipality_code = 91""".execute()
@@ -167,11 +167,11 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       when(mockVVHClient.fetchVVHRoadlinks(boundingBox, Set()))
         .thenReturn(List(
-        VVHRoadlink(123l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.DrivePath),
-        VVHRoadlink(789l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)))
+        VVHRoadlink(123l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.DrivePath),
+        VVHRoadlink(789l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)))
 
       val service = new TestService(mockVVHClient, mockEventBus)
-      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TowardsDigitizing, SingleCarriageway, None, None))
+      val roadLink: List[VVHRoadLinkWithProperties] = List(VVHRoadLinkWithProperties(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, None, None))
 
       val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
 
@@ -188,14 +188,14 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Remove road link from incomplete link list once functional class and link type are specified") {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val roadLink = VVHRoadlink(1l, 91, Nil, Municipality, TowardsDigitizing, FeatureClass.AllOthers)
+      val roadLink = VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers)
       when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
       val service = new TestService(mockVVHClient)
 
       sqlu"""insert into incomplete_link (mml_id, municipality_code, administrative_class) values (1, 91, 1)""".execute()
 
-      simulateQuery { service.updateProperties(1, FunctionalClass.Unknown, Freeway, BothDirections, "test", _ => ()) }
-      simulateQuery { service.updateProperties(1, 4, UnknownLinkType, BothDirections, "test", _ => ()) }
+      simulateQuery { service.updateProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, "test", _ => ()) }
+      simulateQuery { service.updateProperties(1, 4, UnknownLinkType, TrafficDirection.BothDirections, "test", _ => ()) }
 
       val incompleteLinks = service.getIncompleteLinks(Some(Set(91)))
       incompleteLinks should be(empty)

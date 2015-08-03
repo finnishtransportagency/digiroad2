@@ -14,7 +14,7 @@ import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
-  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -113,12 +113,12 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val oldLimit = dao.getSpeedLimitLinksById(200097).head
 
       oldLimit.mmlId should be (388562360)
-      oldLimit.sideCode should be (2)
+      oldLimit.sideCode should be (SideCode.TowardsDigitizing)
       oldLimit.value should be (Some(50))
       oldLimit.modifiedBy should be (Some("test"))
 
       createdLimit.mmlId should be (388562360)
-      createdLimit.sideCode should be (3)
+      createdLimit.sideCode should be (SideCode.AgainstDigitizing)
       createdLimit.value should be (Some(40))
       createdLimit.createdBy should be (Some("test"))
 
@@ -140,8 +140,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("filter out floating speed limits") {
     Database.forDataSource(ds).withDynTransaction {
       val roadLinks = Seq(
-        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None),
-        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, UnknownDirection, MultipleCarriageway, None, None))
+        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None),
+        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None))
       val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
       when(mockedRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(roadLinks)
       when(mockedRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
@@ -157,14 +157,14 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit creation fails if speed limit is already defined on link segment") {
     Database.forDataSource(ds).withDynTransaction {
-      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, _ => ())
       }
       id2 shouldBe None
       dynamicSession.rollback()
@@ -173,18 +173,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit creation succeeds when speed limit is already defined on segment iff speed limits have opposing sidecodes") {
     Database.forDataSource(ds).withDynTransaction {
-      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, UnknownDirection, AllOthers)
+      val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), TowardsDigitizing.value, 40, _ => ())
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.TowardsDigitizing, 40, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), AgainstDigitizing.value, 40, _ => ())
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.AgainstDigitizing, 40, _ => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), 1, 40, _ => ())
+        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, _ => ())
       }
       id3 shouldBe None
       dynamicSession.rollback()

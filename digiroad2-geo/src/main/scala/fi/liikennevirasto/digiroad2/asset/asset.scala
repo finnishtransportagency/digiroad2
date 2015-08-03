@@ -68,11 +68,28 @@ object TrafficDirection {
   def apply(stringValue: String): TrafficDirection = {
     values.find(_.toString == stringValue).getOrElse(UnknownDirection)
   }
+
+  case object BothDirections extends TrafficDirection { def value = 2 }
+  case object AgainstDigitizing extends TrafficDirection { def value = 3 }
+  case object TowardsDigitizing extends TrafficDirection { def value = 4 }
+  case object UnknownDirection extends TrafficDirection { def value = 99 }
 }
-case object BothDirections extends TrafficDirection { def value = 2 }
-case object AgainstDigitizing extends TrafficDirection { def value = 3 }
-case object TowardsDigitizing extends TrafficDirection { def value = 4 }
-case object UnknownDirection extends TrafficDirection { def value = 99 }
+
+sealed trait SideCode {
+  def value: Int
+}
+object SideCode {
+  val values = Set(BothDirections, TowardsDigitizing, AgainstDigitizing, Unknown)
+
+  def apply(intValue: Int): SideCode = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object BothDirections extends SideCode { def value = 1 }
+  case object TowardsDigitizing extends SideCode { def value = 2 }
+  case object AgainstDigitizing extends SideCode { def value = 3 }
+  case object Unknown extends SideCode { def value = 99 }
+}
 
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
