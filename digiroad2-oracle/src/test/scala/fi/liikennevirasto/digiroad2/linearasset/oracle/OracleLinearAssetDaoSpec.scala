@@ -101,6 +101,31 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
+  // TODO: Test that speed limit separation fails if municipality validation fails
+  // TODO: Test that speed limit separation fails if no speed limit is found
+  // TODO: Test that speed limit separation fails if road link is one way
+  // TODO: Test that speed limit separation fails if side code != 1
+  test("separate speed limit to two") {
+    Database.forDataSource(ds).withDynTransaction {
+      val dao = daoWithRoadLinks(List(roadLink))
+      val createdId = dao.separateSpeedLimit(200097, 50, 40, "test", passingMunicipalityValidation)
+      val createdLimit = dao.getSpeedLimitLinksById(createdId).head
+      val oldLimit = dao.getSpeedLimitLinksById(200097).head
+
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (2)
+      oldLimit.value should be (Some(50))
+      oldLimit.modifiedBy should be (Some("test"))
+
+      createdLimit.mmlId should be (388562360)
+      createdLimit.sideCode should be (3)
+      createdLimit.value should be (Some(40))
+      createdLimit.createdBy should be (Some("test"))
+
+      dynamicSession.rollback()
+    }
+  }
+
   test("can update speedlimit value") {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))

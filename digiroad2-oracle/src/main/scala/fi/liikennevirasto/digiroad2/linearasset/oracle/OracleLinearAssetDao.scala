@@ -342,6 +342,13 @@ trait OracleLinearAssetDao {
     createdId
   }
 
+  def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Long = {
+    val speedLimit = getSpeedLimitLinksById(id).head
+    updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
+    updateSideCode(id, 2)
+    createSpeedLimitWithoutDuplicates(username, speedLimit.mmlId, (speedLimit.startMeasure, speedLimit.endMeasure), 3, valueAgainstDigitization).get
+  }
+
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
     def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]): Unit = {
       vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
