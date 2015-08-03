@@ -555,13 +555,12 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId") {
     val user = userProvider.getCurrentUser()
 
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
     linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
-                                        mmlId,
-                                        (parsedBody \ "splitMeasure").extract[Double],
-                                        (parsedBody \ "value").extract[Int],
-                                        user.username,
-                                        validateUserMunicipalityAccess(user))
+      (parsedBody \ "mmlId").extract[Long],
+      (parsedBody \ "splitMeasure").extract[Double],
+      (parsedBody \ "value").extract[Int],
+      user.username,
+      validateUserMunicipalityAccess(user))
   }
 
   post("/speedlimits/:speedLimitId/separate") {
