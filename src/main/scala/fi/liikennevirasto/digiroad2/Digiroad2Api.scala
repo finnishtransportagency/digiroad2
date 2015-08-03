@@ -563,6 +563,16 @@ with GZipSupport {
                                         validateUserMunicipalityAccess(user))
   }
 
+  post("/speedlimits/:speedLimitId/separate") {
+    val user = userProvider.getCurrentUser()
+
+    linearAssetProvider.separateSpeedLimit(params("speedLimitId").toLong,
+      (parsedBody \ "valueTowardsDigitization").extract[Int],
+      (parsedBody \ "valueAgainstDigitization").extract[Int],
+      user.username,
+      validateUserMunicipalityAccess(user))
+  }
+
   post("/speedlimits") {
     val user = userProvider.getCurrentUser()
 
