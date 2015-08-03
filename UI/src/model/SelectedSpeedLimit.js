@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedSpeedLimit = function(backend, collection) {
+  root.SelectedSpeedLimit = function(backend, collection, roadCollection) {
     var selection = [];
     var self = this;
     var dirty = false;
@@ -206,6 +206,12 @@
           return isEqual(speedLimit, selectedSpeedLimit);
         });
       }
+    };
+
+    this.isSeparable = function() {
+      return getProperty('sideCode') === validitydirections.bothDirections &&
+        roadCollection.get(getProperty('mmlId')).getData().trafficDirection === 'BothDirections' &&
+        selection.length === 1;
     };
 
     var isEqual = function(a, b) {

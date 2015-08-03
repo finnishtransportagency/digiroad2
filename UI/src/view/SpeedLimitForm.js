@@ -23,6 +23,16 @@
       }
     };
 
+    var separatorButton = function() {
+      if (selectedSpeedLimit.isSeparable()) {
+        return '<div class="form-group">' +
+        '<button class="cancel btn btn-secondary" id="separate-limit">Jaa nopeusrajoitus kaksisuuntaiseksi</button>' +
+        '</div>';
+      } else {
+        return '';
+      }
+    };
+
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
@@ -42,6 +52,7 @@
                  '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
                '</div>' +
              '</div>' +
+             separatorButton() +
            '</div>' +
            '<footer class="speed-limit form-controls" style="display: none">' +
              buttons +
