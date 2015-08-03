@@ -75,10 +75,11 @@ object SpeedLimitFiller {
   }
 
   private def mergeSegments(topology: Map[Long, RoadLinkForSpeedLimit], segments: Seq[SpeedLimit]): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
-    val first = segments.head
-    val valueShared = segments.forall(_.value == first.value)
+    val headOption = segments.headOption
+    val valueShared = headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
+        val first = headOption.get
         val rest = segments.tail
         val roadLink = topology(first.mmlId)
         val adjustedFirst = first.copy(sideCode = SideCode.BothDirections, points = roadLink.geometry, startMeasure = 0.0, endMeasure = GeometryUtils.geometryLength(roadLink.geometry))
