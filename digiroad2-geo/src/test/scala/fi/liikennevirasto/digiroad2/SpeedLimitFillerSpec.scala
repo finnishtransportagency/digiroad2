@@ -34,7 +34,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1, None))
     val speedLimits = Map(
       1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)),
-      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
+      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, Some(50), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     println(filledTopology)
     filledTopology should have size 2
@@ -93,7 +93,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.value) should be(Seq(Some(40)))
     filledTopology.map(_.id) should be(Seq(1))
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0.0, 1.0)))
-    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, 1)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, SideCode.BothDirections)))
     changeSet.droppedSpeedLimitIds should be(Set(2, 3))
   }
 }
