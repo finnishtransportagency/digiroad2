@@ -8,6 +8,9 @@ window.SpeedLimitLayer = function(params) {
       backend = params.backend,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer;
+
+  var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+
   Layer.call(this, 'speedLimit', roadLayer);
   var me = this;
 
@@ -544,6 +547,21 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
+  var drawIndicators = function(links) {
+    var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+    var indicators = me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+      var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
+      var box = new OpenLayers.Marker.Box(bounds, "00000000");
+      $(box.div).html(markerTemplate(link));
+      $(box.div).css('overflow', 'visible');
+      return box;
+    });
+
+    _.forEach(indicators, function(indicator) {
+      indicatorLayer.addMarker(indicator);
+    });
+  };
+
   var redrawSpeedLimits = function(speedLimitChains) {
     selectClickHandler.deactivate();
     vectorLayer.removeAllFeatures();
@@ -577,6 +595,10 @@ window.SpeedLimitLayer = function(params) {
       }
       highlightMultipleSpeedLimitFeatures();
       selectControl.onSelect = speedLimitOnSelect;
+
+      if (selectedSpeedLimit.isSeparated()) {
+        drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
+      }
     }
   };
 
@@ -614,6 +636,7 @@ window.SpeedLimitLayer = function(params) {
 
   var show = function(map) {
     map.addLayer(vectorLayer);
+    map.addLayer(indicatorLayer);
     vectorLayer.setVisibility(true);
     update(map.getZoom(), map.getExtent());
   };
@@ -621,6 +644,7 @@ window.SpeedLimitLayer = function(params) {
   var hideLayer = function(map) {
     reset();
     map.removeLayer(vectorLayer);
+    map.removeLayer(indicatorLayer);
     me.hide();
   };
 

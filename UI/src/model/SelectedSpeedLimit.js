@@ -123,6 +123,10 @@
       return !isSeparated && selection[0].id === null;
     };
 
+    this.isSeparated = function() {
+      return isSeparated;
+    };
+
     this.save = function() {
       if (self.isSplit()) {
         saveSplit();

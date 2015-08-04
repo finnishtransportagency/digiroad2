@@ -198,7 +198,9 @@
       var limitB = _.cloneDeep(originalLimit);
 
       limitA.sideCode = 2;
+      limitA.marker = 'A';
       limitB.sideCode = 3;
+      limitB.marker = 'B';
       limitB.id = null;
       dirty = true;
 
