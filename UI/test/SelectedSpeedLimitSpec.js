@@ -32,8 +32,8 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
       });
     });
 
-    describe('Separating speed limit', function() {
-      it('', function() {
+    describe('separating speed limit', function() {
+      it('separates selection into two', function() {
         selectedSpeedLimit.open(speedLimitTestData[0][0], true);
         selectedSpeedLimit.separate();
 
