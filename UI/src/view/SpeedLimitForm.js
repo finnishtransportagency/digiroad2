@@ -82,14 +82,18 @@
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function() {
       rootElement.html(template(selectedSpeedLimit));
+      var extractValue = function(event) {
+        return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
+      };
+
       rootElement.find('.speed-limit').change(function(event) {
-        selectedSpeedLimit.setValue(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+        selectedSpeedLimit.setValue(extractValue(event));
       });
       rootElement.find('.speed-limit-a').change(function(event) {
-        console.log("implement me A!");
+        selectedSpeedLimit.setAValue(extractValue(event));
       });
       rootElement.find('.speed-limit-b').change(function(event) {
-        console.log("implement me B!");
+        selectedSpeedLimit.setBValue(extractValue(event));
       });
       toggleMode(applicationModel.isReadOnly());
     });

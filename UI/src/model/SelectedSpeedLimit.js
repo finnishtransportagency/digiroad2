@@ -216,6 +216,20 @@
       }
     };
 
+    this.setAValue = function(value) {
+      if (value != selection[0].value) {
+        selection[0].value = value;
+        eventbus.trigger('speedLimit:valueChanged', self);
+      }
+    };
+
+    this.setBValue = function(value) {
+      if (value != selection[1].value) {
+        selection[1].value = value;
+        eventbus.trigger('speedLimit:valueChanged', self);
+      }
+    };
+
     this.isDirty = function() {
       return dirty;
     };
