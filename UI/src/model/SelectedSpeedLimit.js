@@ -3,13 +3,13 @@
     var selection = [];
     var self = this;
     var dirty = false;
-    var originalSpeedLimit = null;
+    var originalSpeedLimitValue = null;
     var isSeparated = false;
 
     this.splitSpeedLimit = function(id, mmlId, split) {
       collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
         selection = [createdSpeedLimit];
-        originalSpeedLimit = createdSpeedLimit.value;
+        originalSpeedLimitValue = createdSpeedLimit.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -27,7 +27,7 @@
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimit = self.getValue();
+      originalSpeedLimitValue = self.getValue();
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -74,7 +74,7 @@
       eventbus.trigger('speedLimit:saving');
       collection.saveSplit(function(speedLimit) {
         selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimit = self.getValue();
+        originalSpeedLimitValue = self.getValue();
         collection.setSelection(self);
         dirty = false;
       });
@@ -102,7 +102,7 @@
 
       backend.updateSpeedLimits(payload, function(speedLimits) {
         selection = collection.replaceSegments(selection, speedLimits);
-        originalSpeedLimit = self.getValue();
+        originalSpeedLimitValue = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
       }, function() {
@@ -146,7 +146,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
