@@ -494,7 +494,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'speedLimit:selected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
+    eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);

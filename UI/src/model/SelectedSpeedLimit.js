@@ -21,6 +21,7 @@
       isSeparated = true;
       dirty = true;
       eventbus.trigger('speedLimits:fetched', collection.getAll());
+      eventbus.trigger('speedLimit:separated', self);
       eventbus.trigger('speedLimit:selected', self);
     };
 
