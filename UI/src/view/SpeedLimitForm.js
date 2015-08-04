@@ -25,7 +25,7 @@
 
     var separatorButton = function() {
       if (selectedSpeedLimit.isSeparable()) {
-        return '<div class="form-group">' +
+        return '<div class="form-group editable">' +
         '<label class="control-label"></label>' +
         '<button class="cancel btn btn-secondary" id="separate-limit">Jaa nopeusrajoitus kaksisuuntaiseksi</button>' +
         '</div>';

@@ -255,7 +255,7 @@
     };
 
     this.isSaveable = function() {
-      var valuesDiffer = function () { return (selection[0].value !== selection[1].value) };
+      var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
         if (isSeparated && valuesDiffer()) return true;
         else if (!isSeparated) return true;
