@@ -11,7 +11,7 @@
     var createdBy = selectedSpeedLimit.getCreatedBy() || '-';
     var createdDateTime = selectedSpeedLimit.getCreatedDateTime() ? ' ' + selectedSpeedLimit.getCreatedDateTime() : '';
     var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
-    var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
+    var buttons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
                    '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
     var title = function() {
       if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
@@ -98,7 +98,10 @@
     });
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
-      rootElement.find('.speed-limit button').attr('disabled', false);
+      if(selectedSpeedLimit.isSaveable()) {
+        rootElement.find('.speed-limit button.save').attr('disabled', false);
+      }
+      rootElement.find('.speed-limit button.cancel').attr('disabled', false);
     });
     rootElement.on('click', '#separate-limit', function() { selectedSpeedLimit.separate(); });
     rootElement.on('click', '.speed-limit button.save', function() { selectedSpeedLimit.save(); });

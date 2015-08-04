@@ -240,6 +240,15 @@
         selection.length === 1;
     };
 
+    this.isSaveable = function() {
+      var valuesDiffer = function () { return (selection[0].value !== selection[1].value) };
+      if (this.isDirty()) {
+        if (isSeparated && valuesDiffer()) return true;
+        else if (!isSeparated) return true;
+      }
+      return false;
+    };
+
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
