@@ -173,6 +173,15 @@
       });
     };
 
+    this.saveSeparation = function(callback) {
+      backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function(speedLimits) {
+        eventbus.trigger('speedLimit:saved');
+        callback(speedLimits);
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
     this.cancelSplit = function() {
       dirty = false;
       splitSpeedLimits = {};

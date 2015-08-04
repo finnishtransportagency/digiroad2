@@ -80,6 +80,16 @@
       });
     };
 
+    var saveSeparation = function() {
+      eventbus.trigger('speedLimit:saving');
+      collection.saveSeparation(function(speedLimits) {
+        selection = speedLimits;
+        collection.setSelection(self);
+        dirty = false;
+        isSeparated = false;
+      });
+    };
+
     var saveExisting = function() {
       eventbus.trigger('speedLimit:saving');
       var payloadContents = function() {
@@ -116,6 +126,8 @@
     this.save = function() {
       if (self.isSplit()) {
         saveSplit();
+      } else if (isSeparated) {
+        saveSeparation();
       } else {
         saveExisting();
       }
