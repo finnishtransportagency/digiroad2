@@ -34,6 +34,22 @@
       }
     };
 
+    var limitValueButtons = function() {
+      var singleValueElement = function(sideCode) {
+        var speedLimitClass = sideCode ? "speed-limit-" + sideCode : "speed-limit";
+        var template =  _.template(
+          '<div class="form-group editable">' +
+            '<% if(sideCode) { %> <span class="marker"><%- sideCode %></span> <% } %>' +
+            '<label class="control-label">Rajoitus</label>' +
+            '<p class="form-control-static">' + (selectedSpeedLimit.getValue() || 'Tuntematon') + '</p>' +
+            '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
+          '</div>');
+        return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
+      };
+      var separateValueElement = singleValueElement("a") + singleValueElement("b");
+      return selectedSpeedLimit.isSeparated() ? separateValueElement : singleValueElement();
+    };
+
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
     return header +
            '<div class="wrapper read-only">' +
@@ -47,12 +63,8 @@
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
-               '<div class="form-group editable">' +
-                 '<label class="control-label">Rajoitus</label>' +
-                 '<p class="form-control-static">' + (selectedSpeedLimit.getValue() || 'Tuntematon') + '</p>' +
-                 '<select class="form-control speed-limit" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-               '</div>' +
-                separatorButton() +
+               separatorButton() +
+               limitValueButtons() +
              '</div>' +
            '</div>' +
            '<footer class="speed-limit form-controls" style="display: none">' +
@@ -72,6 +84,12 @@
       rootElement.html(template(selectedSpeedLimit));
       rootElement.find('.speed-limit').change(function(event) {
         selectedSpeedLimit.setValue(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+      });
+      rootElement.find('.speed-limit-a').change(function(event) {
+        console.log("implement me A!");
+      });
+      rootElement.find('.speed-limit-b').change(function(event) {
+        console.log("implement me B!");
       });
       toggleMode(applicationModel.isReadOnly());
     });
