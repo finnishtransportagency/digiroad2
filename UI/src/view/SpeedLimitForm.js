@@ -102,9 +102,7 @@
     });
     eventbus.on('application:readOnly', toggleMode);
     eventbus.on('speedLimit:valueChanged', function(selectedSpeedLimit) {
-      if(selectedSpeedLimit.isSaveable()) {
-        rootElement.find('.form-controls.speed-limit button.save').attr('disabled', false);
-      }
+      rootElement.find('.form-controls.speed-limit button.save').attr('disabled', !selectedSpeedLimit.isSaveable());
       rootElement.find('.form-controls.speed-limit button.cancel').attr('disabled', false);
     });
     rootElement.on('click', '#separate-limit', function() { selectedSpeedLimit.separate(); });
