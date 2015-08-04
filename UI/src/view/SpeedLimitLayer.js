@@ -565,6 +565,7 @@ window.SpeedLimitLayer = function(params) {
   var redrawSpeedLimits = function(speedLimitChains) {
     selectClickHandler.deactivate();
     vectorLayer.removeAllFeatures();
+    indicatorLayer.clearMarkers();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectClickHandler.activate();
     }

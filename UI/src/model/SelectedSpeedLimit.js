@@ -82,11 +82,10 @@
 
     var saveSeparation = function() {
       eventbus.trigger('speedLimit:saving');
-      collection.saveSeparation(function(speedLimits) {
-        selection = speedLimits;
-        collection.setSelection(self);
+      collection.saveSeparation(function() {
         dirty = false;
         isSeparated = false;
+        self.close();
       });
     };
 
