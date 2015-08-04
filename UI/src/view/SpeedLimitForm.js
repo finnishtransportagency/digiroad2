@@ -63,8 +63,8 @@
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
-               separatorButton() +
                limitValueButtons() +
+               separatorButton() +
              '</div>' +
            '</div>' +
            '<footer class="speed-limit form-controls" style="display: none">' +
