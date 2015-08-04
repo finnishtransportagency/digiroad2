@@ -31,19 +31,10 @@
           .concat(createdSplit);
     };
 
-    var handleSeparation = function(collection) {
-      return _.map(collection, function(group) { return _.reject(group, { id: separatedLimit.A.id }); })
-        .concat([separatedLimit.A])
-        .concat([separatedLimit.B]);
-    };
-
     this.getAll = function() {
       var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits);
 
-      if(selection && selection.isSeparated()) {
-        return handleSeparation(allWithSelectedSpeedLimitChain);
-      }
-      else if (selection && selection.isSplit()) {
+      if (selection && selection.isSplit()) {
         return handleSplit(allWithSelectedSpeedLimitChain);
       } else {
         return allWithSelectedSpeedLimitChain;

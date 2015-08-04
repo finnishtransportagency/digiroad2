@@ -19,7 +19,9 @@
     this.separate = function() {
       selection = collection.separateSpeedLimit(this.getId());
       isSeparated = true;
-      eventbus.trigger('speedlimits:fetched', collection.getAll());
+      dirty = true;
+      eventbus.trigger('speedLimits:fetched', collection.getAll());
+      eventbus.trigger('speedLimit:selected', self);
     };
 
     this.open = function(speedLimit, singleLinkSelect) {
@@ -108,11 +110,7 @@
     };
 
     this.isSplit = function() {
-      return selection[0].id === null;
-    };
-
-    this.isSeparated = function() {
-      return isSeparated;
+      return !isSeparated && selection[0].id === null;
     };
 
     this.save = function() {
