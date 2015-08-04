@@ -1,4 +1,4 @@
-define(['chai', 'assetGrouping'], function(chai, AssetGrouping) {
+define(['chai', 'assetGrouping', 'zoomlevels', 'geometrycalculator'], function(chai, AssetGrouping) {
   var assert = chai.assert;
   var assetGrouping = new AssetGrouping({ assetGroupingDistance: 36 });
 

@@ -46,7 +46,8 @@ require.config({
             exports: 'LinearAsset'
         },
         'SpeedLimitLayer': {
-          exports: 'SpeedLimitLayer'
+          exports: 'SpeedLimitLayer',
+          deps: ['EventBus']
         },
         'SpeedLimitsCollection': {
             exports: 'SpeedLimitsCollection'
