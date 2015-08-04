@@ -136,12 +136,13 @@
       }
     };
 
-    var cancelSplit = function() {
+    var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
       collection.setSelection(null);
       selection = [];
       dirty = false;
-      collection.cancelSplit();
+      isSeparated = false;
+      collection.cancelCreation();
     };
 
     var cancelExisting = function() {
@@ -152,8 +153,8 @@
     };
 
     this.cancel = function() {
-      if (self.isSplit()) {
-        cancelSplit();
+      if (self.isSplit() || self.isSeparated()) {
+        cancelCreation();
       } else {
         cancelExisting();
       }

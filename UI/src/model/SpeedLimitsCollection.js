@@ -182,7 +182,7 @@
       });
     };
 
-    this.cancelSplit = function() {
+    this.cancelCreation = function() {
       dirty = false;
       splitSpeedLimits = {};
       eventbus.trigger('speedLimits:fetched', self.getAll());
