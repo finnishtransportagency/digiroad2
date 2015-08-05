@@ -141,7 +141,7 @@
       eventbus.trigger('speedLimit:unselect', self);
       if (isSeparated) {
         var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
-        collection.replaceSegments(selection[0], [originalSpeedLimit]);
+        collection.replaceSegments([selection[0]], [originalSpeedLimit]);
       }
       collection.setSelection(null);
       selection = [];
