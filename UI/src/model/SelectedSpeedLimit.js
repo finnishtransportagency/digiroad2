@@ -139,8 +139,10 @@
 
     var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
-      var originalSpeedLimit = _.merge({}, selection[0], { value: originalSpeedLimitValue, sideCode: 1 });
-      collection.replaceSegments(selection, [originalSpeedLimit]);
+      if (isSeparated) {
+        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
+        collection.replaceSegments(selection, [originalSpeedLimit]);
+      }
       collection.setSelection(null);
       selection = [];
       dirty = false;
