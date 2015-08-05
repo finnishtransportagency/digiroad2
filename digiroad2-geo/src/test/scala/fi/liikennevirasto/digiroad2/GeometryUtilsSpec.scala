@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, RoadLink}
 import org.scalatest._
