@@ -127,6 +127,10 @@
       return isSeparated;
     };
 
+    this.isSplitOrSeparated = function() {
+      return this.isSplit() || this.isSeparated();
+    };
+
     this.save = function() {
       if (self.isSplit()) {
         saveSplit();
@@ -258,8 +262,8 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if (isSeparated && valuesDiffer()) return true;
-        else if (!isSeparated) return true;
+        if (this.isSplitOrSeparated() && valuesDiffer()) return true;
+        else if (!this.isSplitOrSeparated()) return true;
       }
       return false;
     };
