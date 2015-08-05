@@ -94,7 +94,8 @@ object GeometryUtils {
     }
   }
 
-  def createSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+  @deprecated
+  def createMultiSegmentSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link
@@ -113,7 +114,7 @@ object GeometryUtils {
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
   }
 
-  def createSplit2(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
+  def createSplit(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
     def splitLength(split: (Double, Double)) = split._2 - split._1
 
     if (!liesInBetween(splitMeasure, segment)) throw new IllegalArgumentException

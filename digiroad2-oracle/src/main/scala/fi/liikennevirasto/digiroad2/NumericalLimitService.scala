@@ -225,7 +225,7 @@ trait NumericalLimitOperations {
         val (roadLinkId, length, geometry) = link
         (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
       }
-      val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+      val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createMultiSegmentSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
       OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
       val createdId = createNumericalLimitWithoutTransaction(typeId, roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id

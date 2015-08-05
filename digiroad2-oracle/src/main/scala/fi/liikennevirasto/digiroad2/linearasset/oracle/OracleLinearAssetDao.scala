@@ -340,7 +340,7 @@ trait OracleLinearAssetDao {
       }.get
 
     Queries.updateAssetModified(id, username).execute()
-    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit2(splitMeasure, (startMeasure, endMeasure))
+    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
     updateMValues(id, existingLinkMeasures)
     val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value).get
