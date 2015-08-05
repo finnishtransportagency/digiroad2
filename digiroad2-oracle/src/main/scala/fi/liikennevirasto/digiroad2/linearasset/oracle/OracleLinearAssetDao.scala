@@ -199,13 +199,13 @@ trait OracleLinearAssetDao {
     """.as[(Double, Double, Int)].list.head
   }
   
-  def getLinkGeometryDataWithMmlId(id: Long, mmlId: Long): (Double, Double, SideCode) = {
+  def getLinkGeometryData(id: Long): (Double, Double, SideCode) = {
     sql"""
       select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
         from asset a
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
-        where a.id = $id and lrm.mml_id = $mmlId
+        where a.id = $id
     """.as[(Double, Double, SideCode)].first()
   }
   
@@ -333,7 +333,7 @@ trait OracleLinearAssetDao {
       vvhLinks
     }
 
-    val (startMeasure, endMeasure, sideCode) = getLinkGeometryDataWithMmlId(id, mmlId)
+    val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id)
     val links: Seq[(Long, Double, (Point, Point))] =
       withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).map { case (mmlId, length, geometry, _) =>
         (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
