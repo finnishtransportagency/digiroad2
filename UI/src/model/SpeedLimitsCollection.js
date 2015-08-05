@@ -26,7 +26,7 @@
     var handleSplit = function(collection) {
       var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
       var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      var newCollection = _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); })
+      var newCollection = _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); });
       newCollection.push(existingSplit);
       newCollection.push(createdSplit);
       return newCollection;
