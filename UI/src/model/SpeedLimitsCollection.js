@@ -176,6 +176,7 @@
     this.saveSeparation = function(callback) {
       backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
         eventbus.trigger('speedLimit:saved');
+        dirty = false;
         callback();
       }, function() {
         eventbus.trigger('asset:updateFailed');
