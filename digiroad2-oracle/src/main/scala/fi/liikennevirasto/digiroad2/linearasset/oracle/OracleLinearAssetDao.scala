@@ -295,7 +295,7 @@ trait OracleLinearAssetDao {
     """.execute()
   }
   
-  def updateMValues(id: Long, mmlId: Long, linkMeasures: (Double, Double)): Unit = {
+  def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
       update LRM_POSITION
@@ -307,7 +307,7 @@ trait OracleLinearAssetDao {
           from asset a
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id and lrm.mml_id = $mmlId)
+          where a.id = $id)
     """.execute()
   }
 
@@ -342,7 +342,7 @@ trait OracleLinearAssetDao {
     Queries.updateAssetModified(id, username).execute()
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit2(splitMeasure, (startMeasure, endMeasure))
 
-    updateMValues(id, link._1, existingLinkMeasures)
+    updateMValues(id, existingLinkMeasures)
     val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value).get
     createdId
   }
