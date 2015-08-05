@@ -73,11 +73,9 @@
 
     var saveSplit = function() {
       eventbus.trigger('speedLimit:saving');
-      collection.saveSplit(function(speedLimit) {
-        selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimitValue = self.getValue();
-        collection.setSelection(self);
+      collection.saveSplit(function() {
         dirty = false;
+        self.close();
       });
     };
 

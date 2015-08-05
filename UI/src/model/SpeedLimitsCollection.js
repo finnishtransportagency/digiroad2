@@ -139,25 +139,11 @@
     };
 
     this.saveSplit = function(callback) {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
-        var existingId = splitSpeedLimits.existing.id;
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+        eventbus.trigger('speedLimit:saved');
         splitSpeedLimits = {};
         dirty = false;
-
-        var speedLimitsPartitionedBySplitGroup = _.groupBy(speedLimits, function(group) { return _.some(group, { id: existingId }); });
-        var splitGroupLimits = _.chain(speedLimitsPartitionedBySplitGroup[true] || [])
-          .flatten()
-          .reject(function(x) { return _.some(updatedSpeedLimits, { id: x.id }); })
-          .concat(updatedSpeedLimits)
-          .map(function(x) { return [x]; })
-          .value();
-
-        speedLimits = (speedLimitsPartitionedBySplitGroup[false] || []).concat(splitGroupLimits);
-
-        var newSpeedLimit = _.find(updatedSpeedLimits, function(speedLimit) { return speedLimit.id !== existingId; });
-        callback(newSpeedLimit);
-
-        eventbus.trigger('speedLimit:saved');
+        callback();
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
