@@ -182,7 +182,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   private def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
       Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
-        "sideCode" -> speedLimit.sideCode,
+        "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.points,
         "value" -> speedLimit.value.getOrElse(0),
         "startMeasure" -> speedLimit.startMeasure,

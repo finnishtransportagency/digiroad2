@@ -8,6 +8,9 @@ window.SpeedLimitLayer = function(params) {
       backend = params.backend,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer;
+
+  var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+
   Layer.call(this, 'speedLimit', roadLayer);
   var me = this;
 
@@ -491,7 +494,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, 'speedLimit:selected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, 'speedLimit:valueChanged', handleSpeedLimitChanged);
+    eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
@@ -544,9 +547,32 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
+  var drawIndicators = function(links) {
+    var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+    var geometriesForIndicators = _.map(links, function(link) {
+      var newLink = _.cloneDeep(link);
+      newLink.points = _.drop(newLink.points, 1);
+      return newLink;
+    });
+    var indicators = me.mapOverLinkMiddlePoints(geometriesForIndicators, geometryUtils, function(link, middlePoint) {
+      var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
+      var box = new OpenLayers.Marker.Box(bounds, "00000000");
+      var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
+      $(box.div).html($marker);
+      $(box.div).css({overflow: 'visible'});
+
+      return box;
+    });
+
+    _.forEach(indicators, function(indicator) {
+      indicatorLayer.addMarker(indicator);
+    });
+  };
+
   var redrawSpeedLimits = function(speedLimitChains) {
     selectClickHandler.deactivate();
     vectorLayer.removeAllFeatures();
+    indicatorLayer.clearMarkers();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectClickHandler.activate();
     }
@@ -577,6 +603,10 @@ window.SpeedLimitLayer = function(params) {
       }
       highlightMultipleSpeedLimitFeatures();
       selectControl.onSelect = speedLimitOnSelect;
+
+      if (selectedSpeedLimit.isSeparated()) {
+        drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
+      }
     }
   };
 
@@ -614,6 +644,7 @@ window.SpeedLimitLayer = function(params) {
 
   var show = function(map) {
     map.addLayer(vectorLayer);
+    map.addLayer(indicatorLayer);
     vectorLayer.setVisibility(true);
     update(map.getZoom(), map.getExtent());
   };
@@ -621,6 +652,7 @@ window.SpeedLimitLayer = function(params) {
   var hideLayer = function(map) {
     reset();
     map.removeLayer(vectorLayer);
+    map.removeLayer(indicatorLayer);
     me.hide();
   };
 

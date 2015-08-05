@@ -28,7 +28,8 @@ with GZipSupport {
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer
+  case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer
 
   before() {
     contentType = formats("json")
@@ -561,6 +562,16 @@ with GZipSupport {
                                         (parsedBody \ "value").extract[Int],
                                         user.username,
                                         validateUserMunicipalityAccess(user))
+  }
+
+  post("/speedlimits/:speedLimitId/separate") {
+    val user = userProvider.getCurrentUser()
+
+    linearAssetProvider.separateSpeedLimit(params("speedLimitId").toLong,
+      (parsedBody \ "valueTowardsDigitization").extract[Int],
+      (parsedBody \ "valueAgainstDigitization").extract[Int],
+      user.username,
+      validateUserMunicipalityAccess(user))
   }
 
   post("/speedlimits") {

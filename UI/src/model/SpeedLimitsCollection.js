@@ -5,6 +5,7 @@
     var selection = null;
     var self = this;
     var splitSpeedLimits = {};
+    var separatedLimit = {};
 
     var maintainSelectedSpeedLimitChain = function(collection) {
       if (!selection) return collection;
@@ -19,15 +20,16 @@
       var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
       var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
 
-      return collectionWithoutGroup.concat([groupWithoutSelection]).concat([selection.get()]);
+      return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
     var handleSplit = function(collection) {
       var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
       var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      return _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); })
-          .concat(existingSplit)
-          .concat(createdSplit);
+      var newCollection = _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); });
+      newCollection.push(existingSplit);
+      newCollection.push(createdSplit);
+      return newCollection;
     };
 
     this.getAll = function() {
@@ -172,14 +174,43 @@
       });
     };
 
-    this.cancelSplit = function() {
+    this.saveSeparation = function(callback) {
+      backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
+        eventbus.trigger('speedLimit:saved');
+        separatedSpeedLimit = {};
+        dirty = false;
+        callback();
+      }, function() {
+        eventbus.trigger('asset:updateFailed');
+      });
+    };
+
+    this.cancelCreation = function() {
       dirty = false;
       splitSpeedLimits = {};
+      separatedSpeedLimit = {};
       eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     this.isDirty = function() {
       return dirty;
+    };
+
+    this.separateSpeedLimit = function(id) {
+      var originalLimit = _.find(_.flatten(speedLimits), { id: id });
+      var limitA = _.cloneDeep(originalLimit);
+      var limitB = _.cloneDeep(originalLimit);
+
+      limitA.sideCode = 2;
+      limitA.marker = 'A';
+      limitB.sideCode = 3;
+      limitB.marker = 'B';
+      limitB.id = null;
+      dirty = true;
+
+      separatedLimit.A = limitA;
+      separatedLimit.B = limitB;
+      return [limitA, limitB];
     };
 
   };

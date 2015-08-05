@@ -8,10 +8,13 @@ require.config({
         'EventBus':                 '../src/utils/eventbus',
         'SelectedAssetModel':       '../src/model/SelectedAssetModel',
         'LinearAsset':              '../src/utils/LinearAsset',
+        'Backend':                  '../src/utils/backend-utils',
+        'validitydirections':       '../src/utils/validity-directions',
         'Layer':                    '../src/view/Layer',
         'SpeedLimitLayer':          '../src/view/SpeedLimitLayer',
         'GeometryUtils':            '../src/utils/GeometryUtils',
         'SpeedLimitsCollection':    '../src/model/SpeedLimitsCollection',
+        'RoadCollection':           '../src/model/RoadCollection',
         'SelectedSpeedLimit':       '../src/model/SelectedSpeedLimit',
         'zoomlevels':               '../src/utils/zoom-levels',
         'geometrycalculator':       '../src/utils/geometry-calculations',
@@ -43,13 +46,18 @@ require.config({
             exports: 'LinearAsset'
         },
         'SpeedLimitLayer': {
-          exports: 'SpeedLimitLayer'
+          exports: 'SpeedLimitLayer',
+          deps: ['EventBus']
         },
         'SpeedLimitsCollection': {
             exports: 'SpeedLimitsCollection'
         },
+        'RoadCollection': {
+            exports: 'RoadCollection'
+        },
         'SelectedSpeedLimit': {
-            exports: 'SelectedSpeedLimit'
+            exports: 'SelectedSpeedLimit',
+            deps: ['validitydirections']
         },
         'geometrycalculator': {
             exports: 'geometrycalculator'
@@ -67,7 +75,8 @@ require.config({
         'AssetPropertyNamesTestData': { exports: 'AssetPropertyNamesTestData' },
         'SpeedLimitsTestData': { exports: 'SpeedLimitsTestData' },
         'SpeedLimitSplitTestData': { exports: 'SpeedLimitSplitTestData' },
-        'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' }
+        'AssetTypePropertiesTestData': { exports: 'AssetTypePropertiesTestData' },
+        'validitydirections': { exports: 'validitydirections' }
     },
     waitSeconds: 10
 });
@@ -75,7 +84,8 @@ require(['lodash',
          'SelectedAssetModelSpec',
          'speed-limit-layer-spec',
          'geometry-calculations-spec',
-         'asset-grouping-spec'], function(lodash) {
+         'asset-grouping-spec',
+         'SelectedSpeedLimitSpec'], function(lodash) {
     window._ = lodash;
     mocha.checkLeaks();
     if(window.mochaPhantomJS) { mochaPhantomJS.run(); }

@@ -1,24 +1,34 @@
 (function(root) {
-  root.SelectedSpeedLimit = function(backend, collection) {
+  root.SelectedSpeedLimit = function(backend, collection, roadCollection) {
     var selection = [];
     var self = this;
     var dirty = false;
-    var originalSpeedLimit = null;
+    var originalSpeedLimitValue = null;
+    var isSeparated = false;
 
     this.splitSpeedLimit = function(id, mmlId, split) {
       collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
         selection = [createdSpeedLimit];
-        originalSpeedLimit = createdSpeedLimit.value;
+        originalSpeedLimitValue = createdSpeedLimit.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
       });
     };
 
+    this.separate = function() {
+      selection = collection.separateSpeedLimit(this.getId());
+      isSeparated = true;
+      dirty = true;
+      eventbus.trigger('speedLimits:fetched', collection.getAll());
+      eventbus.trigger('speedLimit:separated', self);
+      eventbus.trigger('speedLimit:selected', self);
+    };
+
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimit = self.getValue();
+      originalSpeedLimitValue = self.getValue();
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -65,9 +75,18 @@
       eventbus.trigger('speedLimit:saving');
       collection.saveSplit(function(speedLimit) {
         selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimit = self.getValue();
+        originalSpeedLimitValue = self.getValue();
         collection.setSelection(self);
         dirty = false;
+      });
+    };
+
+    var saveSeparation = function() {
+      eventbus.trigger('speedLimit:saving');
+      collection.saveSeparation(function() {
+        dirty = false;
+        isSeparated = false;
+        self.close();
       });
     };
 
@@ -84,7 +103,7 @@
 
       backend.updateSpeedLimits(payload, function(speedLimits) {
         selection = collection.replaceSegments(selection, speedLimits);
-        originalSpeedLimit = self.getValue();
+        originalSpeedLimitValue = self.getValue();
         dirty = false;
         eventbus.trigger('speedLimit:saved');
       }, function() {
@@ -101,35 +120,46 @@
     };
 
     this.isSplit = function() {
-      return selection[0].id === null;
+      return !isSeparated && selection[0].id === null;
+    };
+
+    this.isSeparated = function() {
+      return isSeparated;
     };
 
     this.save = function() {
       if (self.isSplit()) {
         saveSplit();
+      } else if (isSeparated) {
+        saveSeparation();
       } else {
         saveExisting();
       }
     };
 
-    var cancelSplit = function() {
+    var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
+      if (isSeparated) {
+        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
+        collection.replaceSegments([selection[0]], [originalSpeedLimit]);
+      }
       collection.setSelection(null);
       selection = [];
       dirty = false;
-      collection.cancelSplit();
+      isSeparated = false;
+      collection.cancelCreation();
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimit }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
     };
 
     this.cancel = function() {
-      if (self.isSplit()) {
-        cancelSplit();
+      if (self.isSplit() || self.isSeparated()) {
+        cancelCreation();
       } else {
         cancelExisting();
       }
@@ -190,6 +220,20 @@
       }
     };
 
+    this.setAValue = function(value) {
+      if (value != selection[0].value) {
+        selection[0].value = value;
+        eventbus.trigger('speedLimit:valueChanged', self);
+      }
+    };
+
+    this.setBValue = function(value) {
+      if (value != selection[1].value) {
+        selection[1].value = value;
+        eventbus.trigger('speedLimit:valueChanged', self);
+      }
+    };
+
     this.isDirty = function() {
       return dirty;
     };
@@ -206,6 +250,22 @@
           return isEqual(speedLimit, selectedSpeedLimit);
         });
       }
+    };
+
+    this.isSeparable = function() {
+      return getProperty('sideCode') === validitydirections.bothDirections &&
+        roadCollection.get(getProperty('mmlId')).getData().trafficDirection === 'BothDirections' &&
+        !self.isSplit() &&
+        selection.length === 1;
+    };
+
+    this.isSaveable = function() {
+      var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
+      if (this.isDirty()) {
+        if (isSeparated && valuesDiffer()) return true;
+        else if (!isSeparated) return true;
+      }
+      return false;
     };
 
     var isEqual = function(a, b) {

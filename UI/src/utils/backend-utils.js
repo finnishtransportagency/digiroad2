@@ -129,6 +129,18 @@
       });
     };
 
+    this.separateSpeedLimit = function(id, valueTowardsDigitization, valueAgainstDigitization, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/speedlimits/" + id + "/separate",
+        data: JSON.stringify({valueTowardsDigitization: valueTowardsDigitization, valueAgainstDigitization: valueAgainstDigitization}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getNumericalLimits = _.throttle(function(boundingBox, typeId, callback) {
       $.getJSON('api/numericallimits?typeId=' + typeId + '&bbox=' + boundingBox, function(numericalLimits) {
         callback(numericalLimits);

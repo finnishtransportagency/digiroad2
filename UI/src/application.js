@@ -287,9 +287,9 @@ var URLRouter = function(map, backend, models) {
     ];
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
-    var speedLimitsCollection = new SpeedLimitsCollection(backend);
-    var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var roadCollection = new RoadCollection(backend);
+    var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection, roadCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
