@@ -176,6 +176,7 @@
     this.saveSeparation = function(callback) {
       backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
         eventbus.trigger('speedLimit:saved');
+        separatedSpeedLimit = {};
         dirty = false;
         callback();
       }, function() {
@@ -186,6 +187,7 @@
     this.cancelCreation = function() {
       dirty = false;
       splitSpeedLimits = {};
+      separatedSpeedLimit = {};
       eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
