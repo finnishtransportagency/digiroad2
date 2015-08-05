@@ -604,7 +604,7 @@ window.SpeedLimitLayer = function(params) {
       highlightMultipleSpeedLimitFeatures();
       selectControl.onSelect = speedLimitOnSelect;
 
-      if (selectedSpeedLimit.isSeparated()) {
+      if (selectedSpeedLimit.isSeparated() || selectedSpeedLimit.isSplit()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
     }

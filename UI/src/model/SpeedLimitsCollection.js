@@ -129,6 +129,10 @@
       splitSpeedLimits.created.id = null;
       splitSpeedLimits.splitMeasure = split.splitMeasure;
       splitSpeedLimits.splitMmlId = mmlId;
+
+      splitSpeedLimits.created.marker = 'A';
+      splitSpeedLimits.existing.marker = 'B';
+
       dirty = true;
       callback(splitSpeedLimits);
       eventbus.trigger('speedLimits:fetched', self.getAll());
