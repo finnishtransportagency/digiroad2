@@ -251,7 +251,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
 
   test("split speed limits requires an operator role") {
-    postJsonWithUserAuth("/speedlimits/200114", """{"mmlId":362955345, "splitMeasure":5 , "value":120}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits/200114/split", """{ "mmlId":362955345, "existingValue":30, "createdValue":40 , "splitMeasure":5 , "value":120}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

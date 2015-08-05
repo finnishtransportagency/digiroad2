@@ -552,29 +552,15 @@ with GZipSupport {
     }
   }
 
-  post("/speedlimits/:speedLimitId") {
-    val user = userProvider.getCurrentUser()
-
-    linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
-      (parsedBody \ "mmlId").extract[Long],
-      (parsedBody \ "splitMeasure").extract[Double],
-      (parsedBody \ "value").extract[Int],
-      user.username,
-      validateUserMunicipalityAccess(user))
-  }
-
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
 
-    val mmlId = (parsedBody \ "mmlId").extract[Long]
-    linearAssetProvider.splitSpeedLimit(
-      params("speedLimitId").toLong,
-      mmlId,
+    linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
       user.username,
-      validateUserMunicipalityAccess(user))
+      validateUserMunicipalityAccess(user)_)
   }
 
   post("/speedlimits/:speedLimitId/separate") {
