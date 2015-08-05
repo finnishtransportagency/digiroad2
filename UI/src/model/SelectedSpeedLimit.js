@@ -253,7 +253,8 @@
     };
 
     this.isSeparable = function() {
-      return getProperty('sideCode') === validitydirections.bothDirections &&
+      return !self.isUnknown() &&
+        getProperty('sideCode') === validitydirections.bothDirections &&
         roadCollection.get(getProperty('mmlId')).getData().trafficDirection === 'BothDirections' &&
         !self.isSplit() &&
         selection.length === 1;
