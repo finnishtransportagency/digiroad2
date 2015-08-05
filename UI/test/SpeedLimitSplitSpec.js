@@ -60,7 +60,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
         describe('and setting limit for new speed limit', function() {
           before(function() {
-            $('select.speed-limit option[value="100"]').prop('selected', true).change();
+            $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
           });
 
           describe('and saving split speed limit', function() {
