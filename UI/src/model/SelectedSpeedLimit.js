@@ -7,9 +7,9 @@
     var isSeparated = false;
 
     this.splitSpeedLimit = function(id, mmlId, split) {
-      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
-        selection = [createdSpeedLimit];
-        originalSpeedLimitValue = createdSpeedLimit.value;
+      collection.splitSpeedLimit(id, mmlId, split, function(splitSpeedLimits) {
+        selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
+        originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -243,13 +243,9 @@
     };
 
     this.isSelected = function(speedLimit) {
-      if (self.isSplit()) {
-        return speedLimit.id === null;
-      } else {
-        return _.some(selection, function(selectedSpeedLimit) {
-          return isEqual(speedLimit, selectedSpeedLimit);
-        });
-      }
+      return _.some(selection, function(selectedSpeedLimit) {
+        return isEqual(speedLimit, selectedSpeedLimit);
+      });
     };
 
     this.isSeparable = function() {

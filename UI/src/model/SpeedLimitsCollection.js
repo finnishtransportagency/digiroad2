@@ -23,23 +23,8 @@
       return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
-    var handleSplit = function(collection) {
-      var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
-      var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      var newCollection = _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); });
-      newCollection.push(existingSplit);
-      newCollection.push(createdSplit);
-      return newCollection;
-    };
-
     this.getAll = function() {
-      var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits);
-
-      if (selection && selection.isSplit()) {
-        return handleSplit(allWithSelectedSpeedLimitChain);
-      } else {
-        return allWithSelectedSpeedLimitChain;
-      }
+      return maintainSelectedSpeedLimitChain(speedLimits);
     };
 
     var generateUnknownLimitId = function(speedLimit) {
@@ -145,7 +130,7 @@
       splitSpeedLimits.splitMeasure = split.splitMeasure;
       splitSpeedLimits.splitMmlId = mmlId;
       dirty = true;
-      callback(splitSpeedLimits.created);
+      callback(splitSpeedLimits);
       eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
