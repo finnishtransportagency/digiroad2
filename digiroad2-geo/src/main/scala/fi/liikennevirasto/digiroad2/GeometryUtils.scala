@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 
 object GeometryUtils {
