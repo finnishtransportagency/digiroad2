@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
 
 object GeometryUtils {
@@ -111,6 +112,18 @@ object GeometryUtils {
 
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
+  }
+
+  def createSplit2(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
+    def splitLength(split: (Double, Double)) = split._2 - split._1
+
+    if (!liesInBetween(splitMeasure, segment)) throw new IllegalArgumentException
+    val (startMeasureOfSegment, endMeasureOfSegment) = segment
+    val firstSplit = (startMeasureOfSegment, splitMeasure)
+    val secondSplit = (splitMeasure, endMeasureOfSegment)
+
+    if (splitLength(firstSplit) > splitLength(secondSplit)) (firstSplit, secondSplit)
+    else (secondSplit, firstSplit)
   }
 
   def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {

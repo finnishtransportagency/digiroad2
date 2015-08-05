@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.{AssetWithProperties, Modification, RoadLink}
 import org.scalatest._
@@ -41,6 +42,21 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
   test("truncate geometry where start and end point are outside geometry") {
     val truncatedGeometry = truncateGeometry(Seq(Point(0.0, 0.0), Point(5.0, 0.0), Point(10.0, 0.0)), 11.0, 15.0)
     truncatedGeometry should be(empty)
+  }
+
+  test("splitting fails if measure is not within link segment") {
+    val link1 = (0.0, 100.0)
+    intercept[IllegalArgumentException] {
+      createSplit2(105.0, link1)
+    }
+  }
+
+  test("splitting one link speed limit") {
+    val link1 = (0.0, 100.0)
+    val (existingLinkMeasures, createdLinkMeasures) = createSplit2(40.0, link1)
+
+    existingLinkMeasures shouldBe(40.0, 100.0)
+    createdLinkMeasures shouldBe(0.0, 40.0)
   }
 
   test("splitting three link speed limit where first split is longer than second should allocate first split to existing limit") {
