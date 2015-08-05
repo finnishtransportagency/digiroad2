@@ -20,7 +20,7 @@
       var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
       var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
 
-      return collectionWithoutGroup.concat([groupWithoutSelection]).concat([selection.get()]);
+      return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
     var handleSplit = function(collection) {
