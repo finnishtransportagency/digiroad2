@@ -101,8 +101,6 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  // TODO: Test that speed limit separation fails if road link is one way
-  // TODO: Test that speed limit separation fails if side code != 1
   test("separate speed limit to two") {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
@@ -139,6 +137,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
       intercept[NoSuchElementException] {
         dao.separateSpeedLimit(0, 50, 40, "test", passingMunicipalityValidation)
+      }
+      dynamicSession.rollback()
+    }
+  }
+
+  test("speed limit separation fails if speed limit is one way") {
+    val roadLink = VVHRoadlink(1088841242, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+
+    Database.forDataSource(ds).withDynTransaction {
+      val dao = daoWithRoadLinks(List(roadLink))
+      intercept[IllegalArgumentException] {
+        dao.separateSpeedLimit(300103, 50, 40, "test", passingMunicipalityValidation)
       }
       dynamicSession.rollback()
     }
