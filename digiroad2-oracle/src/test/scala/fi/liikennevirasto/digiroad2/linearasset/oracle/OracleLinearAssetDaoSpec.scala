@@ -57,7 +57,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
       intercept[IllegalArgumentException] {
-        dao.splitSpeedLimit(200097, 388562360, 100, 120, "test", failingMunicipalityValidation)
+        dao.splitSpeedLimit(200097, 100, 120, "test", failingMunicipalityValidation)
       }
       dynamicSession.rollback()
     }
@@ -69,7 +69,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for second split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 388562360, 100, 120, "test", passingMunicipalityValidation)
+      val createdId = dao.splitSpeedLimit(200097, 100, 120, "test", passingMunicipalityValidation)
       val (existingModifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
       val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
 
@@ -88,7 +88,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     "and creates new speed limit for first split", Tag("db")) {
     Database.forDataSource(ds).withDynTransaction {
       val dao = daoWithRoadLinks(List(roadLink))
-      val createdId = dao.splitSpeedLimit(200097, 388562360, 50, 120, "test", passingMunicipalityValidation)
+      val createdId = dao.splitSpeedLimit(200097, 50, 120, "test", passingMunicipalityValidation)
       val (modifiedBy, _, _, _, _) = dao.getSpeedLimitDetails(200097)
       val (_, _, newCreatedBy, _, _) = dao.getSpeedLimitDetails(createdId)
 

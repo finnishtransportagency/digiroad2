@@ -327,24 +327,23 @@ trait OracleLinearAssetDao {
   }
 
 
-  def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: Int => Unit): Long = {
+  def splitSpeedLimit(id: Long, splitMeasure: Double, value: Int, username: String, municipalityValidation: (Int) => Unit): Long = {
     def withMunicipalityValidation(vvhLinks: Seq[(Long, Double, Seq[Point], Int)]) = {
-      vvhLinks.find(_._1 == mmlId).foreach(vvhLink => municipalityValidation(vvhLink._4))
+      vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
       vvhLinks
     }
 
     val (startMeasure, endMeasure, sideCode) = getLinkGeometryData(id)
-    val links: Seq[(Long, Double, (Point, Point))] =
-      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).map { case (mmlId, length, geometry, _) =>
+    val link: (Long, Double, (Point, Point)) =
+      withMunicipalityValidation(getLinksWithLengthFromVVH(20, id)).headOption.map { case (mmlId, length, geometry, _) =>
         (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
-      }
+      }.get
 
     Queries.updateAssetModified(id, username).execute()
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createSplit(splitMeasure, (mmlId, startMeasure, endMeasure), links)
+    val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit2(splitMeasure, (startMeasure, endMeasure))
 
-    updateMValues(id, mmlId, existingLinkMeasures)
-    val createdId = createSpeedLimitWithoutDuplicates(username, mmlId, createdLinkMeasures, sideCode, value).get
-    if (linksToMove.nonEmpty) moveLinksByMmlId(id, createdId, linksToMove.map(_._1))
+    updateMValues(id, link._1, existingLinkMeasures)
+    val createdId = createSpeedLimitWithoutDuplicates(username, link._1, createdLinkMeasures, sideCode, value).get
     createdId
   }
 
