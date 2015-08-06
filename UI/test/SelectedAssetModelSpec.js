@@ -1,5 +1,6 @@
 define(['chai', 'SelectedAssetModel'], function(chai) {
     var assert = chai.assert;
+    eventbus = Backbone.Events;
     describe('SelectedAssetModel', function() {
         var confirmDialogShown = false;
         var assetSentToBackend = {};
@@ -14,7 +15,6 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
         var model = SelectedAssetModel.initialize(mockBackend);
 
         before(function() {
-            eventbus = Backbone.Events;
             eventbus.on('confirm:show', function() { confirmDialogShown = true; });
         });
         after(function() {
