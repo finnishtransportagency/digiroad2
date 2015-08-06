@@ -77,27 +77,6 @@ with GZipSupport {
     userProvider.getCurrentUser().configuration.roles
   }
 
-  // TODO: Remove obsolete entry point
-  get("/assets/:assetId") {
-    val getAssetById = if (params.get("externalId").isDefined) {
-      assetProvider.getAssetByExternalId _
-    } else {
-      assetProvider.getAssetById _
-    }
-    getAssetById(params("assetId").toLong) match {
-      case Some(a) => {
-        val user = userProvider.getCurrentUser()
-        if (user.isOperator() || user.isAuthorizedToRead(a.municipalityNumber)) {
-          a
-        } else {
-          Unauthorized("Asset " + params("assetId") + " not authorized")
-        }
-      }
-      case None => NotFound("Asset " + params("assetId") + " not found")
-    }
-  }
-
-
   get("/massTransitStops/:nationalId") {
     def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
@@ -117,19 +96,7 @@ with GZipSupport {
           "floating" -> stop.floating,
           "propertyData" -> stop.propertyData)
       }
-      case false => assetProvider.getAssetByExternalId(nationalId).map { stop =>
-        validateMunicipalityAuthorization(nationalId)(stop.municipalityNumber)
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating,
-          "propertyData" -> stop.propertyData)
-      }
+      case false => throw new NotImplementedError()
     }
     massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
   }
