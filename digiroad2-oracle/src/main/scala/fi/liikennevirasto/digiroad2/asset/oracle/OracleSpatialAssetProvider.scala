@@ -44,6 +44,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  // Called only from CSV importer (test)
   def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
     databaseTransaction.withDynTransaction {
       OracleSpatialAssetDao.getAssetByExternalId(externalId)
@@ -120,6 +121,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
+  // Called only from CSV importer
   def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): AssetWithProperties = {
     databaseTransaction.withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
@@ -133,6 +135,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
 
+  // Called only from CSV importer
   def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, AssetWithProperties] = {
     databaseTransaction.withDynTransaction {
       val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)

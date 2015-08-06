@@ -153,19 +153,6 @@ with GZipSupport {
     }
   }
 
-  // TODO: Remove obsolete entry point
-  post("/assets") {
-    val user = userProvider.getCurrentUser()
-    assetProvider.createAsset(
-      10,
-      (parsedBody \ "lon").extract[Int].toDouble,
-      (parsedBody \ "lat").extract[Int].toDouble,
-      (parsedBody \ "roadLinkId").extract[Long],
-      (parsedBody \ "bearing").extract[Int],
-      user.username,
-      (parsedBody \ "properties").extract[Seq[SimpleProperty]])
-  }
-
   private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
      useVVHGeometry match {
       case true =>
@@ -180,18 +167,7 @@ with GZipSupport {
           "validityPeriod" -> massTransitStop.validityPeriod,
           "floating" -> massTransitStop.floating,
           "propertyData" -> massTransitStop.propertyData)
-      case false =>
-        val asset = assetProvider.createAsset(10, lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
-        Map("id" -> asset.id,
-          "nationalId" -> asset.nationalId,
-          "stopTypes" -> asset.stopTypes,
-          "lat" -> asset.lat,
-          "lon" -> asset.lon,
-          "validityDirection" -> asset.validityDirection,
-          "bearing" -> asset.bearing,
-          "validityPeriod" -> asset.validityPeriod,
-          "floating" -> asset.floating,
-          "propertyData" -> asset.propertyData)
+      case false => throw new NotImplementedError()
      }
   }
   private def validateUserRights(roadLinkId: Long) = {
