@@ -83,8 +83,8 @@ require.config({
 require(['lodash',
          //'SelectedAssetModelSpec',
          //'speed-limit-layer-spec',
-         //'geometry-calculations-spec',
-         //'asset-grouping-spec',
+         'geometry-calculations-spec',
+         'asset-grouping-spec',
          'SelectedSpeedLimitSpec'], function(lodash) {
     window._ = lodash;
     mocha.checkLeaks();
