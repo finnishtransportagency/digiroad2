@@ -1,6 +1,6 @@
 /*jshint expr: true*/
-define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedLimitsCollection', 'RoadCollection', 'Backend'],
-  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection) {
+define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedLimitsCollection', 'RoadCollection', 'Backend', 'EventBus'],
+  function(chai, _, $, testHelpers, SelectedSpeedLimit, SpeedLimitsCollection, RoadCollection, EventBus) {
     var expect = chai.expect;
 
     var speedLimitTestData = SpeedLimitsTestData.generate();
@@ -11,6 +11,7 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
 
     var roadCollection = new RoadCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
+    eventbus.stopListening();
     eventbus = {on: function() {}, trigger: function() {}};
     roadCollection.fetch();
     speedLimitsCollection.fetch();
