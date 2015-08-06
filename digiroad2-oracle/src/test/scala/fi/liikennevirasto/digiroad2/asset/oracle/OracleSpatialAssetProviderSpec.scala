@@ -315,23 +315,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     }
   }
 
-  test("loads all asset with properties in municipality find", Tag("db")) {
-    runWithCleanup {
-      val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
-      val assets = provider.getAssetsByMunicipality(235)
-      assets.size should (be > 0)
-      assets.map(_.municipalityNumber) should contain only (235)
-    }
-  }
-
-  test("returns correct assets from test data", Tag("db")) {
-    runWithCleanup {
-      val assetsByMunicipality = provider.getAssetsByMunicipality(235)
-      assetsByMunicipality.map(_.id) should contain allOf(300000, 300004, 300008, 300003, 300001)
-      assetsByMunicipality.map(_.id) should contain noneOf(300005, 307577) // stop with invalid road link and a stop at Rovaniemi
-    }
-  }
-
   private[this] def asSimplePropertySeq(propertyId: String, value: String): Seq[SimpleProperty] = {
     Seq(new SimpleProperty(propertyId, Seq(new PropertyValue(value))))
   }

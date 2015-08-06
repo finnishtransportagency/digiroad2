@@ -34,24 +34,6 @@ object OracleSpatialAssetDao {
     nextNationalBusStopId.as[Long].first
   }
 
-  def getAssetsByMunicipality(municipality: Int) = {
-    val q = QueryCollector(allAssets + " and a.municipality_code = " + municipality)
-    val assets = collectedQuery[AssetRow](q).groupBy(_.id)
-
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[AssetRow])] = assets.mapValues { assetRows =>
-      val row = assetRows.head
-      val roadLinkOption = getOptionalProductionRoadLink(row)
-      (roadLinkOption, assetRows)
-    }
-
-    val assetsWithProperties = assetsWithRoadLinks.map { case (assetId, (roadLinkOption, assetRows)) =>
-      assetRowToAssetWithProperties(assetId, assetRows.toList, roadLinkOption)
-    }
-    assetsWithProperties.foreach(updateAssetFloatingStatus)
-    assetsWithProperties.map(_._1)
-  }
-
-
   def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head

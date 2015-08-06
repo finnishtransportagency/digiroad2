@@ -170,12 +170,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
     useVVHGeometry match {
-      case true =>
-        massTransitStopService.getByMunicipality(municipalityNumber)
-      case false =>
-        withDynSession {
-          OracleSpatialAssetDao.getAssetsByMunicipality(municipalityNumber).map(assetToIntegrationMassTransitStop)
-        }
+      case true => massTransitStopService.getByMunicipality(municipalityNumber)
+      case false => throw new NotImplementedError()
     }
   }
 

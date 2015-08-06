@@ -177,10 +177,4 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
       OracleSpatialAssetDao.assetPropertyNames(language)
     }
   }
-
-  override def getAssetsByMunicipality(municipality: Int) = {
-    Database.forDataSource(ds).withDynSession {
-      OracleSpatialAssetDao.getAssetsByMunicipality(municipality)
-    }
-  }
 }
