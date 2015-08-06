@@ -56,12 +56,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def getAssets(user: User, bounds: BoundingRectangle, validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.getAssets(user, Some(bounds), validFrom, validTo)
-    }
-  }
-
   private def validatePresenceOf(requiredProperties: Set[String], properties: Seq[SimpleProperty]): Unit = {
     val providedProperties = properties.map { property =>
       property.publicId

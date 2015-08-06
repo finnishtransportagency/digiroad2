@@ -54,26 +54,13 @@ with GZipSupport {
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
 
-  get("/assets") {
-    val user = userProvider.getCurrentUser
-    val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {
-      case Some("past") => (None, Some(LocalDate.now))
-      case Some("future") => (Some(LocalDate.now), None)
-      case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
-      case _ => (None, None)
-    }
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    validateBoundingBox(bbox)
-    assetProvider.getAssets(user, bbox, validFrom, validTo)
-  }
-
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     useVVHGeometry match {
       case true => massTransitStopService.getByBoundingBox(user, bbox)
-      case false => assetProvider.getAssets(user, bbox, None, None)
+      case false => throw new NotImplementedError()
     }
   }
 

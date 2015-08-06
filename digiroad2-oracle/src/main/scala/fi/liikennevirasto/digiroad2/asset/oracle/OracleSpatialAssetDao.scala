@@ -141,54 +141,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    def andAssetWithinBoundingBox = bounds map { b =>
-      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
-      ("AND SDO_FILTER(geometry, ?) = 'TRUE'", List(storeGeometry(boundingBox, dynamicSession.conn)))
-    }
-    def andValidityInRange = (validFrom, validTo) match {
-      case (Some(from), Some(to)) => Some(andByValidityTimeConstraint, List(jodaToSqlDate(from), jodaToSqlDate(to)))
-      case (None, Some(to)) => Some(andExpiredBefore, List(jodaToSqlDate(to)))
-      case (Some(from), None) => Some(andValidAfter, List(jodaToSqlDate(from)))
-      case (None, None) => None
-    }
-    val query = QueryCollector(allAssetsWithoutProperties).add(andValidityInRange).add(andAssetWithinBoundingBox)
-    val allAssets = collectedQuery[ListedAssetRow](query).iterator
-    val assetsWithProperties: Map[Long, Seq[ListedAssetRow]] = allAssets.toSeq.groupBy(_.id)
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
-      val row = assetRows.head
-      val roadLinkOption = getOptionalProductionRoadLink(row)
-      (roadLinkOption, assetRows)
-    }
-    val authorizedAssets =
-      if (user.isOperator()) {
-        assetsWithRoadLinks
-      } else {
-        assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
-        val assetRow = assetRows.head
-        user.isAuthorizedToRead(assetRow.municipalityCode)
-      }
-    }
-    val assets = authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
-      val row = assetRows.head
-      val point = row.point.get
-      (Asset(id = row.id,
-        nationalId = row.externalId,
-        assetTypeId = row.assetTypeId,
-        lon = point.x,
-        lat = point.y,
-        roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary solution for possibly missing roadLinkId
-        bearing = row.bearing,
-        validityDirection = Some(row.validityDirection),
-        municipalityNumber = row.municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row, roadLinkOption),
-        stopTypes = extractStopTypes(assetRows.map(_.property))), row.persistedFloating)
-    }
-    assets.foreach(updateAssetFloatingStatus)
-    assets.map(_._1).toSeq
-  }
-
   private val FLOAT_THRESHOLD_IN_METERS = 3
 
   private def coordinatesWithinThreshold(pt1: Point, pt2: Point): Boolean = {

@@ -60,14 +60,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     userProvider.setCurrentUser(user)
   }
 
-  test("load assets with spatial bounds", Tag("db")) {
-    runWithCleanup {
-      val assets = provider.getAssets(userProvider.getCurrentUser(), BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)),
-        validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
-      assets.size shouldBe 1
-    }
-  }
-
   test("load enumerated values for asset type", Tag("db")) {
     runWithCleanup {
       val values = provider.getEnumeratedPropertyValues(TestAssetTypeId)
