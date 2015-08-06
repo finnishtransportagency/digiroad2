@@ -7,10 +7,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var speedLimitTestData = SpeedLimitSplitTestData.generateSpeedLimitLinks();
   var roadLinkTestData = SpeedLimitSplitTestData.generateRoadLinks();
 
-  var speedLimitSplitting = function(id, mmlId, splitMeasure, createdLimit, existingLimit, success, failure) {
+  var speedLimitSplitting = function(id, splitMeasure, createdLimit, existingLimit, success, failure) {
     splitBackendCalls.push({
       id: id,
-      mmlId: mmlId,
       splitMeasure: splitMeasure,
       createdLimit: createdLimit,
       existingLimit: existingLimit
@@ -73,7 +72,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
               expect(splitBackendCalls).to.have.length(1);
               var backendCall = _.first(splitBackendCalls);
               expect(backendCall.id).to.equal(111);
-              expect(backendCall.mmlId).to.equal(555);
               expect(backendCall.splitMeasure).to.be.closeTo(40.0, 0.5);
               expect(backendCall.createdLimit).to.equal(100);
               expect(backendCall.existingLimit).to.equal(40);

@@ -6,8 +6,8 @@
     var originalSpeedLimitValue = null;
     var isSeparated = false;
 
-    this.splitSpeedLimit = function(id, mmlId, split) {
-      collection.splitSpeedLimit(id, mmlId, split, function(splitSpeedLimits) {
+    this.splitSpeedLimit = function(id, split) {
+      collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
         originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;

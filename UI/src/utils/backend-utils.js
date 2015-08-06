@@ -117,12 +117,12 @@
       });
     }, 1000);
 
-    this.splitSpeedLimit = function(id, mmlId, splitMeasure, createdValue, existingValue, success, failure) {
+    this.splitSpeedLimit = function(id, splitMeasure, createdValue, existingValue, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/speedlimits/" + id + "/split",
-        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
+        data: JSON.stringify({splitMeasure: splitMeasure, createdValue: createdValue, existingValue: existingValue}),
         dataType: "json",
         success: success,
         error: failure

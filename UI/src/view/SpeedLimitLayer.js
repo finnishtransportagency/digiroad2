@@ -111,7 +111,7 @@ window.SpeedLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
-      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
+      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, split);
       remove();
     };
   };

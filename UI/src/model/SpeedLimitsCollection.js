@@ -109,7 +109,7 @@
       return new OpenLayers.Geometry.LineString(points).getLength();
     };
 
-    this.splitSpeedLimit = function(id, mmlId, split, callback) {
+    this.splitSpeedLimit = function(id, split, callback) {
       var link = _.find(_.flatten(speedLimits), { id: id });
 
       var left = _.cloneDeep(link);
@@ -128,7 +128,6 @@
 
       splitSpeedLimits.created.id = null;
       splitSpeedLimits.splitMeasure = split.splitMeasure;
-      splitSpeedLimits.splitMmlId = mmlId;
 
       splitSpeedLimits.created.marker = 'A';
       splitSpeedLimits.existing.marker = 'B';
@@ -139,7 +138,7 @@
     };
 
     this.saveSplit = function(callback) {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
         eventbus.trigger('speedLimit:saved');
         splitSpeedLimits = {};
         dirty = false;
