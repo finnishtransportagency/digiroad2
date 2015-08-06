@@ -55,4 +55,18 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
       createdLimit.createdBy should equal(Some("test"))
     }
   }
+
+  test("split existing speed limit") {
+    runWithCleanup {
+      val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
+      val speedLimits = provider.splitSpeedLimit(200097, 100, 50, 60, "test", (_) => Unit)
+
+      val existing = speedLimits.find(_.id == 200097).get
+      val created = speedLimits.find(_.id != 200097).get
+      existing.value should be(Some(50))
+      created.value should be(Some(60))
+    }
+  }
 }

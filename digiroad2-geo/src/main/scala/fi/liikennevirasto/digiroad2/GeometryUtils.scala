@@ -94,7 +94,8 @@ object GeometryUtils {
     }
   }
 
-  def createSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
+  @deprecated
+  def createMultiSegmentSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
     val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
     def linkEndPoints(link: (Long, Double, (Point, Point))) = {
       val (_, _, linkEndPoints) = link
@@ -111,6 +112,18 @@ object GeometryUtils {
 
     val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
     (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
+  }
+
+  def createSplit(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
+    def splitLength(split: (Double, Double)) = split._2 - split._1
+
+    if (!liesInBetween(splitMeasure, segment)) throw new IllegalArgumentException
+    val (startMeasureOfSegment, endMeasureOfSegment) = segment
+    val firstSplit = (startMeasureOfSegment, splitMeasure)
+    val secondSplit = (splitMeasure, endMeasureOfSegment)
+
+    if (splitLength(firstSplit) > splitLength(secondSplit)) (firstSplit, secondSplit)
+    else (secondSplit, firstSplit)
   }
 
   def calculatePointFromLinearReference(geometry: Seq[Point], measure: Double): Option[Point] = {

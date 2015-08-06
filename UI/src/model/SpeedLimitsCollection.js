@@ -23,23 +23,8 @@
       return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
-    var handleSplit = function(collection) {
-      var existingSplit = _.has(splitSpeedLimits, 'existing') ? [splitSpeedLimits.existing] : [];
-      var createdSplit = _.has(splitSpeedLimits, 'created') ? [splitSpeedLimits.created] : [];
-      var newCollection = _.map(collection, function(group) { return _.reject(group, { id: splitSpeedLimits.existing.id }); });
-      newCollection.push(existingSplit);
-      newCollection.push(createdSplit);
-      return newCollection;
-    };
-
     this.getAll = function() {
-      var allWithSelectedSpeedLimitChain = maintainSelectedSpeedLimitChain(speedLimits);
-
-      if (selection && selection.isSplit()) {
-        return handleSplit(allWithSelectedSpeedLimitChain);
-      } else {
-        return allWithSelectedSpeedLimitChain;
-      }
+      return maintainSelectedSpeedLimitChain(speedLimits);
     };
 
     var generateUnknownLimitId = function(speedLimit) {
@@ -124,7 +109,7 @@
       return new OpenLayers.Geometry.LineString(points).getLength();
     };
 
-    this.splitSpeedLimit = function(id, mmlId, split, callback) {
+    this.splitSpeedLimit = function(id, split, callback) {
       var link = _.find(_.flatten(speedLimits), { id: id });
 
       var left = _.cloneDeep(link);
@@ -143,32 +128,21 @@
 
       splitSpeedLimits.created.id = null;
       splitSpeedLimits.splitMeasure = split.splitMeasure;
-      splitSpeedLimits.splitMmlId = mmlId;
+
+      splitSpeedLimits.created.marker = 'A';
+      splitSpeedLimits.existing.marker = 'B';
+
       dirty = true;
-      callback(splitSpeedLimits.created);
+      callback(splitSpeedLimits);
       eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     this.saveSplit = function(callback) {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMmlId, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, function(updatedSpeedLimits) {
-        var existingId = splitSpeedLimits.existing.id;
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+        eventbus.trigger('speedLimit:saved');
         splitSpeedLimits = {};
         dirty = false;
-
-        var speedLimitsPartitionedBySplitGroup = _.groupBy(speedLimits, function(group) { return _.some(group, { id: existingId }); });
-        var splitGroupLimits = _.chain(speedLimitsPartitionedBySplitGroup[true] || [])
-          .flatten()
-          .reject(function(x) { return _.some(updatedSpeedLimits, { id: x.id }); })
-          .concat(updatedSpeedLimits)
-          .map(function(x) { return [x]; })
-          .value();
-
-        speedLimits = (speedLimitsPartitionedBySplitGroup[false] || []).concat(splitGroupLimits);
-
-        var newSpeedLimit = _.find(updatedSpeedLimits, function(speedLimit) { return speedLimit.id !== existingId; });
-        callback(newSpeedLimit);
-
-        eventbus.trigger('speedLimit:saved');
+        callback();
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });

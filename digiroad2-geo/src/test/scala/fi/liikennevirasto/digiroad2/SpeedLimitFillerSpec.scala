@@ -34,7 +34,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1, None))
     val speedLimits = Map(
       1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)),
-      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
+      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, Some(50), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     println(filledTopology)
     filledTopology should have size 2
@@ -78,5 +78,22 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     changeSet.adjustedSideCodes should have size 1
     changeSet.adjustedSideCodes.head should be(SideCodeAdjustment(1, SideCode.BothDirections))
+  }
+
+  test("merge speed limits with same value on shared road link") {
+    val topology = Map(
+      1l -> RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1, None))
+    val speedLimits = Map(
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, Some(40), Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, None, None)),
+      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, Some(40), Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, None, None, None, None)),
+      3l -> Seq(SpeedLimit(3, 1, SideCode.BothDirections, Some(40), Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, None, None, None, None)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
+    filledTopology.map(_.value) should be(Seq(Some(40)))
+    filledTopology.map(_.id) should be(Seq(1))
+    changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0.0, 1.0)))
+    changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, SideCode.BothDirections)))
+    changeSet.droppedSpeedLimitIds should be(Set(2, 3))
   }
 }

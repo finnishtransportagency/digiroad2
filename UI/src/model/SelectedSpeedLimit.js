@@ -6,10 +6,10 @@
     var originalSpeedLimitValue = null;
     var isSeparated = false;
 
-    this.splitSpeedLimit = function(id, mmlId, split) {
-      collection.splitSpeedLimit(id, mmlId, split, function(createdSpeedLimit) {
-        selection = [createdSpeedLimit];
-        originalSpeedLimitValue = createdSpeedLimit.value;
+    this.splitSpeedLimit = function(id, split) {
+      collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
+        selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
+        originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -73,11 +73,9 @@
 
     var saveSplit = function() {
       eventbus.trigger('speedLimit:saving');
-      collection.saveSplit(function(speedLimit) {
-        selection = [_.merge({}, selection[0], speedLimit)];
-        originalSpeedLimitValue = self.getValue();
-        collection.setSelection(self);
+      collection.saveSplit(function() {
         dirty = false;
+        self.close();
       });
     };
 
@@ -125,6 +123,10 @@
 
     this.isSeparated = function() {
       return isSeparated;
+    };
+
+    this.isSplitOrSeparated = function() {
+      return this.isSplit() || this.isSeparated();
     };
 
     this.save = function() {
@@ -243,13 +245,9 @@
     };
 
     this.isSelected = function(speedLimit) {
-      if (self.isSplit()) {
-        return speedLimit.id === null;
-      } else {
-        return _.some(selection, function(selectedSpeedLimit) {
-          return isEqual(speedLimit, selectedSpeedLimit);
-        });
-      }
+      return _.some(selection, function(selectedSpeedLimit) {
+        return isEqual(speedLimit, selectedSpeedLimit);
+      });
     };
 
     this.isSeparable = function() {
@@ -263,8 +261,8 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if (isSeparated && valuesDiffer()) return true;
-        else if (!isSeparated) return true;
+        if (this.isSplitOrSeparated() && valuesDiffer()) return true;
+        else if (!this.isSplitOrSeparated()) return true;
       }
       return false;
     };

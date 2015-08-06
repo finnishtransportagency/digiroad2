@@ -111,7 +111,7 @@ window.SpeedLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
-      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
+      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, split);
       remove();
     };
   };
@@ -547,24 +547,50 @@ window.SpeedLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
+
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
-    var geometriesForIndicators = _.map(links, function(link) {
-      var newLink = _.cloneDeep(link);
-      newLink.points = _.drop(newLink.points, 1);
-      return newLink;
-    });
-    var indicators = me.mapOverLinkMiddlePoints(geometriesForIndicators, geometryUtils, function(link, middlePoint) {
-      var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-      var box = new OpenLayers.Marker.Box(bounds, "00000000");
-      var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
-      $(box.div).html($marker);
-      $(box.div).css({overflow: 'visible'});
 
-      return box;
-    });
+    var markerContainer = function(position) {
+      var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
+      return new OpenLayers.Marker.Box(bounds, "00000000");
+    };
 
-    _.forEach(indicators, function(indicator) {
+    var indicatorsForSplit = function() {
+      return me.mapOverLinkMiddlePoints(links, geometryUtils, function(link, middlePoint) {
+        var box = markerContainer(middlePoint);
+        var $marker = $(markerTemplate(link));
+        $(box.div).html($marker);
+        $(box.div).css({overflow: 'visible'});
+        return box;
+      });
+    };
+
+    var indicatorsForSeparation = function() {
+      var geometriesForIndicators = _.map(links, function(link) {
+        var newLink = _.cloneDeep(link);
+        newLink.points = _.drop(newLink.points, 1);
+        return newLink;
+      });
+
+      return me.mapOverLinkMiddlePoints(geometriesForIndicators, geometryUtils, function(link, middlePoint) {
+        var box = markerContainer(middlePoint);
+        var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
+        $(box.div).html($marker);
+        $(box.div).css({overflow: 'visible'});
+        return box;
+      });
+    };
+
+    var indicators = function() {
+      if (selectedSpeedLimit.isSplit()) {
+        return indicatorsForSplit();
+      } else {
+        return indicatorsForSeparation();
+      }
+    };
+
+    _.forEach(indicators(), function(indicator) {
       indicatorLayer.addMarker(indicator);
     });
   };
@@ -604,7 +630,7 @@ window.SpeedLimitLayer = function(params) {
       highlightMultipleSpeedLimitFeatures();
       selectControl.onSelect = speedLimitOnSelect;
 
-      if (selectedSpeedLimit.isSeparated()) {
+      if (selectedSpeedLimit.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
     }

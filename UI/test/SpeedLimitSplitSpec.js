@@ -7,16 +7,16 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var speedLimitTestData = SpeedLimitSplitTestData.generateSpeedLimitLinks();
   var roadLinkTestData = SpeedLimitSplitTestData.generateRoadLinks();
 
-  var speedLimitSplitting = function(id, mmlId, splitMeasure, value, success, failure) {
+  var speedLimitSplitting = function(id, splitMeasure, createdLimit, existingLimit, success, failure) {
     splitBackendCalls.push({
       id: id,
-      mmlId: mmlId,
       splitMeasure: splitMeasure,
-      value: value
+      createdLimit: createdLimit,
+      existingLimit: existingLimit
     });
     success([
-      _.merge({}, speedLimitTestData[0][0], { id: id, value: 50 }),
-      _.merge({}, speedLimitTestData[0][0], { id: 123456, value: value })
+      _.merge({}, speedLimitTestData[0][0], { id: id, value: existingLimit }),
+      _.merge({}, speedLimitTestData[0][0], { id: 123456, value: createdLimit })
     ]);
   };
 
@@ -60,7 +60,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
         describe('and setting limit for new speed limit', function() {
           before(function() {
-            $('select.speed-limit option[value="100"]').prop('selected', true).change();
+            $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
           });
 
           describe('and saving split speed limit', function() {
@@ -72,9 +72,9 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
               expect(splitBackendCalls).to.have.length(1);
               var backendCall = _.first(splitBackendCalls);
               expect(backendCall.id).to.equal(111);
-              expect(backendCall.mmlId).to.equal(555);
               expect(backendCall.splitMeasure).to.be.closeTo(40.0, 0.5);
-              expect(backendCall.value).to.equal(100);
+              expect(backendCall.createdLimit).to.equal(100);
+              expect(backendCall.existingLimit).to.equal(40);
             });
           });
         });

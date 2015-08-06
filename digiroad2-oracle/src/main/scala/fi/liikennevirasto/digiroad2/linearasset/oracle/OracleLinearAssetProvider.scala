@@ -53,7 +53,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
     Database.forDataSource(ds).withDynTransaction {
       adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, adjustment.mmlId, (adjustment.startMeasure, adjustment.endMeasure))
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
       }
     }
   }
@@ -72,9 +72,10 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def splitSpeedLimit(id: Long, mmlId: Long, splitMeasure: Double, limit: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
-    Database.forDataSource(ds).withDynTransaction {
-      val newId = dao.splitSpeedLimit(id, mmlId, splitMeasure, limit, username, municipalityValidation)
+  override def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
+    withDynTransaction {
+      val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
+      dao.updateSpeedLimitValue(id, existingValue, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }

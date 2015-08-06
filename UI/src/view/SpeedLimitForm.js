@@ -47,7 +47,7 @@
         return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
       };
       var separateValueElement = singleValueElement("a") + singleValueElement("b");
-      return selectedSpeedLimit.isSeparated() ? separateValueElement : singleValueElement();
+      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
     var header = '<header>' + title() + '<div class="speed-limit form-controls">' + buttons + '</div></header>';
