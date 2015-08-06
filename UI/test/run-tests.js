@@ -81,7 +81,7 @@ require.config({
     waitSeconds: 10
 });
 require(['lodash',
-         //'SelectedAssetModelSpec',
+         'SelectedAssetModelSpec',
          'speed-limit-layer-spec',
          'geometry-calculations-spec',
          'asset-grouping-spec',
