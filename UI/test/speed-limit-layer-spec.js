@@ -6,6 +6,7 @@ define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollectio
     describe('when moving map', function() {
       var layer;
       before(function() {
+        eventbus = Backbone.Events;
         var speedLimitsCollection = new SpeedLimitsCollection({
           getSpeedLimits: function() {
             eventbus.trigger('speedLimits:fetched', [
