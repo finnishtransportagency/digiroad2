@@ -17,6 +17,9 @@ define(['chai', 'SelectedAssetModel'], function(chai) {
             eventbus = Backbone.Events;
             eventbus.on('confirm:show', function() { confirmDialogShown = true; });
         });
+        after(function() {
+            eventbus.stopListening();
+        });
 
         var resetTest = function() {
             model.close();

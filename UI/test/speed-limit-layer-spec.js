@@ -53,6 +53,9 @@ define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollectio
         layer.update(9, null);
         eventbus.trigger('map:moved', {selectedLayer: 'speedLimit', bbox: null, zoom: 10});
       });
+      after(function() {
+        eventbus.stopListening();
+      });
 
       it('should contain each speed limit only once', function() {
         var getFirstPointOfFeature = function(feature) {
