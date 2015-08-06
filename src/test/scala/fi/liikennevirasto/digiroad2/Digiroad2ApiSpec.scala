@@ -54,29 +54,31 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("require authentication", Tag("db")) {
-    get("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
+    get("/massTransitStops?bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
       status should equal(401)
     }
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&municipalityNumber=235", username = "test") {
+    getWithUserAuth("/massTransitStops?bbox=374702,6677462,374870,6677780&municipalityNumber=235", username = "test") {
       status should equal(200)
     }
   }
 
   test("provide header to indicate session still active", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=current") {
+    getWithUserAuth("/massTransitStops?bbox=374702,6677462,374870,6677780") {
       status should equal(200)
       response.getHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader) should be ("true")
     }
   }
 
-  test("get assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374650,6677400,374920,6677820&validityPeriod=current") {
+  test("get mass transit stops", Tag("db")) {
+    getWithUserAuth("/massTransitStops?bbox=374650,6677400,374920,6677820") {
       status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
+      val stops: List[MassTransitStop] = parse(body).extract[List[MassTransitStop]]
+      stops.count(_.validityPeriod == "current") should be(1)
     }
   }
 
-  test("get floating mass transit stops") {
+  // TODO: Remove side-effects from other tests so that list of floating stops is always deterministic
+  ignore("get floating mass transit stops") {
     getWithUserAuth("/floatingMassTransitStops") {
       val response = parse(body).extract[Map[String, Seq[Long]]]
       status should equal(200)
@@ -92,17 +94,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("get assets with bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084") {
+  test("get mass transit stops with bounding box for multiple municipalities", Tag("db")) {
+    getWithUserAuth("/massTransitStops?bbox=373305,6676648,375755,6678084", "test2") {
       status should equal(200)
-      parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(5)
-    }
-  }
-
-  test("get assets with bounding box for multiple municipalities", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=373305,6676648,375755,6678084", "test2") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].filterNot(_.id == 300000).size should be(5)
+      parse(body).extract[List[MassTransitStop]].filterNot(_.id == 300000).size should be(5)
     }
   }
 
@@ -158,44 +153,23 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("get past assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=past") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
-    }
-  }
-
-  test("assets cannot be retrieved without bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10") {
+  test("mass transit stops cannot be retrieved without bounding box", Tag("db")) {
+    getWithUserAuth("/massTransitStops") {
       status should equal(400)
     }
   }
 
-  test("assets cannot be retrieved with massive bounding box", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=324702,6677462,374870,6697780") {
+  test("mass transit stops cannot be retrieved with massive bounding box", Tag("db")) {
+    getWithUserAuth("/massTransitStops?bbox=324702,6677462,374870,6697780") {
       status should equal(400)
-    }
-  }
-
-  test("return failure if bounding box missing", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=past") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
-    }
-  }
-
-  test("get future assets", Tag("db")) {
-    getWithUserAuth("/assets?assetTypeId=10&bbox=374702,6677462,374870,6677780&validityPeriod=future") {
-      status should equal(200)
-      parse(body).extract[List[Asset]].size should be(1)
     }
   }
 
   test("write requests pass only if user is not in viewer role", Tag("db")) {
-    postJsonWithUserAuth("/assets/", Array(), username = "testviewer") {
+    postJsonWithUserAuth("/massTransitStops/", Array(), username = "testviewer") {
       status should equal(401)
     }
-    postJsonWithUserAuth("/assets/", Array()) {
+    postJsonWithUserAuth("/massTransitStops/", Array()) {
       // no asset id given, returning 404 is legal
       status should equal(404)
     }
@@ -224,12 +198,12 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("asset properties are in same order when creating new or editing existing", Tag("db")) {
+  test("mass transit stop has properties defined in asset type properties", Tag("db")) {
     val propIds = getWithUserAuth("/assetTypeProperties/10") {
-      parse(body).extract[List[Property]].map(p => p.publicId)
+      parse(body).extract[List[Property]].map(p => p.publicId).toSet
     }
-    val assetPropNames = getWithUserAuth("/assets/" + CreatedTestAssetId) {
-      parse(body).extract[AssetWithProperties].propertyData.map(p => p.publicId)
+    val assetPropNames = getWithUserAuth("/massTransitStops/2") {
+      parse(body).extract[MassTransitStopWithProperties].propertyData.map(p => p.publicId).toSet
     }
     propIds should be(assetPropNames)
   }
