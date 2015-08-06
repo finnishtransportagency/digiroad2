@@ -25,7 +25,6 @@ object SpeedLimitFiller {
   }
 
   private def adjustTwoWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
-                                   speedLimits: Map[Long, Seq[SpeedLimit]],
                                    segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
     val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections)
@@ -39,7 +38,6 @@ object SpeedLimitFiller {
   }
 
   private def adjustOneWaySegments(topology: Map[Long, RoadLinkForSpeedLimit],
-                                   speedLimits: Map[Long, Seq[SpeedLimit]],
                                    segments: Seq[SpeedLimit],
                                    runningDirection: SideCode):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
@@ -53,32 +51,33 @@ object SpeedLimitFiller {
     }
   }
 
-  private def adjustSpeedLimits(topology: Map[Long, RoadLinkForSpeedLimit],
-                         speedLimits: Map[Long, Seq[SpeedLimit]],
-                         segments: Seq[SpeedLimit]):
-  (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
-    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, SideCode.TowardsDigitizing)
-    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(topology, speedLimits, segments, SideCode.AgainstDigitizing)
-    val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(topology, speedLimits, segments)
+  private def adjustSegmentMValues(topology: Map[Long, RoadLinkForSpeedLimit], segments: Seq[SpeedLimit]) = {
+    val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(topology, segments, SideCode.TowardsDigitizing)
+    val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(topology, segments, SideCode.AgainstDigitizing)
+    val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(topology, segments)
     (towardsGeometrySegments ++ againstGeometrySegments ++ twoWayGeometrySegments,
       towardsGeometryAdjustments ++ againstGeometryAdjustments ++ twoWayGeometryAdjustments)
   }
 
-  private def mergeSegments(topology: Map[Long, RoadLinkForSpeedLimit], segments: Seq[SpeedLimit]): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+  private def adjustSegmentSideCodes(topology: Map[Long, RoadLinkForSpeedLimit], segments: Seq[SpeedLimit]): (Seq[SpeedLimit], Seq[SideCodeAdjustment]) = {
+    if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections) {
+      val segment = segments.head
+      (Seq(segment.copy(sideCode = SideCode.BothDirections)), Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections)))
+    } else {
+      (segments, Nil)
+    }
+  }
+
+  private def dropRedundantSegments(segments: Seq[SpeedLimit]): (Seq[SpeedLimit], Set[Long]) = {
     val headOption = segments.headOption
-    val valueShared = headOption.exists(first => segments.forall(_.value == first.value))
+    val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
       case true =>
         val first = headOption.get
         val rest = segments.tail
-        val roadLink = topology(first.mmlId)
-        val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-        val adjustedFirst = first.copy(sideCode = SideCode.BothDirections, points = roadLink.geometry, startMeasure = 0.0, endMeasure = roadLinkLength)
-        val mValueAdjustments = Seq(MValueAdjustment(first.id, first.mmlId, 0.0, roadLinkLength))
-        val sideCodeAdjustments = if (first.sideCode != SideCode.BothDirections) Seq(SideCodeAdjustment(first.id, SideCode.BothDirections)) else Nil
         val segmentDrops = rest.map(_.id).toSet
-        (Seq(adjustedFirst), SpeedLimitChangeSet(segmentDrops, mValueAdjustments, sideCodeAdjustments))
-      case false => (segments, SpeedLimitChangeSet(Set.empty[Long], Nil, Nil))
+        (Seq(first), segmentDrops)
+      case false => (segments, Set.empty[Long])
     }
   }
 
@@ -111,20 +110,19 @@ object SpeedLimitFiller {
         val (existingSegments, changeSet) = acc
         val segments = speedLimitSegments.filter(_.mmlId == roadLink.mmlId)
         val validSegments = segments.filterNot { segment => changeSet.droppedSpeedLimitIds.contains(segment.id) }
-        val validLimits = speedLimits.filterNot { sl => changeSet.droppedSpeedLimitIds.contains(sl._1) }
 
-        val (mergedSegments, mergeAdjustments) = mergeSegments(topology, validSegments)
-        val (adjustedSegments: Seq[SpeedLimit], mValueAdjustments: Seq[MValueAdjustment]) = adjustSpeedLimits(topology, validLimits, mergedSegments)
-
-        val (maintainedSegments, speedLimitDrops) = dropShortLimits(adjustedSegments)
+        val (unDroppedSegments, segmentDrops) = dropRedundantSegments(validSegments)
+        val (mValueAdjustedSegments, mValueAdjustments) = adjustSegmentMValues(topology, unDroppedSegments)
+        val (sideCodeAdjustedSegments, sideCodeAdjustments) = adjustSegmentSideCodes(topology, mValueAdjustedSegments)
+        val (longSegments, shortDrops) = dropShortLimits(sideCodeAdjustedSegments)
 
         val newChangeSet = changeSet.copy(
-          droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ speedLimitDrops ++ mergeAdjustments.droppedSpeedLimitIds,
-          adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments ++ mergeAdjustments.adjustedMValues,
-          adjustedSideCodes = changeSet.adjustedSideCodes ++  mergeAdjustments.adjustedSideCodes)
+          droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ segmentDrops ++ shortDrops,
+          adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments,
+          adjustedSideCodes = changeSet.adjustedSideCodes ++  sideCodeAdjustments)
 
-        val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, maintainedSegments)
-        (existingSegments ++ maintainedSegments ++ generatedSpeedLimits, newChangeSet)
+        val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, longSegments)
+        (existingSegments ++ longSegments ++ generatedSpeedLimits, newChangeSet)
       }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.id == 0)
