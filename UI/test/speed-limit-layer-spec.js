@@ -1,12 +1,12 @@
 define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollection', 'SelectedSpeedLimit', 'zoomlevels', 'GeometryUtils', 'LinearAsset'],
        function(chai, testHelpers, BaseLayer, SpeedLimitLayer, SpeedLimitsCollection, SelectedSpeedLimit, zoomLevels, GeometryUtils, LinearAsset) {
   var assert = chai.assert;
-  eventbus = Backbone.Events;
 
   describe('SpeedLimitLayer', function() {
     describe('when moving map', function() {
       var layer;
       before(function() {
+        eventbus = Backbone.Events;
         var speedLimitsCollection = new SpeedLimitsCollection({
           getSpeedLimits: function() {
             eventbus.trigger('speedLimits:fetched', [
