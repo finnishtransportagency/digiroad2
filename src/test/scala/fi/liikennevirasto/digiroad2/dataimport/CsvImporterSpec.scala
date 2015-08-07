@@ -54,41 +54,37 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update name by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val asset2 = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val csv = createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin nimi" -> "UpdatedAssetName"),
-        Map("Valtakunnallinen ID" -> asset2.nationalId, "Pysäkin nimi" -> "Asset2Name"))
+      val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "UpdatedAssetName"),
+        Map("Valtakunnallinen ID" -> 2, "Pysäkin nimi" -> "Asset2Name"))
 
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult())
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
       assetName should equal(Some("UpdatedAssetName"))
 
-      val assetName2 = getAssetName(assetProvider.getAssetByExternalId(asset2.nationalId).get)
+      val assetName2 = getAssetName(assetProvider.getAssetByExternalId(2).get)
       assetName2 should equal(Some("Asset2Name"))
     }
   }
 
   test("do not update name if field is empty in CSV", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val csv = createCSV(Map("Valtakunnallinen ID" -> asset.nationalId))
+      val csv = createCSV(Map("Valtakunnallinen ID" -> 1))
 
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult())
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
-      assetName should equal(Some("AssetName"))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
+      assetName should equal(None)
     }
   }
 
   test("validation fails if type is undefined", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val assetFields = Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin tyyppi" -> ",")
+      val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> ",")
       val invalidCsv = csvToInputStream(createCSV(assetFields))
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
@@ -99,9 +95,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("validation fails if type contains illegal characters", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-
-      val assetFields = Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin tyyppi" -> "2,a")
+      val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "2,a")
       val invalidCsv = csvToInputStream(createCSV(assetFields))
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
@@ -112,8 +106,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("validation fails when asset type is unknown", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val assetFields = Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin tyyppi" -> "2,10")
+      val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "2,10")
       val invalidCsv = csvToInputStream(createCSV(assetFields))
       CsvImporter.importAssets(invalidCsv, assetProvider) should equal(ImportResult(
         malformedAssets = List(MalformedAsset(
@@ -124,50 +117,45 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update asset type by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin tyyppi" -> "1,2 , 3 ,4")))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "1,2 , 3 ,4")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetType = getAssetType(assetProvider.getAssetByExternalId(asset.nationalId).get)
+      val assetType = getAssetType(assetProvider.getAssetByExternalId(1).get)
       assetType should contain only("1", "2", "3", "4")
     }
   }
 
   test("update asset admin id by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties + ("yllapitajan_tunnus" -> "1111111"))
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Ylläpitäjän tunnus" -> "2222222")))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Ylläpitäjän tunnus" -> "2222222")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetAdminId = assetProvider.getAssetByExternalId(asset.nationalId).get.getPropertyValue("yllapitajan_tunnus")
+      val assetAdminId = assetProvider.getAssetByExternalId(1).get.getPropertyValue("yllapitajan_tunnus")
       assetAdminId should equal(Some("2222222"))
     }
   }
 
   test("update asset LiVi id by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties + ("yllapitajan_koodi" -> "Livi123456"))
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "LiVi-tunnus" -> "Livi987654")))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetLiviId = assetProvider.getAssetByExternalId(asset.nationalId).get.getPropertyValue("yllapitajan_koodi")
+      val assetLiviId = assetProvider.getAssetByExternalId(1).get.getPropertyValue("yllapitajan_koodi")
       assetLiviId should equal(Some("Livi987654"))
     }
   }
 
   test("update asset stop code by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties + ("matkustajatunnus" -> "H155"))
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Matkustajatunnus" -> "H156")))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Matkustajatunnus" -> "H156")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetStopCode = assetProvider.getAssetByExternalId(asset.nationalId).get.getPropertyValue("matkustajatunnus")
+      val assetStopCode = assetProvider.getAssetByExternalId(1).get.getPropertyValue("matkustajatunnus")
       assetStopCode should equal(Some("H156"))
     }
   }
 
   test("update additional information by CSV import", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties + ("lisatiedot" -> "Additional info"))
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Lisätiedot" -> "Updated additional info")))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Lisätiedot" -> "Updated additional info")))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val assetAdditionalInfo = assetProvider.getAssetByExternalId(asset.nationalId).get.getPropertyValue("lisatiedot")
+      val assetAdditionalInfo = assetProvider.getAssetByExternalId(1).get.getPropertyValue("lisatiedot")
       assetAdditionalInfo should equal(Some("Updated additional info"))
     }
   }
@@ -194,10 +182,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update asset's properties in a generic manner", Tag("db")) {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = 7021, properties = exampleValues.mapValues(_._1) ++ Map("vaikutussuunta" -> "2"))
-      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> asset.nationalId) ++ mappings.mapValues(exampleValues(_)._2)))
+      val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1) ++ mappings.mapValues(exampleValues(_)._2)))
       CsvImporter.importAssets(csv, assetProvider) should equal(ImportResult())
-      val updatedAsset = assetProvider.getAssetByExternalId(asset.nationalId).get
+      val updatedAsset = assetProvider.getAssetByExternalId(1).get
       exampleValues.foreach { case (k, v) =>
         updatedAsset.getPropertyValue(k) should equal(Some(v._2))
       }
@@ -219,17 +206,16 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("raise an error when csv row does not define required parameter", Tag("db")) {
     runWithCleanup {
       val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
-      val asset = createAsset(roadLinkId = 7021, mandatoryBusStopProperties)
       val csv =
         missingRequiredKeys.mkString(";") + "\n" +
-          s"${asset.nationalId}" + missingRequiredKeys.map(_ => ";").mkString + "\n"
+          s"${1}" + missingRequiredKeys.map(_ => ";").mkString + "\n"
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider)
       result should equal(ImportResult(
-        incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> asset.nationalId))))))
+        incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> 1))))))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
-      assetName should equal(Some("AssetName"))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
+      assetName should equal(None)
     }
   }
 
@@ -254,13 +240,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("update asset on street when import is limited to streets") {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = StreetId, mandatoryBusStopProperties)
-      val csv = createCSV(Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin nimi" -> "NewName"))
+      val csv = createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName"))
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Municipality))
       result should equal(ImportResult())
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
       assetName should equal(Some("NewName"))
     }
   }
@@ -280,16 +265,15 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("ignore updates on other road types than roads when import is limited to roads") {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = StreetId, mandatoryBusStopProperties)
-      val assetFields = Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin nimi" -> "NewName")
+      val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName")
       val csv = createCSV(assetFields)
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(State))
       result should equal(ImportResult(
         excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Municipality", csvRow = rowToString(defaultValues ++ assetFields)))))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
-      assetName should equal(Some("AssetName"))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
+      assetName should equal(None)
     }
   }
 
@@ -308,16 +292,15 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("ignore updates on other road types than private roads when import is limited to private roads") {
     runWithCleanup {
-      val asset = createAsset(roadLinkId = StreetId, mandatoryBusStopProperties)
-      val assetFields = Map("Valtakunnallinen ID" -> asset.nationalId, "Pysäkin nimi" -> "NewName")
+      val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin nimi" -> "NewName")
       val csv = createCSV(assetFields)
       val inputStream = new ByteArrayInputStream(csv.getBytes)
       val result = CsvImporter.importAssets(inputStream, assetProvider, roadTypeLimitations = Set(Private))
       result should equal(ImportResult(
         excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "Municipality", csvRow = rowToString(defaultValues ++ assetFields)))))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(asset.nationalId).get)
-      assetName should equal(Some("AssetName"))
+      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
+      assetName should equal(None)
     }
   }
 
