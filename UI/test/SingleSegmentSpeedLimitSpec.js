@@ -150,28 +150,17 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and saving the change', function() {
         before(function() {
+          _.merge(speedLimits[0][0], modificationData[13]);
           $('#feature-attributes button.save').click();
         });
         it('it updates the modified and created fields', function() {
+          testHelpers.selectSpeedLimit(openLayersMap, speedLimitId, true);
           expect($('#feature-attributes .asset-log-info:first')).to.have.text('Lisätty järjestelmään: creator 10.09.2014 13:36:57');
           var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.contains($(e).text(), 'Muokattu viimeksi'); });
           expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
 
-      describe('and changing value of speed limit back to original', function() {
-        before(function() {
-          $('#feature-attributes .form-control.speed-limit').val('60').change();
-        });
-
-        describe('and cancelling the change', function() {
-          before(function() {
-            $('#feature-attributes button.cancel').click();
-          });
-
-          it('resets back to saved speed limit value', function() { assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 100); });
-        });
-      });
     });
   });
 });

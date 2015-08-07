@@ -507,9 +507,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleSpeedLimitSaved = function() {
-    setSelectionStyleAndHighlightFeature();
     collection.fetch(map.getExtent());
-    applicationModel.setSelectedTool('Select');
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
