@@ -122,7 +122,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop road link mml id") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 388554364l, None))
-      RollbackMassTransitStopService.updateExisting(300000, position, Nil, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300000, position, Nil, "user", _ => Unit)
       val mmlId = sql"""
             select lrm.mml_id from asset a
             join asset_link al on al.asset_id = a.id
@@ -136,7 +136,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop bearing") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 388554364l, Some(90)))
-      RollbackMassTransitStopService.updateExisting(300000, position, Nil, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300000, position, Nil, "user", _ => Unit)
       val bearing = sql"""
             select a.bearing from asset a
             join asset_link al on al.asset_id = a.id
@@ -150,7 +150,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Update mass transit stop municipality") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      RollbackMassTransitStopService.updateExisting(300000, position, Nil, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300000, position, Nil, "user", _ => Unit)
       val municipality = sql"""
             select a.municipality_code from asset a
             join asset_link al on al.asset_id = a.id
@@ -163,7 +163,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Update last modified info") {
     runWithCleanup {
-      RollbackMassTransitStopService.updateExisting(300000, None, Nil, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300000, None, Nil, "user", _ => Unit)
       val modifier = sql"""
             select a.modified_by from asset a
             where a.id = 300000
@@ -176,7 +176,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithCleanup {
       val values = List(PropertyValue("New name"))
       val properties = List(SimpleProperty("nimi_suomeksi", values))
-      RollbackMassTransitStopService.updateExisting(300000, None, properties, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300000, None, properties, "user", _ => Unit)
       val modifier = sql"""
             select v.value_fi from text_property_value v
             join property p on v.property_id = p.id
@@ -189,7 +189,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Persist floating on update") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      RollbackMassTransitStopService.updateExisting(300002, position, Nil, "user", _ => Unit)
+      RollbackMassTransitStopService.updateExistingById(300002, position, Nil, "user", _ => Unit)
       val floating = sql"""
             select a.floating from asset a
             where a.id = 300002
@@ -203,7 +203,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val position = Some(Position(60.0, 0.0, 123l, None))
-      service.updateExisting(300002, position, Nil, "user", _ => Unit)
+      service.updateExistingById(300002, position, Nil, "user", _ => Unit)
       verify(eventbus).publish(org.mockito.Matchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
   }
@@ -211,7 +211,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Assert user rights when updating a mass transit stop") {
     runWithCleanup {
       val position = Some(Position(60.0, 0.0, 123l, None))
-      an [Exception] should be thrownBy RollbackMassTransitStopService.updateExisting(300002, position, Nil, "user", { municipalityCode => throw new Exception })
+      an [Exception] should be thrownBy RollbackMassTransitStopService.updateExistingById(300002, position, Nil, "user", { municipalityCode => throw new Exception })
     }
   }
 

@@ -185,15 +185,16 @@ trait MassTransitStopService {
       propertyData = stop.propertyData)
   }
 
-  def updateExisting(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
-      val persistedStop = getPersistedMassTransitStops(withId(id)).headOption
+      val persistedStop = getPersistedMassTransitStops(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       val mmlId = optionalPosition match {
         case Some(position) => position.roadLinkId
         case _ => persistedStop.get.mmlId
       }
       val (municipalityCode, geometry) = fetchRoadLink(mmlId).getOrElse(throw new NoSuchElementException)
+      val id = persistedStop.get.id
       OracleSpatialAssetDao.updateAssetLastModified(id, username)
       if (properties.nonEmpty) {
         OracleSpatialAssetDao.updateAssetProperties(id, properties)
@@ -209,6 +210,10 @@ trait MassTransitStopService {
       }
       getPersistedStopWithPropertiesAndPublishEvent(id, municipalityCode, geometry)
     }
+  }
+
+  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+    updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
   }
 
   private def fetchRoadLink(mmlId: Long): Option[(Int, Seq[Point])] = {
