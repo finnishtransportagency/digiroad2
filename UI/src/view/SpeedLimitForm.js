@@ -80,7 +80,7 @@
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
     };
-    eventbus.on('speedLimit:selected speedLimit:cancelled speedLimit:saved', function() {
+    eventbus.on('speedLimit:selected speedLimit:cancelled', function() {
       rootElement.html(template(selectedSpeedLimit));
       var extractValue = function(event) {
         return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);

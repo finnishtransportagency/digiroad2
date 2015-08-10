@@ -142,38 +142,4 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
     });
   });
-
-  describe('when loading application in edit mode with speed limits', function() {
-    var openLayersMap;
-    var speedLimitId = 13;
-    var speedLimitGroup = _.filter(SpeedLimitsTestData.generate(), function(linkGroup) {
-      return _.some(linkGroup, {id: speedLimitId});
-    });
-
-    before(function(done) {
-      testHelpers.restartApplication(function(map) {
-        openLayersMap = map;
-        $('.speed-limits').click();
-        testHelpers.clickVisibleEditModeButton();
-        done();
-      }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimitGroup)
-        .withMultiSegmentSpeedLimitUpdate(_.flatten(speedLimitGroup)));
-    });
-
-    describe('and changing value of speed limit, saving, changing it again, and cancelling', function() {
-      before(function() {
-        testHelpers.selectSpeedLimit(openLayersMap, speedLimitId);
-        $('#feature-attributes .form-control.speed-limit').val('100').change();
-        $('#feature-attributes button.save').click();
-
-        $('#feature-attributes .form-control.speed-limit').val('40').change();
-        $('#feature-attributes button.cancel').click();
-      });
-
-      it('resets back to saved speed limit value', function() {
-        assertSpeedLimitIsSelectedWithLimitValue(openLayersMap, speedLimitId, 100);
-      });
-    });
-  });
 });

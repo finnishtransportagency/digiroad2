@@ -100,9 +100,8 @@
       var payload = _.merge({value: self.getValue()}, payloadContents());
 
       backend.updateSpeedLimits(payload, function(speedLimits) {
-        selection = collection.replaceSegments(selection, speedLimits);
-        originalSpeedLimitValue = self.getValue();
         dirty = false;
+        self.close();
         eventbus.trigger('speedLimit:saved');
       }, function() {
         eventbus.trigger('asset:updateFailed');
