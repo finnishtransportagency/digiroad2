@@ -111,14 +111,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Fetch mass transit stop by national id") {
     runWithCleanup {
-      val stop = RollbackMassTransitStopService.getByNationalId(85755, _ => Unit)
+      val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
     }
   }
 
   test("Assert user rights when fetching mass transit stop with id") {
     runWithCleanup {
-      an [Exception] should be thrownBy RollbackMassTransitStopService.getByNationalId(85755, { municipalityCode => throw new Exception })
+      an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, { municipalityCode => throw new Exception })
     }
   }
 

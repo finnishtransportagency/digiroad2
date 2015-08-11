@@ -138,7 +138,7 @@ trait CsvImporter {
       }
     }
 
-    val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation)
+    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
     optionalAsset match {
       case Some(asset) =>
         massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _)

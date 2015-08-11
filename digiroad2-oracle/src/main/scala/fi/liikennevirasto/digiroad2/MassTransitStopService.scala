@@ -70,7 +70,7 @@ trait MassTransitStopService {
     }
   }
 
-  def getByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
+  def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)

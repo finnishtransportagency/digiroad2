@@ -84,7 +84,7 @@ with GZipSupport {
     }
     val nationalId = params("nationalId").toLong
     val massTransitStop = useVVHGeometry match {
-      case true => massTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+      case true => massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
          Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
