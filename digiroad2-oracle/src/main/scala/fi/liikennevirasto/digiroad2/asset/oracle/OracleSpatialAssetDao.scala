@@ -52,21 +52,6 @@ object OracleSpatialAssetDao {
     else None
   }
 
-  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)]):  (AssetWithProperties, Boolean) = {
-    val row = assetRows.head
-    val point = row.point.get
-    val wgsPoint = row.wgsPoint.get
-    val municipalityCode = row.municipalityCode
-    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
-    (AssetWithProperties(id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
-  }
-
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
     val productionRoadLinkId: Option[Long] = row.productionRoadLinkId
     productionRoadLinkId.map { roadLinkId =>
@@ -127,12 +112,6 @@ object OracleSpatialAssetDao {
     val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
     assetWithProperties.map(updateAssetFloatingStatus)
     assetWithProperties.map(_._1)
-  }
-
-  def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Q.query[Long, SingleAssetRow](assetByExternalId).firstOption(externalId).flatMap { case row =>
-      row.point
-    }
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
