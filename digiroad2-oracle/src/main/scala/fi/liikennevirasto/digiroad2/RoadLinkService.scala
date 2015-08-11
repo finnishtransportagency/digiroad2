@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory
 import com.newrelic.api.agent.NewRelic
 
 import scala.collection.JavaConversions._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)

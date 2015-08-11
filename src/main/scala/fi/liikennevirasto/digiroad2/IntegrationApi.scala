@@ -15,7 +15,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
 

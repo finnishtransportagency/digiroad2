@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 import org.scalatest.{MustMatchers, FunSuite}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.{PropertyRow, AssetRow}
 import fi.liikennevirasto.digiroad2.asset.{State, AdministrativeClass, Position, Modification}
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import fi.liikennevirasto.digiroad2.Point
 import Database.dynamicSession

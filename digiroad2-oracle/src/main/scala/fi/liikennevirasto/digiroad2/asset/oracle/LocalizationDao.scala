@@ -2,10 +2,10 @@ package fi.liikennevirasto.digiroad2.asset.oracle
 
 import fi.liikennevirasto.digiroad2.asset.LocalizedString
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 object LocalizationDao {
   def insertLocalizedString(ls: LocalizedString): LocalizedString = {

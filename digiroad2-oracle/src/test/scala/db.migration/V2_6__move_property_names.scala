@@ -2,11 +2,11 @@ package db.migration
 
 import com.googlecode.flyway.core.api.migration.jdbc.JdbcMigration
 import java.sql.Connection
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import fi.liikennevirasto.digiroad2.asset.oracle.{LocalizationDao, OracleSpatialAssetDao, Queries}
 import Queries._
 import Q.interpolation
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString

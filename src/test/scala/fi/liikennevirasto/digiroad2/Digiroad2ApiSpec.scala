@@ -13,9 +13,9 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats

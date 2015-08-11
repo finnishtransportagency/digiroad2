@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object LinearAssetService {
   def getByMunicipality(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {

@@ -4,7 +4,7 @@ import java.sql.SQLException
 
 import _root_.oracle.spatial.geometry.JGeometry
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
@@ -16,8 +16,8 @@ import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import scala.language.reflectiveCalls
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 object OracleSpatialAssetDao {
   val logger = LoggerFactory.getLogger(getClass)

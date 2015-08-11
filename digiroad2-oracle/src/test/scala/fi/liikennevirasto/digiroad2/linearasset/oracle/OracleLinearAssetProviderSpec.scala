@@ -16,9 +16,9 @@ import scala.language.implicitConversions
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.Tag
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]

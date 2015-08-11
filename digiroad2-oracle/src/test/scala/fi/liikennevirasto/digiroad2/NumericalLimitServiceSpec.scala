@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import org.scalatest.{Matchers, FunSuite}
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class NumericalLimitServiceSpec extends FunSuite with Matchers {
 

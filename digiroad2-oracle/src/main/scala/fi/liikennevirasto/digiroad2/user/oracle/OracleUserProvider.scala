@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.user.oracle
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult}
 import Database.dynamicSession
 import Q.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._

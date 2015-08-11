@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
 import scala.io.{Codec, Source}
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 

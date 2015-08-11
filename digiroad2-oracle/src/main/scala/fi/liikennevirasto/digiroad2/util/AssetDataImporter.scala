@@ -7,7 +7,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
-import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
@@ -19,11 +19,11 @@ import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
-import scala.slick.util.CloseableIterator
+import slick.util.CloseableIterator
 
 object AssetDataImporter {
 

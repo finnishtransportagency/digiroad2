@@ -12,10 +12,10 @@ import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],

@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 
 trait DatabaseTransaction {
   def withDynTransaction[T](f: => T): T

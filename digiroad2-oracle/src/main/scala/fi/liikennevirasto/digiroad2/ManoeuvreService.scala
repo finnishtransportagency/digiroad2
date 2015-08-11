@@ -8,10 +8,10 @@ import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
