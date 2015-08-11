@@ -88,15 +88,11 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
       // Current user is stored in a thread-local variable (feel free to provide better solution)
       userProvider.setCurrentUser(user)
       try {
-        val response = if (Digiroad2Context.useVVHGeometry) {
-          "Excel-ajo on väliaikaisesti poistettu käytöstä versiossa jossa geometria haetaan VVH:sta."
-        } else {
-          val result = csvImporter.importAssets(csvFileInputStream, administrativeClassLimitations)
-          result match {
-            case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
-            case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
-            case _ => pretty(Extraction.decompose(result))
-          }
+        val result = csvImporter.importAssets(csvFileInputStream, administrativeClassLimitations)
+        val response = result match {
+          case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
+          case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
+          case _ => pretty(Extraction.decompose(result))
         }
         ImportLogService.save(id, response)
       } catch {
