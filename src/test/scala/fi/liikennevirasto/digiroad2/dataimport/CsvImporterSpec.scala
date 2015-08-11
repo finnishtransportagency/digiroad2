@@ -246,19 +246,21 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
-    runWithCleanup {
-      val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
-      val csv =
-        missingRequiredKeys.mkString(";") + "\n" +
-          s"${1}" + missingRequiredKeys.map(_ => ";").mkString + "\n"
-      val inputStream = new ByteArrayInputStream(csv.getBytes)
-      val result = csvImporter.importAssets(inputStream)
-      result should equal(ImportResult(
-        incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = csvImporter.rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> 1))))))
+    val mockService = MockitoSugar.mock[MassTransitStopService]
+    when(mockService.getMassTransitStopByNationalId(Matchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
 
-      val assetName = getAssetName(assetProvider.getAssetByExternalId(1).get)
-      assetName should equal(None)
-    }
+    val importer = importerWithService(mockService)
+    val missingRequiredKeys = defaultKeys.filterNot(Set("Pysäkin nimi"))
+    val csv =
+      missingRequiredKeys.mkString(";") + "\n" +
+        s"${1}" + missingRequiredKeys.map(_ => ";").mkString + "\n"
+    val inputStream = new ByteArrayInputStream(csv.getBytes)
+    val result = importer.importAssets(inputStream)
+
+    result should equal(ImportResult(
+      incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = importer.rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> 1))))))
+
+    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
   }
 
   private val RoadId = 7082

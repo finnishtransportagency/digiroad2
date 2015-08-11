@@ -123,13 +123,6 @@ object OracleSpatialAssetDao {
     }
   }
 
-  // Called only from CSV importer
-  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    val assetWithProperties = Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
-    assetWithProperties.map(updateAssetFloatingStatus)
-    assetWithProperties.map(_._1)
-  }
-
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
     assetWithProperties.map(updateAssetFloatingStatus)

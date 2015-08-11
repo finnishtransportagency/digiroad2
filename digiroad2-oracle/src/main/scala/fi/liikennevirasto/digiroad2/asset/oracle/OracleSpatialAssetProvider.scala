@@ -36,13 +36,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  // Called only from CSV importer (test)
-  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.getAssetByExternalId(externalId)
-    }
-  }
-
   private def eventBusMassTransitStop(asset: AssetWithProperties, municipalityName: String): EventBusMassTransitStop = {
     EventBusMassTransitStop(municipalityNumber = asset.municipalityNumber, municipalityName = municipalityName,
       nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
