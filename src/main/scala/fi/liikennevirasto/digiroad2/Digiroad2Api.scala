@@ -32,7 +32,7 @@ with GZipSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer
 
   before() {
-    contentType = formats("json")
+    contentType = formats("json") + "; charset=utf-8"
     try {
       authenticateForApi(request)(userProvider)
       if(request.isWrite
