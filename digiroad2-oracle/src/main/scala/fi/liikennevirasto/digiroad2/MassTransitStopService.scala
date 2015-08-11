@@ -70,12 +70,16 @@ trait MassTransitStopService {
     }
   }
 
-  def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
+  def getByNationalId[T <: FloatingStop](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => T): Option[T] = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
-      persistedStop.map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink)))
+      persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
+  }
+
+  def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
+    getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
   private def withFloatingUpdate[T <: FloatingStop](toMassTransitStop: PersistedMassTransitStop => T)
