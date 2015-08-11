@@ -43,18 +43,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  private def validateMultipleChoice(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
-    values.foreach { value =>
-      if (value.propertyValue == "99") throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
-    }
-  }
-
-  private def validateNotBlank(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
-    values.foreach { value =>
-      if (isBlank(value.propertyValue)) throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
-    }
-  }
-
   private def eventBusMassTransitStop(asset: AssetWithProperties, municipalityName: String): EventBusMassTransitStop = {
     EventBusMassTransitStop(municipalityNumber = asset.municipalityNumber, municipalityName = municipalityName,
       nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
