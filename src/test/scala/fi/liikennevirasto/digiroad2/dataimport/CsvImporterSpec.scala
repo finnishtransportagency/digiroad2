@@ -1,32 +1,23 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import java.io.{ByteArrayInputStream, InputStream}
+
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
+import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.mockito.Matchers
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.PropertyValue
-import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
-import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, OracleSpatialAssetProvider}
-import fi.liikennevirasto.digiroad2.user.{UserProvider, Configuration, User}
-import fi.liikennevirasto.digiroad2._
-import java.io.{InputStream, ByteArrayInputStream}
-import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import org.mockito.Matchers._
-import org.mockito.Mockito._
 
 class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
-  val passThroughTransaction = new DatabaseTransaction {
-    override def withDynTransaction[T](f: => T): T = f
-  }
   val MunicipalityKauniainen = 235
   val testUserProvider = new OracleUserProvider
-  val assetProvider = new OracleSpatialAssetProvider(new DummyEventBus, testUserProvider, passThroughTransaction)
-  val mandatoryBusStopProperties = Map("vaikutussuunta" -> "2", "nimi_suomeksi" -> "AssetName", "pysakin_tyyppi" -> "2")
   val csvImporter = importerWithNullService()
 
   private def importerWithService(service: MassTransitStopService, rlService: RoadLinkService = MockitoSugar.mock[RoadLinkService]) : CsvImporter = {
@@ -42,13 +33,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override val massTransitStopService: MassTransitStopService = MockitoSugar.mock[MassTransitStopService]
       override val userProvider: UserProvider = testUserProvider
       override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
-    }
-  }
-
-  private def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      test
-      dynamicSession.rollback()
     }
   }
 
@@ -263,10 +247,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
   }
 
-  private val RoadId = 7082
-  private val StreetId = 7118
-  private val PrivateRoadId = 7078
-
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, RoadLinkService) = {
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
@@ -348,8 +328,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
-
-  private def getAssetName(asset: AssetWithProperties): Option[String] = asset.getPropertyValue("nimi_suomeksi")
 
   // TODO: Warn about nonused fields
   // TODO: Should vallu message be sent when assets are updated using csv?
