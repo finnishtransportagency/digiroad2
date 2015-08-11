@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
@@ -27,6 +28,10 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
   private final val threeMegabytes: Long = 3*1024*1024
   private val importLogger = LoggerFactory.getLogger(getClass)
   private val CSV_LOG_PATH = "/tmp/csv_import_logs/"
+  private val csvImporter = new CsvImporter {
+    override val massTransitStopService: MassTransitStopService = Digiroad2Context.massTransitStopService
+    override val userProvider: UserProvider = Digiroad2Context.userProvider
+  }
 
   before() {
     contentType = formats("json")
@@ -85,7 +90,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
         val response = if (Digiroad2Context.useVVHGeometry) {
           "Excel-ajo on väliaikaisesti poistettu käytöstä versiossa jossa geometria haetaan VVH:sta."
         } else {
-          val result = CsvImporter.importAssets(csvFileInputStream, assetProvider, administrativeClassLimitations)
+          val result = csvImporter.importAssets(csvFileInputStream, assetProvider, administrativeClassLimitations)
           result match {
             case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
             case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))

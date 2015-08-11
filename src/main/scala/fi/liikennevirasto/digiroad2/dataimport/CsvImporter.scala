@@ -2,6 +2,10 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{InputStreamReader, InputStream}
 import com.github.tototoshi.csv._
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, MassTransitStopWithProperties, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 
@@ -14,6 +18,12 @@ object CsvImporter {
                           incompleteAssets: List[IncompleteAsset] = Nil,
                           malformedAssets: List[MalformedAsset] = Nil,
                           excludedAssets: List[ExcludedAsset] = Nil)
+}
+
+trait CsvImporter {
+  val massTransitStopService: MassTransitStopService
+  val userProvider: UserProvider
+
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   type MalformedParameters = List[String]
@@ -121,6 +131,21 @@ object CsvImporter {
     }
   }
 
+  private def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
+    def municipalityValidation(municipality: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipality)) {
+        throw new IllegalArgumentException("User does not have write access to municipality")
+      }
+    }
+
+    val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation)
+    optionalAsset match {
+      case Some(asset) =>
+        massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _)
+      case None => throw new AssetNotFoundException(externalId)
+    }
+  }
+
   def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
@@ -137,7 +162,7 @@ object CsvImporter {
         case _ => Nil
       }
     } else {
-      assetProvider.updateAssetByExternalId(externalId, properties)
+      updateAssetByExternalId(externalId, properties)
       Nil
     }
   }
