@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
-import org.eclipse.jetty.servlets.ProxyServlet
-import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.eclipse.jetty.http.{MimeTypes, HttpURI}
-import org.eclipse.jetty.client.HttpExchange
+import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.client.api.Request
 
 trait DigiroadServer {
   val contextPath : String
@@ -31,14 +31,14 @@ trait DigiroadServer {
 }
 
 class NLSProxyServlet extends ProxyServlet {
-  override protected def proxyHttpURI(req: HttpServletRequest, uri: String): HttpURI = {
+  protected def proxyHttpURI(req: HttpServletRequest, uri: String): HttpURI = {
     new HttpURI("http://karttamoottori.maanmittauslaitos.fi"
       + uri.replaceFirst("/digiroad", ""))
   }
 
-  override def customizeExchange(exchange: HttpExchange, req: HttpServletRequest): Unit = {
-    exchange.setRequestHeader("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
-    exchange.setRequestHeader("Host", null)
-    super.customizeExchange(exchange, req)
+  override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
+    proxyRequest.header("Referer", "http://www.paikkatietoikkuna.fi/web/fi/kartta")
+    proxyRequest.header("Host", null)
+    super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
   }
 }
