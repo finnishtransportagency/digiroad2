@@ -34,24 +34,6 @@ object OracleSpatialAssetDao {
     nextNationalBusStopId.as[Long].first
   }
 
-  def getAssetsByMunicipality(municipality: Int) = {
-    val q = QueryCollector(allAssets + " and a.municipality_code = " + municipality)
-    val assets = collectedQuery[AssetRow](q).groupBy(_.id)
-
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[AssetRow])] = assets.mapValues { assetRows =>
-      val row = assetRows.head
-      val roadLinkOption = getOptionalProductionRoadLink(row)
-      (roadLinkOption, assetRows)
-    }
-
-    val assetsWithProperties = assetsWithRoadLinks.map { case (assetId, (roadLinkOption, assetRows)) =>
-      assetRowToAssetWithProperties(assetId, assetRows.toList, roadLinkOption)
-    }
-    assetsWithProperties.foreach(updateAssetFloatingStatus)
-    assetsWithProperties.map(_._1)
-  }
-
-
   def assetRowToProperty(assetRows: Iterable[IAssetRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, assetRows) =>
       val row = assetRows.head
@@ -68,21 +50,6 @@ object OracleSpatialAssetDao {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else if (assetRow.property.propertyDisplayValue != null) Some(assetRow.property.propertyDisplayValue)
     else None
-  }
-
-  private[this] def assetRowToAssetWithProperties(assetId: Long, assetRows: Seq[AssetRow], optionalRoadLink: Option[(Long, Int, Option[Point], AdministrativeClass)]):  (AssetWithProperties, Boolean) = {
-    val row = assetRows.head
-    val point = row.point.get
-    val wgsPoint = row.wgsPoint.get
-    val municipalityCode = row.municipalityCode
-    val roadLinkType = optionalRoadLink.map(_._4).getOrElse(Unknown)
-    (AssetWithProperties(id = row.id, nationalId = row.externalId, assetTypeId = row.assetTypeId,
-        lon = point.x, lat = point.y,
-        propertyData = (AssetPropertyConfiguration.assetRowToCommonProperties(row) ++ assetRowToProperty(assetRows)).sortBy(_.propertyUiIndex),
-        bearing = row.bearing, municipalityNumber = municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        validityDirection = Some(row.validityDirection), wgslon = wgsPoint.x, wgslat = wgsPoint.y,
-        created = row.created, modified = row.modified, roadLinkType = roadLinkType, floating = isFloating(row, optionalRoadLink)),  row.persistedFloating)
   }
 
   private def getOptionalProductionRoadLink(row: {val productionRoadLinkId: Option[Long]; val roadLinkId: Long; val lrmPosition: LRMPosition}): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
@@ -141,70 +108,10 @@ object OracleSpatialAssetDao {
     }
   }
 
-  def getAssetByExternalId(externalId: Long): Option[AssetWithProperties] = {
-    val assetWithProperties = Q.query[Long, SingleAssetRow](assetByExternalId).list(externalId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
-    assetWithProperties.map(updateAssetFloatingStatus)
-    assetWithProperties.map(_._1)
-  }
-
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
     assetWithProperties.map(updateAssetFloatingStatus)
     assetWithProperties.map(_._1)
-  }
-
-  def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    Q.query[Long, SingleAssetRow](assetByExternalId).firstOption(externalId).flatMap { case row =>
-      row.point
-    }
-  }
-
-  def getAssets(user: User, bounds: Option[BoundingRectangle], validFrom: Option[LocalDate], validTo: Option[LocalDate]): Seq[Asset] = {
-    def andAssetWithinBoundingBox = bounds map { b =>
-      val boundingBox = new JGeometry(b.leftBottom.x, b.leftBottom.y, b.rightTop.x, b.rightTop.y, 3067)
-      ("AND SDO_FILTER(geometry, ?) = 'TRUE'", List(storeGeometry(boundingBox, dynamicSession.conn)))
-    }
-    def andValidityInRange = (validFrom, validTo) match {
-      case (Some(from), Some(to)) => Some(andByValidityTimeConstraint, List(jodaToSqlDate(from), jodaToSqlDate(to)))
-      case (None, Some(to)) => Some(andExpiredBefore, List(jodaToSqlDate(to)))
-      case (Some(from), None) => Some(andValidAfter, List(jodaToSqlDate(from)))
-      case (None, None) => None
-    }
-    val query = QueryCollector(allAssetsWithoutProperties).add(andValidityInRange).add(andAssetWithinBoundingBox)
-    val allAssets = collectedQuery[ListedAssetRow](query).iterator
-    val assetsWithProperties: Map[Long, Seq[ListedAssetRow]] = allAssets.toSeq.groupBy(_.id)
-    val assetsWithRoadLinks: Map[Long, (Option[(Long, Int, Option[Point], AdministrativeClass)], Seq[ListedAssetRow])] = assetsWithProperties.mapValues { assetRows =>
-      val row = assetRows.head
-      val roadLinkOption = getOptionalProductionRoadLink(row)
-      (roadLinkOption, assetRows)
-    }
-    val authorizedAssets =
-      if (user.isOperator()) {
-        assetsWithRoadLinks
-      } else {
-        assetsWithRoadLinks.filter { case (_, (roadLinkOption, assetRows)) =>
-        val assetRow = assetRows.head
-        user.isAuthorizedToRead(assetRow.municipalityCode)
-      }
-    }
-    val assets = authorizedAssets.map { case (assetId, (roadLinkOption, assetRows)) =>
-      val row = assetRows.head
-      val point = row.point.get
-      (Asset(id = row.id,
-        nationalId = row.externalId,
-        assetTypeId = row.assetTypeId,
-        lon = point.x,
-        lat = point.y,
-        roadLinkId = roadLinkOption.map(_._1).getOrElse(-1), // FIXME: Temporary solution for possibly missing roadLinkId
-        bearing = row.bearing,
-        validityDirection = Some(row.validityDirection),
-        municipalityNumber = row.municipalityCode,
-        validityPeriod = validityPeriod(row.validFrom, row.validTo),
-        floating = isFloating(row, roadLinkOption),
-        stopTypes = extractStopTypes(assetRows.map(_.property))), row.persistedFloating)
-    }
-    assets.foreach(updateAssetFloatingStatus)
-    assets.map(_._1).toSeq
   }
 
   private val FLOAT_THRESHOLD_IN_METERS = 3
@@ -459,10 +366,6 @@ object OracleSpatialAssetDao {
     sql"""
       select name_fi from municipality where id = $code
     """.as[String].first
-  }
-
-  def requiredProperties(assetTypeId: Long): Set[Property] = {
-    availableProperties(assetTypeId).filter(_.required).toSet
   }
 
   def availableProperties(assetTypeId: Long): Seq[Property] = {

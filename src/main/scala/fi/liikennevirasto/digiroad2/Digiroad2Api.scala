@@ -54,26 +54,13 @@ with GZipSupport {
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
 
-  get("/assets") {
-    val user = userProvider.getCurrentUser
-    val (validFrom: Option[LocalDate], validTo: Option[LocalDate]) = params.get("validityPeriod") match {
-      case Some("past") => (None, Some(LocalDate.now))
-      case Some("future") => (Some(LocalDate.now), None)
-      case Some("current") => (Some(LocalDate.now), Some(LocalDate.now))
-      case _ => (None, None)
-    }
-    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
-    validateBoundingBox(bbox)
-    assetProvider.getAssets(user, bbox, validFrom, validTo)
-  }
-
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     useVVHGeometry match {
       case true => massTransitStopService.getByBoundingBox(user, bbox)
-      case false => assetProvider.getAssets(user, bbox, None, None)
+      case false => throw new NotImplementedError()
     }
   }
 
@@ -90,27 +77,6 @@ with GZipSupport {
     userProvider.getCurrentUser().configuration.roles
   }
 
-  // TODO: Remove obsolete entry point
-  get("/assets/:assetId") {
-    val getAssetById = if (params.get("externalId").isDefined) {
-      assetProvider.getAssetByExternalId _
-    } else {
-      assetProvider.getAssetById _
-    }
-    getAssetById(params("assetId").toLong) match {
-      case Some(a) => {
-        val user = userProvider.getCurrentUser()
-        if (user.isOperator() || user.isAuthorizedToRead(a.municipalityNumber)) {
-          a
-        } else {
-          Unauthorized("Asset " + params("assetId") + " not authorized")
-        }
-      }
-      case None => NotFound("Asset " + params("assetId") + " not found")
-    }
-  }
-
-
   get("/massTransitStops/:nationalId") {
     def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
       if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
@@ -118,7 +84,7 @@ with GZipSupport {
     }
     val nationalId = params("nationalId").toLong
     val massTransitStop = useVVHGeometry match {
-      case true => massTransitStopService.getByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
+      case true => massTransitStopService.getMassTransitStopByNationalId(nationalId, validateMunicipalityAuthorization(nationalId)).map { stop =>
          Map("id" -> stop.id,
           "nationalId" -> stop.nationalId,
           "stopTypes" -> stop.stopTypes,
@@ -130,19 +96,7 @@ with GZipSupport {
           "floating" -> stop.floating,
           "propertyData" -> stop.propertyData)
       }
-      case false => assetProvider.getAssetByExternalId(nationalId).map { stop =>
-        validateMunicipalityAuthorization(nationalId)(stop.municipalityNumber)
-        Map("id" -> stop.id,
-          "nationalId" -> stop.nationalId,
-          "stopTypes" -> stop.stopTypes,
-          "lat" -> stop.lat,
-          "lon" -> stop.lon,
-          "validityDirection" -> stop.validityDirection,
-          "bearing" -> stop.bearing,
-          "validityPeriod" -> stop.validityPeriod,
-          "floating" -> stop.floating,
-          "propertyData" -> stop.propertyData)
-      }
+      case false => throw new NotImplementedError()
     }
     massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
   }
@@ -190,26 +144,13 @@ with GZipSupport {
       val id = params("id").toLong
       useVVHGeometry match {
         case true =>
-          massTransitStopService.updateExisting(id, position, properties, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
+          massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
         case false =>
           assetProvider.updateAsset(id, position, properties)
       }
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
     }
-  }
-
-  // TODO: Remove obsolete entry point
-  post("/assets") {
-    val user = userProvider.getCurrentUser()
-    assetProvider.createAsset(
-      10,
-      (parsedBody \ "lon").extract[Int].toDouble,
-      (parsedBody \ "lat").extract[Int].toDouble,
-      (parsedBody \ "roadLinkId").extract[Long],
-      (parsedBody \ "bearing").extract[Int],
-      user.username,
-      (parsedBody \ "properties").extract[Seq[SimpleProperty]])
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, roadLinkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Map[String, Any] = {
@@ -226,18 +167,7 @@ with GZipSupport {
           "validityPeriod" -> massTransitStop.validityPeriod,
           "floating" -> massTransitStop.floating,
           "propertyData" -> massTransitStop.propertyData)
-      case false =>
-        val asset = assetProvider.createAsset(10, lon, lat, roadLinkId, bearing, userProvider.getCurrentUser().username, properties)
-        Map("id" -> asset.id,
-          "nationalId" -> asset.nationalId,
-          "stopTypes" -> asset.stopTypes,
-          "lat" -> asset.lat,
-          "lon" -> asset.lon,
-          "validityDirection" -> asset.validityDirection,
-          "bearing" -> asset.bearing,
-          "validityPeriod" -> asset.validityPeriod,
-          "floating" -> asset.floating,
-          "propertyData" -> asset.propertyData)
+      case false => throw new NotImplementedError()
      }
   }
   private def validateUserRights(roadLinkId: Long) = {

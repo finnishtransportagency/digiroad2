@@ -2,6 +2,10 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{InputStreamReader, InputStream}
 import com.github.tototoshi.csv._
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import org.apache.commons.lang3.StringUtils.isBlank
 import fi.liikennevirasto.digiroad2.asset._
 
@@ -14,6 +18,13 @@ object CsvImporter {
                           incompleteAssets: List[IncompleteAsset] = Nil,
                           malformedAssets: List[MalformedAsset] = Nil,
                           excludedAssets: List[ExcludedAsset] = Nil)
+}
+
+trait CsvImporter {
+  val massTransitStopService: MassTransitStopService
+  val userProvider: UserProvider
+  val roadLinkService: RoadLinkService
+
   case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
 
   type MalformedParameters = List[String]
@@ -121,6 +132,39 @@ object CsvImporter {
     }
   }
 
+  private def municipalityValidation(municipality: Int): Unit = {
+    if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipality)) {
+      throw new IllegalArgumentException("User does not have write access to municipality")
+    }
+  }
+
+  private def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
+    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
+    optionalAsset match {
+      case Some(asset) =>
+        massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _)
+      case None => throw new AssetNotFoundException(externalId)
+    }
+  }
+
+  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
+    class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingStop {}
+    def massTransitStopTransformation(stop: PersistedMassTransitStop): CsvImportMassTransitStop = {
+      val roadLink = roadLinkService.fetchVVHRoadlink(stop.mmlId)
+      val floating = massTransitStopService.isFloating(stop, roadLink.map{ x => (x.municipalityCode, x.geometry) })
+      new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown))
+    }
+
+    val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation, massTransitStopTransformation)
+    optionalAsset match {
+      case Some(asset) =>
+        val roadLinkType = asset.roadLinkType
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, () => _))
+        else Left(roadLinkType)
+      case None => throw new AssetNotFoundException(externalId)
+    }
+  }
+
   def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
@@ -129,20 +173,20 @@ object CsvImporter {
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass], assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
+  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): ExcludedRoadLinkTypes = {
     if(roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, AssetWithProperties] = assetProvider.updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
       }
     } else {
-      assetProvider.updateAssetByExternalId(externalId, properties)
+      updateAssetByExternalId(externalId, properties)
       Nil
     }
   }
 
-  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResult = {
+  def importAssets(inputStream: InputStream, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -153,7 +197,7 @@ object CsvImporter {
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, assetProvider)
+          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations)
             .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedAssets = excludedAssets ::: result.excludedAssets)
         } catch {

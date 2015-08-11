@@ -60,138 +60,11 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     userProvider.setCurrentUser(user)
   }
 
-  test("load assets with spatial bounds", Tag("db")) {
-    runWithCleanup {
-      val assets = provider.getAssets(userProvider.getCurrentUser(), BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)),
-        validFrom = Some(LocalDate.now), validTo = Some(LocalDate.now))
-      assets.size shouldBe 1
-    }
-  }
-
   test("load enumerated values for asset type", Tag("db")) {
     runWithCleanup {
       val values = provider.getEnumeratedPropertyValues(TestAssetTypeId)
       values shouldBe 'nonEmpty
       values.map(_.propertyName) should contain("Vaikutussuunta")
-    }
-  }
-
-  test("adding asset to database without mandatory properties fails", Tag("db")) {
-    runWithCleanup {
-      val exception = intercept[IllegalArgumentException] {
-        provider.createAsset(
-          TestAssetTypeId,
-          0, 0, 5771, 180,
-          "Tosi sika",
-          Nil)
-      }
-      exception.getMessage should equal("Missing required properties: vaikutussuunta, pysakin_tyyppi")
-    }
- }
-
-  test("add asset to database", Tag("db")) {
-    runWithCleanup {
-      val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
-      val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider, passThroughTransaction)
-      userProvider.setCurrentUser(creatingUser)
-      val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
-      val newAsset = providerWithMockedEventBus.createAsset(
-        TestAssetTypeId,
-        existingAsset.lon,
-        existingAsset.lat,
-        6928,
-        180,
-        AssetCreator,
-        mandatoryBusStopProperties)
-      val eventBusStop = EventBusMassTransitStop(municipalityNumber = 235, municipalityName = "Kauniainen",
-        nationalId = newAsset.nationalId, lon = existingAsset.lon, lat = existingAsset.lat, bearing = Some(180),
-        validityDirection = Some(2), created = newAsset.created, modified = newAsset.modified,
-        propertyData = newAsset.propertyData)
-        newAsset.id should (be > 300000L)
-        Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
-        Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
-        verify(eventBus).publish("asset:saved", eventBusStop)
-        newAsset.nationalId should (be >= 300000L)
-    }
-  }
-
-  test("add asset to database sets default values for properties", Tag("db")) {
-    runWithCleanup {
-      val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
-      val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider, passThroughTransaction)
-      userProvider.setCurrentUser(creatingUser)
-      val existingAsset = providerWithMockedEventBus.getAssetById(TestAssetId).get
-      val newAsset = providerWithMockedEventBus.createAsset(
-        TestAssetTypeId,
-        existingAsset.lon,
-        existingAsset.lat,
-        6928,
-        180,
-        AssetCreator,
-        mandatoryBusStopProperties)
-        newAsset.propertyData.find(prop => prop.publicId == "katos").get.values.head.propertyValue shouldBe "99"
-    }
-  }
-
-  test("add asset with properties to database", Tag("db")) {
-    runWithCleanup {
-      val AssetCreator = "integration_test_add_asset"
-      val existingAsset = provider.getAssetById(TestAssetId).get
-      val newAsset = provider.createAsset(
-        TestAssetTypeId,
-        existingAsset.lon,
-        existingAsset.lat,
-        6928,
-        180,
-        AssetCreator,
-        mandatoryBusStopProperties ++ List(SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2045-12-10")))))
-        newAsset.id should (be > 100L)
-        Math.abs(newAsset.lon - existingAsset.lon) should (be < 0.1)
-        Math.abs(newAsset.lat - existingAsset.lat) should (be < 0.1)
-        newAsset.propertyData should contain (Property(0, "viimeinen_voimassaolopaiva", "date", 80, required = false, List(PropertyValue("2045-12-10", Some("2045-12-10")))))
-    }
-  }
-
-  test("add asset is transactional", Tag("db")) {
-    runWithCleanup {
-      import scala.slick.driver.JdbcDriver.backend.Database
-      import scala.slick.jdbc.{StaticQuery => Q}
-      import Database.dynamicSession
-      import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-      val assetCreator = "spatial_asset_provider_spec_add_asset_is_transactional"
-      val existingAsset = provider.getAssetById(TestAssetId).get
-      try {
-        val newAsset = provider.createAsset(
-          TestAssetTypeId,
-          existingAsset.lon,
-          existingAsset.lat,
-          6928,
-          180,
-          assetCreator,
-          mandatoryBusStopProperties ++
-            List(
-              SimpleProperty(AssetPropertyConfiguration.ValidFromId, List(PropertyValue("2001-12-10"))),
-              SimpleProperty(AssetPropertyConfiguration.ValidToId, List(PropertyValue("1995-12-10")))))
-        fail("Should have thrown an exception")
-      } catch {
-        case e: SQLIntegrityConstraintViolationException =>
-          Database.forDataSource(ds).withDynSession {
-            val assetCount = Q.queryNA[Long]( """SELECT COUNT(*) FROM asset where created_by = '""" + assetCreator + "'").list.head
-            assetCount should be(0)
-          }
-      }
-    }
-  }
-
-  test("add asset to database without write access fails", Tag("db")) {
-    runWithCleanup {
-      userProvider.setCurrentUser(unauthorizedUser)
-      val existingAsset = provider.getAssetById(TestAssetId).get
-      try {
-        intercept[IllegalArgumentException] {
-          val asset = provider.createAsset(TestAssetTypeId, existingAsset.lon, existingAsset.lat, 6928, 180, AssetCreator, Nil)
-        }
-      }
     }
   }
 
@@ -312,23 +185,6 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
     runWithCleanup {
       val asset = provider.getAssetById(TestAssetId).get
       an[IllegalArgumentException] should be thrownBy provider.updateAsset(TestAssetId, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "INVALID DATE"))
-    }
-  }
-
-  test("loads all asset with properties in municipality find", Tag("db")) {
-    runWithCleanup {
-      val provider = new OracleSpatialAssetProvider(new DummyEventBus, new OracleUserProvider)
-      val assets = provider.getAssetsByMunicipality(235)
-      assets.size should (be > 0)
-      assets.map(_.municipalityNumber) should contain only (235)
-    }
-  }
-
-  test("returns correct assets from test data", Tag("db")) {
-    runWithCleanup {
-      val assetsByMunicipality = provider.getAssetsByMunicipality(235)
-      assetsByMunicipality.map(_.id) should contain allOf(300000, 300004, 300008, 300003, 300001)
-      assetsByMunicipality.map(_.id) should contain noneOf(300005, 307577) // stop with invalid road link and a stop at Rovaniemi
     }
   }
 
