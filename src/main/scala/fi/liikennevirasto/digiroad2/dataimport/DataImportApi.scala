@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.{RoadLinkService, MassTransitStopService, Digiroad2Context}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.scalatra._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
@@ -31,6 +31,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
   private val csvImporter = new CsvImporter {
     override val massTransitStopService: MassTransitStopService = Digiroad2Context.massTransitStopService
     override val userProvider: UserProvider = Digiroad2Context.userProvider
+    override val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
   }
 
   before() {

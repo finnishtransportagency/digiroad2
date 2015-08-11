@@ -31,18 +31,18 @@ case class MassTransitStopWithTimeStamps(id: Long, nationalId: Long, lon: Double
                               mmlId: Option[Long], mValue: Option[Double],
                               propertyData: Seq[Property]) extends FloatingStop with RoadLinkStop with TimeStamps
 
+case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
+                                    municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
+                                    validityDirection: Option[Int], bearing: Option[Int],
+                                    validityPeriod: Option[String], floating: Boolean,
+                                    created: Modification, modified: Modification,
+                                    propertyData: Seq[Property])
+
 trait MassTransitStopService {
   def withDynSession[T](f: => T): T
   def roadLinkService: RoadLinkService
   def withDynTransaction[T](f: => T): T
   def eventbus: DigiroadEventBus
-
-  case class PersistedMassTransitStop(id: Long, nationalId: Long, mmlId: Long, stopTypes: Seq[Int],
-                                      municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
-                                      validityDirection: Option[Int], bearing: Option[Int],
-                                      validityPeriod: Option[String], floating: Boolean,
-                                      created: Modification, modified: Modification,
-                                      propertyData: Seq[Property])
 
   case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], productionRoadLinkId: Option[Long], roadLinkId: Long, mmlId: Long, bearing: Option[Int],
                                 validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
@@ -89,7 +89,7 @@ trait MassTransitStopService {
     massTransitStop
   }
 
-  private def isFloating(persistedStop: PersistedMassTransitStop, roadLink: Option[(Int, Seq[Point])]): Boolean = {
+  def isFloating(persistedStop: PersistedMassTransitStop, roadLink: Option[(Int, Seq[Point])]): Boolean = {
     val point = Point(persistedStop.lon, persistedStop.lat)
     roadLink match {
       case None => true

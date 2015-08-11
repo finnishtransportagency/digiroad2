@@ -121,21 +121,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  // Called only from CSV importer
-  def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, AssetWithProperties] = {
-    databaseTransaction.withDynTransaction {
-      val optionalAsset = OracleSpatialAssetDao.getAssetByExternalId(externalId)
-      optionalAsset match {
-        case Some(asset) =>
-          if (!userCanModifyAsset(asset)) { throw new IllegalArgumentException("User does not have write access to municipality") }
-          val roadLinkType = asset.roadLinkType
-          if (roadTypeLimitations(roadLinkType)) Right(OracleSpatialAssetDao.updateAsset(asset.id, None, userProvider.getCurrentUser().username, properties))
-          else Left(roadLinkType)
-        case None => throw new AssetNotFoundException(externalId)
-      }
-    }
-  }
-
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues ++
       databaseTransaction.withDynTransaction {
