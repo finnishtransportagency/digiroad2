@@ -173,7 +173,7 @@ trait CsvImporter {
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass], assetProvider: AssetProvider): ExcludedRoadLinkTypes = {
+  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): ExcludedRoadLinkTypes = {
     if(roadTypeLimitations.nonEmpty) {
       val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
       result match {
@@ -186,7 +186,7 @@ trait CsvImporter {
     }
   }
 
-  def importAssets(inputStream: InputStream, assetProvider: AssetProvider, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResult = {
+  def importAssets(inputStream: InputStream, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -197,7 +197,7 @@ trait CsvImporter {
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, assetProvider)
+          val excludedAssets = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations)
             .map(excludedRoadLinkType => ExcludedAsset(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedAssets = excludedAssets ::: result.excludedAssets)
         } catch {

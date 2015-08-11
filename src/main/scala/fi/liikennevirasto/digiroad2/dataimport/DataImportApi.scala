@@ -91,7 +91,7 @@ class DataImportApi extends ScalatraServlet with CorsSupport with RequestHeaderA
         val response = if (Digiroad2Context.useVVHGeometry) {
           "Excel-ajo on väliaikaisesti poistettu käytöstä versiossa jossa geometria haetaan VVH:sta."
         } else {
-          val result = csvImporter.importAssets(csvFileInputStream, assetProvider, administrativeClassLimitations)
+          val result = csvImporter.importAssets(csvFileInputStream, administrativeClassLimitations)
           result match {
             case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty."
             case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
