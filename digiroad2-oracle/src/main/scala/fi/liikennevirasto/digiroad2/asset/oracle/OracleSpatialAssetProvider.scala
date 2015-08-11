@@ -43,12 +43,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  def getAssetPositionByExternalId(externalId: Long): Option[Point] = {
-    databaseTransaction.withDynTransaction {
-      OracleSpatialAssetDao.getAssetPositionByExternalId(externalId)
-    }
-  }
-
   private def validateMultipleChoice(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
     values.foreach { value =>
       if (value.propertyValue == "99") throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
