@@ -22,11 +22,6 @@ object DefaultDatabaseTransaction extends DatabaseTransaction {
 class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserProvider, databaseTransaction: DatabaseTransaction = DefaultDatabaseTransaction) extends AssetProvider {
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def getMunicipalityName(roadLinkId: Long): String = {
-    val municipalityId = RoadLinkService.getMunicipalityCode(roadLinkId)
-    municipalityId.map { OracleSpatialAssetDao.getMunicipalityNameByCode(_) }.get
-  }
-
   private def userCanModifyMunicipality(municipalityNumber: Int): Boolean = {
     val user = userProvider.getCurrentUser()
     user.isOperator() || user.isAuthorizedToWrite(municipalityNumber)
@@ -34,9 +29,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
 
   private def userCanModifyAsset(asset: AssetWithProperties): Boolean =
     userCanModifyMunicipality(asset.municipalityNumber)
-
-  private def userCanModifyRoadLink(roadLinkId: Long): Boolean =
-    RoadLinkService.getMunicipalityCode(roadLinkId).map(userCanModifyMunicipality(_)).getOrElse(false)
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
     databaseTransaction.withDynTransaction {
@@ -57,16 +49,6 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  private def validatePresenceOf(requiredProperties: Set[String], properties: Seq[SimpleProperty]): Unit = {
-    val providedProperties = properties.map { property =>
-      property.publicId
-    }.toSet
-    val missingProperties = requiredProperties -- providedProperties
-    if (!missingProperties.isEmpty) {
-      throw new IllegalArgumentException("Missing required properties: " + missingProperties.mkString(", "))
-    }
-  }
-
   private def validateMultipleChoice(propertyPublicId: String, values: Seq[PropertyValue]): Unit = {
     values.foreach { value =>
       if (value.propertyValue == "99") throw new IllegalArgumentException("Invalid value for property " + propertyPublicId)
@@ -79,35 +61,10 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
     }
   }
 
-  private def validateRequiredPropertyValues(requiredProperties: Set[Property], properties: Seq[SimpleProperty]): Unit = {
-    requiredProperties.foreach { requiredProperty =>
-      val values = properties.find(_.publicId == requiredProperty.publicId).get.values
-      requiredProperty.propertyType match {
-        case PropertyTypes.MultipleChoice => validateMultipleChoice(requiredProperty.publicId, values)
-        case _ => validateNotBlank(requiredProperty.publicId, values)
-      }
-    }
-  }
-
   private def eventBusMassTransitStop(asset: AssetWithProperties, municipalityName: String): EventBusMassTransitStop = {
     EventBusMassTransitStop(municipalityNumber = asset.municipalityNumber, municipalityName = municipalityName,
       nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat, bearing = asset.bearing, validityDirection = asset.validityDirection,
       created = asset.created, modified = asset.modified, propertyData = asset.propertyData)
-  }
-
-  def createAsset(assetTypeId: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Int, creator: String, properties: Seq[SimpleProperty]): AssetWithProperties = {
-    val definedProperties = properties.filterNot( simpleProperty => simpleProperty.values.isEmpty )
-    databaseTransaction.withDynTransaction {
-      val requiredProperties = OracleSpatialAssetDao.requiredProperties(assetTypeId)
-      validatePresenceOf(Set(AssetPropertyConfiguration.ValidityDirectionId) ++ requiredProperties.map(_.publicId), definedProperties)
-      validateRequiredPropertyValues(requiredProperties, properties)
-      if (!userCanModifyRoadLink(roadLinkId)) {
-        throw new IllegalArgumentException("User does not have write access to municipality")
-      }
-      val asset = OracleSpatialAssetDao.createAsset(assetTypeId, lon, lat, roadLinkId, bearing, creator, definedProperties)
-      eventbus.publish("asset:saved", eventBusMassTransitStop(asset, getMunicipalityName(roadLinkId)))
-      asset
-    }
   }
 
   def updateAsset(assetId: Long, position: Option[Position], properties: Seq[SimpleProperty]): AssetWithProperties = {

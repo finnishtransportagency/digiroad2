@@ -345,22 +345,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
   }
 
-  private def createAsset(roadLinkId: Long, properties: Map[String, String]): AssetWithProperties = {
-    val propertySeq = properties.map { case (key, value) => SimpleProperty(publicId = key, values = Seq(PropertyValue(value))) }.toSeq
-    assetProvider.createAsset(10, 0, 0, roadLinkId, 180, "CsvImportApiSpec", propertySeq)
-  }
-
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
 
   private def getAssetName(asset: AssetWithProperties): Option[String] = asset.getPropertyValue("nimi_suomeksi")
-
-  private def getAssetType(asset: AssetWithProperties): List[String] = {
-    asset.propertyData.find(property => property.publicId.equals("pysakin_tyyppi")).toList.flatMap { property =>
-      property.values.toList.map { value =>
-        value.propertyValue
-      }
-    }
-  }
 
   // TODO: Warn about nonused fields
   // TODO: Should vallu message be sent when assets are updated using csv?
