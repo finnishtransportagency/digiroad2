@@ -185,7 +185,7 @@ trait MassTransitStopService {
       propertyData = stop.propertyData)
   }
 
-  private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
       val persistedStop = getPersistedMassTransitStops(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
@@ -197,7 +197,7 @@ trait MassTransitStopService {
       val id = persistedStop.get.id
       OracleSpatialAssetDao.updateAssetLastModified(id, username)
       if (properties.nonEmpty) {
-        OracleSpatialAssetDao.updateAssetProperties(id, properties)
+        OracleSpatialAssetDao.updateAssetProperties(id, properties.toSeq)
       }
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
@@ -212,7 +212,7 @@ trait MassTransitStopService {
     }
   }
 
-  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Seq[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
   }
 
@@ -234,7 +234,7 @@ trait MassTransitStopService {
       insertAsset(assetId, nationalId, lon, lat, bearing, username, municipalityCode, floating)
       insertAssetLink(assetId, lrmPositionId)
       val defaultValues = OracleSpatialAssetDao.propertyDefaultValues(10).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-      OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues)
+      OracleSpatialAssetDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
       getPersistedStopWithPropertiesAndPublishEvent(assetId, municipalityCode, geometry)
     }
   }
