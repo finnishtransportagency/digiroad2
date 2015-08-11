@@ -328,7 +328,4 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())
-
-  // TODO: Warn about nonused fields
-  // TODO: Should vallu message be sent when assets are updated using csv?
 }
