@@ -15,7 +15,7 @@ import scala.collection.JavaConversions._
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.{StaticQuery => Q}
 
 case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
@@ -149,7 +149,7 @@ trait NumericalLimitOperations {
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
 
   private def updateNumericalLimitValue(id: Long, value: Int, username: String): Option[Long] = {
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption(valuePropertyId).get
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = updateNumberProperty(id, propertyId, value)
     if (assetsUpdated == 1 && propertiesUpdated == 1) {
@@ -186,7 +186,7 @@ trait NumericalLimitOperations {
   private def createNumericalLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
     val id = Sequences.nextPrimaryKeySeqValue
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).first(valuePropertyId)
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
     sqlu"""
@@ -219,7 +219,7 @@ trait NumericalLimitOperations {
   def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[NumericalLimit] = {
     withDynTransaction {
       val typeId = getByIdWithoutTransaction(id).get.typeId
-      Queries.updateAssetModified(id, username).execute()
+      Queries.updateAssetModified(id, username).execute
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id, roadLinkId)
       val links: Seq[(Long, Double, (Point, Point))] = OracleLinearAssetDao.getLinksWithLength(typeId, id).map { link =>
         val (roadLinkId, length, geometry) = link

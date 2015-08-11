@@ -104,12 +104,12 @@ object OracleSpatialAssetDao {
   private def updateAssetFloatingStatus(assetWithFloating: ({val id: Long; val floating: Boolean;}, Boolean)) = {
     val (asset, persistedFloating) = assetWithFloating
     if (persistedFloating != asset.floating) {
-      sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute()
+      sqlu"""update asset set floating = ${asset.floating} where id = ${asset.id}""".execute
     }
   }
 
   def getAssetById(assetId: Long): Option[AssetWithProperties] = {
-    val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).list(assetId).groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
+    val assetWithProperties = Q.query[Long, SingleAssetRow](assetWithPositionById).apply(assetId).list.groupBy(_.id).map(singleAssetRowToAssetWithProperties).headOption
     assetWithProperties.map(updateAssetFloatingStatus)
     assetWithProperties.map(_._1)
   }
@@ -165,7 +165,7 @@ object OracleSpatialAssetDao {
   }
 
   def removeAsset(assetId: Long): Unit = {
-    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).firstOption(assetId)
+    val optionalLrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(assetId).firstOption
     optionalLrmPositionId match {
       case Some(lrmPositionId) =>
         deleteAssetProperties(assetId)
@@ -202,7 +202,7 @@ object OracleSpatialAssetDao {
   }
 
   def updateAssetLastModified(assetId: Long, modifier: String) {
-    updateAssetModified(assetId, modifier).execute()
+    updateAssetModified(assetId, modifier).execute
   }
 
   private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
@@ -217,8 +217,8 @@ object OracleSpatialAssetDao {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
     else {
-      val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(property.publicId).getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
-      (Q.query[Long, String](propertyTypeByPropertyId).first(propertyId), Some(propertyId), property)
+      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
     }
   }
 
@@ -233,7 +233,7 @@ object OracleSpatialAssetDao {
   }
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
-    Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).list(assetTypeId).groupBy(_.propertyId).map { case (k, v) =>
+    Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).apply(assetTypeId).list.groupBy(_.propertyId).map { case (k, v) =>
       val row = v(0)
       EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value.toString, Some(r.displayValue))).toSeq)
     }.toSeq
@@ -242,11 +242,11 @@ object OracleSpatialAssetDao {
   private def updateAssetLocation(id: Long, lon: Double, lat: Double, roadLinkId: Long, bearing: Option[Int]) {
     val point = Point(lon, lat)
     val lrMeasure = RoadLinkService.getPointLRMeasure(roadLinkId, point)
-    val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).first(id)
+    val lrmPositionId = Q.query[Long, Long](assetLrmPositionId).apply(id).first
     val testId = RoadLinkService.getTestId(roadLinkId).getOrElse(roadLinkId)
     updateLRMeasure(lrmPositionId, testId, roadLinkId, lrMeasure, dynamicSession.conn)
     bearing match {
-      case Some(b) => updateAssetBearing(id, b).execute()
+      case Some(b) => updateAssetBearing(id, b).execute
       case None => // do nothing
     }
   }
@@ -256,19 +256,19 @@ object OracleSpatialAssetDao {
       case Text | LongText => {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.size == 0) {
-          deleteTextProperty(assetId, propertyId).execute()
+          deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute()
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
         }
       }
       case SingleChoice => {
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute()
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         }
       }
       case MultipleChoice => {
@@ -282,11 +282,11 @@ object OracleSpatialAssetDao {
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    Q.query[(Long, Long), Long](existsTextProperty).firstOption((assetId, propertyId)).isEmpty
+    Q.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    Q.query[(Long, Long), Long](existsSingleChoiceProperty).firstOption((assetId, propertyId)).isEmpty
+    Q.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def updateCommonAssetProperty(assetId: Long, propertyPublicId: String, propertyType: String, propertyValues: Seq[PropertyValue]) {
@@ -298,12 +298,12 @@ object OracleSpatialAssetDao {
           (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
         } match {
           case Some(propValues) => {
-            updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute()
+            updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
           }
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }
-      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue).execute()
+      case Text | LongText => updateCommonProperty(assetId, property.column, propertyValues.head.propertyValue).execute
       case Date => {
         val formatter = ISODateTimeFormat.dateOptionalTimeParser()
         val optionalDateTime = propertyValues.headOption match {
@@ -311,7 +311,7 @@ object OracleSpatialAssetDao {
           case Some(x) if x.propertyValue.trim.isEmpty => None
           case Some(x) => Some(formatter.parseDateTime(x.propertyValue))
         }
-        updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute()
+        updateCommonDateProperty(assetId, property.column, optionalDateTime, property.lrmPositionProperty).execute
       }
       case ReadOnlyText => {
         logger.debug("Ignoring read only text property in update: " + propertyPublicId)
@@ -321,30 +321,30 @@ object OracleSpatialAssetDao {
   }
 
   def deleteAssetProperty(assetId: Long, propertyPublicId: String) {
-    val propertyId = Q.query[String, Long](propertyIdByPublicId).firstOption(propertyPublicId).getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found, cannot delete"))
-    Q.query[Long, String](propertyTypeByPropertyId).first(propertyId) match {
-      case Text | LongText => deleteTextProperty(assetId, propertyId).execute()
-      case SingleChoice => deleteSingleChoiceProperty(assetId, propertyId).execute()
-      case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute()
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found, cannot delete"))
+    Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first match {
+      case Text | LongText => deleteTextProperty(assetId, propertyId).execute
+      case SingleChoice => deleteSingleChoiceProperty(assetId, propertyId).execute
+      case MultipleChoice => deleteMultipleChoiceProperty(assetId, propertyId).execute
       case t: String => throw new UnsupportedOperationException("Delete asset not supported for property type: " + t)
     }
   }
 
   def deleteAssetProperties(assetId: Long) {
-    deleteAssetTextProperties(assetId).execute()
-    deleteAssetSingleChoiceProperties(assetId).execute()
-    deleteAssetMultipleChoiceProperties(assetId).execute()
+    deleteAssetTextProperties(assetId).execute
+    deleteAssetSingleChoiceProperties(assetId).execute
+    deleteAssetMultipleChoiceProperties(assetId).execute
   }
 
   private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(_.propertyValue)
-    val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).list(assetId, propertyId)
+    val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)
     // remove values as necessary
     currentIdsAndValues.foreach {
       case (multipleChoiceId, enumValue) =>
         if (!newValues.contains(enumValue)) {
-          deleteMultipleChoiceValue(multipleChoiceId).execute()
+          deleteMultipleChoiceValue(multipleChoiceId).execute
         }
     }
     // add values as necessary
@@ -352,7 +352,7 @@ object OracleSpatialAssetDao {
       !currentValues.contains(_)
     }.foreach {
       v =>
-        insertMultipleChoiceValue(assetId, propertyId, v.toLong).execute()
+        insertMultipleChoiceValue(assetId, propertyId, v.toLong).execute
     }
   }
 

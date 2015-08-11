@@ -407,7 +407,7 @@ object Queries {
   }
 
   def collectedQuery[R](qc: QueryCollector)(implicit rconv: GetResult[R], pconv: SetParameter[IndexedSeq[Any]]): List[R] = {
-    Q.query[IndexedSeq[Any], R](qc.sql).list(qc.params)
+    Q.query[IndexedSeq[Any], R](qc.sql).apply(qc.params).list
   }
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {

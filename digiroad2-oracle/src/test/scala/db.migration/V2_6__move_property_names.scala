@@ -16,20 +16,20 @@ class V2_6__move_property_names extends JdbcMigration {
     Database.forDataSource(ds).withDynTransaction {
       val originalProps = sql"""
           select name_fi from property
-        """.as[String].list()
+        """.as[String].list
       originalProps.foreach {
         p =>
           val ls = LocalizationDao.insertLocalizedString(LocalizedString(Map(LocalizedString.LangFi -> p)))
           sqlu"""
           update property set name_localized_string_id = ${ls.id.get} where name_fi = ${p}
-        """.execute()
+        """.execute
       }
       sqlu"""
         alter table property drop column name_fi
-      """.execute()
+      """.execute
       sqlu"""
         alter table property drop column name_sv
-      """.execute()
+      """.execute
     }
   }
 }

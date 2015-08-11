@@ -55,30 +55,30 @@ object ManoeuvreService {
              update manoeuvre
              set valid_to = sysdate, modified_date = sysdate, modified_by = $username
              where id = $id
-          """.execute()
+          """.execute
     }
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first()
+      val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
       val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
       sqlu"""
              insert into manoeuvre(id, type, modified_date, modified_by, additional_info)
              values ($manoeuvreId, 2, sysdate, $userName, $additionalInfo)
-          """.execute()
+          """.execute
 
       val sourceRoadLinkId = manoeuvre.sourceRoadLinkId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $sourceRoadLinkId, $FirstElement)
-          """.execute()
+          """.execute
 
       val destRoadLinkId = manoeuvre.destRoadLinkId
       sqlu"""
              insert into manoeuvre_element(manoeuvre_id, road_link_id, element_type)
              values ($manoeuvreId, $destRoadLinkId, $LastElement)
-          """.execute()
+          """.execute
 
       addManoeuvreExceptions(manoeuvreId, manoeuvre.exceptions)
       manoeuvreId
@@ -98,7 +98,7 @@ object ManoeuvreService {
       val query = s"insert all " +
         exceptions.map { exception => s"into manoeuvre_exceptions (manoeuvre_id, exception_type) values ($manoeuvreId, $exception) "}.mkString +
         s"select * from dual"
-      Q.updateNA(query).execute()
+      Q.updateNA(query).execute
     }
   }
 
@@ -134,7 +134,7 @@ object ManoeuvreService {
   private def setManoeuvreExceptions(manoeuvreId: Long)(exceptions: Seq[Int]) = {
     sqlu"""
            delete from manoeuvre_exceptions where manoeuvre_id = $manoeuvreId
-        """.execute()
+        """.execute
     addManoeuvreExceptions(manoeuvreId, exceptions)
   }
 
@@ -143,7 +143,7 @@ object ManoeuvreService {
            update manoeuvre
            set modified_date = sysdate, modified_by = $username
            where id = $manoeuvreId
-        """.execute()
+        """.execute
   }
 
   private def setManoeuvreAdditionalInfo(manoeuvreId: Long)(additionalInfo: String) = {
@@ -151,6 +151,6 @@ object ManoeuvreService {
            update manoeuvre
            set additional_info = $additionalInfo
            where id = $manoeuvreId
-        """.execute()
+        """.execute
   }
 }

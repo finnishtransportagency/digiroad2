@@ -26,7 +26,7 @@ object SqlScriptRunner {
       stmts.foreach { stmt =>
         println("Executing: " + stmt)
         try {
-          (Q.u + stmt).execute()
+          (Q.u + stmt).execute
         } catch {
           case e: Exception => {
             e.printStackTrace

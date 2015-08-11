@@ -15,7 +15,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber and s.tyyppi = $typeId
         """
-      query.as[(Long, Long, Int, Int, Seq[Point])].iterator().map {
+      query.as[(Long, Long, Int, Int, Seq[Point])].iterator.map {
         case (id, roadLinkId, sideCode, value, geometry) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),
@@ -34,7 +34,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Int, Seq[Point], Int, Int, Int)].iterator().map {
+      query.as[(Long, Long, Int, Seq[Point], Int, Int, Int)].iterator.map {
         case (id, roadLinkId, sideCode, geometry, roadNumber, roadPartNumber, roadLaneNumber) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),
@@ -55,7 +55,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Int, Seq[Point], Int, String, String)].iterator().map {
+      query.as[(Long, Long, Int, Seq[Point], Int, String, String)].iterator.map {
         case (id, roadLinkId, sideCode, geometry, typeId, nameFi, nameSv) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),

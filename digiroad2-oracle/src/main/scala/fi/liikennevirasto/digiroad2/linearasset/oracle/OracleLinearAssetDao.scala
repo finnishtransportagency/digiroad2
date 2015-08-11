@@ -206,7 +206,7 @@ trait OracleLinearAssetDao {
         join asset_link al on a.ID = al.ASSET_ID
         join lrm_position lrm on lrm.id = al.POSITION_ID
         where a.id = $id
-    """.as[(Double, Double, SideCode)].first()
+    """.as[(Double, Double, SideCode)].first
   }
   
   def createSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,  municipalityValidation: (Int) => Unit): Option[Long] = {
@@ -218,7 +218,7 @@ trait OracleLinearAssetDao {
     val (startMeasure, endMeasure) = linkMeasures
     val speedLimitId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val sideCodeValue = sideCode.value
 
     val insertAll =
@@ -237,7 +237,7 @@ trait OracleLinearAssetDao {
         values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
       SELECT * FROM DUAL
       """
-    Q.updateNA(insertAll).execute()
+    Q.updateNA(insertAll).execute
 
     speedLimitId
   }
@@ -262,7 +262,7 @@ trait OracleLinearAssetDao {
       where asset_id = $sourceId and position_id in (
         select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in ($roadLinks))
     """
-    Q.update[Seq[Long]](sql).list(roadLinkIds)
+    Q.update[Seq[Long]](sql).apply(roadLinkIds).list
   }
 
   def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
@@ -273,7 +273,7 @@ trait OracleLinearAssetDao {
         asset_id = $targetId
       where asset_id = $sourceId and position_id in (
         select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
-    """.execute()
+    """.execute
   }
 
   def updateLinkStartAndEndMeasures(id: Long,
@@ -292,7 +292,7 @@ trait OracleLinearAssetDao {
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
           where a.id = $id and lrm.road_link_id = $roadLinkId)
-    """.execute()
+    """.execute
   }
   
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
@@ -308,7 +308,7 @@ trait OracleLinearAssetDao {
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
           where a.id = $id)
-    """.execute()
+    """.execute
   }
 
   def updateSideCode(id: Long, sideCode: SideCode): Unit = {
@@ -323,7 +323,7 @@ trait OracleLinearAssetDao {
           join asset_link al on a.ID = al.ASSET_ID
           join lrm_position lrm on lrm.id = al.POSITION_ID
           where a.id = $id)
-    """.execute()
+    """.execute
   }
 
 
@@ -339,7 +339,7 @@ trait OracleLinearAssetDao {
         (mmlId, length, GeometryUtils.geometryEndpoints(geometry))
       }.get
 
-    Queries.updateAssetModified(id, username).execute()
+    Queries.updateAssetModified(id, username).execute
     val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
     updateMValues(id, existingLinkMeasures)
@@ -361,7 +361,7 @@ trait OracleLinearAssetDao {
     }
 
     validateMunicipalities(getLinksWithLengthFromVVH(20, id))
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).firstOption("rajoitus").get
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first
     if (assetsUpdated == 1 && propertiesUpdated == 1) {
@@ -375,7 +375,7 @@ trait OracleLinearAssetDao {
   def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
-        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute()
+        sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute
       }
     }
   }

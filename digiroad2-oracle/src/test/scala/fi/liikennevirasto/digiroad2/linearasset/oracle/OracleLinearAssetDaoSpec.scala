@@ -49,7 +49,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
-    sqlu"""delete from temp_id""".execute()
+    sqlu"""delete from temp_id""".execute
     result
   }
 

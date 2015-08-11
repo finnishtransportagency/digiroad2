@@ -13,7 +13,7 @@ object PointAssetService {
          select p.palv_tyyppi, p.palv_lisatieto, p.palv_rautatieaseman_tyyppi, p.palv_paikkojen_lukumaara, p.palv_lepoalue_tyyppi, to_2d(p.shape), p.dr1_oid, p.nimi_fi
            from palvelupisteet p
         """
-      query.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].iterator().map {
+      query.as[(Int, Option[String], Option[Int], Option[Int], Option[Int], Seq[Point], Long, Option[String])].iterator.map {
         case (serviceType, extraInfo, railwayStationType, parkingPlaceCount, restAreaType, geometry, id, name) =>
           Map("id" -> id, "point" -> geometry.head, "serviceType" -> serviceType, "extraInfo" -> extraInfo, "railwayStationType" -> railwayStationType, "parkingPlaceCount" -> parkingPlaceCount, "restAreaType" -> restAreaType, "name" -> name)
       }.toSeq
@@ -28,7 +28,7 @@ object PointAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber and s.tyyppi = $typeId
         """
-      query.as[(Long, Long, Seq[Point], Int)].iterator().map {
+      query.as[(Long, Long, Seq[Point], Int)].iterator.map {
         case (id, roadLinkId, geometry, sideCode) => Map("id" -> id, "point" -> geometry.head, "sideCode" -> sideCode)
       }.toSeq
     }
@@ -42,7 +42,7 @@ object PointAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Seq[Point], Int, String)].iterator().map {
+      query.as[(Long, Long, Seq[Point], Int, String)].iterator.map {
         case (id, roadLinkId, geometry, sideCode, infoText) => Map("id" -> id, "point" -> geometry.head, "sideCode" -> sideCode, "infoText" -> infoText)
       }.toSeq
     }
@@ -56,7 +56,7 @@ object PointAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Seq[Point], Int, Int, String, String)].iterator().map {
+      query.as[(Long, Long, Seq[Point], Int, Int, String, String)].iterator.map {
         case (id, roadLinkId, geometry, sideCode, props, nameFi, nameSv) =>
           Map("id" -> id, "point" -> geometry.head,
               "sideCode" -> sideCode, "props" -> props,
