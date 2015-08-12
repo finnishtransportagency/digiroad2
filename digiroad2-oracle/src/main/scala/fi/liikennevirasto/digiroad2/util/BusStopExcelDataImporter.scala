@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.util
 
 import javax.sql.DataSource
 import com.jolbox.bonecp.BoneCPDataSource
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q}
 import Database.dynamicSession
 import Q.interpolation
 import org.apache.commons.lang3.StringUtils.{trimToEmpty, isBlank}

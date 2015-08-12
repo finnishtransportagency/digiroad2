@@ -4,7 +4,7 @@ import _root_.oracle.spatial.geometry.JGeometry
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
-import scala.slick.jdbc.{GetResult, PositionedResult}
+import slick.jdbc.{PositionedResult, GetResult}
 
 object ConversionDatabase {
   implicit object GetPointSeq extends GetResult[Seq[Point]] {

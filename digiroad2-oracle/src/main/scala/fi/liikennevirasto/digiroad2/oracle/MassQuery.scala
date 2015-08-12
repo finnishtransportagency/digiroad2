@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.oracle
 
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 object MassQuery {
   def withIds[T](ids: Set[Long])(f: String => T): T = {

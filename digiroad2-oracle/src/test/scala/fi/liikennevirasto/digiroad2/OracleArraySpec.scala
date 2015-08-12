@@ -4,9 +4,9 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 //import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
 import scala.collection.JavaConversions._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-//import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+//import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 
 class OracleArraySpec extends FunSuite with Matchers with BeforeAndAfter {

@@ -10,8 +10,8 @@ object Digiroad2Build extends Build {
   val Digiroad2Name = "digiroad2"
   val Digiroad2GeoName = "digiroad2-geo"
   val Version = "0.1.0-SNAPSHOT"
-  val ScalaVersion = "2.10.2"
-  val ScalatraVersion = "2.2.1"
+  val ScalaVersion = "2.11.7"
+  val ScalatraVersion = "2.3.1"
   val env = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "dev"
   val testEnv = if (System.getProperty("digiroad2.env") != null) System.getProperty("digiroad2.env") else "test"
   lazy val geoJar = Project (
@@ -32,7 +32,7 @@ object Digiroad2Build extends Build {
         "joda-time" % "joda-time" % "2.2",
         "com.typesafe.akka" %% "akka-actor" % "2.3.2",
         "org.geotools" % "gt-graph" % "13.1",
-        "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
+        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
       )
     )
   )
@@ -54,12 +54,12 @@ object Digiroad2Build extends Build {
         "org.apache.commons" % "commons-lang3" % "3.2",
         "commons-codec" % "commons-codec" % "1.9",
         "com.jolbox" % "bonecp" % "0.8.0.RELEASE",
-        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
-        "com.typesafe.slick" %% "slick" % "2.0.0",
-        "org.json4s"   %% "json4s-jackson" % "3.2.4",
+        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
+        "com.typesafe.slick" %% "slick" % "3.0.0",
+        "org.json4s"   %% "json4s-jackson" % "3.2.11",
         "org.joda" % "joda-convert" % "1.2",
         "joda-time" % "joda-time" % "2.2",
-        "com.github.tototoshi" %% "slick-joda-mapper" % "1.0.0",
+        "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
         "com.github.tototoshi" %% "scala-csv" % "1.0.0",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
@@ -76,6 +76,7 @@ object Digiroad2Build extends Build {
     file("."),
     settings = Defaults.defaultSettings
       ++ assemblySettings
+      ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
       ++ ScalatraPlugin.scalatraWithJRebel ++ Seq(
       organization := Organization,
       name := Digiroad2Name,
@@ -90,8 +91,8 @@ object Digiroad2Build extends Build {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
-        "org.json4s"   %% "json4s-jackson" % "3.2.4",
-        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+        "org.json4s"   %% "json4s-jackson" % "3.2.11",
+        "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
@@ -99,8 +100,10 @@ object Digiroad2Build extends Build {
         "commons-io" % "commons-io" % "2.4",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.apache.httpcomponents" % "httpclient" % "4.3.3",
-        "org.eclipse.jetty" % "jetty-webapp" % "8.1.14.v20131031" % "container;compile",
-        "org.eclipse.jetty" % "jetty-servlets" % "8.1.14.v20131031" % "container;compile",
+        "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "container;compile",
+        "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "container;compile",
+        "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "container;compile",
+        "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,

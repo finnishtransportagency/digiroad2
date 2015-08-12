@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.{RoadLinkService, Digiroad2Context}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 
 object UpdateIncompleteLinkList {
   def runUpdate(): Unit = {

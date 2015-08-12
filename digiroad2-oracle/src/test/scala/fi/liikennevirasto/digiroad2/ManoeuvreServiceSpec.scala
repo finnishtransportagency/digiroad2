@@ -4,17 +4,17 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.StaticQuery.interpolation
 
 class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   after {
     Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      sqlu"""delete from manoeuvre_element where manoeuvre_id in (select id from manoeuvre where modified_by = 'unittest')""".execute()
-      sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute()
+      sqlu"""delete from manoeuvre_element where manoeuvre_id in (select id from manoeuvre where modified_by = 'unittest')""".execute
+      sqlu"""delete from manoeuvre where modified_by = 'unittest'""".execute
     }
   }
 

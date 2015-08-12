@@ -104,6 +104,6 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
     val userConfiguration = new UserConfigurationApi()
     userConfiguration.parseInputToInts(Seq(" "), 0) shouldBe empty
     userConfiguration.parseInputToInts(Seq("1, 2,3,"), 0).get should contain only (1, 2, 3)
-    userConfiguration.parseInputToInts(Seq("1, 2,3,"), 1) mustEqual None
+    userConfiguration.parseInputToInts(Seq("1, 2,3,"), 1) shouldEqual None
   }
 }

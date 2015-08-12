@@ -11,10 +11,10 @@ import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -25,7 +25,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
-    sqlu"""delete from temp_id""".execute()
+    sqlu"""delete from temp_id""".execute
     result
   }
 
@@ -140,8 +140,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         VVHRoadlink(111l, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.CycleOrPedestrianPath)))
       val service = new TestService(mockVVHClient)
 
-      sqlu"""delete from incomplete_link where municipality_code = 91""".execute()
-      sqlu"""insert into incomplete_link(mml_id, municipality_code) values(456, 91)""".execute()
+      sqlu"""delete from incomplete_link where municipality_code = 91""".execute
+      sqlu"""insert into incomplete_link(mml_id, municipality_code) values(456, 91)""".execute
       val roadLinks = service.getRoadLinksFromVVH(boundingBox)
 
       roadLinks.find(_.mmlId == 123).get.functionalClass should be(6)
@@ -192,7 +192,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
       val service = new TestService(mockVVHClient)
 
-      sqlu"""insert into incomplete_link (mml_id, municipality_code, administrative_class) values (1, 91, 1)""".execute()
+      sqlu"""insert into incomplete_link (mml_id, municipality_code, administrative_class) values (1, 91, 1)""".execute
 
       simulateQuery { service.updateProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, "test", _ => ()) }
       simulateQuery { service.updateProperties(1, 4, UnknownLinkType, TrafficDirection.BothDirections, "test", _ => ()) }

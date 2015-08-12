@@ -12,13 +12,13 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, EventBusMa
 import org.joda.time.LocalDate
 import org.mockito.Mockito.verify
 import org.scalatest._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.language.implicitConversions
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 import scala.util.Random
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.StaticQuery.interpolation
 
 
 class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeAndAfter {

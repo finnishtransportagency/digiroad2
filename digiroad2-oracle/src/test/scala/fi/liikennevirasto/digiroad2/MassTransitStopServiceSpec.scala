@@ -8,10 +8,10 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers {
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
@@ -67,7 +67,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithCleanup {
       // TODO: Remove side effects from tests so that floating state is not set during test execution and remove the fix below
       // Make sure asset is not floating
-      sqlu"""update asset set floating = 0 where id = 300000""".execute()
+      sqlu"""update asset set floating = 0 where id = 300000""".execute
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)))
       stops.map(_.id) should be (Seq(300000))
     }
@@ -104,7 +104,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   test("Persist mass transit stop floating status change") {
     runWithCleanup {
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
-      val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption()
+      val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption
       floating should be(Some(true))
     }
   }
@@ -131,7 +131,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
-      """.as[Long].firstOption()
+      """.as[Long].firstOption
       mmlId should be(Some(388554364l))
     }
   }
@@ -145,7 +145,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
-      """.as[Option[Int]].first()
+      """.as[Option[Int]].first
       bearing should be(Some(90))
     }
   }
@@ -159,7 +159,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             join asset_link al on al.asset_id = a.id
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = 300000
-      """.as[Int].firstOption()
+      """.as[Int].firstOption
       municipality should be(Some(91))
     }
   }
@@ -170,7 +170,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val modifier = sql"""
             select a.modified_by from asset a
             where a.id = 300000
-      """.as[String].firstOption()
+      """.as[String].firstOption
       modifier should be(Some("user"))
     }
   }
@@ -184,7 +184,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
             select v.value_fi from text_property_value v
             join property p on v.property_id = p.id
             where v.asset_id = 300000 and p.public_id = 'nimi_suomeksi'
-      """.as[String].firstOption()
+      """.as[String].firstOption
       modifier should be(Some("New name"))
     }
   }
@@ -196,7 +196,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
       val floating = sql"""
             select a.floating from asset a
             where a.id = 300002
-      """.as[Int].firstOption()
+      """.as[Int].firstOption
       floating should be(Some(0))
     }
   }

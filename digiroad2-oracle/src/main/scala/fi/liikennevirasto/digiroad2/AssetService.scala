@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 

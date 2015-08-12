@@ -7,7 +7,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle, TrafficDirection, LinkType}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 
-import scala.slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
+import slick.driver.JdbcDriver.backend.{Database, DatabaseDef}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.oracle.{OracleSpatialAssetDao, Sequences}
@@ -19,11 +19,11 @@ import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 
-import scala.slick.util.CloseableIterator
+import slick.util.CloseableIterator
 
 object AssetDataImporter {
 
@@ -143,7 +143,7 @@ class AssetDataImporter {
     queries.foreach { query =>
       val selectStartTime = System.currentTimeMillis()
       val segments = dataSet.database().withDynSession {
-        query.as[(Int, String)].list()
+        query.as[(Int, String)].list
       }
       Database.forDataSource(ds).withDynSession {
         val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'dr1_conversion')")
@@ -234,7 +234,7 @@ class AssetDataImporter {
          where tyyppi = $sourceTypeId
        """
     val numericalLimitLinks: Seq[(Long, Long, Int, Double, Double, Int)] = database.withDynSession {
-      query.as[(Long, Long, Int, Double, Double, Int)].list()
+      query.as[(Long, Long, Int, Double, Double, Int)].list
     }
     val numericalLimits: Map[Long, Seq[(Long, Long, Int, Double, Double, Int)]] = numericalLimitLinks.groupBy(_._1)
     Database.forDataSource(ds).withDynTransaction {
@@ -290,7 +290,7 @@ class AssetDataImporter {
           from kaantymismaarays
         """
     val manoeuvres: Seq[(Long, Int, Long, Int)] = database.withDynSession {
-      query.as[(Long, Int, Long, Int)].list()
+      query.as[(Long, Int, Long, Int)].list
     }
     Database.forDataSource(ds).withDynTransaction {
       manoeuvres.foreach { manoeuvre =>
@@ -298,7 +298,7 @@ class AssetDataImporter {
         sqlu"""
           insert into manoeuvre (id, type, road_link_id, element_type, modified_by)
           values ($id, $manoeuvreType, $roadLinkId, $elementType, 'dr1_conversion')
-          """.execute()
+          """.execute
       }
     }
   }
@@ -345,7 +345,7 @@ class AssetDataImporter {
   def importMMLIdsOnMassTransitStops(conversionDB: DatabaseDef) {
     Database.forDataSource(ds).withSession { dbSession =>
       conversionDB.withSession { conversionSession =>
-        val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator()(dbSession)
+        val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator(dbSession)
         municipalityCodes.foreach { municipalityCode =>
           println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
           val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
@@ -354,22 +354,22 @@ class AssetDataImporter {
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = 10 and a.municipality_code = $municipalityCode"""
-              .as[(Long, Long, Option[Long], Option[Long])].iterator()(dbSession)
+              .as[(Long, Long, Option[Long], Option[Long])].iterator(dbSession)
           val mmlIds: CloseableIterator[(Long, Long, Option[Long])] =
             roadLinkIds.map { roadLinkId =>
               val (assetId, lrmId, testRoadLinkId, productionRoadLinkId) = roadLinkId
               val mmlId: Option[Long] = (testRoadLinkId, productionRoadLinkId) match {
-                case (_, Some(prodId)) => sql"""select mml_id from tielinkki_ctas where dr1_id = $prodId""".as[Long].firstOption()(conversionSession)
-                case (Some(testId), None) => sql"""select mml_id from tielinkki where objectid = $testId""".as[Long].firstOption()(conversionSession)
+                case (_, Some(prodId)) => sql"""select mml_id from tielinkki_ctas where dr1_id = $prodId""".as[Long].firstOption(conversionSession)
+                case (Some(testId), None) => sql"""select mml_id from tielinkki where objectid = $testId""".as[Long].firstOption(conversionSession)
                 case _ => None
               }
               (assetId, lrmId, mmlId)
             }
           dbSession.withTransaction {
             mmlIds.foreach { case (assetId, lrmId, mmlId) =>
-              sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
+              sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute(dbSession)
               if (mmlId.isEmpty) {
-                sqlu"""update asset set floating = 1 where id = $assetId""".execute()(dbSession)
+                sqlu"""update asset set floating = 1 where id = $assetId""".execute(dbSession)
               }
             }
           }
@@ -387,19 +387,19 @@ class AssetDataImporter {
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = $assetTypeId"""
-            .as[(Long, Option[Long])].iterator()(dbSession)
+            .as[(Long, Option[Long])].iterator(dbSession)
         val mmlIds: CloseableIterator[(Long, Option[Long])] =
           roadLinkIds.map { roadLink =>
             val (lrmId, roadLinkId) = roadLink
             val mmlId: Option[Long] = roadLinkId match {
-              case Some(dr1Id) => sql"""select mml_id from tielinkki_ctas where dr1_id = $dr1Id""".as[Long].firstOption()(conversionSession)
+              case Some(dr1Id) => sql"""select mml_id from tielinkki_ctas where dr1_id = $dr1Id""".as[Long].firstOption(conversionSession)
               case _ => None
             }
             (lrmId, mmlId)
           }
         dbSession.withTransaction {
           mmlIds.foreach { case (lrmId, mmlId) =>
-            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute()(dbSession)
+            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute(dbSession)
           }
         }
       }
@@ -412,7 +412,7 @@ class AssetDataImporter {
         select min(a.id), max(a.id)
         from asset a
         where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
-      """.as[(Int, Int)].first()
+      """.as[(Int, Int)].first
     }
   }
 

@@ -9,9 +9,9 @@ import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers, Tag}
 import org.scalatest.mock.MockitoSugar
 
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
@@ -49,7 +49,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def simulateQuery[T](f: => T): T = {
     val result = f
-    sqlu"""delete from temp_id""".execute()
+    sqlu"""delete from temp_id""".execute
     result
   }
 

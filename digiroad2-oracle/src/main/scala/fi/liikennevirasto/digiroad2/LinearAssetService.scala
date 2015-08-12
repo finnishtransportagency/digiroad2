@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.ConversionDatabase._
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object LinearAssetService {
   def getByMunicipality(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
@@ -15,7 +15,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber and s.tyyppi = $typeId
         """
-      query.as[(Long, Long, Int, Int, Seq[Point])].iterator().map {
+      query.as[(Long, Long, Int, Int, Seq[Point])].iterator.map {
         case (id, roadLinkId, sideCode, value, geometry) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),
@@ -34,7 +34,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Int, Seq[Point], Int, Int, Int)].iterator().map {
+      query.as[(Long, Long, Int, Seq[Point], Int, Int, Int)].iterator.map {
         case (id, roadLinkId, sideCode, geometry, roadNumber, roadPartNumber, roadLaneNumber) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),
@@ -55,7 +55,7 @@ object LinearAssetService {
            join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
            where t.kunta_nro = $municipalityNumber
         """
-      query.as[(Long, Long, Int, Seq[Point], Int, String, String)].iterator().map {
+      query.as[(Long, Long, Int, Seq[Point], Int, String, String)].iterator.map {
         case (id, roadLinkId, sideCode, geometry, typeId, nameFi, nameSv) =>
           Map(
             "id" -> (id.toString + "-" + roadLinkId.toString),

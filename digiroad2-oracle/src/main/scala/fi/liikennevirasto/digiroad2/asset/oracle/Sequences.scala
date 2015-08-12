@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
 object Sequences {

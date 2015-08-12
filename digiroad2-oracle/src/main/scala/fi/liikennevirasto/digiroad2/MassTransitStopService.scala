@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 trait FloatingStop {
   val id: Long
@@ -64,7 +64,7 @@ trait MassTransitStopService {
         case _ => allFloatingAssetsQuery
       }
 
-      StaticQuery.queryNA[(Long, String)](sql).list()
+      StaticQuery.queryNA[(Long, String)](sql).list
         .groupBy(_._2)
         .mapValues(_.map(_._1))
     }
@@ -140,7 +140,7 @@ trait MassTransitStopService {
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
-    val rows = StaticQuery.queryNA[MassTransitStopRow](query).iterator().toSeq
+    val rows = StaticQuery.queryNA[MassTransitStopRow](query).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
@@ -304,7 +304,7 @@ trait MassTransitStopService {
 
   def mandatoryProperties(): Map[String, String] = {
     val requiredProperties = withDynSession {
-      sql"""select public_id, property_type from property where asset_type_id = 10 and required = 1""".as[(String, String)].iterator().toMap
+      sql"""select public_id, property_type from property where asset_type_id = 10 and required = 1""".as[(String, String)].iterator.toMap
     }
     val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
@@ -452,6 +452,6 @@ trait MassTransitStopService {
       """.execute
   }
 
-  private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute()
+  private def updateFloating(id: Long, floating: Boolean) = sqlu"""update asset set floating = $floating where id = $id""".execute
 }
 

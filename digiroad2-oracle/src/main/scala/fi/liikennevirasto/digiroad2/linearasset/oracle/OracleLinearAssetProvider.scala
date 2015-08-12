@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q}
 
 // FIXME:
 // - rename to speed limit service

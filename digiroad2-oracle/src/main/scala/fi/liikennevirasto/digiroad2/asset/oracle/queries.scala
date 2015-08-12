@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
@@ -407,7 +407,7 @@ object Queries {
   }
 
   def collectedQuery[R](qc: QueryCollector)(implicit rconv: GetResult[R], pconv: SetParameter[IndexedSeq[Any]]): List[R] = {
-    Q.query[IndexedSeq[Any], R](qc.sql).list(qc.params)
+    Q.query[IndexedSeq[Any], R](qc.sql).apply(qc.params).list
   }
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {

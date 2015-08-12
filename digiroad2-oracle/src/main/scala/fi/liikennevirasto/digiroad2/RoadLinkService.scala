@@ -11,16 +11,16 @@ import org.slf4j.LoggerFactory
 import com.newrelic.api.agent.NewRelic
 
 import scala.collection.JavaConversions._
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 
 case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[VVHRoadLinkWithProperties], incompleteLinks: Seq[IncompleteLink])
 
-@deprecated("Use VVHRoadLinkWithProperties instead")
+@deprecated("Use VVHRoadLinkWithProperties instead", "")
 case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],
                             length: Double, administrativeClass: AdministrativeClass,
                             functionalClass: Int, trafficDirection: TrafficDirection,
@@ -45,7 +45,7 @@ trait RoadLinkService {
            from tielinkki_ctas
            where dr1_id = $id
         """
-      query.as[(Long, Int, Seq[Point], AdministrativeClass)].firstOption().map {
+      query.as[(Long, Int, Seq[Point], AdministrativeClass)].firstOption.map {
         case (roadLinkId, municipalityNumber, geometry, roadLinkType) => (roadLinkId, municipalityNumber, geometry.headOption, roadLinkType)
       }
     }
@@ -60,7 +60,7 @@ trait RoadLinkService {
            on prod.mml_id = test.mml_id
            where test.objectid = $testId
         """
-      query.as[(Long, Int, Seq[Point], AdministrativeClass)].list() match {
+      query.as[(Long, Int, Seq[Point], AdministrativeClass)].list match {
         case List(productionLink) => Some((productionLink._1, productionLink._2, productionLink._3.headOption, productionLink._4))
         case _ => None
       }
@@ -187,7 +187,7 @@ trait RoadLinkService {
                set #$column = $value,
                    modified_date = current_timestamp,
                    modified_by = $username
-               where mml_id = $mmlId""".execute()
+               where mml_id = $mmlId""".execute
     }
   }
 
@@ -200,13 +200,13 @@ trait RoadLinkService {
         sqlu"""insert into #$table (mml_id, #$column, modified_by)
                  select $mmlId, $value, $username
                  from dual
-                 where not exists (select * from #$table where mml_id = $mmlId)""".execute()
+                 where not exists (select * from #$table where mml_id = $mmlId)""".execute
       case (None, Some(vvhValue)) =>
         if (vvhValue != value)
           sqlu"""insert into #$table (mml_id, #$column, modified_by)
                    select $mmlId, $value, $username
                    from dual
-                   where not exists (select * from #$table where mml_id = $mmlId)""".execute()
+                   where not exists (select * from #$table where mml_id = $mmlId)""".execute
     }
   }
 
@@ -228,19 +228,19 @@ trait RoadLinkService {
   private def fetchTrafficDirections(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select t.mml_id, t.traffic_direction, t.modified_date, t.modified_by
             from traffic_direction t
-            join #$idTableName i on i.id = t.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = t.mml_id""".as[(Long, Int, DateTime, String)].list
   }
 
   private def fetchFunctionalClasses(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select f.mml_id, f.functional_class, f.modified_date, f.modified_by
             from functional_class f
-            join #$idTableName i on i.id = f.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = f.mml_id""".as[(Long, Int, DateTime, String)].list
   }
 
   private def fetchLinkTypes(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
     sql"""select l.mml_id, l.link_type, l.modified_date, l.modified_by
             from link_type l
-            join #$idTableName i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list()
+            join #$idTableName i on i.id = l.mml_id""".as[(Long, Int, DateTime, String)].list
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
@@ -289,7 +289,7 @@ trait RoadLinkService {
 
   def getRoadLinkMmlId(id: Long): Long = {
     Database.forDataSource(dataSource).withDynTransaction {
-      sql"""select mml_id from tielinkki_ctas where dr1_id = $id""".as[Long].first()
+      sql"""select mml_id from tielinkki_ctas where dr1_id = $id""".as[Long].first
     }
   }
 
@@ -303,7 +303,7 @@ trait RoadLinkService {
               from tielinkki_ctas
               where $municipalityFilter $boundingBoxFilter
       """
-      Q.queryNA[BasicRoadLink](query).iterator().toSeq
+      Q.queryNA[BasicRoadLink](query).iterator.toSeq
     }
     adjustedRoadLinks(roadLinks)
   }
@@ -323,7 +323,7 @@ trait RoadLinkService {
   }
 
   protected def removeIncompleteness(mmlId: Long) = {
-    sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute()
+    sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute
   }
 
   def updateRoadLinkChanges(roadLinkChangeSet: RoadLinkChangeSet): Unit = {
@@ -347,7 +347,7 @@ trait RoadLinkService {
       withDynTransaction {
         sqlu"""insert into incomplete_link(mml_id, municipality_code, administrative_class)
                  select ${incompleteLink.mmlId}, ${incompleteLink.municipalityCode}, ${incompleteLink.administrativeClass.value} from dual
-                 where not exists (select * from incomplete_link where mml_id = ${incompleteLink.mmlId})""".execute()
+                 where not exists (select * from incomplete_link where mml_id = ${incompleteLink.mmlId})""".execute
       }
     }
     incompleteLinks.foreach(setIncompleteness)
@@ -411,7 +411,7 @@ trait RoadLinkService {
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
     Database.forDataSource(dataSource).withDynTransaction {
       val query = s"""select dr1_id, to_2d(shape) from tielinkki_ctas where kunta_nro = $municipality"""
-      Q.queryNA[(Long, Seq[Point])](query).iterator().toSeq
+      Q.queryNA[(Long, Seq[Point])](query).iterator.toSeq
     }
   }
 
@@ -421,7 +421,7 @@ trait RoadLinkService {
         select dr1_id, mml_id
           from tielinkki_ctas
           where kunta_nro = $municipality
-        """.as[(Long, Long)].list()
+        """.as[(Long, Long)].list
     }
   }
 
@@ -440,7 +440,7 @@ trait RoadLinkService {
         select dr1_id, mml_id, to_2d(shape)
         from tielinkki_ctas
         where (#$boundingBoxFilter or #$boundingBoxFilter2) and linkkityyppi not in (8, 9, 21)
-      """.as[(Long, Long, Seq[Point])].iterator().toSeq
+      """.as[(Long, Long, Seq[Point])].iterator.toSeq
       }
       roadLinks.filterNot(_._1 == id).filter(roadLink => {
         val (_, _, geometry) = roadLink
@@ -519,7 +519,7 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
         case _ => incompleteLinksQuery
       }
 
-      Q.queryNA[(Long, String, Int)](sql).list()
+      Q.queryNA[(Long, String, Int)](sql).list
         .map(toIncompleteLink)
         .groupBy(_.municipality)
         .mapValues { _.groupBy(_.administrativeClass)

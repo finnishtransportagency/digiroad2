@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.user.oracle
 
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult}
+import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult}
 import Database.dynamicSession
 import Q.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -38,14 +38,14 @@ class OracleUserProvider extends UserProvider {
 
   def saveUser(user: User): User = {
     Database.forDataSource(ds).withDynSession {
-      sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute()
+      sqlu"""update service_user set configuration = ${write(user.configuration)} where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }
   }
 
   def deleteUser(username: String) = {
     Database.forDataSource(ds).withDynSession {
-      sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute()
+      sqlu"""delete from service_user where lower(username) = ${username.toLowerCase}""".execute
     }
   }
 }

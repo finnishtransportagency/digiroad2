@@ -5,12 +5,11 @@ import java.sql.Connection
 import fi.liikennevirasto.digiroad2.ConversionDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import org.joda.time.DateTime
-import scala.slick.direct.AnnotationMapper.column
-import scala.slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
+import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import fi.liikennevirasto.digiroad2.asset.oracle.{LocalizationDao, OracleSpatialAssetDao, Queries}
-import scala.slick.jdbc.StaticQuery
+import slick.jdbc.StaticQuery
 import Q.interpolation
-import scala.slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 
 object RoadLinkDataImporter {

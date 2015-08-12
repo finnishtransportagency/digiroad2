@@ -9,8 +9,8 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.user.Configuration
 import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import fi.liikennevirasto.digiroad2.DummyEventBus
-import scala.slick.driver.JdbcDriver.backend.Database
-import scala.slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   val passThroughTransaction = new DatabaseTransaction {
