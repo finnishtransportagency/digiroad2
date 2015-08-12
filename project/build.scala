@@ -113,6 +113,7 @@ object Digiroad2Build extends Build {
 
   lazy val gatling = project.in(file("digiroad2-gatling"))
     .enablePlugins(GatlingPlugin)
+    .settings(scalaVersion := ScalaVersion)
     .settings(libraryDependencies ++= Seq(
     "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
     "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
