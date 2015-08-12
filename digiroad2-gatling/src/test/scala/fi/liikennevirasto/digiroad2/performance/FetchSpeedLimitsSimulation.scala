@@ -5,7 +5,7 @@ import io.gatling.http.Predef._
 
 class FetchSpeedLimitsSimulation extends Simulation {
   val httpConf = http
-    .baseURL("http://10.129.47.148:8080/digiroad/api/")
+    .baseURL(TestConfiguration.apiUrl)
     .header("Cookie", "testusername=test2")
 
   val scn = scenario("Fetch speed limits by bounding box on maximum zoom level")
