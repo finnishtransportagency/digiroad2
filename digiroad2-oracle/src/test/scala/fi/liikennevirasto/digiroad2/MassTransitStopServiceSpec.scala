@@ -67,7 +67,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     runWithCleanup {
       // TODO: Remove side effects from tests so that floating state is not set during test execution and remove the fix below
       // Make sure asset is not floating
-      sqlu"""update asset set floating = 0 where id = 300000""".execute()
+      sqlu"""update asset set floating = 0 where id = 300000""".execute
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)))
       stops.map(_.id) should be (Seq(300000))
     }
