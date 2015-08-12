@@ -24,15 +24,15 @@ trait DigiroadServer {
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     context.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
     server.setHandler(context)
-
     server.start()
     server.join()
   }
 }
 
 class NLSProxyServlet extends ProxyServlet {
-  protected def proxyHttpURI(req: HttpServletRequest, uri: String): HttpURI = {
-    new HttpURI("http://karttamoottori.maanmittauslaitos.fi"
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    val uri = req.getRequestURI
+    java.net.URI.create("http://karttamoottori.maanmittauslaitos.fi"
       + uri.replaceFirst("/digiroad", ""))
   }
 
