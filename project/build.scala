@@ -1,3 +1,4 @@
+import io.gatling.sbt.GatlingPlugin
 import sbt._
 import sbt.Keys._
 import org.scalatra.sbt._
@@ -103,13 +104,18 @@ object Digiroad2Build extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-servlets" % "9.2.10.v20150310" % "container;compile",
         "org.eclipse.jetty" % "jetty-proxy" % "9.2.10.v20150310" % "container;compile",
-        "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv
     )
   ) dependsOn(geoJar, oracleJar) aggregate(geoJar, oracleJar)
+
+  lazy val gatling = project.in(file("digiroad2-gatling"))
+    .enablePlugins(GatlingPlugin)
+    .settings(libraryDependencies ++= Seq(
+    "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.1.7" % "test",
+    "io.gatling" % "gatling-test-framework" % "2.1.7" % "test"))
 
   val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq(
     mainClass in assembly := Some("fi.liikennevirasto.digiroad2.ProductionServer"),
