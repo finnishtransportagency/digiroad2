@@ -24,16 +24,12 @@ object FetchBoundingBox {
   val fetch =
     group("load speed limits") {
       feed(feeder)
-      .exec(http("Fetch road links").get("/roadlinks2?bbox=${bbox}"))
-      .exec(http("Fetch speed limits").get("/speedlimits?bbox=${bbox}"))
+      .exec(http("Fetch road links").get("/api/roadlinks2?bbox=${bbox}"))
+      .exec(http("Fetch speed limits").get("/api/speedlimits?bbox=${bbox}"))
     }
 }
 
 class FetchSpeedLimitsSimulation extends Simulation {
-  val httpConf = http
-    .baseURL(TestConfiguration.apiUrl)
-    .header("Cookie", "testusername=tarutest")
-    .header("OAM_REMOTE_USER", TestConfiguration.username)
 
   val scn = scenario("Fetch speed limits by bounding box on maximum zoom level")
     .exec(FetchBoundingBox.fetch)
@@ -41,5 +37,5 @@ class FetchSpeedLimitsSimulation extends Simulation {
   private val userCount: Int = TestConfiguration.users
   private val duration: FiniteDuration = FiniteDuration(userCount, TimeUnit.SECONDS)
 
-  setUp(scn.inject(rampUsers(userCount) over duration)).protocols(httpConf)
+  setUp(scn.inject(rampUsers(userCount) over duration)).protocols(TestConfiguration.httpConf)
 }
