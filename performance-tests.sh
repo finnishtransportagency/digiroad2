@@ -1,7 +1,8 @@
 #!/bin/sh
-if [ -z "$1" ]
+if [ $# -ne 2 ]
   then
-    echo "No target host specified"
+    echo "Wrong number of arguments"
+    echo "usage: ./performance-tests.sh [hostname] [user count]"
     exit 1
 fi
-./sbt -Dhost=$1 'project gatling' test
+./sbt -Dhost=$1 -Dusers=$2 'project gatling' test
