@@ -20,7 +20,7 @@ object FetchBoundingBox {
 class FetchSpeedLimitsSimulation extends Simulation {
   val httpConf = http
     .baseURL(TestConfiguration.apiUrl)
-    .header("Cookie", "testusername=tarutest")
+    .header("OAM_REMOTE_USER", TestConfiguration.username)
 
   val scn = scenario("Fetch speed limits by bounding box on maximum zoom level")
     .exec(FetchBoundingBox.fetch)
