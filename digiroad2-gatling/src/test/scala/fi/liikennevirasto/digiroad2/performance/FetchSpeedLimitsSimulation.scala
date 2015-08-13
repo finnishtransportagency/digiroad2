@@ -21,9 +21,12 @@ object FetchBoundingBox {
 
   val feeder: RecordSeqFeederBuilder[String] = kauniainenBoundingBoxes.random
 
-  val fetch = feed(feeder)
-    .exec(http("Fetch road links").get("/roadlinks2?bbox=${bbox}"))
-    .exec(http("Fetch speed limits").get("/speedlimits?bbox=${bbox}"))
+  val fetch =
+    group("load speed limits") {
+      feed(feeder)
+      .exec(http("Fetch road links").get("/roadlinks2?bbox=${bbox}"))
+      .exec(http("Fetch speed limits").get("/speedlimits?bbox=${bbox}"))
+    }
 }
 
 class FetchSpeedLimitsSimulation extends Simulation {
