@@ -7,10 +7,19 @@ import io.gatling.http.Predef._
 import scala.concurrent.duration.FiniteDuration
 
 object FetchBoundingBox {
-  val feeder: RecordSeqFeederBuilder[String] = Array(
-    Map("bbox" -> "372056,6674877,375624,6680169"),
-    Map("bbox" -> "372547,6675156,376115,6680448"),
-    Map("bbox" -> "371332,6676345,374900,6681637")).random
+  private val kauniainenBoundingBoxes: Array[Map[String, String]] = Array(
+    Map("bbox" -> "372863,6677493,374577,6678231"),
+    Map("bbox" -> "372683,6677691,374397,6678429"),
+    Map("bbox" -> "372365,6677455,374079,6678193"),
+    Map("bbox" -> "372513,6677164,374227,6677902"),
+    Map("bbox" -> "372716,6676936,374430,6677674"),
+    Map("bbox" -> "372979,6676853,374693,6677591"),
+    Map("bbox" -> "373320,6676868,375034,6677606"),
+    Map("bbox" -> "373680,6676910,375394,6677648"),
+    Map("bbox" -> "373845,6677212,375559,6677950"),
+    Map("bbox" -> "373848,6677471,375562,6678209"))
+
+  val feeder: RecordSeqFeederBuilder[String] = kauniainenBoundingBoxes.random
 
   val fetch = feed(feeder)
     .exec(http("Fetch road links").get("/roadlinks2?bbox=${bbox}"))
