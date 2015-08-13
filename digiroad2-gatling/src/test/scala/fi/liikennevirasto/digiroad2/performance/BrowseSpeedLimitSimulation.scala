@@ -13,7 +13,7 @@ class BrowseSpeedLimitSimulation extends Simulation {
     .exec(http("load page")
     .get("/"))
     .pause(5)
-    .exec(http("roadlinks highest level").get("api/roadlinks2?bbox=370624,6670024,375424,6673260")
+    .exec(http("roadlinks highest level").get("/api/roadlinks2?bbox=370624,6670024,375424,6673260")
     .resources(
       http("roadlinks zoom 1")
         .get("/api/roadlinks2?bbox=370908,6670016,375708,6673252"),
