@@ -28,7 +28,6 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
 
   val roadLink = VVHRoadLinkWithProperties(1105998302l, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(List(roadLink))
-  when(mockRoadLinkService.getRoadLinksFromVVH(Set.empty[Long])).thenReturn(Seq.empty[VVHRoadLinkWithProperties])
 
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(362964704l, 362955345l, 362955339l)))
     .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),

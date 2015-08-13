@@ -318,10 +318,6 @@ trait RoadLinkService {
     enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def getRoadLinksFromVVH(mmlIds: Set[Long]): Seq[VVHRoadLinkWithProperties] = {
-    enrichRoadLinksFromVVH(fetchVVHRoadlinks(mmlIds))
-  }
-
   protected def removeIncompleteness(mmlId: Long) = {
     sqlu"""delete from incomplete_link where mml_id = $mmlId""".execute
   }
