@@ -111,17 +111,7 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): (Seq[SpeedLimit], Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    getSpeedLimitLinksByRoadLinks(roadLinks)
-  }
-
-  def getByMunicipality(municipality: Int): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipality)
-    getSpeedLimitLinksByRoadLinks(roadLinks)
-  }
-
-  private def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
     val topology = toTopology(roadLinks)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)

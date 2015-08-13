@@ -244,8 +244,7 @@ trait RoadLinkService {
   }
 
   private def adjustedRoadLinks(basicRoadLinks: Seq[BasicRoadLink]): Seq[AdjustedRoadLink] = {
-    withDynTransaction {
-      val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
+    val (adjustedTrafficDirections, adjustedFunctionalClasses, adjustedLinkTypes) =
       MassQuery.withIds(basicRoadLinks.map(_.mmlId).toSet) { idTableName =>
         val trafficDirections: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchTrafficDirections(idTableName).groupBy(_._1)
         val functionalClasses: Map[Long, Seq[(Long, Int, DateTime, String)]] = fetchFunctionalClasses(idTableName).groupBy(_._1)
@@ -253,37 +252,36 @@ trait RoadLinkService {
         (trafficDirections, functionalClasses, linkTypes)
       }
 
-      basicRoadLinks.map { basicRoadLink =>
-        val mmlId = basicRoadLink.mmlId
-        val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
-        val adjustedLinkType = adjustedLinkTypes.get(mmlId).flatMap(_.headOption)
-        val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
+    basicRoadLinks.map { basicRoadLink =>
+      val mmlId = basicRoadLink.mmlId
+      val functionalClass = adjustedFunctionalClasses.get(mmlId).flatMap(_.headOption)
+      val adjustedLinkType = adjustedLinkTypes.get(mmlId).flatMap(_.headOption)
+      val trafficDirection = adjustedTrafficDirections.get(mmlId).flatMap(_.headOption)
 
-        val functionalClassValue = functionalClass.map(_._2).getOrElse(FunctionalClass.Unknown)
-        val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
-        val trafficDirectionValue = trafficDirection.map(trafficDirection =>
-          TrafficDirection(trafficDirection._2)
-        ).getOrElse(basicRoadLink.trafficDirection)
+      val functionalClassValue = functionalClass.map(_._2).getOrElse(FunctionalClass.Unknown)
+      val adjustedLinkTypeValue = adjustedLinkType.map(_._2).getOrElse(UnknownLinkType.value)
+      val trafficDirectionValue = trafficDirection.map(trafficDirection =>
+        TrafficDirection(trafficDirection._2)
+      ).getOrElse(basicRoadLink.trafficDirection)
 
-        def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
-          (a, b) match {
-            case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
-              if (firstModifiedAt.isAfter(secondModifiedAt))
-                Some((firstModifiedAt, firstModifiedBy))
-              else
-                Some((secondModifiedAt, secondModifiedBy))
-            case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
-            case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
-            case (None, None) => None
-          }
+      def latestModifications(a: Option[(DateTime, String)], b: Option[(DateTime, String)]) = {
+        (a, b) match {
+          case (Some((firstModifiedAt, firstModifiedBy)), Some((secondModifiedAt, secondModifiedBy))) =>
+            if (firstModifiedAt.isAfter(secondModifiedAt))
+              Some((firstModifiedAt, firstModifiedBy))
+            else
+              Some((secondModifiedAt, secondModifiedBy))
+          case (Some((firstModifiedAt, firstModifiedBy)), None) => Some((firstModifiedAt, firstModifiedBy))
+          case (None, Some((secondModifiedAt, secondModifiedBy))) => Some((secondModifiedAt, secondModifiedBy))
+          case (None, None) => None
         }
-        val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
-          case Some((_, _, at, by)) => Some((at, by))
-          case _ => None
-        } :+ basicRoadLink.modifiedAt.map(at => (at, "vvh"))
-
-        basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
       }
+      val modifications = List(functionalClass, trafficDirection, adjustedLinkType).map {
+        case Some((_, _, at, by)) => Some((at, by))
+        case _ => None
+      } :+ basicRoadLink.modifiedAt.map(at => (at, "vvh"))
+
+      basicToAdjusted(basicRoadLink, modifications.reduce(latestModifications), functionalClassValue, adjustedLinkTypeValue, trafficDirectionValue)
     }
   }
 
@@ -305,17 +303,23 @@ trait RoadLinkService {
       """
       Q.queryNA[BasicRoadLink](query).iterator.toSeq
     }
-    adjustedRoadLinks(roadLinks)
+    withDynTransaction {
+      adjustedRoadLinks(roadLinks)
+    }
   }
 
   def getRoadLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadLinkWithProperties] = {
     val vvhRoadLinks = fetchVVHRoadlinks(bounds, municipalities)
-    enrichRoadLinksFromVVH(vvhRoadLinks)
+    withDynTransaction {
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+    }
   }
 
   def getRoadLinksFromVVH(municipality: Int): Seq[VVHRoadLinkWithProperties] = {
     val vvhRoadLinks = fetchVVHRoadlinks(municipality)
-    enrichRoadLinksFromVVH(vvhRoadLinks)
+    withDynTransaction {
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+    }
   }
 
   protected def removeIncompleteness(mmlId: Long) = {
@@ -540,14 +544,12 @@ class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) e
         setLinkProperty("traffic_direction", "traffic_direction", direction.value, mmlId, username, Some(vvhRoadLink.trafficDirection.value))
         if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", functionalClass, mmlId, username)
         if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", linkType.value, mmlId, username)
-      }
-      val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
-      if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
-        withDynTransaction {
+        val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
+        if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(mmlId)
         }
+        enrichedLink
       }
-      enrichedLink
     }
   }
 }
