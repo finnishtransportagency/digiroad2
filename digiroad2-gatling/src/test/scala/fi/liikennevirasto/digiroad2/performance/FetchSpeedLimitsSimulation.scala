@@ -8,16 +8,16 @@ import scala.concurrent.duration.FiniteDuration
 
 object FetchBoundingBox {
   private val kauniainenBoundingBoxes: Array[Map[String, String]] = Array(
-    Map("bbox" -> "372863,6677493,374577,6678231"),
-    Map("bbox" -> "372683,6677691,374397,6678429"),
-    Map("bbox" -> "372365,6677455,374079,6678193"),
-    Map("bbox" -> "372513,6677164,374227,6677902"),
-    Map("bbox" -> "372716,6676936,374430,6677674"),
-    Map("bbox" -> "372979,6676853,374693,6677591"),
-    Map("bbox" -> "373320,6676868,375034,6677606"),
-    Map("bbox" -> "373680,6676910,375394,6677648"),
-    Map("bbox" -> "373845,6677212,375559,6677950"),
-    Map("bbox" -> "373848,6677471,375562,6678209"))
+    Map("bbox" -> "370731,6676352,377587,6679304"),
+    Map("bbox" -> "370383,6676384,377239,6679336"),
+    Map("bbox" -> "369867,6676300,376723,6679252"),
+    Map("bbox" -> "370363,6676792,377219,6679744"),
+    Map("bbox" -> "370811,6676876,377667,6679828"),
+    Map("bbox" -> "371415,6677368,378271,6680320"),
+    Map("bbox" -> "371666,6676220,378522,6679172"),
+    Map("bbox" -> "371611,6675404,378467,6678356"),
+    Map("bbox" -> "370651,6675205,377507,6678157"),
+    Map("bbox" -> "371322,6675148,378178,6678100"))
 
   val feeder: RecordSeqFeederBuilder[String] = kauniainenBoundingBoxes.random
 
@@ -32,6 +32,7 @@ object FetchBoundingBox {
 class FetchSpeedLimitsSimulation extends Simulation {
   val httpConf = http
     .baseURL(TestConfiguration.apiUrl)
+    .header("Cookie", "testusername=tarutest")
     .header("OAM_REMOTE_USER", TestConfiguration.username)
 
   val scn = scenario("Fetch speed limits by bounding box on maximum zoom level")
