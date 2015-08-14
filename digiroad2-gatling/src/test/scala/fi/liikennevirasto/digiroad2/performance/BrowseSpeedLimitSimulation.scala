@@ -46,7 +46,7 @@ class BrowseSpeedLimitSimulation extends Simulation {
     val adjustedBoundingBoxes = deltas.map(_.zip(startBoundingBox).map { x => x._2 - x._1 })
     val boundingBoxes = (startBoundingBox +: adjustedBoundingBoxes).map(_.mkString(","))
     Map("boundingBoxes" -> boundingBoxes)
-  }.queue
+  }.circular
 
   val scn = scenario("Browse speed limits").exec(feed(feeder)
     .exec(http("load page")
