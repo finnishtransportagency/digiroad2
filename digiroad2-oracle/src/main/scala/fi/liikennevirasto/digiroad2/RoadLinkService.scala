@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.ConversionDatabase._
+import fi.liikennevirasto.digiroad2.ConversionDatabase.GetPointSeq
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
@@ -39,7 +39,7 @@ trait RoadLinkService {
   def eventbus: DigiroadEventBus
 
   def getByIdAndMeasure(id: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
          select dr1_id, kunta_nro, to_2d(sdo_lrs.dynamic_segment(shape, $measure, $measure)), omistaja
            from tielinkki_ctas
@@ -52,7 +52,7 @@ trait RoadLinkService {
   }
 
   def getByTestIdAndMeasure(testId: Long, measure: Double): Option[(Long, Int, Option[Point], AdministrativeClass)] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
        val query = sql"""
          select prod.dr1_id, prod.kunta_nro, to_2d(sdo_lrs.dynamic_segment(prod.shape, $measure, $measure)), prod.omistaja
            from tielinkki_ctas prod
@@ -68,7 +68,7 @@ trait RoadLinkService {
   }
 
   def getMunicipalityCode(roadLinkId: Long): Option[Int] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
        val query = sql"""
          select prod.kunta_nro
            from tielinkki_ctas prod
@@ -79,7 +79,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
         select to_2d(sdo_lrs.dynamic_segment(shape, $startMeasure, $endMeasure))
           from tielinkki_ctas
@@ -90,7 +90,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
         select to_2d(shape)
           from tielinkki_ctas
@@ -101,7 +101,7 @@ trait RoadLinkService {
   }
 
   def getRoadLinkGeometryByTestId(testId: Long): Option[Seq[Point]] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
         select to_2d(prod.shape)
            from tielinkki_ctas prod
@@ -114,7 +114,7 @@ trait RoadLinkService {
   }
 
   def getTestId(id: Long): Option[Long] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
         select test.objectid
            from tielinkki_ctas prod
@@ -127,7 +127,7 @@ trait RoadLinkService {
   }
 
   def getPointLRMeasure(roadLinkId: Long, point: Point): BigDecimal = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val x = point.x
       val y = point.y
       val query =
@@ -167,7 +167,7 @@ trait RoadLinkService {
   def getRoadLinkMiddlePointByMMLId(mmlId: Long): Option[(Long, Point)]
 
   def getRoadLinkLength(id: Long): Option[Double] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
         select sdo_lrs.geom_segment_length(shape) as length
           from tielinkki_ctas
@@ -286,13 +286,13 @@ trait RoadLinkService {
   }
 
   def getRoadLinkMmlId(id: Long): Long = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       sql"""select mml_id from tielinkki_ctas where dr1_id = $id""".as[Long].first
     }
   }
 
   def getRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[AdjustedRoadLink] = {
-    val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+    val roadLinks = Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val municipalityFilter = if (municipalities.nonEmpty) "kunta_nro in (" + municipalities.mkString(",") + ") and" else ""
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
       val query =
@@ -409,14 +409,14 @@ trait RoadLinkService {
   }
 
   def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = s"""select dr1_id, to_2d(shape) from tielinkki_ctas where kunta_nro = $municipality"""
       Q.queryNA[(Long, Seq[Point])](query).iterator.toSeq
     }
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {
-    Database.forDataSource(dataSource).withDynTransaction {
+    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       sql"""
         select dr1_id, mml_id
           from tielinkki_ctas
@@ -428,7 +428,7 @@ trait RoadLinkService {
   def getAdjacent(id: Long): Seq[Map[String, Any]] = {
     val endpoints = getRoadLinkGeometry(id).map(GeometryUtils.geometryEndpoints)
     endpoints.map(endpoint => {
-      val roadLinks = Database.forDataSource(dataSource).withDynTransaction {
+      val roadLinks = Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
         val delta: Vector3d = Vector3d(0.1, 0.1, 0)
         val bounds = BoundingRectangle(endpoint._1 - delta, endpoint._1 + delta)
         val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "shape")
