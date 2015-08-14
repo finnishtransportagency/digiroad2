@@ -52,7 +52,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       adjustments.foreach { adjustment =>
         dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
       }
@@ -60,7 +60,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       adjustments.foreach { adjustment =>
         dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
       }
@@ -68,7 +68,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
@@ -82,7 +82,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       val newId = dao.separateSpeedLimit(id, valueTowardsDigitization, valueAgainstDigitization, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
@@ -90,7 +90,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
   override def getSpeedLimits(municipality: Int): Seq[SpeedLimit] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.id))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
@@ -99,7 +99,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
 
   override def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
-    Database.forDataSource(ds).withDynTransaction {
+    withDynTransaction {
       dao.markSpeedLimitsFloating(ids)
     }
   }
