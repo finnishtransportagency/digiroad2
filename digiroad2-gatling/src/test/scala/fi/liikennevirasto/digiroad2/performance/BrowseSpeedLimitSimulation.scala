@@ -8,7 +8,7 @@ import io.gatling.http.Predef._
 import scala.collection.immutable.IndexedSeq
 import scala.concurrent.duration.FiniteDuration
 
-class BrowseSpeedLimitSimulation extends Simulation {
+object BoundingBoxProvider {
   def getStartBoundingBoxes: IndexedSeq[Seq[Double]] = {
     val source = scala.io.Source.fromFile("./boundingBoxes.csv")
     val startBoundingBoxes = source.getLines().map { l =>
@@ -18,6 +18,8 @@ class BrowseSpeedLimitSimulation extends Simulation {
     source.close()
     startBoundingBoxes
   }
+}
+class BrowseSpeedLimitSimulation extends Simulation {
 
   val deltas = Seq(Seq(-284.0, 8.0, -284.0, 8.0),
       Seq(-1487.84599685, -801.154003200121, 912.154003150004, 816.845996799879),
@@ -28,7 +30,7 @@ class BrowseSpeedLimitSimulation extends Simulation {
       Seq(-2530.09395842999, -404.69544180017, 1069.90604157001, 2022.30455819983),
       Seq(-2753.67487558001, -195.987239300273, 846.325124419993, 2231.01276069973))
 
-  val startBoundingBoxes = getStartBoundingBoxes
+  val startBoundingBoxes = BoundingBoxProvider.getStartBoundingBoxes
 
   val feeder = startBoundingBoxes.map { startBoundingBox =>
     val adjustedBoundingBoxes = deltas.map(_.zip(startBoundingBox).map { x => x._2 - x._1 })
