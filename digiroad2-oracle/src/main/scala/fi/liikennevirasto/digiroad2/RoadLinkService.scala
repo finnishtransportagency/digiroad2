@@ -179,27 +179,9 @@ trait RoadLinkService {
     }
   }
 
-  val transactionOpen = new DynamicVariable[Boolean](false)
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  def withDynTransaction[T](f: => T): T = {
-    if (transactionOpen.value)
-      throw new IllegalThreadStateException
-    else {
-      transactionOpen.withValue(true) {
-        Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-      }
-    }
-  }
-
-  def withDynSession[T](f: => T): T = {
-    if (transactionOpen.value)
-      throw new IllegalThreadStateException
-    else {
-      transactionOpen.withValue(true) {
-        Database.forDataSource(OracleDatabase.ds).withDynSession(f)
-      }
-    }
-  }
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   private def updateExistingLinkPropertyRow(table: String, column: String, mmlId: Long, username: String, existingValue: Int, value: Int) = {
     if (existingValue != value) {

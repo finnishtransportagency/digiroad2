@@ -1,18 +1,12 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{SideCodeAdjustment, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, BoundingRectangle}
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
-
-import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q}
-
-import scala.util.DynamicVariable
 
 // FIXME:
 // - rename to speed limit service
@@ -23,17 +17,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   }
   val logger = LoggerFactory.getLogger(getClass)
 
-  def withDynTransaction[T](f: => T): T = {
-    if (transactionOpen.value)
-      throw new IllegalThreadStateException
-    else {
-      transactionOpen.withValue(true) {
-        Database.forDataSource(ds).withDynTransaction(f)
-      }
-    }
-  }
-
-  val transactionOpen = new DynamicVariable[Boolean](false)
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)

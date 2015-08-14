@@ -1,18 +1,45 @@
 package fi.liikennevirasto.digiroad2.oracle
 
-import javax.sql.DataSource
+import java.sql.Date
 import java.util.Properties
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import javax.sql.DataSource
+
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.joda.time.LocalDate
-import java.sql.Date
-import java.io.FileInputStream
+import slick.driver.JdbcDriver.backend.Database
 
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
 
   lazy val localProperties: Properties = {
     loadProperties("/bonecp.properties")
+  }
+
+  private val transactionOpen = new ThreadLocal[Boolean] {
+    override def initialValue(): Boolean = { false }
+  }
+
+  def withDynTransaction[T](f: => T): T = {
+    if (transactionOpen.get())
+      throw new IllegalThreadStateException("Attempted to open nested transaction")
+    else {
+      transactionOpen.set(true)
+      val ret = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+      transactionOpen.set(false)
+      ret
+    }
+  }
+
+  def withDynSession[T](f: => T): T = {
+    if (transactionOpen.get())
+      throw new IllegalThreadStateException("Attempted to open nested session")
+    else {
+      transactionOpen.set(true)
+      val ret = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+      transactionOpen.set(false)
+      ret
+    }
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {
