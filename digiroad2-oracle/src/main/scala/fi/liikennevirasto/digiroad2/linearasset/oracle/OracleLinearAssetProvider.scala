@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.util.DynamicVariable
+
 // FIXME:
 // - rename to speed limit service
 // - move common asset functionality to asset service
@@ -20,7 +22,18 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
   val logger = LoggerFactory.getLogger(getClass)
-  def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
+
+  def withDynTransaction[T](f: => T): T = {
+    if (transactionOpen.value)
+      throw new IllegalThreadStateException
+    else {
+      transactionOpen.withValue(true) {
+        Database.forDataSource(ds).withDynTransaction(f)
+      }
+    }
+  }
+
+  val transactionOpen = new DynamicVariable[Boolean](false)
 
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
