@@ -16,6 +16,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+import scala.util.DynamicVariable
+
 
 case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[VVHRoadLinkWithProperties], incompleteLinks: Seq[IncompleteLink])
@@ -177,9 +179,27 @@ trait RoadLinkService {
     }
   }
 
-  def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+  val transactionOpen = new DynamicVariable[Boolean](false)
 
-  def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+  def withDynTransaction[T](f: => T): T = {
+    if (transactionOpen.value)
+      throw new IllegalThreadStateException
+    else {
+      transactionOpen.withValue(true) {
+        Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+      }
+    }
+  }
+
+  def withDynSession[T](f: => T): T = {
+    if (transactionOpen.value)
+      throw new IllegalThreadStateException
+    else {
+      transactionOpen.withValue(true) {
+        Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+      }
+    }
+  }
 
   private def updateExistingLinkPropertyRow(table: String, column: String, mmlId: Long, username: String, existingValue: Int, value: Int) = {
     if (existingValue != value) {
