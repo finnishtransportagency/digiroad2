@@ -177,9 +177,9 @@ trait RoadLinkService {
     }
   }
 
-  def withDynSession[T](f: => T): T
+  def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
 
-  def withDynTransaction[T](f: => T): T
+  def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
 
   private def updateExistingLinkPropertyRow(table: String, column: String, mmlId: Long, username: String, existingValue: Int, value: Int) = {
     if (existingValue != value) {
@@ -458,9 +458,7 @@ trait RoadLinkService {
 object RoadLinkService extends RoadLinkService {
   override val eventbus = new DummyEventBus
 
-  override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
 
-  override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
 
   override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) = {
     throw new NotImplementedError()
@@ -482,10 +480,6 @@ object RoadLinkService extends RoadLinkService {
 }
 
 class VVHRoadLinkService(vvhClient: VVHClient, val eventbus: DigiroadEventBus) extends RoadLinkService {
-  override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-
-  override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
-
   override def fetchVVHRoadlinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     vvhClient.fetchVVHRoadlinks(bounds, municipalities)
   }
