@@ -233,6 +233,11 @@ window.SpeedLimitLayer = function(params) {
     });
   };
 
+  var unknownLimitStyleRule = new OpenLayers.Rule({
+    filter: typeFilter('unknown'),
+    symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
+  });
+
   var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
   var overlayStyleRules = [
     overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
@@ -291,6 +296,7 @@ window.SpeedLimitLayer = function(params) {
   var typeSpecificStyleLookup = {
     overlay: { strokeOpacity: 1.0 },
     other: { strokeOpacity: 0.7 },
+    unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
     cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
   };
 
@@ -321,6 +327,7 @@ window.SpeedLimitLayer = function(params) {
   selectionDefaultStyle.addRules(overlayStyleRules);
   selectionDefaultStyle.addRules(validityDirectionStyleRules);
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
+  selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
   var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
@@ -632,6 +639,10 @@ window.SpeedLimitLayer = function(params) {
     return solidLines.concat(dottedOverlay);
   };
 
+  var isUnknown = function(speedLimit) {
+    return !_.isNumber(speedLimit.value);
+  };
+
   var limitSigns = function(speedLimits) {
     return _.map(speedLimits, function(speedLimit) {
       var points = _.map(speedLimit.points, function(point) {
@@ -639,7 +650,9 @@ window.SpeedLimitLayer = function(params) {
       });
       var road = new OpenLayers.Geometry.LineString(points);
       var signPosition = geometryUtils.calculateMidpointOfLineString(road);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), speedLimit);
+      var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
+      var attributes = _.merge(_.cloneDeep(speedLimit), type);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
     });
   };
 
@@ -648,7 +661,9 @@ window.SpeedLimitLayer = function(params) {
       var points = _.map(speedLimit.points, function(point) {
         return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), _.cloneDeep(speedLimit));
+      var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
+      var attributes = _.merge(_.cloneDeep(speedLimit), type);
+      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
     });
   };
 
