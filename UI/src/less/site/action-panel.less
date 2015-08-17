@@ -183,11 +183,12 @@
     .linear {
       width: calc(~"100% - @{labelWidth}");
     }
-    .speed-limit-120, .speed-limit-100, .speed-limit-80, .speed-limit-70 {
+    .speed-limit-120, .speed-limit-100, .speed-limit-90, .speed-limit-80, .speed-limit-70 {
       &:extend(.dotted-linear-asset);
     }
     .speed-limit-120 { .linear-asset-legend-entry(@speed-limit-5, @linear-asset-node-5); }
     .speed-limit-100 { .linear-asset-legend-entry(@speed-limit-3, @linear-asset-node-3); }
+    .speed-limit-90  { .linear-asset-legend-entry(@speed-limit-2, @linear-asset-node-2); }
     .speed-limit-80  { .linear-asset-legend-entry(@speed-limit-4, @linear-asset-node-4); }
     .speed-limit-70  { .linear-asset-legend-entry(@speed-limit-1, @linear-asset-node-1); }
     .speed-limit-60  { .linear-asset-legend-entry(@speed-limit-5, @linear-asset-node-5); }

@@ -5,7 +5,6 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadCollection = params.roadCollection,
       geometryUtils = params.geometryUtils,
-      backend = params.backend,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer;
 
@@ -275,6 +274,7 @@ window.SpeedLimitLayer = function(params) {
     60:  { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/60.svg' },
     70:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/70.svg' },
     80:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/80.svg' },
+    90:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/90.svg' },
     100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
     120: { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/120.svg' }
   };
