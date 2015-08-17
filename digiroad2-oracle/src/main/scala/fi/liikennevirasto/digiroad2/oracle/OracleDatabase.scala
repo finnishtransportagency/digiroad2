@@ -24,10 +24,13 @@ object OracleDatabase {
     if (transactionOpen.get())
       throw new IllegalThreadStateException("Attempted to open nested transaction")
     else {
-      transactionOpen.set(true)
-      val ret = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-      transactionOpen.set(false)
-      ret
+      try {
+        transactionOpen.set(true)
+        val ret = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+        ret
+      } finally {
+        transactionOpen.set(false)
+      }
     }
   }
 
