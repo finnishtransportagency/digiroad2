@@ -11,10 +11,8 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         eventbus.stopListening();
         eventbus = {on: function() {}, trigger: function() {}};
         speedLimitTestData = SpeedLimitsTestData.generate();
-        var roadLinkTestData = RoadLinkTestData.generate();
         var backend = testHelpers.defaultBackend()
-          .withSpeedLimitsData(speedLimitTestData)
-          .withRoadLinkData(roadLinkTestData);
+          .withSpeedLimitsData(speedLimitTestData);
         var roadCollection = new RoadCollection(backend);
         var speedLimitsCollection = new SpeedLimitsCollection(backend);
         roadCollection.fetch();

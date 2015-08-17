@@ -52,55 +52,7 @@
     ];
   };
 
-  var generateRoadLinks = function() {
-    return [
-      {
-        "mmlId": 555,
-        "type": "Private",
-        "points": [
-          {
-            "x": 0.0,
-            "y": 0.0
-          },
-          {
-            "x": 0.0,
-            "y": 100.0
-          }
-        ]
-      },
-      {
-        "mmlId": 666,
-        "type": "Private",
-        "points": [
-          {
-            "x": 0.0,
-            "y": 100.0
-          },
-          {
-            "x": 0.0,
-            "y": 150.0
-          }
-        ]
-      },
-      {
-        "mmlId": 777,
-        "type": "Private",
-        "points": [
-          {
-            "x": 0.0,
-            "y": 150.0
-          },
-          {
-            "x": 0.0,
-            "y": 200.0
-          }
-        ]
-      }];
-  };
-
-
   root.SpeedLimitSplitTestData = {
-    generateSpeedLimitLinks: generateSpeedLimitLinks,
-    generateRoadLinks: generateRoadLinks
+    generateSpeedLimitLinks: generateSpeedLimitLinks
   };
 })(this);
