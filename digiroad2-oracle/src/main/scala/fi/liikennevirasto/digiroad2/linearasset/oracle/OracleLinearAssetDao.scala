@@ -128,11 +128,12 @@ trait OracleLinearAssetDao {
     }
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
-        link.geometry,
-        link.length,
-        link.administrativeClass,
-        link.mmlId,
-        roadIdentifierFromAttributes(link.attributes))
+      link.geometry,
+      link.length,
+      link.administrativeClass,
+      link.mmlId,
+      roadIdentifierFromAttributes(link.attributes),
+      link.trafficDirection)
 
     roadLinks
       .filter(isCarTrafficRoad)
@@ -144,7 +145,7 @@ trait OracleLinearAssetDao {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.get(mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimit(assetId, mmlId, sideCode, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+    SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
 
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
@@ -163,7 +164,7 @@ trait OracleLinearAssetDao {
 
     speedLimits.map { case (assetId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) =>
       val vvhRoadLink = roadLinksByMmlId.find(_.mmlId == mmlId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(assetId, mmlId, sideCode, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
+      SpeedLimit(assetId, mmlId, sideCode, vvhRoadLink.trafficDirection, value, GeometryUtils.truncateGeometry(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
     }
   }
 

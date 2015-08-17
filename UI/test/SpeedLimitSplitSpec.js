@@ -5,7 +5,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var splitBackendCalls = [];
 
   var speedLimitTestData = SpeedLimitSplitTestData.generateSpeedLimitLinks();
-  var roadLinkTestData = SpeedLimitSplitTestData.generateRoadLinks();
 
   var speedLimitSplitting = function(id, splitMeasure, createdLimit, existingLimit, success, failure) {
     splitBackendCalls.push({
@@ -29,7 +28,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         done();
       }, testHelpers.defaultBackend()
           .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11 })
-          .withRoadLinkData(roadLinkTestData)
           .withSpeedLimitsData(speedLimitTestData)
           .withSpeedLimitSplitting(speedLimitSplitting));
     });

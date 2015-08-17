@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedSpeedLimit = function(backend, collection, roadCollection) {
+  root.SelectedSpeedLimit = function(backend, collection) {
     var selection = [];
     var self = this;
     var dirty = false;
@@ -252,7 +252,7 @@
     this.isSeparable = function() {
       return !self.isUnknown() &&
         getProperty('sideCode') === validitydirections.bothDirections &&
-        roadCollection.get(getProperty('mmlId')).getData().trafficDirection === 'BothDirections' &&
+        getProperty('trafficDirection') === 'BothDirections' &&
         !self.isSplit() &&
         selection.length === 1;
     };
