@@ -5,6 +5,7 @@
         "id": 1123812,
         "value": 40,
         "sideCode": 1,
+        "trafficDirection": "BothDirections",
         "points": [{
           "x": 374895.585,
           "y": 6677506.848
@@ -20,6 +21,7 @@
         "id": 1123107,
         "value": 60,
         "sideCode": 1,
+        "trafficDirection": "TowardsDigitizing",
         "points": [{
           "x": 374695.469,
           "y": 6677610.487

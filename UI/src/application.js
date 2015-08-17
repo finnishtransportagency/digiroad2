@@ -177,7 +177,6 @@ var URLRouter = function(map, backend, models) {
         application: applicationModel,
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
-        roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
         linearAsset: linearAsset,
         backend: backend,
@@ -289,7 +288,7 @@ var URLRouter = function(map, backend, models) {
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
-    var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection, roadCollection);
+    var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);

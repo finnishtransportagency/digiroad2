@@ -20,7 +20,7 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         roadCollection.fetch();
         speedLimitsCollection.fetch();
 
-        selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection, roadCollection);
+        selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
       });
 
       describe('selected speed limit is separable', function() {

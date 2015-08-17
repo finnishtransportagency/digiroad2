@@ -29,7 +29,8 @@ with GZipSupport {
   val MAX_BOUNDING_BOX = 100000000
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer
+  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ null }, { case t: TrafficDirection => JString(t.toString)}))
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -376,6 +377,7 @@ with GZipSupport {
             "id" -> (if (link.id == 0) None else Some(link.id)),
             "mmlId" -> link.mmlId,
             "sideCode" -> link.sideCode,
+            "trafficDirection" -> link.trafficDirection,
             "value" -> link.value,
             "points" -> link.points,
             "startMeasure" -> link.startMeasure,

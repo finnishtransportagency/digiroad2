@@ -3,7 +3,6 @@ window.SpeedLimitLayer = function(params) {
       application = params.application,
       collection = params.collection,
       selectedSpeedLimit = params.selectedSpeedLimit,
-      roadCollection = params.roadCollection,
       geometryUtils = params.geometryUtils,
       backend = params.backend,
       linearAsset = params.linearAsset,
@@ -441,11 +440,7 @@ window.SpeedLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
-        collection.fetch(boundingBox);
-      });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      collection.fetch(boundingBox);
     }
   };
 
@@ -533,11 +528,7 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
-        collection.fetch(state.bbox);
-      });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      collection.fetch(state.bbox);
     } else {
       vectorLayer.setVisibility(false);
       stop();
