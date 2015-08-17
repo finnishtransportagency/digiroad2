@@ -26,8 +26,7 @@ object OracleDatabase {
     else {
       try {
         transactionOpen.set(true)
-        val ret = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-        ret
+        Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
       } finally {
         transactionOpen.set(false)
       }
