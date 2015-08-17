@@ -5,7 +5,6 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadCollection = params.roadCollection,
       geometryUtils = params.geometryUtils,
-      backend = params.backend,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer;
 
