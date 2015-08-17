@@ -107,7 +107,7 @@ window.SpeedLimitLayer = function(params) {
                         }));
       };
 
-      var lineString = pointsToLineString(roadCollection.get(nearest.feature.attributes.mmlId).getPoints());
+      var lineString = pointsToLineString(nearest.feature.attributes.points);
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
                                                 mousePoint));
