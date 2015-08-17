@@ -14,7 +14,7 @@ import Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
-  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+  val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockedRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -149,6 +149,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
       intercept[IllegalArgumentException] {
         dao.separateSpeedLimit(300388, 50, 40, "test", passingMunicipalityValidation)
+      }
+      dynamicSession.rollback()
+    }
+  }
+
+  test("speed limit separation fails if road link is one way") {
+    val roadLink = VVHRoadlink(1068804929, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.TowardsDigitizing, AllOthers)
+
+    Database.forDataSource(ds).withDynTransaction {
+      val dao = daoWithRoadLinks(List(roadLink))
+      intercept[IllegalArgumentException] {
+        dao.separateSpeedLimit(200299, 50, 40, "test", passingMunicipalityValidation)
       }
       dynamicSession.rollback()
     }

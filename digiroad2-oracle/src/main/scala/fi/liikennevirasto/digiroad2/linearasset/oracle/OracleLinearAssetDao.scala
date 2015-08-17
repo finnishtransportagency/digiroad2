@@ -340,7 +340,8 @@ trait OracleLinearAssetDao {
 
   def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Long = {
     val speedLimit = getSpeedLimitLinksById(id).head
-    if (speedLimit.sideCode != SideCode.BothDirections) throw new IllegalArgumentException
+    val separable = speedLimit.sideCode == SideCode.BothDirections && speedLimit.trafficDirection == TrafficDirection.BothDirections
+    if (!separable) throw new IllegalArgumentException
     updateSpeedLimitValue(id, valueTowardsDigitization, username, municipalityValidation)
     updateSideCode(id, SideCode.TowardsDigitizing)
     createSpeedLimitWithoutDuplicates(username, speedLimit.mmlId, (speedLimit.startMeasure, speedLimit.endMeasure), SideCode.AgainstDigitizing, valueAgainstDigitization).get
