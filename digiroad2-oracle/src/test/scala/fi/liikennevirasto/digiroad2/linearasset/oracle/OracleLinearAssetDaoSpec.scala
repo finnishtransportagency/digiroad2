@@ -228,4 +228,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
+  test("speed limit purge removes fully covered link from unknown speed limit list") {
+    Database.forDataSource(ds).withDynTransaction {
+      val mmlId = 1068804939
+      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
+      val dao = daoWithRoadLinks(Nil)
+      dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
+      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(None)
+      dynamicSession.rollback()
+    }
+  }
+
 }
