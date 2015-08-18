@@ -77,16 +77,8 @@
     if(notRendered) {
       $('#information-content').append('' +
         '<div class="form form-horizontal">' +
-          '<a id="work-list-link" class="unknown-speed-limits" href="unknown_speed_limits.html">Tuntemattomien nopeusrajoitusten lista</a>' +
+          '<a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
         '</div>');
-
-      $('#work-list-link').on('click', function(evt) {
-        evt.preventDefault();
-        $('.container').hide();
-        $('#work-list').show();
-        $('body').addClass('work-list');
-        fetchUnknownLimits();
-      });
     }
   };
 

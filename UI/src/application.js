@@ -15,7 +15,8 @@ var URLRouter = function(map, backend, models) {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
       'linkProperties/:mmlId': 'linkProperty',
-      'speedLimit/:mmlId': 'speedLimit'
+      'speedLimit/:mmlId': 'speedLimit',
+      'work-list/:layer': 'workList'
     },
 
     massTransitStop: function(id) {
@@ -46,6 +47,10 @@ var URLRouter = function(map, backend, models) {
         });
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
       });
+    },
+
+    workList: function(layerName){
+      eventbus.trigger('workList:select');
     }
   });
 
@@ -340,6 +345,7 @@ var URLRouter = function(map, backend, models) {
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
+    WorkListView.initialize();
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
