@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{SideCodeAdjustment, MValueAdjustment}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{UnknownLimit, SideCodeAdjustment, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.DateTime
 
@@ -11,6 +11,7 @@ case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 
 trait LinearAssetProvider {
+  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit
   def persistSideCodeAdjustments(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit
   def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit

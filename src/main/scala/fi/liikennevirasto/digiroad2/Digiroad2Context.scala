@@ -30,6 +30,7 @@ class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor 
     linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
     linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
     linearAssetProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
+    linearAssetProvider.persistUnknownSpeedLimits(speedLimitChangeSet.generatedUnknownLimits)
   }
 }
 

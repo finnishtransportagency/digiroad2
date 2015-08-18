@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
@@ -20,6 +21,17 @@ import scala.util.Try
 
 
 trait OracleLinearAssetDao {
+  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+    val statement = dynamicSession.prepareStatement("insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values (?, ?, ?)")
+    limits.foreach { limit =>
+      statement.setLong(1, limit.mmlId)
+      statement.setInt(2, limit.municipalityCode)
+      statement.setInt(3, limit.administrativeClass.value)
+      statement.addBatch()
+    }
+    statement.executeBatch()
+  }
+
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
 
   val roadLinkService: RoadLinkService

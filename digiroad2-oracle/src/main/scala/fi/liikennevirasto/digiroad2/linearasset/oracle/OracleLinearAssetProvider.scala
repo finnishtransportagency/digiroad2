@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{UnknownLimit, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -61,6 +61,12 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
       adjustments.foreach { adjustment =>
         dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
       }
+    }
+  }
+
+  override def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+    withDynTransaction {
+      dao.persistUnknownSpeedLimits(limits)
     }
   }
 
