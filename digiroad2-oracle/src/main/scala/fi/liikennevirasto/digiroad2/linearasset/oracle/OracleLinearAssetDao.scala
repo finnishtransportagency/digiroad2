@@ -46,14 +46,21 @@ trait OracleLinearAssetDao {
   }
 
   def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
-    val statement = dynamicSession.prepareStatement("insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values (?, ?, ?)")
+    val statement = dynamicSession.prepareStatement("""
+        insert into unknown_speed_limit (mml_id, municipality_code, administrative_class)
+        select ?, ?, ?
+        from dual
+        where not exists (select * from unknown_speed_limit where mml_id = ?)
+      """)
     limits.foreach { limit =>
       statement.setLong(1, limit.mmlId)
       statement.setInt(2, limit.municipalityCode)
       statement.setInt(3, limit.administrativeClass.value)
+      statement.setLong(4, limit.mmlId)
       statement.addBatch()
     }
     statement.executeBatch()
+    statement.close()
   }
 
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
