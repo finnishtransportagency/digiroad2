@@ -50,7 +50,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     workList: function(layerName){
-      eventbus.trigger('workList:select');
+      eventbus.trigger('workList:select', layerName);
     }
   });
 

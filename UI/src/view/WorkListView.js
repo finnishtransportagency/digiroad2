@@ -1,6 +1,5 @@
 (function (root) {
-
-  var unknownLimitsTable = function(mmlIdsByAdministrativeClass, municipalityName) {
+  var unknownLimitsTable = function(layerName, mmlIdsByAdministrativeClass, municipalityName) {
     var municipalityHeader = function(municipalityName) {
       return $('<h2/>').html(municipalityName);
     };
@@ -13,7 +12,7 @@
       });
     };
     var assetLink = function(mmlId) {
-      var link = '/#speedLimit/' + mmlId;
+      var link = '/#' + layerName + '/' + mmlId;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
@@ -29,7 +28,7 @@
       .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
   };
 
-  var fetchUnknownLimits = function() {
+  var fetchUnknownLimits = function(layerName) {
     var backend = new Backend();
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
@@ -41,8 +40,9 @@
         '</div>' +
       '</div>'
     );
+    var table = _.partial(unknownLimitsTable, layerName);
     backend.getUnknownLimits(function(limits) {
-      var unknownLimits = _.map(limits, unknownLimitsTable);
+      var unknownLimits = _.map(limits, table);
       $('#unknown-limits').html(unknownLimits);
       $('a.work-list-item').on('click', function() {
         $('.container').show();
@@ -53,11 +53,11 @@
   };
 
   var initialize = function() {
-    eventbus.on('workList:select', function() {
+    eventbus.on('workList:select', function(layerName) {
       $('.container').hide();
       $('#work-list').show();
       $('body').addClass('work-list');
-      fetchUnknownLimits();
+      fetchUnknownLimits(layerName);
     });
   };
 
