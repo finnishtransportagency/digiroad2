@@ -34,6 +34,58 @@
     <div id="information-content"></div>
     <div id="map-plugins"></div>
 </div>
+
+<div id="work-list">
+  <div style="overflow: auto;">
+    <div class="page">
+      <div class="content-box">
+        <header>Tuntemattomien nopeusrajoitusten lista</header>
+        <div id="unknown-limits" class="work-list">
+        </div>
+      </div>
+    </div>
+    <script type="application/javascript">
+      var unknownLimitsTable = function(mmlIdsByAdministrativeClass, municipalityName) {
+        var municipalityHeader = function(municipalityName) {
+          return $('<h2/>').html(municipalityName);
+        };
+        var tableHeaderRow = function(administrativeClass) {
+          return $('<caption/>').html(administrativeClass);
+        };
+        var tableContentRows = function(mmlIds) {
+          return _.map(mmlIds, function(id) {
+            return $('<tr/>').append($('<td/>').append(assetLink(id)));
+          });
+        };
+        var assetLink = function(mmlId) {
+          var link = '/#speedLimit/' + mmlId;
+          return $('<a/>').attr('href', link).html(link);
+        };
+        var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
+          if (!mmlIds || mmlIds.length === 0) return '';
+          return $('<table/>').addClass('table')
+                  .append(tableHeaderRow(administrativeClass))
+                  .append(tableContentRows(mmlIds));
+        };
+        return $('<div/>').append(municipalityHeader(municipalityName))
+                .append(tableForAdministrativeClass('Kunnan omistama', mmlIdsByAdministrativeClass.Municipality))
+                .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State))
+                .append(tableForAdministrativeClass('Yksityisen omistama', mmlIdsByAdministrativeClass.Private))
+                .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
+      };
+
+      var fetchUnknownLimits = function() {
+        var backend = new Backend();
+        backend.getUnknownLimits(function(limits) {
+          var unknownLimits = _.map(limits, unknownLimitsTable);
+          $('#unknown-limits').html(unknownLimits);
+        });
+      };
+
+    </script>
+  </div>
+
+</div>
 <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
 <script type="text/javascript" src="bower_components/momentjs/min/moment.min.js"></script>
