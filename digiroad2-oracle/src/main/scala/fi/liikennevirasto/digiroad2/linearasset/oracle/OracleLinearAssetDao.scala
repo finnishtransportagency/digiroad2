@@ -126,6 +126,9 @@ trait OracleLinearAssetDao {
         .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SM"))))
         .toOption
     }
+    def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
+      attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
+    }
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
       link.geometry,
@@ -133,7 +136,8 @@ trait OracleLinearAssetDao {
       link.administrativeClass,
       link.mmlId,
       roadIdentifierFromAttributes(link.attributes),
-      link.trafficDirection)
+      link.trafficDirection,
+      municipalityCodeFromAttributes(link.attributes))
 
     roadLinks
       .filter(isCarTrafficRoad)
