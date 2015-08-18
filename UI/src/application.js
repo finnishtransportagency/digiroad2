@@ -14,7 +14,8 @@ var URLRouter = function(map, backend, models) {
     routes: {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
-      'linkProperties/:mmlId': 'linkProperty'
+      'linkProperties/:mmlId': 'linkProperty',
+      'speedLimit/:mmlId': 'speedLimit'
     },
 
     massTransitStop: function(id) {
@@ -33,6 +34,13 @@ var URLRouter = function(map, backend, models) {
         eventbus.once('linkProperties:available', function() {
           models.selectedLinkProperty.open(response.id);
         });
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+      });
+    },
+
+    speedLimit: function(mmlId) {
+      applicationModel.selectLayer('speedLimit');
+      backend.getRoadLinkByMMLId(mmlId, function(response) {
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
       });
     }
