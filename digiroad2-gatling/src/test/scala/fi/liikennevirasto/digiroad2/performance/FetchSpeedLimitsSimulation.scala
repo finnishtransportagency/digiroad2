@@ -10,11 +10,8 @@ object FetchBoundingBox {
   val feeder = BoundingBoxProvider.getStartBoundingBoxes.map { bbox => Map("bbox" -> bbox.mkString(",")) }.circular
 
   val fetch =
-    group("load speed limits") {
       feed(feeder)
-      .exec(http("Fetch road links").get("/api/roadlinks2?bbox=${bbox}"))
       .exec(http("Fetch speed limits").get("/api/speedlimits?bbox=${bbox}"))
-    }
 }
 
 class FetchSpeedLimitsSimulation extends Simulation {
