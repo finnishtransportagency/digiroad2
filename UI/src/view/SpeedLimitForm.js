@@ -72,6 +72,16 @@
            '</footer>';
   };
 
+  var renderLinktoWorkList = function renderLinktoWorkList() {
+    var notRendered = !$('#work-list-link').length;
+    if(notRendered) {
+      $('#information-content').append('' +
+        '<div class="form form-horizontal">' +
+          '<a id="work-list-link" class="unknown-speed-limits" href="unknown_speed_limits.html">Tuntemattomien nopeusrajoitusten lista</a>' +
+        '</div>');
+    }
+  };
+
   var bindEvents = function(selectedSpeedLimit) {
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
@@ -108,6 +118,14 @@
     rootElement.on('click', '#separate-limit', function() { selectedSpeedLimit.separate(); });
     rootElement.on('click', '.form-controls.speed-limit button.save', function() { selectedSpeedLimit.save(); });
     rootElement.on('click', '.form-controls.speed-limit button.cancel', function() { selectedSpeedLimit.cancel(); });
+    eventbus.on('layer:selected', function(layer) {
+      if(layer === 'speedLimit') {
+        renderLinktoWorkList();
+      }
+      else {
+        $('#work-list-link').parent().remove();
+      }
+    });
   };
 
   root.SpeedLimitForm = {
