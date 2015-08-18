@@ -26,6 +26,15 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
+  override def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit = {
+    val roadLinks = roadLinkServiceImplementation.fetchVVHRoadlinks(mmlIds)
+    withDynTransaction {
+      roadLinks.foreach { rl =>
+        dao.purgeFromUnknownSpeedLimits(rl.mmlId, GeometryUtils.geometryLength(rl.geometry))
+      }
+    }
+  }
+
   override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
@@ -116,9 +125,11 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
 
   override def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
-      newLimits.flatMap { limit =>
+      val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
       }
+      eventbus.publish("speedLimits:purgeUnknown", newLimits.map(_.mmlId).toSet)
+      createdIds
     }
   }
 }

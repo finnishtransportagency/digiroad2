@@ -63,6 +63,21 @@ trait OracleLinearAssetDao {
     statement.close()
   }
 
+  def purgeFromUnknownSpeedLimits(mmlId: Long, roadLinkLength: Double): Unit = {
+    val speedLimits = fetchSpeedLimitsByMmlId(mmlId)
+
+    def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
+      val limitEndPoints = speedLimits.filter(sl => sl._3 == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
+      limitEndPoints.foldLeft(Seq((0.0, roadLinkLength)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+    }
+
+    val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
+    val againstRemainders = calculateRemainders(SideCode.AgainstDigitizing)
+    if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
+      sqlu"""delete from unknown_speed_limit where mml_id = $mmlId""".execute
+    }
+  }
+
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
 
   val roadLinkService: RoadLinkService

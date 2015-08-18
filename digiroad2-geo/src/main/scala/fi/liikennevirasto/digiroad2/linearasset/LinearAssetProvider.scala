@@ -11,6 +11,7 @@ case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 
 trait LinearAssetProvider {
+  def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
   def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit
   def persistSideCodeAdjustments(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit
