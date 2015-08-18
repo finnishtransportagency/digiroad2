@@ -28,8 +28,7 @@
       .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
   };
 
-  var fetchUnknownLimits = function(layerName) {
-    var backend = new Backend();
+  var fetchUnknownLimits = function(backend, layerName) {
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
         '<div class="page">' +
@@ -52,17 +51,19 @@
     });
   };
 
-  var initialize = function() {
+  var bindEvents = function(backend) {
     eventbus.on('workList:select', function(layerName) {
       $('.container').hide();
       $('#work-list').show();
       $('body').addClass('work-list');
-      fetchUnknownLimits(layerName);
+      fetchUnknownLimits(backend, layerName);
     });
   };
 
   root.WorkListView = {
-    initialize: initialize
+    initialize: function(backend) {
+      bindEvents(backend);
+    }
   };
 
 })(this);
