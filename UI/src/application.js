@@ -41,6 +41,9 @@ var URLRouter = function(map, backend, models) {
     speedLimit: function(mmlId) {
       applicationModel.selectLayer('speedLimit');
       backend.getRoadLinkByMMLId(mmlId, function(response) {
+        eventbus.once('speedLimits:available', function() {
+          eventbus.trigger('speedLimit:selectByMmlId', parseInt(mmlId, 10));
+        });
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
       });
     }

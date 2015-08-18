@@ -500,11 +500,19 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
+    eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
     if (selectedSpeedLimit.isNew()) {
       setSelectionStyleAndHighlightFeature();
+    }
+  };
+
+  var selectSpeedLimitByMmlId = function(mmlId) {
+    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.mmlId === mmlId; });
+    if (feature) {
+      selectControl.select(feature);
     }
   };
 
@@ -631,6 +639,7 @@ window.SpeedLimitLayer = function(params) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
     }
+    eventbus.trigger('speedLimits:available');
   };
 
   var dottedLineFeatures = function(speedLimits) {
