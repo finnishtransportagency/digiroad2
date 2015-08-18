@@ -15,18 +15,18 @@
                 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
     </script>
-    <title>Digiroad 2 korjattavat tielinkit</title>
+    <title>Digiroad 2 tuntemattomat nopeusrajoitukset</title>
 </head>
-<body onload="fetchIncompleteLinks()" style="overflow: auto;">
+<body onload="fetchUnknownLimits()" style="overflow: auto;">
     <div class="page">
         <div class="content-box">
-            <header>Korjattavien linkkien lista</header>
-            <div id="incomplete-links" class="work-list">
+            <header>Tuntemattomien nopeusrajoitusten lista</header>
+            <div id="unknown-limits" class="work-list">
             </div>
         </div>
     </div>
     <script type="application/javascript">
-        var incompleteLinksTableForMunicipality = function(municipalityName, mmlIdsByAdministrativeClass) {
+        var unknownLimitsTable = function(mmlIdsByAdministrativeClass, municipalityName) {
             var municipalityHeader = function(municipalityName) {
                 return $('<h2/>').html(municipalityName);
             };
@@ -39,7 +39,7 @@
                 });
             };
             var assetLink = function(mmlId) {
-                var link =  Environment.urlPath() + '/#linkProperties/' + mmlId;
+                var link =  Environment.urlPath() + '/#speedLimit/' + mmlId;
                 return $('<a/>').attr('href', link).html(link);
             };
             var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
@@ -55,12 +55,11 @@
                     .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
         };
 
-        var fetchIncompleteLinks = function() {
+        var fetchUnknownLimits = function() {
             var backend = new Backend();
-            backend.getIncompleteLinksWithCallBack(function(links) {
-                _.map(links, function(mmlIdsByAdministrativeClass, municipalityName) {
-                    $('#incomplete-links').append(incompleteLinksTableForMunicipality(municipalityName, mmlIdsByAdministrativeClass));
-                });
+            backend.getUnknownLimits(function(limits) {
+                var unknownLimits = _.map(limits, unknownLimitsTable)
+                $('#unknown-limits').html(unknownLimits);
             });
         };
     </script>

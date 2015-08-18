@@ -21,6 +21,30 @@ import scala.util.Try
 
 
 trait OracleLinearAssetDao {
+  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
+    def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
+    val optionalMunicipalities = municipalities.map(_.mkString(","))
+    val incompleteLinksQuery = """
+        select s.mml_id, m.name_fi, s.administrative_class
+        from unknown_speed_limit s
+        join municipality m on s.municipality_code = m.id
+                               """
+
+    val sql = optionalMunicipalities match {
+      case Some(m) => incompleteLinksQuery + s" where l.municipality_code in ($m)"
+      case _ => incompleteLinksQuery
+    }
+
+    Q.queryNA[(Long, String, Int)](sql).list
+      .map(toUnknownLimit)
+      .groupBy(_.municipality)
+      .mapValues {
+      _.groupBy(_.administrativeClass)
+        .mapValues(_.map(_.mmlId))
+    }
+  }
+
   def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
     val statement = dynamicSession.prepareStatement("insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values (?, ?, ?)")
     limits.foreach { limit =>

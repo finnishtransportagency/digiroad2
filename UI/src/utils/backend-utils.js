@@ -234,6 +234,10 @@
       $.getJSON('api/incompleteLinks', callback);
     };
 
+    this.getUnknownLimits = function(callback) {
+      $.getJSON('api/unknownSpeedLimits', callback);
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
