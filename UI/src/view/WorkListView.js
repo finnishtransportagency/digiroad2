@@ -46,7 +46,7 @@
       $('a.work-list-item').on('click', function() {
         $('.container').show();
         $('#work-list').hide();
-        $('body').removeClass('work-list').scrollTop(0);
+        $('body').removeClass('scrollable').scrollTop(0);
       });
     });
   };
@@ -55,7 +55,8 @@
     eventbus.on('workList:select', function(layerName) {
       $('.container').hide();
       $('#work-list').show();
-      $('body').addClass('work-list');
+      $('body').addClass('scrollable');
+
       fetchUnknownLimits(backend, layerName);
     });
   };
