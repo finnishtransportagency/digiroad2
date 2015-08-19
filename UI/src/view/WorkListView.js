@@ -46,7 +46,7 @@
       $('a.work-list-item').on('click', function() {
         $('.container').show();
         $('#work-list').hide();
-        $('body').removeClass('work-list');
+        $('body').removeClass('work-list').scrollTop(0);
       });
     });
   };
