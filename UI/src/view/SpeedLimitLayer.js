@@ -452,7 +452,9 @@ window.SpeedLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox);
+      return collection.fetch(boundingBox);
+    } else {
+      return $.Deferred().resolve();
     }
   };
 
@@ -548,10 +550,13 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox);
+      collection.fetch(state.bbox).then(function() {
+        eventbus.trigger('layer:speedLimit:moved');
+      });
     } else {
       vectorLayer.setVisibility(false);
       stop();
+      eventbus.trigger('layer:speedLimit:moved');
     }
   };
 
@@ -644,7 +649,6 @@ window.SpeedLimitLayer = function(params) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
     }
-    eventbus.trigger('speedLimits:available');
   };
 
   var dottedLineFeatures = function(speedLimits) {
@@ -691,7 +695,10 @@ window.SpeedLimitLayer = function(params) {
     map.addLayer(vectorLayer);
     map.addLayer(indicatorLayer);
     vectorLayer.setVisibility(true);
-    update(map.getZoom(), map.getExtent());
+    var layerUpdated = update(map.getZoom(), map.getExtent());
+    layerUpdated.then(function() {
+      eventbus.trigger('layer:speedLimit:shown');
+    });
   };
 
   var hideLayer = function(map) {

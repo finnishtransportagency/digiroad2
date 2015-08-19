@@ -40,12 +40,16 @@ var URLRouter = function(map, backend, models) {
     },
 
     speedLimit: function(mmlId) {
+      var roadLinkReceived = backend.getRoadLinkByMMLId(mmlId);
+      var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
       applicationModel.selectLayer('speedLimit');
-      backend.getRoadLinkByMMLId(mmlId, function(response) {
-        eventbus.once('speedLimits:available', function() {
-          eventbus.trigger('speedLimit:selectByMmlId', parseInt(mmlId, 10));
-        });
+      var mapMoved = $.when(roadLinkReceived).then(function(response) {
+        var promise =  eventbus.oncePromise('layer:speedLimit:moved');
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+        return promise;
+      });
+      $.when(layerSelected, mapMoved).then(function() {
+        eventbus.trigger('speedLimit:selectByMmlId', parseInt(mmlId, 10));
       });
     },
 
