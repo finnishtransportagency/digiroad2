@@ -25,15 +25,15 @@ trait OracleLinearAssetDao {
     case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
-    val incompleteLinksQuery = """
+    val unknownSpeedLimitQuery = """
         select s.mml_id, m.name_fi, s.administrative_class
         from unknown_speed_limit s
         join municipality m on s.municipality_code = m.id
                                """
 
     val sql = optionalMunicipalities match {
-      case Some(m) => incompleteLinksQuery + s" where l.municipality_code in ($m)"
-      case _ => incompleteLinksQuery
+      case Some(m) => unknownSpeedLimitQuery + s" where l.municipality_code in ($m)"
+      case _ => unknownSpeedLimitQuery
     }
 
     Q.queryNA[(Long, String, Int)](sql).list
