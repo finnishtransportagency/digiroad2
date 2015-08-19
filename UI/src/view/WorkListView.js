@@ -39,15 +39,16 @@
         '</div>' +
       '</div>'
     );
-    var table = _.partial(unknownLimitsTable, layerName);
+    var showApp = function() {
+      $('.container').show();
+      $('#work-list').hide();
+      $('body').removeClass('scrollable').scrollTop(0);
+      $(window).off('hashchange', showApp);
+    };
     backend.getUnknownLimits(function(limits) {
-      var unknownLimits = _.map(limits, table);
+      var unknownLimits = _.map(limits, _.partial(unknownLimitsTable, layerName));
       $('#unknown-limits').html(unknownLimits);
-      $('a.work-list-item').on('click', function() {
-        $('.container').show();
-        $('#work-list').hide();
-        $('body').removeClass('scrollable').scrollTop(0);
-      });
+      $(window).on('hashchange', showApp);
     });
   };
 
