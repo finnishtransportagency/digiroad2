@@ -89,6 +89,19 @@ window.SpeedLimitLayer = function(params) {
     };
 
     this.cut = function(point) {
+      var pointsToLineString = function(points) {
+        var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
+        return new OpenLayers.Geometry.LineString(openlayersPoints);
+      };
+
+      var calculateSplitProperties = function(nearestSpeedLimit, point) {
+        var lineString = pointsToLineString(nearestSpeedLimit.points);
+        var startMeasureOffset = nearestSpeedLimit.startMeasure;
+        var splitMeasure = geometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
+        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestSpeedLimit.points), point);
+        return _.merge({ splitMeasure: splitMeasure }, splitVertices);
+      };
+
       var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
@@ -98,18 +111,10 @@ window.SpeedLimitLayer = function(params) {
         return;
       }
 
-      var pointsToLineString = function(points) {
-        return new OpenLayers.Geometry.LineString(
-          _.map(points, function(point) {
-                          return new OpenLayers.Geometry.Point(point.x, point.y);
-                        }));
-      };
+      var nearestSpeedLimit = nearest.feature.attributes;
+      var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
+      selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
-      var lineString = pointsToLineString(nearest.feature.attributes.points);
-      var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
-      _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
-                                                mousePoint));
-      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, split);
       remove();
     };
   };

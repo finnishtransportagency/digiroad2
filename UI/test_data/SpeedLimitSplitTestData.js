@@ -6,6 +6,7 @@
         "mmlId": 555,
         "value": 40,
         "sideCode": 1,
+        "startMeasure": 0,
         "points": [
           {
             "x": 0.0,
@@ -22,6 +23,7 @@
         "mmlId": 666,
         "value": 40,
         "sideCode": 1,
+        "startMeasure": 10,
         "points": [
           {
             "x": 0.0,
@@ -38,6 +40,7 @@
         "mmlId": 777,
         "value": 40,
         "sideCode": 1,
+        "startMeasure": 0,
         "points": [
           {
             "x": 0.0,

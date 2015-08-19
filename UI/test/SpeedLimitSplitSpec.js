@@ -19,8 +19,40 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     ]);
   };
 
+  describe('splitting speed limit that has non zero start measure', function() {
+    before(function (done) {
+      splitBackendCalls = [];
+
+      var backend = testHelpers.defaultBackend()
+        .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11 })
+        .withSpeedLimitsData(speedLimitTestData)
+        .withSpeedLimitSplitting(speedLimitSplitting);
+
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        $('.speed-limits').click();
+        testHelpers.clickVisibleEditModeButton();
+        done();
+      }, backend);
+
+      $('.speed-limits .action.cut').click();
+      var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 110.0));
+      openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+      $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
+      $('.speed-limit .save.btn').click();
+    });
+
+    it('takes the start measure into consideration on split measure', function() {
+      expect(splitBackendCalls).to.have.length(1);
+      var backendCall = _.first(splitBackendCalls);
+      expect(backendCall.id).to.equal(112);
+      expect(backendCall.splitMeasure).to.be.closeTo(50.0, 0.5);
+    });
+  });
+
   describe('when loading application in edit mode with speed limit data', function() {
     before(function (done) {
+      splitBackendCalls = [];
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         $('.speed-limits').click();
