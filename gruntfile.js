@@ -134,7 +134,8 @@ module.exports = function(grunt) {
           // Indicates whether 'mocha.run()' should be executed in
           // 'bridge.js'
           run: false,
-          log: true
+          log: true,
+          reporter: 'Spec'
         }
       },
       integration: {

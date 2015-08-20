@@ -21,23 +21,25 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
         selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
       });
 
-      describe('selected speed limit is separable', function() {
-        it('returns true when selection is two-way and has two-way roadlink', function() {
+      describe('is separable', function() {
+        it('when selection is two-way and has two-way roadlink', function () {
           selectedSpeedLimit.open(speedLimitTestData[0][0], true);
           expect(selectedSpeedLimit.isSeparable()).to.be.true;
         });
-        it('returns false when selection has multiple links', function() {
+      });
+      describe('is not separable', function() {
+        it('when selection has multiple links', function() {
           var multiSegmentSpeedLimitLink = _.find(speedLimitTestData, function(x) { return x.length > 1; })[0];
           selectedSpeedLimit.open(multiSegmentSpeedLimitLink, false);
           expect(selectedSpeedLimit.isSeparable()).to.be.false;
         });
-        it('returns false when selection does not have a two-way roadlink', function() {
+        it('when selection does not have a two-way roadlink', function() {
           selectedSpeedLimit.open(speedLimitTestData[1][0], true);
           expect(selectedSpeedLimit.isSeparable()).to.be.false;
         });
       });
 
-      describe('separating speed limit', function() {
+      describe('separating', function() {
         it('separates selection into two', function() {
           selectedSpeedLimit.open(speedLimitTestData[0][0], true);
           selectedSpeedLimit.separate();
