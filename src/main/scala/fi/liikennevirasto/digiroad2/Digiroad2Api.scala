@@ -304,15 +304,6 @@ with GZipSupport {
     roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
-  get("/unknownSpeedLimits") {
-    val user = userProvider.getCurrentUser()
-    val includedMunicipalities = user.isOperator() match {
-      case true => None
-      case false => Some(user.configuration.authorizedMunicipalities)
-    }
-    linearAssetProvider.getUnknownSpeedLimits(includedMunicipalities)
-  }
-
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val user = userProvider.getCurrentUser()
@@ -402,6 +393,16 @@ with GZipSupport {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
+
+  get("/speedlimits/unknown") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    linearAssetProvider.getUnknownSpeedLimits(includedMunicipalities)
+  }
+
 
   get("/numericallimits") {
     val user = userProvider.getCurrentUser()

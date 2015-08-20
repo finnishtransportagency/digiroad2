@@ -233,7 +233,7 @@
     };
 
     this.getUnknownLimits = function() {
-      return $.getJSON('api/unknownSpeedLimits');
+      return $.getJSON('api/speedlimits/unknown');
     };
 
     this.createAsset = function (data, errorCallback) {
