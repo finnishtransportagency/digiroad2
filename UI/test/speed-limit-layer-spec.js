@@ -9,11 +9,11 @@ define(['chai', 'TestHelpers', 'Layer', 'SpeedLimitLayer', 'SpeedLimitsCollectio
         eventbus = Backbone.Events;
         var speedLimitsCollection = new SpeedLimitsCollection({
           getSpeedLimits: function() {
-            eventbus.trigger('speedLimits:fetched', [
+            var speedLimitData = [
               [{id: 1, sideCode: 1, points: [{x: 0, y: 0}, {x: 5, y: 5}], position: 0}],
               [{id: 2, sideCode: 1, points: [{x: 10, y: 10}, {x: 15, y: 15}], position: 0}]
-            ]);
-            return $.Deferred().resolve();
+            ];
+            return $.Deferred().resolve(speedLimitData);
           }
         });
         var selectedSpeedLimit = new SelectedSpeedLimit(speedLimitsCollection);

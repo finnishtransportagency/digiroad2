@@ -88,9 +88,7 @@
     }, 1000);
 
     this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
-      return $.getJSON('api/speedlimits?bbox=' + boundingBox, function (speedLimits) {
-        callback(speedLimits);
-      });
+      return $.getJSON('api/speedlimits?bbox=' + boundingBox);
     }, 1000);
 
     this.updateSpeedLimits = _.throttle(function(payload, success, failure) {
@@ -321,9 +319,8 @@
     };
 
     this.withSpeedLimitsData = function(speedLimitsData) {
-      self.getSpeedLimits = function(boundingBox, callback) {
-        callback(speedLimitsData);
-        return $.Deferred().resolve();
+      self.getSpeedLimits = function(boundingBox) {
+        return $.Deferred().resolve(speedLimitsData);
       };
       return self;
     };
