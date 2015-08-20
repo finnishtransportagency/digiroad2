@@ -295,7 +295,7 @@ with GZipSupport {
     RoadLinkService.getAdjacent(id)
   }
 
-  get("/incompleteLinks") {
+  get("/roadLinks/incomplete") {
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = user.isOperator() match {
       case true => None

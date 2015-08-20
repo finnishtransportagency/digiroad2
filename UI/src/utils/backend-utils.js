@@ -229,7 +229,7 @@
     };
 
     this.getIncompleteLinks = function() {
-      return $.getJSON('api/incompleteLinks');
+      return $.getJSON('api/roadLinks/incomplete');
     };
 
     this.getUnknownLimits = function() {
