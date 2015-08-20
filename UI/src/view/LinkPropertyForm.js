@@ -163,7 +163,7 @@
 
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperties') {
+        if(layer === 'linkProperty') {
           renderLinkToIncompleteLinks();
         }
         else {

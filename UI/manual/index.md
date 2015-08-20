@@ -125,7 +125,7 @@ _Tielinkit._
 
 Tielinkkej&auml; haetaan tielinkin MML-ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Esimerkki URL-osoitteesta:
 
- <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperties/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperties/373320541 </a>
+ <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
 jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 

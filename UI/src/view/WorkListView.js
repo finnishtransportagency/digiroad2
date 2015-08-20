@@ -38,7 +38,9 @@
       '<div style="overflow: auto;">' +
         '<div class="page">' +
           '<div class="content-box">' +
-            '<header>' + title[layerName] + '</header>' +
+            '<header>' + title[layerName] +
+              '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+            '</header>' +
             '<div class="work-list">' +
           '</div>' +
         '</div>' +
@@ -50,10 +52,10 @@
       $('body').removeClass('scrollable').scrollTop(0);
       $(window).off('hashchange', showApp);
     };
+    $(window).on('hashchange', showApp);
     listP.then(function(limits) {
       var unknownLimits = _.map(limits, _.partial(unknownLimitsTable, layerName));
       $('#work-list .work-list').html(unknownLimits);
-      $(window).on('hashchange', showApp);
     });
   };
 

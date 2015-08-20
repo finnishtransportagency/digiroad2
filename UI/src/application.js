@@ -32,7 +32,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     linkProperty: function(mmlId) {
-      applicationModel.selectLayer('linkProperties');
+      applicationModel.selectLayer('linkProperty');
       backend.getRoadLinkByMMLId(mmlId, function(response) {
         eventbus.once('linkProperties:available', function() {
           models.selectedLinkProperty.open(response.id);
@@ -83,11 +83,11 @@ var URLRouter = function(map, backend, models) {
   });
 
   eventbus.on('linkProperties:unselected', function() {
-    router.navigate('linkProperties');
+    router.navigate('linkProperty');
   });
 
   eventbus.on('linkProperties:selected', function(linkProperty) {
-    router.navigate('linkProperties/' + linkProperty.mmlId);
+    router.navigate('linkProperty/' + linkProperty.mmlId);
   });
 
   eventbus.on('layer:selected', function(layer) {
@@ -200,7 +200,7 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
