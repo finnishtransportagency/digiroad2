@@ -49,13 +49,19 @@ trait MassTransitStopService {
                                 created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                                 roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean) extends IAssetRow
 
-  def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Seq[Long]] = {
+  def getFloatingStops(includedMunicipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class FloatingStop(externalId: Long, municipality: String, administrativeClass: String)
+    def toFloatingStop(x: (Long, String, Int)) = FloatingStop(x._1, x._2, AdministrativeClass(x._3).toString)
+
     withDynSession {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
       val allFloatingAssetsQuery = """
-        select a.external_id, m.name_fi
+        select a.external_id, m.name_fi, lt.link_type
         from asset a
         join municipality m on a.municipality_code = m.id
+        join asset_link al on a.id = al.asset_id
+        join lrm_position lrm on al.position_id = lrm.id
+        join link_type lt on lrm.mml_id = lt.mml_id
         where asset_type_id = 10 and floating = '1'
       """
 
@@ -64,9 +70,11 @@ trait MassTransitStopService {
         case _ => allFloatingAssetsQuery
       }
 
-      StaticQuery.queryNA[(Long, String)](sql).list
-        .groupBy(_._2)
-        .mapValues(_.map(_._1))
+      StaticQuery.queryNA[(Long, String, Int)](sql).list
+        .map(toFloatingStop)
+        .groupBy(_.municipality)
+        .mapValues { _.groupBy(_.administrativeClass)
+                      .mapValues(_.map(_.externalId)) }
     }
   }
 
