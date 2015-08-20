@@ -30,7 +30,9 @@
 
   var generateWorkList = function(layerName, listP) {
     var title = {
-      speedLimit: 'Tuntemattomien nopeusrajoitusten lista'
+      speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
+      linkProperty: 'Korjattavien linkkien lista',
+      massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +

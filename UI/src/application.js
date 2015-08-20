@@ -16,7 +16,9 @@ var URLRouter = function(map, backend, models) {
       'asset/:id': 'massTransitStop',
       'linkProperties/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
-      'work-list/:layer': 'workList'
+      'work-list/speedLimit': 'speedLimitWorkList',
+      'work-list/linkProperty': 'linkPropertyWorkList',
+      'work-list/massTransitStop': 'massTransitStopWorkList'
     },
 
     massTransitStop: function(id) {
@@ -53,9 +55,17 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
-    workList: function(layerName){
-      eventbus.trigger('workList:select', layerName, backend.getUnknownLimits());
-    }
+    speedLimitWorkList: function() {
+      eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
+    },
+
+    linkPropertyWorkList: function() {
+      eventbus.trigger('workList:select', 'linkProperty', backend.getIncompleteLinks());
+    },
+
+    massTransitStopWorkList: function() {
+      eventbus.trigger('workList:select', 'massTransitStop', backend.getFloatingMassTransitStops());
+    },
   });
 
   var router = new Router();

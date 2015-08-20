@@ -224,12 +224,12 @@
       $.getJSON('api/assetPropertyNames/fi', callback);
     };
 
-    this.getFloatingAssetsWithCallback = function(callback) {
-      $.getJSON('api/floatingMassTransitStops', callback);
+    this.getFloatingMassTransitStops = function() {
+      return $.getJSON('api/floatingMassTransitStops');
     };
 
-    this.getIncompleteLinksWithCallBack = function(callback) {
-      $.getJSON('api/incompleteLinks', callback);
+    this.getIncompleteLinks = function() {
+      return $.getJSON('api/incompleteLinks');
     };
 
     this.getUnknownLimits = function() {
