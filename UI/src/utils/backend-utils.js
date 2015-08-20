@@ -225,7 +225,7 @@
     };
 
     this.getFloatingMassTransitStops = function() {
-      return $.getJSON('api/floatingMassTransitStops');
+      return $.getJSON('api/massTransitStops/floating');
     };
 
     this.getIncompleteLinks = function() {

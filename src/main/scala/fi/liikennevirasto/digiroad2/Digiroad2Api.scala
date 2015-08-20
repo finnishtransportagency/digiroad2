@@ -65,15 +65,6 @@ with GZipSupport {
     }
   }
 
-  get("/floatingMassTransitStops") {
-    val user = userProvider.getCurrentUser()
-    val includedMunicipalities = user.isOperator() match {
-      case true => None
-      case false => Some(user.configuration.authorizedMunicipalities)
-    }
-    massTransitStopService.getFloatingStops(includedMunicipalities)
-  }
-
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles
   }
@@ -100,6 +91,15 @@ with GZipSupport {
       case false => throw new NotImplementedError()
     }
     massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
+  }
+
+  get("/massTransitStops/floating") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    massTransitStopService.getFloatingStops(includedMunicipalities)
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {
