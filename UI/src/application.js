@@ -14,7 +14,7 @@ var URLRouter = function(map, backend, models) {
     routes: {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
-      'linkProperties/:mmlId': 'linkProperty',
+      'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
       'work-list/speedLimit': 'speedLimitWorkList',
       'work-list/linkProperty': 'linkPropertyWorkList',
