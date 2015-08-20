@@ -232,8 +232,8 @@
       $.getJSON('api/incompleteLinks', callback);
     };
 
-    this.getUnknownLimits = function(callback) {
-      $.getJSON('api/unknownSpeedLimits', callback);
+    this.getUnknownLimits = function() {
+      return $.getJSON('api/unknownSpeedLimits');
     };
 
     this.createAsset = function (data, errorCallback) {

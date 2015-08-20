@@ -54,7 +54,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     workList: function(layerName){
-      eventbus.trigger('workList:select', layerName);
+      eventbus.trigger('workList:select', layerName, backend.getUnknownLimits());
     }
   });
 
