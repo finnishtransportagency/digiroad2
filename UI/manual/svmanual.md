@@ -127,7 +127,7 @@ _V&auml;gl&auml;nkar._
 
 V&auml;gl&auml;nkar s&ouml;ks med en URL-adress som  identifierats med v&auml;gl&auml;nkens MML-ID. Exempel p&aring;  URL-adress:
 
- <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperties/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperties/373320541 </a>
+ <a href=https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://testiextranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
 
 d&auml;r nummerserien 373320541 &auml;r v&auml;gl&auml;nkens MML-ID. Funktionen fokuserar visningsl&auml;get till den s&ouml;kta v&auml;gl&auml;nken i kartgr&auml;nssnittet. V&auml;gl&auml;nkens egenskapsdataf&ouml;nster &ouml;ppnas i sidans h&ouml;gra balk.
 

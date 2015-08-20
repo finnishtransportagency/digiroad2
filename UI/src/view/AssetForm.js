@@ -66,12 +66,8 @@
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
-      var activeLayer = 'massTransitStop';
 
       var renderAssetForm = function() {
-        if (activeLayer !== 'massTransitStop') {
-          return;
-        }
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
         var wrapper = $('<div />').addClass('wrapper edit-mode');
@@ -466,12 +462,27 @@
         dateutil.removeDatePickersFromDom();
       };
 
+      var renderLinktoWorkList = function renderLinktoWorkList() {
+        var notRendered = !$('#asset-work-list-link').length;
+        if(notRendered) {
+          $('#information-content').append('' +
+            '<div class="form form-horizontal">' +
+            '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
+            '</div>');
+        }
+      };
+
       eventbus.on('asset:modified', function(){
         renderAssetForm();
       });
 
-      eventbus.on('layer:selected', function(layer) {
-        activeLayer = layer;
+      eventbus.on('layer:selected application:initialized', function() {
+        if(applicationModel.getSelectedLayer() === 'massTransitStop') {
+          renderLinktoWorkList();
+        }
+        else {
+          $('#asset-work-list-link').parent().remove();
+        }
       });
 
       eventbus.on('application:readOnly', function(data) {

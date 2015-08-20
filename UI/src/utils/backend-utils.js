@@ -224,16 +224,16 @@
       $.getJSON('api/assetPropertyNames/fi', callback);
     };
 
-    this.getFloatingAssetsWithCallback = function(callback) {
-      $.getJSON('api/floatingMassTransitStops', callback);
+    this.getFloatingMassTransitStops = function() {
+      return $.getJSON('api/massTransitStops/floating');
     };
 
-    this.getIncompleteLinksWithCallBack = function(callback) {
-      $.getJSON('api/incompleteLinks', callback);
+    this.getIncompleteLinks = function() {
+      return $.getJSON('api/roadLinks/incomplete');
     };
 
-    this.getUnknownLimits = function(callback) {
-      $.getJSON('api/unknownSpeedLimits', callback);
+    this.getUnknownLimits = function() {
+      return $.getJSON('api/speedlimits/unknown');
     };
 
     this.createAsset = function (data, errorCallback) {

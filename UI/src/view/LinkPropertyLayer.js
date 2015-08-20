@@ -1,6 +1,6 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
-    var layerName = 'linkProperties';
+    var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var currentRenderIntent = 'default';

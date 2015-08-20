@@ -85,7 +85,7 @@
       if(notRendered) {
         $('#information-content').append('' +
           '<div class="form form-horizontal">' +
-              '<a id="incomplete-links-link" class="incomplete-links" href="incomplete_links.html">Korjattavien linkkien lista</a>' +
+              '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
           '</div>');
       }
     };
@@ -163,7 +163,7 @@
 
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer === 'linkProperties') {
+        if(layer === 'linkProperty') {
           renderLinkToIncompleteLinks();
         }
         else {

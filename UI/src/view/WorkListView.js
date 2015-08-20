@@ -11,8 +11,8 @@
         return $('<tr/>').append($('<td/>').append(assetLink(id)));
       });
     };
-    var assetLink = function(mmlId) {
-      var link = '#' + layerName + '/' + mmlId;
+    var assetLink = function(id) {
+      var link = '#' + layerName + '/' + id;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
@@ -28,13 +28,20 @@
       .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
   };
 
-  var fetchUnknownLimits = function(backend, layerName) {
+  var generateWorkList = function(layerName, listP) {
+    var title = {
+      speedLimit: 'Tuntemattomien nopeusrajoitusten lista',
+      linkProperty: 'Korjattavien linkkien lista',
+      massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit'
+    };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
         '<div class="page">' +
           '<div class="content-box">' +
-            '<header>Tuntemattomien nopeusrajoitusten lista</header>' +
-            '<div id="unknown-limits" class="work-list">' +
+            '<header>' + title[layerName] +
+              '<a class="header-link" href="#' + layerName + '">Sulje lista</a>' +
+            '</header>' +
+            '<div class="work-list">' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -45,26 +52,26 @@
       $('body').removeClass('scrollable').scrollTop(0);
       $(window).off('hashchange', showApp);
     };
-    backend.getUnknownLimits(function(limits) {
+    $(window).on('hashchange', showApp);
+    listP.then(function(limits) {
       var unknownLimits = _.map(limits, _.partial(unknownLimitsTable, layerName));
-      $('#unknown-limits').html(unknownLimits);
-      $(window).on('hashchange', showApp);
+      $('#work-list .work-list').html(unknownLimits);
     });
   };
 
-  var bindEvents = function(backend) {
-    eventbus.on('workList:select', function(layerName) {
+  var bindEvents = function() {
+    eventbus.on('workList:select', function(layerName, listP) {
       $('.container').hide();
       $('#work-list').show();
       $('body').addClass('scrollable');
 
-      fetchUnknownLimits(backend, layerName);
+      generateWorkList(layerName, listP);
     });
   };
 
   root.WorkListView = {
-    initialize: function(backend) {
-      bindEvents(backend);
+    initialize: function() {
+      bindEvents();
     }
   };
 

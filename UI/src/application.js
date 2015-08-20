@@ -14,9 +14,11 @@ var URLRouter = function(map, backend, models) {
     routes: {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
-      'linkProperties/:mmlId': 'linkProperty',
+      'linkProperty/:mmlId': 'linkProperty',
       'speedLimit/:mmlId': 'speedLimit',
-      'work-list/:layer': 'workList'
+      'work-list/speedLimit': 'speedLimitWorkList',
+      'work-list/linkProperty': 'linkPropertyWorkList',
+      'work-list/massTransitStop': 'massTransitStopWorkList'
     },
 
     massTransitStop: function(id) {
@@ -30,7 +32,7 @@ var URLRouter = function(map, backend, models) {
     },
 
     linkProperty: function(mmlId) {
-      applicationModel.selectLayer('linkProperties');
+      applicationModel.selectLayer('linkProperty');
       backend.getRoadLinkByMMLId(mmlId, function(response) {
         eventbus.once('linkProperties:available', function() {
           models.selectedLinkProperty.open(response.id);
@@ -53,9 +55,17 @@ var URLRouter = function(map, backend, models) {
       });
     },
 
-    workList: function(layerName){
-      eventbus.trigger('workList:select', layerName);
-    }
+    speedLimitWorkList: function() {
+      eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
+    },
+
+    linkPropertyWorkList: function() {
+      eventbus.trigger('workList:select', 'linkProperty', backend.getIncompleteLinks());
+    },
+
+    massTransitStopWorkList: function() {
+      eventbus.trigger('workList:select', 'massTransitStop', backend.getFloatingMassTransitStops());
+    },
   });
 
   var router = new Router();
@@ -73,11 +83,11 @@ var URLRouter = function(map, backend, models) {
   });
 
   eventbus.on('linkProperties:unselected', function() {
-    router.navigate('linkProperties');
+    router.navigate('linkProperty');
   });
 
   eventbus.on('linkProperties:selected', function(linkProperty) {
-    router.navigate('linkProperties/' + linkProperty.mmlId);
+    router.navigate('linkProperty/' + linkProperty.mmlId);
   });
 
   eventbus.on('layer:selected', function(layer) {
@@ -190,7 +200,7 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperties: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
