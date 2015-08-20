@@ -466,12 +466,27 @@
         dateutil.removeDatePickersFromDom();
       };
 
+      var renderLinktoWorkList = function renderLinktoWorkList() {
+        var notRendered = !$('#asset-work-list-link').length;
+        if(notRendered) {
+          $('#information-content').append('' +
+            '<div class="form form-horizontal">' +
+            '<a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a>' +
+            '</div>');
+        }
+      };
+
       eventbus.on('asset:modified', function(){
         renderAssetForm();
       });
 
-      eventbus.on('layer:selected', function(layer) {
-        activeLayer = layer;
+      eventbus.on('layer:selected application:initialized', function(layer) {
+        if(applicationModel.getSelectedLayer() === 'massTransitStop') {
+          renderLinktoWorkList();
+        }
+        else {
+          $('#asset-work-list-link').parent().remove();
+        }
       });
 
       eventbus.on('application:readOnly', function(data) {
