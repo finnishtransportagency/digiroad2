@@ -66,12 +66,8 @@
       var enumeratedPropertyValues = null;
       var readOnly = true;
       var streetViewHandler;
-      var activeLayer = 'massTransitStop';
 
       var renderAssetForm = function() {
-        if (activeLayer !== 'massTransitStop') {
-          return;
-        }
         var container = $("#feature-attributes").empty();
         var header = busStopHeader();
         var wrapper = $('<div />').addClass('wrapper edit-mode');
@@ -480,7 +476,7 @@
         renderAssetForm();
       });
 
-      eventbus.on('layer:selected application:initialized', function(layer) {
+      eventbus.on('layer:selected application:initialized', function() {
         if(applicationModel.getSelectedLayer() === 'massTransitStop') {
           renderLinktoWorkList();
         }
