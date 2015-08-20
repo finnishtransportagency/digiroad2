@@ -180,8 +180,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("filter out floating speed limits") {
     Database.forDataSource(ds).withDynTransaction {
       val roadLinks = Seq(
-        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None),
-        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None))
+        VVHRoadLinkWithProperties(362957727, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(362955969, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
       val dao = new OracleLinearAssetDao {
         override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
       }
@@ -224,6 +224,37 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
         dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, _ => ())
       }
       id3 shouldBe None
+      dynamicSession.rollback()
+    }
+  }
+
+  test("speed limit purge removes fully covered link from unknown speed limit list") {
+    Database.forDataSource(ds).withDynTransaction {
+      val mmlId = 1068804942
+      sqlu"""delete from unknown_speed_limit""".execute
+      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
+      val dao = daoWithRoadLinks(Nil)
+      dao.purgeFromUnknownSpeedLimits(mmlId, 59.934)
+      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(None)
+      dynamicSession.rollback()
+    }
+  }
+
+  test("speed limit purge does not remove partially covered link from unknown speed limit list") {
+    Database.forDataSource(ds).withDynTransaction {
+      val mmlId = 1068804939
+      sqlu"""delete from unknown_speed_limit""".execute
+      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
+      val dao = daoWithRoadLinks(Nil)
+
+      dao.createSpeedLimit("test", mmlId, (11.0, 16.0), SideCode.BothDirections, 40, _ => ())
+      dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
+      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(Some(mmlId))
+
+      dao.createSpeedLimit("test", mmlId, (20.0, 54.0), SideCode.BothDirections, 40, _ => ())
+      dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
+      sql"""select mml_id from unknown_speed_limit where mml_id = $mmlId""".as[Long].firstOption should be(None)
+
       dynamicSession.rollback()
     }
   }

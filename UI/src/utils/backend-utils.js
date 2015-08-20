@@ -71,8 +71,8 @@
     }, 1000);
 
     this.getRoadLinkByMMLId = _.throttle(function(mmlId, callback) {
-      $.getJSON('api/roadlinks/' + mmlId, function(data) {
-        callback(data);
+      return $.getJSON('api/roadlinks/' + mmlId, function(data) {
+        return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
@@ -88,7 +88,7 @@
     }, 1000);
 
     this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
-      $.getJSON('api/speedlimits?bbox=' + boundingBox, function (speedLimits) {
+      return $.getJSON('api/speedlimits?bbox=' + boundingBox, function (speedLimits) {
         callback(speedLimits);
       });
     }, 1000);
@@ -234,6 +234,10 @@
       $.getJSON('api/incompleteLinks', callback);
     };
 
+    this.getUnknownLimits = function(callback) {
+      $.getJSON('api/unknownSpeedLimits', callback);
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
@@ -319,6 +323,7 @@
     this.withSpeedLimitsData = function(speedLimitsData) {
       self.getSpeedLimits = function(boundingBox, callback) {
         callback(speedLimitsData);
+        return $.Deferred().resolve();
       };
       return self;
     };

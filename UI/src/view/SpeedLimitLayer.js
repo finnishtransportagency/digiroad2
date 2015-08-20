@@ -89,6 +89,19 @@ window.SpeedLimitLayer = function(params) {
     };
 
     this.cut = function(point) {
+      var pointsToLineString = function(points) {
+        var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
+        return new OpenLayers.Geometry.LineString(openlayersPoints);
+      };
+
+      var calculateSplitProperties = function(nearestSpeedLimit, point) {
+        var lineString = pointsToLineString(nearestSpeedLimit.points);
+        var startMeasureOffset = nearestSpeedLimit.startMeasure;
+        var splitMeasure = geometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
+        var splitVertices = geometryUtils.splitByPoint(pointsToLineString(nearestSpeedLimit.points), point);
+        return _.merge({ splitMeasure: splitMeasure }, splitVertices);
+      };
+
       var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
@@ -98,18 +111,10 @@ window.SpeedLimitLayer = function(params) {
         return;
       }
 
-      var pointsToLineString = function(points) {
-        return new OpenLayers.Geometry.LineString(
-          _.map(points, function(point) {
-                          return new OpenLayers.Geometry.Point(point.x, point.y);
-                        }));
-      };
+      var nearestSpeedLimit = nearest.feature.attributes;
+      var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
+      selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
-      var lineString = pointsToLineString(nearest.feature.attributes.points);
-      var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
-      _.merge(split, geometryUtils.splitByPoint(pointsToLineString(nearest.feature.attributes.points),
-                                                mousePoint));
-      selectedSpeedLimit.splitSpeedLimit(nearest.feature.attributes.id, split);
       remove();
     };
   };
@@ -447,7 +452,9 @@ window.SpeedLimitLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      collection.fetch(boundingBox);
+      return collection.fetch(boundingBox);
+    } else {
+      return $.Deferred().resolve();
     }
   };
 
@@ -500,11 +507,19 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
+    eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
     if (selectedSpeedLimit.isNew()) {
       setSelectionStyleAndHighlightFeature();
+    }
+  };
+
+  var selectSpeedLimitByMmlId = function(mmlId) {
+    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.mmlId === mmlId; });
+    if (feature) {
+      selectControl.select(feature);
     }
   };
 
@@ -535,10 +550,13 @@ window.SpeedLimitLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      collection.fetch(state.bbox);
+      collection.fetch(state.bbox).then(function() {
+        eventbus.trigger('layer:speedLimit:moved');
+      });
     } else {
       vectorLayer.setVisibility(false);
       stop();
+      eventbus.trigger('layer:speedLimit:moved');
     }
   };
 
@@ -677,7 +695,10 @@ window.SpeedLimitLayer = function(params) {
     map.addLayer(vectorLayer);
     map.addLayer(indicatorLayer);
     vectorLayer.setVisibility(true);
-    update(map.getZoom(), map.getExtent());
+    var layerUpdated = update(map.getZoom(), map.getExtent());
+    layerUpdated.then(function() {
+      eventbus.trigger('layer:speedLimit:shown');
+    });
   };
 
   var hideLayer = function(map) {

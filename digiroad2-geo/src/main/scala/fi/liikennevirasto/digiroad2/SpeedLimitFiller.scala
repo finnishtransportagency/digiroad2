@@ -1,13 +1,17 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLimit}
 
 object SpeedLimitFiller {
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimit, adjustedMValue: Option[Double])
   case class MValueAdjustment(assetId: Long, mmlId: Long, startMeasure: Double, endMeasure: Double)
   case class SideCodeAdjustment(assetId: Long, sideCode: SideCode)
-  case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long], adjustedMValues: Seq[MValueAdjustment], adjustedSideCodes: Seq[SideCodeAdjustment])
+  case class UnknownLimit(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
+  case class SpeedLimitChangeSet(droppedSpeedLimitIds: Set[Long],
+                                 adjustedMValues: Seq[MValueAdjustment],
+                                 adjustedSideCodes: Seq[SideCodeAdjustment],
+                                 generatedUnknownLimits: Seq[UnknownLimit])
 
   private val MaxAllowedMValueError = 0.5
 
@@ -112,7 +116,7 @@ object SpeedLimitFiller {
       dropShortLimits
     )
 
-    val initialChangeSet = SpeedLimitChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil)
+    val initialChangeSet = SpeedLimitChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil, Nil)
     val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet) =
       roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
         val (existingSegments, changeSet) = acc
@@ -124,7 +128,9 @@ object SpeedLimitFiller {
         }
 
         val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-        (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+        val unknownLimits = generatedSpeedLimits.map(_ => UnknownLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass))
+        (existingSegments ++ adjustedSegments ++ generatedSpeedLimits,
+          segmentAdjustments.copy(generatedUnknownLimits = segmentAdjustments.generatedUnknownLimits ++ unknownLimits))
       }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.id == 0)

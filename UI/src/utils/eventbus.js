@@ -5,4 +5,11 @@
       console.log(eventName, entity);
     }
   });
+  eventbus.oncePromise = function(eventName) {
+    var eventReceived = $.Deferred();
+    eventbus.once(eventName, function() {
+      eventReceived.resolve();
+    });
+    return eventReceived;
+  };
 })(Backbone.Events);

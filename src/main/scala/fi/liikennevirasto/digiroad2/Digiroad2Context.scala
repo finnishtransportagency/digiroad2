@@ -23,6 +23,7 @@ class ValluActor extends Actor {
 class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
   def receive = {
     case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
+    case x: Set[Long] => linearAssetProvider.purgeUnknownSpeedLimits(x)
     case _                      => println("speedLimitFiller: Received unknown message")
   }
 
@@ -30,6 +31,7 @@ class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor 
     linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
     linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
     linearAssetProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
+    linearAssetProvider.persistUnknownSpeedLimits(speedLimitChangeSet.generatedUnknownLimits)
   }
 }
 
@@ -55,6 +57,7 @@ object Digiroad2Context {
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknown")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")

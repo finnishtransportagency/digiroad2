@@ -304,6 +304,15 @@ with GZipSupport {
     roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
+  get("/unknownSpeedLimits") {
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedMunicipalities)
+    }
+    linearAssetProvider.getUnknownSpeedLimits(includedMunicipalities)
+  }
+
   put("/linkproperties/:id") {
     val id = params("id").toLong
     val user = userProvider.getCurrentUser()

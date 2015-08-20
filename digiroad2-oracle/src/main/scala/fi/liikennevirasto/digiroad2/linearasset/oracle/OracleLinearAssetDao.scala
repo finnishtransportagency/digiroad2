@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import _root_.oracle.spatial.geometry.JGeometry
+import fi.liikennevirasto.digiroad2.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
@@ -20,6 +21,63 @@ import scala.util.Try
 
 
 trait OracleLinearAssetDao {
+  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+    case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
+    def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
+    val optionalMunicipalities = municipalities.map(_.mkString(","))
+    val unknownSpeedLimitQuery = """
+        select s.mml_id, m.name_fi, s.administrative_class
+        from unknown_speed_limit s
+        join municipality m on s.municipality_code = m.id
+                               """
+
+    val sql = optionalMunicipalities match {
+      case Some(m) => unknownSpeedLimitQuery + s" where l.municipality_code in ($m)"
+      case _ => unknownSpeedLimitQuery
+    }
+
+    Q.queryNA[(Long, String, Int)](sql).list
+      .map(toUnknownLimit)
+      .groupBy(_.municipality)
+      .mapValues {
+      _.groupBy(_.administrativeClass)
+        .mapValues(_.map(_.mmlId))
+    }
+  }
+
+  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+    val statement = dynamicSession.prepareStatement("""
+        insert into unknown_speed_limit (mml_id, municipality_code, administrative_class)
+        select ?, ?, ?
+        from dual
+        where not exists (select * from unknown_speed_limit where mml_id = ?)
+      """)
+    limits.foreach { limit =>
+      statement.setLong(1, limit.mmlId)
+      statement.setInt(2, limit.municipalityCode)
+      statement.setInt(3, limit.administrativeClass.value)
+      statement.setLong(4, limit.mmlId)
+      statement.addBatch()
+    }
+    statement.executeBatch()
+    statement.close()
+  }
+
+  def purgeFromUnknownSpeedLimits(mmlId: Long, roadLinkLength: Double): Unit = {
+    val speedLimits = fetchSpeedLimitsByMmlId(mmlId)
+
+    def calculateRemainders(sideCode: SideCode): Seq[(Double, Double)] = {
+      val limitEndPoints = speedLimits.filter(sl => sl._3 == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
+      limitEndPoints.foldLeft(Seq((0.0, roadLinkLength)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
+    }
+
+    val towardsRemainders = calculateRemainders(SideCode.TowardsDigitizing)
+    val againstRemainders = calculateRemainders(SideCode.AgainstDigitizing)
+    if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
+      sqlu"""delete from unknown_speed_limit where mml_id = $mmlId""".execute
+    }
+  }
+
   case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
 
   val roadLinkService: RoadLinkService
@@ -126,6 +184,9 @@ trait OracleLinearAssetDao {
         .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SM"))))
         .toOption
     }
+    def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
+      attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
+    }
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
       link.geometry,
@@ -133,7 +194,8 @@ trait OracleLinearAssetDao {
       link.administrativeClass,
       link.mmlId,
       roadIdentifierFromAttributes(link.attributes),
-      link.trafficDirection)
+      link.trafficDirection,
+      municipalityCodeFromAttributes(link.attributes))
 
     roadLinks
       .filter(isCarTrafficRoad)

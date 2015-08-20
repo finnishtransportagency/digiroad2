@@ -21,7 +21,7 @@
     <div class="page">
         <div class="content-box">
             <header>Geometrian ulkopuolelle jääneet pysäkit</header>
-            <div class="floating-stops">                         
+            <div id="floating-stops" class="work-list">
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
             var backend = new Backend();
             backend.getFloatingAssetsWithCallback(function(assets) {
                 _.map(assets, function(externalIds, municipalityName) {
-                    $('.floating-stops').append(floatingStopsTableForMunicipality(municipalityName, externalIds));
+                    $('#floating-stops').append(floatingStopsTableForMunicipality(municipalityName, externalIds));
                 });
             });
         };

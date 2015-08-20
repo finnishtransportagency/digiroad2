@@ -14,7 +14,9 @@ var URLRouter = function(map, backend, models) {
     routes: {
       'massTransitStop/:id': 'massTransitStop',
       'asset/:id': 'massTransitStop',
-      'linkProperties/:mmlId': 'linkProperty'
+      'linkProperties/:mmlId': 'linkProperty',
+      'speedLimit/:mmlId': 'speedLimit',
+      'work-list/:layer': 'workList'
     },
 
     massTransitStop: function(id) {
@@ -35,6 +37,24 @@ var URLRouter = function(map, backend, models) {
         });
         map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
       });
+    },
+
+    speedLimit: function(mmlId) {
+      var roadLinkReceived = backend.getRoadLinkByMMLId(mmlId);
+      var layerSelected = eventbus.oncePromise('layer:speedLimit:shown');
+      applicationModel.selectLayer('speedLimit');
+      var mapMoved = $.when(roadLinkReceived).then(function(response) {
+        var promise =  eventbus.oncePromise('layer:speedLimit:moved');
+        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+        return promise;
+      });
+      $.when(layerSelected, mapMoved).then(function() {
+        eventbus.trigger('speedLimit:selectByMmlId', parseInt(mmlId, 10));
+      });
+    },
+
+    workList: function(layerName){
+      eventbus.trigger('workList:select', layerName);
     }
   });
 
@@ -329,6 +349,7 @@ var URLRouter = function(map, backend, models) {
     ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
+    WorkListView.initialize(backend);
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;

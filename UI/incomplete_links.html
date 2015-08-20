@@ -21,7 +21,7 @@
     <div class="page">
         <div class="content-box">
             <header>Korjattavien linkkien lista</header>
-            <div class="incomplete-links">
+            <div id="incomplete-links" class="work-list">
             </div>
         </div>
     </div>
@@ -59,7 +59,7 @@
             var backend = new Backend();
             backend.getIncompleteLinksWithCallBack(function(links) {
                 _.map(links, function(mmlIdsByAdministrativeClass, municipalityName) {
-                    $('.incomplete-links').append(incompleteLinksTableForMunicipality(municipalityName, mmlIdsByAdministrativeClass));
+                    $('#incomplete-links').append(incompleteLinksTableForMunicipality(municipalityName, mmlIdsByAdministrativeClass));
                 });
             });
         };
