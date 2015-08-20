@@ -12,7 +12,7 @@
       });
     };
     var assetLink = function(mmlId) {
-      var link = '/#' + layerName + '/' + mmlId;
+      var link = '#' + layerName + '/' + mmlId;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
     var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
