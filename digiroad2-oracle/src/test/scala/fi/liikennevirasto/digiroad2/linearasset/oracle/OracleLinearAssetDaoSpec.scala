@@ -245,7 +245,8 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val mmlId = 1068804939
       sqlu"""delete from unknown_speed_limit""".execute
       sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
-      val dao = daoWithRoadLinks(Nil)
+      val roadLink = VVHRoadlink(mmlId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val dao = daoWithRoadLinks(List(roadLink))
 
       dao.createSpeedLimit("test", mmlId, (11.0, 16.0), SideCode.BothDirections, 40, _ => ())
       dao.purgeFromUnknownSpeedLimits(mmlId, 86.123)
