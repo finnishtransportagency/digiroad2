@@ -7,6 +7,7 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
 
   it('parses street addresses', function() {
     expect(LocationInputParser.parse('Salorankatu 7, Salo')).to.deep.equal({ type: 'street', street: 'Salorankatu 7', municipality: 'Salo' });
+    expect(LocationInputParser.parse('   Salorankatu   7,   Salo  ')).to.deep.equal({ type: 'street', street: 'Salorankatu 7', municipality: 'Salo' });
   });
 
   it('parses road addresses', function() {

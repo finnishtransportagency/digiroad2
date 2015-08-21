@@ -21,8 +21,8 @@
   };
 
   var parseStreet = function(input) {
-    var result = _.map(input.split(','), _.trim);
-    return { type: 'street', street: result[0], municipality: result[1] };
+    var result = input.split(',');
+    return { type: 'street', street: _.words(result[0]).join(' '), municipality: _.trim(result[1]) };
   };
 
   var parseRoad = function(input) {
