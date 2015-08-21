@@ -16,5 +16,8 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
 
   it('returns validation error on unexpected input', function() {
     expect(LocationInputParser.parse('234, 345 NOT VALID')).to.deep.equal({ type: 'invalid' });
+    expect(LocationInputParser.parse('123.234')).to.deep.equal({ type: 'invalid' });
+    expect(LocationInputParser.parse('123.234,345.123')).to.deep.equal({ type: 'invalid' });
+    expect(LocationInputParser.parse('')).to.deep.equal({ type: 'invalid' });
   });
 });
