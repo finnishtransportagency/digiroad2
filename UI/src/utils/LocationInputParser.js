@@ -2,7 +2,6 @@
   var parse = function(input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var matchedCoordinates = input.match(coordinateRegex);
-    var parsedOutput;
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
     } else {
