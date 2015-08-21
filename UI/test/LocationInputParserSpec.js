@@ -1,19 +1,19 @@
 define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
-  var assert = chai.assert;
+  var expect = chai.expect;
 
   it('parses coordinate pairs', function() {
-    assert.deepEqual({ type: 'coordinate', lat: 123, lon: 345 }, LocationInputParser.parse('123,345'));
+   expect(LocationInputParser.parse('123,345')).to.deep.equal({ type: 'coordinate', lat: 123, lon: 345 });
   });
 
   it('parses street addresses', function() {
-    assert.deepEqual({ type: 'street', street: 'Salorankatu 7', municipality: 'Salo' }, LocationInputParser.parse('Salorankatu 7, Salo'));
+    expect(LocationInputParser.parse('Salorankatu 7, Salo')).to.deep.equal({ type: 'street', street: 'Salorankatu 7', municipality: 'Salo' });
   });
 
   it('parses road addresses', function() {
-    assert.deepEqual({ type: 'road', roadNumber: 52, section: 1, distance: 100 }, LocationInputParser.parse('52, 1, 100'));
+   expect(LocationInputParser.parse('52, 1, 100')).to.deep.equal({ type: 'road', roadNumber: 52, section: 1, distance: 100 });
   });
 
   it('returns validation error on unexpected input', function() {
-    assert.deepEqual({ type: 'invalid' }, LocationInputParser.parse('234, 345 NOT VALID'));
+    expect(LocationInputParser.parse('234, 345 NOT VALID')).to.deep.equal({ type: 'invalid' });
   });
 });
