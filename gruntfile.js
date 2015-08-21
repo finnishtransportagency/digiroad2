@@ -1,5 +1,4 @@
 module.exports = function(grunt) {
-
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     env: {
@@ -43,63 +42,63 @@ module.exports = function(grunt) {
     cachebreaker: {
       options: {
         match: ['digiroad2.css'],
-          replacement: 'md5',
-          src: {
-            path: 'dist/css/digiroad2.css'
-          }
+        replacement: 'md5',
+        src: {
+          path: 'dist/css/digiroad2.css'
+        }
       },
       files: {
         src: ['UI/index.html']
       }
     },
     clean: ['dist'],
-      connect: {
-          server: {
-              options: {
-                  port: 9001,
-                  base: ['dist', '.', 'UI'],
-                  middleware: function (connect, opts) {
-                      var config = [
-                          // Serve static files.
-                          connect.static(opts.base[0]),
-                          connect.static(opts.base[1]),
-                          connect.static(opts.base[2]),
-                          // Make empty directories browsable.
-                          connect.directory(opts.base[2])
-                      ];
-                      var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
-                      config.unshift(proxy);
-                      return config;
-                  }
-              },
-              proxies: [
-                  {
-                      context: '/api',
-                      host: '127.0.0.1',
-                      port: '8080',
-                      https: false,
-                      changeOrigin: false,
-                      xforward: false
-                  },
-                  {
-                      context: '/maasto',
-                      host: 'karttamoottori.maanmittauslaitos.fi',
-                      https: false,
-                      changeOrigin: true,
-                      xforward: false,
-                      headers : {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
-                  },
-                {
-                  context: '/vkm',
-                  host: '10.129.65.37',
-                  port: '8997',
-                  https: false,
-                  changeOrigin: false,
-                  xforward: false
-                }
-              ]
+    connect: {
+      server: {
+        options: {
+          port: 9001,
+          base: ['dist', '.', 'UI'],
+          middleware: function(connect, opts) {
+            var config = [
+              // Serve static files.
+              connect.static(opts.base[0]),
+              connect.static(opts.base[1]),
+              connect.static(opts.base[2]),
+              // Make empty directories browsable.
+              connect.directory(opts.base[2])
+            ];
+            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
+            config.unshift(proxy);
+            return config;
           }
-      },
+        },
+        proxies: [
+          {
+            context: '/api',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
+            context: '/maasto',
+            host: 'karttamoottori.maanmittauslaitos.fi',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+          },
+          {
+            context: '/vkm',
+            host: '10.129.65.37',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          }
+        ]
+      }
+    },
     less: {
       development: {
         files: {
