@@ -13,8 +13,7 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
   var bindEvents = function() {
     var moveToCoordinates = function(eventName) {
       var lonlat = $('.coordinates .lonlat').val();
-      var regex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-      var result = lonlat.match(regex);
+      var result = LocationInputParser.parse(lonlat);
 
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
@@ -22,14 +21,10 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
 
       if (!result) {
         showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
-      } else if (!geometrycalculator.isInBounds(extent, result[2], result[1])) {
+      } else if (!geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
         showDialog('Koordinaatit eivät osu kartalle.');
       } else {
-        var position = {
-          lat: result[1],
-          lon: result[2]
-        };
-        eventbus.trigger(eventName, position);
+        eventbus.trigger(eventName, { lon: result.lon, lat: result.lat });
       }
     };
 
