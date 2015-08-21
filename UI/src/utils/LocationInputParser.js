@@ -2,7 +2,7 @@
   var parse = function(input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
     var streetRegex = /^\s*[A-Za-z]+\s*\d*,\s*[A-Za-z]+\s*$/;
-    var roadRegex = /^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
+    var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     if (matchedCoordinates) {
@@ -21,8 +21,9 @@
   };
 
   var parseRoad = function(input) {
-    var result = _.map(input.split(','), _.parseInt);
-    return { type: 'road', roadNumber: result[0], section: result[1], distance: result[2] };
+    var parsed = _.map(_.words(input), _.parseInt);
+    var output = { type: 'road', roadNumber: parsed[0], section: parsed[1], distance: parsed[2], lane: parsed[3] };
+    return _.omit(output, _.isUndefined);
   };
 
   var LocationInputParser = {
