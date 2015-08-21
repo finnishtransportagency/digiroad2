@@ -16,15 +16,15 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
-      var result = locationSearch.search(lonlat);
-
-      if (!result) {
-        showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
-      } else if (!geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
-        showDialog('Koordinaatit eivät osu kartalle.');
-      } else {
-        eventbus.trigger(eventName, { lon: result.lon, lat: result.lat });
-      }
+      locationSearch.search(lonlat).then(function(result) {
+        if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
+          eventbus.trigger(eventName, { lon: result.lon, lat: result.lat });
+        } else {
+          showDialog('Koordinaatit eivät osu kartalle.');
+        }
+      }).fail(function() {
+          showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
+      });
     };
 
     coordinatesText.keypress(function(event) {

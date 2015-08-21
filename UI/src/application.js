@@ -323,7 +323,7 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
-    var locationSearch = new LocationSearch();
+    var locationSearch = new LocationSearch(backend);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);

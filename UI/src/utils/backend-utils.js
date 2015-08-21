@@ -264,6 +264,10 @@
       });
     };
 
+    this.getGeocode = function(address) {
+      return $.get("/vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
+    };
+
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
         callback(roadLinkData);

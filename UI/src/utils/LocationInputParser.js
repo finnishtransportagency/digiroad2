@@ -1,14 +1,14 @@
 (function(root) {
   var parse = function(input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-    var streetRegex = /^\s*([A-Za-z]+)\s*(\d+),\s*([A-Za-z]+)\s*$/;
+    var streetRegex = /^\s*[A-Za-z]+\s*\d*,\s*[A-Za-z]+\s*$/;
     var roadRegex = /^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
     } else if (input.match(streetRegex)) {
-      return parseStreet(input);
+      return { type: 'street', address: input };
     } else if (input.match(roadRegex)) {
       return parseRoad(input);
     } else {
@@ -18,11 +18,6 @@
 
   var parseCoordinates = function(coordinates) {
     return { type: 'coordinate', lat: _.parseInt(coordinates[1]), lon: _.parseInt(coordinates[2]) };
-  };
-
-  var parseStreet = function(input) {
-    var result = input.split(',');
-    return { type: 'street', street: _.words(result[0]).join(' '), municipality: _.trim(result[1]) };
   };
 
   var parseRoad = function(input) {
