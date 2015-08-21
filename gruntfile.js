@@ -88,8 +88,15 @@ module.exports = function(grunt) {
                       changeOrigin: true,
                       xforward: false,
                       headers : {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
-                  }
-
+                  },
+                {
+                  context: '/vkm',
+                  host: '10.129.65.37',
+                  port: '8997',
+                  https: false,
+                  changeOrigin: false,
+                  xforward: false
+                }
               ]
           }
       },
