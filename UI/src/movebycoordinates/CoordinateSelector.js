@@ -1,4 +1,4 @@
-window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
+window.CoordinateSelector = function(parentElement, extent, instructionsPopup, locationSearch) {
   var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
   var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
   var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
@@ -13,11 +13,10 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
   var bindEvents = function() {
     var moveToCoordinates = function(eventName) {
       var lonlat = $('.coordinates .lonlat').val();
-      var result = LocationInputParser.parse(lonlat);
-
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
+      var result = locationSearch.search(lonlat);
 
       if (!result) {
         showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
@@ -30,7 +29,7 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
 
     coordinatesText.keypress(function(event) {
       if (event.keyCode == 13) {
-        moveToCoordinates();
+        moveToCoordinates('coordinates:selected');
       }
     });
     moveButton.on('click', function() {
