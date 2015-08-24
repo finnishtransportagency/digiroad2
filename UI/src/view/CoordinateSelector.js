@@ -11,14 +11,14 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
   };
 
   var bindEvents = function() {
-    var moveToCoordinates = function(eventName) {
+    var moveToCoordinates = function() {
       var lonlat = $('.coordinates .lonlat').val();
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
       locationSearch.search(lonlat).then(function(result) {
         if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
-          eventbus.trigger(eventName, { lon: result.lon, lat: result.lat });
+          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
         } else {
           showDialog('Koordinaatit eivät osu kartalle.');
         }
@@ -27,14 +27,14 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
 
     coordinatesText.keypress(function(event) {
       if (event.keyCode == 13) {
-        moveToCoordinates('coordinates:selected');
+        moveToCoordinates();
       }
     });
     moveButton.on('click', function() {
-      moveToCoordinates('coordinates:selected');
+      moveToCoordinates();
     });
     markButton.on('click', function() {
-      moveToCoordinates('coordinates:marked');
+      eventbus.trigger('coordinates:marked');
     });
 
     $('input', crosshairToggle).change(function() {
