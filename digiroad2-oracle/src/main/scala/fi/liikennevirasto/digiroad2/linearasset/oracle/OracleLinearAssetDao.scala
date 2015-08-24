@@ -33,19 +33,12 @@ trait OracleLinearAssetDao {
       where rank <= 10
       """
 
-    val unknownSpeedLimitCounts =  sql"""
-      select name_fi, s.administrative_class, count(*)
-      from unknown_speed_limit s
-      join municipality m on s.municipality_code = m.id
-      group by name_fi, administrative_class
-    """.as[(String, Int, Long)].list
-
     val sql = optionalMunicipalities match {
       case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m)"
       case _ => unknownSpeedLimitQuery
     }
 
-    val result = Q.queryNA[(Long, String, Int)](sql).list
+    val limitsByMunicipality = Q.queryNA[(Long, String, Int)](sql).list
       .map(toUnknownLimit)
       .groupBy(_.municipality)
       .mapValues {
@@ -53,7 +46,14 @@ trait OracleLinearAssetDao {
         .mapValues(_.map(_.mmlId))
     }
 
-    result.map { case (municipality, values) =>
+    val unknownSpeedLimitCounts =  sql"""
+      select name_fi, s.administrative_class, count(*)
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
+      group by name_fi, administrative_class
+    """.as[(String, Int, Long)].list
+
+    limitsByMunicipality.map { case (municipality, values) =>
       val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0l)
       val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0l)
       val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0l)
