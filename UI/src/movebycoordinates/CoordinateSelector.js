@@ -22,9 +22,7 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
         } else {
           showDialog('Koordinaatit eivät osu kartalle.');
         }
-      }).fail(function() {
-          showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
-      });
+      }).fail(showDialog);
     };
 
     coordinatesText.keypress(function(event) {

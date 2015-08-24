@@ -7,7 +7,7 @@
         if (lon && lat) {
           return { lon: lon, lat: lat };
         } else {
-          return $.Deferred().reject();
+          return $.Deferred().reject('Tuntematon katuosoite');
         }
       });
     };
@@ -20,7 +20,7 @@
           if (lon && lat) {
             return { lon: lon, lat: lat };
           } else {
-            return $.Deferred().reject();
+            return $.Deferred().reject('Tuntematon tieosoite');
           }
       });
     };
@@ -31,7 +31,7 @@
         coordinate: function(coordinates) { return $.Deferred().resolve(coordinates); },
         street: geocode,
         road: getCoordinatesFromRoadAddress,
-        invalid: function() { return $.Deferred().reject(); }
+        invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
       return resultByInputType[input.type](input);
     };
