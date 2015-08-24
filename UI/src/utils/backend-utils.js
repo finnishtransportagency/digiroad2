@@ -265,7 +265,7 @@
     };
 
     this.getGeocode = function(address) {
-      return $.get("/vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
+      return $.post("/vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
