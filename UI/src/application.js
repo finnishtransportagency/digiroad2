@@ -221,7 +221,7 @@ var URLRouter = function(map, backend, models) {
     new ZoomBox(map, mapPluginsContainer);
     new MouseCoordinatesDisplay(map, mapPluginsContainer);
 
-    new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
+    new MapView(map, layers, new InstructionsPopup($('.digiroad2')), models.locationSearch);
 
     applicationModel.moveMap(map.getZoom(), map.getExtent());
 
@@ -323,6 +323,7 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
+    var locationSearch = new LocationSearch(backend);
 
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
@@ -343,7 +344,8 @@ var URLRouter = function(map, backend, models) {
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection
+      manoeuvresCollection: manoeuvresCollection,
+      locationSearch: locationSearch
     };
 
     bindEvents();

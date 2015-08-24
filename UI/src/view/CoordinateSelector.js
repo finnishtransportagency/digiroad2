@@ -1,4 +1,4 @@
-window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
+window.CoordinateSelector = function(parentElement, extent, instructionsPopup, locationSearch) {
   var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
   var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
   var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
@@ -13,29 +13,21 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup) {
   var bindEvents = function() {
     var moveToCoordinates = function(eventName) {
       var lonlat = $('.coordinates .lonlat').val();
-      var regex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-      var result = lonlat.match(regex);
-
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
-
-      if (!result) {
-        showDialog('Käytä koordinaateissa P ja I numeroarvoja.');
-      } else if (!geometrycalculator.isInBounds(extent, result[2], result[1])) {
-        showDialog('Koordinaatit eivät osu kartalle.');
-      } else {
-        var position = {
-          lat: result[1],
-          lon: result[2]
-        };
-        eventbus.trigger(eventName, position);
-      }
+      locationSearch.search(lonlat).then(function(result) {
+        if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
+          eventbus.trigger(eventName, { lon: result.lon, lat: result.lat });
+        } else {
+          showDialog('Koordinaatit eivät osu kartalle.');
+        }
+      }).fail(showDialog);
     };
 
     coordinatesText.keypress(function(event) {
       if (event.keyCode == 13) {
-        moveToCoordinates();
+        moveToCoordinates('coordinates:selected');
       }
     });
     moveButton.on('click', function() {

@@ -264,6 +264,15 @@
       });
     };
 
+    this.getGeocode = function(address) {
+      return $.post("/vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
+    };
+
+    this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
+      return $.get("/vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
+        .then(function(x) { return JSON.parse(x); });
+    };
+
     this.withRoadLinkData = function (roadLinkData) {
       self.getRoadLinks = function (boundingBox, callback) {
         callback(roadLinkData);

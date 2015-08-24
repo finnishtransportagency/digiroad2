@@ -18,6 +18,7 @@ require.config({
     'SelectedSpeedLimit': '../src/model/SelectedSpeedLimit',
     'zoomlevels': '../src/utils/zoom-levels',
     'geometrycalculator': '../src/utils/geometry-calculations',
+    'LocationInputParser': '../src/utils/LocationInputParser',
     'assetGrouping': '../src/assetgrouping/asset-grouping',
     'AssetsTestData': '../test_data/AssetsTestData',
     'RoadLinkTestData': '../test_data/RoadLinkTestData',
@@ -62,6 +63,7 @@ require.config({
     'geometrycalculator': {
       exports: 'geometrycalculator'
     },
+    'LocationInputParser': { exports: 'LocationInputParser' },
     'GeometryUtils': {
       exports: 'GeometryUtils'
     },
@@ -85,7 +87,8 @@ require(['lodash',
   'speed-limit-layer-spec',
   'geometry-calculations-spec',
   'asset-grouping-spec',
-  'SelectedSpeedLimitSpec'], function (lodash) {
+  'SelectedSpeedLimitSpec',
+  'LocationInputParserSpec'], function (lodash) {
   window._ = lodash;
   mocha.checkLeaks();
   if (window.mochaPhantomJS) {
