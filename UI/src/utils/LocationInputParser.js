@@ -26,9 +26,7 @@
     return _.omit(output, _.isUndefined);
   };
 
-  var LocationInputParser = {
+  root.LocationInputParser = {
     parse: parse
   };
-
-  root.LocationInputParser = LocationInputParser;
 })(window);
