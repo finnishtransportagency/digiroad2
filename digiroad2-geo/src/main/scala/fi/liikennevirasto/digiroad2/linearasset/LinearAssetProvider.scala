@@ -12,7 +12,7 @@ case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modif
 
 trait LinearAssetProvider {
   def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]]
+  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]]
   def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit
   def persistSideCodeAdjustments(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit
   def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
