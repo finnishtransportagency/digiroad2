@@ -4,10 +4,9 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
   var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
   var coordinatesText = $('<input type="text" class="location form-control input-sm" placeholder="P, I" title="' + tooltip + '"/>');
   var moveButton = $('<button class="btn btn-sm btn-tertiary">Siirry</button>');
-  var markButton = $('<button class="btn btn-sm btn-tertiary">Merkitse</button>');
 
   var render = function() {
-    parentElement.append(coordinatesDiv.append(coordinatesText).append(moveButton).append(markButton)).append(crosshairToggle);
+    parentElement.append(coordinatesDiv.append(coordinatesText).append(moveButton)).append(crosshairToggle);
   };
 
   var bindEvents = function() {
@@ -32,9 +31,6 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
     });
     moveButton.on('click', function() {
       moveToLocation();
-    });
-    markButton.on('click', function() {
-      eventbus.trigger('coordinates:marked');
     });
 
     $('input', crosshairToggle).change(function() {

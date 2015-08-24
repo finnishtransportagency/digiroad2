@@ -60,10 +60,7 @@
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    eventbus.on('coordinates:marked', function(position) {
-      var mapSize = map.getSize();
-      drawCenterMarker(map.getLonLatFromPixel({x: mapSize.w / 2.0, y: mapSize.h / 2.0}));
-    }, this);
+    eventbus.on('coordinates:marked', drawCenterMarker, this);
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];
