@@ -1,5 +1,5 @@
 (function (root) {
-  root.MouseCoordinatesDisplay = function(map, container) {
+  root.CoordinatesDisplay = function(map, container) {
     var element =
       '<div class="mapplugin coordinates" data-position="4">' +
         '<div class="cbSpansWrapper">' +
@@ -16,13 +16,19 @@
             '<div class="cbValue" axis="lon">lon</div>' +
           '</div>' +
         '</div>' +
+        '<button class="btn btn-sm btn-tertiary" id="mark-coordinates">Merkitse</button>' +
       '</div>';
     container.append(element);
 
-    eventbus.on('map:mouseMoved', function(event) {
-      var lonlat = map.getLonLatFromPixel(event.xy);
-      container.find('.cbValue[axis="lat"]').text(Math.round(lonlat.lat));
-      container.find('.cbValue[axis="lon"]').text(Math.round(lonlat.lon));
+    var centerLonLat = {lon: 0, lat: 0};
+    eventbus.on('map:moved', function(event) {
+      centerLonLat = event.bbox.getCenterLonLat();
+      container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat.lat));
+      container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat.lon));
+    });
+
+    $('#mark-coordinates').on('click', function() {
+      eventbus.trigger('coordinates:marked', centerLonLat);
     });
   };
 })(this);

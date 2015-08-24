@@ -54,15 +54,13 @@
       setCursor(tool);
     });
 
-    eventbus.on('coordinates:selected coordinates:marked', function(position) {
+    eventbus.on('coordinates:selected', function(position) {
       map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
     }, this);
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    eventbus.on('coordinates:marked', function(position) {
-      drawCenterMarker(position);
-    }, this);
+    eventbus.on('coordinates:marked', drawCenterMarker, this);
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];

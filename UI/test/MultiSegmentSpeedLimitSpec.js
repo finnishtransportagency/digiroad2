@@ -84,7 +84,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       before(function() {
         testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
         backend.withSpeedLimitsData([_.flatten(speedLimitsData)]);
-        eventbus.trigger('map:moved', { selectedLayer: "speedLimit", zoom: 10 } );
+        eventbus.trigger('map:moved', { selectedLayer: "speedLimit", zoom: 10, bbox: new OpenLayers.Bounds(374061, 6676946, 375292, 6678247) } );
       });
       it("maintains two features on map, only one of which is selected", function() {
         var uniqueFeatures = _.unique(testHelpers.getSpeedLimitFeatures(openLayersMap), function(f) {
