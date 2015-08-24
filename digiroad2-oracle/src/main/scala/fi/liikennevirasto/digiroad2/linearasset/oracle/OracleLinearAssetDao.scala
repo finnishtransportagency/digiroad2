@@ -26,13 +26,15 @@ trait OracleLinearAssetDao {
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery = """
-        select s.mml_id, m.name_fi, s.administrative_class
-        from unknown_speed_limit s
-        join municipality m on s.municipality_code = m.id
-                               """
+      select mml_id, name_fi, administrative_class
+      from (select s.mml_id, m.name_fi, s.administrative_class, rank() over (partition by s.municipality_code, s.administrative_class order by s.mml_id) rank, s.municipality_code
+           from unknown_speed_limit s
+           join municipality m on s.municipality_code = m.id)
+      where rank <= 10
+      """
 
     val sql = optionalMunicipalities match {
-      case Some(m) => unknownSpeedLimitQuery + s" where l.municipality_code in ($m)"
+      case Some(m) => unknownSpeedLimitQuery + s" and municipality_code in ($m)"
       case _ => unknownSpeedLimitQuery
     }
 
