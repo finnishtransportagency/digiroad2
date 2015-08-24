@@ -260,4 +260,28 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
+  test("unknown speed limits can be filtered by municipality") {
+    Database.forDataSource(ds).withDynTransaction {
+      val mmlId = 1
+      val mmlId2 = 2
+      sqlu"""delete from unknown_speed_limit""".execute
+      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId, 235, 1)""".execute
+      sqlu"""insert into unknown_speed_limit (mml_id, municipality_code, administrative_class) values ($mmlId2, 49, 1)""".execute
+
+      val roadLink = VVHRoadlink(mmlId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val roadLink2 = VVHRoadlink(mmlId2, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      val dao = daoWithRoadLinks(List(roadLink, roadLink2))
+
+      val allSpeedLimits = dao.getUnknownSpeedLimits(None)
+      allSpeedLimits("Kauniainen")("State").length should be(1)
+      allSpeedLimits("Espoo")("State").length should be(1)
+
+      val kauniainenSpeedLimits = dao.getUnknownSpeedLimits(Some(Set(235)))
+      kauniainenSpeedLimits("Kauniainen")("State").length should be(1)
+      kauniainenSpeedLimits.keySet.contains("Espoo") should be(false)
+
+      dynamicSession.rollback()
+    }
+  }
+
 }
