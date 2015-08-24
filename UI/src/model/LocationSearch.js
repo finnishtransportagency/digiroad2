@@ -2,7 +2,13 @@
   root.LocationSearch = function(backend) {
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
-        return { lon: result.results[0].x, lat: result.results[0].y };
+        var lon = _.get(result, 'results[0].x');
+        var lat = _.get(result, 'results[0].y');
+        if (lon && lat) {
+          return { lon: lon, lat: lat };
+        } else {
+          return $.Deferred().reject();
+        }
       });
     };
 
