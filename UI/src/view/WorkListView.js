@@ -1,5 +1,5 @@
 (function (root) {
-  var unknownLimitsTable = function(layerName, mmlIdsByAdministrativeClass, municipalityName) {
+  var unknownLimitsTable = function(layerName, workListItems, municipalityName) {
     var municipalityHeader = function(municipalityName, totalCount) {
       var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
       return $('<h2/>').html(municipalityName + countString);
@@ -23,11 +23,11 @@
         .append(tableHeaderRow(administrativeClass + countString))
         .append(tableContentRows(mmlIds));
     };
-    return $('<div/>').append(municipalityHeader(municipalityName, mmlIdsByAdministrativeClass.totalCount))
-      .append(tableForAdministrativeClass('Kunnan omistama', mmlIdsByAdministrativeClass.Municipality, mmlIdsByAdministrativeClass.municipalityCount))
-      .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State, mmlIdsByAdministrativeClass.stateCount))
-      .append(tableForAdministrativeClass('Yksityisen omistama', mmlIdsByAdministrativeClass.Private, mmlIdsByAdministrativeClass.privateCount))
-      .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown, 0));
+    return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
+      .append(tableForAdministrativeClass('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
+      .append(tableForAdministrativeClass('Valtion omistama', workListItems.State, workListItems.stateCount))
+      .append(tableForAdministrativeClass('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
+      .append(tableForAdministrativeClass('Ei tiedossa', workListItems.Unknown, 0));
   };
 
   var generateWorkList = function(layerName, listP) {
