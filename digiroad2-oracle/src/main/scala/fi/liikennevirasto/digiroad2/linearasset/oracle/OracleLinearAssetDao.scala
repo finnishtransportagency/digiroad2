@@ -27,7 +27,7 @@ trait OracleLinearAssetDao {
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery = """
       select mml_id, name_fi, administrative_class
-      from (select s.mml_id, m.name_fi, s.administrative_class, rank() over ( partition by s.municipality_code order by s.mml_id) rank
+      from (select s.mml_id, m.name_fi, s.administrative_class, rank() over ( partition by s.municipality_code, s.administrative_class order by s.mml_id) rank
            from unknown_speed_limit s
            join municipality m on s.municipality_code = m.id)
       where rank <= 10
