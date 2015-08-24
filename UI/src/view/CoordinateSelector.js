@@ -2,7 +2,7 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
   var tooltip = "Koordinaattien sy&ouml;tt&ouml;: pohjoinen (7 merkki&auml;), it&auml; (6 merkki&auml;). Esim. 6901839, 435323";
   var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
   var coordinatesDiv = $('<div class="coordinates-wrapper"/>');
-  var coordinatesText = $('<input type="text" class="lonlat form-control input-sm" name="lonlat" placeholder="P, I" title="' + tooltip + '"/>');
+  var coordinatesText = $('<input type="text" class="location form-control input-sm" placeholder="P, I" title="' + tooltip + '"/>');
   var moveButton = $('<button class="btn btn-sm btn-tertiary">Siirry</button>');
   var markButton = $('<button class="btn btn-sm btn-tertiary">Merkitse</button>');
 
@@ -11,12 +11,12 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
   };
 
   var bindEvents = function() {
-    var moveToCoordinates = function() {
-      var lonlat = $('.coordinates .lonlat').val();
+    var moveToLocation = function() {
+      var location = $('.coordinates .location').val();
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
-      locationSearch.search(lonlat).then(function(result) {
+      locationSearch.search(location).then(function(result) {
         if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
           eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
         } else {
@@ -27,11 +27,11 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
 
     coordinatesText.keypress(function(event) {
       if (event.keyCode == 13) {
-        moveToCoordinates();
+        moveToLocation();
       }
     });
     moveButton.on('click', function() {
-      moveToCoordinates();
+      moveToLocation();
     });
     markButton.on('click', function() {
       eventbus.trigger('coordinates:marked');
