@@ -219,7 +219,7 @@ var URLRouter = function(map, backend, models) {
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
-    new MouseCoordinatesDisplay(map, mapPluginsContainer);
+    new CoordinatesDisplay(map, mapPluginsContainer);
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')), models.locationSearch);
 

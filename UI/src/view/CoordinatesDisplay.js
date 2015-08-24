@@ -1,5 +1,5 @@
 (function (root) {
-  root.MouseCoordinatesDisplay = function(map, container) {
+  root.CoordinatesDisplay = function(map, container) {
     var element =
       '<div class="mapplugin coordinates" data-position="4">' +
         '<div class="cbSpansWrapper">' +
@@ -19,8 +19,8 @@
       '</div>';
     container.append(element);
 
-    eventbus.on('map:mouseMoved', function(event) {
-      var lonlat = map.getLonLatFromPixel(event.xy);
+    eventbus.on('map:moved', function(event) {
+      var lonlat = event.bbox.getCenterLonLat();
       container.find('.cbValue[axis="lat"]').text(Math.round(lonlat.lat));
       container.find('.cbValue[axis="lon"]').text(Math.round(lonlat.lon));
     });
