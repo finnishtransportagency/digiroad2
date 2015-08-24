@@ -46,6 +46,10 @@ trait OracleLinearAssetDao {
         .mapValues(_.map(_.mmlId))
     }
 
+    addCountsFor(limitsByMunicipality)
+  }
+
+  def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
     val unknownSpeedLimitCounts =  sql"""
       select name_fi, s.administrative_class, count(*)
       from unknown_speed_limit s
@@ -53,7 +57,7 @@ trait OracleLinearAssetDao {
       group by name_fi, administrative_class
     """.as[(String, Int, Long)].list
 
-    limitsByMunicipality.map { case (municipality, values) =>
+    unknownLimitsByMunicipality.map { case (municipality, values) =>
       val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0l)
       val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0l)
       val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0l)
