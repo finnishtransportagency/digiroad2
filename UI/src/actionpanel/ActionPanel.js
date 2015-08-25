@@ -5,6 +5,9 @@
 
       $('#map-tools').append(panelControl);
 
+      var searchBox = new SearchBox();
+      $('.action-panels').append(searchBox.element);
+
       var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
       $('.action-panels').append(roadLinkBox.element);
 
