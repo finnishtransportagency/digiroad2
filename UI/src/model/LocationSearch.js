@@ -18,7 +18,7 @@
           var lon = _.get(result, 'alkupiste.tieosoitteet[0].point.x');
           var lat = _.get(result, 'alkupiste.tieosoitteet[0].point.y');
           if (lon && lat) {
-            return { lon: lon, lat: lat };
+            return [{ lon: lon, lat: lat }];
           } else {
             return $.Deferred().reject('Tuntematon tieosoite');
           }
@@ -28,7 +28,7 @@
     this.search = function(searchString) {
       var input = LocationInputParser.parse(searchString);
       var resultByInputType = {
-        coordinate: function(coordinates) { return $.Deferred().resolve(coordinates); },
+        coordinate: function(coordinates) { return $.Deferred().resolve([coordinates]); },
         street: geocode,
         road: getCoordinatesFromRoadAddress,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
