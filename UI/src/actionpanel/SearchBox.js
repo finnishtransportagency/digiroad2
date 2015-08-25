@@ -12,7 +12,9 @@
     var bindEvents = function() {
       var populateSearchResults = function(results) {
         var resultItems = _.map(results, function(result) {
-          return $('<li></li>').text(result.title);
+          return $('<li></li>').text(result.title).on('click', function() {
+            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+          });
         });
         searchResults.html(resultItems);
         resultsSection.show();
