@@ -8,6 +8,8 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import java.net.URLEncoder
 
+import scala.collection.parallel.immutable.ParSeq
+
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
@@ -79,14 +81,18 @@ class VVHClient(hostname: String) {
   def fetchVVHRoadlink(mmlId: Long): Option[VVHRoadlink] = fetchVVHRoadlinks(Set(mmlId)).headOption
 
   def fetchVVHRoadlinks(mmlIds: Set[Long]): Seq[VVHRoadlink] = {
-    val definition = layerDefinition(withMmlIdFilter(mmlIds))
-    val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
-      s"layerDefs=$definition&$queryParameters"
+    val batchSize = 1000
+    val idGroups = mmlIds.grouped(batchSize).toList.par
+    idGroups.flatMap { ids =>
+      val definition = layerDefinition(withMmlIdFilter(ids))
+      val url = "http://" + hostname + "/arcgis/rest/services/VVH_OTH/Roadlink_data/FeatureServer/query?" +
+        s"layerDefs=$definition&$queryParameters"
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHFeature)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
 
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
   }
 
   case class VVHError(content: Map[String, Any], url: String)
