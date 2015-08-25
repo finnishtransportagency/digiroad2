@@ -49,7 +49,7 @@ trait OracleLinearAssetDao {
     addCountsFor(limitsByMunicipality)
   }
 
-  def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
+  private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
     val unknownSpeedLimitCounts =  sql"""
       select name_fi, s.administrative_class, count(*)
       from unknown_speed_limit s
