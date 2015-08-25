@@ -1,5 +1,5 @@
 (function(root) {
-  root.MapView = function(map, layers, instructionsPopup, locationSearch) {
+  root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer;
 
@@ -40,7 +40,7 @@
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
       }
-      new CoordinateSelector($('.mapplugin.coordinates'), map.getMaxExtent(), instructionsPopup, locationSearch);
+      new CoordinateSelector($('.mapplugin.coordinates'));
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);

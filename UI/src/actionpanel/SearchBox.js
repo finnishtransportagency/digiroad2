@@ -12,8 +12,11 @@
         var showDialog = function(message) {
           instructionsPopup.show(message, 3000);
         };
-        locationSearch.search(location).then(function(result) {
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+        locationSearch.search(location).then(function(results) {
+          if (results.length === 1) {
+            var result = results[0];
+            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+          }
         }).fail(showDialog);
       };
 
