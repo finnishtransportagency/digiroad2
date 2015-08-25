@@ -1,18 +1,21 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
     var tooltip = "Hae katuosoitteella, tieosoitteella tai koordinaateilla";
-    var groupDiv = $('<div class="panel-group"/>');
-    var coordinatesDiv = $('<div class="panel search-box"/>');
+    var groupDiv = $('<div class="panel-group search-box"/>');
+    var coordinatesDiv = $('<div class="panel"/>');
     var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
     var moveButton = $('<button class="btn btn-sm btn-primary">Hae</button>');
-    var searchResults = $('<ul id="search-results"></ul>').hide();
+    var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);
+    var searchResults = $('<ul id="search-results"></ul>');
+    var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {
         var resultItems = _.map(results, function(result) {
           return $('<li></li>').text(result.title);
         });
-        searchResults.html(resultItems).show();
+        searchResults.html(resultItems);
+        resultsSection.show();
       };
       var moveToLocation = function() {
         var location = coordinatesText.val();
@@ -39,6 +42,6 @@
     };
 
     bindEvents();
-    this.element = groupDiv.append(coordinatesDiv.append(coordinatesText).append(moveButton).append(searchResults));
+    this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection));
   };
 })(this);
