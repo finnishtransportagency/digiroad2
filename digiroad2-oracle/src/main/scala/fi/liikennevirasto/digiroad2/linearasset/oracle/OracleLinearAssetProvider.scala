@@ -20,7 +20,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  override def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  override def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     withDynSession {
       dao.getUnknownSpeedLimits(municipalities)
     }

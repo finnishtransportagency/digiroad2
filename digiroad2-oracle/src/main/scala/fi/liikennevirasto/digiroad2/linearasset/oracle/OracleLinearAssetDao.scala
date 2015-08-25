@@ -21,7 +21,7 @@ import scala.util.Try
 
 
 trait OracleLinearAssetDao {
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Seq[Long]]] = {
+  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     case class UnknownLimit(mmlId: Long, municipality: String, administrativeClass: String)
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
@@ -38,12 +38,37 @@ trait OracleLinearAssetDao {
       case _ => unknownSpeedLimitQuery
     }
 
-    Q.queryNA[(Long, String, Int)](sql).list
+    val limitsByMunicipality = Q.queryNA[(Long, String, Int)](sql).list
       .map(toUnknownLimit)
       .groupBy(_.municipality)
       .mapValues {
       _.groupBy(_.administrativeClass)
         .mapValues(_.map(_.mmlId))
+    }
+
+    addCountsFor(limitsByMunicipality)
+  }
+
+  private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
+    val unknownSpeedLimitCounts =  sql"""
+      select name_fi, s.administrative_class, count(*)
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
+      group by name_fi, administrative_class
+    """.as[(String, Int, Int)].list
+
+    unknownLimitsByMunicipality.map { case (municipality, values) =>
+      val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0)
+      val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0)
+      val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0)
+
+      val valuesWithCounts = values +
+        ("municipalityCount" -> municipalityCount) +
+        ("stateCount" -> stateCount) +
+        ("privateCount" -> privateCount) +
+        ("totalCount" -> (municipalityCount + stateCount + privateCount))
+
+      (municipality -> valuesWithCounts)
     }
   }
 

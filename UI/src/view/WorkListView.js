@@ -1,7 +1,8 @@
 (function (root) {
-  var unknownLimitsTable = function(layerName, mmlIdsByAdministrativeClass, municipalityName) {
-    var municipalityHeader = function(municipalityName) {
-      return $('<h2/>').html(municipalityName);
+  var unknownLimitsTable = function(layerName, workListItems, municipalityName) {
+    var municipalityHeader = function(municipalityName, totalCount) {
+      var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
+      return $('<h2/>').html(municipalityName + countString);
     };
     var tableHeaderRow = function(administrativeClass) {
       return $('<caption/>').html(administrativeClass);
@@ -15,17 +16,18 @@
       var link = '#' + layerName + '/' + id;
       return $('<a class="work-list-item"/>').attr('href', link).html(link);
     };
-    var tableForAdministrativeClass = function(administrativeClass, mmlIds) {
+    var tableForAdministrativeClass = function(administrativeClass, mmlIds, count) {
       if (!mmlIds || mmlIds.length === 0) return '';
+      var countString = count ? ' (' + count + ' kpl)' : '';
       return $('<table/>').addClass('table')
-        .append(tableHeaderRow(administrativeClass))
+        .append(tableHeaderRow(administrativeClass + countString))
         .append(tableContentRows(mmlIds));
     };
-    return $('<div/>').append(municipalityHeader(municipalityName))
-      .append(tableForAdministrativeClass('Kunnan omistama', mmlIdsByAdministrativeClass.Municipality))
-      .append(tableForAdministrativeClass('Valtion omistama', mmlIdsByAdministrativeClass.State))
-      .append(tableForAdministrativeClass('Yksityisen omistama', mmlIdsByAdministrativeClass.Private))
-      .append(tableForAdministrativeClass('Ei tiedossa', mmlIdsByAdministrativeClass.Unknown));
+    return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
+      .append(tableForAdministrativeClass('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
+      .append(tableForAdministrativeClass('Valtion omistama', workListItems.State, workListItems.stateCount))
+      .append(tableForAdministrativeClass('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
+      .append(tableForAdministrativeClass('Ei tiedossa', workListItems.Unknown, 0));
   };
 
   var generateWorkList = function(layerName, listP) {
