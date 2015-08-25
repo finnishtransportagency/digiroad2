@@ -2,10 +2,10 @@
   root.LocationSearch = function(backend) {
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
-        var lon = _.get(result, 'results[0].x');
-        var lat = _.get(result, 'results[0].y');
-        if (lon && lat) {
-          return { lon: lon, lat: lat };
+        var resultLength = _.get(result, 'results.length');
+        var vkmResultToCoordinates = function(r) { return { lon: r.x, lat: r.y}; };
+        if (resultLength > 0) {
+          return _.map(result.results, vkmResultToCoordinates);
         } else {
           return $.Deferred().reject('Tuntematon katuosoite');
         }

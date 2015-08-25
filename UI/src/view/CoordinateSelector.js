@@ -15,11 +15,14 @@ window.CoordinateSelector = function(parentElement, extent, instructionsPopup, l
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
-      locationSearch.search(location).then(function(result) {
-        if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
-          eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-        } else {
-          showDialog('Koordinaatit eivät osu kartalle.');
+      locationSearch.search(location).then(function(results) {
+        if (results.length === 1) {
+          var result = results[0];
+          if (geometrycalculator.isInBounds(extent, result.lon, result.lat)) {
+            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+          } else {
+            showDialog('Koordinaatit eivät osu kartalle.');
+          }
         }
       }).fail(showDialog);
     };
