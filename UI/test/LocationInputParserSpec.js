@@ -13,6 +13,7 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
     expect(LocationInputParser.parse('Iso Roobertinkatu, Helsinki')).to.deep.equal({ type: 'street', address: 'Iso Roobertinkatu, Helsinki' });
     expect(LocationInputParser.parse('Kirkkokatu, Peräseinäjoki')).to.deep.equal({ type: 'street', address: 'Kirkkokatu, Peräseinäjoki' });
     expect(LocationInputParser.parse('Kirkkokatu')).to.deep.equal({ type: 'street', address: 'Kirkkokatu' });
+    expect(LocationInputParser.parse('Kirkkokatu 2')).to.deep.equal({ type: 'street', address: 'Kirkkokatu 2' });
   });
 
   it('parses road addresses', function() {
