@@ -55,12 +55,12 @@ trait OracleLinearAssetDao {
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
       group by name_fi, administrative_class
-    """.as[(String, Int, Long)].list
+    """.as[(String, Int, Int)].list
 
     unknownLimitsByMunicipality.map { case (municipality, values) =>
-      val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0l)
-      val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0l)
-      val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0l)
+      val municipalityCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Municipality.value).map(_._3).getOrElse(0)
+      val stateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == State.value).map(_._3).getOrElse(0)
+      val privateCount = unknownSpeedLimitCounts.find(x => x._1 == municipality && x._2 == Private.value).map(_._3).getOrElse(0)
 
       val valuesWithCounts = values +
         ("municipalityCount" -> municipalityCount) +
