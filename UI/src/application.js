@@ -358,7 +358,12 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource].concat(selectedNumericalLimitModels));
-    ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
+    ActionPanel.initialize(backend,
+                           new InstructionsPopup($('.digiroad2')),
+                           selectedSpeedLimit,
+                           numericalLimits,
+                           linkPropertiesModel,
+                           locationSearch);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);

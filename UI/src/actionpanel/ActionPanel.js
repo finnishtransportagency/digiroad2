@@ -1,11 +1,11 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits, linkPropertiesModel) {
+    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits, linkPropertiesModel, locationSearch) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
 
-      var searchBox = new SearchBox();
+      var searchBox = new SearchBox(instructionsPopup, locationSearch);
       $('.action-panels').append(searchBox.element);
 
       var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
