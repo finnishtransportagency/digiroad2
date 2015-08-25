@@ -1,4 +1,4 @@
-window.CoordinateSelector = function(parentElement) {
+window.CrosshairToggle = function(parentElement) {
   var crosshairToggle = $('<div class="crosshair-wrapper"><div class="checkbox"><label><input type="checkbox" name="crosshair" value="crosshair" checked="true"/> Kohdistin</label></div></div>');
 
   var render = function() { parentElement.append(crosshairToggle); };

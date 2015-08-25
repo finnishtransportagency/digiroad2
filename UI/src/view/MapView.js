@@ -40,7 +40,7 @@
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
       }
-      new CoordinateSelector($('.mapplugin.coordinates'));
+      new CrosshairToggle($('.mapplugin.coordinates'));
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
