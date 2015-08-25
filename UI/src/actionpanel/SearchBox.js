@@ -8,6 +8,8 @@
     var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);
     var searchResults = $('<ul id="search-results"></ul>');
     var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
+    var clearButton = $('<button class="btn btn-primary btn-block">Tyhjenn&auml; tulokset</button>');
+    var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {
@@ -18,6 +20,7 @@
         });
         searchResults.html(resultItems);
         resultsSection.show();
+        clearSection.show();
       };
       var moveToLocation = function() {
         var location = coordinatesText.val();
@@ -41,9 +44,13 @@
       moveButton.on('click', function() {
         moveToLocation();
       });
+      clearButton.on('click', function() {
+        resultsSection.hide();
+        clearSection.hide();
+      });
     };
 
     bindEvents();
-    this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection));
+    this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
   };
 })(this);
