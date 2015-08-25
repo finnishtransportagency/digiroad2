@@ -1,7 +1,7 @@
 (function(root) {
   var parse = function(input) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-    var streetRegex = /^\s*[^0-9,]+\s*\d*,\s*[^0-9,]+\s*$/;
+    var streetRegex = /^\s*[^0-9,]+\s*\d*(,\s*[^0-9,]+\s*$)?/;
     var roadRegex = /^\s*\d*\s*\d*\s*\d*\s*\d+$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
