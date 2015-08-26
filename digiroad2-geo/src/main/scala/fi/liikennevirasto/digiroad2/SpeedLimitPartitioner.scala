@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.LineSegment
-import fi.liikennevirasto.digiroad2.asset.{PolyLine, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, PolyLine, SpeedLimit}
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
@@ -13,7 +13,7 @@ object SpeedLimitPartitioner {
   private def clusterLinks[T <: PolyLine](links: Seq[T]): Seq[Graph] = {
     val generator = new BasicLineGraphGenerator(0.5)
     links.foreach { link =>
-      val (sp, ep) = GeometryUtils.geometryEndpoints(link.points)
+      val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
       val segment = new LineSegment(sp.x, sp.y, ep.x, ep.y)
       val graphable = generator.add(segment)
       graphable.setObject(link)
@@ -46,4 +46,14 @@ object SpeedLimitPartitioner {
     linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
   }
 
+  private def roadLinksFromCluster(cluster: Graph): Seq[VVHRoadLinkWithProperties] = {
+    val edges = cluster.getEdges.toList.asInstanceOf[List[BasicEdge]]
+    edges.map { edge: BasicEdge =>
+      edge.getObject.asInstanceOf[VVHRoadLinkWithProperties]
+    }
+  }
+
+  def partitionRoadLinks(links: Seq[VVHRoadLinkWithProperties]): Seq[Seq[VVHRoadLinkWithProperties]] = {
+    clusterLinks(links).map(roadLinksFromCluster)
+  }
 }

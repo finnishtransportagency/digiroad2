@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode, Unknown}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, SpeedLimit}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimit}
 import org.scalatest._
 
 class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
@@ -82,5 +81,20 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
 
     val groupedLinks = SpeedLimitPartitioner.partition(speedLimitLinks, roadIdentifiers)
     groupedLinks should have size 2
+  }
+
+  // TODO: Separate cluster on different functional class
+  // TODO: Separate cluster on different traffic direction
+  // TODO: Separate cluster on different link type
+  // TODO: Separate cluster on different road name or road number
+  test("group road links") {
+    val roadLinks = Seq(
+      VVHRoadLinkWithProperties(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None),
+      VVHRoadLinkWithProperties(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None))
+
+    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    groupedLinks should have size 1
+    groupedLinks.head should have size 2
+    groupedLinks.head.map(_.mmlId).toSet should be(roadLinks.map(_.mmlId).toSet)
   }
 }

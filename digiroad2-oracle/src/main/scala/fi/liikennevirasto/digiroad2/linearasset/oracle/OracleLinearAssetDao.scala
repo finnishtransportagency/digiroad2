@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 

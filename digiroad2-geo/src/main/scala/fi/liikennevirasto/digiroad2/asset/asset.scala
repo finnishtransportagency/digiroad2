@@ -144,7 +144,3 @@ object ValidityPeriod {
   val Future = "future"
 }
 
-trait PolyLine {
-  val points: Seq[Point]
-}
-

@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.ConversionDatabase.GetPointSeq
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries
+import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
@@ -27,12 +28,6 @@ case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],
                             length: Double, administrativeClass: AdministrativeClass,
                             functionalClass: Int, trafficDirection: TrafficDirection,
                             modifiedAt: Option[String], modifiedBy: Option[String], linkType: Int)
-
-case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point],
-                                     length: Double, administrativeClass: AdministrativeClass,
-                                     functionalClass: Int, trafficDirection: TrafficDirection,
-                                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
-                                     attributes: Map[String, Any] = Map())
 
 trait RoadLinkService {
   case class BasicRoadLink(id: Long, mmlId: Long, geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection, modifiedAt: Option[DateTime])

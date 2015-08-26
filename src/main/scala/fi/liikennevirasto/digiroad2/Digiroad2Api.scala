@@ -379,7 +379,7 @@ with GZipSupport {
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
             "value" -> link.value,
-            "points" -> link.points,
+            "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
             "modifiedBy" -> link.modifiedBy,

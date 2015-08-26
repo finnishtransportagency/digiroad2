@@ -24,7 +24,7 @@ object SpeedLimitFiller {
         Seq(MValueAdjustment(link.id, link.mmlId, 0, roadLinkLength))
       else
         Nil
-    val modifiedSegment = link.copy(points = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
+    val modifiedSegment = link.copy(geometry = GeometryUtils.truncateGeometry(roadLink.geometry, 0, roadLinkLength), startMeasure = 0, endMeasure = roadLinkLength)
     (modifiedSegment, mAdjustment)
   }
 
@@ -88,11 +88,11 @@ object SpeedLimitFiller {
   }
 
   private def dropSpeedLimitsWithEmptySegments(speedLimits: Map[Long, Seq[SpeedLimit]]): Set[Long] = {
-    speedLimits.filter { case (id, segments) => segments.exists(_.points.isEmpty) }.keySet
+    speedLimits.filter { case (id, segments) => segments.exists(_.geometry.isEmpty) }.keySet
   }
 
   private def dropShortLimits(topology: Map[Long, RoadLinkForSpeedLimit], speedLimits: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
-    val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.points) < MaxAllowedMValueError }.map(_.id).toSet
+    val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MaxAllowedMValueError }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ limitsToDrop))
   }

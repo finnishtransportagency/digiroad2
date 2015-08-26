@@ -23,7 +23,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology.length should be(1)
-    filledTopology.head.points should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
+    filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
     changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil))
@@ -38,7 +38,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     println(filledTopology)
     filledTopology should have size 2
-    filledTopology.map(_.points) should be(Seq(
+    filledTopology.map(_.geometry) should be(Seq(
       Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
       Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     filledTopology.map(_.startMeasure) should be(Seq(0.0, 0.0))
