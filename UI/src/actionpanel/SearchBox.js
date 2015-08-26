@@ -13,21 +13,23 @@
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {
-        var resultItems = _.map(results, function(result) {
-          return $('<li></li>').text(result.title).on('click', function() {
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          });
-        });
+        var resultItems = _.chain(results)
+          .sortBy('distance')
+          .map(function(result) {
+            return $('<li></li>').text(result.title).on('click', function() {
+              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+            });
+          }).value();
+
         searchResults.html(resultItems);
         resultsSection.show();
         clearSection.show();
       };
       var moveToLocation = function() {
-        var location = coordinatesText.val();
         var showDialog = function(message) {
           instructionsPopup.show(message, 3000);
         };
-        locationSearch.search(location).then(function(results) {
+        locationSearch.search(coordinatesText.val()).then(function(results) {
           populateSearchResults(results);
           if (results.length === 1) {
             var result = results[0];

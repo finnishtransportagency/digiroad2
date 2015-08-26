@@ -323,8 +323,6 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
-    var locationSearch = new LocationSearch(backend);
-
     var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
       var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
       var selectedNumericalLimit = new SelectedNumericalLimit(backend, spec.typeId, collection, spec.singleElementEventCategory);
@@ -362,7 +360,7 @@ var URLRouter = function(map, backend, models) {
                            selectedSpeedLimit,
                            numericalLimits,
                            linkPropertiesModel,
-                           locationSearch);
+                           new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
