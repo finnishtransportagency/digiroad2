@@ -95,15 +95,20 @@ Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+
 
 ####Koordinaattihaku####
 
-K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku (2), joka keskitt&auml;&auml; kartan keskipisteen haettuun koordinaattipisteeseen. Keskipiste on merkitty kartalle kohdistimella. Kohdistimen saa pois n&auml;kyvist&auml; klikkaamalla "N&auml;yt&auml; kohdistin"-valinnan tyhj&auml;ksi. 
+K&auml;ytt&ouml;liittym&auml;ss&auml; on koordinaattihaku (2), joka keskitt&auml;&auml; kartan keskipisteen haettuun koordinaattipisteeseen. Keskipiste on merkitty kartalle kohdistimella. Kohdistimen saa pois n&auml;kyvist&auml; klikkaamalla "Kohdistin"-valinnan tyhj&auml;ksi. 
 
-Siirry-painike keskitt&auml;&auml; kartan haettuun pisteeseen ja Merkitse-painike luo merkin haettuun pisteeseen. Merkki j&auml;&auml; kartalle, kunnes sille hakee uuden sijainnin. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla. Esimerkiksi:
+Siirry-painike keskitt&auml;&auml; kartan haettuun pisteeseen. Sy&ouml;tekentt&auml;&auml;n kirjoitetaan kokonaislukuina metrin tarkkuudella pohjois-koordinaatti (7 merkki&auml;) ja it&auml;-koordinaatti (6 merkki&auml;) ETRS35FIN-koordinaattij&auml;rjestelm&auml;ss&auml;. Koordinaatit erotetaan toisistaan pilkulla. Esimerkiksi:
 
 ```
 6901839,435323
 ```
 
-Koordinaattihakuun voi sy&ouml;tt&auml;&auml; vain koordinaatteja, jotka osuvat sovelluksen kartalle. Jos koordinaatit eiv&auml;t osu kartalle, sovellus ilmoittaa "Koordinaatit eiv&auml;t osu kartalle". My&ouml;sk&auml;&auml;n kirjaimia tai merkkej&auml; ei voi sy&ouml;tt&auml;&auml;. Jos sy&ouml;te on virheellinen merkkijono, sovellus ilmoittaa "K&auml;yt&auml; koordinaateissa P ja I numeroarvoja".
+Koordinaattihakuun voi sy&ouml;tt&auml;&auml; vain koordinaatteja, jotka osuvat sovelluksen kartalle. Jos koordinaatit eiv&auml;t osu kartalle, sovellus ilmoittaa "Koordinaatit eiv&auml;t osu kartalle". 
+
+####Merkitse piste kartalla####
+
+Merkitse-painike (10) merkitsee sinisen pisteen kartan keskipisteeseen. Merkki poistuu vain, kun merkit&auml;&auml;n uusi piste kartalta. Merkitse-painikkeen vieress&auml; olevat koordinaatit seuraavat kartan keskipistett&auml; ja p&auml;ivittyv&auml;t, kun kartan keskipiste muuttuu.
+
 ####Taustakartat####
 
 Taustakartaksi voi valita maastokartan, ortokuvat tai taustakarttasarjan. (8)
