@@ -47,7 +47,7 @@ class NLSProxyServlet extends ProxyServlet {
 
 class VKMProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    java.net.URI.create("http://10.129.65.37:8997" + req.getRequestURI)
+    java.net.URI.create("http://10.129.65.37:8997" + req.getRequestURI.replaceFirst("/digiroad", ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
