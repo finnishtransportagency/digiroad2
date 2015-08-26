@@ -306,22 +306,33 @@ with GZipSupport {
 
   put("/linkproperties/:id") {
     val id = params("id").toLong
-    val user = userProvider.getCurrentUser()
+    updateRoadLinkProperties(Seq(id))
+  }
+
+  put("/linkproperties") {
+    val ids = (parsedBody \ "mmlIds").extract[Seq[Long]]
+    updateRoadLinkProperties(ids)
+  }
+
+  def updateRoadLinkProperties(ids: Seq[Long]): Seq[Equals] = {
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = LinkType((parsedBody \ "linkType").extract[Int])
-    def municipalityValidation(municipalityCode: Int) = hasWriteAccess(user, municipalityCode)
 
-    roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
-      Map("mmlId" -> roadLink.mmlId,
-        "points" -> roadLink.geometry,
-        "administrativeClass" -> roadLink.administrativeClass.toString,
-        "functionalClass" -> roadLink.functionalClass,
-        "trafficDirection" -> roadLink.trafficDirection.toString,
-        "modifiedAt" -> roadLink.modifiedAt,
-        "modifiedBy" -> roadLink.modifiedBy,
-        "linkType" -> roadLink.linkType.value)
-    }.getOrElse(NotFound("Road link with MML ID " + id + " not found"))
+    val user = userProvider.getCurrentUser()
+    def municipalityValidation(municipalityCode: Int) = hasWriteAccess(user, municipalityCode)
+    ids.map { id =>
+      roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
+        Map("mmlId" -> roadLink.mmlId,
+          "points" -> roadLink.geometry,
+          "administrativeClass" -> roadLink.administrativeClass.toString,
+          "functionalClass" -> roadLink.functionalClass,
+          "trafficDirection" -> roadLink.trafficDirection.toString,
+          "modifiedAt" -> roadLink.modifiedAt,
+          "modifiedBy" -> roadLink.modifiedBy,
+          "linkType" -> roadLink.linkType.value)
+      }.getOrElse(halt(NotFound("Road link with MML ID " + id + " not found")))
+    }
   }
 
   get("/assetTypeProperties/:assetTypeId") {
