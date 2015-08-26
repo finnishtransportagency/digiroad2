@@ -414,6 +414,7 @@ _Nopeusrajoitusten visualisointi._
 ##Nopeusrajoituksien muokkaus##
 
 Muokkaustilassa nopeusrajoituksille voi antaa uusia arvoja, niit&auml; voi katkaista sek&auml; muuttaa yksisuuntaisiksi. Nopeusrajoituksien arvoja voi muokata kolmella tavalla:
+
 1. Koko nopeusrajoitusketjulle.
 1. Yksitt&auml;isen linkin mittaiselle osuudelle.
 1. Monivalinnan avulla kokonaiselle alueelle.
@@ -486,6 +487,12 @@ Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&au
 ![Tuntematon nopeusrajoitus.](k48.jpg)
 
 _Tuntematon nopeusrajoitus._
+
+Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (1). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusrajoituksen kohdalle sovelluksessa ja sille voi asettaa arvon. Lista sulkeutuu Sulje lista -painikkeesta.
+
+![Tuntematon nopeusrajoitus.](k49.JPG)
+
+_Tuntemattomien nopeusrajoitusten lista._
 
 6. K&auml;&auml;ntymisrajoitukset
 ----------------------------------
