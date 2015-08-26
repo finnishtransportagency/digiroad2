@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.LineSegment
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{PolyLine, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
@@ -10,7 +10,7 @@ import org.geotools.graph.util.graph.GraphPartitioner
 import scala.collection.JavaConversions._
 
 object SpeedLimitPartitioner {
-  private def clusterLinks(links: Seq[SpeedLimit]): Seq[Graph] = {
+  private def clusterLinks[T <: PolyLine](links: Seq[T]): Seq[Graph] = {
     val generator = new BasicLineGraphGenerator(0.5)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.points)

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{UnknownLimit, SideCodeAdju
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.DateTime
 
-case class SpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, trafficDirection: TrafficDirection, value: Option[Int], points: Seq[Point], startMeasure: Double, endMeasure: Double, modifiedBy: Option[String], modifiedDateTime: Option[DateTime], createdBy: Option[String], createdDateTime: Option[DateTime])
+case class SpeedLimit(id: Long, mmlId: Long, sideCode: SideCode, trafficDirection: TrafficDirection, value: Option[Int], points: Seq[Point], startMeasure: Double, endMeasure: Double, modifiedBy: Option[String], modifiedDateTime: Option[DateTime], createdBy: Option[String], createdDateTime: Option[DateTime]) extends PolyLine
 case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administrativeClass: AdministrativeClass, mmlId: Long, roadIdentifier: Option[Either[Int, String]], trafficDirection: TrafficDirection, municipalityCode: Int)
 case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
