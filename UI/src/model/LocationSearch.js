@@ -1,5 +1,5 @@
 (function(root) {
-  root.LocationSearch = function(backend) {
+  root.LocationSearch = function(backend, applicationModel, geometryUtils) {
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
@@ -39,6 +39,21 @@
     };
 
     this.search = function(searchString) {
+      function addDistance(item) {
+        var currentLocation = applicationModel.getCurrentLocation();
+
+        var distance = geometryUtils.distanceOfPoints({
+          x: currentLocation.lon,
+          y: currentLocation.lat
+        }, {
+          x: item.lon,
+          y: item.lat
+        });
+        return _.assign(item, {
+          distance: distance
+        });
+      }
+
       var input = LocationInputParser.parse(searchString);
       var resultByInputType = {
         coordinate: resultFromCoordinates,
@@ -46,7 +61,11 @@
         road: getCoordinatesFromRoadAddress,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
-      return resultByInputType[input.type](input);
+
+      var results = resultByInputType[input.type](input);
+      return results.then(function(result) {
+        return _.map(result, addDistance);
+      });
     };
   };
 })(this);

@@ -103,6 +103,7 @@
     var distanceOfPoints = function(end, start) {
       return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
     };
+    this.distanceOfPoints = distanceOfPoints;
 
     var radiansToDegrees = function(radians) {
       return radians * (180 / Math.PI);
