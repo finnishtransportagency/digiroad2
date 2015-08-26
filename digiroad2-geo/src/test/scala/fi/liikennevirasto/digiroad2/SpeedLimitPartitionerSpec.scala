@@ -9,6 +9,10 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     SpeedLimit(0, mmlId, SideCode.BothDirections, TrafficDirection.BothDirections, Some(value), geometry, 0.0, 0.0, None, None, None, None)
   }
 
+  private def roadLink(mmlId: Long, geometry: Seq[Point]) = {
+    VVHRoadLinkWithProperties(mmlId, geometry, 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None)
+  }
+
   test("group speed limits with same limit value and road number") {
     val speedLimitLinks = Seq(
       speedLimitLink(1, 50, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
@@ -88,8 +92,8 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
   // TODO: Separate cluster on different road name or road number
   test("group road links") {
     val roadLinks = Seq(
-      VVHRoadLinkWithProperties(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None),
-      VVHRoadLinkWithProperties(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None))
+      roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
+      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
 
     val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
     groupedLinks should have size 1
@@ -99,8 +103,8 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
 
   test("separate road link group with functional class") {
     val roadLinks = Seq(
-      VVHRoadLinkWithProperties(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None),
-      VVHRoadLinkWithProperties(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0)), 0.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+      roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
+      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(functionalClass = 1))
 
     val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
     groupedLinks should have size 2
