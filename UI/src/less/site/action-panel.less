@@ -40,6 +40,33 @@
   }  
 }
 
+.search-box {
+  .panel-header {
+    .location {
+      .shadow-box();
+      width: 135px;
+      color: @gray-darkest;
+    }
+    button {
+      margin-left: 5px;
+      border-top-width: 0;
+    }
+  }
+  .panel-section {
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      max-height: 150px;
+      li {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
 .panel.road-link {
   .road-link-legend {
     display: block;

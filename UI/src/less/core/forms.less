@@ -79,15 +79,13 @@ input[type="checkbox"]:focus {
   width: 100%;
   height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
   padding: @line-height-modifier (@line-height-modifier * 1.5);
-  border: 1px solid @input-border;
-  border-radius: @input-border-radius;
   font-size: @font-size-base;
   line-height: @line-height-modifier * 3;
   color: @input-color;
   background-color: @input-bg;
-  box-shadow: inset 1px 2px 2px rgba(40,40,38,.15);
   .box-sizing(border-box);
   .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .shadow-box();
 
   // Customize the `:focus` state to imitate native WebKit styles.
   .form-control-focus();

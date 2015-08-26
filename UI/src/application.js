@@ -221,7 +221,7 @@ var URLRouter = function(map, backend, models) {
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    new MapView(map, layers, new InstructionsPopup($('.digiroad2')), models.locationSearch);
+    new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
     applicationModel.moveMap(map.getZoom(), map.getExtent());
 
@@ -344,8 +344,7 @@ var URLRouter = function(map, backend, models) {
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,
       linkPropertiesModel: linkPropertiesModel,
-      manoeuvresCollection: manoeuvresCollection,
-      locationSearch: locationSearch
+      manoeuvresCollection: manoeuvresCollection
     };
 
     bindEvents();
@@ -358,7 +357,12 @@ var URLRouter = function(map, backend, models) {
       selectedSpeedLimit,
       selectedLinkProperty,
       selectedManoeuvreSource].concat(selectedNumericalLimitModels));
-    ActionPanel.initialize(backend, new InstructionsPopup($('.digiroad2')), selectedSpeedLimit, numericalLimits, linkPropertiesModel);
+    ActionPanel.initialize(backend,
+                           new InstructionsPopup($('.digiroad2')),
+                           selectedSpeedLimit,
+                           numericalLimits,
+                           linkPropertiesModel,
+                           locationSearch);
     AssetForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
