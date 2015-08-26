@@ -225,7 +225,7 @@ Joukkoliikenteen pys&auml;kki voi olla kelluva, jos tielinkkigeometria sen alla 
 
 _Kelluvat pys&auml;kit on visualisoitu eri tavoin._
 
-Kelluvista pys&auml;keist&auml; on lista <a href=https://testiextranet.liikennevirasto.fi/digiroad/floatingstops.html target="_blank">t&auml;&auml;ll&auml; </a>Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle.
+Kelluvat pys&auml;kit on listattu omaan listaan, johon on linkki pys&auml;kkien ominaisuustieton&auml;kym&auml;ss&auml; (1). Pys&auml;kit on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listalla n&auml;kyy vain ne pys&auml;kit, joihin k&auml;ytt&auml;j&auml;ll&auml; on muokkausoikeus. Kelluvasta pys&auml;kist&auml; on listassa linkki, josta p&auml;&auml;see suoraan pys&auml;kin kohdalle sovelluksessa ja sen voi siirt&auml;&auml; takaisin geometrialle. Lista sulkeutuu Sulje lista -painikkeesta.
 
 ![Kelluvien pys&auml;kkien lista](k30.JPG)
 
