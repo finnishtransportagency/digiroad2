@@ -97,4 +97,14 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     groupedLinks.head should have size 2
     groupedLinks.head.map(_.mmlId).toSet should be(roadLinks.map(_.mmlId).toSet)
   }
+
+  test("separate road link group with functional class") {
+    val roadLinks = Seq(
+      VVHRoadLinkWithProperties(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None),
+      VVHRoadLinkWithProperties(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0)), 0.0, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+
+    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    groupedLinks should have size 2
+    groupedLinks.map(_.length) should be(Seq(1, 1))
+  }
 }
