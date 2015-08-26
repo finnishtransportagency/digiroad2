@@ -54,7 +54,7 @@ object SpeedLimitPartitioner {
   }
 
   def partitionRoadLinks(links: Seq[VVHRoadLinkWithProperties]): Seq[Seq[VVHRoadLinkWithProperties]] = {
-    val linkGroups = links.groupBy { link => link.functionalClass }
+    val linkGroups = links.groupBy { link => (link.functionalClass, link.trafficDirection) }
 
     val clusters = for (linkGroup <- linkGroups.values.toSeq;
                         cluster <- clusterLinks(linkGroup)) yield cluster

@@ -87,7 +87,6 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     groupedLinks should have size 2
   }
 
-  // TODO: Separate cluster on different traffic direction
   // TODO: Separate cluster on different link type
   // TODO: Separate cluster on different road name or road number
   test("group road links") {
@@ -105,6 +104,16 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadLinks = Seq(
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(functionalClass = 1))
+
+    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    groupedLinks should have size 2
+    groupedLinks.map(_.length) should be(Seq(1, 1))
+  }
+
+  test("separate road link group with traffic direction") {
+    val roadLinks = Seq(
+      roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
+      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(trafficDirection = TrafficDirection.AgainstDigitizing))
 
     val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
     groupedLinks should have size 2
