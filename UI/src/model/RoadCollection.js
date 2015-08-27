@@ -89,7 +89,7 @@
     var self = this;
 
     var getSelectedRoadLinks = function() {
-      return _.filter(roadLinks, function(roadLink) {
+      return _.filter(_.flatten(roadLinks), function(roadLink) {
         return roadLink.isSelected();
       });
     };
@@ -114,18 +114,22 @@
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
         });
-        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLink) {
-          return new RoadLinkModel(roadLink);
+        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
+          return _.map(roadLinkGroup, function(roadLink) {
+              return new RoadLinkModel(roadLink);
+            });
         });
-        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLink) {
-          return _.contains(selectedIds, roadLink.getId());
+        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+          return _.some(roadLinkGroup, function(roadLink) {
+            _.contains(selectedIds, roadLink.getId());
+          });
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
       });
     };
 
     this.getAllCarTrafficRoads = function() {
-      return _.chain(roadLinks)
+      return _.chain(_.flatten(roadLinks))
         .filter(function(roadLink) {
           return roadLink.isCarTrafficRoad();
         })
@@ -136,13 +140,13 @@
     };
 
     this.getAll = function() {
-      return _.map(roadLinks, function(roadLink) {
+      return _.map(_.flatten(roadLinks), function(roadLink) {
         return roadLink.getData();
       });
     };
 
     this.get = function(id) {
-      return _.find(roadLinks, function(road) {
+      return _.find(_.flatten(roadLinks), function(road) {
         return road.getId() === id;
       });
     };

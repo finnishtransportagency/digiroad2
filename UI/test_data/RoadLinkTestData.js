@@ -1,6 +1,7 @@
 (function(testData) {
   testData.generate = function() {
-    return [{
+    var roadLinkData =
+    [{
       "mmlId": 1,
       "administrativeClass": "Private",
       "trafficDirection": "BothDirections",
@@ -532,5 +533,7 @@
         "y": 6677654.303
       }]
     }];
+
+    return _.map(roadLinkData, function(roadLink) { return [roadLink]; });
   };
 }(window.RoadLinkTestData = window.RoadLinkTestData || {}));
