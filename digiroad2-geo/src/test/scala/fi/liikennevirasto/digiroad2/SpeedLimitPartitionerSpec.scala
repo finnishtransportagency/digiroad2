@@ -10,7 +10,9 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
   }
 
   private def roadLink(mmlId: Long, geometry: Seq[Point]) = {
-    VVHRoadLinkWithProperties(mmlId, geometry, 0.0, Municipality, 0, TrafficDirection.BothDirections, Motorway, None, None)
+    VVHRoadLinkWithProperties(mmlId, geometry, 0.0, Municipality, 0,
+      TrafficDirection.BothDirections, Motorway, None, None,
+      Map("ROADNUMBER" -> BigInt(123)))
   }
 
   test("group speed limits with same limit value and road number") {
@@ -123,6 +125,16 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
     val roadLinks = Seq(
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(linkType = Freeway))
+
+    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    groupedLinks should have size 2
+    groupedLinks.map(_.length) should be(Seq(1, 1))
+  }
+
+  test("separate road link group with road number") {
+    val roadLinks = Seq(
+      roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
+      roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map("ROADNUMBER" -> BigInt(5))))
 
     val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
     groupedLinks should have size 2

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, PolyLine, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{LinearAsset, VVHRoadLinkWithProperties, PolyLine, SpeedLimit}
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
 import org.geotools.graph.structure.basic.BasicEdge
@@ -54,7 +54,9 @@ object SpeedLimitPartitioner {
   }
 
   def partitionRoadLinks(links: Seq[VVHRoadLinkWithProperties]): Seq[Seq[VVHRoadLinkWithProperties]] = {
-    val linkGroups = links.groupBy { link => (link.functionalClass, link.trafficDirection, link.linkType) }
+    val linkGroups = links.groupBy { link => (
+      link.functionalClass, link.trafficDirection,
+      link.linkType, LinearAsset.roadIdentifierFromRoadLink(link)) }
 
     val clusters = for (linkGroup <- linkGroups.values.toSeq;
                         cluster <- clusterLinks(linkGroup)) yield cluster
