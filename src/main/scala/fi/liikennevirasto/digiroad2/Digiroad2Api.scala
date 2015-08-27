@@ -230,12 +230,12 @@ with GZipSupport {
     }
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Map[String, Any]]  = {
+  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]]  = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    roadLinkService.getRoadLinksFromVVH(
-      bounds = boundingRectangle,
-      municipalities = municipalities).map { roadLink =>
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val partitionedRoadLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    partitionedRoadLinks.map { group => group.map { roadLink =>
       Map(
         "mmlId" -> roadLink.mmlId,
         "points" -> roadLink.geometry,
@@ -253,7 +253,7 @@ with GZipSupport {
         "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
         "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
         "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"))
-    }
+    } }
   }
 
   get("/roadlinks") {
