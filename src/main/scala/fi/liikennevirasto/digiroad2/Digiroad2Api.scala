@@ -35,8 +35,7 @@ with GZipSupport {
     contentType = formats("json") + "; charset=utf-8"
     try {
       authenticateForApi(request)(userProvider)
-      if(request.isWrite
-        && userProvider.getCurrentUser().hasWriteAccess() == false){
+      if(request.isWrite && !userProvider.getCurrentUser().hasWriteAccess()){
         halt(Unauthorized("No write permissions"))
       }
     } catch {
@@ -55,7 +54,7 @@ with GZipSupport {
   }
 
   get("/massTransitStops") {
-    val user = userProvider.getCurrentUser
+    val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     useVVHGeometry match {
@@ -314,7 +313,7 @@ with GZipSupport {
     val linkType = LinkType((parsedBody \ "linkType").extract[Int])
 
     val user = userProvider.getCurrentUser()
-    def municipalityValidation(municipalityCode: Int) = hasWriteAccess(user, municipalityCode)
+    def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     ids.map { id =>
       roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
         Map("mmlId" -> roadLink.mmlId,
@@ -347,11 +346,10 @@ with GZipSupport {
     case ise: IllegalStateException => halt(InternalServerError("Illegal state: " + ise.getMessage))
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
-    case e: Exception => {
+    case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)
       halt(InternalServerError("API error"))
-    }
   }
 
   private def validateBoundingBox(bbox: BoundingRectangle): Unit = {
@@ -440,7 +438,7 @@ with GZipSupport {
   put("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite(_))) {
+    if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite)) {
       halt(Unauthorized("User not authorized"))
     }
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
@@ -460,14 +458,14 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    hasWriteAccess(user, municipalityCode.get)
+    validateUserMunicipalityAccess(user)(municipalityCode.get)
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val username = user.username
     NumericalLimitService.createNumericalLimit(typeId = typeId,
                                          roadLinkId = roadLinkId,
-                                         value = value.intValue,
+                                         value = value.intValue(),
                                          username = username)
   }
 
@@ -475,14 +473,14 @@ with GZipSupport {
     val user = userProvider.getCurrentUser()
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    hasWriteAccess(user, municipalityCode.get)
+    validateUserMunicipalityAccess(user)(municipalityCode.get)
     val value = (parsedBody \ "value").extract[BigInt]
     validateNumericalLimitValue(value)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    NumericalLimitService.split(id, roadLinkId, measure, value.intValue, expired, username)
+    NumericalLimitService.split(id, roadLinkId, measure, value.intValue(), expired, username)
   }
 
   put("/speedlimits") {
@@ -507,7 +505,7 @@ with GZipSupport {
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
       user.username,
-      validateUserMunicipalityAccess(user)_)
+      validateUserMunicipalityAccess(user))
   }
 
   post("/speedlimits/:speedLimitId/separate") {
@@ -542,12 +540,6 @@ with GZipSupport {
     }
   }
 
-  def hasWriteAccess(user: User, municipality: Int) {
-    if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
-      halt(Unauthorized("User not authorized"))
-    }
-  }
-
   get("/manoeuvres") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -567,7 +559,7 @@ with GZipSupport {
 
     val manoeuvreIds = manoeuvres.map { manoeuvre =>
       val municipality = RoadLinkService.getMunicipalityCode(manoeuvre.sourceRoadLinkId)
-      hasWriteAccess(user, municipality.get)
+      validateUserMunicipalityAccess(user)(municipality.get)
       ManoeuvreService.createManoeuvre(user.username, manoeuvre)
     }
     Created(manoeuvreIds)
@@ -580,7 +572,7 @@ with GZipSupport {
 
     manoeuvreIds.foreach { manoeuvreId =>
       val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
       ManoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -593,7 +585,7 @@ with GZipSupport {
       .map{case(id, updates) => (id.toLong, updates)}
     manoeuvreUpdates.foreach{ case(id, updates) =>
       val sourceRoadLinkId = ManoeuvreService.getSourceRoadLinkIdById(id)
-      hasWriteAccess(user, RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
+      validateUserMunicipalityAccess(user)(RoadLinkService.getMunicipalityCode(sourceRoadLinkId).get)
       ManoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
