@@ -304,11 +304,6 @@ with GZipSupport {
     roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
-  put("/linkproperties/:id") {
-    val id = params("id").toLong
-    updateRoadLinkProperties(Seq(id))
-  }
-
   put("/linkproperties") {
     val ids = (parsedBody \ "mmlIds").extract[Seq[Long]]
     updateRoadLinkProperties(ids)
