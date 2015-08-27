@@ -32,9 +32,9 @@
     this.selectControl = selectControl;
     map.addControl(selectControl);
 
-    var highlightFeatures = function(feature) {
+    var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
-        if (feature && (x.attributes.mmlId === feature.attributes.mmlId)) {
+        if (selectedLinkProperty.isSelected(x.attributes.mmlId)) {
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -96,14 +96,14 @@
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === selectedLinkProperty.getId(); });
-      if (feature) {
+      var features = _.filter(roadLayer.layer.features, function(feature) { return selectedLinkProperty.isSelected(feature.attributes.mmlId); });
+      if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
-        selectControl.select(feature);
-        highlightFeatures(feature);
+        selectControl.select(_.first(features));
+        highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
-      if (selectedLinkProperty.get() && selectedLinkProperty.isDirty()) {
+      if (selectedLinkProperty.isDirty()) {
         selectControl.deactivate();
       }
     };
@@ -153,7 +153,7 @@
 
     var redrawSelected = function() {
       var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
-        return feature.attributes.mmlId === selectedLinkProperty.getId();
+        return selectedLinkProperty.isSelected(feature.attributes.mmlId);
       });
       roadLayer.layer.removeFeatures(selectedFeatures);
       var data = selectedLinkProperty.get().getData();

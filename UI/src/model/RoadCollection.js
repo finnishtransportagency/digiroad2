@@ -151,6 +151,14 @@
       });
     };
 
+    this.getGroup = function(id) {
+      return _.find(roadLinks, function(roadLinkGroup) {
+        return _.some(roadLinkGroup, function(roadLink) {
+          return roadLink.getId() === id;
+        });
+      });
+    };
+
     this.reset = function(){
       roadLinks = [];
     };

@@ -1,34 +1,30 @@
 (function(root) {
   root.SelectedLinkProperty = function(backend, collection) {
-    var current = null;
+    var current = [];
 
     var close = function() {
-      if (current && !current.isDirty()) {
-        current.unselect();
+      if (!_.isEmpty(current) && !isDirty()) {
+        _.forEach(current, function(selected) { selected.unselect(); });
         eventbus.trigger('linkProperties:unselected');
-        current = null;
+        current = [];
       }
     };
 
     var open = function(id) {
-      if (id !== getId()) {
+      if (!isSelected(id)) {
         close();
-        current = collection.get(id);
-        current.select();
-        eventbus.trigger('linkProperties:selected', current.getData());
+        current = collection.getGroup(id);
+        _.forEach(current, function(selected) { selected.select(); });
+        eventbus.trigger('linkProperties:selected', _.first(current).getData());
       }
     };
 
     var isDirty = function() {
-      return current && current.isDirty();
+      return _.some(current, function(selected) { return selected.isDirty(); });
     };
 
-    var getId = function() {
-      return current && current.getId();
-    };
-
-    var get = function() {
-      return current;
+    var isSelected = function(mmlId) {
+      return _.some(current, function(selected) { return selected.getId() === mmlId; });
     };
 
     var save = function() {
@@ -43,10 +39,9 @@
       close: close,
       open: open,
       isDirty: isDirty,
-      getId: getId,
-      get: get,
       save: save,
-      cancel: cancel
+      cancel: cancel,
+      isSelected: isSelected
     };
   };
 })(this);
