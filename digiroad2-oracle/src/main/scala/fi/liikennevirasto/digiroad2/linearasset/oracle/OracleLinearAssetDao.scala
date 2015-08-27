@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimitTimeStamps, RoadLinkForSpeedLimit, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 
@@ -203,14 +203,6 @@ trait OracleLinearAssetDao {
   }
 
   private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
-    def roadIdentifierFromAttributes(attributes: Map[String, Any]): Option[Either[Int, String]] = {
-      def getAttributeWithoutNull(attribute: String) = attributes(attribute).asInstanceOf[String].toString
-      Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
-        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_FI"))))
-        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SE"))))
-        .orElse(Try(Right(getAttributeWithoutNull("ROADNAME_SM"))))
-        .toOption
-    }
     def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
       attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
     }
@@ -220,7 +212,7 @@ trait OracleLinearAssetDao {
       link.length,
       link.administrativeClass,
       link.mmlId,
-      roadIdentifierFromAttributes(link.attributes),
+      LinearAsset.roadIdentifierFromRoadLink(link),
       link.trafficDirection,
       municipalityCodeFromAttributes(link.attributes))
 
