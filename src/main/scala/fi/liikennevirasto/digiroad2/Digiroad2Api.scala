@@ -308,7 +308,7 @@ with GZipSupport {
     updateRoadLinkProperties(ids)
   }
 
-  def updateRoadLinkProperties(ids: Seq[Long]): Seq[Equals] = {
+  def updateRoadLinkProperties(ids: Seq[Long]): Seq[Map[String, Any]] = {
     val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
     val functionalClass = (parsedBody \ "functionalClass").extract[Int]
     val linkType = LinkType((parsedBody \ "linkType").extract[Int])
