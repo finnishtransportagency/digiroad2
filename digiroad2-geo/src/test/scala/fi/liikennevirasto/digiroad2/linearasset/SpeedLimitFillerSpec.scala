@@ -1,8 +1,8 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{UnknownLimit, SideCodeAdjustment, MValueAdjustment, SpeedLimitChangeSet}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, SpeedLimitChangeSet, UnknownLimit}
 import org.scalatest._
 
 class SpeedLimitFillerSpec extends FunSuite with Matchers {

@@ -1,24 +1,18 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, NewLimit}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, UnknownLinkType, Municipality, BoundingRectangle}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-
-import scala.language.implicitConversions
-
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
-import org.scalatest.Tag
+import org.scalatest.mock.MockitoSugar
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
+
+import scala.language.implicitConversions
 
 class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]

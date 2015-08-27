@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{UnknownLimit, SideCodeAdjustment, MValueAdjustment}
+import SpeedLimitFiller.{UnknownLimit, SideCodeAdjustment, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.asset._
 import org.joda.time.DateTime
 

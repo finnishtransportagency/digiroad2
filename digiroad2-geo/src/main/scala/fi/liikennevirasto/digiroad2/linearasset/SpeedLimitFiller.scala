@@ -1,7 +1,7 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.linearasset
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, RoadLinkForSpeedLimit}
 
 object SpeedLimitFiller {
   case class AdjustedSpeedLimitSegment(speedLimitSegment: SpeedLimit, adjustedMValue: Option[Double])
