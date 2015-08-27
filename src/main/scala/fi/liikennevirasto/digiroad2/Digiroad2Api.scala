@@ -1,19 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, LinearAssetProvider}
-import org.scalatra._
-import org.json4s._
-import org.scalatra.json._
-import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset._
-import org.joda.time.{LocalDate, DateTime}
-import fi.liikennevirasto.digiroad2.authentication.{UserNotFoundException, RequestHeaderAuthentication, UnauthenticatedException}
-import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.user.{User}
-import org.apache.commons.lang3.StringUtils.isBlank
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
+import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
+import fi.liikennevirasto.digiroad2.linearasset.{LinearAssetProvider, NewLimit, RoadLinkPartitioner}
+import fi.liikennevirasto.digiroad2.user.User
+import org.apache.commons.lang3.StringUtils.isBlank
+import org.joda.time.DateTime
+import org.json4s._
+import org.scalatra._
+import org.scalatra.json._
+import org.slf4j.LoggerFactory
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearAssetProvider: LinearAssetProvider,
@@ -234,7 +233,7 @@ with GZipSupport {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
-    val partitionedRoadLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map { group => group.map { roadLink =>
       Map(
         "mmlId" -> roadLink.mmlId,

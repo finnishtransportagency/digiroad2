@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkPartitioner, SpeedLimitPartitioner, VVHRoadLinkWithProperties, SpeedLimit}
 import org.scalatest._
 
 class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
@@ -94,7 +94,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 1
     groupedLinks.head should have size 2
     groupedLinks.head.map(_.mmlId).toSet should be(roadLinks.map(_.mmlId).toSet)
@@ -105,7 +105,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(functionalClass = 1))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
@@ -115,7 +115,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(trafficDirection = TrafficDirection.AgainstDigitizing))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
@@ -125,7 +125,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(linkType = Freeway))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
@@ -135,7 +135,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map("ROADNUMBER" -> BigInt(5))))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
@@ -145,7 +145,7 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map("ROADNAME_FI" -> "Opastinsilta")))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
@@ -155,9 +155,8 @@ class SpeedLimitPartitionerSpec extends FunSuite with Matchers {
       roadLink(0l, Seq(Point(0.0, 0.0), Point(10.0, 0.0))),
       roadLink(1l, Seq(Point(10.2, 0.0), Point(20.0, 0.0))).copy(attributes = Map()))
 
-    val groupedLinks = SpeedLimitPartitioner.partitionRoadLinks(roadLinks)
+    val groupedLinks = RoadLinkPartitioner.partition(roadLinks)
     groupedLinks should have size 2
     groupedLinks.map(_.length) should be(Seq(1, 1))
   }
-
 }
