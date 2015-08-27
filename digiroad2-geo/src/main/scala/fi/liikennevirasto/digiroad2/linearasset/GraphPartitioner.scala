@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.LineSegment
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import org.geotools.graph.build.line.BasicLineGraphGenerator
 import org.geotools.graph.structure.Graph
+import org.geotools.graph.structure.basic.BasicEdge
 import scala.collection.JavaConversions._
 
 trait GraphPartitioner {
@@ -16,6 +17,11 @@ trait GraphPartitioner {
       graphable.setObject(link)
     }
     clusterGraph(generator.getGraph)
+  }
+
+  protected def linksFromCluster[T <: PolyLine](cluster: Graph): Seq[T] = {
+    val edges = cluster.getEdges.toList.asInstanceOf[List[BasicEdge]]
+    edges.map { edge: BasicEdge => edge.getObject.asInstanceOf[T] }
   }
 
   private def clusterGraph(graph: Graph): Seq[Graph] = {
