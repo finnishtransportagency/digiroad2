@@ -59,7 +59,7 @@
     var save = function(backend) {
       backend.updateLinkProperties([getId()], data, function(linkProperties) {
         dirty = false;
-        data = _.merge({}, data, linkProperties);
+        data = _.merge({}, data, _.first(linkProperties));
         eventbus.trigger('linkProperties:saved', data);
       }, function() {
         eventbus.trigger('linkProperties:updateFailed');
