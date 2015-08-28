@@ -1,5 +1,11 @@
 (function(root) {
-  root.DoubleClickSelectControl = function(selectControl) {
+  root.DoubleClickSelectControl = function(layer, selectFunction, unselectFunction) {
+    var selectControl = new OpenLayers.Control.SelectFeature(layer, {
+      onSelect: selectFunction,
+      onUnselect: unselectFunction
+    });
+    layer.map.addControl(selectControl);
+
     var selectClickHandler = new OpenLayers.Handler.Click(
       selectControl,
       {
@@ -31,12 +37,13 @@
       selectClickHandler.activate();
     };
     var deactivate = function() {
-      selectClickHandler.activate();
+      selectClickHandler.deactivate();
     };
 
     return {
       activate: activate,
-      deactivate: deactivate
+      deactivate: deactivate,
+      getControl: function() { return selectControl; }
     };
   };
 })(this);

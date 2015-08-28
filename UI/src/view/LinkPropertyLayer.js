@@ -11,6 +11,13 @@
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
 
+    var selectRoadLink = function(feature) {
+      selectedLinkProperty.open(feature.attributes.mmlId);
+      currentRenderIntent = 'select';
+      roadLayer.redraw();
+      highlightFeatures(feature);
+    };
+
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
@@ -18,20 +25,9 @@
       highlightFeatures(null);
     };
 
-    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect: function(feature) {
-        selectedLinkProperty.open(feature.attributes.mmlId);
-        currentRenderIntent = 'select';
-        roadLayer.redraw();
-        highlightFeatures(feature);
-      },
-      onUnselect: function() {
-        unselectRoadLink();
-      }
-    });
+    var doubleClickSelectControl = new DoubleClickSelectControl(roadLayer.layer, selectRoadLink, unselectRoadLink);
+    var selectControl = doubleClickSelectControl.getControl();
     this.selectControl = selectControl;
-    map.addControl(selectControl);
-    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
 
     this.activateSelection = function() {
       doubleClickSelectControl.activate();
