@@ -63,7 +63,7 @@
       selectClickHandler.activate();
     };
     this.deactivateSelection = function() {
-      me.electClickHandler.deactivate();
+      selectClickHandler.deactivate();
     };
 
     var highlightFeatures = function() {
