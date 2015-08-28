@@ -107,7 +107,7 @@
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
       };
-      eventbus.on('linkProperties:selected linkProperties:cancelled linkProperties:saved', function(linkProperties) {
+      eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';

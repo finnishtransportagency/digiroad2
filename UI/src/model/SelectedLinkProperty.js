@@ -1,12 +1,14 @@
 (function(root) {
   root.SelectedLinkProperty = function(backend, collection) {
     var current = [];
+    var dirty = false;
 
     var close = function() {
       if (!_.isEmpty(current) && !isDirty()) {
         _.forEach(current, function(selected) { selected.unselect(); });
         eventbus.trigger('linkProperties:unselected');
         current = [];
+        dirty = false;
       }
     };
 
@@ -20,7 +22,7 @@
     };
 
     var isDirty = function() {
-      return _.some(current, function(selected) { return selected.isDirty(); });
+      return dirty;
     };
 
     var isSelected = function(mmlId) {
@@ -28,20 +30,34 @@
     };
 
     var save = function() {
-      current.save(backend);
+      var mmlIds = _.map(current, function(selected) { return selected.getId(); });
+      var modifications = _.first(current).getData();
+
+      backend.updateLinkProperties(mmlIds, modifications, function(linkProperties) {
+        dirty = false;
+        eventbus.trigger('linkProperties:saved');
+      }, function() {
+        eventbus.trigger('linkProperties:updateFailed');
+      });
     };
 
     var cancel = function() {
+      dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
+      var originalData = _.first(current).getData();
+      eventbus.trigger('linkProperties:cancelled', originalData);
     };
 
     var setTrafficDirection = function(value) {
+      dirty = true;
       _.each(current, function(selected) { selected.setTrafficDirection(value); });
     };
     var setFunctionalClass = function(value) {
+      dirty = true;
       _.each(current, function(selected) { selected.setFunctionalClass(value); });
     };
     var setLinkType = function(value) {
+      dirty = true;
       _.each(current, function(selected) { selected.setLinkType(value); });
     };
 

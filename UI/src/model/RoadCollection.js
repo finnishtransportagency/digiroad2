@@ -1,6 +1,5 @@
 (function(root) {
   var RoadLinkModel = function(data) {
-    var dirty = false;
     var selected = false;
     var original = _.clone(data);
 
@@ -19,7 +18,6 @@
     var setLinkProperty = function(name, value) {
       if (value != data[name]) {
         data[name] = value;
-        dirty = true;
         eventbus.trigger('linkProperties:changed');
       }
     };
@@ -27,10 +25,6 @@
     var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
     var setLinkType = _.partial(setLinkProperty, 'linkType');
-
-    var isDirty = function() {
-      return dirty;
-    };
 
     var select = function() {
       selected = true;
@@ -52,18 +46,6 @@
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
       data.linkType = original.linkType;
-      dirty = false;
-      eventbus.trigger('linkProperties:cancelled', data);
-    };
-
-    var save = function(backend) {
-      backend.updateLinkProperties([getId()], data, function(linkProperties) {
-        dirty = false;
-        data = _.merge({}, data, _.first(linkProperties));
-        eventbus.trigger('linkProperties:saved', data);
-      }, function() {
-        eventbus.trigger('linkProperties:updateFailed');
-      });
     };
 
     return {
@@ -73,13 +55,11 @@
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
-      isDirty: isDirty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,
       select: select,
       unselect: unselect,
-      cancel: cancel,
-      save: save
+      cancel: cancel
     };
   };
 

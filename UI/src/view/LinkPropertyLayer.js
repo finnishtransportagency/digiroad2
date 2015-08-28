@@ -136,6 +136,7 @@
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
+      eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.mmlId === link.mmlId;
@@ -147,6 +148,11 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
         draw();
       });
+    };
+
+    var refreshViewAfterSaving = function() {
+      unselectRoadLink();
+      me.refreshView();
     };
 
     var handleLinkPropertyChanged = function(eventListener) {
