@@ -32,6 +32,40 @@
     this.selectControl = selectControl;
     map.addControl(selectControl);
 
+    var selectClickHandler = new OpenLayers.Handler.Click(
+      selectControl,
+      {
+        click: function(event) {
+          var feature = selectControl.layer.getFeatureFromEvent(event);
+          if (feature) {
+            selectControl.select(feature);
+          } else {
+            selectControl.unselectAll();
+          }
+        },
+        dblclick: function(event) {
+          var feature = selectControl.layer.getFeatureFromEvent(event);
+          if (feature) {
+            selectControl.select(feature);
+          } else {
+            map.zoomIn();
+          }
+        }
+      },
+      {
+        single: true,
+        double: true,
+        stopDouble: true,
+        stopSingle: true
+      }
+    );
+    this.activateSelection = function() {
+      selectClickHandler.activate();
+    };
+    this.deactivateSelection = function() {
+      me.electClickHandler.deactivate();
+    };
+
     var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
         if (selectedLinkProperty.isSelected(x.attributes.mmlId)) {
@@ -100,7 +134,7 @@
     };
 
     var reselectRoadLink = function() {
-      selectControl.activate();
+      me.activateSelection();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
       var features = getSelectedFeatures();
@@ -111,12 +145,12 @@
       }
       selectControl.onSelect = originalOnSelectHandler;
       if (selectedLinkProperty.isDirty()) {
-        selectControl.deactivate();
+        me.deactivateSelection();
       }
     };
 
     var prepareRoadLinkDraw = function() {
-      selectControl.deactivate();
+      me.deactivateSelection();
     };
 
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
@@ -147,13 +181,13 @@
 
     var handleLinkPropertyChanged = function(eventListener) {
       redrawSelected();
-      selectControl.deactivate();
+      me.deactivateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
     var concludeLinkPropertyEdit = function(eventListener) {
-      selectControl.activate();
+      me.activateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       redrawSelected();
     };
