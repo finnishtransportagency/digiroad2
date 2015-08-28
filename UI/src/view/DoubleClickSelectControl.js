@@ -12,7 +12,7 @@
         click: function(event) {
           var feature = selectControl.layer.getFeatureFromEvent(event);
           if (feature) {
-            selectControl.select(feature);
+            selectControl.select(_.assign({singleLinkSelect: false}, feature));
           } else {
             selectControl.unselectAll();
           }
@@ -20,7 +20,7 @@
         dblclick: function(event) {
           var feature = selectControl.layer.getFeatureFromEvent(event);
           if (feature) {
-            selectControl.select(feature);
+            selectControl.select(_.assign({singleLinkSelect: true}, feature));
           } else {
             map.zoomIn();
           }
