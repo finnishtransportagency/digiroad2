@@ -48,7 +48,7 @@
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks, geometryUtils);
-      reselectRoadLink();
+      redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
 
@@ -156,10 +156,10 @@
         return selectedLinkProperty.isSelected(feature.attributes.mmlId);
       });
       roadLayer.layer.removeFeatures(selectedFeatures);
-      var data = selectedLinkProperty.get().getData();
-      roadLayer.drawRoadLink(data);
-      drawDashedLineFeaturesIfApplicable([data]);
-      me.drawOneWaySigns(roadLayer.layer, [data], geometryUtils);
+      var selectedRoadLinks = selectedLinkProperty.get();
+      _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
+      drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
+      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks, geometryUtils);
       reselectRoadLink();
     };
 

@@ -35,13 +35,33 @@
       current.cancel();
     };
 
+    var setTrafficDirection = function(value) {
+      _.each(current, function(selected) { selected.setTrafficDirection(value); });
+    };
+    var setFunctionalClass = function(value) {
+      _.each(current, function(selected) { selected.setFunctionalClass(value); });
+    };
+    var setLinkType = function(value) {
+      _.each(current, function(selected) { selected.setLinkType(value); });
+    };
+
+    var get = function() {
+      return _.map(current, function(roadLink) {
+        return roadLink.getData();
+      });
+    };
+
     return {
       close: close,
       open: open,
       isDirty: isDirty,
       save: save,
       cancel: cancel,
-      isSelected: isSelected
+      isSelected: isSelected,
+      setTrafficDirection: setTrafficDirection,
+      setFunctionalClass: setFunctionalClass,
+      setLinkType: setLinkType,
+      get: get
     };
   };
 })(this);

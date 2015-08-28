@@ -137,13 +137,13 @@
                                     linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
         rootElement.html(_.template(template, options)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
         rootElement.find('.functional-class').change(function(event) {
-          selectedLinkProperty.get().setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         rootElement.find('.link-types').change(function(event) {
-          selectedLinkProperty.get().setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
       });
