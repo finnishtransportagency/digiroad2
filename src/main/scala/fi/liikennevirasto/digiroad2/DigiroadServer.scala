@@ -21,6 +21,7 @@ trait DigiroadServer {
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     context.addServlet(classOf[NLSProxyServlet], "/maasto/*")
     context.addServlet(classOf[VKMProxyServlet], "/vkm/*")
+    context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -56,5 +57,11 @@ class VKMProxyServlet extends ProxyServlet {
       proxyRequest.param(key, value.mkString(""))
     }
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+  }
+}
+
+class VKMUIProxyServlet extends ProxyServlet {
+  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
+    java.net.URI.create("http://localhost:3000" + req.getRequestURI.replaceFirst("/digiroad/viitekehysmuunnin/", "/"))
   }
 }
