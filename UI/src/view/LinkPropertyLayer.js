@@ -92,11 +92,18 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
+    var getSelectedFeatures = function() {
+      var features = _.filter(roadLayer.layer.features, function(feature) {
+        return selectedLinkProperty.isSelected(feature.attributes.mmlId);
+      });
+      return features;
+    };
+
     var reselectRoadLink = function() {
       selectControl.activate();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var features = _.filter(roadLayer.layer.features, function(feature) { return selectedLinkProperty.isSelected(feature.attributes.mmlId); });
+      var features = getSelectedFeatures();
       if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
         selectControl.select(_.first(features));
@@ -152,10 +159,7 @@
     };
 
     var redrawSelected = function() {
-      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
-        return selectedLinkProperty.isSelected(feature.attributes.mmlId);
-      });
-      roadLayer.layer.removeFeatures(selectedFeatures);
+      roadLayer.layer.removeFeatures(getSelectedFeatures());
       var selectedRoadLinks = selectedLinkProperty.get();
       _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
       drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
