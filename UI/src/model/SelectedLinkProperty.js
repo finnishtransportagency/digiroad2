@@ -32,7 +32,7 @@
     };
 
     var cancel = function() {
-      current.cancel();
+      _.each(current, function(selected) { selected.cancel(); });
     };
 
     var setTrafficDirection = function(value) {
