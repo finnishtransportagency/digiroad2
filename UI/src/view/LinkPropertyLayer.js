@@ -31,39 +31,13 @@
     });
     this.selectControl = selectControl;
     map.addControl(selectControl);
+    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
 
-    var selectClickHandler = new OpenLayers.Handler.Click(
-      selectControl,
-      {
-        click: function(event) {
-          var feature = selectControl.layer.getFeatureFromEvent(event);
-          if (feature) {
-            selectControl.select(feature);
-          } else {
-            selectControl.unselectAll();
-          }
-        },
-        dblclick: function(event) {
-          var feature = selectControl.layer.getFeatureFromEvent(event);
-          if (feature) {
-            selectControl.select(feature);
-          } else {
-            map.zoomIn();
-          }
-        }
-      },
-      {
-        single: true,
-        double: true,
-        stopDouble: true,
-        stopSingle: true
-      }
-    );
     this.activateSelection = function() {
-      selectClickHandler.activate();
+      doubleClickSelectControl.activate();
     };
     this.deactivateSelection = function() {
-      selectClickHandler.deactivate();
+      doubleClickSelectControl.deactivate();
     };
 
     var highlightFeatures = function() {
