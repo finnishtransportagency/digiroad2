@@ -12,7 +12,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      selectedLinkProperty.open(feature.attributes.mmlId);
+      selectedLinkProperty.open(feature.attributes.mmlId, feature.singleLinkSelect);
       currentRenderIntent = 'select';
       roadLayer.redraw();
       highlightFeatures(feature);

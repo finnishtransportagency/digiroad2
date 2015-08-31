@@ -12,10 +12,10 @@
       }
     };
 
-    var open = function(id) {
+    var open = function(id, singleLinkSelect) {
       if (!isSelected(id)) {
         close();
-        current = collection.getGroup(id);
+        current = singleLinkSelect ? [collection.get(id)] : collection.getGroup(id);
         _.forEach(current, function(selected) { selected.select(); });
         eventbus.trigger('linkProperties:selected', _.first(current).getData());
       }
