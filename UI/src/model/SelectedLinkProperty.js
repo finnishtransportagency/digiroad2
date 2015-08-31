@@ -58,18 +58,13 @@
       eventbus.trigger('linkProperties:cancelled', originalData);
     };
 
-    var setTrafficDirection = function(value) {
+    var setLinkProperty = function(key, value) {
       dirty = true;
-      _.each(current, function(selected) { selected.setTrafficDirection(value); });
+      _.each(current, function(selected) { selected.setLinkProperty(key, value); });
     };
-    var setFunctionalClass = function(value) {
-      dirty = true;
-      _.each(current, function(selected) { selected.setFunctionalClass(value); });
-    };
-    var setLinkType = function(value) {
-      dirty = true;
-      _.each(current, function(selected) { selected.setLinkType(value); });
-    };
+    var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
+    var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
+    var setLinkType = _.partial(setLinkProperty, 'linkType');
 
     var get = function() {
       return _.map(current, function(roadLink) {

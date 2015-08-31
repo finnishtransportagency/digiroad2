@@ -22,10 +22,6 @@
       }
     };
 
-    var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
-    var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
-    var setLinkType = _.partial(setLinkProperty, 'linkType');
-
     var select = function() {
       selected = true;
     };
@@ -52,9 +48,7 @@
       getId: getId,
       getData: getData,
       getPoints: getPoints,
-      setTrafficDirection: setTrafficDirection,
-      setFunctionalClass: setFunctionalClass,
-      setLinkType: setLinkType,
+      setLinkProperty: setLinkProperty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,
       select: select,
