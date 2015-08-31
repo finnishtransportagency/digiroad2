@@ -60,15 +60,13 @@
   root.RoadCollection = function(backend) {
     var roadLinks = [];
 
-    var self = this;
-
     var getSelectedRoadLinks = function() {
       return _.filter(_.flatten(roadLinks), function(roadLink) {
         return roadLink.isSelected();
       });
     };
 
-    this.fetch = function(boundingBox, zoom) {
+    this.fetch = function(boundingBox) {
       backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
         var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
           return roadLink.getId();
