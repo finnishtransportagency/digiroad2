@@ -67,6 +67,9 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
             '</div>' +
+            '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+            '</div>' +
             staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
             '<div class="form-group editable">' +
               '<label class="control-label">Toiminnallinen luokka</label>' +
