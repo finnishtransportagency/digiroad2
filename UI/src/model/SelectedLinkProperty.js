@@ -12,8 +12,17 @@
       }
     };
 
+    var isSingleLinkSelection = function() {
+      return current.length === 1;
+    };
+
+    var isDifferingSelection = function(singleLinkSelect) {
+      return (!_.isUndefined(singleLinkSelect) &&
+              (singleLinkSelect !== isSingleLinkSelection()));
+    };
+
     var open = function(id, singleLinkSelect) {
-      if (!isSelected(id)) {
+      if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
         close();
         current = singleLinkSelect ? [collection.get(id)] : collection.getGroup(id);
         _.forEach(current, function(selected) { selected.select(); });
