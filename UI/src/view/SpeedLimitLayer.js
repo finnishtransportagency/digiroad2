@@ -378,7 +378,7 @@ window.SpeedLimitLayer = function(params) {
     onUnselect: speedLimitOnUnselect
   });
   map.addControl(selectControl);
-  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
+  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
   var pixelBoundsToCoordinateBounds = function(bounds) {
     var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));

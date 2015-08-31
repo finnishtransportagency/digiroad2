@@ -1,5 +1,5 @@
 (function(root) {
-  root.DoubleClickSelectControl = function(selectControl) {
+  root.DoubleClickSelectControl = function(selectControl, map) {
     var selectClickHandler = new OpenLayers.Handler.Click(
       selectControl,
       {

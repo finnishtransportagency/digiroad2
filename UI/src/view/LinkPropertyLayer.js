@@ -30,7 +30,7 @@
       onUnselect: unselectRoadLink
     });
     map.addControl(selectControl);
-    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
+    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
     this.activateSelection = function() {
