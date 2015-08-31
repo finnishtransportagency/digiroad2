@@ -39,6 +39,7 @@
     };
 
     var save = function() {
+      eventbus.trigger('linkProperties:saving');
       var mmlIds = _.map(current, function(selected) { return selected.getId(); });
       var modifications = _.first(current).getData();
 

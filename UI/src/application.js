@@ -104,11 +104,11 @@ var URLRouter = function(map, backend, models) {
   };
 
   var bindEvents = function() {
-    eventbus.on('asset:saving asset:creating speedLimit:saving', function() {
+    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving', function() {
       indicatorOverlay();
     });
 
-    eventbus.on('asset:fetched asset:created speedLimits:fetched', function(asset) {
+    eventbus.on('asset:fetched asset:created speedLimits:fetched linkProperties:available', function(asset) {
       jQuery('.spinner-overlay').remove();
     });
 
