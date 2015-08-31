@@ -373,8 +373,12 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  var doubleClickSelectControl = new DoubleClickSelectControl(vectorLayer, speedLimitOnSelect, speedLimitOnUnselect);
-  var selectControl = doubleClickSelectControl.getControl();
+  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
+    onSelect: speedLimitOnSelect,
+    onUnselect: speedLimitOnUnselect
+  });
+  map.addControl(selectControl);
+  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
 
   var pixelBoundsToCoordinateBounds = function(bounds) {
     var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));

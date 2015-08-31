@@ -1,11 +1,5 @@
 (function(root) {
-  root.DoubleClickSelectControl = function(layer, selectFunction, unselectFunction) {
-    var selectControl = new OpenLayers.Control.SelectFeature(layer, {
-      onSelect: selectFunction,
-      onUnselect: unselectFunction
-    });
-    layer.map.addControl(selectControl);
-
+  root.DoubleClickSelectControl = function(selectControl) {
     var selectClickHandler = new OpenLayers.Handler.Click(
       selectControl,
       {
@@ -42,8 +36,7 @@
 
     return {
       activate: activate,
-      deactivate: deactivate,
-      getControl: function() { return selectControl; }
+      deactivate: deactivate
     };
   };
 })(this);

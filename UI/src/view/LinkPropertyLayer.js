@@ -25,8 +25,12 @@
       highlightFeatures(null);
     };
 
-    var doubleClickSelectControl = new DoubleClickSelectControl(roadLayer.layer, selectRoadLink, unselectRoadLink);
-    var selectControl = doubleClickSelectControl.getControl();
+    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
+      onSelect: selectRoadLink,
+      onUnselect: unselectRoadLink
+    });
+    map.addControl(selectControl);
+    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl);
     this.selectControl = selectControl;
 
     this.activateSelection = function() {
