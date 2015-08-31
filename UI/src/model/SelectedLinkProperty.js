@@ -72,6 +72,10 @@
       });
     };
 
+    var count = function() {
+      return current.length;
+    };
+
     return {
       close: close,
       open: open,
@@ -82,7 +86,8 @@
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
-      get: get
+      get: get,
+      count: count
     };
   };
 })(this);
