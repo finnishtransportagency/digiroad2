@@ -85,12 +85,6 @@
       return current.length;
     };
 
-    var segmentWithLatestModifications = function() {
-      return _.last(_.sortBy(get(), function(s) {
-        return moment(s.modifiedAt, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
-      }));
-    };
-
     var getAddressNumber = function(minMax, leftRight) {
       var addressNumbers =  _.chain(get())
       .pluck(minMax + 'AddressNumber' + leftRight)
@@ -98,14 +92,6 @@
       .sortBy()
       .value();
       return minMax === 'min' ? _.first(addressNumbers) : _.last(addressNumbers);
-    };
-
-    var getModifiedBy = function() {
-      return segmentWithLatestModifications().modifiedBy;
-    };
-
-    var getModifiedDateTime = function() {
-      return segmentWithLatestModifications().modifiedAt;
     };
 
     return {
