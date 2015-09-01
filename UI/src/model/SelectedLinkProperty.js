@@ -21,6 +21,13 @@
               (singleLinkSelect !== isSingleLinkSelection()));
     };
 
+    var extractMunicipalityCodes = function (selectedData) {
+      return _.chain(selectedData)
+              .pluck('municipalityCode')
+              .uniq()
+              .value();
+    };
+
     var open = function(id, singleLinkSelect) {
       if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
         close();
@@ -35,7 +42,8 @@
           maxAddressNumberRight: getAddressNumber('max', 'Right')
         };
         var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
-        eventbus.trigger('linkProperties:selected', _.merge({}, propertyData, addressNumbers, latestModified));
+        var municipalityCodes = { municipalityCode: extractMunicipalityCodes(selectedData) };
+        eventbus.trigger('linkProperties:selected', _.merge({}, propertyData, addressNumbers, latestModified, municipalityCodes));
       }
     };
 
