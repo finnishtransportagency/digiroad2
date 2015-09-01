@@ -26,10 +26,11 @@
         close();
         current = singleLinkSelect ? [collection.get(id)] : collection.getGroup(id);
         _.forEach(current, function(selected) { selected.select(); });
-        var data =  _.first(current).getData();
-        data.modifiedBy = getModifiedBy();
-        data.modifiedAt = getModifiedDateTime();
-        eventbus.trigger('linkProperties:selected', data);
+        var selectedData =  get();
+        var propertyData =  _.first(selectedData);
+        propertyData.modifiedBy = dateutil.getModifiedBy(selectedData, 'modifiedAt');
+        propertyData.modifiedAt = dateutil.getModifiedDateTime(selectedData, 'modifiedAt');
+        eventbus.trigger('linkProperties:selected', propertyData);
       }
     };
 
@@ -77,20 +78,6 @@
 
     var count = function() {
       return current.length;
-    };
-
-    var segmentWithLatestModifications = function() {
-      return _.last(_.sortBy(get(), function(s) {
-        return moment(s.modifiedAt, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
-      }));
-    };
-
-    var getModifiedBy = function() {
-      return segmentWithLatestModifications().modifiedBy;
-    };
-
-    var getModifiedDateTime = function() {
-      return segmentWithLatestModifications().modifiedAt;
     };
 
     return {

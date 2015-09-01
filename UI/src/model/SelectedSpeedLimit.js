@@ -182,18 +182,12 @@
       return getProperty('value');
     };
 
-    var segmentWithLatestModifications = function() {
-      return _.last(_.sortBy(selection, function(s) {
-        return moment(s.modifiedDateTime, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
-      }));
-    };
-
     this.getModifiedBy = function() {
-      return segmentWithLatestModifications().modifiedBy;
+      return dateutil.getModifiedBy(selection, 'modifiedDateTime');
     };
 
     this.getModifiedDateTime = function() {
-      return segmentWithLatestModifications().modifiedDateTime;
+      return dateutil.getModifiedDateTime(selection, 'modifiedDateTime');
     };
 
     this.getCreatedBy = function() {
