@@ -43,13 +43,23 @@
 .search-box {
   .panel-header {
     .location {
-      .shadow-box();
-      width: 135px;
+      border-style: solid;
+      border-color: @input-border;
+      border-width: 1px;
+      border-radius: 3px;
+      box-shadow: inset 1px 2px 2px rgba(40,40,38,.15);
+      width: 144px;
       color: @gray-darkest;
     }
     button {
-      margin-left: 5px;
-      border-top-width: 0;
+      border-style: solid;
+      border-color: transparent;
+      border-width: 1px 1px 1px 0;
+      border-radius: @input-border-radius;
+      padding-left: 8px;
+      display: block;
+      height: 22px;
+      float: right;
     }
   }
   .panel-section {
