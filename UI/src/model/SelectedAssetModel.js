@@ -23,8 +23,10 @@
     eventbus.on('tool:changed', function(tool) {
       if (tool === 'Add') {
         close();
-      } else if (currentAsset.id) {
-        backend.getAsset(currentAsset.payload.nationalId);
+      } else if (exists()) {
+        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+          if (exists()) { eventbus.trigger('asset:fetched', asset); }
+        });
       }
     });
 
@@ -111,8 +113,10 @@
     };
 
     eventbus.on('application:readOnly', function() {
-      if (currentAsset.id) {
-        backend.getAsset(currentAsset.payload.nationalId);
+      if (exists()) {
+        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+          if (exists()) { eventbus.trigger('asset:fetched', asset); }
+        });
       }
     });
 

@@ -195,12 +195,6 @@
       });
     };
 
-    this.getAsset = function(nationalId) {
-      self.getMassTransitStopByNationalId(nationalId, function(asset) {
-        eventbus.trigger('asset:fetched', asset);
-      });
-    };
-
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
     };
