@@ -74,7 +74,7 @@
       var mmlIds = _.map(current, function(selected) { return selected.getId(); });
       var modifications = _.first(current).getData();
 
-      backend.updateLinkProperties(mmlIds, modifications, function(linkProperties) {
+      backend.updateLinkProperties(mmlIds, modifications, function() {
         dirty = false;
         eventbus.trigger('linkProperties:saved');
       }, function() {

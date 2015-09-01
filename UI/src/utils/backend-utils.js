@@ -87,7 +87,7 @@
         .fail(function() { console.log("error"); });
     }, 1000);
 
-    this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
+    this.getSpeedLimits = _.throttle(function (boundingBox) {
       return $.getJSON('api/speedlimits?bbox=' + boundingBox);
     }, 1000);
 

@@ -148,7 +148,7 @@
           selectControl.select(feature);
         }
       });
-      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
         draw();
       });
     };

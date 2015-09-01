@@ -9,7 +9,7 @@
     var setDataset = function(dataset) {
       if (currentDataset !== dataset) {
         currentDataset = dataset;
-        eventbus.trigger('linkProperties:dataset:changed', dataset);
+        eventbus.trigger('linkProperties:dataset:changed');
       }
     };
 
