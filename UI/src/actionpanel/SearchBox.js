@@ -8,7 +8,7 @@
     var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);
     var searchResults = $('<ul id="search-results"></ul>');
     var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
-    var clearButton = $('<button class="btn btn-primary btn-block">Tyhjenn&auml; tulokset</button>');
+    var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
     var bindEvents = function() {
