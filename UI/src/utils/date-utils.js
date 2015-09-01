@@ -91,15 +91,7 @@
         return picker;
     }
 
-  dateutil.getModifiedBy = function(data, fieldName) {
-    return segmentWithLatestModifications(data, fieldName).modifiedBy;
-  };
-
-  dateutil.getModifiedDateTime = function(data, fieldName) {
-    return segmentWithLatestModifications(data, fieldName)[fieldName];
-  };
-
-  var segmentWithLatestModifications = function(data, fieldName) {
+  dateutil.extractLatestModifications = function(data, fieldName) {
     return _.last(_.sortBy(data, function(s) {
       return moment(s[fieldName], "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
     }));

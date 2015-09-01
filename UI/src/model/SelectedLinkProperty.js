@@ -34,9 +34,8 @@
           minAddressNumberRight: getAddressNumber('min', 'Right'),
           maxAddressNumberRight: getAddressNumber('max', 'Right')
         };
-        propertyData.modifiedBy = getModifiedBy();
-        propertyData.modifiedAt = getModifiedDateTime();
-        eventbus.trigger('linkProperties:selected', _.merge({}, propertyData, addressNumbers));
+        var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
+        eventbus.trigger('linkProperties:selected', _.merge({}, propertyData, addressNumbers, latestModified));
       }
     };
 

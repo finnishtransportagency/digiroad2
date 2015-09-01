@@ -183,11 +183,11 @@
     };
 
     this.getModifiedBy = function() {
-      return dateutil.getModifiedBy(selection, 'modifiedDateTime');
+      return dateutil.extractLatestModifications(selection, 'modifiedDateTime').modifiedBy;
     };
 
     this.getModifiedDateTime = function() {
-      return dateutil.getModifiedDateTime(selection, 'modifiedDateTime');
+      return dateutil.extractLatestModifications(selection, 'modifiedDateTime').modifiedDateTime;
     };
 
     this.getCreatedBy = function() {
