@@ -51,11 +51,10 @@
       }
     };
 
-    var disabled = 'disabled';
     var buttons =
       '<div class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
+        '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+        '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
     var template = function(options) {
       return _.template('' +
