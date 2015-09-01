@@ -101,10 +101,9 @@
     };
 
     var getSelectedFeatures = function() {
-      var features = _.filter(roadLayer.layer.features, function(feature) {
+      return _.filter(roadLayer.layer.features, function (feature) {
         return selectedLinkProperty.isSelected(feature.attributes.mmlId);
       });
-      return features;
     };
 
     var reselectRoadLink = function() {
