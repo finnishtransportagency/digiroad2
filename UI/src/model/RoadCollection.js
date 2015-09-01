@@ -58,10 +58,14 @@
   };
 
   root.RoadCollection = function(backend) {
-    var roadLinks = [];
+    var roadLinkGroups = [];
+
+    var roadLinks = function() {
+      return _.flatten(roadLinkGroups);
+    };
 
     var getSelectedRoadLinks = function() {
-      return _.filter(_.flatten(roadLinks), function(roadLink) {
+      return _.filter(roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
@@ -74,7 +78,7 @@
         var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLink) {
           return new RoadLinkModel(roadLink);
         });
-        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLink) {
+        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLink) {
           return _.contains(selectedIds, roadLink.getId());
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
@@ -91,7 +95,7 @@
               return new RoadLinkModel(roadLink);
             });
         });
-        roadLinks = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
             _.contains(selectedIds, roadLink.getId());
           });
@@ -101,7 +105,7 @@
     };
 
     this.getAllCarTrafficRoads = function() {
-      return _.chain(_.flatten(roadLinks))
+      return _.chain(roadLinks())
         .filter(function(roadLink) {
           return roadLink.isCarTrafficRoad();
         })
@@ -112,19 +116,19 @@
     };
 
     this.getAll = function() {
-      return _.map(_.flatten(roadLinks), function(roadLink) {
+      return _.map(roadLinks(), function(roadLink) {
         return roadLink.getData();
       });
     };
 
     this.get = function(id) {
-      return _.find(_.flatten(roadLinks), function(road) {
+      return _.find(roadLinks(), function(road) {
         return road.getId() === id;
       });
     };
 
     this.getGroup = function(id) {
-      return _.find(roadLinks, function(roadLinkGroup) {
+      return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
         });
@@ -132,7 +136,7 @@
     };
 
     this.reset = function(){
-      roadLinks = [];
+      roadLinkGroups = [];
     };
   };
 })(this);
