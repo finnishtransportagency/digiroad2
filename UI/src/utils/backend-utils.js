@@ -87,7 +87,7 @@
         .fail(function() { console.log("error"); });
     }, 1000);
 
-    this.getSpeedLimits = _.throttle(function (boundingBox, callback) {
+    this.getSpeedLimits = _.throttle(function (boundingBox) {
       return $.getJSON('api/speedlimits?bbox=' + boundingBox);
     }, 1000);
 
@@ -103,12 +103,12 @@
       });
     }, 1000);
 
-    this.updateLinkProperties = _.throttle(function(id, data, success, failure) {
+    this.updateLinkProperties = _.throttle(function(mmlIds, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/linkproperties/" + id,
-        data: JSON.stringify({trafficDirection: data.trafficDirection, functionalClass: data.functionalClass, linkType: data.linkType}),
+        url: "api/linkproperties",
+        data: JSON.stringify({mmlIds: mmlIds, trafficDirection: data.trafficDirection, functionalClass: data.functionalClass, linkType: data.linkType}),
         dataType: "json",
         success: success,
         error: failure

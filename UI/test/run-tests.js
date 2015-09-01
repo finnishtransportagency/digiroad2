@@ -10,8 +10,6 @@ require.config({
     'LinearAsset': '../src/utils/LinearAsset',
     'Backend': '../src/utils/backend-utils',
     'validitydirections': '../src/utils/validity-directions',
-    'Layer': '../src/view/Layer',
-    'SpeedLimitLayer': '../src/view/SpeedLimitLayer',
     'GeometryUtils': '../src/utils/GeometryUtils',
     'SpeedLimitsCollection': '../src/model/SpeedLimitsCollection',
     'RoadCollection': '../src/model/RoadCollection',
@@ -84,7 +82,6 @@ require.config({
 });
 require(['lodash',
   'SelectedAssetModelSpec',
-  'speed-limit-layer-spec',
   'geometry-calculations-spec',
   'asset-grouping-spec',
   'SelectedSpeedLimitSpec',

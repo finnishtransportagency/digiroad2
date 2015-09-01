@@ -90,4 +90,10 @@
         jqueryElement.attr('placeholder', FINNISH_HINT_TEXT);
         return picker;
     }
+
+  dateutil.extractLatestModifications = function(data, fieldName) {
+    return _.last(_.sortBy(data, function(s) {
+      return moment(s[fieldName], "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
+    }));
+  };
 }(window.dateutil = window.dateutil || {}));

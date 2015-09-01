@@ -43,42 +43,54 @@
              '</div>';
     };
 
-    var disabled = 'disabled';
+    var title = function() {
+      if (selectedLinkProperty.count() == 1) {
+        return '<span>Linkin MML ID: ' + _.first(selectedLinkProperty.get()).mmlId + '</span>';
+      } else {
+        return '<span>Ominaisuustiedot</span>';
+      }
+    };
+
     var buttons =
       '<div class="link-properties form-controls">' +
-        '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
-        '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
+        '<button class="save btn btn-primary" disabled>Tallenna</button>' +
+        '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-    var template = '' +
-      '<header>' +
-        '<span>Linkin MML ID: <%- mmlId %></span>' + buttons +
-      '</header>' +
-      '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-          '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+    var template = function(options) {
+      return _.template('' +
+        '<header>' +
+          title() + buttons +
+        '</header>' +
+        '<div class="wrapper read-only">' +
+          '<div class="form form-horizontal form-dark">' +
+            '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
+            '</div>' +
+            staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
+            '<div class="form-group editable">' +
+              '<label class="control-label">Toiminnallinen luokka</label>' +
+              '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
+              '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
+              '<label class="control-label">Liikennevirran suunta</label>' +
+              '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
+              '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
+              '<label class="control-label">Tielinkin tyyppi</label>' +
+              '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
+              '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
+            '</div>' +
+            staticField('Kuntanumero', 'municipalityCode') +
+            staticField('Tien nimi (Suomi)', 'roadNameFi') +
+            staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
+            staticField('Tien nimi (Saame)', 'roadNameSm') +
+            staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
+            staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
           '</div>' +
-          staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
-          '<div class="form-group editable">' +
-            '<label class="control-label">Toiminnallinen luokka</label>' +
-            '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
-            '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
-            '<label class="control-label">Liikennevirran suunta</label>' +
-            '<p class="form-control-static"><%- localizedTrafficDirection %></p>' +
-            '<select class="form-control traffic-direction" style="display: none"><%= trafficDirectionOptionTags %></select>' +
-            '<label class="control-label">Tielinkin tyyppi</label>' +
-            '<p class="form-control-static"><%- localizedLinkTypes %></p>' +
-            '<select class="form-control link-types" style="display: none"><%= linkTypesOptionTags %></select>' +
-          '</div>' +
-          staticField('Kuntanumero', 'municipalityCode') +
-          staticField('Tien nimi (Suomi)', 'roadNameFi') +
-          staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
-          staticField('Tien nimi (Saame)', 'roadNameSm') +
-          staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
-          staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
         '</div>' +
-      '</div>' +
-      '<footer>' + buttons + '</footer>';
+      '<footer>' + buttons + '</footer>', options);
+    };
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
       var notRendered = !$('#incomplete-links-link').length;
@@ -107,7 +119,7 @@
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
       };
-      eventbus.on('linkProperties:selected linkProperties:cancelled linkProperties:saved', function(linkProperties) {
+      eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
         linkProperties.modifiedAt = linkProperties.modifiedAt || '';
         linkProperties.localizedFunctionalClass = _.find(functionalClasses, function(x) { return x === linkProperties.functionalClass; }) || 'Tuntematon';
@@ -135,15 +147,15 @@
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
                                     functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
                                     linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
-        rootElement.html(_.template(template, options)(linkProperties));
+        rootElement.html(template(options)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.get().setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
         rootElement.find('.functional-class').change(function(event) {
-          selectedLinkProperty.get().setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         rootElement.find('.link-types').change(function(event) {
-          selectedLinkProperty.get().setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+          selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
         });
         toggleMode(applicationModel.isReadOnly());
       });

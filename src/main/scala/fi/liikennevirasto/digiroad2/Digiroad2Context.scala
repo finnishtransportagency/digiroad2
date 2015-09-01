@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.SpeedLimitChangeSet
-import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
+import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.SpeedLimitChangeSet
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider

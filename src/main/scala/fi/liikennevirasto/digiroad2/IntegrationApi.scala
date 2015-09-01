@@ -6,7 +6,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitTimeStamps, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimitTimeStamps, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -179,7 +179,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     speedLimits.map { speedLimit =>
       Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
         "sideCode" -> speedLimit.sideCode.value,
-        "points" -> speedLimit.points,
+        "points" -> speedLimit.geometry,
         "value" -> speedLimit.value.getOrElse(0),
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,

@@ -1,8 +1,7 @@
-package fi.liikennevirasto.digiroad2
+package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.SpeedLimitFiller.{MValueAdjustment, SpeedLimitChangeSet}
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, SideCode, Unknown}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkForSpeedLimit, SpeedLimit}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset._
 import org.scalatest._
 
 class SpeedLimitPartitionerSpec extends FunSuite with Matchers {

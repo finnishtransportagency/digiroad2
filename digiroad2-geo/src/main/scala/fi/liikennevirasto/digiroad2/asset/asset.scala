@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.asset
 
+import fi.liikennevirasto.digiroad2.Point
 import org.joda.time.LocalDate
 import org.joda.time.DateTime
 
@@ -142,3 +143,4 @@ object ValidityPeriod {
   val Current = "current"
   val Future = "future"
 }
+

@@ -21,9 +21,15 @@
     this.isStarted = function() {
       return me.eventListener.running;
     };
+    this.activateSelection = function() {
+      me.selectControl.activate();
+    };
+    this.deactivateSelection = function() {
+      me.selectControl.deactivate();
+    };
     this.start = function() {
       if (!me.isStarted()) {
-        me.selectControl.activate();
+        me.activateSelection();
         me.eventListener.running = true;
         me.refreshView();
         me.layerStarted(me.eventListener);
@@ -32,7 +38,7 @@
     this.stop = function() {
       if (me.isStarted()) {
         me.removeLayerFeatures();
-        me.selectControl.deactivate();
+        me.deactivateSelection();
         me.eventListener.stopListening(eventbus);
         me.eventListener.running = false;
       }

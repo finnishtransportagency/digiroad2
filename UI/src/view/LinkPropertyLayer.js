@@ -11,6 +11,13 @@
       return linkPropertyLayerStyles.getDatasetSpecificStyleMap(linkPropertiesModel.getDataset(), currentRenderIntent);
     });
 
+    var selectRoadLink = function(feature) {
+      selectedLinkProperty.open(feature.attributes.mmlId, feature.singleLinkSelect);
+      currentRenderIntent = 'select';
+      roadLayer.redraw();
+      highlightFeatures(feature);
+    };
+
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
@@ -19,22 +26,23 @@
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect: function(feature) {
-        selectedLinkProperty.open(feature.attributes.mmlId);
-        currentRenderIntent = 'select';
-        roadLayer.redraw();
-        highlightFeatures(feature);
-      },
-      onUnselect: function() {
-        unselectRoadLink();
-      }
+      onSelect: selectRoadLink,
+      onUnselect: unselectRoadLink
     });
-    this.selectControl = selectControl;
     map.addControl(selectControl);
+    var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
+    this.selectControl = selectControl;
 
-    var highlightFeatures = function(feature) {
+    this.activateSelection = function() {
+      doubleClickSelectControl.activate();
+    };
+    this.deactivateSelection = function() {
+      doubleClickSelectControl.deactivate();
+    };
+
+    var highlightFeatures = function() {
       _.each(roadLayer.layer.features, function(x) {
-        if (feature && (x.attributes.mmlId === feature.attributes.mmlId)) {
+        if (selectedLinkProperty.isSelected(x.attributes.mmlId)) {
           selectControl.highlight(x);
         } else {
           selectControl.unhighlight(x);
@@ -48,7 +56,7 @@
       roadLayer.drawRoadLinks(roadLinks, map.getZoom());
       drawDashedLineFeaturesIfApplicable(roadLinks);
       me.drawOneWaySigns(roadLayer.layer, roadLinks, geometryUtils);
-      reselectRoadLink();
+      redrawSelected();
       eventbus.trigger('linkProperties:available');
     };
 
@@ -92,24 +100,30 @@
       roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks, 'linkType'));
     };
 
+    var getSelectedFeatures = function() {
+      return _.filter(roadLayer.layer.features, function (feature) {
+        return selectedLinkProperty.isSelected(feature.attributes.mmlId);
+      });
+    };
+
     var reselectRoadLink = function() {
-      selectControl.activate();
+      me.activateSelection();
       var originalOnSelectHandler = selectControl.onSelect;
       selectControl.onSelect = function() {};
-      var feature = _.find(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === selectedLinkProperty.getId(); });
-      if (feature) {
+      var features = getSelectedFeatures();
+      if (!_.isEmpty(features)) {
         currentRenderIntent = 'select';
-        selectControl.select(feature);
-        highlightFeatures(feature);
+        selectControl.select(_.first(features));
+        highlightFeatures();
       }
       selectControl.onSelect = originalOnSelectHandler;
-      if (selectedLinkProperty.get() && selectedLinkProperty.isDirty()) {
-        selectControl.deactivate();
+      if (selectedLinkProperty.isDirty()) {
+        me.deactivateSelection();
       }
     };
 
     var prepareRoadLinkDraw = function() {
-      selectControl.deactivate();
+      me.deactivateSelection();
     };
 
     var drawDashedLineFeaturesIfApplicable = function(roadLinks) {
@@ -125,6 +139,7 @@
       var linkPropertyEditConclusion = _.partial(concludeLinkPropertyEdit, eventListener);
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
+      eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
       eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.mmlId === link.mmlId;
@@ -133,33 +148,35 @@
           selectControl.select(feature);
         }
       });
-      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function(dataset) {
+      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
         draw();
       });
     };
 
+    var refreshViewAfterSaving = function() {
+      unselectRoadLink();
+      me.refreshView();
+    };
+
     var handleLinkPropertyChanged = function(eventListener) {
       redrawSelected();
-      selectControl.deactivate();
+      me.deactivateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
     var concludeLinkPropertyEdit = function(eventListener) {
-      selectControl.activate();
+      me.activateSelection();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       redrawSelected();
     };
 
     var redrawSelected = function() {
-      var selectedFeatures = _.filter(roadLayer.layer.features, function(feature) {
-        return feature.attributes.mmlId === selectedLinkProperty.getId();
-      });
-      roadLayer.layer.removeFeatures(selectedFeatures);
-      var data = selectedLinkProperty.get().getData();
-      roadLayer.drawRoadLink(data);
-      drawDashedLineFeaturesIfApplicable([data]);
-      me.drawOneWaySigns(roadLayer.layer, [data], geometryUtils);
+      roadLayer.layer.removeFeatures(getSelectedFeatures());
+      var selectedRoadLinks = selectedLinkProperty.get();
+      _.each(selectedRoadLinks,  function(selectedLink) { roadLayer.drawRoadLink(selectedLink); });
+      drawDashedLineFeaturesIfApplicable(selectedRoadLinks);
+      me.drawOneWaySigns(roadLayer.layer, selectedRoadLinks, geometryUtils);
       reselectRoadLink();
     };
 
