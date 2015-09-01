@@ -9,7 +9,7 @@
       new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
       new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
-      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
 
     var zoomLevelRules = [
@@ -132,7 +132,7 @@
       new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
       new OpenLayersRule().where('linkType').isIn([7, 10, 11, 12]).use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
       new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  }),
-      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', externalGraphic: 'images/link-properties/arrow-drop-black.svg'  })
+      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg'  })
     ];
 
     var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
