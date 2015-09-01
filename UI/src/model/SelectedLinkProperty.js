@@ -26,24 +26,17 @@
         close();
         current = singleLinkSelect ? [collection.get(id)] : collection.getGroup(id);
         _.forEach(current, function(selected) { selected.select(); });
-<<<<<<< HEAD
         var selectedData =  get();
         var propertyData =  _.first(selectedData);
-        propertyData.modifiedBy = dateutil.getModifiedBy(selectedData, 'modifiedAt');
-        propertyData.modifiedAt = dateutil.getModifiedDateTime(selectedData, 'modifiedAt');
-        eventbus.trigger('linkProperties:selected', propertyData);
-=======
-        var data =  _.first(current).getData();
         var addressNumbers = {
           minAddressNumberLeft: getAddressNumber('min', 'Left'),
           maxAddressNumberLeft: getAddressNumber('max', 'Left'),
           minAddressNumberRight: getAddressNumber('min', 'Right'),
           maxAddressNumberRight: getAddressNumber('max', 'Right')
         };
-        data.modifiedBy = getModifiedBy();
-        data.modifiedAt = getModifiedDateTime();
-        eventbus.trigger('linkProperties:selected', _.merge({}, data, addressNumbers));
->>>>>>> Provide address numbers on multilink selection
+        propertyData.modifiedBy = getModifiedBy();
+        propertyData.modifiedAt = getModifiedDateTime();
+        eventbus.trigger('linkProperties:selected', _.merge({}, propertyData, addressNumbers));
       }
     };
 
