@@ -57,8 +57,8 @@
         '<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>' +
       '</div>';
-    var template = function() {
-      return '' +
+    var template = function(options) {
+      return _.template('' +
         '<header>' +
           title() + buttons +
         '</header>' +
@@ -90,7 +90,7 @@
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
           '</div>' +
         '</div>' +
-      '<footer>' + buttons + '</footer>';
+      '<footer>' + buttons + '</footer>', options);
     };
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
@@ -148,7 +148,7 @@
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
                                     functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
                                     linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
-        rootElement.html(_.template(template(), options)(linkProperties));
+        rootElement.html(template(options)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
