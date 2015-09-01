@@ -48,6 +48,8 @@ Moduuli tuottaa kirjaston, joka lisätään ajonaikaisesti digiroad2-sovelluksen
 
 Build edellyttää, että paikallinen tietokantaymäristö on alustettu ja konfiguroitu:
 
+Kopioi tiedostot ojdbc6.jar, sdoapi.jar ja sdoutl.jar hakemistoon `digiroad2-oracle/lib`. Tiedostot saa [digiroad2-oracle-projektista](https://github.com/finnishtransportagency/digiroad2-oracle/tree/master/lib).
+
 Luo digiroad2/digiroad2-oracle/conf/dev/bonecp.properties ja lisää sinne tietokantayhteyden tiedot:
 
 ```
@@ -114,6 +116,8 @@ Windowsissa toimii komento:
 ```
 run fi.liikennevirasto.digiroad2.ProductionServer
 ```
+
+Avaa käyttöliittymä osoitteessa <http://localhost:9001/login.html>.
 
 Käyttäjien lisääminen ja päivittäminen CSV-tiedostosta
 ======================================================
