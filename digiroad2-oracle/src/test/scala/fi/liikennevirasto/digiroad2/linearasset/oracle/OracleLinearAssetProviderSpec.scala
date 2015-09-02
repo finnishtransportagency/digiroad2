@@ -29,7 +29,7 @@ class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   private def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       test
       dynamicSession.rollback()
     }

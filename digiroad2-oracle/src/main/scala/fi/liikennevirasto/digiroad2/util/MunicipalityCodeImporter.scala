@@ -1,19 +1,22 @@
 package fi.liikennevirasto.digiroad2.util
 
-import scala.io.Source
-import javax.sql.DataSource
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import java.util.Properties
+import javax.sql.DataSource
+
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
-import Q.interpolation
+
+import scala.io.Source
 
 class MunicipalityCodeImporter {
   val ds: DataSource = initDataSource
 
   def importMunicipalityCodes() = {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val src = Source.fromInputStream(getClass.getResourceAsStream("/kunnat_ja_elyt_2014.csv"))
       src.getLines().toList.drop(1).map(row => {
         var elems = row.replace("\"", "").split(";");

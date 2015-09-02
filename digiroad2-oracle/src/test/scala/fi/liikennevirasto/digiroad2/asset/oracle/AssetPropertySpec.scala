@@ -28,7 +28,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   private def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       test
       dynamicSession.rollback()
     }

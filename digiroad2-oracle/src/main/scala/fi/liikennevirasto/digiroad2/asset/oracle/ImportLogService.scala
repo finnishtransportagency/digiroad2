@@ -1,13 +1,10 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import slick.driver.JdbcDriver.backend.Database
+import fi.liikennevirasto.digiroad2.asset.oracle.Queries.nextPrimaryKeyId
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-
-import org.slf4j.LoggerFactory
-
-import Queries.nextPrimaryKeyId
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 
 object ImportLogService {
   val logger = LoggerFactory.getLogger(getClass)
@@ -17,7 +14,7 @@ object ImportLogService {
   }
 
   def save(content: String): Long = {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val id = nextPrimaryKeySeqValue
       sqlu"""
         insert into import_log(id, content)
@@ -28,7 +25,7 @@ object ImportLogService {
   }
 
   def save(id: Long, content: String): Long = {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       sqlu"""
         update import_log set content = $content
           where id = $id
@@ -38,7 +35,7 @@ object ImportLogService {
   }
 
   def get(id: Long): Option[String] = {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       sql"select content from import_log where id = $id".as[String].firstOption
     }
   }

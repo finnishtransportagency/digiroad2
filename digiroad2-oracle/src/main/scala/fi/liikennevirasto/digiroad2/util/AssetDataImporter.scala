@@ -145,7 +145,7 @@ class AssetDataImporter {
       val segments = dataSet.database().withDynSession {
         query.as[(Int, String)].list
       }
-      Database.forDataSource(ds).withDynSession {
+      OracleDatabase.withDynSession {
         val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, 20, SYSDATE, 'dr1_conversion')")
         val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
         val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
@@ -237,7 +237,7 @@ class AssetDataImporter {
       query.as[(Long, Long, Int, Double, Double, Int)].list
     }
     val numericalLimits: Map[Long, Seq[(Long, Long, Int, Double, Double, Int)]] = numericalLimitLinks.groupBy(_._1)
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       numericalLimits.foreach { numericalLimit ⇒
         val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
         val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?)")
@@ -292,7 +292,7 @@ class AssetDataImporter {
     val manoeuvres: Seq[(Long, Int, Long, Int)] = database.withDynSession {
       query.as[(Long, Int, Long, Int)].list
     }
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       manoeuvres.foreach { manoeuvre =>
         val (id, manoeuvreType, roadLinkId, elementType) = manoeuvre
         sqlu"""
@@ -304,7 +304,7 @@ class AssetDataImporter {
   }
 
   def getTypeProperties = {
-    Database.forDataSource(ds).withDynSession {
+    OracleDatabase.withDynSession {
       val shelterTypePropertyId = sql"select p.id from property p where p.public_id = 'katos'".as[Long].first
       val accessibilityPropertyId = sql"select p.id from property p where p.public_id = 'esteettomyys_liikuntarajoitteiselle'".as[Long].first
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
@@ -316,7 +316,7 @@ class AssetDataImporter {
   }
 
   def insertBusStops(busStop: SimpleBusStop, typeProps: PropertyWrapper) {
-    Database.forDataSource(ds).withDynSession {
+    OracleDatabase.withDynSession {
       val assetId = busStop.assetId.getOrElse(Sequences.nextPrimaryKeySeqValue)
 
       sqlu"""
@@ -343,9 +343,9 @@ class AssetDataImporter {
   }
 
   def importMMLIdsOnMassTransitStops(conversionDB: DatabaseDef) {
-    Database.forDataSource(ds).withSession { dbSession =>
+    OracleDatabase.withDynSession {
       conversionDB.withSession { conversionSession =>
-        val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator(dbSession)
+        val municipalityCodes: CloseableIterator[Int] = sql"""select id from municipality""".as[Int].iterator
         municipalityCodes.foreach { municipalityCode =>
           println(s"Importing MML IDs on mass transit stops in municipality: $municipalityCode")
           val roadLinkIds: CloseableIterator[(Long, Long, Option[Long], Option[Long])] =
@@ -354,7 +354,7 @@ class AssetDataImporter {
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = 10 and a.municipality_code = $municipalityCode"""
-              .as[(Long, Long, Option[Long], Option[Long])].iterator(dbSession)
+              .as[(Long, Long, Option[Long], Option[Long])].iterator
           val mmlIds: CloseableIterator[(Long, Long, Option[Long])] =
             roadLinkIds.map { roadLinkId =>
               val (assetId, lrmId, testRoadLinkId, productionRoadLinkId) = roadLinkId
@@ -365,12 +365,11 @@ class AssetDataImporter {
               }
               (assetId, lrmId, mmlId)
             }
-          dbSession.withTransaction {
-            mmlIds.foreach { case (assetId, lrmId, mmlId) =>
-              sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute(dbSession)
-              if (mmlId.isEmpty) {
-                sqlu"""update asset set floating = 1 where id = $assetId""".execute(dbSession)
-              }
+
+          mmlIds.foreach { case (assetId, lrmId, mmlId) =>
+            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute
+            if (mmlId.isEmpty) {
+              sqlu"""update asset set floating = 1 where id = $assetId""".execute
             }
           }
         }
@@ -379,7 +378,7 @@ class AssetDataImporter {
   }
 
   def importMMLIdsOnNumericalLimit(conversionDB: DatabaseDef, assetTypeId: Int) {
-    Database.forDataSource(ds).withSession { dbSession =>
+    OracleDatabase.withDynSession {
       conversionDB.withSession { conversionSession =>
         val roadLinkIds: CloseableIterator[(Long, Option[Long])] =
           sql"""select lrm.id, lrm.road_link_id
@@ -387,7 +386,7 @@ class AssetDataImporter {
                 join asset_link al on a.id = al.asset_id
                 join lrm_position lrm on lrm.id = al.position_id
                 where a.asset_type_id = $assetTypeId"""
-            .as[(Long, Option[Long])].iterator(dbSession)
+            .as[(Long, Option[Long])].iterator
         val mmlIds: CloseableIterator[(Long, Option[Long])] =
           roadLinkIds.map { roadLink =>
             val (lrmId, roadLinkId) = roadLink
@@ -397,17 +396,15 @@ class AssetDataImporter {
             }
             (lrmId, mmlId)
           }
-        dbSession.withTransaction {
-          mmlIds.foreach { case (lrmId, mmlId) =>
-            sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute(dbSession)
-          }
+        mmlIds.foreach { case (lrmId, mmlId) =>
+          sqlu"""update lrm_position set mml_id = $mmlId where id = $lrmId""".execute
         }
       }
     }
   }
 
   private def getSpeedLimitIdRange: (Int, Int) = {
-    Database.forDataSource(ds).withDynSession {
+    OracleDatabase.withDynSession {
       sql"""
         select min(a.id), max(a.id)
         from asset a
@@ -421,7 +418,7 @@ class AssetDataImporter {
       override val roadLinkService: RoadLinkService = null
     }
 
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val speedLimitLinks = sql"""
             select a.id, pos.mml_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
             from asset a

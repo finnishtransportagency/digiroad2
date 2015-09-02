@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+
 import scala.io.{Codec, Source}
 import slick.driver.JdbcDriver.backend.Database
 import slick.jdbc.{StaticQuery => Q}
@@ -12,7 +14,7 @@ object SqlScriptRunner {
   }
 
   def runScripts(filenames: Seq[String]) {
-    executeStatements(filenames.flatMap(readScriptStatements(_)))
+    executeStatements(filenames.flatMap(readScriptStatements))
   }
 
   def readScriptStatements(filename: String): Seq[String] = {
@@ -22,7 +24,7 @@ object SqlScriptRunner {
   }
 
   def executeStatements(stmts: Seq[String]) {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       stmts.foreach { stmt =>
         println("Executing: " + stmt)
         try {

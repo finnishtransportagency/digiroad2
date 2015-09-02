@@ -1,11 +1,10 @@
 package fi.liikennevirasto.digiroad2.municipality.oracle
 
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
-import slick.jdbc.{PositionedParameters, SetParameter, StaticQuery}
 import Database.dynamicSession
-import StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import slick.jdbc.{SetParameter, StaticQuery}
 
 class OracleMunicipalityProvider extends MunicipalityProvider {
 
@@ -19,7 +18,7 @@ class OracleMunicipalityProvider extends MunicipalityProvider {
   implicit val parameterSetOfInts: SetParameter[Set[Int]] = seqParam[Int]
 
   def getMunicipalities(elyNumbers: Set[Int]): Seq[Int] = {
-    Database.forDataSource(ds).withDynSession {
+    OracleDatabase.withDynSession {
       val q = "select municipality_id from ely where id in (" + elyNumbers.toArray.map(_ => "?").mkString(",") + ")"
       StaticQuery.query[Set[Int], Int](q).apply(elyNumbers).list
     }
