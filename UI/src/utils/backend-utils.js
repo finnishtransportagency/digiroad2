@@ -328,7 +328,7 @@
       return self;
     };
 
-    this.withMultiSegmentSpeedLimitUpdate = function() {
+    this.withSpeedLimitUpdate = function() {
       self.updateSpeedLimits = function (payload, success, failure) {
         success();
       };
