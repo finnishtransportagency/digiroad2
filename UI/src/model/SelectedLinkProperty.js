@@ -22,32 +22,25 @@
     };
 
     var extractDataForDisplay = function(selectedData) {
-      var getAddressNumber = function(minMax, leftRight) {
-        var addressNumbers =  _.chain(get())
-          .pluck(minMax + 'AddressNumber' + leftRight)
-          .filter()
-          .sortBy()
-          .value();
-        return minMax === 'min' ? _.first(addressNumbers) : _.last(addressNumbers);
-      };
-
       var extractMunicipalityCodes = function(selectedData) {
         return _.chain(selectedData)
           .pluck('municipalityCode')
           .uniq()
           .value();
       };
-
-      var propertyData = _.first(selectedData);
-      var addressNumbers = {
-        minAddressNumberLeft: getAddressNumber('min', 'Left'),
-        maxAddressNumberLeft: getAddressNumber('max', 'Left'),
-        minAddressNumberRight: getAddressNumber('min', 'Right'),
-        maxAddressNumberRight: getAddressNumber('max', 'Right')
+      var extractProperties = function(selection) {
+        var properties = _.first(selection);
+        var isMultiSelect = selection.length > 1;
+        if (isMultiSelect) {
+          var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight'];
+          properties = _.omit(properties, ambiguousFields);
+        }
+        return properties;
       };
-      var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
+
+      var latestModified = _.pick(dateutil.extractLatestModifications(selectedData, 'modifiedAt'), ['modifiedBy', 'modifiedAt']);
       var municipalityCodes = {municipalityCode: extractMunicipalityCodes(selectedData)};
-      return _.merge({}, propertyData, addressNumbers, latestModified, municipalityCodes);
+      return _.merge({}, extractProperties(selectedData), latestModified, municipalityCodes);
     };
 
     var open = function(id, singleLinkSelect) {
