@@ -138,8 +138,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-        .withSpeedLimitsData(speedLimits)
-        .withMultiSegmentSpeedLimitUpdate(_.flatten(speedLimits), modificationData));
+        .withSpeedLimitsData(speedLimits));
     });
 
     describe('and changing value of speed limit', function() {

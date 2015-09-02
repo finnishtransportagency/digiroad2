@@ -328,22 +328,9 @@
       return self;
     };
 
-    this.withMultiSegmentSpeedLimitUpdate = function(speedLimitData, modificationData) {
+    this.withMultiSegmentSpeedLimitUpdate = function() {
       self.updateSpeedLimits = function (payload, success, failure) {
-        var response = _.map(payload.ids, function(id) {
-          var speedLimitLink = _.find(speedLimitData, { id: id });
-          return {
-            id: id,
-            value: payload.value,
-            points: speedLimitLink.points,
-            modifiedBy: modificationData ? modificationData[id].modifiedBy : undefined,
-            modifiedDateTime: modificationData ? modificationData[id].modifiedDateTime : undefined,
-            createdBy: modificationData ? modificationData[id].createdBy : undefined,
-            createdDateTime: modificationData ? modificationData[id].createdDateTime : undefined,
-            speedLimitLinks: [_.merge({}, speedLimitLink, _.pick(payload, 'value'))]
-          };
-        });
-        success(response);
+        success();
       };
       return self;
     };
