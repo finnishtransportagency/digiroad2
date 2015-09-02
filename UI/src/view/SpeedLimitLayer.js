@@ -531,8 +531,8 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
+  // TODO: Stop listening to map:moved events when layer is stopped
   eventbus.on('map:moved', handleMapMoved);
-
 
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
