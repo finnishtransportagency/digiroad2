@@ -91,9 +91,10 @@
         return picker;
     }
 
-  dateutil.extractLatestModifications = function(data, fieldName) {
-    return _.last(_.sortBy(data, function(s) {
-      return moment(s[fieldName], "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
+  dateutil.extractLatestModifications = function(data) {
+    var last = _.last(_.sortBy(data, function (s) {
+        return moment(s.modifiedAt, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
     }));
+      return _.pick(last, ['modifiedAt', 'modifiedBy']);
   };
 }(window.dateutil = window.dateutil || {}));

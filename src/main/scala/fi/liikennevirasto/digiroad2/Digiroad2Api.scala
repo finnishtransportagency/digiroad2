@@ -386,7 +386,7 @@ with GZipSupport {
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
             "modifiedBy" -> link.modifiedBy,
-            "modifiedDateTime" -> link.modifiedDateTime,
+            "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
             "createdDateTime" -> link.createdDateTime
           )
