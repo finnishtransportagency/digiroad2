@@ -20,7 +20,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     before(function (done) {
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         done();
       }, testHelpers.defaultBackend()
         .withSpeedLimitsData(speedLimitsData));
@@ -50,13 +50,11 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and selecting assets layer', function() {
         before(function() {
-          $('.panel-header').filter(':visible').filter(function(i, element) {
-            return _.contains($(element).text(), 'Joukkoliikenteen pysäkit');
-          }).click();
+          testHelpers.selectLayer('massTransitStop');
         });
         describe('and reselecting speed limits layer', function() {
           before(function() {
-            $('.speed-limits').click();
+            testHelpers.selectLayer('speedLimit');
           });
           it('deselects speed limit', function() {
             expect($('#feature-attributes header')).not.to.exist;
@@ -75,7 +73,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       backend = testHelpers.defaultBackend(_.take(speedLimitsData, 1)).withSpeedLimitsData(speedLimitsData);
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         done();
       }, backend);
     });
@@ -109,7 +107,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()

@@ -139,19 +139,29 @@ define(['AssetsTestData',
    element.dispatchEvent(event);
  };
 
-  return {
-    restartApplication: restartApplication,
-    defaultBackend: defaultBackend,
-    fakeBackend: fakeBackend,
-    clickVisibleEditModeButton: clickVisibleEditModeButton,
-    clickMarker: clickMarker,
-    moveMarker: moveMarker,
-    clickMap: clickMap,
-    getAssetMarkers: getAssetMarkers,
-    getLineStringFeatures: getLineStringFeatures,
-    getSpeedLimitFeatures: getSpeedLimitFeatures,
-    getSpeedLimitVertices: getSpeedLimitVertices,
-    selectSpeedLimit: selectSpeedLimit,
-    clickElement: clickElement
-  };
+ var selectLayer = function(layerName) {
+   var domSelector = {
+     speedLimit: '.panel.speed-limits',
+     linkProperty: '.panel.road-links',
+     massTransitStop: '.panel.mass-transit-stops'
+   };
+   $(domSelector[layerName]).click();
+ };
+
+ return {
+   restartApplication: restartApplication,
+   defaultBackend: defaultBackend,
+   fakeBackend: fakeBackend,
+   clickVisibleEditModeButton: clickVisibleEditModeButton,
+   clickMarker: clickMarker,
+   moveMarker: moveMarker,
+   clickMap: clickMap,
+   getAssetMarkers: getAssetMarkers,
+   getLineStringFeatures: getLineStringFeatures,
+   getSpeedLimitFeatures: getSpeedLimitFeatures,
+   getSpeedLimitVertices: getSpeedLimitVertices,
+   selectSpeedLimit: selectSpeedLimit,
+   clickElement: clickElement,
+   selectLayer: selectLayer
+ };
 });
