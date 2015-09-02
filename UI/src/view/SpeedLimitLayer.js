@@ -5,10 +5,10 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       geometryUtils = params.geometryUtils,
       linearAsset = params.linearAsset,
-      roadLayer = params.roadLayer;
+      roadLayer = params.roadLayer,
+      layerName = 'speedLimit';
 
-
-  Layer.call(this, 'speedLimit', roadLayer);
+  Layer.call(this, layerName, roadLayer);
   var me = this;
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
@@ -333,7 +333,7 @@ window.SpeedLimitLayer = function(params) {
   selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
   selectionDefaultStyle.addRules([unknownLimitStyleRule]);
 
-  var vectorLayer = new OpenLayers.Layer.Vector('speedLimit', { styleMap: browseStyleMap });
+  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
   map.addLayer(vectorLayer);
 
@@ -443,7 +443,9 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var updateMultiSelectBoxHandlerState = function() {
-    if (!application.isReadOnly() && application.getSelectedTool() === 'Select') {
+    if (!application.isReadOnly() &&
+        application.getSelectedTool() === 'Select' &&
+        application.getSelectedLayer() === layerName) {
       boxHandler.activate();
     } else {
       boxHandler.deactivate();
@@ -455,12 +457,13 @@ window.SpeedLimitLayer = function(params) {
       eventListener.running = true;
       bindEvents();
       changeTool(application.getSelectedTool());
+      updateMultiSelectBoxHandlerState();
     }
   };
 
   var stop = function() {
     doubleClickSelectControl.deactivate();
-    boxHandler.deactivate();
+    updateMultiSelectBoxHandlerState();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
@@ -514,7 +517,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === 'speedLimit') {
+    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
