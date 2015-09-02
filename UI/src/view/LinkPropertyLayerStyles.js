@@ -9,7 +9,12 @@
       new OpenLayersRule().where('functionalClass').is(6).use({ strokeColor: '#01b', externalGraphic: 'images/link-properties/arrow-drop-blue.svg' }),
       new OpenLayersRule().where('functionalClass').is(7).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
       new OpenLayersRule().where('functionalClass').is(8).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg' }),
+    ];
+    var unknownFunctionalClassDefaultRules = [
       new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+    var unknownFunctionalClassUnselectedRules = [
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
 
     var zoomLevelRules = [
@@ -60,6 +65,7 @@
       strokeOpacity: 0.7,
       rotation: '${rotation}'}));
     functionalClassDefaultStyle.addRules(functionalClassRules);
+    functionalClassDefaultStyle.addRules(unknownFunctionalClassDefaultRules);
     functionalClassDefaultStyle.addRules(zoomLevelRules);
     functionalClassDefaultStyle.addRules(overlayRules);
     functionalClassDefaultStyle.addRules(linkTypeSizeRules);
@@ -78,6 +84,8 @@
     }));
     functionalClassSelectionDefaultStyle.addRules(functionalClassRules);
     functionalClassSelectionSelectStyle.addRules(functionalClassRules);
+    functionalClassSelectionDefaultStyle.addRules(unknownFunctionalClassUnselectedRules);
+    functionalClassSelectionSelectStyle.addRules(unknownFunctionalClassDefaultRules);
     functionalClassSelectionDefaultStyle.addRules(zoomLevelRules);
     functionalClassSelectionSelectStyle.addRules(zoomLevelRules);
     functionalClassSelectionDefaultStyle.addRules(overlayRules);
@@ -132,13 +140,19 @@
       new OpenLayersRule().where('linkType').isIn([8, 9]).use({ strokeColor: '#888', externalGraphic: 'images/link-properties/arrow-drop-grey.svg'  }),
       new OpenLayersRule().where('linkType').isIn([7, 10, 11, 12]).use({ strokeColor: '#1b0', externalGraphic: 'images/link-properties/arrow-drop-green.svg' }),
       new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  }),
-      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg'  })
+    ];
+    var unknownLinkTypeDefaultRules = [
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+    ];
+    var unknownLinkTypeUnselectedRules = [
+      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
 
     var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
       strokeOpacity: 0.7,
       rotation: '${rotation}'}));
     linkTypeDefaultStyle.addRules(linkTypeRules);
+    linkTypeDefaultStyle.addRules(unknownLinkTypeDefaultRules);
     linkTypeDefaultStyle.addRules(zoomLevelRules);
     linkTypeDefaultStyle.addRules(overlayRules);
     linkTypeDefaultStyle.addRules(linkTypeSizeRules);
@@ -157,6 +171,8 @@
     }));
     linkTypeSelectionDefaultStyle.addRules(linkTypeRules);
     linkTypeSelectionSelectStyle.addRules(linkTypeRules);
+    linkTypeSelectionDefaultStyle.addRules(unknownLinkTypeUnselectedRules);
+    linkTypeSelectionSelectStyle.addRules(unknownLinkTypeDefaultRules);
     linkTypeSelectionDefaultStyle.addRules(zoomLevelRules);
     linkTypeSelectionSelectStyle.addRules(zoomLevelRules);
     linkTypeSelectionDefaultStyle.addRules(overlayRules);
