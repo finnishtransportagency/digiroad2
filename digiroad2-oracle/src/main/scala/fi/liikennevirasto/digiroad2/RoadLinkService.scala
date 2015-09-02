@@ -22,6 +22,7 @@ import scala.util.DynamicVariable
 
 case class IncompleteLink(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[VVHRoadLinkWithProperties], incompleteLinks: Seq[IncompleteLink])
+case class LinkProperties(mmlId: Long, functionalClass: Int, linkType: Int, trafficDirection: String)
 
 @deprecated("Use VVHRoadLinkWithProperties instead", "")
 case class AdjustedRoadLink(id: Long, mmlId: Long, geometry: Seq[Point],

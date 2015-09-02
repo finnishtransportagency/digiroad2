@@ -72,7 +72,7 @@
     var save = function() {
       eventbus.trigger('linkProperties:saving');
       var mmlIds = _.map(current, function(selected) { return selected.getId(); });
-      var modifications = _.first(current).getData();
+      var modifications = _.map(current, function(c) { return c.getData(); });
 
       backend.updateLinkProperties(mmlIds, modifications, function() {
         dirty = false;

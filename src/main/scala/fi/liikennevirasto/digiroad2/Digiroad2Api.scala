@@ -303,19 +303,11 @@ with GZipSupport {
   }
 
   put("/linkproperties") {
-    val ids = (parsedBody \ "mmlIds").extract[Seq[Long]]
-    updateRoadLinkProperties(ids)
-  }
-
-  def updateRoadLinkProperties(ids: Seq[Long]): Seq[Map[String, Any]] = {
-    val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
-    val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    val linkType = LinkType((parsedBody \ "linkType").extract[Int])
-
+    val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
-    ids.map { id =>
-      roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
+    properties.map { prop =>
+      roadLinkService.updateProperties(prop.mmlId, prop.functionalClass, LinkType(prop.linkType), TrafficDirection(prop.trafficDirection), user.username, municipalityValidation).map { roadLink =>
         Map("mmlId" -> roadLink.mmlId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
@@ -324,7 +316,7 @@ with GZipSupport {
           "modifiedAt" -> roadLink.modifiedAt,
           "modifiedBy" -> roadLink.modifiedBy,
           "linkType" -> roadLink.linkType.value)
-      }.getOrElse(halt(NotFound("Road link with MML ID " + id + " not found")))
+      }.getOrElse(halt(NotFound("Road link with MML ID " + prop.mmlId + " not found")))
     }
   }
 
