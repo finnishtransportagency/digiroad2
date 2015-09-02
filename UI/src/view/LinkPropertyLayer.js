@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -33,11 +33,25 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
+    var boxHandler = new BoxSelectControl(map, function() { console.log('Implement mass update'); });
+
     this.activateSelection = function() {
+      updateMultiSelectBoxHandlerState();
       doubleClickSelectControl.activate();
     };
     this.deactivateSelection = function() {
+      updateMultiSelectBoxHandlerState();
       doubleClickSelectControl.deactivate();
+    };
+
+    var updateMultiSelectBoxHandlerState = function() {
+      if (!applicationModel.isReadOnly() &&
+          applicationModel.getSelectedTool() === 'Select' &&
+          applicationModel.getSelectedLayer() === layerName) {
+        boxHandler.activate();
+      } else {
+        boxHandler.deactivate();
+      }
     };
 
     var highlightFeatures = function() {
@@ -151,6 +165,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
         draw();
       });
+      eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
     };
 
     var refreshViewAfterSaving = function() {
