@@ -161,7 +161,7 @@ Luokka 6: Muu yksityistie
 Luokka 7: Ajopolku
 Luokka 8: Kevyen liikenteen v&auml;yl&auml;
 
-![Tielinkit visualisoitu toiminnallisen luokan mukaan](k7.JPG)
+![Tielinkit visualisoitu toiminnallisen luokan mukaan](k7.jpg)
 
 _Tielinkit visualisoitu toiminnallisen luokan mukaan._
 
