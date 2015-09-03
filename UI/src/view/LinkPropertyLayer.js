@@ -34,6 +34,7 @@
     this.selectControl = selectControl;
 
     var showMassUpdateDialog = function(links) {
+      selectedLinkProperty.openMultiple(links);
       console.log('Editing links: ', links);
     };
 

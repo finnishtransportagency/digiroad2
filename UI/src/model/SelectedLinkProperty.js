@@ -51,12 +51,21 @@
     var open = function(id, singleLinkSelect) {
       if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
         close();
-        current = singleLinkSelect ? [collection.get(id)] : collection.getGroup(id);
+        current = singleLinkSelect ? collection.get([id]) : collection.getGroup(id);
         _.forEach(current, function (selected) {
           selected.select();
         });
         eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
       }
+    };
+
+    var openMultiple = function(links) {
+      var uniqueLinks = _.unique(links, 'mmlId');
+      current = collection.get(_.pluck(uniqueLinks, 'mmlId'));
+      _.forEach(current, function (selected) {
+        selected.select();
+      });
+      eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
     };
 
     var isDirty = function() {
@@ -116,7 +125,8 @@
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
       get: get,
-      count: count
+      count: count,
+      openMultiple: openMultiple
     };
   };
 })(this);
