@@ -35,7 +35,6 @@
 
     var showMassUpdateDialog = function(links) {
       selectedLinkProperty.openMultiple(links);
-      console.log('Editing links: ', links);
 
       var functionalClasses = [
         {text: '1', value: 1},
@@ -73,13 +72,9 @@
 
       var createOptionElements = function(options) {
         return ['<option value=""></option>'].concat(_.map(options, function(option) {
-          return '<option value="' + option.value + '">' + option.text + "</option>";
-        }));
+          return '<option value="' + option.value + '">' + option.text + '</option>';
+        })).join('');
       };
-
-      var functionalClassOptions = createOptionElements(functionalClasses);
-      var trafficDirectionOptions = createOptionElements(localizedTrafficDirections);
-      var linkTypeOptions = createOptionElements(linkTypes);
 
       var confirmDiv =
           _.template(
@@ -91,17 +86,17 @@
 
             '<div class="form-group editable">' +
               '<label class="control-label">Toiminnallinen luokka</label>' +
-              '<select id="functional-class-selection" class="form-control">' + functionalClassOptions.join('') + '</select>' +
+              '<select id="functional-class-selection" class="form-control">' + createOptionElements(functionalClasses) + '</select>' +
             '</div>' +
 
             '<div class="form-group editable">' +
             '<label class="control-label">Liikennevirran suunta</label>' +
-            '<select id="traffic-direction-selection" class="form-control">' + trafficDirectionOptions.join('') + '</select>' +
+            '<select id="traffic-direction-selection" class="form-control">' + createOptionElements(localizedTrafficDirections) + '</select>' +
             '</div>' +
 
             '<div class="form-group editable">' +
             '<label class="control-label">Tielinkin tyyppi</label>' +
-            '<select id="link-type-selection" class="form-control">' + linkTypeOptions.join('') + '</select>' +
+            '<select id="link-type-selection" class="form-control">' + createOptionElements(linkTypes) + '</select>' +
             '</div>' +
 
             '<div class="actions">' +
