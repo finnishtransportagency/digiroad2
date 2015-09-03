@@ -195,7 +195,7 @@
     };
 
     this.getCreatedDateTime = function() {
-      return selection.length === 1 ? getProperty('createdDateTime') : null;
+      return selection.length === 1 ? getProperty('createdAt') : null;
     };
 
     this.get = function() {

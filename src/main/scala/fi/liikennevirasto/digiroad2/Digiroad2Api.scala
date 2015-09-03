@@ -388,7 +388,7 @@ with GZipSupport {
             "modifiedBy" -> link.modifiedBy,
             "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
-            "createdDateTime" -> link.createdDateTime
+            "createdAt" -> link.createdDateTime
           )
         }
       }

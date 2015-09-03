@@ -127,8 +127,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
     var modificationData = {
-      13: {modifiedBy: 'modifier', modifiedAt: '10.09.2014 13:36:58', createdBy: 'creator', createdDateTime: '10.09.2014 13:36:57'},
-      14: {modifiedBy: null, modifiedAt: null, createdBy: null, createdDateTime: null}
+      13: {modifiedBy: 'modifier', modifiedAt: '10.09.2014 13:36:58', createdBy: 'creator', createdAt: '10.09.2014 13:36:57'},
+      14: {modifiedBy: null, modifiedAt: null, createdBy: null, createdAt: null}
     };
 
     before(function(done) {
