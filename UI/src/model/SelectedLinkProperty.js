@@ -22,25 +22,30 @@
     };
 
     var extractDataForDisplay = function(selectedData) {
-      var extractMunicipalityCodes = function(selectedData) {
+      var extractUniqueValues = function(selectedData, property) {
         return _.chain(selectedData)
-          .pluck('municipalityCode')
+          .pluck(property)
           .uniq()
           .value();
       };
-      var extractProperties = function(selection) {
-        var properties = _.first(selection);
-        var isMultiSelect = selection.length > 1;
-        if (isMultiSelect) {
-          var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight'];
-          properties = _.omit(properties, ambiguousFields);
-        }
-        return properties;
-      };
 
-      var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
-      var municipalityCodes = {municipalityCode: extractMunicipalityCodes(selectedData)};
-      return _.merge({}, extractProperties(selectedData), latestModified, municipalityCodes);
+      var properties = _.cloneDeep(_.first(selectedData));
+      var isMultiSelect = selectedData.length > 1;
+      if (isMultiSelect) {
+        var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
+          'municipalityCode', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
+        properties = _.omit(properties, ambiguousFields);
+        var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
+        var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
+        var roadNames = {
+          roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
+          roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
+          roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
+        };
+        _.merge(properties, latestModified, municipalityCodes, roadNames);
+      }
+
+      return properties;
     };
 
     var open = function(id, singleLinkSelect) {
