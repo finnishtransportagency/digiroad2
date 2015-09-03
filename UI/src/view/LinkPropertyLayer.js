@@ -114,7 +114,12 @@
       };
 
       var bindEvents = function() {
-
+        me.eventListener.listenTo(eventbus, 'linkProperties:updateFailed', function() {
+          selectedLinkProperty.cancel();
+          unselectRoadLink();
+          me.refreshView();
+          me.eventListener.stopListening(eventbus, 'linkProperties:updateFailed');
+        });
         $('.mass-update-modal .close').on('click', function() {
           unselectRoadLink();
           purge();
