@@ -109,8 +109,8 @@ object Digiroad2Context {
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
       override def roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
-      override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-      override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+      override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+      override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
     }
     new ProductionMassTransitStopService(eventbus)
   }

@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimitTimeStamps, SpeedLimit}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
@@ -165,8 +164,6 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
       modified = asset.modified, mmlId = None, mValue = None, floating = asset.floating)
   }
-
-  private def withDynSession[T](f: => T) = Database.forDataSource(ds).withDynSession(f)
 
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
     useVVHGeometry match {

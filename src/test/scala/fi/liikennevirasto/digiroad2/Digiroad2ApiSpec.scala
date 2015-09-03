@@ -46,8 +46,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def roadLinkService: RoadLinkService = testRoadLinkService
     override def eventbus: DigiroadEventBus = new DummyEventBus
-    override def withDynTransaction[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
-    override def withDynSession[T](f: => T): T = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   }
 
   addServlet(new Digiroad2Api(testRoadLinkService, testLinearAssetProvider, testMassTransitStopService), "/*")

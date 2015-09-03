@@ -183,11 +183,11 @@
     };
 
     this.getModifiedBy = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedDateTime').modifiedBy;
+      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedBy;
     };
 
     this.getModifiedDateTime = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedDateTime').modifiedDateTime;
+      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedAt;
     };
 
     this.getCreatedBy = function() {
@@ -195,7 +195,7 @@
     };
 
     this.getCreatedDateTime = function() {
-      return selection.length === 1 ? getProperty('createdDateTime') : null;
+      return selection.length === 1 ? getProperty('createdAt') : null;
     };
 
     this.get = function() {

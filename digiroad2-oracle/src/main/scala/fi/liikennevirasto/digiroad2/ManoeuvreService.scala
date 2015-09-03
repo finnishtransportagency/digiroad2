@@ -23,7 +23,7 @@ object ManoeuvreService {
   val LastElement = 3
 
   def getSourceRoadLinkIdById(id: Long): Long = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       sql"""
              select road_link_id
              from manoeuvre_element
@@ -33,24 +33,24 @@ object ManoeuvreService {
   }
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val roadLinks = RoadLinkService.getIdsAndMmlIdsByMunicipality(municipalityNumber).toMap
       getByRoadlinks(roadLinks)
     }
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-        .map(link => (link.id, link.mmlId))
-        .toMap
+    val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
+      .map(link => (link.id, link.mmlId))
+      .toMap
 
+    OracleDatabase.withDynTransaction {
       getByRoadlinks(roadLinks)
     }
   }
 
   def deleteManoeuvre(username: String, id: Long) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       sqlu"""
              update manoeuvre
              set valid_to = sysdate, modified_date = sysdate, modified_by = $username
@@ -60,7 +60,7 @@ object ManoeuvreService {
   }
 
   def createManoeuvre(userName: String, manoeuvre: NewManoeuvre): Long = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val manoeuvreId = sql"select manoeuvre_id_seq.nextval from dual".as[Long].first
       val additionalInfo = manoeuvre.additionalInfo.getOrElse("")
       sqlu"""
@@ -86,7 +86,7 @@ object ManoeuvreService {
   }
 
   def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       manoeuvreUpdates.additionalInfo.map(setManoeuvreAdditionalInfo(manoeuvreId))
       manoeuvreUpdates.exceptions.map(setManoeuvreExceptions(manoeuvreId))
       updateModifiedData(userName, manoeuvreId)

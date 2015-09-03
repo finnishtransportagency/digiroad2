@@ -1,20 +1,16 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
-import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import org.apache.commons.lang3.StringUtils.isBlank
-import org.joda.time.LocalDate
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, EventBusMassTransitStop}
 import org.slf4j.LoggerFactory
-
-import slick.driver.JdbcDriver.backend.Database
 
 trait DatabaseTransaction {
   def withDynTransaction[T](f: => T): T
 }
 object DefaultDatabaseTransaction extends DatabaseTransaction {
-  override def withDynTransaction[T](f: => T): T = Database.forDataSource(ds).withDynTransaction(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 }
 
 // FIXME:
@@ -67,7 +63,7 @@ class OracleSpatialAssetProvider(eventbus: DigiroadEventBus, userProvider: UserP
   }
 
   def getMunicipalities: Seq[Int] = {
-    Database.forDataSource(ds).withDynSession {
+    OracleDatabase.withDynSession {
       OracleSpatialAssetDao.getMunicipalities
     }
   }

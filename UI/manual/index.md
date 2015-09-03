@@ -118,7 +118,7 @@ _Karttan&auml;kym&auml;n muokkaus._
 3. Tielinkit
 ------------
 
-Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista (1) Tielinkit.
+Tielinkki on tien, kadun, kevyen liikenteen v&auml;yl&auml;n tai lauttayhteyden keskilinjageometrian pienin yksikk&ouml;. Tielinkin ominaisuustiedot ovat aina voimassa koko tielinkin matkalla. Karttan&auml;kym&auml;&auml;n valitaan tielinkit valitsemalla tietolajit-paletista Tielinkit.
 
 ![Tielinkit](k38.JPG)
 
@@ -134,9 +134,21 @@ jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml
 
 ##Tielinkin tietojen katselu##
 
-Yksitt&auml;isen tielinkin ominaisuustiedot tulevat n&auml;kyviin, kun tielinkin geometriaa kartalla klikataan (4). T&auml;ll&ouml;in tielinkin geometria korostuu kartalla ja sen ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (6). Tielinkin ominaisuustietoja ovat tielinkin ID, Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame) ja osoitenumerot vasemmalla ja oikealla.
+Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame) ja osoitenumerot vasemmalla ja oikealla.
 
-Tielinkeille voi valita visualisoinnin Tietolajit -paletista (1) tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin tai hallinnollisen luokan mukaan. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t Tietolajit-paletissa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
+Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
+
+Valitun tielinkkiketjun tai yksitt&auml;isen tielinkin geometria korostuu kartalla. Sivun oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Jos tielinkkiketju jatkuu kuntarajan yli, tai tiennumerolla on useita tien nimi&auml;, kirjataan n&auml;m&auml; kaikki tiedot ominaisuustieton&auml;kym&auml;&auml;n.
+
+![Tielinkkiketju](k54.jpg)
+
+_Tielinkkiketjun valinta (klikattu kerran)._
+
+![Yksitt&auml;isen tielinkin valinta](k55.jpg)
+
+_Yksitt&auml;isen tielinkin valinta (tuplaklikkaus)._
+
+Tielinkeille voi valita visualisoinnin Tietolajit -paletista tielinkkien alta. Visualisoinnin voi valita toiminnallisen luokan, tielinkin tyypin tai hallinnollisen luokan mukaan. Valinnan mukaan visualisoinnin selitteet n&auml;kyv&auml;t Tietolajit-paletissa. Lis&auml;ksi tielinkill&auml; on visualisoitu suuntanuoli, mik&auml;li tielinkin liikennevirran suunta on vain toiseen suuntaan.
 
 Toiminnallisen luokan selitteet ovat:
 
@@ -161,15 +173,20 @@ _Tielinkit visualisoitu tielinkin tyypin mukaan._
 
 _Tielinkit visualisoitu hallinnollisen luokan mukaan._
 
+
 ##Tielinkin ominaisuustietojen muokkaus##
 
-Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan. Muokattava tielinkki valitaan hiirell&auml; klikkaamalla.
+Yksitt&auml;isen tielinkin ominaisuustietoja voi muokata siirtym&auml;ll&auml; muokkaustilaan.
 
-Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa.
+Muokattava tielinkki valitaan klikkaamalla sen geometriaa (2). Kerran klikkaamalla tulee valituksi koko tielinkkiketju, eli ominaisuustiedoiltaan yhtenev&auml;t tielinkit.
+
+Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden tielinkin, sen voi tehd&auml; tuplaklikkamalla tielinkki&auml;.
+
+Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja tielinkin tyyppi ovat muokattavissa (3). Ketjuvalinta korjaa kaikkien ketjuun valittuna olevien tielinkkien tiedot.
 
 ![Tielinkin ominaisuustietojen muokkaus.](k39.JPG)
 
-_Tielinkin ominaisuustietojen muokkaus._
+_Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerran)._
 
 ####Korjattavat tielinkit####
 
@@ -390,7 +407,7 @@ Kerran klikkaamalla tulee valituksi koko nopeusrajoitusketju, eli kaikki nopeusr
 
 Huom! Nopeusrajoituksien ketjuvalinta ei toimi yksisuuntaisille nopeusrajoituksille.
 
-Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria tummentuu ja muut nopeusrajoitukset n&auml;kyv&auml;t haaleammalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
+Valitun nopeusrajoitusketjun tai yksitt&auml;isen nopeusrajoituksen geometria korostuu kartalla. Sivun oikeaan laitaan avautuu nopeusrajoituksen ominaisuustieton&auml;kym&auml;.
 
 Ominaisuustieton&auml;kym&auml;ss&auml; on nopeusrajoituksen arvo (km/h), valittujen linkkien lukum&auml;&auml;r&auml; sek&auml; lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot.
 
@@ -491,7 +508,7 @@ Tuntemattomalle nopeusrajoitukselle voi antaa arvon alasvetovalikosta ja niit&au
 
 _Tuntematon nopeusrajoitus._
 
-Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (1). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusrajoituksen kohdalle sovelluksessa ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen klikkaamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
+Tuntemattomista nopeusrajoituksista on lista, johon p&auml;&auml;see nopeusrajoitusten ominaisuustieton&auml;kym&auml;st&auml; (1). Nopeusrajoitukset on jaoteltu listalle kunnan sek&auml; kunnan sis&auml;ll&auml; hallinnollisen luokan (kunta, valtio, yksityinen) mukaan. Listan pituus on rajoitettu kymmeneen nopeusrajoitukseen, mutta kunkin hallinnollisen luokan vieress&auml; lukee my&ouml;s korjattavien nopeusrajoitusten kokonaism&auml;&auml;r&auml;. Nopeusrajoituksesta on listassa linkki, josta p&auml;&auml;see suoraan nopeusrajoituksen kohdalle sovelluksessa ja sille voi asettaa arvon. Nopeusrajoituslinkin voi avata uuteen v&auml;lilehteen klikkaamalla linkki&auml; Ctrl-painike pohjassa. Muuten linkki avautuu samaan v&auml;lilehteen. Lista sulkeutuu Sulje lista -painikkeesta.
 
 ![Tuntematon nopeusrajoitus.](k49.JPG)
 

@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{RoadLinkService, Digiroad2Context}
+import fi.liikennevirasto.digiroad2.Digiroad2Context
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleSpatialAssetDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.ds
-
-import slick.driver.JdbcDriver.backend.Database
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 object UpdateIncompleteLinkList {
   def runUpdate(): Unit = {
-    val municipalities: Seq[Int] = Database.forDataSource(ds).withDynSession {
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       OracleSpatialAssetDao.getMunicipalities
     }
 

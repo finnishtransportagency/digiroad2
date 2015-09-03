@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import slick.jdbc.{StaticQuery => Q}
@@ -8,7 +9,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 
 class AssetService(roadLinkService: RoadLinkService) {
   def getMunicipalityCodes(assetId: Long): Set[Int] = {
-    val roadLinkIds = Database.forDataSource(ds).withDynTransaction {
+    val roadLinkIds = OracleDatabase.withDynTransaction {
       sql"""
       select lrm.road_link_id
         from asset a

@@ -39,7 +39,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
   def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       test
       dynamicSession.rollback()
     }

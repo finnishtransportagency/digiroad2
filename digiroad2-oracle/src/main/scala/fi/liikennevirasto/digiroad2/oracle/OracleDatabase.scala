@@ -6,8 +6,11 @@ import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import oracle.jdbc.{driver, OracleDriver}
 import org.joda.time.LocalDate
 import slick.driver.JdbcDriver.backend.Database
+import slick.jdbc.StaticQuery.interpolation
+import Database.dynamicSession
 
 object OracleDatabase {
   lazy val ds: DataSource = initDataSource
@@ -26,7 +29,10 @@ object OracleDatabase {
     else {
       try {
         transactionOpen.set(true)
-        Database.forDataSource(OracleDatabase.ds).withDynTransaction(f)
+        Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+          setSessionLanguage()
+          f
+        }
       } finally {
         transactionOpen.set(false)
       }
@@ -38,10 +44,17 @@ object OracleDatabase {
       throw new IllegalThreadStateException("Attempted to open nested session")
     else {
       transactionOpen.set(true)
-      val ret = Database.forDataSource(OracleDatabase.ds).withDynSession(f)
+      val ret = Database.forDataSource(OracleDatabase.ds).withDynSession {
+        setSessionLanguage()
+        f
+      }
       transactionOpen.set(false)
       ret
     }
+  }
+
+  def setSessionLanguage() {
+    sqlu"""alter session set nls_language = 'american'""".execute
   }
 
   def jodaToSqlDate(jodaDate: LocalDate): Date = {

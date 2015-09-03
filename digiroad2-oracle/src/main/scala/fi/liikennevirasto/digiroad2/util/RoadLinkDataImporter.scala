@@ -1,16 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.sql.Connection
-
 import fi.liikennevirasto.digiroad2.ConversionDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import org.joda.time.DateTime
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
-import fi.liikennevirasto.digiroad2.asset.oracle.{LocalizationDao, OracleSpatialAssetDao, Queries}
-import slick.jdbc.StaticQuery
-import Q.interpolation
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 object RoadLinkDataImporter {
   def importFromConversionDB() {
@@ -20,7 +15,7 @@ object RoadLinkDataImporter {
         .list
     }
 
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       println("insert functional classes")
       insertFunctionalClasses(existingRoadLinkData)
       println("insert link types")

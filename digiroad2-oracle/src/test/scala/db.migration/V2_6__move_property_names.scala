@@ -2,6 +2,7 @@ package db.migration
 
 import com.googlecode.flyway.core.api.migration.jdbc.JdbcMigration
 import java.sql.Connection
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, PositionedParameters, SetParameter}
 import fi.liikennevirasto.digiroad2.asset.oracle.{LocalizationDao, OracleSpatialAssetDao, Queries}
 import Queries._
@@ -13,7 +14,7 @@ import fi.liikennevirasto.digiroad2.asset.LocalizedString
 
 class V2_6__move_property_names extends JdbcMigration {
   def migrate(connection: Connection) {
-    Database.forDataSource(ds).withDynTransaction {
+    OracleDatabase.withDynTransaction {
       val originalProps = sql"""
           select name_fi from property
         """.as[String].list
