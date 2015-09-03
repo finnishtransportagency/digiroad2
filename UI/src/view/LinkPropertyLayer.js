@@ -33,7 +33,33 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
-    var boxHandler = new BoxSelectControl(map, function() { console.log('Implement mass update'); });
+    var pixelBoundsToCoordinateBounds = function(bounds) {
+      var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
+      var topRight = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
+      return new OpenLayers.Bounds(bottomLeft.lon, bottomLeft.lat, topRight.lon, topRight.lat);
+    };
+
+    var showMassUpdateDialog = function(links) {
+      console.log('Editing links: ', links);
+    };
+
+    var massUpdate = function(bounds) {
+      if (selectedLinkProperty.isDirty()) {
+        me.displayConfirmMessage();
+      } else {
+        var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
+        var selectedLinks = _.chain(roadLayer.layer.features)
+        .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
+        .map(function(feature) { return feature.attributes; })
+        .value();
+        if (selectedLinks.length > 0) {
+          selectedLinkProperty.close();
+          showMassUpdateDialog(selectedLinks);
+        }
+      }
+    };
+
+    var boxHandler = new BoxSelectControl(map, massUpdate);
 
     this.activateSelection = function() {
       updateMultiSelectBoxHandlerState();
