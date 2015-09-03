@@ -99,6 +99,14 @@ define(['AssetsTestData',
     map.events.triggerEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
   };
 
+  var massSelect = function(map, longitude1, latitude1, longitude2, latitude2) {
+    var topRight = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude1, latitude1));
+    var bottomLeft = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude2, latitude2));
+    map.events.triggerEvent('mousedown',  {target: {}, srcElement: {}, button: 1, metaKey: true, xy: {x: topRight.x, y: topRight.y}});
+    map.events.triggerEvent('mousemove',  {target: {}, srcElement: {}, button: 1, metaKey: true, xy: {x: bottomLeft.x, y: bottomLeft.y}});
+    map.events.triggerEvent('mouseup',  {target: {}, srcElement: {}, button: 1, metaKey: true, xy: {x: bottomLeft.x, y: bottomLeft.y}});
+  };
+
   var getAssetMarkers = function(map) {
     return map.getLayersByName('massTransitStop')[0].markers;
   };
@@ -156,6 +164,7 @@ define(['AssetsTestData',
    clickMarker: clickMarker,
    moveMarker: moveMarker,
    clickMap: clickMap,
+   massSelect: massSelect,
    getAssetMarkers: getAssetMarkers,
    getLineStringFeatures: getLineStringFeatures,
    getSpeedLimitFeatures: getSpeedLimitFeatures,
