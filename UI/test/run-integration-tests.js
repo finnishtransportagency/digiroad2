@@ -38,7 +38,8 @@ require(['chai',
          'GroupingInCreationSpec',
          'SingleSegmentSpeedLimitSpec',
          'SpeedLimitSplitSpec',
-         'MultiSegmentSpeedLimitSpec'],
+         'MultiSegmentSpeedLimitSpec',
+         'BoxSelectControlSpec'],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
 
