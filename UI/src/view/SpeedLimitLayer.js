@@ -380,29 +380,7 @@ window.SpeedLimitLayer = function(params) {
   map.addControl(selectControl);
   var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
-  var pixelBoundsToCoordinateBounds = function(bounds) {
-    var bottomLeft = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
-    var topRight = map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
-    return new OpenLayers.Bounds(bottomLeft.lon, bottomLeft.lat, topRight.lon, topRight.lat);
-  };
-
-  var massUpdateSpeedLimits = function(bounds) {
-    if (selectedSpeedLimit.isDirty()) {
-      displayConfirmMessage();
-    } else {
-      var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
-      var selectedSpeedLimits = _.chain(vectorLayer.features)
-        .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
-        .map(function(feature) { return feature.attributes; })
-        .value();
-      if (selectedSpeedLimits.length > 0) {
-        selectedSpeedLimit.close();
-        showMassUpdateDialog(selectedSpeedLimits);
-      }
-    }
-  };
-
-  var boxHandler = new BoxSelectControl(map, massUpdateSpeedLimits);
+  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, showMassUpdateDialog);
 
   var handleSpeedLimitUnSelected = function(selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
@@ -439,16 +417,16 @@ window.SpeedLimitLayer = function(params) {
       speedLimitCutter.deactivate();
       doubleClickSelectControl.activate();
     }
-    updateMultiSelectBoxHandlerState();
+    updateMassUpdateHandlerState();
   };
 
-  var updateMultiSelectBoxHandlerState = function() {
+  var updateMassUpdateHandlerState = function() {
     if (!application.isReadOnly() &&
         application.getSelectedTool() === 'Select' &&
         application.getSelectedLayer() === layerName) {
-      boxHandler.activate();
+      massUpdateHandler.activate();
     } else {
-      boxHandler.deactivate();
+      massUpdateHandler.deactivate();
     }
   };
 
@@ -457,13 +435,13 @@ window.SpeedLimitLayer = function(params) {
       eventListener.running = true;
       bindEvents();
       changeTool(application.getSelectedTool());
-      updateMultiSelectBoxHandlerState();
+      updateMassUpdateHandlerState();
     }
   };
 
   var stop = function() {
     doubleClickSelectControl.deactivate();
-    updateMultiSelectBoxHandlerState();
+    updateMassUpdateHandlerState();
     speedLimitCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
@@ -477,7 +455,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'application:readOnly', updateMultiSelectBoxHandlerState);
+    eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
   };
 
