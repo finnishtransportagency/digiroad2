@@ -39,7 +39,6 @@
       };
 
       var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
-      console.log(latestModified);
       var municipalityCodes = {municipalityCode: extractMunicipalityCodes(selectedData)};
       return _.merge({}, extractProperties(selectedData), latestModified, municipalityCodes);
     };
