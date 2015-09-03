@@ -65,7 +65,7 @@
       _.forEach(current, function (selected) {
         selected.select();
       });
-      eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+      eventbus.trigger('linkProperties:multiSelected', extractDataForDisplay(get()));
     };
 
     var isDirty = function() {
