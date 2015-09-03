@@ -89,8 +89,6 @@
             'Olet valinnut <%- linkCount %> tielinkkiä' +
             '</div>' +
 
-            '<div>Ominaisuustiedot</div>' +
-
             '<div class="form-group editable">' +
               '<label class="control-label">Toiminnallinen luokka</label>' +
               '<select id="functional-class-selection" class="form-control">' + functionalClassOptions.join('') + '</select>' +
@@ -121,10 +119,6 @@
       };
 
       var bindEvents = function() {
-        //eventListener.listenTo(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed', function() {
-        //  collection.fetch(map.getExtent());
-        //  eventListener.stopListening(eventbus, 'speedLimits:massUpdateSucceeded speedLimits:massUpdateFailed');
-        //});
 
         $('.mass-update-modal .close').on('click', function() {
           purge();
@@ -133,20 +127,18 @@
           var modal = $('.modal-dialog');
           modal.find('.actions button').attr('disabled', true);
 
-          console.log(selectedLinkProperty.get());
-
           var functionalClassSelection = $('#functional-class-selection').val();
-          if (_.isEmpty(functionalClassSelection)) {
+          if (!_.isEmpty(functionalClassSelection)) {
             selectedLinkProperty.setFunctionalClass(parseInt(functionalClassSelection, 10));
           }
 
           var trafficDirectionSelection = $('#traffic-direction-selection').val();
-          if (_.isEmpty(trafficDirectionSelection)) {
+          if (!_.isEmpty(trafficDirectionSelection)) {
             selectedLinkProperty.setTrafficDirection(trafficDirectionSelection);
           }
 
           var linkTypeSelection = $('#link-type-selection').val();
-          if (_.isEmpty(linkTypeSelection)) {
+          if (!_.isEmpty(linkTypeSelection)) {
             selectedLinkProperty.setLinkType(parseInt(linkTypeSelection, 10));
           }
 
@@ -156,13 +148,11 @@
       };
 
       var show = function() {
-        purge();
         renderDialog();
         bindEvents();
       };
 
       var purge = function() {
-        //selectedSpeedLimit.closeMultiple();
         $('.mass-update-modal').remove();
       };
       show();
