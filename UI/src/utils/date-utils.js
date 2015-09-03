@@ -93,10 +93,10 @@
     return picker;
   }
 
-  dateutil.extractLatestModifications = function (data) {
-    var last = _.last(_.sortBy(data, function (s) {
+  dateutil.extractLatestModifications = function (elementsWithModificationTimestamps) {
+    var newest = _.max(elementsWithModificationTimestamps, function (s) {
       return moment(s.modifiedAt, "DD.MM.YYYY HH:mm:ss").valueOf() || 0;
-    }));
-    return _.pick(last, ['modifiedAt', 'modifiedBy']);
+    });
+    return _.pick(newest, ['modifiedAt', 'modifiedBy']);
   };
 }(window.dateutil = window.dateutil || {}));

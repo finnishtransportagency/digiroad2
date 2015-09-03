@@ -35,7 +35,7 @@
         var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
         properties = _.omit(properties, ambiguousFields);
-        var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
+        var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
         var roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
