@@ -15,14 +15,14 @@
       selectedLinkProperty.open(feature.attributes.mmlId, feature.singleLinkSelect);
       currentRenderIntent = 'select';
       roadLayer.redraw();
-      highlightFeatures(feature);
+      highlightFeatures();
     };
 
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
       roadLayer.redraw();
-      highlightFeatures(null);
+      highlightFeatures();
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
