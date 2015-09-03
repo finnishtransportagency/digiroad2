@@ -38,7 +38,8 @@
         return properties;
       };
 
-      var latestModified = _.pick(dateutil.extractLatestModifications(selectedData, 'modifiedAt'), ['modifiedBy', 'modifiedAt']);
+      var latestModified = dateutil.extractLatestModifications(selectedData, 'modifiedAt');
+      console.log(latestModified);
       var municipalityCodes = {municipalityCode: extractMunicipalityCodes(selectedData)};
       return _.merge({}, extractProperties(selectedData), latestModified, municipalityCodes);
     };
