@@ -14,13 +14,14 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         "mmlId": 1,
         "administrativeClass": "Private",
         "trafficDirection": "BothDirections",
-        "linkType": 2,
+        "functionalClass": 5,
+        "linkType": 3,
         "points": [{
-          "x": 90.0,
-          "y": 90.0
+          "x": 200.0,
+          "y": 200.0
         }, {
-          "x": 100.0,
-          "y": 100.0
+          "x": 300.0,
+          "y": 200.0
         }]
       }]
     ];
@@ -39,10 +40,26 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
     describe('and performing mass selection', function() {
       before(function() {
-        testHelpers.massSelect(openLayersMap, 90,90,110,110);
+        testHelpers.massSelect(openLayersMap,200,200,300,300);
       });
       it('does not show mass update dialog', function() {
         expect($('.mass-update-modal')).not.to.exist;
+      });
+    });
+
+    xdescribe('and entering edit mode', function() {
+      // todo: fix test fixture
+      before(function() {
+        testHelpers.clickVisibleEditModeButton();
+      });
+
+      describe('and performing mass selection', function() {
+        before(function() {
+          testHelpers.massSelect(openLayersMap,200,200,300,300);
+        });
+        it('shows mass update dialog', function() {
+          expect($('.mass-update-modal')).to.exist;
+        });
       });
     });
   });
