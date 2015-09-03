@@ -116,6 +116,7 @@
       var bindEvents = function() {
 
         $('.mass-update-modal .close').on('click', function() {
+          unselectRoadLink();
           purge();
         });
         $('.mass-update-modal .save').on('click', function() {
