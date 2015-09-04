@@ -33,9 +33,7 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
-    var showMassUpdateDialog = LinkPropertyMassUpdateDialog.initialize;
-
-    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, showMassUpdateDialog);
+    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, LinkPropertyMassUpdateDialog.initialize);
 
     this.activateSelection = function() {
       updateMassUpdateHandlerState();
@@ -168,6 +166,11 @@
         draw();
       });
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
+      eventListener.listenTo(eventbus, 'linkProperties:multiSelectCancelled linkProperties:multiSelectFailed', handleMultiSelectCancelled);
+    };
+
+    var handleMultiSelectCancelled = function() {
+      unselectRoadLink();
     };
 
     var refreshViewAfterSaving = function() {

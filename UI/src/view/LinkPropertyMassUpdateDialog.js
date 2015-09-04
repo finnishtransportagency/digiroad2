@@ -86,11 +86,12 @@
       eventbus.on('linkProperties:updateFailed', function() {
         selectedLinkProperty.cancel();
         selectedLinkProperty.close();
-        eventbus.off('linkProperties:updateFailed');
+        eventbus.trigger('linkProperties:multiSelectFailed');
       });
       $('.mass-update-modal .close').on('click', function() {
         selectedLinkProperty.cancel();
         selectedLinkProperty.close();
+        eventbus.trigger('linkProperties:multiSelectCancelled');
         purge();
       });
       $('.mass-update-modal .save').on('click', function() {
