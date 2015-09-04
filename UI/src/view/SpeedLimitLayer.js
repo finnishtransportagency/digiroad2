@@ -457,6 +457,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
+    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
@@ -495,7 +496,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var handleMapMoved = function(state) {
-    if (zoomlevels.isInAssetZoomLevel(state.zoom) && state.selectedLayer === layerName) {
+    if (zoomlevels.isInAssetZoomLevel(state.zoom)) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
@@ -509,8 +510,11 @@ window.SpeedLimitLayer = function(params) {
     }
   };
 
-  // TODO: Stop listening to map:moved events when layer is stopped
-  eventbus.on('map:moved', handleMapMoved);
+  eventbus.on('layer:selected', function(layer){
+    if(layer===layerName) {
+      start();
+    }
+  });
 
   var drawIndicators = function(links) {
     var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
