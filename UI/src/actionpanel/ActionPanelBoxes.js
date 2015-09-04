@@ -252,7 +252,7 @@
       '</div>'].join('');
 
     var collapsedTemplate = [
-      '<div class="panel">',
+      '<div class="panel mass-transit-stops">',
       '  <header class="panel-header">',
       '    Joukkoliikenteen pys&auml;kit',
       '  </header>',

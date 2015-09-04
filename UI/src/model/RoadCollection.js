@@ -121,9 +121,9 @@
       });
     };
 
-    this.get = function(id) {
-      return _.find(roadLinks(), function(road) {
-        return road.getId() === id;
+    this.get = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(roadLinks(), function(road) { return road.getId() === id; });
       });
     };
 

@@ -108,7 +108,7 @@
         contentType: "application/json",
         type: "PUT",
         url: "api/linkproperties",
-        data: JSON.stringify({mmlIds: mmlIds, trafficDirection: data.trafficDirection, functionalClass: data.functionalClass, linkType: data.linkType}),
+        data: JSON.stringify(data),
         dataType: "json",
         success: success,
         error: failure

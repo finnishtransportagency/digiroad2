@@ -28,8 +28,9 @@ with GZipSupport {
   val MAX_BOUNDING_BOX = 100000000
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
-  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ null }, { case t: TrafficDirection => JString(t.toString)}))
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer
+  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
+  case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -303,19 +304,12 @@ with GZipSupport {
   }
 
   put("/linkproperties") {
-    val ids = (parsedBody \ "mmlIds").extract[Seq[Long]]
-    updateRoadLinkProperties(ids)
-  }
-
-  def updateRoadLinkProperties(ids: Seq[Long]): Seq[Map[String, Any]] = {
-    val trafficDirection = TrafficDirection((parsedBody \ "trafficDirection").extract[String])
-    val functionalClass = (parsedBody \ "functionalClass").extract[Int]
-    val linkType = LinkType((parsedBody \ "linkType").extract[Int])
-
+    halt(status = 500)
+    val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
-    ids.map { id =>
-      roadLinkService.updateProperties(id, functionalClass, linkType, trafficDirection, user.username, municipalityValidation).map { roadLink =>
+    properties.map { prop =>
+      roadLinkService.updateProperties(prop.mmlId, prop.functionalClass, prop.linkType, prop.trafficDirection, user.username, municipalityValidation).map { roadLink =>
         Map("mmlId" -> roadLink.mmlId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
@@ -324,7 +318,7 @@ with GZipSupport {
           "modifiedAt" -> roadLink.modifiedAt,
           "modifiedBy" -> roadLink.modifiedBy,
           "linkType" -> roadLink.linkType.value)
-      }.getOrElse(halt(NotFound("Road link with MML ID " + id + " not found")))
+      }.getOrElse(halt(NotFound("Road link with MML ID " + prop.mmlId + " not found")))
     }
   }
 

@@ -30,7 +30,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
       }, backend);
@@ -55,7 +55,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       splitBackendCalls = [];
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()

@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel) {
+  root.LinkPropertyLayer = function(map, roadLayer, geometryUtils, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -15,14 +15,14 @@
       selectedLinkProperty.open(feature.attributes.mmlId, feature.singleLinkSelect);
       currentRenderIntent = 'select';
       roadLayer.redraw();
-      highlightFeatures(feature);
+      highlightFeatures();
     };
 
     var unselectRoadLink = function() {
       currentRenderIntent = 'default';
       selectedLinkProperty.close();
       roadLayer.redraw();
-      highlightFeatures(null);
+      highlightFeatures();
     };
 
     var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
@@ -33,11 +33,25 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
+    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, LinkPropertyMassUpdateDialog.initialize);
+
     this.activateSelection = function() {
+      updateMassUpdateHandlerState();
       doubleClickSelectControl.activate();
     };
     this.deactivateSelection = function() {
+      updateMassUpdateHandlerState();
       doubleClickSelectControl.deactivate();
+    };
+
+    var updateMassUpdateHandlerState = function() {
+      if (!applicationModel.isReadOnly() &&
+          applicationModel.getSelectedTool() === 'Select' &&
+          applicationModel.getSelectedLayer() === layerName) {
+        massUpdateHandler.activate();
+      } else {
+        massUpdateHandler.deactivate();
+      }
     };
 
     var highlightFeatures = function() {
@@ -139,7 +153,7 @@
       eventListener.listenTo(eventbus, 'linkProperties:changed', linkPropertyChangeHandler);
       eventListener.listenTo(eventbus, 'linkProperties:cancelled linkProperties:saved', linkPropertyEditConclusion);
       eventListener.listenTo(eventbus, 'linkProperties:saved', refreshViewAfterSaving);
-      eventListener.listenTo(eventbus, 'linkProperties:selected', function(link) {
+      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         var feature = _.find(roadLayer.layer.features, function(feature) {
           return feature.attributes.mmlId === link.mmlId;
         });
@@ -149,6 +163,15 @@
       });
       eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
+      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
+        draw();
+      });
+      eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
+      eventListener.listenTo(eventbus, 'linkProperties:multiSelectCancelled linkProperties:multiSelectFailed', handleMultiSelectCancelled);
+    };
+
+    var handleMultiSelectCancelled = function() {
+      unselectRoadLink();
     };
 
     var refreshViewAfterSaving = function() {

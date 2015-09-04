@@ -17,7 +17,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     before(function(done) {
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
-        $('.speed-limits').click();
+        testHelpers.selectLayer('speedLimit');
         done();
       });
     });
