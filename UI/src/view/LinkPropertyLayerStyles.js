@@ -142,10 +142,10 @@
       new OpenLayersRule().where('linkType').isIn([13, 21]).use({ strokeColor: '#f5d', externalGraphic: 'images/link-properties/arrow-drop-pink.svg'  }),
     ];
     var unknownLinkTypeDefaultRules = [
-      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.6, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
     var unknownLinkTypeUnselectedRules = [
-      new OpenLayersRule().where('functionalClass').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
+      new OpenLayersRule().where('linkType').is(99).use({ strokeColor: '#000', strokeOpacity: 0.3, externalGraphic: 'images/link-properties/arrow-drop-black.svg' })
     ];
 
     var linkTypeDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
