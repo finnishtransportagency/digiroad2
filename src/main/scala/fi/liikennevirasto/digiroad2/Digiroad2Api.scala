@@ -304,6 +304,7 @@ with GZipSupport {
   }
 
   put("/linkproperties") {
+    halt(status = 500)
     val properties = parsedBody.extract[Seq[LinkProperties]]
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
