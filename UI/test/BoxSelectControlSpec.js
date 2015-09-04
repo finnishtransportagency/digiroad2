@@ -46,7 +46,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
       });
 
-      describe('and performing mass selection', function() {
+      xdescribe('and performing mass selection', function() {
         before(function() {
           testHelpers.massSelect(openLayersMap,200,200,300,300);
         });
