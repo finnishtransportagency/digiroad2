@@ -47,8 +47,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
     });
 
-    xdescribe('and entering edit mode', function() {
-      // todo: fix test fixture
+    describe('and entering edit mode', function() {
       before(function() {
         testHelpers.clickVisibleEditModeButton();
       });
