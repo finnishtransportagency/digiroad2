@@ -118,7 +118,10 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var showMassUpdateDialog = function(selectedSpeedLimits) {
+  var showMassUpdateDialog = function(options) {
+    var selectedSpeedLimits = options.selectedLinearAssets,
+        selectedSpeedLimit = options.selectedLinearAssetModel;
+
     var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
       var selected = value === 50 ? " selected" : "";

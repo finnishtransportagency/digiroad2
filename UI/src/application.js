@@ -348,7 +348,6 @@ var URLRouter = function(map, backend, models) {
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = selectedMassTransitStopModel;
-    window.selectedLinkProperty = selectedLinkProperty;
     var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
     window.applicationModel = new ApplicationModel([
       selectedAssetModel,

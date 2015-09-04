@@ -2,7 +2,11 @@
   root.LinkPropertyMassUpdateDialog = {
     initialize: init
   };
-  function init(links){
+
+  function init(options){
+    var selectedLinkProperty = options.selectedLinearAssetModel,
+        links = options.selectedLinearAssets;
+
     selectedLinkProperty.openMultiple(links);
 
     var functionalClasses = [
