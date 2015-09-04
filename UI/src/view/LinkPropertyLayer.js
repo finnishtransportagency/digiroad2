@@ -61,7 +61,6 @@
     };
 
     this.refreshView = function() {
-      eventbus.once('roadLinks:fetched', function() { draw(); });
       roadCollection.fetchFromVVH(map.getExtent());
     };
 
@@ -148,9 +147,8 @@
           selectControl.select(feature);
         }
       });
-      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', function() {
-        draw();
-      });
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
+      eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
     };
 
     var refreshViewAfterSaving = function() {
