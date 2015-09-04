@@ -1,12 +1,6 @@
 /*jshint expr: true*/
 define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
-  // 1. Select link property layer *
-  // 2. Assert: box control deactivated *
-  // 3. Select edit mode
-  // 4. Assert: box control activated
-  // 5. Select speed limit layer
-  // 6. Assert: box control deactivated
 
   var roadLinkData =
     [
@@ -58,6 +52,24 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
         it('shows mass update dialog', function() {
           expect($('.mass-update-modal')).to.exist;
+        });
+        after(function() {
+          $('.btn.btn-secondary.close').click();
+        });
+      });
+    });
+
+    describe('and selecting speed limit layer', function() {
+      before(function() {
+        testHelpers.selectLayer('speedLimit');
+      });
+
+      describe('and performing mass selection', function() {
+        before(function() {
+          testHelpers.massSelect(openLayersMap,200,200,300,300);
+        });
+        it('does not show mass update dialog', function() {
+          expect($('.mass-update-modal')).not.to.exist;
         });
       });
     });
