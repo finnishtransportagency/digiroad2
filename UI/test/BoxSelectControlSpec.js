@@ -10,6 +10,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         "trafficDirection": "BothDirections",
         "functionalClass": 5,
         "linkType": 3,
+        "municipalityCode": 235,
         "points": [{
           "x": 200.0,
           "y": 200.0
@@ -46,7 +47,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
       });
 
-      xdescribe('and performing mass selection', function() {
+      describe('and performing mass selection', function() {
         before(function() {
           testHelpers.massSelect(openLayersMap,200,200,300,300);
         });
