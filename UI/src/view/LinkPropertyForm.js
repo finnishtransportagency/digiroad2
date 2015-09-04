@@ -85,6 +85,7 @@
             staticField('Tien nimi (Suomi)', 'roadNameFi') +
             staticField('Tien nimi (Ruotsi)', 'roadNameSe') +
             staticField('Tien nimi (Saame)', 'roadNameSm') +
+            staticField('Tien numero', 'roadNumber') +
             staticField('Osoitenumerot oikealla', 'addressNumbersRight') +
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
           '</div>' +
@@ -131,6 +132,7 @@
         linkProperties.roadNameSm = linkProperties.roadNameSm || '';
         linkProperties.addressNumbersRight = addressNumberString(linkProperties.minAddressNumberRight, linkProperties.maxAddressNumberRight);
         linkProperties.addressNumbersLeft = addressNumberString(linkProperties.minAddressNumberLeft, linkProperties.maxAddressNumberLeft);
+        linkProperties.roadNumber = linkProperties.roadNumber || '';
         var trafficDirectionOptionTags = _.map(localizedTrafficDirections, function(value, key) {
           var selected = key === linkProperties.trafficDirection ? " selected" : "";
           return '<option value="' + key + '"' + selected + '>' + value + '</option>';

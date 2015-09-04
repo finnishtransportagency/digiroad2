@@ -26,7 +26,8 @@
         return _.chain(selectedData)
           .pluck(property)
           .uniq()
-          .value();
+          .value()
+          .join(', ');
       };
 
       var properties = _.cloneDeep(_.first(selectedData));

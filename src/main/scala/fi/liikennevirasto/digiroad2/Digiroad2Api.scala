@@ -251,7 +251,8 @@ with GZipSupport {
         "minAddressNumberRight" -> roadLink.attributes.get("MINANRIGHT"),
         "maxAddressNumberRight" -> roadLink.attributes.get("MAXANRIGHT"),
         "minAddressNumberLeft" -> roadLink.attributes.get("MINANLEFT"),
-        "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"))
+        "maxAddressNumberLeft" -> roadLink.attributes.get("MAXANLEFT"),
+        "roadNumber" -> roadLink.attributes.get("ROADNUMBER"))
     } }
   }
 
