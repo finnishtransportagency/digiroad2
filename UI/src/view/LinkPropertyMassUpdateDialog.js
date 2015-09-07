@@ -16,12 +16,6 @@
       {text: '8', value: 8}
     ];
 
-    var localizedTrafficDirections = [
-      {value: 'BothDirections', text: 'Molempiin suuntiin'},
-      {value: 'AgainstDigitizing', text: 'Digitointisuuntaa vastaan'},
-      {value: 'TowardsDigitizing', text: 'Digitointisuuntaan'}
-    ];
-
     var linkTypes = [
       {value: 1, text: 'Moottoritie'},
       {value: 2, text: 'Moniajoratainen tie'},
@@ -56,11 +50,6 @@
         '<div class="form-group editable">' +
         '<label class="control-label">Toiminnallinen luokka</label>' +
         '<select id="functional-class-selection" class="form-control">' + createOptionElements(functionalClasses) + '</select>' +
-        '</div>' +
-
-        '<div class="form-group editable">' +
-        '<label class="control-label">Liikennevirran suunta</label>' +
-        '<select id="traffic-direction-selection" class="form-control">' + createOptionElements(localizedTrafficDirections) + '</select>' +
         '</div>' +
 
         '<div class="form-group editable">' +
@@ -101,11 +90,6 @@
         var functionalClassSelection = $('#functional-class-selection').val();
         if (!_.isEmpty(functionalClassSelection)) {
           selectedLinkProperty.setFunctionalClass(parseInt(functionalClassSelection, 10));
-        }
-
-        var trafficDirectionSelection = $('#traffic-direction-selection').val();
-        if (!_.isEmpty(trafficDirectionSelection)) {
-          selectedLinkProperty.setTrafficDirection(trafficDirectionSelection);
         }
 
         var linkTypeSelection = $('#link-type-selection').val();
