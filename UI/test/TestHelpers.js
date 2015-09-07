@@ -100,13 +100,13 @@ define(['AssetsTestData',
   };
 
   var massSelect = function(map, longitude1, latitude1, longitude2, latitude2) {
-    var topRight = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude1, latitude1));
-    var bottomLeft = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude2, latitude2));
+    var topLeft = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude1, latitude1));
+    var bottomRight = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude2, latitude2));
     var commonParameters = {target: {}, srcElement: {}, button: 1};
     var modifierKey = (navigator.platform.toLowerCase().indexOf('mac') === 0) ? { metaKey: true } : { ctrlKey: true };
-    var mouseDownEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: topRight.x, y: topRight.y} });
-    var mouseMoveEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomLeft.x, y: bottomLeft.y} });
-    var mouseUpEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomLeft.x, y: bottomLeft.y} });
+    var mouseDownEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: topLeft.x, y: topLeft.y} });
+    var mouseMoveEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
+    var mouseUpEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
     map.events.triggerEvent('mousedown', mouseDownEvent);
     map.events.triggerEvent('mousemove', mouseMoveEvent);
     map.events.triggerEvent('mouseup', mouseUpEvent);
