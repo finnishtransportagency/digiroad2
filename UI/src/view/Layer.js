@@ -31,8 +31,8 @@
       if (!me.isStarted()) {
         me.activateSelection();
         me.eventListener.running = true;
-        me.refreshView();
         me.layerStarted(me.eventListener);
+        me.refreshView();
       }
     };
     this.stop = function() {

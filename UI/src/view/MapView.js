@@ -70,8 +70,8 @@
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
-      layerToBeShown.show(map);
       layerToBeHidden.hide(map);
+      layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
