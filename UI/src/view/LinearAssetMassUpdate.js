@@ -19,10 +19,7 @@
         .value();
         if (selectedLinearAssets.length > 0) {
           selectedLinearAssetModel.close();
-          showUpdateDialogFunction({
-            selectedLinearAssetModel: selectedLinearAssetModel,
-            selectedLinearAssets: selectedLinearAssets
-          });
+          showUpdateDialogFunction(selectedLinearAssets);
         }
       }
     };

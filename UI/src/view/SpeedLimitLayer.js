@@ -383,7 +383,12 @@ window.SpeedLimitLayer = function(params) {
   map.addControl(selectControl);
   var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
-  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, showMassUpdateDialog);
+  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, function(speedLimits) {
+    showMassUpdateDialog({
+      selectedLinearAssets: speedLimits,
+      selectedLinearAssetModel: selectedSpeedLimit
+    });
+  });
 
   var handleSpeedLimitUnSelected = function(selection) {
     _.each(_.filter(vectorLayer.features, function(feature) {
@@ -450,22 +455,42 @@ window.SpeedLimitLayer = function(params) {
     eventListener.running = false;
   };
 
+  var activateBrowseStyle = function() {
+    _.each(vectorLayer.features, function(feature) {
+      selectControl.unhighlight(feature);
+    });
+    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.redraw();
+  };
+
+  var activateSelectionStyle = function() {
+    vectorLayer.styleMap = selectionStyle;
+    selectedSpeedLimit.openMultiple(selectedSpeedLimits);
+    highlightMultipleSpeedLimitFeatures();
+    vectorLayer.redraw();
+  };
+
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'speedLimit:selected', handleSpeedLimitSelected);
+    eventListener.listenTo(eventbus, 'speedLimit:selected speedLimit:multiSelected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved', handleSpeedLimitSaved);
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
+    eventListener.listenTo(eventbus, 'speedLimits:multiSelectCancelled speedLimits:multiSelectFailed', handleMultiSelectCancelled);
+  };
+
+  var handleMultiSelectCancelled = function() {
+    console.log('SpeedLimitLayer.handleMultiSelectCancelled');
+    selectedSpeedLimit.close();
+    activateBrowseStyle();
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
-    if (selectedSpeedLimit.isNew()) {
-      setSelectionStyleAndHighlightFeature();
-    }
+    setSelectionStyleAndHighlightFeature();
   };
 
   var selectSpeedLimitByMmlId = function(mmlId) {

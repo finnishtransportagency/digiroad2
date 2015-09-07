@@ -33,7 +33,12 @@
     var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
     this.selectControl = selectControl;
 
-    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, LinkPropertyMassUpdateDialog.initialize);
+    var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, function(links) {
+      LinkPropertyMassUpdateDialog.initialize({
+        selectedLinearAssets: links,
+        selectedLinearAssetModel: selectedLinkProperty
+      });
+    });
 
     this.activateSelection = function() {
       updateMassUpdateHandlerState();
