@@ -7,7 +7,8 @@
     var selectedLinkProperty = options.selectedLinearAssetModel,
         links = options.selectedLinearAssets,
         onFailure = options.onFailure,
-        onCancel = options.onCancel;
+        onCancel = options.onCancel,
+        onSave = options.onSave;
 
     selectedLinkProperty.openMultiple(links);
 
@@ -87,16 +88,13 @@
         modal.find('.actions button').attr('disabled', true);
 
         var functionalClassSelection = $('#functional-class-selection').val();
-        if (!_.isEmpty(functionalClassSelection)) {
-          selectedLinkProperty.setFunctionalClass(parseInt(functionalClassSelection, 10));
-        }
+        var functionalClass = _.isEmpty(functionalClassSelection) ? undefined : parseInt(functionalClassSelection, 10);
 
         var linkTypeSelection = $('#link-type-selection').val();
-        if (!_.isEmpty(linkTypeSelection)) {
-          selectedLinkProperty.setLinkType(parseInt(linkTypeSelection, 10));
-        }
+        var linkType = _.isEmpty(linkTypeSelection) ? undefined : parseInt(linkTypeSelection, 10);
 
-        selectedLinkProperty.save();
+        onSave(functionalClass, linkType);
+
         purge();
       });
     };

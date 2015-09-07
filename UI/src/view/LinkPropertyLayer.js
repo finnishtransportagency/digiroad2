@@ -38,7 +38,18 @@
         selectedLinearAssets: links,
         selectedLinearAssetModel: selectedLinkProperty,
         onFailure: handleMultiSelectCancelled,
-        onCancel: handleMultiSelectCancelled
+        onCancel: handleMultiSelectCancelled,
+        onSave: function(functionalClass, linkType) {
+          if (functionalClass) {
+            selectedLinkProperty.setFunctionalClass(functionalClass);
+          }
+
+          if (linkType) {
+            selectedLinkProperty.setLinkType(linkType);
+          }
+
+          selectedLinkProperty.save();
+        }
       });
     });
 
