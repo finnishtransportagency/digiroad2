@@ -34,9 +34,10 @@
     this.selectControl = selectControl;
 
     var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, function(links) {
-      LinkPropertyMassUpdateDialog.initialize({
+      selectedLinkProperty.openMultiple(links);
+
+      LinkPropertyMassUpdateDialog.show({
         selectedLinearAssets: links,
-        selectedLinearAssetModel: selectedLinkProperty,
         onFailure: handleMultiSelectCancelled,
         onCancel: handleMultiSelectCancelled,
         onSave: function(functionalClass, linkType) {
