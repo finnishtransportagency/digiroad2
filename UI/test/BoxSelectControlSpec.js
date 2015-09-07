@@ -47,7 +47,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
       });
 
-      xdescribe('and performing mass selection', function() {
+      describe('and performing mass selection', function() {
         before(function() {
           testHelpers.massSelect(openLayersMap,200,200,300,300);
         });
@@ -55,7 +55,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           expect($('.mass-update-modal')).to.exist;
         });
         after(function() {
-          $('.btn.btn-secondary.close').click();
+          $('.mass-update-modal .btn.btn-secondary.close').click();
         });
       });
     });
