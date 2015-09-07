@@ -18,7 +18,6 @@
     var setLinkProperty = function(name, value) {
       if (value != data[name]) {
         data[name] = value;
-        eventbus.trigger('linkProperties:changed');
       }
     };
 

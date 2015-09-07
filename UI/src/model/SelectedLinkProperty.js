@@ -100,6 +100,7 @@
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
+      eventbus.trigger('linkProperties:changed');
     };
     var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
