@@ -90,7 +90,7 @@ module.exports = function(grunt) {
           },
           {
             context: '/vkm',
-            host: '10.129.65.37',
+            host: 'localhost',
             port: '8997',
             https: false,
             changeOrigin: false,

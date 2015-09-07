@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
+import java.util.Properties
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+
 import scala.collection.JavaConversions._
 import org.eclipse.jetty.http.{MimeTypes, HttpURI}
 import org.eclipse.jetty.proxy.ProxyServlet
@@ -48,7 +50,10 @@ class NLSProxyServlet extends ProxyServlet {
 
 class VKMProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    java.net.URI.create("http://10.129.65.37:8997" + req.getRequestURI.replaceFirst("/digiroad", ""))
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    val vkmUrl: String = properties.getProperty("digiroad2.VKMUrl")
+    java.net.URI.create(vkmUrl + req.getRequestURI.replaceFirst("/digiroad", ""))
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
