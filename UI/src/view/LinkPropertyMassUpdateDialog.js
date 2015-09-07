@@ -3,7 +3,7 @@
     initialize: init
   };
 
-  function init(options){
+  function init(options) {
     var selectedLinkProperty = options.selectedLinearAssetModel,
         links = options.selectedLinearAssets;
 
@@ -72,7 +72,6 @@
       $('.container').append(confirmDiv({
         linkCount: links.length
       }));
-      var modal = $('.modal-dialog');
     };
 
     var bindEvents = function() {
