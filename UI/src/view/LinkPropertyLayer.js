@@ -38,8 +38,7 @@
 
       LinkPropertyMassUpdateDialog.show({
         selectedLinearAssets: links,
-        onFailure: handleMultiSelectCancelled,
-        onCancel: handleMultiSelectCancelled,
+        onCancel: cancelSelection,
         onSave: function(functionalClass, linkType) {
           if (functionalClass) {
             selectedLinkProperty.setFunctionalClass(functionalClass);
@@ -186,9 +185,10 @@
         draw();
       });
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
+      eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
     };
 
-    var handleMultiSelectCancelled = function() {
+    var cancelSelection = function() {
       selectedLinkProperty.cancel();
       selectedLinkProperty.close();
       unselectRoadLink();

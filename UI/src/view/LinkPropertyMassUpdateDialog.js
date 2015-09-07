@@ -5,7 +5,6 @@
 
   function init(options) {
     var links = options.selectedLinearAssets,
-        onFailure = options.onFailure,
         onCancel = options.onCancel,
         onSave = options.onSave;
 
@@ -75,7 +74,6 @@
     };
 
     var bindEvents = function() {
-      eventbus.on('linkProperties:updateFailed', onFailure);
       $('.mass-update-modal .close').on('click', function() {
         purge();
         onCancel();
@@ -90,9 +88,9 @@
         var linkTypeSelection = $('#link-type-selection').val();
         var linkType = _.isEmpty(linkTypeSelection) ? undefined : parseInt(linkTypeSelection, 10);
 
-        onSave(functionalClass, linkType);
-
         purge();
+
+        onSave(functionalClass, linkType);
       });
     };
 
