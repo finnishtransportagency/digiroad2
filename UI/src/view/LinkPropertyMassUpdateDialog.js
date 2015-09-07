@@ -5,7 +5,8 @@
 
   function init(options) {
     var selectedLinkProperty = options.selectedLinearAssetModel,
-        links = options.selectedLinearAssets;
+        links = options.selectedLinearAssets,
+        onFailure = options.onFailure;
 
     selectedLinkProperty.openMultiple(links);
 
@@ -75,11 +76,7 @@
     };
 
     var bindEvents = function() {
-      eventbus.on('linkProperties:updateFailed', function() {
-        selectedLinkProperty.cancel();
-        selectedLinkProperty.close();
-        eventbus.trigger('linkProperties:multiSelectFailed');
-      });
+      eventbus.on('linkProperties:updateFailed', onFailure);
       $('.mass-update-modal .close').on('click', function() {
         selectedLinkProperty.cancel();
         selectedLinkProperty.close();

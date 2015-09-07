@@ -36,7 +36,12 @@
     var massUpdateHandler = new LinearAssetMassUpdate(map, roadLayer.layer, selectedLinkProperty, function(links) {
       LinkPropertyMassUpdateDialog.initialize({
         selectedLinearAssets: links,
-        selectedLinearAssetModel: selectedLinkProperty
+        selectedLinearAssetModel: selectedLinkProperty,
+        onFailure: function() {
+          selectedLinkProperty.cancel();
+          selectedLinkProperty.close();
+          handleMultiSelectCancelled();
+        }
       });
     });
 
@@ -172,7 +177,7 @@
         draw();
       });
       eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
-      eventListener.listenTo(eventbus, 'linkProperties:multiSelectCancelled linkProperties:multiSelectFailed', handleMultiSelectCancelled);
+      eventListener.listenTo(eventbus, 'linkProperties:multiSelectCancelled', handleMultiSelectCancelled);
     };
 
     var handleMultiSelectCancelled = function() {
