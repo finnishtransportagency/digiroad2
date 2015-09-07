@@ -4,7 +4,7 @@
   };
 
   function init(options) {
-    var links = options.selectedLinearAssets,
+    var linkCount = options.linkCount,
         onCancel = options.onCancel,
         onSave = options.onSave;
 
@@ -69,7 +69,7 @@
 
     var renderDialog = function() {
       $('.container').append(confirmDiv({
-        linkCount: links.length
+        linkCount: linkCount
       }));
     };
 

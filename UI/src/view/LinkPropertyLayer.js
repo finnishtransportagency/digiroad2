@@ -37,7 +37,7 @@
       selectedLinkProperty.openMultiple(links);
 
       LinkPropertyMassUpdateDialog.show({
-        selectedLinearAssets: links,
+        linkCount: links.length,
         onCancel: cancelSelection,
         onSave: function(functionalClass, linkType) {
           if (functionalClass) {
