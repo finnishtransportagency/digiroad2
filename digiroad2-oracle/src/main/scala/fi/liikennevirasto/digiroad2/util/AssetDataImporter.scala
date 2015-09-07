@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries.updateAssetGeometry
 import _root_.oracle.sql.STRUCT
-import org.joda.time.LocalDate
+import org.joda.time.{Seconds, DateTime, LocalDate}
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -218,6 +218,60 @@ class AssetDataImporter {
             leftHours, leftMins,
             timeNow - selectStartTime)
         }
+      }
+    }
+  }
+
+  def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
+    val litRoadLinks: Seq[(Long, Double, Double, Int)] = conversionDatabase.withDynSession {
+      sql"""
+          select t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          from segments s
+          join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
+          where s.tyyppi = 27
+       """.as[(Long, Double, Double, Int)].list
+    }
+    println("*** found " + litRoadLinks.length + " lit road links from Conversion DB")
+
+    val litRoadLinksByMunicipality = litRoadLinks.groupBy(_._4)
+    val totalMunicipalityCount = litRoadLinksByMunicipality.keys.size
+    var municipalityCount = 0
+
+    OracleDatabase.withDynTransaction {
+      litRoadLinksByMunicipality.foreach { case (municipalityCode, litRoads) =>
+        val startTime = DateTime.now();
+        litRoads.foreach { litRoad =>
+          val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+          val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, 1)")
+          val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+          val (mmlId, startMeasure, endMeasure, _) = litRoad
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 100)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, mmlId)
+          lrmPositionPS.setDouble(3, startMeasure)
+          lrmPositionPS.setDouble(4, endMeasure)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          assetPS.executeBatch()
+          lrmPositionPS.executeBatch()
+          assetLinkPS.executeBatch()
+          assetPS.close()
+          lrmPositionPS.close()
+          assetLinkPS.close()
+        }
+        val seconds = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
+        municipalityCount += 1
+        println("*** imported lit roads for municipality: " + municipalityCode + " in " + seconds + " seconds  (done " + municipalityCount + "/" + totalMunicipalityCount + " municipalities)" )
       }
     }
   }

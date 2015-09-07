@@ -175,6 +175,16 @@ object DataFixture {
     println("\n")
   }
 
+  def importLitRoadsFromConversion(): Unit = {
+    println("\nCommencing lit roads import from conversion at time: ")
+    println(DateTime.now())
+    println("import lit roads")
+    dataImporter.importLitRoadsFromConversion(Conversion.database())
+    println("Lit roads import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -222,7 +232,9 @@ object DataFixture {
         flyway.repair()
       case Some("split_speedlimitchains") =>
         splitSpeedLimitChains()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | split_speedlimitchains | repair")
+      case Some("litroads") =>
+        importLitRoadsFromConversion()
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | split_speedlimitchains | litroads | repair")
     }
   }
 }
