@@ -14,9 +14,9 @@
       } else {
         var coordinateBounds = pixelBoundsToCoordinateBounds(bounds);
         var selectedLinearAssets = _.chain(layer.features)
-        .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
-        .map(function(feature) { return feature.attributes; })
-        .value();
+          .filter(function(feature) { return coordinateBounds.toGeometry().intersects(feature.geometry);})
+          .map(function(feature) { return feature.attributes; })
+          .value();
         if (selectedLinearAssets.length > 0) {
           selectedLinearAssetModel.close();
           showUpdateDialogFunction(selectedLinearAssets);
