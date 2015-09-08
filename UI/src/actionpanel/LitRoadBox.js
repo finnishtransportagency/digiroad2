@@ -1,5 +1,6 @@
 (function(root) {
  root.LitRoadBox = function() {
+   var layerName = 'litRoad';
    var collapsed =
      $('<div class="panel">' +
          '<header class="panel-header">Valaistu tie</header>' +
@@ -28,6 +29,19 @@
    };
 
    bindDOMEventHandlers();
+
+   var bindExternalEventHandlers = function() {
+     eventbus.on('layer:selected', function(selectedLayer) {
+       if (selectedLayer !== layerName) {
+         expanded.hide();
+         collapsed.show();
+       } else {
+         collapsed.hide();
+         expanded.show();
+       }
+     }, this);
+   };
+   bindExternalEventHandlers();
 
    return {
      element: $('<div class="panel-group"/>')
