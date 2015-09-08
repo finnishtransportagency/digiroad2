@@ -1,1 +1,0 @@
-insert into asset_type (id, name, geometry_type) values(100, 'Valaistu tie', 'linear');
