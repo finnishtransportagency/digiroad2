@@ -1,0 +1,4 @@
+(function(root) {
+root.LitRoadBox = function() {
+}
+})(this);
