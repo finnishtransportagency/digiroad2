@@ -109,6 +109,7 @@ trait NumericalLimitOperations {
         }
 
       numericalLimits.map { link =>
+        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
         val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
         val value = Option(link._5)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
