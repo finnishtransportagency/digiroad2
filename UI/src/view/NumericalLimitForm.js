@@ -15,6 +15,22 @@
         '<span>' + newNumericalLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
       var header = '<header>' + title + '<div class="' + className + ' form-controls">' + buttons + '</div></header>';
+      var measureInput = function() {
+        if(unit) {
+          return '' +
+          '<div class="form-group editable">' +
+            '<label class="control-label"></label>' +
+            '<div class="input-group" style="display: none">' +
+              '<input type="text" class="form-control ' + className + '">' +
+              '<span class="input-group-addon">' + unit + '</span>' +
+            '</div>' +
+          '</div>';
+        }
+        else {
+          return '';
+        }
+      };
+
       return header +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
@@ -36,13 +52,7 @@
         '</div>' +
         '</div>' +
         '</div>' +
-        '<div class="form-group editable">' +
-        '<label class="control-label"></label>' +
-        '<div class="input-group" style="display: none">' +
-        '<input type="text" class="form-control ' + className + '">' +
-        '<span class="input-group-addon">' + unit + '</span>' +
-        '</div>' +
-        '</div>' +
+         measureInput() +
         '</div>' +
         '</div>' +
         '<footer class="' + className + ' form-controls" style="display: none">' +

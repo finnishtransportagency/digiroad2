@@ -320,8 +320,7 @@ var URLRouter = function(map, backend, models) {
         layerName: 'litRoad',
         numericalLimitTitle: 'Valaistu tie',
         newNumericalLimitTitle: 'Uusi valaistu tie',
-        className: 'lit-road',
-        unit: 'cm'
+        className: 'lit-road'
       }
     ];
     var backend = customBackend || new Backend();
