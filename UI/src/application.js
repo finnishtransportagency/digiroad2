@@ -314,7 +314,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'cm'
       },
       {
-        typeId: 90,
+        typeId: 100,
         singleElementEventCategory: 'litRoad',
         multiElementEventCategory: 'litRoads',
         layerName: 'litRoad',
