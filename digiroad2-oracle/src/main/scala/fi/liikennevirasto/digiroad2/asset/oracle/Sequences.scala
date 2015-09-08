@@ -12,8 +12,4 @@ object Sequences {
   def nextLrmPositionPrimaryKeySeqValue = {
     nextLrmPositionPrimaryKeyId.as[Long].first
   }
-
-  def nextLitRoadPrimaryKey = {
-    nextLitRoadPrimaryKeyId.as[Long].first
-  }
 }

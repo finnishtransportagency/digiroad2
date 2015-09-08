@@ -238,26 +238,41 @@ class AssetDataImporter {
     var municipalityCount = 0
 
     OracleDatabase.withDynTransaction {
-      val litRoadsPS = dynamicSession.prepareStatement("""
-        insert into lit_roads (id, mml_id, start_measure, end_measure, created_date, created_by)
-        values (?, ?, ?, ?, SYSDATE, 'dr1_conversion')""")
-
       litRoadLinksByMunicipality.foreach { case (municipalityCode, litRoads) =>
         val startTime = DateTime.now()
-        litRoads.foreach { case (mmlId, startMeasure, endMeasure, _)  =>
-          val id = Sequences.nextLitRoadPrimaryKey
-          litRoadsPS.setLong(1, id)
-          litRoadsPS.setLong(2, mmlId)
-          litRoadsPS.setDouble(3, startMeasure)
-          litRoadsPS.setDouble(4, endMeasure)
-          litRoadsPS.addBatch()
+        litRoads.foreach { litRoad =>
+          val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
+          val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, 1)")
+          val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
+
+          val (mmlId, startMeasure, endMeasure, _) = litRoad
+          val assetId = Sequences.nextPrimaryKeySeqValue
+          assetPS.setLong(1, assetId)
+          assetPS.setInt(2, 100)
+          assetPS.addBatch()
+
+          val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+          lrmPositionPS.setLong(1, lrmPositionId)
+          lrmPositionPS.setLong(2, mmlId)
+          lrmPositionPS.setDouble(3, startMeasure)
+          lrmPositionPS.setDouble(4, endMeasure)
+          lrmPositionPS.addBatch()
+
+          assetLinkPS.setLong(1, assetId)
+          assetLinkPS.setLong(2, lrmPositionId)
+          assetLinkPS.addBatch()
+
+          assetPS.executeBatch()
+          lrmPositionPS.executeBatch()
+          assetLinkPS.executeBatch()
+          assetPS.close()
+          lrmPositionPS.close()
+          assetLinkPS.close()
         }
-        litRoadsPS.executeBatch()
         val seconds = Seconds.secondsBetween(startTime, DateTime.now()).getSeconds
         municipalityCount += 1
         println("*** imported lit roads for municipality: " + municipalityCode + " in " + seconds + " seconds  (done " + municipalityCount + "/" + totalMunicipalityCount + " municipalities)" )
       }
-      litRoadsPS.close()
     }
   }
 
