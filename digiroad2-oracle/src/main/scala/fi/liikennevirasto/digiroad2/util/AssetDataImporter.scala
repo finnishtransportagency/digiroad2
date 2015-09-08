@@ -239,7 +239,7 @@ class AssetDataImporter {
 
     OracleDatabase.withDynTransaction {
       litRoadLinksByMunicipality.foreach { case (municipalityCode, litRoads) =>
-        val startTime = DateTime.now();
+        val startTime = DateTime.now()
         litRoads.foreach { litRoad =>
           val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
           val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, 1)")
