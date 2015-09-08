@@ -134,7 +134,7 @@ jossa numerosarja 373320541 on tielinkin MML-ID. Toiminto tarkentaa karttak&auml
 
 ##Tielinkin tietojen katselu##
 
-Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame) ja osoitenumerot vasemmalla ja oikealla.
+Yksitt&auml;isen tielinkin voi valita klikkaamalla kartalta sen geometriaa. Tielinkin ominaisuustiedot avautuvat ominaisuustieton&auml;kym&auml;&auml;n (1). Tielinkin ominaisuustietoja ovat Maanmittauslaitoksen ID (MML ID), hallinnollinen luokka, toiminnallinen luokka, liikennevirran suunta, tielinkin tyyppi, kuntanumero, tien nimi (suomi, ruotsi, saame), tieosoite ja osoitenumerot vasemmalla ja oikealla.
 
 Kerran klikkaamalla tulee valituksi koko tielinkkiketju. Tielinkkiketjussa kaikilla tielinkeill&auml; on sama hallinnollinen luokka, toiminnallinen luokka, tielinkin tyyppi, liikennevirran suunta ja tiennumero (maantiet) tai tien nimi (katuverkko ja yksityistie). Jos k&auml;ytt&auml;j&auml; haluaa valita vain yhden linkin, sen voi tehd&auml; tuplaklikkaamalla linkki&auml;.
 
@@ -187,6 +187,14 @@ Tielinkin ominaisuustiedoista toiminnallinen luokka, liikennevirran suunta ja ti
 ![Tielinkin ominaisuustietojen muokkaus.](k39.JPG)
 
 _Tielinkin ominaisuustietojen muokkaus. Valittuna tielinkkiketju (klikattu kerran)._
+
+####Tielinkkien muokkaus aluevalintaty&ouml;kalulla####
+
+Useamman tielinkin arvoa tietyll&auml; alueella voi muokata aluevalintaty&ouml;kalulla. Halutut tielinkit valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko tielinkkien p&auml;&auml;lle. Valituksi tulevat kaikki tielinkit laatikon sis&auml;ll&auml; ja tielinkit, joita laatikko leikkaa. Valitut tielinkit korostuvat kartalla. Valinnan j&auml;lkeen avautuu ikkuna, jossa voi valita tielinkeille alasvetovalikoista uuden toiminnallisen luokan (3) ja /tai tielinkin tyypin (4). Muutokset tallennetaan tallenna-painikkeesta. Jos alasvetovalikosta ei valita uutta arvoa, s&auml;ilyy tielinkill&auml; vanha arvo. Peruuta-painikkeesta voi perua muutoksen.
+
+![Tielinkkien monivalintap&auml;ivitys.](k56.jpg)
+
+_Tielinkkien p&auml;ivitys aluevalintaty&ouml;kalulla._
 
 ####Korjattavat tielinkit####
 
@@ -453,9 +461,9 @@ Tietoja muokataan ominaisuustieton&auml;kym&auml;ss&auml; valitsemalla nopeusraj
 
 _Nopeusrajoitusketjun arvon muokkaus (klikattu kerran)._
 
-####Useamman nopeusrajoituksen arvon muokkaus kerralla####
+####Nopeusrajoituksien muokkaus monivalintaty&ouml;kalulla####
 
-Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeusrajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiirell&auml; laatikko nopeusrajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki nopeusrajoitukset laatikon sis&auml;ll&auml; ja nopeusrajoitukset, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan nopeusrajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
+Useamman kuin yhden nopeusrajoituksen arvon voi muuttaa kerralla. Halutut nopeusrajoitukset valitaan painamalla Ctrl-painike n&auml;pp&auml;imist&ouml;lt&auml; pohjaan ja piirt&auml;m&auml;ll&auml; hiiren vasen painike pohjassa laatikko nopeusrajoitusten p&auml;&auml;lle. Valituksi tulevat kaikki nopeusrajoitukset laatikon sis&auml;ll&auml; ja nopeusrajoitukset, joita laatikko leikkaa. Valinnan j&auml;lkeen avautuu ikkuna, jossa valitaan nopeusrajoituksille tallentuva arvo ja painetaan tallenna. Peruuta-painikkeesta voi perua muutoksen.
 
 ![Useamman nopeusrajoituksen arvon muokkaus.](k40.JPG)
 
