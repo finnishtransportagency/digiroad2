@@ -312,6 +312,16 @@ var URLRouter = function(map, backend, models) {
         newNumericalLimitTitle: 'Uusi suurin sallittu leveys',
         className: 'width-limit',
         unit: 'cm'
+      },
+      {
+        typeId: 90,
+        singleElementEventCategory: 'litRoad',
+        multiElementEventCategory: 'litRoads',
+        layerName: 'litRoad',
+        numericalLimitTitle: 'Valaistu tie',
+        newNumericalLimitTitle: 'Uusi valaistu tie',
+        className: 'lit-road',
+        unit: 'cm'
       }
     ];
     var backend = customBackend || new Backend();

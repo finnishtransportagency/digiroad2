@@ -20,9 +20,6 @@
       var manoeuvreBox = new ManoeuvreBox();
       $('.action-panels').append(manoeuvreBox.element);
 
-      var litRoadBox = new LitRoadBox();
-      $('.action-panels').append(litRoadBox.element);
-
       _.forEach(numericalLimits, function(numericalLimit) {
         var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className);
         $('.action-panels').append(numericalLimitBox.element);
