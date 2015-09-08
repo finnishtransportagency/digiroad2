@@ -49,7 +49,7 @@
         '<div class="content">' +
         'Olet valinnut <%- linkCount %> tielinkkiä' +
         '</div>' +
-
+        '<div class="form-group">Tyhjäksi jätetyn kentän arvo ei muutu</div>' +
         '<div class="form-group editable">' +
         '<label class="control-label">Toiminnallinen luokka</label>' +
         '<select id="functional-class-selection" class="form-control">' + createOptionElements(functionalClasses) + '</select>' +
