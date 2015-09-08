@@ -49,7 +49,8 @@ public class OracleArray {
             long roadLinkId = row.getLong(2);
             long mmlId = row.getLong(3);
             int sideCode = row.getInt(4);
-            int limitValue = row.getInt(5);
+            Integer limitValue = new Integer(row.getInt(5));
+            if(row.wasNull()) { limitValue = null; }
             double startMeasure = row.getDouble(6);
             double endMeasure = row.getDouble(7);
             return new Tuple7(id, roadLinkId, mmlId, sideCode, limitValue, startMeasure, endMeasure);
@@ -96,7 +97,7 @@ public class OracleArray {
                 "JOIN ASSET_LINK al ON a.id = al.asset_id " +
                 "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
                 "JOIN PROPERTY p ON p.public_id = '" + valuePropertyId + "' " +
-                "JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
+                "LEFT JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
                 "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
                 "AND (a.valid_to >= sysdate OR a.valid_to is null)";
         return queryWithIdArray(ids, connection, query, new RowToNumericalLimit());

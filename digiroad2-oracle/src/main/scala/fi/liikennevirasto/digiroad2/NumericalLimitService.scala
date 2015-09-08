@@ -17,8 +17,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Int, points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
-case class NumericalLimit(id: Long, value: Int, expired: Boolean, endpoints: Set[Point],
+case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+case class NumericalLimit(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
                        numericalLimitLinks: Seq[NumericalLimitLink], typeId: Int)
@@ -48,7 +48,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Int, Int, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val numericalLimits = sql"""
       select a.id, pos.road_link_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
@@ -57,9 +57,9 @@ trait NumericalLimitOperations {
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
         join property p on p.public_id = $valuePropertyId
-        join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+        left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
         where a.id = $id
-      """.as[(Long, Long, Int, Int, Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
 
     numericalLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
@@ -85,7 +85,9 @@ trait NumericalLimitOperations {
         }
 
       val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
-        val (assetId, roadLinkId, _, sideCode, value, startMeasure, endMeasure) = link
+        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
+        val (assetId, roadLinkId, _, sideCode, _, startMeasure, endMeasure) = link
+        val value = Option(link._5)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
         NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
       }
@@ -107,7 +109,9 @@ trait NumericalLimitOperations {
         }
 
       numericalLimits.map { link =>
-        val (assetId, roadLinkId, mmlId, sideCode, value, startMeasure, endMeasure) = link
+        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
+        val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
+        val value = Option(link._5)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
         Map("id" -> (assetId + "-" + mmlId),
           "points" -> geometry,
@@ -183,10 +187,17 @@ trait NumericalLimitOperations {
     }
   }
 
-  private def createNumericalLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Int, expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
-    val id = Sequences.nextPrimaryKeySeqValue
+  private def insertNumericalLimitValue(assetId: Long)(value: Int) = {
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+     sqlu"""
+       insert into number_property_value(id, asset_id, property_id, value)
+       values ($numberPropertyValueId, $assetId, $propertyId, $value)
+     """.execute
+  }
+
+  private def createNumericalLimitWithoutTransaction(typeId: Int, roadLinkId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
+    val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
     sqlu"""
@@ -199,15 +210,15 @@ trait NumericalLimitOperations {
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
-
-        into number_property_value(id, asset_id, property_id, value)
-        values ($numberPropertyValueId, $id, $propertyId, $value)
       select * from dual
     """.execute
+
+    value.foreach(insertNumericalLimitValue(id))
+
     getByIdWithoutTransaction(id).get
   }
 
-  def createNumericalLimit(typeId: Int, roadLinkId: Long, value: Int, username: String): NumericalLimit = {
+  def createNumericalLimit(typeId: Int, roadLinkId: Long, value: Option[Int], username: String): NumericalLimit = {
     val sideCode = 1
     val startMeasure = 0
     val endMeasure = RoadLinkService.getRoadLinkLength(roadLinkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -216,7 +227,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[NumericalLimit] = {
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String): Seq[NumericalLimit] = {
     withDynTransaction {
       val typeId = getByIdWithoutTransaction(id).get.typeId
       Queries.updateAssetModified(id, username).execute

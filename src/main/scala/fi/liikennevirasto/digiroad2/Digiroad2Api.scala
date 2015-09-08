@@ -454,12 +454,12 @@ with GZipSupport {
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
     validateUserMunicipalityAccess(user)(municipalityCode.get)
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val value = (parsedBody \ "value").extract[BigInt]
-    validateNumericalLimitValue(value)
+    val value = (parsedBody \ "value").extractOpt[BigInt]
+    value.foreach(validateNumericalLimitValue)
     val username = user.username
     NumericalLimitService.createNumericalLimit(typeId = typeId,
                                          roadLinkId = roadLinkId,
-                                         value = value.intValue(),
+                                         value = value.map(_.intValue()),
                                          username = username)
   }
 
@@ -468,13 +468,13 @@ with GZipSupport {
     val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
     val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
     validateUserMunicipalityAccess(user)(municipalityCode.get)
-    val value = (parsedBody \ "value").extract[BigInt]
-    validateNumericalLimitValue(value)
+    val value = (parsedBody \ "value").extractOpt[BigInt]
+    value.foreach(validateNumericalLimitValue)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    NumericalLimitService.split(id, roadLinkId, measure, value.intValue(), expired, username)
+    NumericalLimitService.split(id, roadLinkId, measure, value.map(_.intValue()), expired, username)
   }
 
   put("/speedlimits") {

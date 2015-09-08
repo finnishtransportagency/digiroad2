@@ -21,7 +21,7 @@ class NumericalLimitServiceSpec extends FunSuite with Matchers {
     runWithCleanup {
       PassThroughService.updateNumericalLimit(11111, None, true, "lol")
       val limit = PassThroughService.getById(11111)
-      limit.get.value should be (4000)
+      limit.get.value should be (Some(4000))
       limit.get.expired should be (true)
     }
   }
@@ -30,7 +30,7 @@ class NumericalLimitServiceSpec extends FunSuite with Matchers {
     runWithCleanup {
       PassThroughService.updateNumericalLimit(11111, Some(2000), false, "lol")
       val limit = PassThroughService.getById(11111)
-      limit.get.value should be (2000)
+      limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
     }
   }
