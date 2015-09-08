@@ -223,28 +223,28 @@ class AssetDataImporter {
   }
 
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
-    val litRoadLinks: Seq[(Long, Double, Double, Int)] = conversionDatabase.withDynSession {
+    val litRoadLinks: Seq[(Long, Long, Double, Double, Int)] = conversionDatabase.withDynSession {
       sql"""
-          select t.mml_id, s.alkum, s.loppum, t.kunta_nro
+          select s.tielinkki_id, t.mml_id, s.alkum, s.loppum, t.kunta_nro
           from segments s
           join tielinkki_ctas t on s.tielinkki_id = t.dr1_id
           where s.tyyppi = 27
-       """.as[(Long, Double, Double, Int)].list
+       """.as[(Long, Long, Double, Double, Int)].list
     }
     println("*** found " + litRoadLinks.length + " lit road links from Conversion DB")
 
-    val litRoadLinksByMunicipality = litRoadLinks.groupBy(_._4)
+    val litRoadLinksByMunicipality = litRoadLinks.groupBy(_._5)
     val totalMunicipalityCount = litRoadLinksByMunicipality.keys.size
     var municipalityCount = 0
 
     OracleDatabase.withDynTransaction {
       val assetPS = dynamicSession.prepareStatement("insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY) values (?, ?, SYSDATE, 'dr1_conversion')")
-      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, 1)")
+      val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, ROAD_LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) values (?, ?, ?, ?, ?, 1)")
       val assetLinkPS = dynamicSession.prepareStatement("insert into asset_link (asset_id, position_id) values (?, ?)")
 
       litRoadLinksByMunicipality.foreach { case (municipalityCode, litRoads) =>
         val startTime = DateTime.now()
-        litRoads.foreach { case (mmlId, startMeasure, endMeasure, _) =>
+        litRoads.foreach { case (roadLinkId, mmlId, startMeasure, endMeasure, _) =>
           val assetId = Sequences.nextPrimaryKeySeqValue
           assetPS.setLong(1, assetId)
           assetPS.setInt(2, 100)
@@ -252,9 +252,10 @@ class AssetDataImporter {
 
           val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
           lrmPositionPS.setLong(1, lrmPositionId)
-          lrmPositionPS.setLong(2, mmlId)
-          lrmPositionPS.setDouble(3, startMeasure)
-          lrmPositionPS.setDouble(4, endMeasure)
+          lrmPositionPS.setLong(2, roadLinkId)
+          lrmPositionPS.setLong(3, mmlId)
+          lrmPositionPS.setDouble(4, startMeasure)
+          lrmPositionPS.setDouble(5, endMeasure)
           lrmPositionPS.addBatch()
 
           assetLinkPS.setLong(1, assetId)
