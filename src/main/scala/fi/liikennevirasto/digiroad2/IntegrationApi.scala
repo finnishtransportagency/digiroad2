@@ -197,6 +197,15 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
+  def litRoadsToApi(litRoads: Seq[Map[String, Any]]): Seq[Map[String, Any]] = {
+    litRoads.map { litRoad =>
+      Map("id" -> litRoad.get("id"),
+        "sideCode" -> litRoad.get("side_code"),
+        "value" -> 1,
+        "points" -> litRoad.get("points"))
+    }
+  }
+
   get("/:assetType") {
     contentType = formats("json")
     params.get("municipality").map { municipality =>
@@ -224,7 +233,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         case "roads_affected_by_thawing" ⇒ LinearAssetService.getByMunicipality(6, municipalityNumber)
         case "widths" ⇒ LinearAssetService.getByMunicipality(8, municipalityNumber)
         case "paved_roads" ⇒ LinearAssetService.getByMunicipality(26, municipalityNumber)
-        case "lit_roads" ⇒ LinearAssetService.getByMunicipality(27, municipalityNumber)
+        case "lit_roads" ⇒ litRoadsToApi(NumericalLimitService.getByMunicipality(100, municipalityNumber))
         case "built_up_area" ⇒ LinearAssetService.getByMunicipality(30, municipalityNumber)
         case "speed_limits_during_winter" ⇒ LinearAssetService.getByMunicipality(31, municipalityNumber)
         case "traffic_volumes" ⇒ LinearAssetService.getByMunicipality(33, municipalityNumber)
