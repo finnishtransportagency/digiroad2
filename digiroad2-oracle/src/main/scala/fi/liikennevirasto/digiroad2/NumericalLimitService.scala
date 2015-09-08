@@ -225,7 +225,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Int, expired: Boolean, username: String): Seq[NumericalLimit] = {
+  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String): Seq[NumericalLimit] = {
     withDynTransaction {
       val typeId = getByIdWithoutTransaction(id).get.typeId
       Queries.updateAssetModified(id, username).execute
@@ -237,7 +237,7 @@ trait NumericalLimitOperations {
       val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createMultiSegmentSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
 
       OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-      val createdId = createNumericalLimitWithoutTransaction(typeId, roadLinkId, Some(value), expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      val createdId = createNumericalLimitWithoutTransaction(typeId, roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
       if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
       Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
     }
