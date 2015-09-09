@@ -15,7 +15,7 @@ define(['chai', 'lodash', 'jquery', 'TestHelpers', 'SelectedSpeedLimit', 'SpeedL
           .withSpeedLimitsData(speedLimitTestData);
         var roadCollection = new RoadCollection(backend);
         var speedLimitsCollection = new SpeedLimitsCollection(backend);
-        roadCollection.fetch();
+        roadCollection.fetchFromVVH();
         speedLimitsCollection.fetch();
 
         selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
