@@ -115,6 +115,10 @@ object Digiroad2Context {
     new ProductionMassTransitStopService(eventbus)
   }
 
+  lazy val numericalLimitService: NumericalLimitService = {
+    new NumericalLimitService(roadLinkService)
+  }
+
   lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean
 
   val env = System.getProperty("env")

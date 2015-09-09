@@ -272,6 +272,7 @@ trait NumericalLimitOperations {
   }
 }
 
-object NumericalLimitService extends NumericalLimitOperations {
+class NumericalLimitService(roadLinkServiceImpl: RoadLinkService) extends NumericalLimitOperations {
   def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
 }

@@ -408,7 +408,7 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      NumericalLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      numericalLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -416,7 +416,7 @@ with GZipSupport {
 
   get("/numericallimits/:segmentId") {
     val segmentId = params("segmentId")
-    NumericalLimitService.getById(segmentId.toLong)
+    numericalLimitService.getById(segmentId.toLong)
       .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
   }
 
@@ -441,8 +441,8 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        NumericalLimitService.updateNumericalLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => NumericalLimitService.getById(segmentId)
+        numericalLimitService.updateNumericalLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+          case Some(segmentId) => numericalLimitService.getById(segmentId)
           case None => NotFound("Numerical limit " + id + " not found")
         }
     }
@@ -457,7 +457,7 @@ with GZipSupport {
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val username = user.username
-    NumericalLimitService.createNumericalLimit(typeId = typeId,
+    numericalLimitService.createNumericalLimit(typeId = typeId,
                                          roadLinkId = roadLinkId,
                                          value = value.map(_.intValue()),
                                          username = username)
@@ -474,7 +474,7 @@ with GZipSupport {
     val id = params("id").toLong
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    NumericalLimitService.split(id, roadLinkId, measure, value.map(_.intValue()), expired, username)
+    numericalLimitService.split(id, roadLinkId, measure, value.map(_.intValue()), expired, username)
   }
 
   put("/speedlimits") {
