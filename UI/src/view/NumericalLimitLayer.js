@@ -272,7 +272,7 @@ window.NumericalLimitLayer = function(params) {
         reselectNumericalLimit();
         collection.fetch(boundingBox, selectedNumericalLimit);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     }
   };
 
@@ -361,7 +361,7 @@ window.NumericalLimitLayer = function(params) {
         reselectNumericalLimit();
         collection.fetch(state.bbox, selectedNumericalLimit);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     } else {
       vectorLayer.setVisibility(false);
       stop();
