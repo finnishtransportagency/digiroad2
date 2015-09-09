@@ -73,15 +73,15 @@ trait NumericalLimitOperations {
     Set(endPoints._1, endPoints._2)
   }
 
-  private def fetchNumericalLimitsByRoadLinkIds(assetTypeId: Int, roadLinkIds: Seq[Long]) = {
-    MassQuery.withIds(roadLinkIds.toSet) { idTableName =>
+  private def fetchNumericalLimitsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
+    MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join property p on p.public_id = $valuePropertyId
-          join #$idTableName i on i.id = pos.road_link_id
+          join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Long, Int, Int, Double, Double)].list
@@ -92,21 +92,21 @@ trait NumericalLimitOperations {
     // Using lit roads as test data when moving from conversion database geometry to VVH geometry
     if (typeId == 100) {
       withDynTransaction {
-        val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities)
-        val roadLinkIds = roadLinks.map(_.id).toList
+        val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+        val mmlIds = roadLinks.map(_.mmlId).toList
 
-        val numericalLimits = fetchNumericalLimitsByRoadLinkIds(typeId, roadLinkIds)
+        val numericalLimits = fetchNumericalLimitsByMmlIds(typeId, mmlIds)
 
         val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
           roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
-            acc + (roadLink.id ->(roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
+            acc + (roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
           }
 
         val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
           // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-          val (assetId, roadLinkId, _, sideCode, _, startMeasure, endMeasure) = link
+          val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
           val value = Option(link._5)
-          val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
+          val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
           NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
         }
 
