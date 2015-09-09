@@ -29,6 +29,7 @@ trait NumericalLimitOperations {
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T
+  def roadLinkService: RoadLinkService = RoadLinkService
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -73,26 +74,51 @@ trait NumericalLimitOperations {
   }
 
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
-    withDynTransaction {
-      val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
-      val roadLinkIds = roadLinks.map(_.id).toList
+    // Using lit roads as test data when moving from conversion database geometry to VVH geometry
+    if (typeId == 100) {
+       withDynTransaction {
+        val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities)
+        val roadLinkIds = roadLinks.map(_.id).toList
 
-      val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+        val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
 
-      val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
-      roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
-          acc + (roadLink.id -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
+        val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
+          roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
+            acc + (roadLink.id ->(roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
+          }
+
+        val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
+          // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
+          val (assetId, roadLinkId, _, sideCode, _, startMeasure, endMeasure) = link
+          val value = Option(link._5)
+          val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
+          NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
         }
 
-      val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
-        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-        val (assetId, roadLinkId, _, sideCode, _, startMeasure, endMeasure) = link
-        val value = Option(link._5)
-        val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
-        NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+        numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
       }
+    } else {
+      withDynTransaction {
+        val roadLinks = RoadLinkService.getRoadLinks(bounds, municipalities)
+        val roadLinkIds = roadLinks.map(_.id).toList
 
-      numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+        val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+
+        val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
+          roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
+            acc + (roadLink.id ->(roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
+          }
+
+        val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
+          // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
+          val (assetId, roadLinkId, _, sideCode, _, startMeasure, endMeasure) = link
+          val value = Option(link._5)
+          val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId)._1, startMeasure, endMeasure)
+          NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+        }
+
+        numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+      }
     }
   }
 
