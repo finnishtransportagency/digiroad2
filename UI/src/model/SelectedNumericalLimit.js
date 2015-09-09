@@ -31,20 +31,20 @@
       });
     };
 
-    this.create = function(roadLinkId, points) {
+    this.create = function(mmlId, points) {
       self.close();
       var endpoints = [_.first(points), _.last(points)];
       originalValue = null;
       originalExpired = true;
       current = {
         id: null,
-        roadLinkId: roadLinkId,
+        mmlId: mmlId,
         endpoints: endpoints,
         value: null,
         expired: true,
         sideCode: 1,
         links: [{
-          roadLinkId: roadLinkId,
+          mmlId: mmlId,
           points: points
         }]
       };
@@ -113,7 +113,7 @@
     };
 
     var createNew = function(success, failure) {
-      backend.createNumericalLimit(typeId, current.roadLinkId, current.value, success, failure);
+      backend.createNumericalLimit(typeId, current.mmlId, current.value, success, failure);
     };
 
     this.cancel = function() {
@@ -141,8 +141,8 @@
       return current.id;
     };
 
-    this.getRoadLinkId = function() {
-      return current.roadLinkId;
+    this.getMmlId = function() {
+      return current.mmlId;
     };
 
     this.getEndpoints = function() {

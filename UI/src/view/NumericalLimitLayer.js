@@ -212,6 +212,11 @@ window.NumericalLimitLayer = function(params) {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === null; });
   };
 
+  var findRoadLinkFeaturesByMmlId = function(id) {
+    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === id; });
+  };
+
+  // TODO: Remove usage and use findRoadLinkFeaturesByMmlId instead
   var findRoadLinkFeaturesByRoadLinkId = function(id) {
     return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
   };
@@ -225,7 +230,7 @@ window.NumericalLimitLayer = function(params) {
     if (feature.attributes.id) {
       selectedNumericalLimit.open(feature.attributes.id);
     } else {
-      selectedNumericalLimit.create(feature.attributes.roadLinkId, feature.attributes.points);
+      selectedNumericalLimit.create(feature.attributes.mmlId, feature.attributes.points);
     }
   };
 
@@ -314,7 +319,7 @@ window.NumericalLimitLayer = function(params) {
 
   var handleNumericalLimitSelected = function(selectedNumericalLimit) {
     if (selectedNumericalLimit.isNew()) {
-      var feature = _.first(findWeightFeaturesById(selectedNumericalLimit.getId())) || _.first(findRoadLinkFeaturesByRoadLinkId(selectedNumericalLimit.getRoadLinkId()));
+      var feature = _.first(findWeightFeaturesById(selectedNumericalLimit.getId())) || _.first(findRoadLinkFeaturesByMmlId(selectedNumericalLimit.getMmlId()));
       setSelectionStyleAndHighlightFeature(feature);
     }
   };
@@ -380,7 +385,7 @@ window.NumericalLimitLayer = function(params) {
       if (selectedNumericalLimit.isDirty()) {
         return findUnpersistedWeightFeatures();
       } else {
-        return findRoadLinkFeaturesByRoadLinkId(selectedNumericalLimit.getRoadLinkId());
+        return findRoadLinkFeaturesByMmlId(selectedNumericalLimit.getMmlId());
       }
     } else {
       return findWeightFeaturesById(selectedNumericalLimit.getId());

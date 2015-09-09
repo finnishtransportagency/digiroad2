@@ -23,6 +23,7 @@
           return [key, { id: values[0].id, links: _.map(values, function(value) {
             return {
               roadLinkId: value.roadLinkId,
+              mmlId: value.mmlId,
               position: value.position,
               points: value.points
             };

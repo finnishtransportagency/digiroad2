@@ -171,12 +171,12 @@
       });
     };
 
-    this.createNumericalLimit = _.throttle(function(typeId, roadLinkId, value, success, error) {
+    this.createNumericalLimit = _.throttle(function(typeId, mmlId, value, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/numericallimits?typeId=" + typeId,
-        data: JSON.stringify({roadLinkId: roadLinkId, value: value}),
+        data: JSON.stringify({mmlId: mmlId, value: value}),
         dataType: "json",
         success: success,
         error: error
