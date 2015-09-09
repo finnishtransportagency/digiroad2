@@ -1,13 +1,19 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, AdministrativeClass}
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
+import org.mockito.Mockito._
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class NumericalLimitServiceSpec extends FunSuite with Matchers {
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   object PassThroughService extends NumericalLimitOperations {
     override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
   }
 
   def runWithCleanup(test: => Unit): Unit = {
