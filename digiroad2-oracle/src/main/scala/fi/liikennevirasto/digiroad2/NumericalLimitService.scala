@@ -50,7 +50,7 @@ trait NumericalLimitOperations {
   }
 
   // TODO: Remove RoadLinkService usage when VVH is used througout NumericalLimitService
-  private def numericalLimitLinksById(id: Long, roadLinkGeometry: Option[Seq[Point]] = None): Seq[(Long, Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+  private def numericalLimitLinksById(id: Long, fetchGeometry: (Long, Long) => Seq[Point] = { (_, roadLinkId) => RoadLinkService.getRoadLinkGeometry(roadLinkId).get }): Seq[(Long, Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val numericalLimits = sql"""
       select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
@@ -64,10 +64,7 @@ trait NumericalLimitOperations {
       """.as[(Long, Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
 
     numericalLimits.map { case (segmentId, roadLinkId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
-      val points = roadLinkGeometry match {
-        case Some(geometry) => GeometryUtils.truncateGeometry(geometry, startMeasure, endMeasure)
-        case None => RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      }
+      val points = GeometryUtils.truncateGeometry(fetchGeometry(mmlId, roadLinkId), startMeasure, endMeasure)
       (segmentId, roadLinkId, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
     }
   }
@@ -145,8 +142,8 @@ trait NumericalLimitOperations {
   }
 
   // TODO: Remove default None when VVH is used throughout NumericalLimitService
-  private def getByIdWithoutTransaction(id: Long, geometry: Option[Seq[Point]] = None): Option[NumericalLimit] = {
-    val links = numericalLimitLinksById(id, geometry)
+  private def getByIdWithoutTransaction(id: Long, fetchGeometry: (Long, Long) => Seq[Point] = { (_, roadLinkId) => RoadLinkService.getRoadLinkGeometry(roadLinkId).get }): Option[NumericalLimit] = {
+    val links = numericalLimitLinksById(id, fetchGeometry)
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._6) }.toList
@@ -166,7 +163,7 @@ trait NumericalLimitOperations {
 
   def getById(id: Long): Option[NumericalLimit] = {
     withDynTransaction {
-      getByIdWithoutTransaction(id)
+      getByIdWithoutTransaction(id, { (mmlId, _) => roadLinkService.fetchVVHRoadlink(mmlId).get.geometry })
     }
   }
 
@@ -259,7 +256,7 @@ trait NumericalLimitOperations {
 
     value.foreach(insertNumericalLimitValue(id))
 
-    getByIdWithoutTransaction(id, Some(roadLinkGeometry)).get
+    getByIdWithoutTransaction(id, { (_, _) => roadLinkGeometry }).get
   }
 
   def createNumericalLimit(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): NumericalLimit = {
