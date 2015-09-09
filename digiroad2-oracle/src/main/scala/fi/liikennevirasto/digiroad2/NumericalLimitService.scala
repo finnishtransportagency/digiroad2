@@ -49,7 +49,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  // TODO: Remove RoadLinkService usage when VVH is used througout NumericalLimitService
+  // TODO: Remove default fetchGeometry function and roadLinkId parameter when VVH is used througout NumericalLimitService
   private def numericalLimitLinksById(id: Long, fetchGeometry: (Long, Long) => Seq[Point] = { (_, roadLinkId) => RoadLinkService.getRoadLinkGeometry(roadLinkId).get }): Seq[(Long, Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val numericalLimits = sql"""
       select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
@@ -141,7 +141,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  // TODO: Remove default None when VVH is used throughout NumericalLimitService
+  // TODO: Remove default function when VVH is used throughout NumericalLimitService
   private def getByIdWithoutTransaction(id: Long, fetchGeometry: (Long, Long) => Seq[Point] = { (_, roadLinkId) => RoadLinkService.getRoadLinkGeometry(roadLinkId).get }): Option[NumericalLimit] = {
     val links = numericalLimitLinksById(id, fetchGeometry)
     if (links.isEmpty) None
