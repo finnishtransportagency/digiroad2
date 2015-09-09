@@ -178,7 +178,8 @@ var URLRouter = function(map, backend, models) {
           numericalLimit.newNumericalLimitTitle,
           numericalLimit.className,
           numericalLimit.singleElementEventCategory,
-          numericalLimit.unit);
+          numericalLimit.unit,
+          numericalLimit.editControlLabels);
     });
 
     var numericalLimitLayers = _.reduce(numericalLimits, function(acc, numericalLimit) {
@@ -251,7 +252,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Suurin sallittu massa',
         newNumericalLimitTitle: 'Uusi suurin sallittu massa',
         className: 'total-weight-limit',
-        unit: 'kg'
+        unit: 'kg',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 40,
@@ -261,7 +265,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Yhdistelmän suurin sallittu massa',
         newNumericalLimitTitle: 'Uusi yhdistelmän suurin sallittu massa',
         className: 'trailer-truck-weight-limit',
-        unit: 'kg'
+        unit: 'kg',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 50,
@@ -271,7 +278,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Suurin sallittu akselimassa',
         newNumericalLimitTitle: 'Uusi suurin sallittu akselimassa',
         className: 'axle-weight-limit',
-        unit: 'kg'
+        unit: 'kg',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 60,
@@ -281,7 +291,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Suurin sallittu telimassa',
         newNumericalLimitTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg'
+        unit: 'kg',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 70,
@@ -291,7 +304,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Suurin sallittu korkeus',
         newNumericalLimitTitle: 'Uusi suurin sallittu korkeus',
         className: 'height-limit',
-        unit: 'cm'
+        unit: 'cm',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 80,
@@ -301,7 +317,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
         newNumericalLimitTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
         className: 'length-limit',
-        unit: 'cm'
+        unit: 'cm',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 90,
@@ -311,7 +330,10 @@ var URLRouter = function(map, backend, models) {
         numericalLimitTitle: 'Suurin sallittu leveys',
         newNumericalLimitTitle: 'Uusi suurin sallittu leveys',
         className: 'width-limit',
-        unit: 'cm'
+        unit: 'cm',
+        editControlLabels: { title: 'Rajoitus',
+                             enabled: 'Rajoitus',
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 100,
@@ -320,7 +342,10 @@ var URLRouter = function(map, backend, models) {
         layerName: 'litRoad',
         numericalLimitTitle: 'Valaistu tie',
         newNumericalLimitTitle: 'Uusi valaistu tie',
-        className: 'lit-road'
+        className: 'lit-road',
+        editControlLabels: { title: 'Valaistus',
+                             enabled: 'Valaistus',
+                             disabled: 'Ei valaistusta' }
       }
     ];
     var backend = customBackend || new Backend();
