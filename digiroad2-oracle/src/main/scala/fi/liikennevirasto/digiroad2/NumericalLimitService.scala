@@ -17,7 +17,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class NumericalLimitLink(id: Long, roadLinkId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+case class NumericalLimitLink(id: Long, roadLinkId: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 case class NumericalLimit(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
@@ -49,9 +49,9 @@ trait NumericalLimitOperations {
     }
   }
 
-  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val numericalLimits = sql"""
-      select a.id, pos.road_link_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
+      select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
              a.asset_type_id
         from asset a
@@ -60,11 +60,11 @@ trait NumericalLimitOperations {
         join property p on p.public_id = $valuePropertyId
         left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
         where a.id = $id
-      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      """.as[(Long, Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
 
-    numericalLimits.map { case (segmentId, roadLinkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
+    numericalLimits.map { case (segmentId, roadLinkId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (segmentId, roadLinkId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
+      (segmentId, roadLinkId, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
     }
   }
 
@@ -105,7 +105,7 @@ trait NumericalLimitOperations {
         val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
         val value = Option(link._5)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
-        NumericalLimitLink(assetId, roadLinkId, sideCode, value, geometry)
+        NumericalLimitLink(assetId, roadLinkId, mmlId, sideCode, value, geometry)
       }
 
       numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
@@ -144,12 +144,12 @@ trait NumericalLimitOperations {
     val links = numericalLimitLinksById(id)
     if (links.isEmpty) None
     else {
-      val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
+      val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._6) }.toList
       val limitEndpoints = calculateEndPoints(linkEndpoints)
       val head = links.head
-      val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
-      val numericalLimitLinks = links.map { case (_, roadLinkId, sideCode, _, points, _, _, _, _, _, typeId) =>
-        NumericalLimitLink(id, roadLinkId, sideCode, value, points, None, None, expired)
+      val (_, _, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
+      val numericalLimitLinks = links.map { case (_, roadLinkId, mmlId, sideCode, _, points, _, _, _, _, _, typeId) =>
+        NumericalLimitLink(id, roadLinkId, mmlId, sideCode, value, points, None, None, expired)
       }
       Some(NumericalLimit(
             id, value, expired, limitEndpoints,
