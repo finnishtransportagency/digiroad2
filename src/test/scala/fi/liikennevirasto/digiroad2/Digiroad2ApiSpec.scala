@@ -31,7 +31,10 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockVVHClient.fetchVVHRoadlink(7478l))
     .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
-    .thenReturn(List(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    .thenReturn(List(
+      VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+    ))
   when(mockVVHClient.fetchVVHRoadlink(362964704))
     .thenReturn(Some(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlink(1140018963))
@@ -49,8 +52,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   }
+  val testNumericalLimitService = new NumericalLimitService(testRoadLinkService)
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testLinearAssetProvider, testMassTransitStopService), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testLinearAssetProvider, testMassTransitStopService, testNumericalLimitService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   // TODO: For this test to mean anything the servlet should probably not use test mode authentication?
@@ -234,7 +238,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/numericallimits?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      parse(body).extract[List[NumericalLimitLink]].size should be(2)
+      val parsedBody = parse(body).extract[List[NumericalLimitLink]]
+      parsedBody.size should be(2)
     }
   }
 

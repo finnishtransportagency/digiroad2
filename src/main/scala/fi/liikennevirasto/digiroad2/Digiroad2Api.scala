@@ -16,7 +16,8 @@ import org.slf4j.LoggerFactory
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearAssetProvider: LinearAssetProvider,
-                   val massTransitStopService: MassTransitStopService) extends ScalatraServlet
+                   val massTransitStopService: MassTransitStopService,
+                   val numericalLimitService: NumericalLimitService) extends ScalatraServlet
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
