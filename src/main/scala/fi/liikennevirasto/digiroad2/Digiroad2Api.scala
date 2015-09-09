@@ -452,17 +452,16 @@ with GZipSupport {
   post("/numericallimits") {
     val user = userProvider.getCurrentUser()
     val mmlId = (parsedBody \ "mmlId").extract[Long]
-    // TODO: Execute municipality validation within numerical limit creation
-//    val municipalityCode = RoadLinkService.getMunicipalityCode(mmlId)
-//    validateUserMunicipalityAccess(user)(municipalityCode.get)
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val username = user.username
-    numericalLimitService.createNumericalLimit(typeId = typeId,
-                                         mmlId = mmlId,
-                                         value = value.map(_.intValue()),
-                                         username = username)
+    numericalLimitService.createNumericalLimit(
+      typeId = typeId,
+      mmlId = mmlId,
+      value = value.map(_.intValue()),
+      username = username,
+      municipalityValidation = validateUserMunicipalityAccess(user))
   }
 
   post("/numericallimits/:id") {

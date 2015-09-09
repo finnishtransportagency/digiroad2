@@ -262,10 +262,11 @@ trait NumericalLimitOperations {
     getByIdWithoutTransaction(id, Some(roadLinkGeometry)).get
   }
 
-  def createNumericalLimit(typeId: Int, mmlId: Long, value: Option[Int], username: String): NumericalLimit = {
+  def createNumericalLimit(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): NumericalLimit = {
     val sideCode = 1
     val startMeasure = 0
     val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    municipalityValidation(roadLink.municipalityCode)
     withDynTransaction {
       createNumericalLimitWithoutTransaction(typeId, roadLink.mmlId, roadLink.geometry, value, false, sideCode, startMeasure, GeometryUtils.geometryLength(roadLink.geometry), username)
     }
