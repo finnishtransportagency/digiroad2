@@ -237,6 +237,7 @@ class AssetDataImporter {
 
   def generateDroppedNumericalLimits(): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient("localhost:6080"), null)
+    val startTime = DateTime.now()
 
     val limits = OracleDatabase.withDynSession {
       sql"""
@@ -248,16 +249,13 @@ class AssetDataImporter {
            where a.asset_type_id in (30,40,50,60,70,80,90,100)
          """.as[(Long, Long, Int, Int, Int, Int)].list
     }
+    println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
-    val mmlIds = limits.map(_._1).toSet
+    val existingMmlIds = roadLinkService.fetchVVHRoadlinks(limits.map(_._1).toSet).map(_.mmlId)
+    println("*** fetched all road links from VVH "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
-    val nonExistingMmlIds = mmlIds.filter { mmlId =>
-      roadLinkService.fetchVVHRoadlink(mmlId).isEmpty
-    }
-
-    val nonExistingLimits: Map[Int, List[(Long, Long, Int, Int, Int, Int)]] = limits.filter { limit =>
-      nonExistingMmlIds.contains(limit._1)
-    }.groupBy(_._6)
+    val nonExistingLimits = limits.filter { limit => !existingMmlIds.contains(limit._1) }
+    println("*** calculated dropped links "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
 
     val asset_name = Map(30 -> "total_weight_limits",
       40 -> "trailer_truck_weight_limits",
@@ -268,9 +266,10 @@ class AssetDataImporter {
       90 -> "width_limits",
       100 -> "lit_roads")
 
-    nonExistingLimits.foreach { case (key, values) =>
+    nonExistingLimits.groupBy(_._6).foreach { case (key, values) =>
       exportCsv(asset_name(key), values)
     }
+    println("*** exported CSV files "  + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
   }
 
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
