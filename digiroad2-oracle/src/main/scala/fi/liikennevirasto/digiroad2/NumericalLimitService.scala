@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnect
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
 
@@ -73,14 +73,29 @@ trait NumericalLimitOperations {
     Set(endPoints._1, endPoints._2)
   }
 
+  private def fetchNumericalLimitsByRoadLinkIds(assetTypeId: Int, roadLinkIds: Seq[Long]) = {
+    MassQuery.withIds(roadLinkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join property p on p.public_id = $valuePropertyId
+          join #$idTableName i on i.id = pos.road_link_id
+          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+          where a.asset_type_id = $assetTypeId
+          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Long, Int, Int, Double, Double)].list
+    }
+  }
+
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
     // Using lit roads as test data when moving from conversion database geometry to VVH geometry
     if (typeId == 100) {
-       withDynTransaction {
+      withDynTransaction {
         val roadLinks = roadLinkService.getRoadLinks(bounds, municipalities)
         val roadLinkIds = roadLinks.map(_.id).toList
 
-        val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+        val numericalLimits = fetchNumericalLimitsByRoadLinkIds(typeId, roadLinkIds)
 
         val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
           roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
