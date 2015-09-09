@@ -216,11 +216,6 @@ window.NumericalLimitLayer = function(params) {
     return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === id; });
   };
 
-  // TODO: Remove usage and use findRoadLinkFeaturesByMmlId instead
-  var findRoadLinkFeaturesByRoadLinkId = function(id) {
-    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
-  };
-
   var findWeightFeaturesById = function(id) {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
   };
@@ -251,9 +246,9 @@ window.NumericalLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  var handleNumericalLimitUnSelected = function(id, roadLinkId) {
+  var handleNumericalLimitUnSelected = function(id, mmlId) {
     var features = findWeightFeaturesById(id);
-    if (_.isEmpty(features)) { features = findRoadLinkFeaturesByRoadLinkId(roadLinkId); }
+    if (_.isEmpty(features)) { features = findRoadLinkFeaturesByMmlId(mmlId); }
     _.each(features, function(feature) {
       selectControl.unhighlight(feature);
     });

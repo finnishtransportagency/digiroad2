@@ -54,12 +54,12 @@
     this.close = function() {
       if (current && !dirty) {
         var id = current.id;
-        var roadLinkId = current.roadLinkId;
+        var mmlId = current.mmlId;
         if (current.expired) {
           collection.remove(id);
         }
         current = null;
-        eventbus.trigger(singleElementEvent('unselected'), id, roadLinkId);
+        eventbus.trigger(singleElementEvent('unselected'), id, mmlId);
       }
     };
 
