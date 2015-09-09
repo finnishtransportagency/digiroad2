@@ -222,6 +222,31 @@ class AssetDataImporter {
     }
   }
 
+  def generateDroppedNumericalLimits(): Unit = {
+    val roadLinkService = new VVHRoadLinkService(new VVHClient("localhost:6080"), null)
+
+    val limits = OracleDatabase.withDynSession {
+      sql"""
+           select pos.MML_ID, pos.road_link_id, pos.start_measure, pos.end_measure, s.value, a.asset_type_id
+           from asset a
+           join ASSET_LINK al on a.id = al.asset_id
+           join LRM_POSITION pos on al.position_id = pos.id
+           left join number_property_value s on s.asset_id = a.id
+           where a.asset_type_id in (30,40,50,60,70,80,90,100)
+         """.as[(Long, Long, Int, Int, Int, Int)].list
+    }
+
+    val mmlIds = limits.map(_._1).toSet
+
+    val nonExistingMmlIds = mmlIds.filter { mmlId =>
+      roadLinkService.fetchVVHRoadlink(mmlId).isEmpty
+    }
+
+    val nonExistingLimits = limits.filter { limit =>
+      nonExistingMmlIds.contains(limit._1)
+    }
+  }
+
   def importLitRoadsFromConversion(conversionDatabase: DatabaseDef) = {
     val litRoadLinks: Seq[(Long, Long, Double, Double, Int)] = conversionDatabase.withDynSession {
       sql"""
