@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.io.{FileWriter, BufferedWriter, File}
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -222,6 +223,18 @@ class AssetDataImporter {
     }
   }
 
+  def exportCsv(fileName: String, droppedLimits: List[(Long, Long, Int, Int, Int, Int)]): Unit = {
+    val headerLine = "mml_id; road_link_id; start_measure; end_measure; value \n"
+    val data = droppedLimits.map { x =>
+      s"""${x._1}; ${x._2}; ${x._3}; ${x._4}; ${x._5}"""
+    }.mkString("\n")
+
+    val file = new File(fileName + ".csv")
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write(headerLine + data + "\n")
+    bw.close()
+  }
+
   def generateDroppedNumericalLimits(): Unit = {
     val roadLinkService = new VVHRoadLinkService(new VVHClient("localhost:6080"), null)
 
@@ -242,8 +255,21 @@ class AssetDataImporter {
       roadLinkService.fetchVVHRoadlink(mmlId).isEmpty
     }
 
-    val nonExistingLimits = limits.filter { limit =>
+    val nonExistingLimits: Map[Int, List[(Long, Long, Int, Int, Int, Int)]] = limits.filter { limit =>
       nonExistingMmlIds.contains(limit._1)
+    }.groupBy(_._6)
+
+    val asset_name = Map(30 -> "total_weight_limits",
+      40 -> "trailer_truck_weight_limits",
+      50 -> "axle_weight_limits",
+      60 -> "bogie_weight_limits",
+      70 -> "height_limits",
+      80 -> "length_limits",
+      90 -> "width_limits",
+      100 -> "lit_roads")
+
+    nonExistingLimits.foreach { case (key, values) =>
+      exportCsv(asset_name(key), values)
     }
   }
 
