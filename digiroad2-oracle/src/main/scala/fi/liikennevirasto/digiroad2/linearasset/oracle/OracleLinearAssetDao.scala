@@ -105,8 +105,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
-
   val roadLinkService: RoadLinkService
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -127,27 +125,6 @@ trait OracleLinearAssetDao {
   implicit val SetParameterFromLong: SetParameter[Seq[Long]] = new SetParameter[Seq[Long]] {
     def apply(seq: Seq[Long], p: PositionedParameters): Unit = {
       seq.foreach(p.setLong)
-    }
-  }
-
-  def transformLink(link: (Long, Long, Int, Int, Array[Byte])) = {
-    val (id, roadLinkId, sideCode, value, pos) = link
-    val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
-    (id, roadLinkId, sideCode, value, points.map { pointArray =>
-      Point(pointArray(0), pointArray(1))}.toSeq)
-  }
-
-  def getLinksWithLength(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point])] = {
-    val links = sql"""
-      select pos.road_link_id, pos.start_measure, pos.end_measure
-        from ASSET a
-        join ASSET_LINK al on a.id = al.asset_id
-        join LRM_POSITION pos on al.position_id = pos.id
-        where a.asset_type_id = $assetTypeId and a.id = $id
-        """.as[(Long, Double, Double)].list
-    links.map { case (roadLinkId, startMeasure, endMeasure) =>
-      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (roadLinkId, endMeasure - startMeasure, points)
     }
   }
 
@@ -261,16 +238,6 @@ trait OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, value)
   }
 
-  def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
-    sql"""
-      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
-        from asset a
-        join asset_link al on a.ID = al.ASSET_ID
-        join lrm_position lrm on lrm.id = al.POSITION_ID
-        where a.id = $id and lrm.road_link_id = $roadLinkId
-    """.as[(Double, Double, Int)].list.head
-  }
-  
   def getLinkGeometryData(id: Long): (Double, Double, SideCode) = {
     sql"""
       select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
@@ -325,18 +292,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def moveLinks(sourceId: Long, targetId: Long, roadLinkIds: Seq[Long]): List[Int] = {
-    val roadLinks = roadLinkIds.map(_ => "?").mkString(",")
-    val sql = s"""
-      update ASSET_LINK
-      set
-        asset_id = $targetId
-      where asset_id = $sourceId and position_id in (
-        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in ($roadLinks))
-    """
-    Q.update[Seq[Long]](sql).apply(roadLinkIds).list
-  }
-
   def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
     val roadLinks = mmlIds.mkString(",")
     sqlu"""
@@ -348,25 +303,6 @@ trait OracleLinearAssetDao {
     """.execute
   }
 
-  def updateLinkStartAndEndMeasures(id: Long,
-                                    roadLinkId: Long,
-                                    linkMeasures: (Double, Double)): Unit = {
-    val (startMeasure, endMeasure) = linkMeasures
-
-    sqlu"""
-      update LRM_POSITION
-      set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id and lrm.road_link_id = $roadLinkId)
-    """.execute
-  }
-  
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
