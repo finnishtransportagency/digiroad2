@@ -442,7 +442,7 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        linearAssetService.updateNumericalLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+        linearAssetService.update(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
           case Some(segmentId) => linearAssetService.getById(segmentId)
           case None => NotFound("Numerical limit " + id + " not found")
         }
@@ -456,7 +456,7 @@ with GZipSupport {
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val username = user.username
-    linearAssetService.createNumericalLimit(
+    linearAssetService.createNew(
       typeId = typeId,
       mmlId = mmlId,
       value = value.map(_.intValue()),

@@ -14,15 +14,15 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class NumericalLimitLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point],
+case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point],
                               position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 
-case class NumericalLimit(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
+case class LinearAsset(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
-                       numericalLimitLinks: Seq[NumericalLimitLink], typeId: Int)
+                       linearAssetLinks: Seq[LinearAssetLink], typeId: Int)
 
-trait NumericalLimitOperations {
+trait LinearAssetOperations {
   import GeometryDirection._
 
   val valuePropertyId: String = "mittarajoitus"
@@ -35,8 +35,8 @@ trait NumericalLimitOperations {
     new BoneCPDataSource(cfg)
   }
 
-  private def getLinksWithPositions(links: Seq[NumericalLimitLink]): Seq[NumericalLimitLink] = {
-    def getLinkEndpoints(link: NumericalLimitLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
+  private def getLinksWithPositions(links: Seq[LinearAssetLink]): Seq[LinearAssetLink] = {
+    def getLinkEndpoints(link: LinearAssetLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
     val linkChain = LinkChain(links, getLinkEndpoints)
     linkChain.map { chainedLink =>
       val rawLink = chainedLink.rawLink
@@ -48,8 +48,8 @@ trait NumericalLimitOperations {
     }
   }
 
-  private def numericalLimitLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
-    val numericalLimits = sql"""
+  private def linearAssetLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+    val linearAssets = sql"""
       select a.id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
              a.asset_type_id
@@ -61,7 +61,7 @@ trait NumericalLimitOperations {
         where a.id = $id
       """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
 
-    numericalLimits.map { case (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
+    linearAssets.map { case (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       val points = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
       (segmentId, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
@@ -73,7 +73,7 @@ trait NumericalLimitOperations {
     Set(endPoints._1, endPoints._2)
   }
 
-  private def fetchNumericalLimitsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
+  private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
@@ -88,27 +88,27 @@ trait NumericalLimitOperations {
     }
   }
 
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[NumericalLimitLink] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAssetLink] = {
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
       val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val numericalLimits = fetchNumericalLimitsByMmlIds(typeId, mmlIds)
+      val linearAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
 
       val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
         roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
           acc + (roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
         }
 
-      val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
+      val linearAssetsWithGeometry: Seq[LinearAssetLink] = linearAssets.map { link =>
         // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
         val (assetId, mmlId, sideCode, _, startMeasure, endMeasure) = link
         val value = Option(link._4)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
-        NumericalLimitLink(assetId, mmlId, sideCode, value, geometry)
+        LinearAssetLink(assetId, mmlId, sideCode, value, geometry)
       }
 
-      numericalLimitsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+      linearAssetsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
     }
   }
 
@@ -117,37 +117,37 @@ trait NumericalLimitOperations {
       val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
       val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val numericalLimits = fetchNumericalLimitsByMmlIds(typeId, mmlIds)
+      val linearAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
 
       val linkGeometries: Map[Long, Seq[Point]] =
         roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
           acc + (roadLink.mmlId -> roadLink.geometry)
         }
 
-      (numericalLimits, linkGeometries)
+      (linearAssets, linkGeometries)
     }
   }
 
-  private def getByIdWithoutTransaction(id: Long): Option[NumericalLimit] = {
-    val links = numericalLimitLinksById(id)
+  private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
+    val links = linearAssetLinksById(id)
     if (links.isEmpty) None
     else {
       val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
       val limitEndpoints = calculateEndPoints(linkEndpoints)
       val head = links.head
       val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
-      val numericalLimitLinks = links.map { case (_, mmlId, sideCode, _, points, _, _, _, _, _, _) =>
-        NumericalLimitLink(id, mmlId, sideCode, value, points, None, None, expired)
+      val linearAssetLinks = links.map { case (_, mmlId, sideCode, _, points, _, _, _, _, _, _) =>
+        LinearAssetLink(id, mmlId, sideCode, value, points, None, None, expired)
       }
-      Some(NumericalLimit(
+      Some(LinearAsset(
             id, value, expired, limitEndpoints,
             modifiedBy, modifiedAt.map(DateTimeFormat.print),
             createdBy, createdAt.map(DateTimeFormat.print),
-            getLinksWithPositions(numericalLimitLinks), typeId))
+            getLinksWithPositions(linearAssetLinks), typeId))
     }
   }
 
-  def getById(id: Long): Option[NumericalLimit] = {
+  def getById(id: Long): Option[LinearAsset] = {
     withDynTransaction {
       getByIdWithoutTransaction(id)
     }
@@ -156,7 +156,7 @@ trait NumericalLimitOperations {
   private def updateNumberProperty(assetId: Long, propertyId: Long, value: Int): Int =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId".first
 
-  private def updateNumericalLimitValue(id: Long, value: Int, username: String): Option[Long] = {
+  private def updateLinearAssetValue(id: Long, value: Int, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = updateNumberProperty(id, propertyId, value)
@@ -167,7 +167,7 @@ trait NumericalLimitOperations {
     }
   }
 
-  private def updateNumericalLimitExpiration(id: Long, expired: Boolean, username: String) = {
+  private def updateLinearAssetExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
       sqlu"update asset set valid_to = sysdate where id = $id".first
@@ -181,17 +181,17 @@ trait NumericalLimitOperations {
     }
   }
 
-  def updateNumericalLimit(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
+  def update(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
     withDynTransaction {
-      val valueUpdate: Option[Long] = value.flatMap(updateNumericalLimitValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateNumericalLimitExpiration(id, expired, username)
+      val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
+      val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
       val updatedId = valueUpdate.orElse(expirationUpdate)
       if (updatedId.isEmpty) dynamicSession.rollback()
       updatedId
     }
   }
 
-  private def insertNumericalLimitValue(assetId: Long)(value: Int) = {
+  private def insertValue(assetId: Long)(value: Int) = {
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
      sqlu"""
@@ -200,7 +200,7 @@ trait NumericalLimitOperations {
      """.execute
   }
 
-  private def createNumericalLimitWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
+  private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): LinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if(expired) "sysdate" else "null"
@@ -217,40 +217,40 @@ trait NumericalLimitOperations {
       select * from dual
     """.execute
 
-    value.foreach(insertNumericalLimitValue(id))
+    value.foreach(insertValue(id))
 
     getByIdWithoutTransaction(id).get
   }
 
-  def createNumericalLimit(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): NumericalLimit = {
+  def createNew(typeId: Int, mmlId: Long, value: Option[Int], username: String, municipalityValidation: Int => Unit): LinearAsset = {
     val sideCode = 1
     val startMeasure = 0
     val expired = false
     val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
     withDynTransaction {
-      createNumericalLimitWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, startMeasure, GeometryUtils.geometryLength(roadLink.geometry), username)
+      createWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, startMeasure, GeometryUtils.geometryLength(roadLink.geometry), username)
     }
   }
 
-  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[NumericalLimit] = {
+  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[LinearAsset] = {
     val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
     municipalityValidation(roadLink.municipalityCode)
 
-    val limit: NumericalLimit = getById(id).get
+    val limit: LinearAsset = getById(id).get
     val createdId = withDynTransaction {
       Queries.updateAssetModified(id, username).execute
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id)
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
       OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
-      createNumericalLimitWithoutTransaction(limit.typeId, mmlId, value, expired, sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
+      createWithoutTransaction(limit.typeId, mmlId, value, expired, sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
     Seq(getById(id).get, getById(createdId).get)
   }
 }
 
-class LinearAssetService(roadLinkServiceImpl: RoadLinkService) extends NumericalLimitOperations {
+class LinearAssetService(roadLinkServiceImpl: RoadLinkService) extends LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
 }

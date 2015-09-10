@@ -12,7 +12,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  object PassThroughService extends NumericalLimitOperations {
+  object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
   }
@@ -26,7 +26,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Expire numerical limit") {
     runWithCleanup {
-      PassThroughService.updateNumericalLimit(11111, None, true, "lol")
+      PassThroughService.update(11111, None, true, "lol")
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(4000))
       limit.get.expired should be (true)
@@ -35,7 +35,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithCleanup {
-      PassThroughService.updateNumericalLimit(11111, Some(2000), false, "lol")
+      PassThroughService.update(11111, Some(2000), false, "lol")
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)

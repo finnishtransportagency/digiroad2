@@ -238,7 +238,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/numericallimits?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      val parsedBody = parse(body).extract[List[NumericalLimitLink]]
+      val parsedBody = parse(body).extract[List[LinearAssetLink]]
       parsedBody.size should be(2)
     }
   }
