@@ -204,10 +204,10 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
-  def numericalLimitsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
-    val (numericalLimits, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
+  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
+    val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
-    numericalLimits.map { link =>
+    linearAssets.map { link =>
       // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
       val (assetId, mmlId, sideCode, _, startMeasure, endMeasure) = link
       val value = Option(link._5)
@@ -230,13 +230,13 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
         case "speed_limits" => speedLimitsToApi(speedLimitProvider.getSpeedLimits(municipalityNumber))
-        case "total_weight_limits" => numericalLimitsToApi(30, municipalityNumber)
-        case "trailer_truck_weight_limits" => numericalLimitsToApi(40, municipalityNumber)
-        case "axle_weight_limits" => numericalLimitsToApi(50, municipalityNumber)
-        case "bogie_weight_limits" => numericalLimitsToApi(60, municipalityNumber)
-        case "height_limits" => numericalLimitsToApi(70, municipalityNumber)
-        case "length_limits" => numericalLimitsToApi(80, municipalityNumber)
-        case "width_limits" => numericalLimitsToApi(90, municipalityNumber)
+        case "total_weight_limits" => linearAssetsToApi(30, municipalityNumber)
+        case "trailer_truck_weight_limits" => linearAssetsToApi(40, municipalityNumber)
+        case "axle_weight_limits" => linearAssetsToApi(50, municipalityNumber)
+        case "bogie_weight_limits" => linearAssetsToApi(60, municipalityNumber)
+        case "height_limits" => linearAssetsToApi(70, municipalityNumber)
+        case "length_limits" => linearAssetsToApi(80, municipalityNumber)
+        case "width_limits" => linearAssetsToApi(90, municipalityNumber)
         case "blocked_passages" => PointAssetService.getByMunicipality(16, municipalityNumber)
         case "barrier_gates" => PointAssetService.getByMunicipality(3, municipalityNumber)
         case "traffic_lights" => PointAssetService.getByMunicipality(9, municipalityNumber)
@@ -249,7 +249,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         case "roads_affected_by_thawing" => ReadOnlyLinearAssetService.getByMunicipality(6, municipalityNumber)
         case "widths" => ReadOnlyLinearAssetService.getByMunicipality(8, municipalityNumber)
         case "paved_roads" => ReadOnlyLinearAssetService.getByMunicipality(26, municipalityNumber)
-        case "lit_roads" => litRoadsToApi(numericalLimitsToApi(100, municipalityNumber))
+        case "lit_roads" => litRoadsToApi(linearAssetsToApi(100, municipalityNumber))
         case "built_up_area" => ReadOnlyLinearAssetService.getByMunicipality(30, municipalityNumber)
         case "speed_limits_during_winter" => ReadOnlyLinearAssetService.getByMunicipality(31, municipalityNumber)
         case "traffic_volumes" => ReadOnlyLinearAssetService.getByMunicipality(33, municipalityNumber)

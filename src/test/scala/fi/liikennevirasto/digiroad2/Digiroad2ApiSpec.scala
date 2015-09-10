@@ -236,7 +236,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/numericallimits?typeId=30&bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
       val parsedBody = parse(body).extract[List[LinearAssetLink]]
       parsedBody.size should be(2)
@@ -244,13 +244,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/numericallimits?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675") {
       status should equal(400)
     }
   }
 
   test("updating numerical limits should require an operator role") {
-    putJsonWithUserAuth("/numericallimits/11112", """{"value":6000}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/linearassets/11112", """{"value":6000}""".getBytes, username = "test") {
       status should equal(401)
     }
   }

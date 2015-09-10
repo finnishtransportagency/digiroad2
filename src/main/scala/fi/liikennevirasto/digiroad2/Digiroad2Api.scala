@@ -402,7 +402,7 @@ with GZipSupport {
   }
 
 
-  get("/numericallimits") {
+  get("/linearassets") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
@@ -415,7 +415,7 @@ with GZipSupport {
     }
   }
 
-  get("/numericallimits/:segmentId") {
+  get("/linearassets/:segmentId") {
     val segmentId = params("segmentId")
     linearAssetService.getById(segmentId.toLong)
       .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
@@ -430,7 +430,7 @@ with GZipSupport {
   }
 
 
-  put("/numericallimits/:id") {
+  put("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite)) {
@@ -444,12 +444,12 @@ with GZipSupport {
         value.foreach(validateNumericalLimitValue)
         linearAssetService.update(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
           case Some(segmentId) => linearAssetService.getById(segmentId)
-          case None => NotFound("Numerical limit " + id + " not found")
+          case None => NotFound("Linear asset " + id + " not found")
         }
     }
   }
 
-  post("/numericallimits") {
+  post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val mmlId = (parsedBody \ "mmlId").extract[Long]
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
@@ -464,7 +464,7 @@ with GZipSupport {
       municipalityValidation = validateUserMunicipalityAccess(user))
   }
 
-  post("/numericallimits/:id") {
+  post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val mmlId = (parsedBody \ "mmlId").extract[Long]
     val value = (parsedBody \ "value").extractOpt[BigInt]
