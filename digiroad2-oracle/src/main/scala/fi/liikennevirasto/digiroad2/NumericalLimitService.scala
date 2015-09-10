@@ -77,7 +77,7 @@ trait NumericalLimitOperations {
   private def fetchNumericalLimitsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
+        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -85,7 +85,7 @@ trait NumericalLimitOperations {
           join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Long, Int, Int, Double, Double)].list
+          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Int, Double, Double)].list
     }
   }
 
@@ -103,8 +103,8 @@ trait NumericalLimitOperations {
 
       val numericalLimitsWithGeometry: Seq[NumericalLimitLink] = numericalLimits.map { link =>
         // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-        val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
-        val value = Option(link._5)
+        val (assetId, mmlId, sideCode, _, startMeasure, endMeasure) = link
+        val value = Option(link._4)
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
         NumericalLimitLink(assetId, mmlId, sideCode, value, geometry)
       }
