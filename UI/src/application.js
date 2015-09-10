@@ -360,7 +360,7 @@ var URLRouter = function(map, backend, models) {
                              enabled: 'Valaistus',
                              disabled: 'Ei valaistusta' },
         valueString: function(selectedNumericalLimit) {
-          return selectedNumericalLimit.expired() ? 'ei ole' : 'on';
+          return selectedNumericalLimit.expired() ? 'ei' : 'on';
         }
       }
     ];
