@@ -3,21 +3,20 @@ package fi.liikennevirasto.digiroad2
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
-import fi.liikennevirasto.digiroad2.asset.oracle.Queries.bonecpToInternalConnection
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
-
-import scala.collection.JavaConversions._
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class NumericalLimitLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+case class NumericalLimitLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point],
+                              position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+
 case class NumericalLimit(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
@@ -113,32 +112,19 @@ trait NumericalLimitOperations {
     }
   }
 
-  // TODO: Use VVH
-  def getByMunicipality(typeId: Int, municipality: Int): Seq[Map[String, Any]] = {
+  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int, Int, Double, Double)], Map[Long, Seq[Point]]) = {
     withDynTransaction {
-      val roadLinks = RoadLinkService.getByMunicipality(municipality)
-      val roadLinkIds = roadLinks.map(_._1).toList
+      val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
+      val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val numericalLimits = OracleArray.fetchNumericalLimitsByRoadLinkIds(roadLinkIds, typeId, valuePropertyId, bonecpToInternalConnection(dynamicSession.conn))
+      val numericalLimits = fetchNumericalLimitsByMmlIds(typeId, mmlIds)
 
       val linkGeometries: Map[Long, Seq[Point]] =
         roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
-          acc + (roadLink._1 -> roadLink._2)
+          acc + (roadLink.mmlId -> roadLink.geometry)
         }
 
-      numericalLimits.map { link =>
-        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-        val (assetId, roadLinkId, mmlId, sideCode, _, startMeasure, endMeasure) = link
-        val value = Option(link._5)
-        val geometry = GeometryUtils.truncateGeometry(linkGeometries(roadLinkId), startMeasure, endMeasure)
-        Map("id" -> (assetId + "-" + mmlId),
-          "points" -> geometry,
-          "value" -> value,
-          "side_code" -> sideCode,
-          "mmlId" -> mmlId,
-          "startMeasure" -> startMeasure,
-          "endMeasure" -> endMeasure)
-      }
+      (numericalLimits, linkGeometries)
     }
   }
 

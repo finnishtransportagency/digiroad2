@@ -74,4 +74,12 @@ class NumericalLimitServiceSpec extends FunSuite with Matchers {
 
     PassThroughService.calculateEndPoints(links) shouldBe Set(Point(0.0, 0.0), Point(2.0, 0.0))
   }
+
+  test("get by municipality works lul") {
+    runWithCleanup {
+//      val limits: Seq[Map[String, Any]] = PassThroughService.getByMunicipality(30, 235)
+//
+//      limits
+    }
+  }
 }

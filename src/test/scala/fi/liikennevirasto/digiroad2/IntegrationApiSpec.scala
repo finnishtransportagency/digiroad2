@@ -43,11 +43,4 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite {
       mmlIds should be(Seq(388554364, 388553080, 388554364, 1140018963, 388554364, 388554364))
     }
   }
-
-  test("Returns side code of a total weight limit") {
-    getWithBasicUserAuth("/total_weight_limits?municipality=235", "kalpa", "kalpa") {
-      val sideCodes = (parse(body) \ "side_code").extract[Seq[Int]]
-      sideCodes should be(Seq(1, 1))
-    }
-  }
 }
