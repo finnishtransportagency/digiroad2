@@ -248,7 +248,9 @@ object DataFixture {
         importLitRoadsFromConversion()
       case Some("dropped_numericallimits") =>
         generateDroppedNumericalLimits()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | split_speedlimitchains | litroads | repair")
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
+        " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
+        " split_speedlimitchains | litroads | dropped_numericallimits | repair")
     }
   }
 }
