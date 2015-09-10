@@ -205,7 +205,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   }
 
   def numericalLimitsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
-    val (numericalLimits, linkGeometries) = numericalLimitService.getByMunicipality(typeId, municipalityNumber)
+    val (numericalLimits, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
     numericalLimits.map { link =>
       // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
