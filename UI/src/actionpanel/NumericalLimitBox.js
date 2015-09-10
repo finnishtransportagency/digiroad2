@@ -1,5 +1,5 @@
 (function(root) {
-  root.NumericalLimitBox = function(selectedNumericalLimit, layerName, numericalLimitTitle, className) {
+  root.NumericalLimitBox = function(selectedNumericalLimit, layerName, numericalLimitTitle, className, legendValues) {
     var collapsedTemplate = [
       '<div class="panel ' + className + '">',
       '  <header class="panel-header">',
@@ -7,8 +7,7 @@
       '  </header>',
       '</div>'].join('');
 
-    var values = ['Ei rajoitusta', 'Rajoitus'];
-    var numericalLimitLegendTemplate = _.map(values, function(value, idx) {
+    var numericalLimitLegendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear limit-' + idx + '" />' +
