@@ -10,11 +10,17 @@
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
       var expiredChecked = selectedNumericalLimit.expired() ? 'checked' : '';
       var nonExpiredChecked = selectedNumericalLimit.expired() ? '' : 'checked';
-      var value = selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' ' + unit : '-';
       var title = selectedNumericalLimit.isNew() ?
         '<span>' + newNumericalLimitTitle + '</span>' :
         '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
       var header = '<header>' + title + '<div class="' + className + ' form-controls">' + buttons + '</div></header>';
+      var valueString = function() {
+        if (unit) {
+          return selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' ' + unit : '-';
+        } else {
+          return selectedNumericalLimit.expired() ? 'ei ole' : 'on';
+        }
+      };
       var measureInput = function() {
         if(unit) {
           return '' +
@@ -42,7 +48,7 @@
         '</div>' +
         '<div class="form-group editable">' +
         '<label class="control-label">' + editControlLabels.title + '</label>' +
-        '<p class="form-control-static ' + className + '">' + value + '</p>' +
+        '<p class="form-control-static ' + className + '">' + valueString() + '</p>' +
         '<div class="choice-group">' +
         '<div class="radio">' +
         '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
