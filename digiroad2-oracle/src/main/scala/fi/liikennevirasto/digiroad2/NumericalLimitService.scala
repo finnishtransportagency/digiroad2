@@ -113,6 +113,7 @@ trait NumericalLimitOperations {
     }
   }
 
+  // TODO: Use VVH
   def getByMunicipality(typeId: Int, municipality: Int): Seq[Map[String, Any]] = {
     withDynTransaction {
       val roadLinks = RoadLinkService.getByMunicipality(municipality)
