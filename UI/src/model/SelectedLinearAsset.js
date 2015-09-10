@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedNumericalLimit = function(backend, typeId, collection, singleElementEventCategory) {
+  root.SelectedLinearAsset = function(backend, typeId, collection, singleElementEventCategory) {
     var current = null;
     var self = this;
     var dirty = false;
@@ -11,11 +11,11 @@
     };
 
     eventbus.on(singleElementEvent('split'), function() {
-      collection.fetchNumericalLimit(null, function(numericalLimit) {
-        current = numericalLimit;
+      collection.fetchLinearAsset(null, function(linearAsset) {
+        current = linearAsset;
         current.isSplit = true;
-        originalValue = numericalLimit.value;
-        originalExpired = numericalLimit.expired;
+        originalValue = linearAsset.value;
+        originalExpired = linearAsset.expired;
         dirty = true;
         eventbus.trigger(singleElementEvent('selected'), self);
       });
@@ -23,10 +23,10 @@
 
     this.open = function(id) {
       self.close();
-      collection.fetchNumericalLimit(id, function(numericalLimit) {
-        current = numericalLimit;
-        originalValue = numericalLimit.value;
-        originalExpired = numericalLimit.expired;
+      collection.fetchLinearAsset(id, function(linearAsset) {
+        current = linearAsset;
+        originalValue = linearAsset.value;
+        originalExpired = linearAsset.expired;
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
@@ -72,10 +72,10 @@
     };
 
     this.save = function() {
-      var success = function(numericalLimit) {
+      var success = function(linearAsset) {
         var wasNew = isNew();
         dirty = false;
-        current = _.merge({}, current, numericalLimit);
+        current = _.merge({}, current, linearAsset);
         originalValue = current.value;
         originalExpired = current.expired;
         if (wasNew) {
@@ -105,15 +105,15 @@
     };
 
     var expire = function(success, failure) {
-      backend.expireNumericalLimit(current.id, success, failure);
+      backend.expireLinearAsset(current.id, success, failure);
     };
 
     var update = function(success, failure) {
-      backend.updateNumericalLimit(current.id, current.value, success, failure);
+      backend.updateLinearAsset(current.id, current.value, success, failure);
     };
 
     var createNew = function(success, failure) {
-      backend.createNumericalLimit(typeId, current.mmlId, current.value, success, failure);
+      backend.createLinearAsset(typeId, current.mmlId, current.value, success, failure);
     };
 
     this.cancel = function() {
@@ -207,10 +207,10 @@
 
     this.isNew = isNew;
 
-    eventbus.on(singleElementEvent('saved'), function(numericalLimit) {
-      current = numericalLimit;
-      originalValue = numericalLimit.value;
-      originalExpired = numericalLimit.expired;
+    eventbus.on(singleElementEvent('saved'), function(linearAsset) {
+      current = linearAsset;
+      originalValue = linearAsset.value;
+      originalExpired = linearAsset.expired;
       dirty = false;
     });
   };

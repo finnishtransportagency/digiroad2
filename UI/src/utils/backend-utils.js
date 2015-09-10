@@ -139,31 +139,31 @@
       });
     };
 
-    this.getNumericalLimits = _.throttle(function(boundingBox, typeId, callback) {
-      $.getJSON('api/numericallimits?typeId=' + typeId + '&bbox=' + boundingBox, function(numericalLimits) {
-        callback(numericalLimits);
+    this.getLinearAssets = _.throttle(function(boundingBox, typeId, callback) {
+      $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox, function(linearAssets) {
+        callback(linearAssets);
       });
     }, 1000);
 
-    this.getNumericalLimit = _.throttle(function(id, callback) {
-      $.getJSON('api/numericallimits/' + id, function(numericalLimit) {
-        callback(numericalLimit);
+    this.getLinearAsset = _.throttle(function(id, callback) {
+      $.getJSON('api/linearassets/' + id, function(linearAsset) {
+        callback(linearAsset);
       });
     }, 1000);
 
-    this.updateNumericalLimit = _.throttle(function(id, value, success, failure) {
-      putUpdateNumericalLimitCall(id, {value: value}, success, failure);
+    this.updateLinearAsset = _.throttle(function(id, value, success, failure) {
+      putUpdateLinearAssetCall(id, {value: value}, success, failure);
     }, 1000);
 
-    this.expireNumericalLimit = _.throttle(function(id, success, failure) {
-      putUpdateNumericalLimitCall(id, {expired: true}, success, failure);
+    this.expireLinearAsset = _.throttle(function(id, success, failure) {
+      putUpdateLinearAssetCall(id, {expired: true}, success, failure);
     }, 1000);
 
-    var putUpdateNumericalLimitCall = function(id, data, success, failure) {
+    var putUpdateLinearAssetCall = function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/numericallimits/" + id,
+        url: "api/linearassets/" + id,
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -171,11 +171,11 @@
       });
     };
 
-    this.createNumericalLimit = _.throttle(function(typeId, mmlId, value, success, error) {
+    this.createLinearAsset = _.throttle(function(typeId, mmlId, value, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/numericallimits?typeId=" + typeId,
+        url: "api/linearassets?typeId=" + typeId,
         data: JSON.stringify({mmlId: mmlId, value: value}),
         dataType: "json",
         success: success,
@@ -183,11 +183,11 @@
       });
     }, 1000);
 
-    this.splitNumericalLimit = function(id, mmlId, splitMeasure, value, expired, success, failure) {
+    this.splitLinearAssets = function(id, mmlId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/numericallimits/" + id,
+        url: "api/linearassets/" + id,
         data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: value, expired: expired}),
         dataType: "json",
         success: success,

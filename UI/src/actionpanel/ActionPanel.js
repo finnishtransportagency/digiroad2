@@ -1,6 +1,6 @@
 (function(root) {
   root.ActionPanel = {
-    initialize: function(backend, instructionsPopup, selectedSpeedLimit, numericalLimits, linkPropertiesModel, locationSearch) {
+    initialize: function(backend, instructionsPopup, selectedSpeedLimit, linearAssets, linkPropertiesModel, locationSearch) {
       var panelControl = ['<div class="action-panels"></div>'].join('');
 
       $('#map-tools').append(panelControl);
@@ -20,10 +20,10 @@
       var manoeuvreBox = new ManoeuvreBox();
       $('.action-panels').append(manoeuvreBox.element);
 
-      _.forEach(numericalLimits, function(numericalLimit) {
-        var legendValues = [numericalLimit.editControlLabels.disabled, numericalLimit.editControlLabels.enabled];
-        var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className, legendValues);
-        $('.action-panels').append(numericalLimitBox.element);
+      _.forEach(linearAssets, function(linearAsset) {
+        var legendValues = [linearAsset.editControlLabels.disabled, linearAsset.editControlLabels.enabled];
+        var linearAssetBox = new LinearAssetBox(linearAsset.selectedLinearAsset, linearAsset.layerName, linearAsset.title, linearAsset.className, legendValues);
+        $('.action-panels').append(linearAssetBox.element);
       });
 
       backend.getUserRoles();

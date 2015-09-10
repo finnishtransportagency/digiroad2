@@ -1,13 +1,13 @@
 (function(root) {
-  root.NumericalLimitBox = function(selectedNumericalLimit, layerName, numericalLimitTitle, className, legendValues) {
+  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues) {
     var collapsedTemplate = [
       '<div class="panel ' + className + '">',
       '  <header class="panel-header">',
-      '    ' + numericalLimitTitle,
+      '    ' + title,
       '  </header>',
       '</div>'].join('');
 
-    var numericalLimitLegendTemplate = _.map(legendValues, function(value, idx) {
+    var legendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear limit-' + idx + '" />' +
@@ -17,10 +17,10 @@
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
-      '    ' + numericalLimitTitle,
+      '    ' + title,
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
-            numericalLimitLegendTemplate,
+            legendTemplate,
       '  </div>',
       '</div>'].join('');
 
@@ -31,8 +31,8 @@
 
     var toolSelection = new ActionPanelBoxes.ToolSelection(
       null,
-      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedNumericalLimit),
-       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedNumericalLimit)]);
+      [new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedLinearAsset),
+       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
     var bindDOMEventHandlers = function() {
