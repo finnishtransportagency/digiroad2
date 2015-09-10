@@ -189,7 +189,7 @@ trait OracleLinearAssetDao {
       link.length,
       link.administrativeClass,
       link.mmlId,
-      LinearAsset.roadIdentifierFromRoadLink(link),
+      RoadLinkUtility.roadIdentifierFromRoadLink(link),
       link.trafficDirection,
       municipalityCodeFromAttributes(link.attributes))
 
