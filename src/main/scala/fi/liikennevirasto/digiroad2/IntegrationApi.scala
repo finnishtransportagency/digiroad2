@@ -48,7 +48,7 @@ trait AuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuth
   val realm = "Digiroad 2 Integration API"
 
   protected def fromSession = { case id: String => BasicAuthUser(id)  }
-  protected def toSession = { case user: BasicAuthUser = user.username }
+  protected def toSession = { case user: BasicAuthUser => user.username }
 
   protected val scentryConfig = (new ScentryConfig {}).asInstanceOf[ScentryConfiguration]
 
