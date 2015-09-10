@@ -94,26 +94,6 @@ object GeometryUtils {
     }
   }
 
-  @deprecated
-  def createMultiSegmentSplit(splitMeasure: Double, linkToBeSplit: (Long, Double, Double), links: Seq[(Long, Double, (Point, Point))]): ((Double, Double), (Double, Double), Seq[(Long, Double, (Point, Point))]) = {
-    val (splitLinkId, startMeasureOfSplitLink, endMeasureOfSplitLink) = linkToBeSplit
-    def linkEndPoints(link: (Long, Double, (Point, Point))) = {
-      val (_, _, linkEndPoints) = link
-      linkEndPoints
-    }
-    def linkLength(link: (Long, Double, (Point, Point))) = {
-      val (_, length, _) = link
-      length
-    }
-
-    val (linksBeforeSplit, splitLink, linksAfterSplit) = LinkChain(links, linkEndPoints).splitBy { case (linkId, _, _) => linkId == splitLinkId}
-
-    val (firstSplitLength, secondSplitLength) = splitLengths(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linkLength, linksBeforeSplit, linksAfterSplit)
-
-    val (existingLinkMeasures, createdLinkMeasures, linksToMove) = splitResults(splitMeasure, startMeasureOfSplitLink, endMeasureOfSplitLink, splitLink.geometryDirection, linksBeforeSplit, linksAfterSplit, firstSplitLength, secondSplitLength)
-    (existingLinkMeasures, createdLinkMeasures, linksToMove.map(_.rawLink))
-  }
-
   def createSplit(splitMeasure: Double, segment: (Double, Double)): ((Double, Double), (Double, Double)) = {
     def splitLength(split: (Double, Double)) = split._2 - split._1
 
