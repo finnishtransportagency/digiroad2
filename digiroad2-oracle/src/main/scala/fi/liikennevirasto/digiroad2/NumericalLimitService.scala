@@ -214,29 +214,6 @@ trait NumericalLimitOperations {
      """.execute
   }
 
-  @deprecated("Use createNumericalLimitWithoutTransaction instead")
-  private def createNumericalLimitWithoutTransactionOld(typeId: Int, roadLinkId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
-    val id = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val validTo = if(expired) "sysdate" else "null"
-    sqlu"""
-      insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-        values ($id, $typeId, $username, sysdate, #$validTo)
-
-        into lrm_position(id, start_measure, end_measure, road_link_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $roadLinkId, $sideCode)
-
-        into asset_link(asset_id, position_id)
-        values ($id, $lrmPositionId)
-      select * from dual
-    """.execute
-
-    value.foreach(insertNumericalLimitValue(id))
-
-    getByIdWithoutTransaction(id).get
-  }
-
   private def createNumericalLimitWithoutTransaction(typeId: Int, mmlId: Long, roadLinkGeometry: Seq[Point], value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): NumericalLimit = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
