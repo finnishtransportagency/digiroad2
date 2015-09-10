@@ -183,12 +183,12 @@
       });
     }, 1000);
 
-    this.splitNumericalLimit = function(id, roadLinkId, splitMeasure, value, expired, success, failure) {
+    this.splitNumericalLimit = function(id, mmlId, splitMeasure, value, expired, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/numericallimits/" + id,
-        data: JSON.stringify({roadLinkId: roadLinkId, splitMeasure: splitMeasure, value: value, expired: expired}),
+        data: JSON.stringify({mmlId: mmlId, splitMeasure: splitMeasure, value: value, expired: expired}),
         dataType: "json",
         success: success,
         error: failure

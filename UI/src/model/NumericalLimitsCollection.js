@@ -118,11 +118,11 @@
       }, 0);
     };
 
-    this.splitNumericalLimit = function(id, roadLinkId, split) {
+    this.splitNumericalLimit = function(id, mmlId, split) {
       backend.getNumericalLimit(id, function(numericalLimit) {
         var numericalLimitLinks = numericalLimit.numericalLimitLinks;
         var splitLink = _.find(numericalLimitLinks, function(link) {
-          return link.roadLinkId === roadLinkId;
+          return link.mmlId === mmlId;
         });
         var position = splitLink.position;
         var towardsLinkChain = splitLink.towardsLinkChain;
@@ -140,11 +140,11 @@
 
         left.links = leftLinks.concat([{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
                                         position: position,
-                                        roadLinkId: roadLinkId}]);
+                                        mmlId: mmlId}]);
 
         right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
                         position: position,
-                        roadLinkId: roadLinkId}].concat(rightLinks);
+                        mmlId: mmlId}].concat(rightLinks);
 
         if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
           splitNumericalLimits.created = left;
@@ -156,7 +156,7 @@
 
         splitNumericalLimits.created.id = null;
         splitNumericalLimits.splitMeasure = split.splitMeasure;
-        splitNumericalLimits.splitRoadLinkId = roadLinkId;
+        splitNumericalLimits.splitMmlId = mmlId;
         dirty = true;
         eventbus.trigger(multiElementEvent('fetched'), buildPayload(numericalLimits, splitNumericalLimits));
         eventbus.trigger(singleElementEvent('split'));
@@ -164,7 +164,7 @@
     };
 
     this.saveSplit = function(splitLimit) {
-      backend.splitNumericalLimit(splitNumericalLimits.existing.id, splitNumericalLimits.splitRoadLinkId, splitNumericalLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedNumericalLimits) {
+      backend.splitNumericalLimit(splitNumericalLimits.existing.id, splitNumericalLimits.splitMmlId, splitNumericalLimits.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedNumericalLimits) {
         var existingId = splitNumericalLimits.existing.id;
         splitNumericalLimits = {};
         dirty = false;

@@ -98,7 +98,7 @@ window.NumericalLimitLayer = function(params) {
         return;
       }
 
-      var points = _.chain(roadCollection.get([nearest.feature.attributes.roadLinkId])[0].getPoints())
+      var points = _.chain(roadCollection.get([nearest.feature.attributes.links[0].mmlId])[0].getPoints())
                      .map(function(point) {
                        return new OpenLayers.Geometry.Point(point.x, point.y);
                      })
@@ -107,7 +107,7 @@ window.NumericalLimitLayer = function(params) {
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
 
-      collection.splitNumericalLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
+      collection.splitNumericalLimit(nearest.feature.attributes.id, nearest.feature.attributes.links[0].mmlId, split);
       remove();
     };
   };

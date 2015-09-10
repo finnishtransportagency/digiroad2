@@ -466,16 +466,17 @@ with GZipSupport {
 
   post("/numericallimits/:id") {
     val user = userProvider.getCurrentUser()
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    validateUserMunicipalityAccess(user)(municipalityCode.get)
+    val mmlId = (parsedBody \ "mmlId").extract[Long]
+    //TODO: validate user rights
+//    val municipalityCode = RoadLinkService.getMunicipalityCode(mmlId)
+//    validateUserMunicipalityAccess(user)(municipalityCode.get)
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    numericalLimitService.split(id, roadLinkId, measure, value.map(_.intValue()), expired, username)
+    numericalLimitService.split(id, mmlId, measure, value.map(_.intValue()), expired, username)
   }
 
   put("/speedlimits") {

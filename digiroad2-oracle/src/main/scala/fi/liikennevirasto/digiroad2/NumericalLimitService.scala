@@ -269,22 +269,19 @@ trait NumericalLimitOperations {
     }
   }
 
-  def split(id: Long, roadLinkId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String): Seq[NumericalLimit] = {
-    withDynTransaction {
-      val typeId = getByIdWithoutTransaction(id).get.typeId
+  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String): Seq[NumericalLimit] = {
+    val limit: NumericalLimit = getById(id).get
+    val createdId = withDynTransaction {
       Queries.updateAssetModified(id, username).execute
-      val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id, roadLinkId)
-      val links: Seq[(Long, Double, (Point, Point))] = OracleLinearAssetDao.getLinksWithLength(typeId, id).map { link =>
-        val (roadLinkId, length, geometry) = link
-        (roadLinkId, length, GeometryUtils.geometryEndpoints(geometry))
-      }
-      val (existingLinkMeasures, createdLinkMeasures, linksToMove) = GeometryUtils.createMultiSegmentSplit(splitMeasure, (roadLinkId, startMeasure, endMeasure), links)
+      val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id)
+      val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
-      OracleLinearAssetDao.updateLinkStartAndEndMeasures(id, roadLinkId, existingLinkMeasures)
-      val createdId = createNumericalLimitWithoutTransactionOld(typeId, roadLinkId, value, expired, sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username).id
-      if (linksToMove.nonEmpty) OracleLinearAssetDao.moveLinks(id, createdId, linksToMove.map(_._1))
-      Seq(getByIdWithoutTransaction(id).get, getByIdWithoutTransaction(createdId).get)
+      OracleLinearAssetDao.updateMValues(id, existingLinkMeasures)
+      createNumericalLimitWithoutTransaction(limit.typeId, mmlId, roadLink.geometry, value, expired, sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
+    Seq(getById(id).get, getById(createdId).get)
+
   }
 }
 
