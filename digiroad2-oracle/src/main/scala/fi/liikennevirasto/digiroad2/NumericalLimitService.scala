@@ -28,7 +28,7 @@ trait NumericalLimitOperations {
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T
-  def roadLinkService: RoadLinkService = RoadLinkService
+  def roadLinkService: RoadLinkService
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
