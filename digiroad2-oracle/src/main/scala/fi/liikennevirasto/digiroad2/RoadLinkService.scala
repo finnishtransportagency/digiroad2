@@ -76,17 +76,6 @@ trait RoadLinkService {
     }
   }
 
-  def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select to_2d(sdo_lrs.dynamic_segment(shape, $startMeasure, $endMeasure))
-          from tielinkki_ctas
-          where dr1_id = $id
-        """
-      query.as[Seq[Point]].first
-    }
-  }
-
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
