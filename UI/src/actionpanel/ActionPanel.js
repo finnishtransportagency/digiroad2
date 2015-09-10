@@ -21,7 +21,8 @@
       $('.action-panels').append(manoeuvreBox.element);
 
       _.forEach(numericalLimits, function(numericalLimit) {
-        var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className);
+        var legendValues = [numericalLimit.editControlLabels.disabled, numericalLimit.editControlLabels.enabled];
+        var numericalLimitBox = new NumericalLimitBox(numericalLimit.selectedNumericalLimit, numericalLimit.layerName, numericalLimit.numericalLimitTitle, numericalLimit.className, legendValues);
         $('.action-panels').append(numericalLimitBox.element);
       });
 
