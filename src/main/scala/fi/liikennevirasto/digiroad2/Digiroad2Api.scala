@@ -369,7 +369,7 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitProvider.getSpeedLimits(boundingRectangle, municipalities).map { linkPartition =>
+      speedLimitProvider.get(boundingRectangle, municipalities).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
@@ -398,7 +398,7 @@ with GZipSupport {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    speedLimitProvider.getUnknownSpeedLimits(includedMunicipalities)
+    speedLimitProvider.getUnknown(includedMunicipalities)
   }
 
 
@@ -483,9 +483,9 @@ with GZipSupport {
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(value) =>
-        val updatedIds = speedLimitProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
-        val createdIds = speedLimitProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        speedLimitProvider.getSpeedLimits(updatedIds ++ createdIds)
+        val updatedIds = speedLimitProvider.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
+        val createdIds = speedLimitProvider.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
+        speedLimitProvider.get(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -493,7 +493,7 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
 
-    speedLimitProvider.splitSpeedLimit(params("speedLimitId").toLong,
+    speedLimitProvider.split(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
@@ -504,7 +504,7 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
 
-    speedLimitProvider.separateSpeedLimit(params("speedLimitId").toLong,
+    speedLimitProvider.separate(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[Int],
       (parsedBody \ "valueAgainstDigitization").extract[Int],
       user.username,
@@ -518,11 +518,11 @@ with GZipSupport {
                             (parsedBody \ "startMeasure").extract[Double],
                             (parsedBody \ "endMeasure").extract[Double])
 
-    speedLimitProvider.createSpeedLimits(Seq(newLimit),
+    speedLimitProvider.create(Seq(newLimit),
                                          (parsedBody \ "value").extract[Int],
                                          user.username,
                                          validateUserMunicipalityAccess(user)).headOption match {
-      case Some(id) => speedLimitProvider.getSpeedLimit(id)
+      case Some(id) => speedLimitProvider.find(id)
       case _ => BadRequest("Speed limit creation failed")
     }
   }

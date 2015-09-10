@@ -229,7 +229,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val assetType = params("assetType")
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
-        case "speed_limits" => speedLimitsToApi(speedLimitProvider.getSpeedLimits(municipalityNumber))
+        case "speed_limits" => speedLimitsToApi(speedLimitProvider.get(municipalityNumber))
         case "total_weight_limits" => linearAssetsToApi(30, municipalityNumber)
         case "trailer_truck_weight_limits" => linearAssetsToApi(40, municipalityNumber)
         case "axle_weight_limits" => linearAssetsToApi(50, municipalityNumber)

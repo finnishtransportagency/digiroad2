@@ -11,18 +11,18 @@ case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 
 trait SpeedLimitProvider {
-  def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit
-  def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]]
-  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit
+  def purgeUnknown(mmlIds: Set[Long]): Unit
+  def getUnknown(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]]
+  def persistUnknown(limits: Seq[UnknownLimit]): Unit
   def persistSideCodeAdjustments(adjustedSideCodes: Seq[SideCodeAdjustment]): Unit
-  def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
+  def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long]
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit
-  def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
-  def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
-  def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
-  def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]]
-  def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimit]
-  def getSpeedLimit(segmentId: Long): Option[SpeedLimit]
-  def markSpeedLimitsFloating(ids: Set[Long]): Unit
-  def getSpeedLimits(municipality: Int): Seq[SpeedLimit]
+  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long]
+  def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
+  def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit]
+  def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]]
+  def get(ids: Seq[Long]): Seq[SpeedLimit]
+  def find(segmentId: Long): Option[SpeedLimit]
+  def drop(ids: Set[Long]): Unit
+  def get(municipality: Int): Seq[SpeedLimit]
 }

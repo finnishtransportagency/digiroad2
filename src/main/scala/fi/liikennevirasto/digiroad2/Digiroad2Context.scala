@@ -23,15 +23,15 @@ class ValluActor extends Actor {
 class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
     case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
-    case x: Set[Long] => speedLimitProvider.purgeUnknownSpeedLimits(x)
+    case x: Set[Long] => speedLimitProvider.purgeUnknown(x)
     case _                      => println("speedLimitFiller: Received unknown message")
   }
 
   def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
-    speedLimitProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
+    speedLimitProvider.drop(speedLimitChangeSet.droppedSpeedLimitIds)
     speedLimitProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
     speedLimitProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
-    speedLimitProvider.persistUnknownSpeedLimits(speedLimitChangeSet.generatedUnknownLimits)
+    speedLimitProvider.persistUnknown(speedLimitChangeSet.generatedUnknownLimits)
   }
 }
 

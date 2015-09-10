@@ -41,9 +41,9 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
 
-      val id = provider.createSpeedLimits(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
+      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_) => Unit)
 
-      val createdLimit = provider.getSpeedLimit(id.head).get
+      val createdLimit = provider.find(id.head).get
       createdLimit.value should equal(Some(30))
       createdLimit.createdBy should equal(Some("test"))
     }
@@ -54,7 +54,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
-      val speedLimits = provider.splitSpeedLimit(200097, 100, 50, 60, "test", (_) => Unit)
+      val speedLimits = provider.split(200097, 100, 50, 60, "test", (_) => Unit)
 
       val existing = speedLimits.find(_.id == 200097).get
       val created = speedLimits.find(_.id != 200097).get
