@@ -150,7 +150,7 @@ trait NumericalLimitOperations {
       val limitEndpoints = calculateEndPoints(linkEndpoints)
       val head = links.head
       val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
-      val numericalLimitLinks = links.map { case (_, mmlId, sideCode, _, points, _, _, _, _, _, typeId) =>
+      val numericalLimitLinks = links.map { case (_, mmlId, sideCode, _, points, _, _, _, _, _, _) =>
         NumericalLimitLink(id, mmlId, sideCode, value, points, None, None, expired)
       }
       Some(NumericalLimit(
