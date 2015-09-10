@@ -292,17 +292,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
-    val roadLinks = mmlIds.mkString(",")
-    sqlu"""
-      update ASSET_LINK
-      set
-        asset_id = $targetId
-      where asset_id = $sourceId and position_id in (
-        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
-    """.execute
-  }
-
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
