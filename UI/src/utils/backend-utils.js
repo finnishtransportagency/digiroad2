@@ -152,7 +152,7 @@
     }, 1000);
 
     this.updateNumericalLimit = _.throttle(function(id, value, success, failure) {
-      putUpdateNumericalLimitCall(id, {value: value}, success, failure);
+      putUpdateNumericalLimitCall(id, {value: value, expired: false}, success, failure);
     }, 1000);
 
     this.expireNumericalLimit = _.throttle(function(id, success, failure) {
