@@ -94,7 +94,7 @@
           .map(function(a, i){
             return _.merge({}, a, { marker: markers[i] });
           }).value();
-        var sourceRoadLinkModel = roadCollection.get(roadLinkId);
+        var sourceRoadLinkModel = roadCollection.get([roadLinkId])[0];
         callback(_.merge({}, roadLink, modificationData, { adjacent: sortedAdjacentWithMarker }, { select: sourceRoadLinkModel.select, unselect: sourceRoadLinkModel.unselect } ));
       });
     };

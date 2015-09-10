@@ -1,5 +1,5 @@
 (function (root) {
-  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory, unit) {
+  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory, unit, editControlLabels) {
     var template = function(selectedNumericalLimit) {
       var modifiedBy = selectedNumericalLimit.getModifiedBy() || '-';
       var modifiedDateTime = selectedNumericalLimit.getModifiedDateTime() ? ' ' + selectedNumericalLimit.getModifiedDateTime() : '';
@@ -41,14 +41,14 @@
         '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
         '</div>' +
         '<div class="form-group editable">' +
-        '<label class="control-label">Rajoitus</label>' +
+        '<label class="control-label">' + editControlLabels.title + '</label>' +
         '<p class="form-control-static ' + className + '">' + value + '</p>' +
         '<div class="choice-group">' +
         '<div class="radio">' +
-        '<label>Ei rajoitusta<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+        '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
         '</div>' +
         '<div class="radio">' +
-        '<label>Rajoitus<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
+        '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
         '</div>' +
         '</div>' +
         '</div>' +

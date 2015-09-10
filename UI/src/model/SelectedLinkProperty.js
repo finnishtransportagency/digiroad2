@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedLinkProperty = function(backend, collection) {
+  root.SelectedLinkProperty = function(backend, roadCollection) {
     var current = [];
     var dirty = false;
 
@@ -52,7 +52,7 @@
     var open = function(id, singleLinkSelect) {
       if (!isSelected(id) || isDifferingSelection(singleLinkSelect)) {
         close();
-        current = singleLinkSelect ? collection.get([id]) : collection.getGroup(id);
+        current = singleLinkSelect ? roadCollection.get([id]) : roadCollection.getGroup(id);
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -62,7 +62,7 @@
 
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'mmlId');
-      current = collection.get(_.pluck(uniqueLinks, 'mmlId'));
+      current = roadCollection.get(_.pluck(uniqueLinks, 'mmlId'));
       _.forEach(current, function (selected) {
         selected.select();
       });
