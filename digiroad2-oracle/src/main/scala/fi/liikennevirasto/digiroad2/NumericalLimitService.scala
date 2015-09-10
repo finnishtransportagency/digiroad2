@@ -246,11 +246,13 @@ trait NumericalLimitOperations {
     }
   }
 
-  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String): Seq[NumericalLimit] = {
+  def split(id: Long, mmlId: Long, splitMeasure: Double, value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[NumericalLimit] = {
+    val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    municipalityValidation(roadLink.municipalityCode)
+
     val limit: NumericalLimit = getById(id).get
     val createdId = withDynTransaction {
       Queries.updateAssetModified(id, username).execute
-      val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       val (startMeasure, endMeasure, sideCode) = OracleLinearAssetDao.getLinkGeometryData(id)
       val (existingLinkMeasures, createdLinkMeasures) = GeometryUtils.createSplit(splitMeasure, (startMeasure, endMeasure))
 
@@ -258,7 +260,6 @@ trait NumericalLimitOperations {
       createNumericalLimitWithoutTransaction(limit.typeId, mmlId, roadLink.geometry, value, expired, sideCode.value, createdLinkMeasures._1, createdLinkMeasures._2, username).id
     }
     Seq(getById(id).get, getById(createdId).get)
-
   }
 }
 
