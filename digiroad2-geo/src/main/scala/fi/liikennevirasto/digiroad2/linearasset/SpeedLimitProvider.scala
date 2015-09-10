@@ -10,7 +10,7 @@ case class RoadLinkForSpeedLimit(geometry: Seq[Point], length: Double, administr
 case class NewLimit(mmlId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps
 
-trait LinearAssetProvider {
+trait SpeedLimitProvider {
   def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]]
   def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit

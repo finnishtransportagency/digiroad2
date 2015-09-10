@@ -14,9 +14,9 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 import scala.language.implicitConversions
 
-class OracleLinearAssetProviderSpec extends FunSuite with Matchers {
+class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val provider = new OracleLinearAssetProvider(new DummyEventBus, mockRoadLinkService) {
+  val provider = new OracleSpeedLimitProvider(new DummyEventBus, mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
   }
 

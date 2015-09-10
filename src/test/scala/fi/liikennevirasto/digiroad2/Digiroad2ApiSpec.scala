@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -45,7 +45,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testRoadLinkService = new VVHRoadLinkService(mockVVHClient, new DummyEventBus)
-  val testLinearAssetProvider = new OracleLinearAssetProvider(new DummyEventBus, testRoadLinkService)
+  val testSpeedLimitProvider = new OracleSpeedLimitProvider(new DummyEventBus, testRoadLinkService)
   val testMassTransitStopService: MassTransitStopService = new MassTransitStopService {
     override def roadLinkService: RoadLinkService = testRoadLinkService
     override def eventbus: DigiroadEventBus = new DummyEventBus
@@ -54,7 +54,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
   val testNumericalLimitService = new NumericalLimitService(testRoadLinkService)
 
-  addServlet(new Digiroad2Api(testRoadLinkService, testLinearAssetProvider, testMassTransitStopService, testNumericalLimitService), "/*")
+  addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testMassTransitStopService, testNumericalLimitService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   // TODO: For this test to mean anything the servlet should probably not use test mode authentication?

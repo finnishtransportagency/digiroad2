@@ -8,7 +8,7 @@ import javax.servlet.ServletContext
 class ScalatraBootstrap extends LifeCycle {
   override def init(context: ServletContext) {
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
-      Digiroad2Context.linearAssetProvider,
+      Digiroad2Context.speedLimitProvider,
       Digiroad2Context.massTransitStopService,
       Digiroad2Context.numericalLimitService
     ), "/api/*")

@@ -5,7 +5,7 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetProvider
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitProvider
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.SpeedLimitChangeSet
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -20,18 +20,18 @@ class ValluActor extends Actor {
   }
 }
 
-class SpeedLimitUpdater(linearAssetProvider: LinearAssetProvider) extends Actor {
+class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
     case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
-    case x: Set[Long] => linearAssetProvider.purgeUnknownSpeedLimits(x)
+    case x: Set[Long] => speedLimitProvider.purgeUnknownSpeedLimits(x)
     case _                      => println("speedLimitFiller: Received unknown message")
   }
 
   def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
-    linearAssetProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
-    linearAssetProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
-    linearAssetProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
-    linearAssetProvider.persistUnknownSpeedLimits(speedLimitChangeSet.generatedUnknownLimits)
+    speedLimitProvider.markSpeedLimitsFloating(speedLimitChangeSet.droppedSpeedLimitIds)
+    speedLimitProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
+    speedLimitProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
+    speedLimitProvider.persistUnknownSpeedLimits(speedLimitChangeSet.generatedUnknownLimits)
   }
 }
 
@@ -55,7 +55,7 @@ object Digiroad2Context {
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], linearAssetProvider), name = "speedLimitUpdater")
+  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], speedLimitProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknown")
 
@@ -73,11 +73,11 @@ object Digiroad2Context {
          .asInstanceOf[AssetProvider]
   }
 
-  lazy val linearAssetProvider: LinearAssetProvider = {
-    Class.forName(properties.getProperty("digiroad2.linearAssetProvider"))
+  lazy val speedLimitProvider: SpeedLimitProvider = {
+    Class.forName(properties.getProperty("digiroad2.speedLimitProvider"))
       .getDeclaredConstructor(classOf[DigiroadEventBus], classOf[RoadLinkService])
       .newInstance(eventbus, roadLinkService)
-      .asInstanceOf[LinearAssetProvider]
+      .asInstanceOf[SpeedLimitProvider]
   }
 
   lazy val userProvider: UserProvider = {

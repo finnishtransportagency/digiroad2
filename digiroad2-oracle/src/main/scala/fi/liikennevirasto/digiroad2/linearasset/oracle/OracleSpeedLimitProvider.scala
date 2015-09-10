@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 // FIXME:
-// - rename to speed limit service
 // - move common asset functionality to asset service
-class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
