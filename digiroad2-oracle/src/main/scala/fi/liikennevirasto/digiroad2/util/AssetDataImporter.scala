@@ -247,7 +247,7 @@ class AssetDataImporter {
            join LRM_POSITION pos on al.position_id = pos.id
            left join number_property_value s on s.asset_id = a.id
            where a.asset_type_id in (30,40,50,60,70,80,90,100)
-           and (valid_to is null or valid_to > sysdate)
+           and (valid_to is null or valid_to >= sysdate)
          """.as[(Long, Long, Int, Int, Int, Int)].list
     }
     println("*** fetched all numerical limits from DB " + Seconds.secondsBetween(startTime, DateTime.now()).getSeconds)
