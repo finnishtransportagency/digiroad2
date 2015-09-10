@@ -151,6 +151,8 @@ object DataFixture {
     dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 80)
     println("import mml ids for width limits")
     dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 90)
+    println("import mml ids for lit roads")
+    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 100)
     println("MML ID import complete at time: ")
     println(DateTime.now())
     println("\n")
