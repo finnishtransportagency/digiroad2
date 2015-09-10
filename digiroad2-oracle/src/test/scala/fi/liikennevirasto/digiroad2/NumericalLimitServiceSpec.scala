@@ -10,6 +10,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 class NumericalLimitServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   object PassThroughService extends NumericalLimitOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -75,11 +76,11 @@ class NumericalLimitServiceSpec extends FunSuite with Matchers {
     PassThroughService.calculateEndPoints(links) shouldBe Set(Point(0.0, 0.0), Point(2.0, 0.0))
   }
 
-  test("get by municipality works lul") {
+  test("get limits by municipality") {
     runWithCleanup {
-//      val limits: Seq[Map[String, Any]] = PassThroughService.getByMunicipality(30, 235)
-//
-//      limits
+      val (limits, _): (List[(Long, Long, Int, Int, Double, Double)], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
+      limits.length should be (2)
+      Set(limits(0)._1, limits(1)._1) should be (Set(11111, 11112))
     }
   }
 }
