@@ -179,8 +179,7 @@ var URLRouter = function(map, backend, models) {
           numericalLimit.className,
           numericalLimit.singleElementEventCategory,
           numericalLimit.unit,
-          numericalLimit.editControlLabels,
-          numericalLimit.valueString);
+          numericalLimit.editControlLabels);
     });
 
     var numericalLimitLayers = _.reduce(numericalLimits, function(acc, numericalLimit) {
@@ -244,11 +243,6 @@ var URLRouter = function(map, backend, models) {
   };
 
   application.start = function(customBackend, withTileMaps) {
-
-    var numericalLimitValueString = function(selectedNumericalLimit, unit) {
-      return selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' ' + unit : '-';
-    };
-
     var numericalLimitSpecs = [
       {
         typeId: 30,
@@ -261,8 +255,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 40,
@@ -275,8 +268,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 50,
@@ -289,8 +281,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 60,
@@ -303,8 +294,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 70,
@@ -317,8 +307,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 80,
@@ -331,8 +320,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 90,
@@ -345,8 +333,7 @@ var URLRouter = function(map, backend, models) {
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
                              enabled: 'Rajoitus',
-                             disabled: 'Ei rajoitusta' },
-        valueString: numericalLimitValueString
+                             disabled: 'Ei rajoitusta' }
       },
       {
         typeId: 100,
@@ -358,10 +345,7 @@ var URLRouter = function(map, backend, models) {
         className: 'lit-road',
         editControlLabels: { title: 'Valaistus',
                              enabled: 'Valaistus',
-                             disabled: 'Ei valaistusta' },
-        valueString: function(selectedNumericalLimit) {
-          return selectedNumericalLimit.expired() ? 'ei' : 'on';
-        }
+                             disabled: 'Ei valaistusta' }
       }
     ];
     var backend = customBackend || new Backend();
