@@ -286,6 +286,35 @@ trait OracleLinearAssetDao {
     speedLimitId
   }
   
+  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Long = {
+    val (startMeasure, endMeasure) = linkMeasures
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
+    val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
+    val sideCodeValue = sideCode.value
+
+    val insertAll =
+      s"""
+       insert all
+         into asset(id, asset_type_id, created_by, created_date)
+         values ($assetId, $typeId, '$creator', sysdate)
+
+         into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCodeValue)
+
+         into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId)
+
+         into number_property_value(id, asset_id, property_id, value)
+         values ($numberPropertyValueId, $assetId, $propertyId, $value)
+       select * from dual
+      """
+    Q.updateNA(insertAll).execute
+
+    assetId
+  }
+  
   private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Option[Long] = {
     val (startMeasure, endMeasure) = linkMeasures
     val existingLrmPositions = fetchSpeedLimitsByMmlId(mmlId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
@@ -375,7 +404,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+  def floatLinearAssets(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
         sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute

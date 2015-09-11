@@ -118,7 +118,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
 
   override def drop(ids: Set[Long]): Unit = {
     withDynTransaction {
-      dao.markSpeedLimitsFloating(ids)
+      dao.floatLinearAssets(ids)
     }
   }
 
