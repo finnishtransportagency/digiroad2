@@ -200,10 +200,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
     linearAssets.map { link =>
-      // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-      val (assetId, mmlId, sideCode, _, startMeasure, endMeasure, createdAt, modifiedAt) = link
+      val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdAt, modifiedAt) = link
       val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
-      val value = Option(link._5)
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
       Map("id" -> (assetId + "-" + mmlId),
         "points" -> geometry,

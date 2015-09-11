@@ -84,7 +84,7 @@ trait LinearAssetOperations {
           join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Int, Double, Double, Option[DateTime], Option[DateTime])].list
+          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime], Option[DateTime])].list
     }
   }
 
@@ -101,9 +101,7 @@ trait LinearAssetOperations {
         }
 
       val linearAssetsWithGeometry: Seq[LinearAssetLink] = linearAssets.map { link =>
-        // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-        val (assetId, mmlId, sideCode, _, startMeasure, endMeasure, _, _) = link
-        val value = Option(link._4)
+        val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, _, _) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
         LinearAssetLink(assetId, mmlId, sideCode, value, geometry)
       }
@@ -112,7 +110,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int, Int, Double, Double, Option[DateTime], Option[DateTime])], Map[Long, Seq[Point]]) = {
+  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int,  Option[Int], Double, Double, Option[DateTime], Option[DateTime])], Map[Long, Seq[Point]]) = {
     withDynTransaction {
       val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
       val mmlIds = roadLinks.map(_.mmlId).toList
