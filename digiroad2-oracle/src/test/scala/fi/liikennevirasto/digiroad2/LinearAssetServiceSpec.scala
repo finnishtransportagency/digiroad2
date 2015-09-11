@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, AdministrativeClass}
+import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSuite}
 import org.mockito.Mockito._
@@ -78,7 +79,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("get limits by municipality") {
     runWithCleanup {
-      val (limits, _): (List[(Long, Long, Int, Int, Double, Double)], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
+      val (limits, _): (List[(Long, Long, Int, Int, Double, Double, Option[DateTime], Option[DateTime])], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
       limits.length should be (2)
       Set(limits(0)._1, limits(1)._1) should be (Set(11111, 11112))
     }
