@@ -196,11 +196,13 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
   }
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
+    case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
     val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
     linearAssets.map { link =>
       // Value is extracted separately since Scala does an implicit conversion from null to 0 in case of Ints
-      val (assetId, mmlId, sideCode, _, startMeasure, endMeasure) = link
+      val (assetId, mmlId, sideCode, _, startMeasure, endMeasure, createdAt, modifiedAt) = link
+      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
       val value = Option(link._5)
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
       Map("id" -> (assetId + "-" + mmlId),
@@ -209,7 +211,8 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
         "side_code" -> sideCode,
         "mmlId" -> mmlId,
         "startMeasure" -> startMeasure,
-        "endMeasure" -> endMeasure)
+        "endMeasure" -> endMeasure,
+         extractModificationTime(timeStamps))
     }
   }
 
