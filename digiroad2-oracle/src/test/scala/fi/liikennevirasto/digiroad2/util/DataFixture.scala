@@ -178,6 +178,20 @@ object DataFixture {
     println("\n")
   }
 
+  def splitLinearAssets() {
+    println("\nCommencing Linear asset splitting at time: ")
+    println(DateTime.now())
+    println("split assets")
+    val assetTypes = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100)
+    assetTypes.foreach { typeId =>
+      println("Splitting asset type " + typeId)
+      dataImporter.splitMultiLinkAssetsToSingleLinkAssets(typeId)
+    }
+    println("splitting complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importLitRoadsFromConversion(): Unit = {
     println("\nCommencing lit roads import from conversion at time: ")
     println(DateTime.now())
@@ -244,13 +258,15 @@ object DataFixture {
         flyway.repair()
       case Some("split_speedlimitchains") =>
         splitSpeedLimitChains()
+      case Some("split_linear_asset_chains") =>
+        splitLinearAssets()
       case Some("litroads") =>
         importLitRoadsFromConversion()
       case Some("dropped_numericallimits") =>
         generateDroppedNumericalLimits()
       case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
         " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
-        " split_speedlimitchains | litroads | dropped_numericallimits | repair")
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | repair")
     }
   }
 }
