@@ -511,16 +511,6 @@ class AssetDataImporter {
     }
   }
 
-  private def getSpeedLimitIdRange: (Int, Int) = {
-    withDynSession {
-      sql"""
-        select min(a.id), max(a.id)
-        from asset a
-        where a.asset_type_id = 20 and floating = 0 and (select count(*) from asset_link where asset_id = a.id) > 1
-      """.as[(Int, Int)].first
-    }
-  }
-
   private def getAssetIdRange(typeId: Int): (Int, Int) = {
     withDynSession {
       sql"""
@@ -553,7 +543,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, mmlId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", mmlId, (startMeasure, endMeasure), SideCode(sideCode), value.get)
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertEnumeratedValue(_, "rajoitus"))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -581,9 +571,8 @@ class AssetDataImporter {
             and a.id between $chunkStart and $chunkEnd
           """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
-      linearAssetLinks.foreach { assetLink =>
-        val (id, mmlId, sideCode, startMeasure, endMeasure, value) = assetLink
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), "mittarajoitus", value)
+      linearAssetLinks.foreach { case (id, mmlId, sideCode, startMeasure, endMeasure, value) =>
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value, dao.insertValue(_, "mittarajoitus"))
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
@@ -596,7 +585,7 @@ class AssetDataImporter {
 
   def splitMultiLinkSpeedLimitsToSingleLinkLimits() {
     val chunkSize = 1000
-    val (minId, maxId) = getSpeedLimitIdRange
+    val (minId, maxId) = getAssetIdRange(20)
     val chunks: List[(Int, Int)] = getBatchDrivers(minId, maxId, chunkSize)
     chunks.foreach { case(chunkStart, chunkEnd) =>
       val start = System.currentTimeMillis()
