@@ -206,7 +206,12 @@ trait OracleLinearAssetDao {
     def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
       attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
     }
-    def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = Set(1, 2, 3, 4, 5, 6).contains(link.functionalClass % 10)
+    def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = {
+      val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
+      val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)
+
+      allowedFunctionalClasses.contains(link.functionalClass % 10) && !disallowedLinkTypes.contains(link.linkType.value)
+    }
     def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
       link.geometry,
       link.length,
