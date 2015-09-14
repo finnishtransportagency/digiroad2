@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
 // FIXME:
-// - rename to speed limit service
 // - move common asset functionality to asset service
-class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends LinearAssetProvider {
+class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
   }
@@ -20,13 +19,13 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  override def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
+  override def getUnknown(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
     withDynSession {
       dao.getUnknownSpeedLimits(municipalities)
     }
   }
 
-  override def purgeUnknownSpeedLimits(mmlIds: Set[Long]): Unit = {
+  override def purgeUnknown(mmlIds: Set[Long]): Unit = {
     val roadLinks = roadLinkServiceImplementation.fetchVVHRoadlinks(mmlIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
@@ -35,7 +34,7 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimits(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
+  override def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -48,13 +47,13 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def getSpeedLimits(ids: Seq[Long]): Seq[SpeedLimit] = {
+  override def get(ids: Seq[Long]): Seq[SpeedLimit] = {
     withDynTransaction {
       ids.flatMap(loadSpeedLimit)
     }
   }
 
-  override def getSpeedLimit(speedLimitId: Long): Option[SpeedLimit] = {
+  override def find(speedLimitId: Long): Option[SpeedLimit] = {
     withDynTransaction {
      loadSpeedLimit(speedLimitId)
     }
@@ -80,19 +79,19 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+  override def persistUnknown(limits: Seq[UnknownLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
     }
   }
 
-  override def updateSpeedLimitValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
+  override def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     withDynTransaction {
       ids.map(dao.updateSpeedLimitValue(_, value, username, municipalityValidation)).flatten
     }
   }
 
-  override def splitSpeedLimit(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
+  override def split(id: Long, splitMeasure: Double, existingValue: Int, createdValue: Int, username: String, municipalityValidation: (Int) => Unit): Seq[SpeedLimit] = {
     withDynTransaction {
       val newId = dao.splitSpeedLimit(id, splitMeasure, createdValue, username, municipalityValidation)
       dao.updateSpeedLimitValue(id, existingValue, username, municipalityValidation)
@@ -100,14 +99,14 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def separateSpeedLimit(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
+  override def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: Int => Unit): Seq[SpeedLimit] = {
     withDynTransaction {
       val newId = dao.separateSpeedLimit(id, valueTowardsDigitization, valueAgainstDigitization, username, municipalityValidation)
       Seq(loadSpeedLimit(id).get, loadSpeedLimit(newId).get)
     }
   }
 
-  override def getSpeedLimits(municipality: Int): Seq[SpeedLimit] = {
+  override def get(municipality: Int): Seq[SpeedLimit] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
@@ -117,13 +116,13 @@ class OracleLinearAssetProvider(eventbus: DigiroadEventBus, roadLinkServiceImple
     }
   }
 
-  override def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+  override def drop(ids: Set[Long]): Unit = {
     withDynTransaction {
-      dao.markSpeedLimitsFloating(ids)
+      dao.floatLinearAssets(ids)
     }
   }
 
-  override def createSpeedLimits(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+  override def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)

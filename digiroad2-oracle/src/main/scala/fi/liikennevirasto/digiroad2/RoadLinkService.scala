@@ -76,17 +76,6 @@ trait RoadLinkService {
     }
   }
 
-  def getRoadLinkGeometry(id: Long, startMeasure: Double, endMeasure: Double): Seq[Point] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = sql"""
-        select to_2d(sdo_lrs.dynamic_segment(shape, $startMeasure, $endMeasure))
-          from tielinkki_ctas
-          where dr1_id = $id
-        """
-      query.as[Seq[Point]].first
-    }
-  }
-
   def getRoadLinkGeometry(id: Long): Option[Seq[Point]] = {
     Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
       val query = sql"""
@@ -404,13 +393,6 @@ trait RoadLinkService {
     adjustedLinks.map{ link => VVHRoadLinkWithProperties(link.mmlId, link.geometry,
       link.length, link.administrativeClass, link.functionalClass, link.trafficDirection,
       LinkType(link.linkType), link.modifiedAt, link.modifiedBy, attributes = vvhRoadLinks.find(_.mmlId==link.mmlId).get.attributes) }
-  }
-
-  def getByMunicipality(municipality: Int): Seq[(Long, Seq[Point])] = {
-    Database.forDataSource(ConversionDatabase.dataSource).withDynTransaction {
-      val query = s"""select dr1_id, to_2d(shape) from tielinkki_ctas where kunta_nro = $municipality"""
-      Q.queryNA[(Long, Seq[Point])](query).iterator.toSeq
-    }
   }
 
   def getIdsAndMmlIdsByMunicipality(municipality: Int): Seq[(Long, Long)] = {

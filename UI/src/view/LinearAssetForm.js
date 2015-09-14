@@ -1,24 +1,24 @@
 (function (root) {
-  root.NumericalLimitForm = function(selectedNumericalLimit, newNumericalLimitTitle, className, eventCategory, unit, editControlLabels) {
-    var template = function(selectedNumericalLimit) {
-      var modifiedBy = selectedNumericalLimit.getModifiedBy() || '-';
-      var modifiedDateTime = selectedNumericalLimit.getModifiedDateTime() ? ' ' + selectedNumericalLimit.getModifiedDateTime() : '';
-      var createdBy = selectedNumericalLimit.getCreatedBy() || '-';
-      var createdDateTime = selectedNumericalLimit.getCreatedDateTime() ? ' ' + selectedNumericalLimit.getCreatedDateTime() : '';
-      var disabled = selectedNumericalLimit.isDirty() ? '' : 'disabled';
+  root.LinearAssetForm = function(selectedLinearAsset, newTitle, className, eventCategory, unit, editControlLabels) {
+    var template = function(selectedLinearAsset) {
+      var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
+      var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
+      var createdBy = selectedLinearAsset.getCreatedBy() || '-';
+      var createdDateTime = selectedLinearAsset.getCreatedDateTime() ? ' ' + selectedLinearAsset.getCreatedDateTime() : '';
+      var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
       var buttons = ['<button class="save btn btn-primary" ' + disabled + '>Tallenna</button>',
           '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-      var expiredChecked = selectedNumericalLimit.expired() ? 'checked' : '';
-      var nonExpiredChecked = selectedNumericalLimit.expired() ? '' : 'checked';
-      var title = selectedNumericalLimit.isNew() ?
-        '<span>' + newNumericalLimitTitle + '</span>' :
-        '<span>Segmentin ID: ' + selectedNumericalLimit.getId() + '</span>';
+      var expiredChecked = selectedLinearAsset.expired() ? 'checked' : '';
+      var nonExpiredChecked = selectedLinearAsset.expired() ? '' : 'checked';
+      var title = selectedLinearAsset.isNew() ?
+        '<span>' + newTitle + '</span>' :
+        '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
       var header = '<header>' + title + '<div class="' + className + ' form-controls">' + buttons + '</div></header>';
       var valueString = function() {
         if (unit) {
-          return selectedNumericalLimit.getValue() ? selectedNumericalLimit.getValue() + ' ' + unit : '-';
+          return selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() + ' ' + unit : '-';
         } else {
-          return selectedNumericalLimit.expired() ? 'ei ole' : 'on';
+          return selectedLinearAsset.expired() ? 'ei ole' : 'on';
         }
       };
       var measureInput = function() {
@@ -70,22 +70,22 @@
       return s.replace(/\s/g, '');
     };
 
-    var setupNumericalLimitInput = function(toggleElement, inputElement, selectedNumericalLimit) {
-      inputElement.val(selectedNumericalLimit.getValue());
-      inputElement.prop('disabled', selectedNumericalLimit.expired());
+    var setupNumericalLimitInput = function(toggleElement, inputElement, selectedLinearAsset) {
+      inputElement.val(selectedLinearAsset.getValue());
+      inputElement.prop('disabled', selectedLinearAsset.expired());
       inputElement.on('input', function(event) {
         var value = parseInt(removeWhitespace($(event.currentTarget).val()), 10);
-        selectedNumericalLimit.setValue(value);
+        selectedLinearAsset.setValue(value);
       });
       toggleElement.change(function(event) {
         var expired = $(event.currentTarget).val();
         var disabled = expired === 'disabled';
-        selectedNumericalLimit.setExpired(disabled);
+        selectedLinearAsset.setExpired(disabled);
         inputElement.prop('disabled', disabled);
       });
     };
 
-    var bindEvents = function(selectedNumericalLimit, className, eventCategory) {
+    var bindEvents = function(selectedLinearAsset, className, eventCategory) {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
         rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -97,10 +97,10 @@
         return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
       };
       eventbus.on(events('selected', 'cancelled', 'saved'), function() {
-        rootElement.html(template(selectedNumericalLimit));
+        rootElement.html(template(selectedLinearAsset));
         var toggleElement = rootElement.find(".radio input");
         var inputElement = rootElement.find('.' + className);
-        setupNumericalLimitInput(toggleElement, inputElement, selectedNumericalLimit);
+        setupNumericalLimitInput(toggleElement, inputElement, selectedLinearAsset);
         toggleMode(applicationModel.isReadOnly());
       });
       eventbus.on(events('unselected'), function() {
@@ -111,13 +111,13 @@
         rootElement.find('.form-controls button').attr('disabled', false);
       });
       rootElement.on('click', '.' + className + ' button.save', function() {
-        selectedNumericalLimit.save();
+        selectedLinearAsset.save();
       });
       rootElement.on('click', '.' + className + ' button.cancel', function() {
-        selectedNumericalLimit.cancel();
+        selectedLinearAsset.cancel();
       });
     };
 
-    bindEvents(selectedNumericalLimit, className, eventCategory);
+    bindEvents(selectedLinearAsset, className, eventCategory);
   };
 })(this);

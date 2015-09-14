@@ -148,7 +148,7 @@ var URLRouter = function(map, backend, models) {
     return map;
   };
 
-  var setupMap = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
+  var setupMap = function(backend, models, linearAssets, withTileMaps, startupParameters) {
     var map = createOpenLayersMap(startupParameters);
 
     var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
@@ -167,34 +167,34 @@ var URLRouter = function(map, backend, models) {
 
     if (withTileMaps) { new TileMapCollection(map); }
     var geometryUtils = new GeometryUtils();
-    var linearAsset = new LinearAsset(geometryUtils);
+    var linearAssetsUtility = new LinearAsset(geometryUtils);
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
-    _.forEach(numericalLimits, function(numericalLimit) {
-      new NumericalLimitForm(
-          numericalLimit.selectedNumericalLimit,
-          numericalLimit.newNumericalLimitTitle,
-          numericalLimit.className,
-          numericalLimit.singleElementEventCategory,
-          numericalLimit.unit,
-          numericalLimit.editControlLabels);
+    _.forEach(linearAssets, function(linearAsset) {
+      new LinearAssetForm(
+          linearAsset.selectedLinearAsset,
+          linearAsset.newTitle,
+          linearAsset.className,
+          linearAsset.singleElementEventCategory,
+          linearAsset.unit,
+          linearAsset.editControlLabels);
     });
 
-    var numericalLimitLayers = _.reduce(numericalLimits, function(acc, numericalLimit) {
-      acc[numericalLimit.layerName] = new NumericalLimitLayer({
+    var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
+      acc[asset.layerName] = new LinearAssetLayer({
         map: map,
         application: applicationModel,
-        collection: numericalLimit.collection,
-        selectedNumericalLimit: numericalLimit.selectedNumericalLimit,
+        collection: asset.collection,
+        selectedLinearAsset: asset.selectedLinearAsset,
         roadCollection: models.roadCollection,
         geometryUtils: geometryUtils,
-        linearAsset: linearAsset,
+        linearAsset: linearAssetsUtility,
         roadLayer: roadLayer,
-        layerName: numericalLimit.layerName,
-        multiElementEventCategory: numericalLimit.multiElementEventCategory,
-        singleElementEventCategory: numericalLimit.singleElementEventCategory
+        layerName: asset.layerName,
+        multiElementEventCategory: asset.multiElementEventCategory,
+        singleElementEventCategory: asset.singleElementEventCategory
       });
       return acc;
     }, {});
@@ -209,12 +209,12 @@ var URLRouter = function(map, backend, models) {
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
         geometryUtils: geometryUtils,
-        linearAsset: linearAsset,
+        linearAsset: linearAssetsUtility,
         backend: backend,
         roadLayer: roadLayer
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
-    }, numericalLimitLayers);
+    }, linearAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -233,24 +233,24 @@ var URLRouter = function(map, backend, models) {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
-  var startApplication = function(backend, models, numericalLimits, withTileMaps, startupParameters) {
+  var startApplication = function(backend, models, linearAssets, withTileMaps, startupParameters) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, numericalLimits, withTileMaps, startupParameters);
+      var map = setupMap(backend, models, linearAssets, withTileMaps, startupParameters);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     }
   };
 
   application.start = function(customBackend, withTileMaps) {
-    var numericalLimitSpecs = [
+    var linearAssetSpecs = [
       {
         typeId: 30,
         singleElementEventCategory: 'totalWeightLimit',
         multiElementEventCategory: 'totalWeightLimits',
         layerName: 'totalWeightLimit',
-        numericalLimitTitle: 'Suurin sallittu massa',
-        newNumericalLimitTitle: 'Uusi suurin sallittu massa',
+        title: 'Suurin sallittu massa',
+        newTitle: 'Uusi suurin sallittu massa',
         className: 'total-weight-limit',
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
@@ -262,8 +262,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'trailerTruckWeightLimit',
         multiElementEventCategory: 'trailerTruckWeightLimits',
         layerName: 'trailerTruckWeightLimit',
-        numericalLimitTitle: 'Yhdistelmän suurin sallittu massa',
-        newNumericalLimitTitle: 'Uusi yhdistelmän suurin sallittu massa',
+        title: 'Yhdistelmän suurin sallittu massa',
+        newTitle: 'Uusi yhdistelmän suurin sallittu massa',
         className: 'trailer-truck-weight-limit',
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
@@ -275,8 +275,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'axleWeightLimit',
         multiElementEventCategory: 'axleWeightLimits',
         layerName: 'axleWeightLimit',
-        numericalLimitTitle: 'Suurin sallittu akselimassa',
-        newNumericalLimitTitle: 'Uusi suurin sallittu akselimassa',
+        title: 'Suurin sallittu akselimassa',
+        newTitle: 'Uusi suurin sallittu akselimassa',
         className: 'axle-weight-limit',
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
@@ -288,8 +288,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'bogieWeightLimit',
         multiElementEventCategory: 'bogieWeightlLimits',
         layerName: 'bogieWeightLimit',
-        numericalLimitTitle: 'Suurin sallittu telimassa',
-        newNumericalLimitTitle: 'Uusi suurin sallittu telimassa',
+        title: 'Suurin sallittu telimassa',
+        newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
         unit: 'kg',
         editControlLabels: { title: 'Rajoitus',
@@ -301,8 +301,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'heightLimit',
         multiElementEventCategory: 'heightLimits',
         layerName: 'heightLimit',
-        numericalLimitTitle: 'Suurin sallittu korkeus',
-        newNumericalLimitTitle: 'Uusi suurin sallittu korkeus',
+        title: 'Suurin sallittu korkeus',
+        newTitle: 'Uusi suurin sallittu korkeus',
         className: 'height-limit',
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
@@ -314,8 +314,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'lengthLimit',
         multiElementEventCategory: 'lengthLimits',
         layerName: 'lengthLimit',
-        numericalLimitTitle: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
-        newNumericalLimitTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+        title: 'Ajoneuvon tai -yhdistelmän suurin sallittu pituus',
+        newTitle: 'Uusi ajoneuvon tai -yhdistelmän suurin sallittu pituus',
         className: 'length-limit',
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
@@ -327,8 +327,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'widthLimit',
         multiElementEventCategory: 'widthLimits',
         layerName: 'widthLimit',
-        numericalLimitTitle: 'Suurin sallittu leveys',
-        newNumericalLimitTitle: 'Uusi suurin sallittu leveys',
+        title: 'Suurin sallittu leveys',
+        newTitle: 'Uusi suurin sallittu leveys',
         className: 'width-limit',
         unit: 'cm',
         editControlLabels: { title: 'Rajoitus',
@@ -340,8 +340,8 @@ var URLRouter = function(map, backend, models) {
         singleElementEventCategory: 'litRoad',
         multiElementEventCategory: 'litRoads',
         layerName: 'litRoad',
-        numericalLimitTitle: 'Valaistu tie',
-        newNumericalLimitTitle: 'Uusi valaistu tie',
+        title: 'Valaistu tie',
+        newTitle: 'Uusi valaistu tie',
         className: 'lit-road',
         editControlLabels: { title: 'Valaistus',
                              enabled: 'Valaistus',
@@ -357,12 +357,12 @@ var URLRouter = function(map, backend, models) {
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
     var selectedManoeuvreSource = new SelectedManoeuvreSource(manoeuvresCollection);
-    var numericalLimits = _.map(numericalLimitSpecs, function(spec) {
-      var collection = new NumericalLimitsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
-      var selectedNumericalLimit = new SelectedNumericalLimit(backend, spec.typeId, collection, spec.singleElementEventCategory);
+    var linearAssets = _.map(linearAssetSpecs, function(spec) {
+      var collection = new LinearAssetsCollection(backend, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory);
+      var selectedLinearAsset = new SelectedLinearAsset(backend, spec.typeId, collection, spec.singleElementEventCategory);
       return _.merge({}, spec, {
         collection: collection,
-        selectedNumericalLimit: selectedNumericalLimit
+        selectedLinearAsset: selectedLinearAsset
       });
     });
 
@@ -382,16 +382,16 @@ var URLRouter = function(map, backend, models) {
     bindEvents();
     window.assetsModel = new AssetsModel(backend);
     window.selectedAssetModel = selectedMassTransitStopModel;
-    var selectedNumericalLimitModels = _.pluck(numericalLimits, "selectedNumericalLimit");
+    var selectedLinearAssetModels = _.pluck(linearAssets, "selectedLinearAsset");
     window.applicationModel = new ApplicationModel([
       selectedAssetModel,
       selectedSpeedLimit,
       selectedLinkProperty,
-      selectedManoeuvreSource].concat(selectedNumericalLimitModels));
+      selectedManoeuvreSource].concat(selectedLinearAssetModels));
     ActionPanel.initialize(backend,
                            new InstructionsPopup($('.digiroad2')),
                            selectedSpeedLimit,
-                           numericalLimits,
+                           linearAssets,
                            linkPropertiesModel,
                            new LocationSearch(backend, window.applicationModel, new GeometryUtils()));
     AssetForm.initialize(backend);
@@ -401,7 +401,7 @@ var URLRouter = function(map, backend, models) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, numericalLimits, tileMaps, startupParameters);
+        startApplication(backend, models, linearAssets, tileMaps, startupParameters);
       });
     });
   };

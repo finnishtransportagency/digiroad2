@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.linearasset.{LinearAssetProvider, NewLimit, RoadLinkPartitioner}
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, NewLimit, RoadLinkPartitioner}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
@@ -15,8 +15,9 @@ import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
-                   val linearAssetProvider: LinearAssetProvider,
-                   val massTransitStopService: MassTransitStopService) extends ScalatraServlet
+                   val speedLimitProvider: SpeedLimitProvider,
+                   val massTransitStopService: MassTransitStopService,
+                   val linearAssetService: LinearAssetService) extends ScalatraServlet
 with JacksonJsonSupport
 with CorsSupport
 with RequestHeaderAuthentication
@@ -368,7 +369,7 @@ with GZipSupport {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      linearAssetProvider.getSpeedLimits(boundingRectangle, municipalities).map { linkPartition =>
+      speedLimitProvider.get(boundingRectangle, municipalities).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
@@ -397,26 +398,26 @@ with GZipSupport {
       case true => None
       case false => Some(user.configuration.authorizedMunicipalities)
     }
-    linearAssetProvider.getUnknownSpeedLimits(includedMunicipalities)
+    speedLimitProvider.getUnknown(includedMunicipalities)
   }
 
 
-  get("/numericallimits") {
+  get("/linearassets") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      NumericalLimitService.getByBoundingBox(typeId, boundingRectangle, municipalities)
+      linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
   }
 
-  get("/numericallimits/:segmentId") {
+  get("/linearassets/:segmentId") {
     val segmentId = params("segmentId")
-    NumericalLimitService.getById(segmentId.toLong)
+    linearAssetService.getById(segmentId.toLong)
       .getOrElse(NotFound("Numerical limit " + segmentId + " not found"))
   }
 
@@ -429,7 +430,7 @@ with GZipSupport {
   }
 
 
-  put("/numericallimits/:id") {
+  put("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
     if (!user.hasEarlyAccess() || !assetService.getMunicipalityCodes(id).forall(user.isAuthorizedToWrite)) {
@@ -441,40 +442,38 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        NumericalLimitService.updateNumericalLimit(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => NumericalLimitService.getById(segmentId)
-          case None => NotFound("Numerical limit " + id + " not found")
+        linearAssetService.update(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+          case Some(segmentId) => linearAssetService.getById(segmentId)
+          case None => NotFound("Linear asset " + id + " not found")
         }
     }
   }
 
-  post("/numericallimits") {
+  post("/linearassets") {
     val user = userProvider.getCurrentUser()
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    validateUserMunicipalityAccess(user)(municipalityCode.get)
+    val mmlId = (parsedBody \ "mmlId").extract[Long]
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val username = user.username
-    NumericalLimitService.createNumericalLimit(typeId = typeId,
-                                         roadLinkId = roadLinkId,
-                                         value = value.map(_.intValue()),
-                                         username = username)
+    linearAssetService.createNew(
+      typeId = typeId,
+      mmlId = mmlId,
+      value = value.map(_.intValue()),
+      username = username,
+      municipalityValidation = validateUserMunicipalityAccess(user))
   }
 
-  post("/numericallimits/:id") {
+  post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
-    val roadLinkId = (parsedBody \ "roadLinkId").extract[Long]
-    val municipalityCode = RoadLinkService.getMunicipalityCode(roadLinkId)
-    validateUserMunicipalityAccess(user)(municipalityCode.get)
+    val mmlId = (parsedBody \ "mmlId").extract[Long]
     val value = (parsedBody \ "value").extractOpt[BigInt]
     value.foreach(validateNumericalLimitValue)
     val expired = (parsedBody \ "expired").extract[Boolean]
     val id = params("id").toLong
     val username = user.username
     val measure = (parsedBody \ "splitMeasure").extract[Double]
-    NumericalLimitService.split(id, roadLinkId, measure, value.map(_.intValue()), expired, username)
+    linearAssetService.split(id, mmlId, measure, value.map(_.intValue()), expired, username, validateUserMunicipalityAccess(user))
   }
 
   put("/speedlimits") {
@@ -484,9 +483,9 @@ with GZipSupport {
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(value) =>
-        val updatedIds = linearAssetProvider.updateSpeedLimitValues(ids, value, user.username, validateUserMunicipalityAccess(user))
-        val createdIds = linearAssetProvider.createSpeedLimits(newLimits, value, user.username, validateUserMunicipalityAccess(user))
-        linearAssetProvider.getSpeedLimits(updatedIds ++ createdIds)
+        val updatedIds = speedLimitProvider.updateValues(ids, value, user.username, validateUserMunicipalityAccess(user))
+        val createdIds = speedLimitProvider.create(newLimits, value, user.username, validateUserMunicipalityAccess(user))
+        speedLimitProvider.get(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
   }
@@ -494,7 +493,7 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId/split") {
     val user = userProvider.getCurrentUser()
 
-    linearAssetProvider.splitSpeedLimit(params("speedLimitId").toLong,
+    speedLimitProvider.split(params("speedLimitId").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       (parsedBody \ "existingValue").extract[Int],
       (parsedBody \ "createdValue").extract[Int],
@@ -505,7 +504,7 @@ with GZipSupport {
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
 
-    linearAssetProvider.separateSpeedLimit(params("speedLimitId").toLong,
+    speedLimitProvider.separate(params("speedLimitId").toLong,
       (parsedBody \ "valueTowardsDigitization").extract[Int],
       (parsedBody \ "valueAgainstDigitization").extract[Int],
       user.username,
@@ -519,11 +518,11 @@ with GZipSupport {
                             (parsedBody \ "startMeasure").extract[Double],
                             (parsedBody \ "endMeasure").extract[Double])
 
-    linearAssetProvider.createSpeedLimits(Seq(newLimit),
+    speedLimitProvider.create(Seq(newLimit),
                                          (parsedBody \ "value").extract[Int],
                                          user.username,
                                          validateUserMunicipalityAccess(user)).headOption match {
-      case Some(id) => linearAssetProvider.getSpeedLimit(id)
+      case Some(id) => speedLimitProvider.find(id)
       case _ => BadRequest("Speed limit creation failed")
     }
   }

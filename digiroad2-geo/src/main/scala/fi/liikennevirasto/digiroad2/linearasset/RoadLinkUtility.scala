@@ -15,7 +15,7 @@ case class VVHRoadLinkWithProperties(mmlId: Long, geometry: Seq[Point],
                                      linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
                                      attributes: Map[String, Any] = Map()) extends PolyLine
 
-object LinearAsset {
+object RoadLinkUtility {
   def roadIdentifierFromRoadLink(link: VVHRoadLinkWithProperties): Option[Either[Int, String]] = {
     def getAttributeWithoutNull(attribute: String) = link.attributes(attribute).asInstanceOf[String].toString
     Try(Left(link.attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))

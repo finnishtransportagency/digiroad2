@@ -151,6 +151,8 @@ object DataFixture {
     dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 80)
     println("import mml ids for width limits")
     dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 90)
+    println("import mml ids for lit roads")
+    dataImporter.importMMLIdsOnNumericalLimit(Conversion.database(), 100)
     println("MML ID import complete at time: ")
     println(DateTime.now())
     println("\n")
@@ -176,12 +178,35 @@ object DataFixture {
     println("\n")
   }
 
+  def splitLinearAssets() {
+    println("\nCommencing Linear asset splitting at time: ")
+    println(DateTime.now())
+    println("split assets")
+    val assetTypes = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100)
+    assetTypes.foreach { typeId =>
+      println("Splitting asset type " + typeId)
+      dataImporter.splitMultiLinkAssetsToSingleLinkAssets(typeId)
+    }
+    println("splitting complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importLitRoadsFromConversion(): Unit = {
     println("\nCommencing lit roads import from conversion at time: ")
     println(DateTime.now())
     println("import lit roads")
     dataImporter.importLitRoadsFromConversion(Conversion.database())
     println("Lit roads import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def generateDroppedNumericalLimits(): Unit = {
+    println("\nGenerating list of numerical limits outside geometry")
+    println(DateTime.now())
+    dataImporter.generateDroppedNumericalLimits()
+    println("complete at time: ")
     println(DateTime.now())
     println("\n")
   }
@@ -233,9 +258,15 @@ object DataFixture {
         flyway.repair()
       case Some("split_speedlimitchains") =>
         splitSpeedLimitChains()
+      case Some("split_linear_asset_chains") =>
+        splitLinearAssets()
       case Some("litroads") =>
         importLitRoadsFromConversion()
-      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits | manoeuvres | mml_masstransitstops | import_roadlink_data | split_speedlimitchains | litroads | repair")
+      case Some("dropped_numericallimits") =>
+        generateDroppedNumericalLimits()
+      case _ => println("Usage: DataFixture test | speedlimits | totalweightlimits | weightlimits | dimensionlimits |" +
+        " manoeuvres | mml_masstransitstops | mml_numericallimits | mml_speedlimits | import_roadlink_data |" +
+        " split_speedlimitchains | split_linear_asset_chains | litroads | dropped_numericallimits | repair")
     }
   }
 }

@@ -105,8 +105,6 @@ trait OracleLinearAssetDao {
     }
   }
 
-  case class GeneratedSpeedLimitLink(id: Long, mmlId: Long, roadLinkId: Long, sideCode: Int, startMeasure: Double, endMeasure: Double)
-
   val roadLinkService: RoadLinkService
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -127,27 +125,6 @@ trait OracleLinearAssetDao {
   implicit val SetParameterFromLong: SetParameter[Seq[Long]] = new SetParameter[Seq[Long]] {
     def apply(seq: Seq[Long], p: PositionedParameters): Unit = {
       seq.foreach(p.setLong)
-    }
-  }
-
-  def transformLink(link: (Long, Long, Int, Int, Array[Byte])) = {
-    val (id, roadLinkId, sideCode, value, pos) = link
-    val points = JGeometry.load(pos).getOrdinatesArray.grouped(2)
-    (id, roadLinkId, sideCode, value, points.map { pointArray =>
-      Point(pointArray(0), pointArray(1))}.toSeq)
-  }
-
-  def getLinksWithLength(assetTypeId: Int, id: Long): Seq[(Long, Double, Seq[Point])] = {
-    val links = sql"""
-      select pos.road_link_id, pos.start_measure, pos.end_measure
-        from ASSET a
-        join ASSET_LINK al on a.id = al.asset_id
-        join LRM_POSITION pos on al.position_id = pos.id
-        where a.asset_type_id = $assetTypeId and a.id = $id
-        """.as[(Long, Double, Double)].list
-    links.map { case (roadLinkId, startMeasure, endMeasure) =>
-      val points = RoadLinkService.getRoadLinkGeometry(roadLinkId, startMeasure, endMeasure)
-      (roadLinkId, endMeasure - startMeasure, points)
     }
   }
 
@@ -217,7 +194,7 @@ trait OracleLinearAssetDao {
       link.length,
       link.administrativeClass,
       link.mmlId,
-      LinearAsset.roadIdentifierFromRoadLink(link),
+      RoadLinkUtility.roadIdentifierFromRoadLink(link),
       link.trafficDirection,
       municipalityCodeFromAttributes(link.attributes))
 
@@ -266,16 +243,6 @@ trait OracleLinearAssetDao {
     (modifiedBy, modifiedDate, createdBy, createdDate, value)
   }
 
-  def getLinkGeometryData(id: Long, roadLinkId: Long): (Double, Double, Int) = {
-    sql"""
-      select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
-        from asset a
-        join asset_link al on a.ID = al.ASSET_ID
-        join lrm_position lrm on lrm.id = al.POSITION_ID
-        where a.id = $id and lrm.road_link_id = $roadLinkId
-    """.as[(Double, Double, Int)].list.head
-  }
-  
   def getLinkGeometryData(id: Long): (Double, Double, SideCode) = {
     sql"""
       select lrm.START_MEASURE, lrm.END_MEASURE, lrm.SIDE_CODE
@@ -291,32 +258,47 @@ trait OracleLinearAssetDao {
     createSpeedLimitWithoutDuplicates(creator, mmlId, linkMeasures, sideCode, value)
   }
 
-  def forceCreateSpeedLimit(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Long = {
+  def insertEnumeratedValue(assetId: Long, valuePropertyId: String)(value: Int) = {
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    sqlu"""
+       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
+       values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+     """.execute
+  }
+
+  def insertValue(assetId: Long, valuePropertyId: String)(value: Int) = {
+    val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    sqlu"""
+       insert into number_property_value(id, asset_id, property_id, value)
+       values ($numberPropertyValueId, $assetId, $propertyId, $value)
+     """.execute
+  }
+
+  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Option[Int], valueInsertion: Long => Int => Unit): Long = {
     val (startMeasure, endMeasure) = linkMeasures
-    val speedLimitId = Sequences.nextPrimaryKeySeqValue
+    val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val sideCodeValue = sideCode.value
 
     val insertAll =
       s"""
-      INSERT ALL
-        into asset(id, asset_type_id, created_by, created_date)
-        values ($speedLimitId, 20, '$creator', sysdate)
+       insert all
+         into asset(id, asset_type_id, created_by, created_date)
+         values ($assetId, $typeId, '$creator', sysdate)
 
-        into lrm_position(id, start_measure, end_measure, mml_id, side_code)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCodeValue)
+         into lrm_position(id, start_measure, end_measure, mml_id, side_code)
+         values ($lrmPositionId, $startMeasure, $endMeasure, $mmlId, $sideCodeValue)
 
-        into asset_link(asset_id, position_id)
-        values ($speedLimitId, $lrmPositionId)
-
-        into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-        values ($speedLimitId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
-      SELECT * FROM DUAL
+         into asset_link(asset_id, position_id)
+         values ($assetId, $lrmPositionId)
+       select * from dual
       """
     Q.updateNA(insertAll).execute
 
-    speedLimitId
+    value.foreach(valueInsertion(assetId))
+
+    assetId
   }
   
   private def createSpeedLimitWithoutDuplicates(creator: String, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Option[Long] = {
@@ -324,54 +306,12 @@ trait OracleLinearAssetDao {
     val existingLrmPositions = fetchSpeedLimitsByMmlId(mmlId).filter(sl => sideCode == SideCode.BothDirections || sl._3 == sideCode).map { case(_, _, _, _, start, end) => (start, end) }
     val remainders = existingLrmPositions.foldLeft(Seq((startMeasure, endMeasure)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.01}
     if (remainders.length == 1) {
-      Some(forceCreateSpeedLimit(creator, mmlId, linkMeasures, sideCode, value))
+      Some(forceCreateLinearAsset(creator, 20, mmlId, linkMeasures, sideCode, Some(value), insertEnumeratedValue(_, "rajoitus")))
     } else {
       None
     }
   }
 
-  def moveLinks(sourceId: Long, targetId: Long, roadLinkIds: Seq[Long]): List[Int] = {
-    val roadLinks = roadLinkIds.map(_ => "?").mkString(",")
-    val sql = s"""
-      update ASSET_LINK
-      set
-        asset_id = $targetId
-      where asset_id = $sourceId and position_id in (
-        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.road_link_id in ($roadLinks))
-    """
-    Q.update[Seq[Long]](sql).apply(roadLinkIds).list
-  }
-
-  def moveLinksByMmlId(sourceId: Long, targetId: Long, mmlIds: Seq[Long]): Unit = {
-    val roadLinks = mmlIds.mkString(",")
-    sqlu"""
-      update ASSET_LINK
-      set
-        asset_id = $targetId
-      where asset_id = $sourceId and position_id in (
-        select al.position_id from asset_link al join lrm_position lrm on al.position_id = lrm.id where lrm.mml_id in (#$roadLinks))
-    """.execute
-  }
-
-  def updateLinkStartAndEndMeasures(id: Long,
-                                    roadLinkId: Long,
-                                    linkMeasures: (Double, Double)): Unit = {
-    val (startMeasure, endMeasure) = linkMeasures
-
-    sqlu"""
-      update LRM_POSITION
-      set
-        start_measure = $startMeasure,
-        end_measure = $endMeasure
-      where id = (
-        select lrm.id
-          from asset a
-          join asset_link al on a.ID = al.ASSET_ID
-          join lrm_position lrm on lrm.id = al.POSITION_ID
-          where a.id = $id and lrm.road_link_id = $roadLinkId)
-    """.execute
-  }
-  
   def updateMValues(id: Long, linkMeasures: (Double, Double)): Unit = {
     val (startMeasure, endMeasure) = linkMeasures
     sqlu"""
@@ -450,7 +390,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def markSpeedLimitsFloating(ids: Set[Long]): Unit = {
+  def floatLinearAssets(ids: Set[Long]): Unit = {
     if (ids.nonEmpty) {
       MassQuery.withIds(ids) { idTableName =>
         sqlu"""update asset set floating = 1 where id in (select id from #$idTableName)""".execute

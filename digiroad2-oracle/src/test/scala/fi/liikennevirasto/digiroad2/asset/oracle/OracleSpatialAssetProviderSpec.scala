@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, Role, User}
 import fi.liikennevirasto.digiroad2.util.DataFixture.TestAssetId
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner._
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, EventBusMassTransitStop, Point}
 import org.joda.time.LocalDate
 import org.mockito.Mockito.verify
@@ -49,19 +50,14 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   val creatingUser = user.copy(username = AssetCreator)
   val operatorUser = user.copy(configuration = user.configuration.copy(authorizedMunicipalities = Set(1), roles = Set(Role.Operator)))
 
-  private def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      test
-      dynamicSession.rollback()
-    }
-  }
+  private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   before {
     userProvider.setCurrentUser(user)
   }
 
   test("load enumerated values for asset type", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val values = provider.getEnumeratedPropertyValues(TestAssetTypeId)
       values shouldBe 'nonEmpty
       values.map(_.propertyName) should contain("Vaikutussuunta")
@@ -88,7 +84,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update the position of an asset within a road link", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val eventBus = mock.MockitoSugar.mock[DigiroadEventBus]
       val providerWithMockedEventBus = new OracleSpatialAssetProvider(eventBus, userProvider)
       val asset = providerWithMockedEventBus.getAssetById(TestAssetId).get
@@ -112,7 +108,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update the position of an asset, changing road links, fails without write access", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       userProvider.setCurrentUser(unauthorizedUser)
       val origAsset = provider.getAssetById(300000).get
       val refAsset = provider.getAssetById(300004).get
@@ -124,7 +120,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update a common asset property value (single choice)", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       userProvider.setCurrentUser(operatorUser)
       val asset = provider.getAssetById(TestAssetId).get
       asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidityDirectionId).get.values.head.propertyValue should be(AssetPropertyConfiguration.ValidityDirectionSame)
@@ -136,7 +132,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update validity date throws exception if validFrom after validTo", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = provider.getAssetById(TestAssetId).get
       provider.updateAsset(asset.id, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidToId, "2045-12-10"))
       an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAsset(asset.id, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "2065-12-15"))
@@ -145,7 +141,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
 
 
   test("update validity date throws exception if validTo before validFrom", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = provider.getAssetById(TestAssetId).get
       provider.updateAsset(asset.id, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "2010-12-15"))
       an[SQLIntegrityConstraintViolationException] should be thrownBy provider.updateAsset(asset.id, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidToId, "2009-12-10"))
@@ -153,7 +149,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update a common asset without write access fails", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       userProvider.setCurrentUser(unauthorizedUser)
       val asset = provider.getAssetById(TestAssetId).get
       asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidityDirectionId).get.values.head.propertyValue should be(AssetPropertyConfiguration.ValidityDirectionSame)
@@ -164,7 +160,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("update a common asset property value (text i.e. timestamp)", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
 
       val asset = provider.getAssetById(TestAssetId).get
       asset.propertyData.find(_.publicId == AssetPropertyConfiguration.ValidFromId).get.values shouldBe 'nonEmpty
@@ -182,7 +178,7 @@ class OracleSpatialAssetProviderSpec extends FunSuite with Matchers with BeforeA
   }
 
   test("validate date property values", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = provider.getAssetById(TestAssetId).get
       an[IllegalArgumentException] should be thrownBy provider.updateAsset(TestAssetId, None, asSimplePropertySeq(AssetPropertyConfiguration.ValidFromId, "INVALID DATE"))
     }

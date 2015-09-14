@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset.oracle
 
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest._
 import fi.liikennevirasto.digiroad2.asset.{SimpleProperty, PropertyValue, AssetWithProperties}
 import java.sql.SQLException
@@ -27,15 +28,10 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
     userProvider.setCurrentUser(user)
   }
 
-  private def runWithCleanup(test: => Unit): Unit = {
-    OracleDatabase.withDynTransaction {
-      test
-      dynamicSession.rollback()
-    }
-  }
+  private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Update a text property value", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = getTestAsset
       val property = asset.propertyData.find(_.publicId == "nimi_suomeksi").get
       val modifiedProperty = property.copy(values = List(PropertyValue("NEW TEXT")))
@@ -52,7 +48,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Delete and create a text property value", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = getTestAsset
       val property = asset.propertyData.find(_.publicId == "esteettomyys_liikuntarajoitteiselle").get
       updateAssetProperties(asset.id, property.publicId)
@@ -65,7 +61,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Update a single-choice property value", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = getTestAsset
       val property = asset.propertyData.find(_.publicId == "katos").get
       val modifiedProperty = property.copy(values = List(PropertyValue("2", Some("Kyllä"))))
@@ -84,7 +80,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Update multiple-choice property values", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = getTestAsset
       val property = asset.propertyData.find(_.propertyType == "multiple_choice").get
       val modifiedProperty = property.copy(values = List(PropertyValue("2", Some("Linja-autojen paikallisliikenne")), PropertyValue("3", Some("Linja-autojen kaukoliikenne"))))
@@ -99,7 +95,7 @@ class AssetPropertySpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Delete and create a multiple-choice property value", Tag("db")) {
-    runWithCleanup {
+    runWithRollback {
       val asset = getTestAsset
       val property = asset.propertyData.find(_.publicId == "pysakin_tyyppi").get
       updateAssetProperties(asset.id, property.publicId)

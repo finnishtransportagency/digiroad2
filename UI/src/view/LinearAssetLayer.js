@@ -1,11 +1,11 @@
-window.NumericalLimitLayer = function(params) {
+window.LinearAssetLayer = function(params) {
   var map = params.map,
     application = params.application,
     collection = params.collection,
-    selectedNumericalLimit = params.selectedNumericalLimit,
+    selectedLinearAsset = params.selectedLinearAsset,
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
-    linearAsset = params.linearAsset,
+    linearAssetsUtility = params.linearAsset,
     roadLayer = params.roadLayer,
     layerName = params.layerName,
     multiElementEventCategory = params.multiElementEventCategory,
@@ -13,7 +13,7 @@ window.NumericalLimitLayer = function(params) {
   Layer.call(this, layerName, roadLayer);
   var me = this;
 
-  var NumericalLimitCutter = function(vectorLayer, collection) {
+  var LinearAssetCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
 
@@ -55,16 +55,16 @@ window.NumericalLimitLayer = function(params) {
       });
     };
 
-    var isWithinCutThreshold = function(numericalLimitLink) {
-      return numericalLimitLink && numericalLimitLink.distance < CUT_THRESHOLD;
+    var isWithinCutThreshold = function(linearAssetLink) {
+      return linearAssetLink && linearAssetLink.distance < CUT_THRESHOLD;
     };
 
-    var findNearestNumericalLimitLink = function(point) {
+    var findNearestLinearAssetLink = function(point) {
       return _.chain(vectorLayer.features)
         .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
         .map(function(feature) {
           return {feature: feature,
-                  distanceObject: feature.geometry.distanceTo(point, {details: true})};
+            distanceObject: feature.geometry.distanceTo(point, {details: true})};
         })
         .sortBy(function(x) {
           return x.distanceObject.distance;
@@ -76,11 +76,11 @@ window.NumericalLimitLayer = function(params) {
     this.updateByPosition = function(position) {
       var lonlat = map.getLonLatFromPixel(position);
       var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
-      var nearestNumericalLimitLink = findNearestNumericalLimitLink(mousePoint);
-      if (!nearestNumericalLimitLink) {
+      var nearestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
+      if (!nearestLinearAssetLink) {
         return;
       }
-      var distanceObject = nearestNumericalLimitLink.distanceObject;
+      var distanceObject = nearestLinearAssetLink.distanceObject;
       if (isWithinCutThreshold(distanceObject)) {
         moveTo(distanceObject.x0, distanceObject.y0);
       } else {
@@ -92,22 +92,22 @@ window.NumericalLimitLayer = function(params) {
       var pixel = new OpenLayers.Pixel(point.x, point.y);
       var mouseLonLat = map.getLonLatFromPixel(pixel);
       var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestNumericalLimitLink(mousePoint);
+      var nearest = findNearestLinearAssetLink(mousePoint);
 
       if (!isWithinCutThreshold(nearest.distanceObject)) {
         return;
       }
 
-      var points = _.chain(roadCollection.get([nearest.feature.attributes.roadLinkId])[0].getPoints())
-                     .map(function(point) {
-                       return new OpenLayers.Geometry.Point(point.x, point.y);
-                     })
-                     .value();
+      var points = _.chain(roadCollection.get([nearest.feature.attributes.mmlId])[0].getPoints())
+        .map(function(point) {
+          return new OpenLayers.Geometry.Point(point.x, point.y);
+        })
+        .value();
       var lineString = new OpenLayers.Geometry.LineString(points);
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
 
-      collection.splitNumericalLimit(nearest.feature.attributes.id, nearest.feature.attributes.roadLinkId, split);
+      collection.splitLinearAsset(nearest.feature.attributes.id, nearest.feature.attributes.mmlId, split);
       remove();
     };
   };
@@ -187,12 +187,12 @@ window.NumericalLimitLayer = function(params) {
   var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
   vectorLayer.setOpacity(1);
 
-  var numericalLimitCutter = new NumericalLimitCutter(vectorLayer, collection);
+  var linearAssetCutter = new LinearAssetCutter(vectorLayer, collection);
 
   var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.3);
   roadLayer.setLayerSpecificStyleMap(layerName, styleMap);
 
-  var highlightNumericalLimitFeatures = function(feature) {
+  var highlightLinearAssetFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
       if (x.attributes.id === feature.attributes.id) {
         selectControl.highlight(x);
@@ -204,7 +204,7 @@ window.NumericalLimitLayer = function(params) {
 
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
-    highlightNumericalLimitFeatures(feature);
+    highlightLinearAssetFeatures(feature);
     vectorLayer.redraw();
   };
 
@@ -212,30 +212,30 @@ window.NumericalLimitLayer = function(params) {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === null; });
   };
 
-  var findRoadLinkFeaturesByRoadLinkId = function(id) {
-    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.roadLinkId === id; });
+  var findRoadLinkFeaturesByMmlId = function(id) {
+    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === id; });
   };
 
   var findWeightFeaturesById = function(id) {
     return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === id; });
   };
 
-  var numericalLimitOnSelect = function(feature) {
+  var linearAssetOnSelect = function(feature) {
     setSelectionStyleAndHighlightFeature(feature);
     if (feature.attributes.id) {
-      selectedNumericalLimit.open(feature.attributes.id);
+      selectedLinearAsset.open(feature.attributes.id);
     } else {
-      selectedNumericalLimit.create(feature.attributes.roadLinkId, feature.attributes.points);
+      selectedLinearAsset.create(feature.attributes.mmlId, feature.attributes.points);
     }
   };
 
   var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer, roadLayer.layer], {
-    onSelect: numericalLimitOnSelect,
+    onSelect: linearAssetOnSelect,
     onUnselect: function(feature) {
-      if (selectedNumericalLimit.exists()) {
-        var id = selectedNumericalLimit.getId();
-        var expired = selectedNumericalLimit.expired();
-        selectedNumericalLimit.close();
+      if (selectedLinearAsset.exists()) {
+        var id = selectedLinearAsset.getId();
+        var expired = selectedLinearAsset.expired();
+        selectedLinearAsset.close();
         if (expired) {
           vectorLayer.removeFeatures(_.filter(vectorLayer.features, function(feature) {
             return feature.attributes.id === id;
@@ -246,9 +246,9 @@ window.NumericalLimitLayer = function(params) {
   });
   map.addControl(selectControl);
 
-  var handleNumericalLimitUnSelected = function(id, roadLinkId) {
+  var handleLinearAssetUnSelected = function(id, mmlId) {
     var features = findWeightFeaturesById(id);
-    if (_.isEmpty(features)) { features = findRoadLinkFeaturesByRoadLinkId(roadLinkId); }
+    if (_.isEmpty(features)) { features = findRoadLinkFeaturesByMmlId(mmlId); }
     _.each(features, function(feature) {
       selectControl.unhighlight(feature);
     });
@@ -264,10 +264,10 @@ window.NumericalLimitLayer = function(params) {
       start();
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
-        reselectNumericalLimit();
-        collection.fetch(boundingBox, selectedNumericalLimit);
+        reselectLinearAsset();
+        collection.fetch(boundingBox, selectedLinearAsset);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     }
   };
 
@@ -279,9 +279,9 @@ window.NumericalLimitLayer = function(params) {
   var changeTool = function(tool) {
     if (tool === 'Cut') {
       selectControl.deactivate();
-      numericalLimitCutter.activate();
+      linearAssetCutter.activate();
     } else if (tool === 'Select') {
-      numericalLimitCutter.deactivate();
+      linearAssetCutter.deactivate();
       selectControl.activate();
     }
   };
@@ -296,54 +296,54 @@ window.NumericalLimitLayer = function(params) {
 
   var stop = function() {
     selectControl.deactivate();
-    numericalLimitCutter.deactivate();
+    linearAssetCutter.deactivate();
     eventListener.stopListening(eventbus);
     eventListener.running = false;
   };
 
   var bindEvents = function() {
-    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawNumericalLimits);
+    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, singleElementEvents('selected'), handleNumericalLimitSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected'), handleLinearAssetSelected);
     eventListener.listenTo(eventbus,
-        singleElementEvents('limitChanged', 'expirationChanged'),
-        handleNumericalLimitChanged);
+      singleElementEvents('limitChanged', 'expirationChanged'),
+      handleLinearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), concludeUpdate);
-    eventListener.listenTo(eventbus, singleElementEvents('unselected'), handleNumericalLimitUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('unselected'), handleLinearAssetUnSelected);
   };
 
-  var handleNumericalLimitSelected = function(selectedNumericalLimit) {
-    if (selectedNumericalLimit.isNew()) {
-      var feature = _.first(findWeightFeaturesById(selectedNumericalLimit.getId())) || _.first(findRoadLinkFeaturesByRoadLinkId(selectedNumericalLimit.getRoadLinkId()));
+  var handleLinearAssetSelected = function(selectedLinearAsset) {
+    if (selectedLinearAsset.isNew()) {
+      var feature = _.first(findWeightFeaturesById(selectedLinearAsset.getId())) || _.first(findRoadLinkFeaturesByMmlId(selectedLinearAsset.getMmlId()));
       setSelectionStyleAndHighlightFeature(feature);
     }
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  var numericalLimitFeatureExists = function(selectedNumericalLimit) {
-    if (selectedNumericalLimit.isNew() && selectedNumericalLimit.isDirty()) {
+  var linearAssetFeatureExists = function(selectedLinearAsset) {
+    if (selectedLinearAsset.isNew() && selectedLinearAsset.isDirty()) {
       return !_.isEmpty(findUnpersistedWeightFeatures());
     } else {
-      return !_.isEmpty(findWeightFeaturesById(selectedNumericalLimit.getId()));
+      return !_.isEmpty(findWeightFeaturesById(selectedLinearAsset.getId()));
     }
   };
 
-  var handleNumericalLimitChanged = function(selectedNumericalLimit) {
+  var handleLinearAssetChanged = function(selectedLinearAsset) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    if (numericalLimitFeatureExists(selectedNumericalLimit)) {
-      var selectedNumericalLimitFeatures = getSelectedFeatures(selectedNumericalLimit);
-      vectorLayer.removeFeatures(selectedNumericalLimitFeatures);
+    if (linearAssetFeatureExists(selectedLinearAsset)) {
+      var selectedLinearAssetFeatures = getSelectedFeatures(selectedLinearAsset);
+      vectorLayer.removeFeatures(selectedLinearAssetFeatures);
     }
-    drawNumericalLimits([selectedNumericalLimit.get()]);
+    drawLinearAssets([selectedLinearAsset.get()]);
   };
 
   var concludeUpdate = function() {
     selectControl.activate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    redrawNumericalLimits(collection.getAll());
+    redrawLinearAssets(collection.getAll());
   };
 
   var handleMapMoved = function(state) {
@@ -353,10 +353,10 @@ window.NumericalLimitLayer = function(params) {
       start();
       eventbus.once('roadLinks:fetched', function() {
         roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
-        reselectNumericalLimit();
-        collection.fetch(state.bbox, selectedNumericalLimit);
+        reselectLinearAsset();
+        collection.fetch(state.bbox, selectedLinearAsset);
       });
-      roadCollection.fetch(map.getExtent(), map.getZoom());
+      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
     } else {
       vectorLayer.setVisibility(false);
       stop();
@@ -365,62 +365,62 @@ window.NumericalLimitLayer = function(params) {
 
   eventbus.on('map:moved', handleMapMoved);
 
-  var redrawNumericalLimits = function(numericalLimits) {
+  var redrawLinearAssets = function(linearAssets) {
     selectControl.deactivate();
     vectorLayer.removeAllFeatures();
-    if (!selectedNumericalLimit.isDirty() && application.getSelectedTool() === 'Select') {
+    if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
       selectControl.activate();
     }
 
-    drawNumericalLimits(numericalLimits);
+    drawLinearAssets(linearAssets);
   };
 
-  var getSelectedFeatures = function(selectedNumericalLimit) {
-    if (selectedNumericalLimit.isNew()) {
-      if (selectedNumericalLimit.isDirty()) {
+  var getSelectedFeatures = function(selectedLinearAsset) {
+    if (selectedLinearAsset.isNew()) {
+      if (selectedLinearAsset.isDirty()) {
         return findUnpersistedWeightFeatures();
       } else {
-        return findRoadLinkFeaturesByRoadLinkId(selectedNumericalLimit.getRoadLinkId());
+        return findRoadLinkFeaturesByMmlId(selectedLinearAsset.getMmlId());
       }
     } else {
-      return findWeightFeaturesById(selectedNumericalLimit.getId());
+      return findWeightFeaturesById(selectedLinearAsset.getId());
     }
   };
 
-  var reselectNumericalLimit = function() {
-    if (selectedNumericalLimit.exists && selectedNumericalLimit.exists()) {
+  var reselectLinearAsset = function() {
+    if (selectedLinearAsset.exists && selectedLinearAsset.exists()) {
       selectControl.onSelect = function() {};
-      var feature = _.first(getSelectedFeatures(selectedNumericalLimit));
+      var feature = _.first(getSelectedFeatures(selectedLinearAsset));
       if (feature) {
         selectControl.select(feature);
-        highlightNumericalLimitFeatures(feature);
+        highlightLinearAssetFeatures(feature);
       }
-      selectControl.onSelect = numericalLimitOnSelect;
+      selectControl.onSelect = linearAssetOnSelect;
     }
   };
 
-  var drawNumericalLimits = function(numericalLimits) {
-    var numericalLimitsWithType = _.map(numericalLimits, function(limit) {
+  var drawLinearAssets = function(linearAssets) {
+    var linearAssetsWithType = _.map(linearAssets, function(limit) {
       return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
     });
-    var offsetBySideCode = function(numericalLimit) {
-      return linearAsset.offsetBySideCode(map.getZoom(), numericalLimit);
+    var offsetBySideCode = function(linearAsset) {
+      return linearAssetsUtility.offsetBySideCode(map.getZoom(), linearAsset);
     };
-    var numericalLimitsWithAdjustments = _.map(numericalLimitsWithType, offsetBySideCode);
-    vectorLayer.addFeatures(lineFeatures(numericalLimitsWithAdjustments));
+    var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
+    vectorLayer.addFeatures(lineFeatures(linearAssetsWithAdjustments));
 
-    reselectNumericalLimit();
+    reselectLinearAsset();
   };
 
-  var lineFeatures = function(numericalLimits) {
-    return _.flatten(_.map(numericalLimits, function(numericalLimit) {
-      return _.map(numericalLimit.links, function(link) {
+  var lineFeatures = function(linearAssets) {
+    return _.flatten(_.map(linearAssets, function(linearAsset) {
+      return _.map(linearAsset.links, function(link) {
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var numericalLimitWithRoadLinkId = _.cloneDeep(numericalLimit);
-        numericalLimitWithRoadLinkId.roadLinkId = link.roadLinkId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), numericalLimitWithRoadLinkId);
+        var linearAssetWithMmlId = _.cloneDeep(linearAsset);
+        linearAssetWithMmlId.mmlId = link.mmlId;
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAssetWithMmlId);
       });
     }));
   };

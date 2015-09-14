@@ -91,18 +91,6 @@ public class OracleArray {
         }
     }
 
-    public static List<Tuple7<Long, Long, Long, Int, Int, Double, Double>> fetchNumericalLimitsByRoadLinkIds(List ids, int assetTypeId, String valuePropertyId, Connection connection) throws SQLException {
-        String query = "SELECT a.id, pos.road_link_id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure " +
-                "FROM ASSET a " +
-                "JOIN ASSET_LINK al ON a.id = al.asset_id " +
-                "JOIN LRM_POSITION pos ON al.position_id = pos.id " +
-                "JOIN PROPERTY p ON p.public_id = '" + valuePropertyId + "' " +
-                "LEFT JOIN NUMBER_PROPERTY_VALUE s ON s.asset_id = a.id AND s.property_id = p.id " +
-                "WHERE a.asset_type_id = " + String.valueOf(assetTypeId) + " AND pos.road_link_id IN (SELECT COLUMN_VALUE FROM TABLE(?))" +
-                "AND (a.valid_to >= sysdate OR a.valid_to is null)";
-        return queryWithIdArray(ids, connection, query, new RowToNumericalLimit());
-    }
-
     public static List<Tuple7<Long, Int, Long, Int, DateTime, String, String>> fetchManoeuvresByRoadLinkIds(List ids, Connection connection) throws SQLException {
         String query = "SELECT m.id, m.type, e.road_link_id, e.element_type, to_char(m.modified_date, 'YYYY-MM-DD\"T\"HH24:MI:SS'), m.modified_by, m.additional_info " +
                 "FROM MANOEUVRE m " +

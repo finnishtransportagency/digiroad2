@@ -4,17 +4,15 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.oracle.{AssetPropertyConfiguration, OracleSpatialAssetDao}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{VVHRoadLinkWithProperties, SpeedLimitTimeStamps, SpeedLimit}
+import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, SpeedLimitTimeStamps, VVHRoadLinkWithProperties}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 import org.scalatra.auth.{ScentryConfig, ScentrySupport}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{BadRequest, ScalatraBase, ScalatraServlet}
 import org.slf4j.LoggerFactory
-
-import slick.driver.JdbcDriver.backend.Database
 
 case class BasicAuthUser(username: String)
 
@@ -73,26 +71,11 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
-  private def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
-
-  private def propertyValuesToString(values: Seq[String]): String = { values.mkString }
-
-  private def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
-
-  private def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
-    val values: Seq[String] = properties.filter { property => property.publicId == key}.map { property =>
-      property.values.map { value =>
-        value.propertyValue
-      }
-    }.flatten
-    key -> transformation(values)
-  }
-
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-      timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(""))
+    timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
@@ -101,17 +84,23 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       .getOrElse(""))
   }
 
-  def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
-
-  def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
-
-  def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-
-  def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
-
-  def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
-
   private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
+    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
+      val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
+        property.values.map { value =>
+          value.propertyValue
+        }
+      }
+      key -> transformation(values)
+    }
+    def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
+    def propertyValuesToString(values: Seq[String]): String = { values.mkString }
+    def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
+    def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
+    def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
+    def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
+    def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -159,12 +148,6 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       })
   }
 
-  private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
-    MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
-      bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
-      modified = asset.modified, mmlId = None, mValue = None, floating = asset.floating)
-  }
-
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
     useVVHGeometry match {
       case true => massTransitStopService.getByMunicipality(municipalityNumber)
@@ -174,7 +157,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   private def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
-      Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
+      Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
         "value" -> speedLimit.value.getOrElse(0),
@@ -197,12 +180,22 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     }
   }
 
-  def litRoadsToApi(litRoads: Seq[Map[String, Any]]): Seq[Map[String, Any]] = {
-    litRoads.map { litRoad =>
-      Map("id" -> litRoad.get("id"),
-        "sideCode" -> litRoad.get("side_code"),
-        "value" -> 1,
-        "points" -> litRoad.get("points"))
+  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): List[Map[String, Any]] = {
+    case class LinearAssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
+    val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
+
+    linearAssets.map { link =>
+      val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdAt, modifiedAt) = link
+      val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
+      val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
+      Map("id" -> assetId,
+        "points" -> geometry,
+        "value" -> value,
+        "side_code" -> sideCode,
+        "mmlId" -> mmlId,
+        "startMeasure" -> startMeasure,
+        "endMeasure" -> endMeasure,
+         extractModificationTime(timeStamps))
     }
   }
 
@@ -213,33 +206,33 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val assetType = params("assetType")
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
-        case "speed_limits" => speedLimitsToApi(linearAssetProvider.getSpeedLimits(municipalityNumber))
-        case "total_weight_limits" => NumericalLimitService.getByMunicipality(30, municipalityNumber)
-        case "trailer_truck_weight_limits" => NumericalLimitService.getByMunicipality(40, municipalityNumber)
-        case "axle_weight_limits" => NumericalLimitService.getByMunicipality(50, municipalityNumber)
-        case "bogie_weight_limits" => NumericalLimitService.getByMunicipality(60, municipalityNumber)
-        case "height_limits" => NumericalLimitService.getByMunicipality(70, municipalityNumber)
-        case "length_limits" => NumericalLimitService.getByMunicipality(80, municipalityNumber)
-        case "width_limits" => NumericalLimitService.getByMunicipality(90, municipalityNumber)
+        case "speed_limits" => speedLimitsToApi(speedLimitProvider.get(municipalityNumber))
+        case "total_weight_limits" => linearAssetsToApi(30, municipalityNumber)
+        case "trailer_truck_weight_limits" => linearAssetsToApi(40, municipalityNumber)
+        case "axle_weight_limits" => linearAssetsToApi(50, municipalityNumber)
+        case "bogie_weight_limits" => linearAssetsToApi(60, municipalityNumber)
+        case "height_limits" => linearAssetsToApi(70, municipalityNumber)
+        case "length_limits" => linearAssetsToApi(80, municipalityNumber)
+        case "width_limits" => linearAssetsToApi(90, municipalityNumber)
         case "blocked_passages" => PointAssetService.getByMunicipality(16, municipalityNumber)
         case "barrier_gates" => PointAssetService.getByMunicipality(3, municipalityNumber)
         case "traffic_lights" => PointAssetService.getByMunicipality(9, municipalityNumber)
         case "pedestrian_crossings" => PointAssetService.getByMunicipality(17, municipalityNumber)
         case "directional_traffic_signs" => PointAssetService.getDirectionalTrafficSignsByMunicipality(municipalityNumber)
         case "railway_crossings" => PointAssetService.getRailwayCrossingsByMunicipality(municipalityNumber)
-        case "vehicle_allowed" => LinearAssetService.getByMunicipality(1, municipalityNumber)
-        case "vehicle_not_allowed" => LinearAssetService.getByMunicipality(29, municipalityNumber)
-        case "number_of_lanes" ⇒ LinearAssetService.getByMunicipality(5, municipalityNumber)
-        case "roads_affected_by_thawing" ⇒ LinearAssetService.getByMunicipality(6, municipalityNumber)
-        case "widths" ⇒ LinearAssetService.getByMunicipality(8, municipalityNumber)
-        case "paved_roads" ⇒ LinearAssetService.getByMunicipality(26, municipalityNumber)
-        case "lit_roads" ⇒ litRoadsToApi(NumericalLimitService.getByMunicipality(100, municipalityNumber))
-        case "built_up_area" ⇒ LinearAssetService.getByMunicipality(30, municipalityNumber)
-        case "speed_limits_during_winter" ⇒ LinearAssetService.getByMunicipality(31, municipalityNumber)
-        case "traffic_volumes" ⇒ LinearAssetService.getByMunicipality(33, municipalityNumber)
-        case "exit_numbers" ⇒ LinearAssetService.getByMunicipality(34, municipalityNumber)
-        case "road_addresses" ⇒ LinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
-        case "bridges_underpasses_and_tunnels" => LinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
+        case "vehicle_allowed" => ReadOnlyLinearAssetService.getByMunicipality(1, municipalityNumber)
+        case "vehicle_not_allowed" => ReadOnlyLinearAssetService.getByMunicipality(29, municipalityNumber)
+        case "number_of_lanes" => ReadOnlyLinearAssetService.getByMunicipality(5, municipalityNumber)
+        case "roads_affected_by_thawing" => ReadOnlyLinearAssetService.getByMunicipality(6, municipalityNumber)
+        case "widths" => ReadOnlyLinearAssetService.getByMunicipality(8, municipalityNumber)
+        case "paved_roads" => ReadOnlyLinearAssetService.getByMunicipality(26, municipalityNumber)
+        case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
+        case "built_up_area" => ReadOnlyLinearAssetService.getByMunicipality(30, municipalityNumber)
+        case "speed_limits_during_winter" => ReadOnlyLinearAssetService.getByMunicipality(31, municipalityNumber)
+        case "traffic_volumes" => ReadOnlyLinearAssetService.getByMunicipality(33, municipalityNumber)
+        case "exit_numbers" => ReadOnlyLinearAssetService.getByMunicipality(34, municipalityNumber)
+        case "road_addresses" => ReadOnlyLinearAssetService.getRoadAddressesByMunicipality(municipalityNumber)
+        case "bridges_underpasses_and_tunnels" => ReadOnlyLinearAssetService.getBridgesUnderpassesAndTunnelsByMunicipality(municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksFromVVH(municipalityNumber))
         case "manoeuvres" =>  ManoeuvreService.getByMunicipality(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
