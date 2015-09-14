@@ -71,26 +71,11 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     basicAuth
   }
 
-  private def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
-
-  private def propertyValuesToString(values: Seq[String]): String = { values.mkString }
-
-  private def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
-
-  private def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
-    val values: Seq[String] = properties.filter { property => property.publicId == key}.map { property =>
-      property.values.map { value =>
-        value.propertyValue
-      }
-    }.flatten
-    key -> transformation(values)
-  }
-
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-      timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-        .getOrElse(""))
+    timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+      .getOrElse(""))
   }
 
   def extractModifier(massTransitStop: MassTransitStopWithTimeStamps): (String, String) = {
@@ -99,17 +84,23 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       .getOrElse(""))
   }
 
-  def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
-
-  def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
-
-  def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-
-  def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
-
-  def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
-
   private def toGeoJSON(input: Iterable[MassTransitStopWithTimeStamps]): Map[String, Any] = {
+    def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
+      val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
+        property.values.map { value =>
+          value.propertyValue
+        }
+      }
+      key -> transformation(values)
+    }
+    def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
+    def propertyValuesToString(values: Seq[String]): String = { values.mkString }
+    def firstPropertyValueToInt(values: Seq[String]): Int = { values.headOption.map(_.toInt).getOrElse(99) }
+    def extractBearing(massTransitStop: MassTransitStopWithTimeStamps): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractExternalId(massTransitStop: MassTransitStopWithTimeStamps): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
+    def extractFloating(massTransitStop: MassTransitStopWithTimeStamps): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
+    def extractMmlId(massTransitStop: RoadLinkStop): (String, Option[Long]) = { "mml_id" -> massTransitStop.mmlId }
+    def extractMvalue(massTransitStop: RoadLinkStop): (String, Option[Double]) = { "m_value" -> massTransitStop.mValue }
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
