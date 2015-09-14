@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Municipality, TrafficDirection, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers}
@@ -28,15 +29,10 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
                     VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  private def runWithCleanup(test: => Unit): Unit = {
-    OracleDatabase.withDynTransaction {
-      test
-      dynamicSession.rollback()
-    }
-  }
+  private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("create new speed limit") {
-    runWithCleanup {
+    runWithRollback {
       val roadLink = VVHRoadlink(1l, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlink(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set(1l))).thenReturn(Seq(roadLink))
@@ -50,7 +46,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
   }
 
   test("split existing speed limit") {
-    runWithCleanup {
+    runWithRollback {
       val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set(388562360l))).thenReturn(Seq(roadLink))
