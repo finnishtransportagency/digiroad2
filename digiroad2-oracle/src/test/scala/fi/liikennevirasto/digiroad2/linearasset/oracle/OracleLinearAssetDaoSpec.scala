@@ -193,6 +193,44 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     }
   }
 
+  test("filter out disallowed link types") {
+    Database.forDataSource(ds).withDynTransaction {
+      val roadLinks = Seq(
+        VVHRoadLinkWithProperties(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CycleOrPedestrianPath, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      )
+      val dao = new OracleLinearAssetDao {
+        override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+      }
+
+      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+
+      speedLimits._1.map(_.id) should equal(Seq(300103))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("filter out disallowed functional classes") {
+    Database.forDataSource(ds).withDynTransaction {
+      val roadLinks = Seq(
+        VVHRoadLinkWithProperties(1088841242, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+        VVHRoadLinkWithProperties(1088841350, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      )
+      val dao = new OracleLinearAssetDao {
+        override val roadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+      }
+
+      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+
+      speedLimits._1.map(_.id) should equal(Seq(300103))
+      dynamicSession.rollback()
+    }
+  }
+
   test("speed limit creation fails if speed limit is already defined on link segment") {
     Database.forDataSource(ds).withDynTransaction {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
