@@ -623,3 +623,42 @@ Tielinkille voi lis&auml;t&auml; suurin sallittu -kohteen valitsemalla sen geome
 ![Suurin sallittu -kohteen lis&auml;ys](k34.JPG)
 
 _Suurin sallittu -kohteen lis&auml;&auml;minen._
+
+8. Valaistu tie
+----------------------
+
+Valaistu tie on viivamainen kohde. Valaistus voi olla tielinkin mittainen tai sit&auml; lyhyempi viiva. Valaistu tie -tietolajin saa kartalle valitsemalla sen tietolaji-paletista (1). Kohteet tulevat n&auml;kyviin kartalle, kun zoomaa l&auml;hemm&auml;ksi. Jos tielinkille on ilmoitettu valaistus, se piirtyy kartalle punaisella viivalla (2). Valaisemattomat tielinkit ovat harmaita (3).  Valaistuksen arvo on kyll&auml; tai ei. 
+
+![Valaistu tie](k57.jpg)
+
+_Valaistu tie._
+
+##Valaistustietojen katselu##
+
+Kun kohdetta klikkaa kartalta, se korostuu (4) ja ominaisuustietotauluun tulee n&auml;kyviin sen tiedot (5). Valaistuksella on ID, lis&auml;tty j&auml;rjestelm&auml;&auml;n ja muokattu viimeksi -tiedot sek&auml; valaistuksen arvo kyll&auml;/ei.
+
+![Valaistustiedon katselu](k58.jpg)
+
+_Valaistustiedon katselu._
+
+##Valaistustietojen muokkaus##
+
+Valaistus-tietoja voi muokata muokkaustilassa. Valaistuksen voi lis&auml;t&auml;, poistaa ja valaistusgeometrian voi katkaista. Muutokset tallennetaan aina Tallenna-painikkeesta tai perutaan Peruuta-painikkeesta, jolloin alkuper&auml;inen tieto j&auml;&auml; voimaan.
+
+Uusi valaistus lis&auml;t&auml;&auml;n valitsemalla kartalta harmaa geometria ja valitsemalla oikean laidan ominaisuustietotaulussa "Valaistus" (6). Uusi valaistus-tieto n&auml;kyy kartalla punaisena.
+
+![Valaistustiedon lis&auml;ys](k59.jpg)
+
+_Valaistustiedon lis&auml;ys._
+
+Valaistustiedon voi poistaa valitsemalla valaistun kohteen ja oikean laidan ominaisuustietotaulusta kohdan "Ei valaistusta" (7). Kun valaistustieto on poistettu, kohde muuttuu kartalla harmaaksi.
+
+![Valaistustiedon poistaminen](k60.jpg)
+
+_Valaistustiedon poistaminen._
+
+Tarvittaessa valaistuksen voi katkaista leikkausty&ouml;kalulla (8). Leikkausty&ouml;kalulla klikataan valaistuksen geometriasta kohtaa, josta se halutaan katkaista. Valaistuksen geometrian p&auml;&auml;ll&auml; ty&ouml;kalu n&auml;kyy ristin&auml;, jotta tarkka katkaisukohta on helppo m&auml;&auml;ritt&auml;&auml;. Katkaisun j&auml;lkeen valituksi j&auml;&auml; lyhyempi p&auml;tk&auml;, jolle voi tallentaa tiedon valaistuksesta ominaisuustietotauluun (9).
+
+![Valaistusgeometrian katkaisu](k61.jpg)
+
+_Valaistusgeometrian katkaisu._
