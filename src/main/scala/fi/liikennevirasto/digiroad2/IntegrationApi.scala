@@ -63,7 +63,7 @@ trait AuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuth
   }
 }
 
-class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class IntegrationApi(val massTransitStopService: MassTransitStopService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats
 
@@ -104,7 +104,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop) => Map(
+        case (massTransitStop: MassTransitStopWithTimeStamps) => Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
