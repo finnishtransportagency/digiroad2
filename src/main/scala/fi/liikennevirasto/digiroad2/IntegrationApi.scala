@@ -157,12 +157,6 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       })
   }
 
-  private def assetToIntegrationMassTransitStop(asset: AssetWithProperties): MassTransitStopWithTimeStamps =  {
-    MassTransitStopWithTimeStamps(id = asset.id, nationalId = asset.nationalId, lon = asset.lon, lat = asset.lat,
-      bearing = asset.bearing, propertyData = asset.propertyData, created = asset.created,
-      modified = asset.modified, mmlId = None, mValue = None, floating = asset.floating)
-  }
-
   private def getMassTransitStopsByMunicipality(municipalityNumber: Int): Iterable[MassTransitStopWithTimeStamps] = {
     useVVHGeometry match {
       case true => massTransitStopService.getByMunicipality(municipalityNumber)
