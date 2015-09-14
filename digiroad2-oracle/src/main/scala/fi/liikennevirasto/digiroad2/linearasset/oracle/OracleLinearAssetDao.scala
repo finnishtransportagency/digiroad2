@@ -280,8 +280,17 @@ trait OracleLinearAssetDao {
 
     speedLimitId
   }
-  
-  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int): Long = {
+
+  def insertValue(assetId: Long, valuePropertyId: String)(value: Int) = {
+    val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
+    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    sqlu"""
+       insert into number_property_value(id, asset_id, property_id, value)
+       values ($numberPropertyValueId, $assetId, $propertyId, $value)
+     """.execute
+  }
+
+  def forceCreateLinearAsset(creator: String, typeId: Int, mmlId: Long, linkMeasures: (Double, Double), sideCode: SideCode, valuePropertyId: String, value: Option[Int]): Long = {
     val (startMeasure, endMeasure) = linkMeasures
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -300,12 +309,11 @@ trait OracleLinearAssetDao {
 
          into asset_link(asset_id, position_id)
          values ($assetId, $lrmPositionId)
-
-         into number_property_value(id, asset_id, property_id, value)
-         values ($numberPropertyValueId, $assetId, $propertyId, $value)
        select * from dual
       """
     Q.updateNA(insertAll).execute
+
+    value.foreach(OracleLinearAssetDao.insertValue(assetId, valuePropertyId))
 
     assetId
   }

@@ -574,16 +574,16 @@ class AssetDataImporter {
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
-            join number_property_value n on a.id = n.asset_id
+            left join number_property_value n on a.id = n.asset_id
             where a.asset_type_id = $typeId
             and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Double, Double, Int)].list
+          """.as[(Long, Long, Int, Double, Double, Option[Int])].list
 
       linearAssetLinks.foreach { assetLink =>
         val (id, mmlId, sideCode, startMeasure, endMeasure, value) = assetLink
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), value)
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, mmlId, (startMeasure, endMeasure), SideCode(sideCode), "mittarajoitus", value)
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")

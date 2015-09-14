@@ -22,7 +22,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
   }
 
-  test("Split multi-link speed limit") {
+  test("Split multi-link speed limit assets") {
     runWithCleanup {
       val originalId = createMultiLinkLinearAsset(20, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
       insertSpeedLimitValue(originalId, 60)
@@ -49,7 +49,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Split multi-link total weight limit") {
+  test("Split multi-link total weight limit assets") {
     runWithCleanup {
       val originalId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
       insertNumericalLimitValue(originalId, 40000)
@@ -60,8 +60,34 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
       splitSegments.length shouldBe 2
       splitSegments(0)._1 shouldNot be(splitSegments(1)._1)
-      splitSegments(0)._6 should be(40000)
-      splitSegments(1)._6 should be(40000)
+      splitSegments(0)._6 should be(Some(40000))
+      splitSegments(1)._6 should be(Some(40000))
+      splitSegments.map(_._3).toSet should be(Set(1, 2))
+      splitSegments(0)._7 should be(false)
+      splitSegments(1)._7 should be(false)
+
+      val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
+
+      originalSpeedLimitSegments.length should be(2)
+      originalSpeedLimitSegments(0)._7 should be(true)
+      originalSpeedLimitSegments(1)._7 should be(true)
+      originalSpeedLimitSegments(0)._1 should be(originalId)
+      originalSpeedLimitSegments(1)._1 should be(originalId)
+    }
+  }
+
+  test("Split multi-link lit road assets") {
+    runWithCleanup {
+      val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
+
+      assetDataImporter.splitMultiLinkAssetsToSingleLinkAssets(100)
+
+      val splitSegments = fetchNumericalLimitSegments(s"split_linearasset_$originalId")
+
+      splitSegments.length shouldBe 2
+      splitSegments(0)._1 shouldNot be(splitSegments(1)._1)
+      splitSegments(0)._6 should be(None)
+      splitSegments(1)._6 should be(None)
       splitSegments.map(_._3).toSet should be(Set(1, 2))
       splitSegments(0)._7 should be(false)
       splitSegments(1)._7 should be(false)
@@ -124,15 +150,15 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       """.execute
   }
 
-  private def fetchNumericalLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Int, Boolean)] = {
+  private def fetchNumericalLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Option[Int], Boolean)] = {
     sql"""
         select a.id, lrm.id, lrm.mml_id, lrm.start_measure, lrm.end_measure, n.value, a.floating
         from asset a
         join asset_link al on al.asset_id = a.id
         join lrm_position lrm on lrm.id = al.position_id
-        join number_property_value n on a.id = n.asset_id
+        left join number_property_value n on a.id = n.asset_id
         where a.created_by = $creator
-      """.as[(Long, Long, Long, Double, Double, Int, Boolean)].list
+      """.as[(Long, Long, Long, Double, Double, Option[Int], Boolean)].list
   }
 
   private def fetchSpeedLimitSegments(creator: String): List[(Long, Long, Long, Double, Double, Int, Boolean)] = {

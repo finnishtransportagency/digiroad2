@@ -189,15 +189,6 @@ trait LinearAssetOperations {
     }
   }
 
-  private def insertValue(assetId: Long)(value: Int) = {
-    val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
-     sqlu"""
-       insert into number_property_value(id, asset_id, property_id, value)
-       values ($numberPropertyValueId, $assetId, $propertyId, $value)
-     """.execute
-  }
-
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): LinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -215,7 +206,7 @@ trait LinearAssetOperations {
       select * from dual
     """.execute
 
-    value.foreach(insertValue(id))
+    value.foreach(OracleLinearAssetDao.insertValue(id, valuePropertyId))
 
     getByIdWithoutTransaction(id).get
   }
