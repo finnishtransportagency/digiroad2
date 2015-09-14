@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -38,15 +39,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus)
 
-  def runWithCleanup(test: => Unit): Unit = {
-    OracleDatabase.withDynTransaction {
-      test
-      dynamicSession.rollback()
-    }
-  }
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Calculate mass transit stop validity periods") {
-    runWithCleanup {
+    runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).map(_.validityPeriod) should be(Some(ValidityPeriod.Current))
       massTransitStops.find(_.id == 300001).map(_.validityPeriod) should be(Some(ValidityPeriod.Past))
@@ -55,7 +51,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Return mass transit stop types") {
-    runWithCleanup {
+    runWithRollback {
       val massTransitStops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       massTransitStops.find(_.id == 300000).map(_.stopTypes) should be(Some(Seq(2)))
       massTransitStops.find(_.id == 300001).map(_.stopTypes) should be(Some(Seq(2, 3, 4)))
@@ -64,7 +60,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Get stops by bounding box") {
-    runWithCleanup {
+    runWithRollback {
       // TODO: Remove side effects from tests so that floating state is not set during test execution and remove the fix below
       // Make sure asset is not floating
       sqlu"""update asset set floating = 0 where id = 300000""".execute
@@ -74,35 +70,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Filter stops by authorization") {
-    runWithCleanup {
+    runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(User(0, "test", Configuration()), boundingBoxWithKauniainenAssets)
       stops should be(empty)
     }
   }
 
   test("Stop floats if road link does not exist") {
-    runWithCleanup {
+    runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300000).map(_.floating) should be(Some(true))
     }
   }
 
   test("Stop floats if stop and roadlink municipality codes differ") {
-    runWithCleanup {
+    runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300004).map(_.floating) should be(Some(true))
     }
   }
 
   test("Stop floats if stop is too far from linearly referenced location") {
-    runWithCleanup {
+    runWithRollback {
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       stops.find(_.id == 300008).map(_.floating) should be(Some(true))
     }
   }
 
   test("Persist mass transit stop floating status change") {
-    runWithCleanup {
+    runWithRollback {
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBoxWithKauniainenAssets)
       val floating: Option[Boolean] = sql"""select floating from asset where id = 300008""".as[Boolean].firstOption
       floating should be(Some(true))
@@ -110,20 +106,20 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Fetch mass transit stop by national id") {
-    runWithCleanup {
+    runWithRollback {
       val stop = RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, _ => Unit)
       stop.map(_.floating) should be(Some(true))
     }
   }
 
   test("Assert user rights when fetching mass transit stop with id") {
-    runWithCleanup {
+    runWithRollback {
       an [Exception] should be thrownBy RollbackMassTransitStopService.getMassTransitStopByNationalId(85755, { municipalityCode => throw new Exception })
     }
   }
 
   test("Update mass transit stop road link mml id") {
-    runWithCleanup {
+    runWithRollback {
       val position = Some(Position(60.0, 0.0, 388554364l, None))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val mmlId = sql"""
@@ -137,7 +133,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update mass transit stop bearing") {
-    runWithCleanup {
+    runWithRollback {
       val position = Some(Position(60.0, 0.0, 388554364l, Some(90)))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val bearing = sql"""
@@ -151,7 +147,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update mass transit stop municipality") {
-    runWithCleanup {
+    runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))
       RollbackMassTransitStopService.updateExistingById(300000, position, Set.empty, "user", _ => Unit)
       val municipality = sql"""
@@ -165,7 +161,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update last modified info") {
-    runWithCleanup {
+    runWithRollback {
       RollbackMassTransitStopService.updateExistingById(300000, None, Set.empty, "user", _ => Unit)
       val modifier = sql"""
             select a.modified_by from asset a
@@ -176,7 +172,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Update properties") {
-    runWithCleanup {
+    runWithRollback {
       val values = List(PropertyValue("New name"))
       val properties = Set(SimpleProperty("nimi_suomeksi", values))
       RollbackMassTransitStopService.updateExistingById(300000, None, properties, "user", _ => Unit)
@@ -190,7 +186,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Persist floating on update") {
-    runWithCleanup {
+    runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))
       RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", _ => Unit)
       val floating = sql"""
@@ -202,7 +198,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Send event to event bus in update") {
-    runWithCleanup {
+    runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val position = Some(Position(60.0, 0.0, 123l, None))
@@ -212,14 +208,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
   }
 
   test("Assert user rights when updating a mass transit stop") {
-    runWithCleanup {
+    runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))
       an [Exception] should be thrownBy RollbackMassTransitStopService.updateExistingById(300002, position, Set.empty, "user", { municipalityCode => throw new Exception })
     }
   }
 
   test("Create new mass transit stop") {
-    runWithCleanup {
+    runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus)
       val values = List(PropertyValue("1"))

@@ -9,21 +9,13 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 class AssetDataImporterSpec extends FunSuite with Matchers {
-  // TODO: Move to trait and share between tests
-  private def runWithCleanup(test: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      test
-      dynamicSession.rollback()
-    }
-  }
-
   private val assetDataImporter = new AssetDataImporter {
     override def withDynTransaction(f: => Unit): Unit = f
     override def withDynSession[T](f: => T): T = f
   }
 
   test("Split multi-link speed limit assets") {
-    runWithCleanup {
+    TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(20, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
       insertSpeedLimitValue(originalId, 60)
 
@@ -50,7 +42,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Split multi-link total weight limit assets") {
-    runWithCleanup {
+    TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
       insertNumericalLimitValue(originalId, 40000)
 
@@ -77,7 +69,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Split multi-link lit road assets") {
-    runWithCleanup {
+    TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(1, 0, 50), LinearAssetSegment(2, 0, 50)))
 
       assetDataImporter.splitMultiLinkAssetsToSingleLinkAssets(100)
