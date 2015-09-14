@@ -172,7 +172,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
 
   private def speedLimitsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
-      Map("id" -> (speedLimit.id + "-" + speedLimit.mmlId),
+      Map("id" -> speedLimit.id,
         "sideCode" -> speedLimit.sideCode.value,
         "points" -> speedLimit.geometry,
         "value" -> speedLimit.value.getOrElse(0),
@@ -203,7 +203,7 @@ class IntegrationApi extends ScalatraServlet with JacksonJsonSupport with Authen
       val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdAt, modifiedAt) = link
       val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
-      Map("id" -> (assetId + "-" + mmlId),
+      Map("id" -> assetId,
         "points" -> geometry,
         "value" -> value,
         "side_code" -> sideCode,
