@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimit
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleSpeedLimitProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.json4s._
@@ -12,10 +11,6 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
-
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -57,16 +52,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   addServlet(new Digiroad2Api(testRoadLinkService, testSpeedLimitProvider, testMassTransitStopService, testLinearAssetService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
-  // TODO: For this test to mean anything the servlet should probably not use test mode authentication?
-  ignore("require authentication", Tag("db")) {
-    get("/massTransitStops?bbox=374702,6677462,374870,6677780&municipalityNumber=235") {
-      status should equal(401)
-    }
-    getWithUserAuth("/massTransitStops?bbox=374702,6677462,374870,6677780&municipalityNumber=235", username = "test") {
-      status should equal(200)
-    }
-  }
-
   test("provide header to indicate session still active", Tag("db")) {
     getWithUserAuth("/massTransitStops?bbox=374702,6677462,374870,6677780") {
       status should equal(200)
@@ -79,23 +64,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val stops: List[MassTransitStop] = parse(body).extract[List[MassTransitStop]]
       stops.count(_.validityPeriod == "current") should be(1)
-    }
-  }
-
-  // TODO: Remove side-effects from other tests so that list of floating stops is always deterministic
-  ignore("get floating mass transit stops") {
-    getWithUserAuth("/floatingMassTransitStops") {
-      val response = parse(body).extract[Map[String, Seq[Long]]]
-      status should equal(200)
-      response.size should be(1)
-      response should be(Map("Kauniainen" -> List(6)))
-    }
-
-    getWithOperatorAuth("/floatingMassTransitStops") {
-      val response = parse(body).extract[Map[String, Seq[Long]]]
-      status should equal(200)
-      response.size should be(1)
-      response should be(Map("Kauniainen" -> List(6)))
     }
   }
 
