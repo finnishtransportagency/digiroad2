@@ -19,8 +19,7 @@ case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[I
 
 case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean,
                        endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String],
-                       createdBy: Option[String], createdDateTime: Option[String],
-                       linearAssetLink: LinearAssetLink, typeId: Int)
+                       createdBy: Option[String], createdDateTime: Option[String], typeId: Int)
 
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
@@ -121,8 +120,7 @@ trait LinearAssetOperations {
       LinearAsset(
         id, mmlId, sideCode, value, points, expired, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimeFormat.print),
-        createdBy, createdAt.map(DateTimeFormat.print),
-        linearAssetLink, typeId)
+        createdBy, createdAt.map(DateTimeFormat.print), typeId)
     }
   }
 

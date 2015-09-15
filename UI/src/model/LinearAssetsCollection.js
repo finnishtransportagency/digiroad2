@@ -151,8 +151,7 @@
         delete linearAssets[existingId];
 
         _.each(updatedLinearAssets, function(linearAsset) {
-          linearAsset.links = [linearAsset.linearAssetLink];
-          delete linearAsset.linearAssetLink;
+          linearAsset.links = [linearAsset];
           linearAsset.sideCode = linearAsset.links[0].sideCode;
           linearAssets[linearAsset.id] = linearAsset;
         });
