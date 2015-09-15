@@ -74,19 +74,30 @@ trait LinearAssetOperations {
     }
   }
 
+  private def generateLinearAssetsForHoles(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)]): Seq[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)] = {
+    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x._5, x._6) }
+    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
+    remainders.map { segment =>
+      (0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false)
+    }
+  }
+
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAsset] = {
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-      val mmlIds = roadLinks.map(_.mmlId).toList
+      val mmlIds = roadLinks.map(_.mmlId)
 
       val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
+      val unknownAssets = roadLinks.flatMap { link =>
+        generateLinearAssetsForHoles(link, existingAssets.filter(_._2 == link.mmlId))
+      }
       val generatedLinearAssets = generateMissingLinearAssets(roadLinks, existingAssets)
-      val linearAssets = existingAssets ++ generatedLinearAssets
+      val linearAssets = existingAssets ++ generatedLinearAssets ++ unknownAssets
 
       val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
-        roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
-          acc + (roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
-        }
+        roadLinks.map { (roadLink) =>
+          roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass)
+        }.toMap
 
       linearAssets.map { link =>
         val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired) = link
