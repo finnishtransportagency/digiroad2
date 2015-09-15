@@ -15,12 +15,12 @@ import slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 
 case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point],
-                              position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+                           position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
 
 case class LinearAsset(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
-                       linearAssetLinks: Seq[LinearAssetLink], typeId: Int)
+                       linearAssetLink: LinearAssetLink, typeId: Int)
 
 trait LinearAssetOperations {
   import GeometryDirection._
@@ -48,7 +48,11 @@ trait LinearAssetOperations {
     }
   }
 
-  private def linearAssetLinksById(id: Long): Seq[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+  private def getLinkWithPosition(link: LinearAssetLink): LinearAssetLink = {
+    link.copy(position = Some(0), towardsLinkChain = Some(true))
+  }
+
+  private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val linearAssets = sql"""
       select a.id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
@@ -59,7 +63,7 @@ trait LinearAssetOperations {
         join property p on p.public_id = $valuePropertyId
         left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
         where a.id = $id
-      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
+      """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].firstOption
 
     linearAssets.map { case (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -127,21 +131,14 @@ trait LinearAssetOperations {
   }
 
   private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
-    val links = linearAssetLinksById(id)
-    if (links.isEmpty) None
-    else {
-      val linkEndpoints: List[(Point, Point)] = links.map { link => GeometryUtils.geometryEndpoints(link._5) }.toList
-      val limitEndpoints = calculateEndPoints(linkEndpoints)
-      val head = links.head
-      val (_, _, _, value, _, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) = head
-      val linearAssetLinks = links.map { case (_, mmlId, sideCode, _, points, _, _, _, _, _, _) =>
-        LinearAssetLink(id, mmlId, sideCode, value, points, None, None, expired)
-      }
-      Some(LinearAsset(
-            id, value, expired, limitEndpoints,
-            modifiedBy, modifiedAt.map(DateTimeFormat.print),
-            createdBy, createdAt.map(DateTimeFormat.print),
-            getLinksWithPositions(linearAssetLinks), typeId))
+    linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
+      val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
+      val linearAssetLink = LinearAssetLink(id, mmlId, sideCode, value, points, None, None, expired)
+      LinearAsset(
+        id, value, expired, Set(linkEndpoints._1, linkEndpoints._2),
+        modifiedBy, modifiedAt.map(DateTimeFormat.print),
+        createdBy, createdAt.map(DateTimeFormat.print),
+        getLinkWithPosition(linearAssetLink), typeId)
     }
   }
 

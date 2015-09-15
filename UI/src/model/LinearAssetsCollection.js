@@ -119,31 +119,20 @@
 
     this.splitLinearAsset = function(id, mmlId, split) {
       backend.getLinearAsset(id, function(linearAsset) {
-        var linearAssetLinks = linearAsset.linearAssetLinks;
-        var splitLink = _.find(linearAssetLinks, function(link) {
-          return link.mmlId === mmlId;
-        });
+        var splitLink = linearAsset.linearAssetLink;
         var position = splitLink.position;
         var towardsLinkChain = splitLink.towardsLinkChain;
 
         var left = _.cloneDeep(linearAssets[id]);
         var right = _.cloneDeep(linearAssets[id]);
 
-        var leftLinks = _.filter(_.cloneDeep(linearAssetLinks), function(it) {
-          return it.position < position;
-        });
-
-        var rightLinks = _.filter(_.cloneDeep(linearAssetLinks), function(it) {
-          return it.position > position;
-        });
-
-        left.links = leftLinks.concat([{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
-                                        position: position,
-                                        mmlId: mmlId}]);
+        left.links = [{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
+                       position: position,
+                       mmlId: mmlId}];
 
         right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
                         position: position,
-                        mmlId: mmlId}].concat(rightLinks);
+                        mmlId: mmlId}];
 
         if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
           splitLinearAssets.created = left;
@@ -170,8 +159,8 @@
         delete linearAssets[existingId];
 
         _.each(updatedLinearAssets, function(linearAsset) {
-          linearAsset.links = linearAsset.linearAssetLinks;
-          delete linearAsset.linearAssetLinks;
+          linearAsset.links = [linearAsset.linearAssetLink];
+          delete linearAsset.linearAssetLink;
           linearAsset.sideCode = linearAsset.links[0].sideCode;
           linearAssets[linearAsset.id] = linearAsset;
         });
