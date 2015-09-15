@@ -416,8 +416,6 @@ with GZipSupport {
           "sideCode" -> link.sideCode,
           "value" -> link.value,
           "points" -> link.points,
-          "position" -> link.position,
-          "towardsLinkChain" -> link.towardsLinkChain,
           "expired" -> link.expired
         )
       }

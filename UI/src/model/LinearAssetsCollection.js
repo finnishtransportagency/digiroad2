@@ -23,7 +23,6 @@
           return [key, { id: values[0].id, links: _.map(values, function(value) {
             return {
               mmlId: value.mmlId,
-              position: value.position,
               points: value.points
             };
           }), sideCode: values[0].sideCode, value: values[0].value, expired: values[0].expired }];
@@ -120,19 +119,12 @@
     this.splitLinearAsset = function(id, mmlId, split) {
       backend.getLinearAsset(id, function(linearAsset) {
         var splitLink = linearAsset.linearAssetLink;
-        var position = splitLink.position;
-        var towardsLinkChain = splitLink.towardsLinkChain;
 
         var left = _.cloneDeep(linearAssets[id]);
         var right = _.cloneDeep(linearAssets[id]);
 
-        left.links = [{points: towardsLinkChain ? split.firstSplitVertices : split.secondSplitVertices,
-                       position: position,
-                       mmlId: mmlId}];
-
-        right.links = [{points: towardsLinkChain ? split.secondSplitVertices : split.firstSplitVertices,
-                        position: position,
-                        mmlId: mmlId}];
+        left.links = [{points: split.firstSplitVertices, mmlId: mmlId}];
+        right.links = [{points: split.secondSplitVertices, mmlId: mmlId}];
 
         if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
           splitLinearAssets.created = left;

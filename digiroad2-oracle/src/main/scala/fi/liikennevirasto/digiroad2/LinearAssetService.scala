@@ -15,8 +15,7 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point],
-                           position: Option[Int] = None, towardsLinkChain: Option[Boolean] = None, expired: Boolean = false)
+case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
 
 case class LinearAsset(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
                        modifiedBy: Option[String], modifiedDateTime: Option[String],
@@ -32,10 +31,6 @@ trait LinearAssetOperations {
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
-  }
-
-  private def getLinkWithPosition(link: LinearAssetLink): LinearAssetLink = {
-    link.copy(position = Some(0), towardsLinkChain = Some(true))
   }
 
   private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
@@ -95,13 +90,11 @@ trait LinearAssetOperations {
           acc + (roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass))
         }
 
-      val linearAssetsWithGeometry: Seq[LinearAssetLink] = linearAssets.map { link =>
+      linearAssets.map { link =>
         val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, _, _) = link
         val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
         LinearAssetLink(assetId, mmlId, sideCode, value, geometry)
       }
-
-      linearAssetsWithGeometry.map(getLinkWithPosition)
     }
   }
 
@@ -124,12 +117,12 @@ trait LinearAssetOperations {
   private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
     linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
-      val linearAssetLink = LinearAssetLink(id, mmlId, sideCode, value, points, None, None, expired)
+      val linearAssetLink = LinearAssetLink(id, mmlId, sideCode, value, points, expired)
       LinearAsset(
         id, value, expired, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimeFormat.print),
         createdBy, createdAt.map(DateTimeFormat.print),
-        getLinkWithPosition(linearAssetLink), typeId)
+        linearAssetLink, typeId)
     }
   }
 
