@@ -24,8 +24,6 @@ case class LinearAsset(id: Long, value: Option[Int], expired: Boolean, endpoints
                        linearAssetLink: LinearAssetLink, typeId: Int)
 
 trait LinearAssetOperations {
-  import GeometryDirection._
-
   val valuePropertyId: String = "mittarajoitus"
 
   def withDynTransaction[T](f: => T): T
@@ -34,19 +32,6 @@ trait LinearAssetOperations {
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
-  }
-
-  private def getLinksWithPositions(links: Seq[LinearAssetLink]): Seq[LinearAssetLink] = {
-    def getLinkEndpoints(link: LinearAssetLink): (Point, Point) = GeometryUtils.geometryEndpoints(link.points)
-    val linkChain = LinkChain(links, getLinkEndpoints)
-    linkChain.map { chainedLink =>
-      val rawLink = chainedLink.rawLink
-      val towardsLinkChain = chainedLink.geometryDirection match {
-        case TowardsLinkChain => true
-        case AgainstLinkChain => false
-      }
-      rawLink.copy(position = Some(chainedLink.linkPosition), towardsLinkChain = Some(towardsLinkChain))
-    }
   }
 
   private def getLinkWithPosition(link: LinearAssetLink): LinearAssetLink = {
@@ -71,11 +56,6 @@ trait LinearAssetOperations {
       val points = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
       (segmentId, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
     }
-  }
-
-  def calculateEndPoints(links: List[(Point, Point)]): Set[Point] = {
-    val endPoints = LinkChain(links, identity[(Point, Point)]).endPoints()
-    Set(endPoints._1, endPoints._2)
   }
 
   private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
@@ -121,7 +101,7 @@ trait LinearAssetOperations {
         LinearAssetLink(assetId, mmlId, sideCode, value, geometry)
       }
 
-      linearAssetsWithGeometry.groupBy(_.id).mapValues(getLinksWithPositions).values.flatten.toSeq
+      linearAssetsWithGeometry.map(getLinkWithPosition)
     }
   }
 

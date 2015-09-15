@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.GeometryDirection.GeometryDirection
-
 object GeometryUtils {
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
@@ -57,40 +55,6 @@ object GeometryUtils {
       case (start, end) if !liesInBetween(spanStart, (start, end)) && !liesInBetween(spanEnd, (start, end)) => List()
       case (start, end) if liesInBetween(spanStart, (start, end)) && liesInBetween(spanEnd, (start, end)) => List((start, spanStart), (spanEnd, end))
       case x => List(x)
-    }
-  }
-
-  private def splitLengths(splitMeasure: Double,
-                           startMeasureOfSplitLink: Double,
-                           endMeasureOfSplitLink: Double,
-                           splitGeometryDirection: GeometryDirection,
-                           linkLength: ((Long, Double, (Point, Point))) => Double,
-                           linksBeforeSplit: LinkChain[(Long, Double, (Point, Point))],
-                           linksAfterSplit: LinkChain[(Long, Double, (Point, Point))]): (Double, Double) = {
-    val splitFromStart = splitMeasure - startMeasureOfSplitLink
-    val splitFromEnd = endMeasureOfSplitLink - splitMeasure
-    val (firstSplitLength, secondSplitLength) = splitGeometryDirection match {
-      case GeometryDirection.TowardsLinkChain =>
-        (splitFromStart + linksBeforeSplit.length(linkLength), splitFromEnd + linksAfterSplit.length(linkLength))
-      case GeometryDirection.AgainstLinkChain =>
-        (splitFromEnd + linksBeforeSplit.length(linkLength), splitFromStart + linksAfterSplit.length(linkLength))
-    }
-    (firstSplitLength, secondSplitLength)
-  }
-
-  private def splitResults(splitMeasure: Double,
-                           startMeasureOfSplitLink: Double,
-                           endMeasureOfSplitLink: Double,
-                           splitGeometryDirection: GeometryDirection,
-                           linksBeforeSplit: LinkChain[(Long, Double, (Point, Point))],
-                           linksAfterSplit: LinkChain[(Long, Double, (Point, Point))],
-                           firstSplitLength: Double,
-                           secondSplitLength: Double): ((Double, Double), (Double, Double), LinkChain[(Long, Double, (Point, Point))]) = {
-    (firstSplitLength > secondSplitLength, splitGeometryDirection) match {
-      case (true, GeometryDirection.TowardsLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksAfterSplit)
-      case (true, GeometryDirection.AgainstLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksAfterSplit)
-      case (false, GeometryDirection.TowardsLinkChain) => ((splitMeasure, endMeasureOfSplitLink), (startMeasureOfSplitLink, splitMeasure), linksBeforeSplit)
-      case (false, GeometryDirection.AgainstLinkChain) => ((startMeasureOfSplitLink, splitMeasure), (splitMeasure, endMeasureOfSplitLink), linksBeforeSplit)
     }
   }
 
