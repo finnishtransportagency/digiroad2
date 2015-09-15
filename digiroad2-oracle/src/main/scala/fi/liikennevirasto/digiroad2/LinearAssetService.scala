@@ -5,6 +5,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
@@ -92,12 +93,22 @@ trait LinearAssetOperations {
     }
   }
 
+  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: List[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime], Option[DateTime])]) = {
+    val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset._2 == link.mmlId))
+
+    roadLinksWithoutAssets.map { link =>
+      (0L, link.mmlId, 1, None, 0.0, link.length, None, None)
+    }
+  }
+
   def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAssetLink] = {
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
       val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val linearAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
+      val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
+      val generatedLinearAssets = generateMissingLinearAssets(roadLinks, existingAssets)
+      val linearAssets = existingAssets ++ generatedLinearAssets
 
       val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
         roadLinks.foldLeft(Map.empty[Long, (Seq[Point], Double, AdministrativeClass, Int)]) { (acc, roadLink) =>
