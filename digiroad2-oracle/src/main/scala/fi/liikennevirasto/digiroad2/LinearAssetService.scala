@@ -55,7 +55,8 @@ trait LinearAssetOperations {
   private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
       sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure, a.created_date, a.modified_date
+        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
+               a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -63,7 +64,7 @@ trait LinearAssetOperations {
           join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime], Option[DateTime])].list
+          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
   }
 
@@ -75,7 +76,7 @@ trait LinearAssetOperations {
     }
   }
 
-  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAssetLink] = {
+  def getByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[LinearAsset] = {
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
       val mmlIds = roadLinks.map(_.mmlId).toList
@@ -90,14 +91,17 @@ trait LinearAssetOperations {
         }
 
       linearAssets.map { link =>
-        val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, _, _) = link
-        val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
-        LinearAssetLink(assetId, mmlId, sideCode, value, geometry)
+        val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired) = link
+        val points = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
+        val endPoints = GeometryUtils.geometryEndpoints(points)
+        LinearAsset(
+          assetId, mmlId, sideCode, value, points, expired, Set(endPoints._1, endPoints._2), modifiedBy,
+          modifiedDateTime.map(DateTimeFormat.print), createdBy, createdDateTime.map(DateTimeFormat.print), typeId)
       }
     }
   }
 
-  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int,  Option[Int], Double, Double, Option[DateTime], Option[DateTime])], Map[Long, Seq[Point]]) = {
+  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int,  Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)], Map[Long, Seq[Point]]) = {
     withDynTransaction {
       val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
       val mmlIds = roadLinks.map(_.mmlId).toList

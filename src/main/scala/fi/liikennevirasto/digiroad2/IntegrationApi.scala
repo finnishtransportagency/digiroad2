@@ -185,7 +185,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     val (linearAssets, linkGeometries) = linearAssetService.getByMunicipality(typeId, municipalityNumber)
 
     linearAssets.map { link =>
-      val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdAt, modifiedAt) = link
+      val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, _, createdAt, _, modifiedAt, _) = link
       val timeStamps: LinearAssetTimeStamps = LinearAssetTimeStamps(Modification(createdAt, None), Modification(modifiedAt, None))
       val geometry = GeometryUtils.truncateGeometry(linkGeometries(mmlId), startMeasure, endMeasure)
       Map("id" -> assetId,
