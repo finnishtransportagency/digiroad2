@@ -117,7 +117,7 @@
       }, 0);
     };
 
-    this.splitLinearAssets = function(id, mmlId, split) {
+    this.splitLinearAsset = function(id, mmlId, split) {
       backend.getLinearAsset(id, function(linearAsset) {
         var linearAssetLinks = linearAsset.linearAssetLinks;
         var splitLink = _.find(linearAssetLinks, function(link) {
