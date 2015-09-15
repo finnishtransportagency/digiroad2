@@ -182,7 +182,7 @@ object DataFixture {
     println("\nCommencing Linear asset splitting at time: ")
     println(DateTime.now())
     println("split assets")
-    val assetTypes = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100)
+    val assetTypes = Seq(30, 40, 50, 60, 70, 80, 90, 100)
     assetTypes.foreach { typeId =>
       println("Splitting asset type " + typeId)
       dataImporter.splitMultiLinkAssetsToSingleLinkAssets(typeId)
