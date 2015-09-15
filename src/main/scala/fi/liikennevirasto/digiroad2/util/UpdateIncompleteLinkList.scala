@@ -9,7 +9,7 @@ import slick.jdbc.StaticQuery.interpolation
 object UpdateIncompleteLinkList {
   def main(args:Array[String]) : Unit = {
     try {
-    UpdateIncompleteLinkList.runUpdate()
+      UpdateIncompleteLinkList.runUpdate()
     } catch {
       case e: Exception => e.printStackTrace()
     }
