@@ -68,11 +68,11 @@ trait LinearAssetOperations {
     }
   }
 
-  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: List[(Long, Long, Int, Option[Int], Double, Double, Option[DateTime], Option[DateTime])]) = {
+  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: List[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)]) = {
     val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset._2 == link.mmlId))
 
     roadLinksWithoutAssets.map { link =>
-      (0L, link.mmlId, 1, None, 0.0, link.length, None, None)
+      (0L, link.mmlId, 1, None, 0.0, link.length, None, None, None, None, false)
     }
   }
 
