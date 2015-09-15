@@ -12,6 +12,8 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
+case class LinearAssetFromApi(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
+
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
   val TestPropertyId = "katos"
@@ -206,7 +208,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      val parsedBody = parse(body).extract[List[LinearAssetLink]]
+      val parsedBody = parse(body).extract[List[LinearAssetFromApi]]
       parsedBody.size should be(2)
     }
   }

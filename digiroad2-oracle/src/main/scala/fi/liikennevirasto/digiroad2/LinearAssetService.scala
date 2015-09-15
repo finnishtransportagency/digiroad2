@@ -15,8 +15,6 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
-
 case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean,
                        endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String], typeId: Int)
@@ -120,7 +118,6 @@ trait LinearAssetOperations {
   private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
     linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
-      val linearAssetLink = LinearAssetLink(id, mmlId, sideCode, value, points, expired)
       LinearAsset(
         id, mmlId, sideCode, value, points, expired, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimeFormat.print),
