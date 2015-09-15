@@ -17,8 +17,8 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 case class LinearAssetLink(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
 
-case class LinearAsset(id: Long, value: Option[Int], expired: Boolean, endpoints: Set[Point],
-                       modifiedBy: Option[String], modifiedDateTime: Option[String],
+case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean,
+                       endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String],
                        linearAssetLink: LinearAssetLink, typeId: Int)
 
@@ -119,7 +119,7 @@ trait LinearAssetOperations {
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
       val linearAssetLink = LinearAssetLink(id, mmlId, sideCode, value, points, expired)
       LinearAsset(
-        id, value, expired, Set(linkEndpoints._1, linkEndpoints._2),
+        id, mmlId, sideCode, value, points, expired, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimeFormat.print),
         createdBy, createdAt.map(DateTimeFormat.print),
         linearAssetLink, typeId)
