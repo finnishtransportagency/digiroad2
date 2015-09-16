@@ -418,7 +418,7 @@ window.LinearAssetLayer = function(params) {
         var points = _.map(link.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var linearAssetWithMmlId = _.cloneDeep(linearAsset);
+        var linearAssetWithMmlId = _.omit(linearAsset, 'links');
         linearAssetWithMmlId.mmlId = link.mmlId;
         return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAssetWithMmlId);
       });
