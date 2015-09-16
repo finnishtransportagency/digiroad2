@@ -163,12 +163,12 @@
       });
     }, 1000);
 
-    this.createLinearAsset = _.throttle(function(typeId, mmlId, value, success, error) {
+    this.createLinearAsset = _.throttle(function(typeId, linearAsset, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
         url: "api/linearassets?typeId=" + typeId,
-        data: JSON.stringify({mmlId: mmlId, value: value}),
+        data: JSON.stringify(linearAsset),
         dataType: "json",
         success: success,
         error: error

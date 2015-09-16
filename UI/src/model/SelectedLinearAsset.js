@@ -107,7 +107,7 @@
     };
 
     var createNew = function(success, failure) {
-      backend.createLinearAsset(typeId, current.mmlId, current.value, success, failure);
+      backend.createLinearAsset(typeId, current, success, failure);
     };
 
     this.cancel = function() {
