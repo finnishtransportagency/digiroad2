@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, Municipality, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
@@ -45,5 +46,19 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limits.length should be (2)
       Set(limits(0).id, limits(1).id) should be (Set(11111, 11112))
     }
+  }
+
+  test("create non-existent linear assets on empty road links") {
+    val topology = Seq(
+      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
+        TrafficDirection.BothDirections, Motorway, None, None))
+    val linearAssets = Map.empty[Long, Seq[DBLinearAsset]]
+    val filledTopology = LinearAssetFiller.fillTopology(topology, linearAssets, 30)
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be(Seq(1))
+    filledTopology.map(_.value) should be(Seq(None))
+    filledTopology.map(_.id) should be(Seq(0))
+    filledTopology.map(_.mmlId) should be(Seq(1))
+    filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
 }

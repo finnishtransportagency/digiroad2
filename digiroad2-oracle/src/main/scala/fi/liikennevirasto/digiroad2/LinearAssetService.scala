@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -22,6 +22,37 @@ case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int],
 case class DBLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int],
                          startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                          modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean)
+
+object LinearAssetFiller {
+  private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[DBLinearAsset]): Seq[DBLinearAsset] = {
+    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
+    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
+    remainders.map { segment =>
+      DBLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false)
+    }
+  }
+
+  def toLinearAsset(dbAssets: Seq[DBLinearAsset], roadLinkGeometry: Seq[Point], typeId: Int): Seq[LinearAsset] = {
+    dbAssets.map { dbAsset =>
+      val points = GeometryUtils.truncateGeometry(roadLinkGeometry, dbAsset.startMeasure, dbAsset.endMeasure)
+      val endPoints = GeometryUtils.geometryEndpoints(points)
+      LinearAsset(
+        dbAsset.id, dbAsset.mmlId, dbAsset.sideCode, dbAsset.value, points, dbAsset.expired,
+        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime.map(DateTimeFormat.print),
+        dbAsset.createdBy, dbAsset.createdDateTime.map(DateTimeFormat.print), typeId)
+    }
+  }
+
+  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[DBLinearAsset]], typeId: Int): Seq[LinearAsset] = {
+    topology.foldLeft(Seq.empty[LinearAsset]) { case (acc, roadLink) =>
+      val existingAssets = acc
+      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
+
+      val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, assetsOnRoadLink)
+      existingAssets ++ toLinearAsset(generatedLinearAssets ++ assetsOnRoadLink, roadLink.geometry, typeId)
+    }
+  }
+}
 
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
@@ -95,26 +126,10 @@ trait LinearAssetOperations {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
       val mmlIds = roadLinks.map(_.mmlId)
 
-      val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
-      val unknownAssets = roadLinks.flatMap { link =>
-        generateLinearAssetsForHoles(link, existingAssets.filter(_.mmlId == link.mmlId))
-      }
-      val generatedLinearAssets = generateMissingLinearAssets(roadLinks, existingAssets)
-      val linearAssets = existingAssets ++ generatedLinearAssets ++ unknownAssets
+      val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds).groupBy(_.mmlId)
 
-      val linkGeometries: Map[Long, (Seq[Point], Double, AdministrativeClass, Int)] =
-        roadLinks.map { (roadLink) =>
-          roadLink.mmlId -> (roadLink.geometry, roadLink.length, roadLink.administrativeClass, roadLink.functionalClass)
-        }.toMap
-
-      linearAssets.map { link =>
-        val points = GeometryUtils.truncateGeometry(linkGeometries(link.mmlId)._1, link.startMeasure, link.endMeasure)
-        val endPoints = GeometryUtils.geometryEndpoints(points)
-        LinearAsset(
-          link.id, link.mmlId, link.sideCode, link.value, points, link.expired, Set(endPoints._1, endPoints._2), link.modifiedBy,
-          link.modifiedDateTime.map(DateTimeFormat.print), link.createdBy, link.createdDateTime.map(DateTimeFormat.print), typeId)
-      }
-    }
+      LinearAssetFiller.fillTopology(roadLinks, existingAssets, typeId)
+   }
   }
 
   def getByMunicipality(typeId: Int, municipality: Int): (Seq[DBLinearAsset], Map[Long, Seq[Point]]) = {

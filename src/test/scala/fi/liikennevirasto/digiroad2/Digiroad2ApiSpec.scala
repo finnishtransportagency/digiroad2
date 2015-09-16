@@ -209,8 +209,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
-      // TODO: Get by bounding box should return 3 linear assets: 2 existing and one non-existing
-      parsedBody.size should be(4)
+      parsedBody.size should be(3)
+      parsedBody.count(_.id.isEmpty) should be(1)
+      parsedBody.count(_.id.isDefined) should be(2)
     }
   }
 
