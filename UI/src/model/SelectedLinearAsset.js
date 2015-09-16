@@ -105,11 +105,11 @@
     };
 
     var expire = function(success, failure) {
-      backend.updateLinearAsset(current.id, { expired: true }, success, failure);
+      backend.updateLinearAsset(current.id, current, success, failure);
     };
 
     var update = function(success, failure) {
-      backend.updateLinearAsset(current.id, { value: current.value, expired: false }, success, failure);
+      backend.updateLinearAsset(current.id, current, success, failure);
     };
 
     var createNew = function(success, failure) {
