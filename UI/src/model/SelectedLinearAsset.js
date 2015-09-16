@@ -95,19 +95,11 @@
         }
 
         if (isNew()) {
-          createNew(success, failure);
+          backend.createLinearAsset(typeId, current, success, failure);
         } else {
-          update(success, failure);
+          backend.updateLinearAsset(current.id, current, success, failure);
         }
       }
-    };
-
-    var update = function(success, failure) {
-      backend.updateLinearAsset(current.id, current, success, failure);
-    };
-
-    var createNew = function(success, failure) {
-      backend.createLinearAsset(typeId, current, success, failure);
     };
 
     this.cancel = function() {
