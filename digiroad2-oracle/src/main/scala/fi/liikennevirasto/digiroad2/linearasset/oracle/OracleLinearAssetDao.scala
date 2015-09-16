@@ -173,13 +173,13 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Map[Long, RoadLinkForSpeedLimit]) = {
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[RoadLinkForSpeedLimit]) = {
     val topology = toTopology(roadLinks)
-    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.keys.toSeq).map(createGeometryForSegment(topology))
+    val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
-  private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Map[Long, RoadLinkForSpeedLimit] = {
+  private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[RoadLinkForSpeedLimit] = {
     def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
       attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
     }
@@ -201,12 +201,11 @@ trait OracleLinearAssetDao {
     roadLinks
       .filter(isCarTrafficRoad)
       .map(toRoadLinkForSpeedLimit)
-      .groupBy(_.mmlId).mapValues(_.head)
   }
 
-  private def createGeometryForSegment(topology: Map[Long, RoadLinkForSpeedLimit])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+  private def createGeometryForSegment(topology: Seq[RoadLinkForSpeedLimit])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
-    val roadLink = topology.get(mmlId).get
+    val roadLink = topology.find(_.mmlId == mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
     SpeedLimit(assetId, mmlId, sideCode, roadLink.trafficDirection, speedLimit, geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate)
   }
