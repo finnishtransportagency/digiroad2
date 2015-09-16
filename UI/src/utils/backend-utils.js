@@ -151,15 +151,7 @@
       });
     }, 1000);
 
-    this.updateLinearAsset = _.throttle(function(id, value, success, failure) {
-      putUpdateLinearAssetCall(id, {value: value}, success, failure);
-    }, 1000);
-
-    this.expireLinearAsset = _.throttle(function(id, success, failure) {
-      putUpdateLinearAssetCall(id, {expired: true}, success, failure);
-    }, 1000);
-
-    var putUpdateLinearAssetCall = function(id, data, success, failure) {
+    this.updateLinearAsset = _.throttle(function(id, data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -169,7 +161,7 @@
         success: success,
         error: failure
       });
-    };
+    }, 1000);
 
     this.createLinearAsset = _.throttle(function(typeId, mmlId, value, success, error) {
       $.ajax({
