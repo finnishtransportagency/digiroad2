@@ -41,9 +41,9 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("get limits by municipality") {
     runWithRollback {
-      val (limits, _): (List[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
+      val (limits, _): (Seq[DBLinearAsset], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
       limits.length should be (2)
-      Set(limits(0)._1, limits(1)._1) should be (Set(11111, 11112))
+      Set(limits(0).id, limits(1).id) should be (Set(11111, 11112))
     }
   }
 }

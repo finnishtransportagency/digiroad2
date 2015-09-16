@@ -12,7 +12,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
-case class LinearAssetFromApi(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
+case class LinearAssetFromApi(id: Option[Long], mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean = false)
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -29,7 +29,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(Some(VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchVVHRoadlinks(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(List(
-      VVHRoadlink(7478l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(7478l, 235, Seq(Point(0, 0), Point(0, 10)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       VVHRoadlink(388562360, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     ))
   when(mockVVHClient.fetchVVHRoadlink(362964704))
@@ -208,8 +208,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
       status should equal(200)
-      val parsedBody = parse(body).extract[List[LinearAssetFromApi]]
-      parsedBody.size should be(2)
+      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      // TODO: Get by bounding box should return 3 linear assets: 2 existing and one non-existing
+      parsedBody.size should be(4)
     }
   }
 

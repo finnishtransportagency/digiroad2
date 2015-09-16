@@ -19,6 +19,10 @@ case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int],
                        endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String],
                        createdBy: Option[String], createdDateTime: Option[String], typeId: Int)
 
+case class DBLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int],
+                         startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
+                         modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean)
+
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 
@@ -50,9 +54,9 @@ trait LinearAssetOperations {
     }
   }
 
-  private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]) = {
+  private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]): Seq[DBLinearAsset] = {
     MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      sql"""
+      val assets = sql"""
         select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired
           from asset a
@@ -62,23 +66,27 @@ trait LinearAssetOperations {
           join #$idTableName i on i.id = pos.mml_id
           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
           where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
+          and (a.valid_to >= sysdate or a.valid_to is null)"""
+        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
+      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) =>
+          DBLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired)
+      }
     }
   }
 
-  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: List[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)]) = {
-    val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset._2 == link.mmlId))
+  def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: Seq[DBLinearAsset]) = {
+    val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset.mmlId == link.mmlId))
 
     roadLinksWithoutAssets.map { link =>
-      (0L, link.mmlId, 1, None, 0.0, link.length, None, None, None, None, false)
+      DBLinearAsset(0L, link.mmlId, 1, None, 0.0, link.length, None, None, None, None, false)
     }
   }
 
-  private def generateLinearAssetsForHoles(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)]): Seq[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)] = {
-    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x._5, x._6) }
+  private def generateLinearAssetsForHoles(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[DBLinearAsset]): Seq[DBLinearAsset] = {
+    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
     remainders.map { segment =>
-      (0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false)
+      DBLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false)
     }
   }
 
@@ -89,7 +97,7 @@ trait LinearAssetOperations {
 
       val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
       val unknownAssets = roadLinks.flatMap { link =>
-        generateLinearAssetsForHoles(link, existingAssets.filter(_._2 == link.mmlId))
+        generateLinearAssetsForHoles(link, existingAssets.filter(_.mmlId == link.mmlId))
       }
       val generatedLinearAssets = generateMissingLinearAssets(roadLinks, existingAssets)
       val linearAssets = existingAssets ++ generatedLinearAssets ++ unknownAssets
@@ -100,17 +108,16 @@ trait LinearAssetOperations {
         }.toMap
 
       linearAssets.map { link =>
-        val (assetId, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired) = link
-        val points = GeometryUtils.truncateGeometry(linkGeometries(mmlId)._1, startMeasure, endMeasure)
+        val points = GeometryUtils.truncateGeometry(linkGeometries(link.mmlId)._1, link.startMeasure, link.endMeasure)
         val endPoints = GeometryUtils.geometryEndpoints(points)
         LinearAsset(
-          assetId, mmlId, sideCode, value, points, expired, Set(endPoints._1, endPoints._2), modifiedBy,
-          modifiedDateTime.map(DateTimeFormat.print), createdBy, createdDateTime.map(DateTimeFormat.print), typeId)
+          link.id, link.mmlId, link.sideCode, link.value, points, link.expired, Set(endPoints._1, endPoints._2), link.modifiedBy,
+          link.modifiedDateTime.map(DateTimeFormat.print), link.createdBy, link.createdDateTime.map(DateTimeFormat.print), typeId)
       }
     }
   }
 
-  def getByMunicipality(typeId: Int, municipality: Int): (List[(Long, Long, Int,  Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)], Map[Long, Seq[Point]]) = {
+  def getByMunicipality(typeId: Int, municipality: Int): (Seq[DBLinearAsset], Map[Long, Seq[Point]]) = {
     withDynTransaction {
       val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
       val mmlIds = roadLinks.map(_.mmlId).toList

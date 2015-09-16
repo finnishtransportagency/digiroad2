@@ -401,7 +401,6 @@ with GZipSupport {
     speedLimitProvider.getUnknown(includedMunicipalities)
   }
 
-
   get("/linearassets") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
