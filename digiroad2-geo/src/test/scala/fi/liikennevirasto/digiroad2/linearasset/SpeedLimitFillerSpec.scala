@@ -33,10 +33,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 1.0, Unknown, 1, None, TrafficDirection.BothDirections, 235))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(40), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)),
-      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(50), Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
+      1l -> Seq(
+        SpeedLimit(
+          1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(40),
+          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None),
+        SpeedLimit(
+          2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(50),
+          Seq(Point(2.0, 0.0), Point(9.0, 0.0)), 2.0, 9.0, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-    println(filledTopology)
     filledTopology should have size 2
     filledTopology.map(_.geometry) should be(Seq(
       Seq(Point(0.0, 0.0), Point(10.0, 0.0)),
@@ -84,9 +88,16 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val topology = Seq(
       RoadLinkForSpeedLimit(Seq(Point(0.0, 0.0), Point(1.0, 0.0)), 1.0, Unknown, 1, None, TrafficDirection.BothDirections, 235))
     val speedLimits = Map(
-      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(40), Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, None, None)),
-      2l -> Seq(SpeedLimit(2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(40), Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, None, None, None, None)),
-      3l -> Seq(SpeedLimit(3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(40), Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, None, None, None, None)))
+      1l -> Seq(
+        SpeedLimit(
+          1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(40),
+          Seq(Point(0.0, 0.0), Point(0.2, 0.0)), 0.0, 0.2, None, None, None, None),
+        SpeedLimit(
+          2, 1, SideCode.AgainstDigitizing, TrafficDirection.BothDirections, Some(40),
+          Seq(Point(0.2, 0.0), Point(0.5, 0.0)), 0.0, 0.3, None, None, None, None),
+        SpeedLimit(
+          3, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(40),
+          Seq(Point(0.5, 0.0), Point(1.0, 0.0)), 0.0, 0.5, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
