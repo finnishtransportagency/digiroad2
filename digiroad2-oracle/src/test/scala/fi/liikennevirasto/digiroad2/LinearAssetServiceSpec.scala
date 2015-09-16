@@ -42,7 +42,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("get limits by municipality") {
     runWithRollback {
-      val (limits, _): (Seq[DBLinearAsset], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
+      val (limits, _): (Seq[PersistedLinearAsset], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
       limits.length should be (2)
       Set(limits(0).id, limits(1).id) should be (Set(11111, 11112))
     }
@@ -52,7 +52,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val topology = Seq(
       VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
         TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map.empty[Long, Seq[DBLinearAsset]]
+    val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
     val filledTopology = LinearAssetFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(1))
