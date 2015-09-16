@@ -131,10 +131,6 @@
       return current.mmlId;
     };
 
-    this.getEndpoints = function() {
-      return current.endpoints;
-    };
-
     this.getValue = function() {
       return current.value;
     };
