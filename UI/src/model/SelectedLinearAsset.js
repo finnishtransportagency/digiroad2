@@ -94,18 +94,12 @@
           return;
         }
 
-        if (expired()) {
-          expire(success, failure);
-        } else if (isNew()) {
+        if (isNew()) {
           createNew(success, failure);
         } else {
           update(success, failure);
         }
       }
-    };
-
-    var expire = function(success, failure) {
-      backend.updateLinearAsset(current.id, current, success, failure);
     };
 
     var update = function(success, failure) {
