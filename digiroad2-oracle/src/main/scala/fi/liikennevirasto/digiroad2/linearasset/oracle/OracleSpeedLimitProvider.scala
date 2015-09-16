@@ -38,7 +38,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, linkGeometries) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val speedLimits = speedLimitLinks.groupBy(_.id)
+      val speedLimits = speedLimitLinks.groupBy(_.mmlId)
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
@@ -115,7 +115,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
       val (speedLimitLinks, roadLinksByMmlId) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.id))
+      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.mmlId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
       filledTopology
     }

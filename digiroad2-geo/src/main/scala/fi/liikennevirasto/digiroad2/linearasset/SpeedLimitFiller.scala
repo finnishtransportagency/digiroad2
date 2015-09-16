@@ -107,7 +107,6 @@ object SpeedLimitFiller {
   }
 
   def fillTopology(roadLinks: Seq[RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
-    val speedLimitSegments: Seq[SpeedLimit] = speedLimits.values.flatten.toSeq
     val fillOperations: Seq[(RoadLinkForSpeedLimit, Seq[SpeedLimit], SpeedLimitChangeSet) => (Seq[SpeedLimit], SpeedLimitChangeSet)] = Seq(
       dropRedundantSegments,
       adjustSegmentMValues,
@@ -119,7 +118,7 @@ object SpeedLimitFiller {
     val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet) =
       roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
         val (existingSegments, changeSet) = acc
-        val segments = speedLimitSegments.filter(_.mmlId == roadLink.mmlId)
+        val segments = speedLimits.getOrElse(roadLink.mmlId, Nil)
         val validSegments = segments.filterNot { segment => changeSet.droppedSpeedLimitIds.contains(segment.id) }
 
         val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
