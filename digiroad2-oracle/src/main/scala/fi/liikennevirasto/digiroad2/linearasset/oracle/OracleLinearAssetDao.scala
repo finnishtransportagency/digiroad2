@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.linearasset._
-import SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
-
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -16,8 +14,6 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-
-import scala.util.Try
 
 
 trait OracleLinearAssetDao {
