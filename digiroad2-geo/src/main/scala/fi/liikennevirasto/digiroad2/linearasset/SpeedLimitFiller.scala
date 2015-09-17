@@ -15,7 +15,7 @@ object SpeedLimitFiller {
 
   private val MaxAllowedMValueError = 0.5
 
-  private def adjustSegment(link: SpeedLimit, roadLink: RoadLinkForSpeedLimit): (SpeedLimit, Seq[MValueAdjustment]) = {
+  private def adjustSegment(link: SpeedLimit, roadLink: VVHRoadLinkWithProperties): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = link.startMeasure
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
     val endError = roadLinkLength - link.endMeasure
@@ -28,7 +28,7 @@ object SpeedLimitFiller {
     (modifiedSegment, mAdjustment)
   }
 
-  private def adjustTwoWaySegments(roadLink: RoadLinkForSpeedLimit,
+  private def adjustTwoWaySegments(roadLink: VVHRoadLinkWithProperties,
                                    segments: Seq[SpeedLimit]):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
     val twoWaySegments = segments.filter(_.sideCode == SideCode.BothDirections)
@@ -41,7 +41,7 @@ object SpeedLimitFiller {
     }
   }
 
-  private def adjustOneWaySegments(roadLink: RoadLinkForSpeedLimit,
+  private def adjustOneWaySegments(roadLink: VVHRoadLinkWithProperties,
                                    segments: Seq[SpeedLimit],
                                    runningDirection: SideCode):
   (Seq[SpeedLimit], Seq[MValueAdjustment]) = {
@@ -55,7 +55,7 @@ object SpeedLimitFiller {
     }
   }
 
-  private def adjustSegmentMValues(roadLink: RoadLinkForSpeedLimit, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+  private def adjustSegmentMValues(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
     val (towardsGeometrySegments, towardsGeometryAdjustments) = adjustOneWaySegments(roadLink, segments, SideCode.TowardsDigitizing)
     val (againstGeometrySegments, againstGeometryAdjustments) = adjustOneWaySegments(roadLink, segments, SideCode.AgainstDigitizing)
     val (twoWayGeometrySegments, twoWayGeometryAdjustments) = adjustTwoWaySegments(roadLink, segments)
@@ -64,7 +64,7 @@ object SpeedLimitFiller {
       changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
   }
 
-  private def adjustSegmentSideCodes(roadLink: RoadLinkForSpeedLimit, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+  private def adjustSegmentSideCodes(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
     if (segments.length == 1 && segments.head.sideCode != SideCode.BothDirections) {
       val segment = segments.head
       val sideCodeAdjustments = Seq(SideCodeAdjustment(segment.id, SideCode.BothDirections))
@@ -74,7 +74,7 @@ object SpeedLimitFiller {
     }
   }
 
-  private def dropRedundantSegments(roadLink: RoadLinkForSpeedLimit, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+  private def dropRedundantSegments(roadLink: VVHRoadLinkWithProperties, segments: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
     val headOption = segments.headOption
     val valueShared = segments.length > 1 && headOption.exists(first => segments.forall(_.value == first.value))
     valueShared match {
@@ -91,13 +91,13 @@ object SpeedLimitFiller {
     speedLimits.filter { case (id, segments) => segments.exists(_.geometry.isEmpty) }.keySet
   }
 
-  private def dropShortLimits(roadLinks: RoadLinkForSpeedLimit, speedLimits: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+  private def dropShortLimits(roadLinks: VVHRoadLinkWithProperties, speedLimits: Seq[SpeedLimit], changeSet: SpeedLimitChangeSet): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
     val limitsToDrop = speedLimits.filter { limit => GeometryUtils.geometryLength(limit.geometry) < MaxAllowedMValueError }.map(_.id).toSet
     val limits = speedLimits.filterNot { x => limitsToDrop.contains(x.id) }
     (limits, changeSet.copy(droppedSpeedLimitIds = changeSet.droppedSpeedLimitIds ++ limitsToDrop))
   }
 
-  private def generateUnknownSpeedLimitsForLink(roadLink: RoadLinkForSpeedLimit, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
+  private def generateUnknownSpeedLimitsForLink(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MaxAllowedMValueError}
     remainders.map { segment =>
@@ -106,8 +106,8 @@ object SpeedLimitFiller {
     }
   }
 
-  def fillTopology(roadLinks: Seq[RoadLinkForSpeedLimit], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
-    val fillOperations: Seq[(RoadLinkForSpeedLimit, Seq[SpeedLimit], SpeedLimitChangeSet) => (Seq[SpeedLimit], SpeedLimitChangeSet)] = Seq(
+  def fillTopology(roadLinks: Seq[VVHRoadLinkWithProperties], speedLimits: Map[Long, Seq[SpeedLimit]]): (Seq[SpeedLimit], SpeedLimitChangeSet) = {
+    val fillOperations: Seq[(VVHRoadLinkWithProperties, Seq[SpeedLimit], SpeedLimitChangeSet) => (Seq[SpeedLimit], SpeedLimitChangeSet)] = Seq(
       dropRedundantSegments,
       adjustSegmentMValues,
       adjustSegmentSideCodes,
@@ -126,7 +126,8 @@ object SpeedLimitFiller {
         }
 
         val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-        val unknownLimits = generatedSpeedLimits.map(_ => UnknownLimit(roadLink.mmlId, roadLink.municipalityCode, roadLink.administrativeClass))
+        val municipalityCode = RoadLinkUtility.municipalityCodeFromAttributes(roadLink.attributes)
+        val unknownLimits = generatedSpeedLimits.map(_ => UnknownLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass))
         (existingSegments ++ adjustedSegments ++ generatedSpeedLimits,
           segmentAdjustments.copy(generatedUnknownLimits = segmentAdjustments.generatedUnknownLimits ++ unknownLimits))
       }

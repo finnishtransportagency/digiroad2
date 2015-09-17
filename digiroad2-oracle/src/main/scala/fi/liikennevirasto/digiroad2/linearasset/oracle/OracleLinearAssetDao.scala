@@ -167,37 +167,24 @@ trait OracleLinearAssetDao {
          where a.asset_type_id = 20 and floating = 0 and pos.mml_id = $mmlId""".as[(Long, Long, SideCode, Option[Int], Double, Double)].list
   }
 
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[RoadLinkForSpeedLimit]) = {
-    val topology = toTopology(roadLinks)
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): (Seq[SpeedLimit],  Seq[VVHRoadLinkWithProperties]) = {
+    val topology = filterSupportedLinks(roadLinks)
     val speedLimitLinks = fetchSpeedLimitsByMmlIds(topology.map(_.mmlId)).map(createGeometryForSegment(topology))
     (speedLimitLinks, topology)
   }
 
-  private def toTopology(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[RoadLinkForSpeedLimit] = {
-    def municipalityCodeFromAttributes(attributes: Map[String, Any]): Int = {
-      attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue()
-    }
+  private def filterSupportedLinks(roadLinks: Seq[VVHRoadLinkWithProperties]): Seq[VVHRoadLinkWithProperties] = {
     def isCarTrafficRoad(link: VVHRoadLinkWithProperties) = {
       val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
       val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)
 
       allowedFunctionalClasses.contains(link.functionalClass % 10) && !disallowedLinkTypes.contains(link.linkType.value)
     }
-    def toRoadLinkForSpeedLimit(link: VVHRoadLinkWithProperties) = RoadLinkForSpeedLimit(
-      link.geometry,
-      link.length,
-      link.administrativeClass,
-      link.mmlId,
-      RoadLinkUtility.roadIdentifierFromRoadLink(link),
-      link.trafficDirection,
-      municipalityCodeFromAttributes(link.attributes))
 
-    roadLinks
-      .filter(isCarTrafficRoad)
-      .map(toRoadLinkForSpeedLimit)
+    roadLinks.filter(isCarTrafficRoad)
   }
 
-  private def createGeometryForSegment(topology: Seq[RoadLinkForSpeedLimit])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
+  private def createGeometryForSegment(topology: Seq[VVHRoadLinkWithProperties])(segment: (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime])) = {
     val (assetId, mmlId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate) = segment
     val roadLink = topology.find(_.mmlId == mmlId).get
     val geometry = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
