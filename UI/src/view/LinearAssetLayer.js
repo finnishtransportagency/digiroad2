@@ -414,14 +414,10 @@ window.LinearAssetLayer = function(params) {
 
   var lineFeatures = function(linearAssets) {
     return _.flatten(_.map(linearAssets, function(linearAsset) {
-      return _.map(linearAsset.links, function(link) {
-        var points = _.map(link.points, function(point) {
+        var points = _.map(linearAsset.points, function(point) {
           return new OpenLayers.Geometry.Point(point.x, point.y);
         });
-        var linearAssetWithMmlId = _.omit(linearAsset, 'links');
-        linearAssetWithMmlId.mmlId = link.mmlId;
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAssetWithMmlId);
-      });
+        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), linearAsset);
     }));
   };
 

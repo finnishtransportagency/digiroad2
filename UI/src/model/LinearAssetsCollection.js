@@ -19,15 +19,6 @@
     var transformLinearAssets = function(linearAssets) {
       return _.chain(linearAssets)
         .groupBy('id')
-        .map(function(values, key) {
-          return [key, { id: values[0].id, links: _.map(values, function(value) {
-            return {
-              mmlId: value.mmlId,
-              points: value.points
-            };
-          }), sideCode: values[0].sideCode, value: values[0].value, expired: values[0].expired }];
-        })
-        .object()
         .value();
     };
 
@@ -65,7 +56,7 @@
         if (splitLinearAssets.existing) {
           eventbus.trigger(multiElementEvent('fetched'), buildPayload(linearAssets, splitLinearAssets));
         } else {
-          eventbus.trigger(multiElementEvent('fetched'), _.values(linearAssets).concat(newLinearAsset));
+          eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets).concat(newLinearAsset)));
         }
       });
     };
