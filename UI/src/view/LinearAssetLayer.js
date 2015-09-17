@@ -302,14 +302,6 @@ window.LinearAssetLayer = function(params) {
 
   var displayConfirmMessage = function() { new Confirm(); };
 
-  var linearAssetFeatureExists = function(selectedLinearAsset) {
-    if (selectedLinearAsset.isNew() && selectedLinearAsset.isDirty()) {
-      return !_.isEmpty(findUnpersistedWeightFeatures());
-    } else {
-      return !_.isEmpty(findWeightFeaturesById(selectedLinearAsset.getId()));
-    }
-  };
-
   var handleLinearAssetChanged = function(selectedLinearAsset) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
