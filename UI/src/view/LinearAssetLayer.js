@@ -6,11 +6,10 @@ window.LinearAssetLayer = function(params) {
     roadCollection = params.roadCollection,
     geometryUtils = params.geometryUtils,
     linearAssetsUtility = params.linearAsset,
-    roadLayer = params.roadLayer,
     layerName = params.layerName,
     multiElementEventCategory = params.multiElementEventCategory,
     singleElementEventCategory = params.singleElementEventCategory;
-  Layer.call(this, layerName, roadLayer);
+  Layer.call(this, layerName, params.roadLayer);
   var me = this;
 
   var LinearAssetCutter = function(vectorLayer, collection) {
@@ -189,9 +188,6 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(vectorLayer, collection);
 
-  var styleMap = RoadLayerSelectionStyle.create(roadLayer, 0.3);
-  roadLayer.setLayerSpecificStyleMap(layerName, styleMap);
-
   var highlightLinearAssetFeatures = function(feature) {
     _.each(vectorLayer.features, function(x) {
       if (x.attributes.id === feature.attributes.id) {
@@ -213,7 +209,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var findRoadLinkFeaturesByMmlId = function(id) {
-    return _.filter(roadLayer.layer.features, function(feature) { return feature.attributes.mmlId === id; });
+    return _.filter(vectorLayer.features, function(feature) { return feature.attributes.mmlId === id; });
   };
 
   var findWeightFeaturesById = function(id) {
@@ -229,7 +225,7 @@ window.LinearAssetLayer = function(params) {
     }
   };
 
-  var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer, roadLayer.layer], {
+  var selectControl = new OpenLayers.Control.SelectFeature([vectorLayer], {
     onSelect: linearAssetOnSelect,
     onUnselect: function(feature) {
       if (selectedLinearAsset.exists()) {
@@ -263,7 +259,6 @@ window.LinearAssetLayer = function(params) {
       adjustStylesByZoomLevel(zoom);
       start();
       eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), zoom);
         reselectLinearAsset();
         collection.fetch(boundingBox, selectedLinearAsset);
       });
@@ -352,7 +347,6 @@ window.LinearAssetLayer = function(params) {
       adjustStylesByZoomLevel(state.zoom);
       start();
       eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), state.zoom);
         reselectLinearAsset();
         collection.fetch(state.bbox, selectedLinearAsset);
       });
