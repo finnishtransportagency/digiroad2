@@ -36,14 +36,14 @@
 
     this.fetch = function(boundingBox, selectedLinearAsset) {
       backend.getLinearAssets(boundingBox, typeId, function(fetchedLinearAssets) {
-        var selected = selectedLinearAsset.exists() ? linearAssets[selectedLinearAsset.getId()] : undefined;
+        var selected = selectedLinearAsset.exists() ? selectedLinearAsset.get() : undefined;
 
         linearAssets = transformLinearAssets(fetchedLinearAssets);
 
         if (selected && !linearAssets[selected.id]) {
           linearAssets[selected.id] = selected;
         } else if (selected) {
-          var selectedInCollection = linearAssets[selected.id];
+          var selectedInCollection = linearAssets[selected.id][0];
           selectedInCollection.value = selected.value;
           selectedInCollection.expired = selected.expired;
         }
