@@ -16,12 +16,6 @@
       return payload;
     };
 
-    var transformLinearAssets = function(linearAssets) {
-      return _.chain(linearAssets)
-        .groupBy('id')
-        .value();
-    };
-
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
     };
@@ -31,32 +25,28 @@
     };
 
     this.getAll = function() {
-      return _.values(linearAssets);
+      return _.flatten(_.values(linearAssets));
     };
 
     this.fetch = function(boundingBox, selectedLinearAsset) {
-      backend.getLinearAssets(boundingBox, typeId, function(fetchedLinearAssets) {
-        var selected = selectedLinearAsset.exists() ? selectedLinearAsset.get() : undefined;
+      var transformLinearAssets = function(linearAssets) {
+        return _.chain(linearAssets)
+          .groupBy('id')
+          .value();
+      };
 
+      backend.getLinearAssets(boundingBox, typeId, function(fetchedLinearAssets) {
         linearAssets = transformLinearAssets(fetchedLinearAssets);
 
-        if (selected && !linearAssets[selected.id]) {
+        if (selectedLinearAsset.exists()) {
+          var selected = selectedLinearAsset.get();
           linearAssets[selected.id] = selected;
-        } else if (selected) {
-          var selectedInCollection = linearAssets[selected.id][0];
-          selectedInCollection.value = selected.value;
-          selectedInCollection.expired = selected.expired;
-        }
-
-        var newLinearAsset = [];
-        if (selectedLinearAsset.isNew() && selectedLinearAsset.isDirty()) {
-          newLinearAsset = [selectedLinearAsset.get()];
         }
 
         if (splitLinearAssets.existing) {
           eventbus.trigger(multiElementEvent('fetched'), buildPayload(linearAssets, splitLinearAssets));
         } else {
-          eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets).concat(newLinearAsset)));
+          eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets)));
         }
       });
     };
