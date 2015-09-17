@@ -188,19 +188,8 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(vectorLayer, collection);
 
-  var highlightLinearAssetFeatures = function(feature) {
-    _.each(vectorLayer.features, function(x) {
-      if (x.attributes.id === feature.attributes.id) {
-        selectControl.highlight(x);
-      } else {
-        selectControl.unhighlight(x);
-      }
-    });
-  };
-
   var setSelectionStyleAndHighlightFeature = function(feature) {
     vectorLayer.styleMap = selectionStyle;
-    highlightLinearAssetFeatures(feature);
     vectorLayer.redraw();
   };
 
@@ -381,7 +370,6 @@ window.LinearAssetLayer = function(params) {
       var feature = _.first(getSelectedFeatures(selectedLinearAsset));
       if (feature) {
         selectControl.select(feature);
-        highlightLinearAssetFeatures(feature);
       }
       selectControl.onSelect = linearAssetOnSelect;
     }
@@ -389,7 +377,8 @@ window.LinearAssetLayer = function(params) {
 
   var drawLinearAssets = function(linearAssets) {
     var linearAssetsWithType = _.map(linearAssets, function(limit) {
-      return _.merge({}, limit, { type: 'line', expired: limit.expired + '' });
+      var expired = _.isUndefined(limit.id) || limit.expired;
+      return _.merge({}, limit, { type: 'line', expired: expired + '' });
     });
     var offsetBySideCode = function(linearAsset) {
       return linearAssetsUtility.offsetBySideCode(map.getZoom(), linearAsset);
