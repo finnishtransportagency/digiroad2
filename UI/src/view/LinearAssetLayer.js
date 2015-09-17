@@ -388,7 +388,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var reselectLinearAsset = function() {
-    if (selectedLinearAsset.exists && selectedLinearAsset.exists()) {
+    if (selectedLinearAsset.exists()) {
       selectControl.onSelect = function() {};
       var feature = _.first(getSelectedFeatures(selectedLinearAsset));
       if (feature) {
