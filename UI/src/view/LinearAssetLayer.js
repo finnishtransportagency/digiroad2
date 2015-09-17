@@ -258,11 +258,8 @@ window.LinearAssetLayer = function(params) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
       start();
-      eventbus.once('roadLinks:fetched', function() {
-        reselectLinearAsset();
-        collection.fetch(boundingBox, selectedLinearAsset);
-      });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      reselectLinearAsset();
+      collection.fetch(boundingBox, selectedLinearAsset);
     }
   };
 
@@ -346,11 +343,8 @@ window.LinearAssetLayer = function(params) {
       vectorLayer.setVisibility(true);
       adjustStylesByZoomLevel(state.zoom);
       start();
-      eventbus.once('roadLinks:fetched', function() {
-        reselectLinearAsset();
-        collection.fetch(state.bbox, selectedLinearAsset);
-      });
-      roadCollection.fetchFromVVH(map.getExtent(), map.getZoom());
+      reselectLinearAsset();
+      collection.fetch(state.bbox, selectedLinearAsset);
     } else {
       vectorLayer.setVisibility(false);
       stop();
