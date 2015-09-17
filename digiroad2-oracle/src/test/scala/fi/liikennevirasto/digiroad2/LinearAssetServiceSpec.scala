@@ -65,7 +65,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(1l -> Seq(
-      PersistedLinearAsset(1, 1, 1, Some(40000), 0.0, 9.6, None, None, None, None, false)))
+      PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false)))
     val filledTopology = LinearAssetFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
     filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))

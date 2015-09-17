@@ -28,11 +28,9 @@ object LinearAssetFiller {
 
   private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): PersistedLinearAsset = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val lengthDifference = roadLinkLength - asset.endMeasure
-    if (lengthDifference < AllowedTolerance)
-      asset.copy(endMeasure = roadLinkLength)
-    else
-      asset
+    val startMeasure = if (asset.startMeasure < AllowedTolerance) 0.0 else asset.startMeasure
+    val endMeasure = if (roadLinkLength - asset.endMeasure < AllowedTolerance) roadLinkLength else asset.endMeasure
+    asset.copy(startMeasure = startMeasure, endMeasure = endMeasure)
   }
 
   private def adjustTwoWaySegments(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
