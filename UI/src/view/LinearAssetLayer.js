@@ -314,10 +314,9 @@ window.LinearAssetLayer = function(params) {
     selectControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    if (linearAssetFeatureExists(selectedLinearAsset)) {
-      var selectedLinearAssetFeatures = getSelectedFeatures(selectedLinearAsset);
-      vectorLayer.removeFeatures(selectedLinearAssetFeatures);
-    }
+    _.each(vectorLayer.selectedFeatures, function(selectedFeature) {
+      vectorLayer.removeFeatures(selectedFeature);
+    });
     drawLinearAssets([selectedLinearAsset.get()]);
   };
 

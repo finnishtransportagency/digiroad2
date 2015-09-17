@@ -43,10 +43,7 @@
         value: null,
         expired: true,
         sideCode: 1,
-        links: [{
-          mmlId: mmlId,
-          points: points
-        }]
+        points: points
       };
       eventbus.trigger(singleElementEvent('selected'), self);
     };
