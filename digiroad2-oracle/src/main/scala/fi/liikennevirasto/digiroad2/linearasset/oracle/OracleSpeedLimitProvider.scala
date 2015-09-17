@@ -42,13 +42,8 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(linkGeometries, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      val roadIdentifiers = linkGeometries
-        .groupBy(_.mmlId)
-        .mapValues(_.head)
-        .mapValues(_.roadIdentifier)
-        .filter(_._2.isDefined)
-        .mapValues(_.get)
-      SpeedLimitPartitioner.partition(filledTopology, roadIdentifiers)
+      val roadLinksForSpeedLimits = linkGeometries.groupBy(_.mmlId).mapValues(_.head)
+      SpeedLimitPartitioner.partition(filledTopology, roadLinksForSpeedLimits)
     }
   }
 

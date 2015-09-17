@@ -94,26 +94,12 @@
           return;
         }
 
-        if (expired()) {
-          expire(success, failure);
-        } else if (isNew()) {
-          createNew(success, failure);
+        if (isNew()) {
+          backend.createLinearAsset(typeId, current, success, failure);
         } else {
-          update(success, failure);
+          backend.updateLinearAsset(current.id, current, success, failure);
         }
       }
-    };
-
-    var expire = function(success, failure) {
-      backend.expireLinearAsset(current.id, success, failure);
-    };
-
-    var update = function(success, failure) {
-      backend.updateLinearAsset(current.id, current.value, success, failure);
-    };
-
-    var createNew = function(success, failure) {
-      backend.createLinearAsset(typeId, current.mmlId, current.value, success, failure);
     };
 
     this.cancel = function() {
@@ -143,10 +129,6 @@
 
     this.getMmlId = function() {
       return current.mmlId;
-    };
-
-    this.getEndpoints = function() {
-      return current.endpoints;
     };
 
     this.getValue = function() {

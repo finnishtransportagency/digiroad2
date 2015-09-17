@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import _root_.oracle.spatial.geometry.JGeometry
-import fi.liikennevirasto.digiroad2.linearasset._
-import SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
-
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
@@ -17,8 +15,6 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
-import scala.util.Try
-
 
 trait OracleLinearAssetDao {
   def getUnknownSpeedLimits(municipalities: Option[Set[Int]]): Map[String, Map[String, Any]] = {
@@ -26,11 +22,9 @@ trait OracleLinearAssetDao {
     def toUnknownLimit(x: (Long, String, Int)) = UnknownLimit(x._1, x._2, AdministrativeClass(x._3).toString)
     val optionalMunicipalities = municipalities.map(_.mkString(","))
     val unknownSpeedLimitQuery = """
-      select mml_id, name_fi, administrative_class
-      from (select s.mml_id, m.name_fi, s.administrative_class, rank() over (partition by s.municipality_code, s.administrative_class order by s.mml_id) rank, s.municipality_code
-           from unknown_speed_limit s
-           join municipality m on s.municipality_code = m.id)
-      where rank <= 10
+      select s.mml_id, m.name_fi, s.administrative_class
+      from unknown_speed_limit s
+      join municipality m on s.municipality_code = m.id
       """
 
     val sql = optionalMunicipalities match {
