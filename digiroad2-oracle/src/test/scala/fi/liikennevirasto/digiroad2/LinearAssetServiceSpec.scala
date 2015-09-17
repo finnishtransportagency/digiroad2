@@ -3,12 +3,9 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
 import org.mockito.Mockito._
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -50,8 +47,8 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("create non-existent linear assets on empty road links") {
     val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1,
-        TrafficDirection.BothDirections, Motorway, None, None))
+      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
     val filledTopology = LinearAssetFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
@@ -60,5 +57,19 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     filledTopology.map(_.id) should be(Seq(0))
     filledTopology.map(_.mmlId) should be(Seq(1))
     filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+  }
+
+  test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
+    val topology = Seq(
+      VVHRoadLinkWithProperties(
+        1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+        1, TrafficDirection.BothDirections, Motorway, None, None))
+    val linearAssets = Map(1l -> Seq(
+      PersistedLinearAsset(1, 1, 1, Some(40000), 0.0, 9.6, None, None, None, None, false)))
+    val filledTopology = LinearAssetFiller.fillTopology(topology, linearAssets, 30)
+    filledTopology should have size 1
+    filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    filledTopology.map(_.mmlId) should be(Seq(1))
+    filledTopology.map(_.value) should be(Seq(Some(40000)))
   }
 }

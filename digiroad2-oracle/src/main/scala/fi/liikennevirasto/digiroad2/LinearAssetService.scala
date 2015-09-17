@@ -24,6 +24,28 @@ case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Opt
                          modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean)
 
 object LinearAssetFiller {
+  private val AllowedTolerance = 0.5
+
+  private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): PersistedLinearAsset = {
+    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val lengthDifference = roadLinkLength - asset.endMeasure
+    if (lengthDifference < AllowedTolerance)
+      asset.copy(endMeasure = roadLinkLength)
+    else
+      asset
+  }
+
+  private def adjustTwoWaySegments(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    val twoWaySegments = assets.filter(_.sideCode == 1)
+    if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
+      val asset = assets.head
+      val adjustedAsset = adjustAsset(asset, roadLink)
+      Seq(adjustedAsset)
+    } else {
+      assets
+    }
+  }
+
   private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
@@ -47,9 +69,10 @@ object LinearAssetFiller {
     topology.foldLeft(Seq.empty[LinearAsset]) { case (acc, roadLink) =>
       val existingAssets = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
+      val adjustedAssets = adjustTwoWaySegments(roadLink, assetsOnRoadLink)
 
-      val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, assetsOnRoadLink)
-      existingAssets ++ toLinearAsset(generatedLinearAssets ++ assetsOnRoadLink, roadLink.geometry, typeId)
+      val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets)
+      existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink.geometry, typeId)
     }
   }
 }
