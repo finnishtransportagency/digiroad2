@@ -23,7 +23,7 @@ case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Opt
                          startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
                          modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean)
 
-object LinearAssetFiller {
+object NumericalLimitFiller {
   private val AllowedTolerance = 0.5
 
   private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): PersistedLinearAsset = {
@@ -149,7 +149,7 @@ trait LinearAssetOperations {
 
       val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds).groupBy(_.mmlId)
 
-      LinearAssetFiller.fillTopology(roadLinks, existingAssets, typeId)
+      NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
    }
   }
 

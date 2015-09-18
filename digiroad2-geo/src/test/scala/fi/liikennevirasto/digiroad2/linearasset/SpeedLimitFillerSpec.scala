@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, SpeedLimitChangeSet, UnknownLimit}
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, ChangeSet, UnknownLimit}
 import org.scalatest._
 
 class SpeedLimitFillerSpec extends FunSuite with Matchers {
@@ -19,7 +19,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val speedLimits = Map(1l -> Seq(
       SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, None, Nil, 0.0, 0.2, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-    changeSet.droppedSpeedLimitIds should be(Set(1))
+    changeSet.droppedAssetIds should be(Set(1))
   }
 
   test("adjust speed limit to cover whole link when its the only speed limit to refer to the link") {
@@ -32,7 +32,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(SpeedLimitChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
@@ -64,7 +64,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(40), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None)))
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 0
-    changeSet.droppedSpeedLimitIds should be(Set(1))
+    changeSet.droppedAssetIds should be(Set(1))
   }
 
   test("should not drop adjusted short speed limit") {
@@ -75,7 +75,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
     filledTopology should have size 1
     filledTopology.map(_.id) should be(Seq(1))
-    changeSet.droppedSpeedLimitIds shouldBe empty
+    changeSet.droppedAssetIds shouldBe empty
   }
 
   test("adjust side code of a speed limit") {
@@ -111,7 +111,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.id) should be(Seq(1))
     changeSet.adjustedMValues should be(Seq(MValueAdjustment(1, 1, 0.0, 1.0)))
     changeSet.adjustedSideCodes should be(Seq(SideCodeAdjustment(1, SideCode.BothDirections)))
-    changeSet.droppedSpeedLimitIds should be(Set(2, 3))
+    changeSet.droppedAssetIds should be(Set(2, 3))
   }
 
   test("create unknown speed limit on empty segments") {

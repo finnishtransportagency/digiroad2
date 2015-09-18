@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitProvider
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.SpeedLimitChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -22,13 +22,13 @@ class ValluActor extends Actor {
 
 class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
-    case x: SpeedLimitChangeSet => persistSpeedLimitChanges(x)
+    case x: ChangeSet => persistSpeedLimitChanges(x)
     case x: Set[Long] => speedLimitProvider.purgeUnknown(x)
     case _                      => println("speedLimitFiller: Received unknown message")
   }
 
-  def persistSpeedLimitChanges(speedLimitChangeSet: SpeedLimitChangeSet) {
-    speedLimitProvider.drop(speedLimitChangeSet.droppedSpeedLimitIds)
+  def persistSpeedLimitChanges(speedLimitChangeSet: ChangeSet) {
+    speedLimitProvider.drop(speedLimitChangeSet.droppedAssetIds)
     speedLimitProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
     speedLimitProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
     speedLimitProvider.persistUnknown(speedLimitChangeSet.generatedUnknownLimits)
