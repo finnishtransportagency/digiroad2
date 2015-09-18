@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime

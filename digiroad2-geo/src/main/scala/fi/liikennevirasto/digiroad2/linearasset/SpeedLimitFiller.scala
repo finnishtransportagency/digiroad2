@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SideCode}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 
-object SpeedLimitFiller extends LinearAssetFiller {
+object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.5
 
   private def adjustSegment(link: SpeedLimit, roadLink: VVHRoadLinkWithProperties): (SpeedLimit, Seq[MValueAdjustment]) = {

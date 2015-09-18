@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.{MValueAdjustment, SideCodeAdjustment, UnknownLimit}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
@@ -76,22 +76,6 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
-  override def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
-      }
-    }
-  }
-
-  override def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
-    withDynTransaction {
-      adjustments.foreach { adjustment =>
-        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
-      }
-    }
-  }
-
   override def persistUnknown(limits: Seq[UnknownLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
@@ -132,12 +116,6 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
       filledTopology
-    }
-  }
-
-  override def drop(ids: Set[Long]): Unit = {
-    withDynTransaction {
-      dao.floatLinearAssets(ids)
     }
   }
 

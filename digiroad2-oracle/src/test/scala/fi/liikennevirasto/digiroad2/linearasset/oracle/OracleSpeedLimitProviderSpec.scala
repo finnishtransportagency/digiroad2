@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers}

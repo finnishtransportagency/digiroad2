@@ -5,9 +5,8 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{UnknownLimit, ChangeSet}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitProvider
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -21,18 +20,24 @@ class ValluActor extends Actor {
   }
 }
 
-class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
+class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   def receive = {
-    case x: ChangeSet => persistSpeedLimitChanges(x)
-    case x: Set[Long] => speedLimitProvider.purgeUnknown(x)
-    case x: Seq[UnknownLimit] => speedLimitProvider.persistUnknown(x)
-    case _                      => println("speedLimitFiller: Received unknown message")
+    case x: ChangeSet => persistLinearAssetChanges(x)
+    case _            => println("LinearAssetUpdater: Received unknown message")
   }
 
-  def persistSpeedLimitChanges(speedLimitChangeSet: ChangeSet) {
-    speedLimitProvider.drop(speedLimitChangeSet.droppedAssetIds)
-    speedLimitProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
-    speedLimitProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
+  def persistLinearAssetChanges(changeSet: ChangeSet) {
+    linearAssetService.drop(changeSet.droppedAssetIds)
+    linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
+    linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
+  }
+}
+
+class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
+  def receive = {
+    case x: Set[Long]         => speedLimitProvider.purgeUnknown(x)
+    case x: Seq[UnknownLimit] => speedLimitProvider.persistUnknown(x)
+    case _                    => println("speedLimitFiller: Received unknown message")
   }
 }
 
@@ -56,8 +61,10 @@ object Digiroad2Context {
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
 
+  val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
+  eventbus.subscribe(linearAssetUpdater, "speedLimits:update")
+
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], speedLimitProvider), name = "speedLimitUpdater")
-  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknown")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 

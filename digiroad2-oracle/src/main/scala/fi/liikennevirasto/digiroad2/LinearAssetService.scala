@@ -5,6 +5,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -80,6 +81,7 @@ trait LinearAssetOperations {
 
   def withDynTransaction[T](f: => T): T
   def roadLinkService: RoadLinkService
+  def dao: OracleLinearAssetDao
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -235,6 +237,22 @@ trait LinearAssetOperations {
     }.flatten
   }
 
+  def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
+    withDynTransaction {
+      adjustments.foreach { adjustment =>
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+    }
+  }
+
+  def persistSideCodeAdjustments(adjustments: Seq[SideCodeAdjustment]): Unit = {
+    withDynTransaction {
+      adjustments.foreach { adjustment =>
+        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
+      }
+    }
+  }
+
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): LinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -283,9 +301,18 @@ trait LinearAssetOperations {
     }
     Seq(getById(id).get, getById(createdId).get)
   }
+
+  def drop(ids: Set[Long]): Unit = {
+    withDynTransaction {
+      dao.floatLinearAssets(ids)
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService) extends LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
+    override val roadLinkService: RoadLinkService = roadLinkServiceImpl
+  }
 }
