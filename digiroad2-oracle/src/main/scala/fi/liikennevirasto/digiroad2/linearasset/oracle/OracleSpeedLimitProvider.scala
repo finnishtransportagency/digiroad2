@@ -48,8 +48,8 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val speedLimits = speedLimitLinks.groupBy(_.mmlId)
       val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
 
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-      eventbus.publish("speedLimits:update", speedLimitChangeSet)
+      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+      eventbus.publish("linearAssets:update", changeSet)
 
       val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
@@ -107,8 +107,8 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
 
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
-      eventbus.publish("speedLimits:update", speedLimitChangeSet)
+      val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
+      eventbus.publish("linearAssets:update", changeSet)
 
       val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
       eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
@@ -122,7 +122,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.mmlId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, municipalityValidation)
       }
-      eventbus.publish("speedLimits:purgeUnknown", newLimits.map(_.mmlId).toSet)
+      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.mmlId).toSet)
       createdIds
     }
   }

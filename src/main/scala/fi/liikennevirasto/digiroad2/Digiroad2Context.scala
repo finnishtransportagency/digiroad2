@@ -62,10 +62,10 @@ object Digiroad2Context {
   eventbus.subscribe(vallu, "asset:saved")
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
-  eventbus.subscribe(linearAssetUpdater, "speedLimits:update")
+  eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], speedLimitProvider), name = "speedLimitUpdater")
-  eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknown")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
