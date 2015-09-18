@@ -12,7 +12,6 @@ import org.scalatest.{FunSuite, Matchers}
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockRoadLinkService.fetchVVHRoadlinks(235)).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -37,14 +36,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
-    }
-  }
-
-  test("get limits by municipality") {
-    runWithRollback {
-      val (limits, _): (Seq[PersistedLinearAsset], Map[Long, Seq[Point]]) = PassThroughService.getByMunicipality(30, 235)
-      limits.length should be (2)
-      Set(limits(0).id, limits(1).id) should be (Set(11111, 11112))
     }
   }
 

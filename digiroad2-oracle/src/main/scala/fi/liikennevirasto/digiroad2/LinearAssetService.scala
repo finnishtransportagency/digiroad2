@@ -115,26 +115,6 @@ trait LinearAssetOperations {
     }
   }
 
-  private def fetchLinearAssetsByMmlIds(assetTypeId: Int, mmlIds: Seq[Long]): Seq[PersistedLinearAsset] = {
-    MassQuery.withIds(mmlIds.toSet) { idTableName =>
-      val assets = sql"""
-        select a.id, pos.mml_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
-               a.created_by, a.created_date, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired
-          from asset a
-          join asset_link al on a.id = al.asset_id
-          join lrm_position pos on al.position_id = pos.id
-          join property p on p.public_id = $valuePropertyId
-          join #$idTableName i on i.id = pos.mml_id
-          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-          where a.asset_type_id = $assetTypeId
-          and (a.valid_to >= sysdate or a.valid_to is null)"""
-        .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
-      assets.map { case(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired) =>
-          PersistedLinearAsset(id, mmlId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired)
-      }
-    }
-  }
-
   def generateMissingLinearAssets(roadLinks: Seq[VVHRoadLinkWithProperties], linearAssets: Seq[PersistedLinearAsset]) = {
     val roadLinksWithoutAssets = roadLinks.filterNot(link => linearAssets.exists(linearAsset => linearAsset.mmlId == link.mmlId))
 
@@ -156,7 +136,7 @@ trait LinearAssetOperations {
       val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
       val mmlIds = roadLinks.map(_.mmlId)
 
-      val existingAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds).groupBy(_.mmlId)
+      val existingAssets = dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId).groupBy(_.mmlId)
 
       val (filledTopology, _) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
       filledTopology
@@ -168,7 +148,7 @@ trait LinearAssetOperations {
       val roadLinks = roadLinkService.fetchVVHRoadlinks(municipality)
       val mmlIds = roadLinks.map(_.mmlId).toList
 
-      val linearAssets = fetchLinearAssetsByMmlIds(typeId, mmlIds)
+      val linearAssets = dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId)
 
       val linkGeometries: Map[Long, Seq[Point]] =
         roadLinks.foldLeft(Map.empty[Long, Seq[Point]]) { (acc, roadLink) =>
