@@ -208,8 +208,13 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
     withDynTransaction {
+      val mmlIds = ids.map(getByIdWithoutTransaction).flatten.map(_.mmlId)
+      roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
+        .map(_.municipalityCode)
+        .foreach(municipalityValidation)
+
       ids.map { id =>
         val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
         val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)

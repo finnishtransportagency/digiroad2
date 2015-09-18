@@ -450,7 +450,7 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        linearAssetService.update(Seq(id), value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+        linearAssetService.update(Seq(id), value.map(_.intValue()), expired.getOrElse(false), user.username, (_) => Unit) match {
           case Nil => NotFound("Linear asset " + id + " not found")
           case segmentIds => linearAssetService.getById(segmentIds.head)
         }
@@ -468,10 +468,9 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(ids, value.map(_.intValue()), expired.getOrElse(false), user.username)
+        val updatedIds = linearAssetService.update(ids, value.map(_.intValue()), expired.getOrElse(false), user.username, validateUserMunicipalityAccess(user))
         val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username, validateUserMunicipalityAccess(user))
         updatedIds ++ created.map(_.id)
-        // todo: validate municipalities on update also
         // todo: return linear assets instead of ids
     }
   }

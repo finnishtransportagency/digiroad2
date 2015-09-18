@@ -13,6 +13,7 @@ import org.scalatest.{FunSuite, Matchers}
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.fetchVVHRoadlink(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
       VVHRoadLinkWithProperties(
         1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
@@ -35,7 +36,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Expire numerical limit") {
     runWithRollback {
-      PassThroughService.update(Seq(11111l), None, true, "lol")
+      PassThroughService.update(Seq(11111l), None, true, "lol", (_) => Unit)
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(4000))
       limit.get.expired should be (true)
@@ -44,7 +45,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Update numerical limit") {
     runWithRollback {
-      PassThroughService.update(Seq(11111l), Some(2000), false, "lol")
+      PassThroughService.update(Seq(11111l), Some(2000), false, "lol", (_) => Unit)
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
