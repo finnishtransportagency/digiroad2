@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.MValueAdjustment
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -22,10 +22,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   when(mockLinearAssetDao.fetchLinearAssetsByMmlIds(30, Seq(1), "mittarajoitus"))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false)))
 
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = mockLinearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
@@ -68,6 +71,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     linearAssets.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     linearAssets.map(_.mmlId) should be(Seq(1))
     linearAssets.map(_.value) should be(Seq(Some(40000)))
-//    changeSet.adjustedMValues should be (Seq(MValueAdjustment(1, 1, 0.0, 10.0)))
+    verify(mockEventBus, times(1))
+      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil))
   }
 }

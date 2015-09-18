@@ -125,7 +125,7 @@ object Digiroad2Context {
   }
 
   lazy val linearAssetService: LinearAssetService = {
-    new LinearAssetService(roadLinkService)
+    new LinearAssetService(roadLinkService, eventbus)
   }
 
   lazy val useVVHGeometry: Boolean = properties.getProperty("digiroad2.useVVHGeometry", "false").toBoolean

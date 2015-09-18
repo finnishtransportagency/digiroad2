@@ -91,6 +91,7 @@ trait LinearAssetOperations {
   def withDynTransaction[T](f: => T): T
   def roadLinkService: RoadLinkService
   def dao: OracleLinearAssetDao
+  def eventBus: DigiroadEventBus
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -140,7 +141,9 @@ trait LinearAssetOperations {
 
       val existingAssets = dao.fetchLinearAssetsByMmlIds(typeId, mmlIds, valuePropertyId).groupBy(_.mmlId)
 
-      val (filledTopology, _) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
+      val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, existingAssets, typeId)
+      eventBus.publish("linearAssets:update", changeSet)
+
       filledTopology
    }
   }
@@ -301,10 +304,11 @@ trait LinearAssetOperations {
   }
 }
 
-class LinearAssetService(roadLinkServiceImpl: RoadLinkService) extends LinearAssetOperations {
+class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   def withDynTransaction[T](f: => T): T = Database.forDataSource(dataSource).withDynTransaction(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImpl
   }
+  override def eventBus: DigiroadEventBus = eventBusImpl
 }
