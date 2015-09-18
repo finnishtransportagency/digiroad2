@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitProvider
 import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -24,6 +25,7 @@ class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
     case x: ChangeSet => persistSpeedLimitChanges(x)
     case x: Set[Long] => speedLimitProvider.purgeUnknown(x)
+    case x: Seq[UnknownLimit] => speedLimitProvider.persistUnknown(x)
     case _                      => println("speedLimitFiller: Received unknown message")
   }
 
@@ -31,7 +33,6 @@ class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
     speedLimitProvider.drop(speedLimitChangeSet.droppedAssetIds)
     speedLimitProvider.persistMValueAdjustments(speedLimitChangeSet.adjustedMValues)
     speedLimitProvider.persistSideCodeAdjustments(speedLimitChangeSet.adjustedSideCodes)
-    speedLimitProvider.persistUnknown(speedLimitChangeSet.generatedUnknownLimits)
   }
 }
 
@@ -58,6 +59,7 @@ object Digiroad2Context {
   val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater], speedLimitProvider), name = "speedLimitUpdater")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
   eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknown")
+  eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")

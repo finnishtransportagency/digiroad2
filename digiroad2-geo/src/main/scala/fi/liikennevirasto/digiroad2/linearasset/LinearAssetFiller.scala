@@ -9,6 +9,5 @@ trait LinearAssetFiller {
   case class UnknownLimit(mmlId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
   case class ChangeSet(droppedAssetIds: Set[Long],
                        adjustedMValues: Seq[MValueAdjustment],
-                       adjustedSideCodes: Seq[SideCodeAdjustment],
-                       generatedUnknownLimits: Seq[UnknownLimit])
+                       adjustedSideCodes: Seq[SideCodeAdjustment])
 }

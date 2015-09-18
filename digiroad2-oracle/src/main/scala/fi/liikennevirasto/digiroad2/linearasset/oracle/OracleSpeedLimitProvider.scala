@@ -34,16 +34,29 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
+  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, VVHRoadLinkWithProperties]): Seq[UnknownLimit] = {
+    val generatedLimits = speedLimits.filter(_.id == 0)
+    generatedLimits.map { limit =>
+      val roadLink = roadLinksByMmlId(limit.mmlId)
+      val municipalityCode = RoadLinkUtility.municipalityCodeFromAttributes(roadLink.attributes)
+      UnknownLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass)
+    }
+  }
+
   override def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(bounds, municipalities)
     withDynTransaction {
       val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       val speedLimits = speedLimitLinks.groupBy(_.mmlId)
+      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
 
       val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
-      val roadLinksForSpeedLimits = topology.groupBy(_.mmlId).mapValues(_.head)
-      SpeedLimitPartitioner.partition(filledTopology, roadLinksForSpeedLimits)
+
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
+
+      SpeedLimitPartitioner.partition(filledTopology, roadLinksByMmlId)
     }
   }
 
@@ -109,9 +122,15 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
   override def get(municipality: Int): Seq[SpeedLimit] = {
     val roadLinks = roadLinkServiceImplementation.getRoadLinksFromVVH(municipality)
     withDynTransaction {
-      val (speedLimitLinks, roadLinksByMmlId) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(roadLinksByMmlId, speedLimitLinks.groupBy(_.mmlId))
+      val (speedLimitLinks, topology) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      val roadLinksByMmlId = topology.groupBy(_.mmlId).mapValues(_.head)
+
+      val (filledTopology, speedLimitChangeSet) = SpeedLimitFiller.fillTopology(topology, speedLimitLinks.groupBy(_.mmlId))
       eventbus.publish("speedLimits:update", speedLimitChangeSet)
+
+      val unknownLimits = createUnknownLimits(filledTopology, roadLinksByMmlId)
+      eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
+
       filledTopology
     }
   }

@@ -32,7 +32,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
@@ -123,6 +123,5 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
     filledTopology.map(_.id) should be(Seq(0))
-    changeSet.generatedUnknownLimits should be(Seq(UnknownLimit(1l, 235, State)))
   }
 }

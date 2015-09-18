@@ -105,7 +105,7 @@ object SpeedLimitFiller extends LinearAssetFiller {
       dropShortLimits
     )
 
-    val initialChangeSet = ChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil, Nil)
+    val initialChangeSet = ChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil)
     val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: ChangeSet) =
       roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
         val (existingSegments, changeSet) = acc
@@ -117,10 +117,7 @@ object SpeedLimitFiller extends LinearAssetFiller {
         }
 
         val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-        val municipalityCode = RoadLinkUtility.municipalityCodeFromAttributes(roadLink.attributes)
-        val unknownLimits = generatedSpeedLimits.map(_ => UnknownLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass))
-        (existingSegments ++ adjustedSegments ++ generatedSpeedLimits,
-          segmentAdjustments.copy(generatedUnknownLimits = segmentAdjustments.generatedUnknownLimits ++ unknownLimits))
+        (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
       }
 
     val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.id == 0)
