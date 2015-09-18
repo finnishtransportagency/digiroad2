@@ -3,8 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
@@ -72,7 +71,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
 
-      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownLimit(1, 235, Municipality)))
+      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
     }
   }
 
@@ -85,7 +84,7 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
 
       provider.get(235)
 
-      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownLimit(1, 235, Municipality)))
+      verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
     }
   }
 }

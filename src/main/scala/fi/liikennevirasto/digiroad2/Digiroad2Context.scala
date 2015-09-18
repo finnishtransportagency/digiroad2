@@ -5,8 +5,8 @@ import java.util.Properties
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.asset.AssetProvider
 import fi.liikennevirasto.digiroad2.asset.oracle.{DatabaseTransaction, DefaultDatabaseTransaction}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{UnknownLimit, ChangeSet}
-import fi.liikennevirasto.digiroad2.linearasset.SpeedLimitProvider
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, SpeedLimitProvider}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -36,7 +36,7 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
 class SpeedLimitUpdater(speedLimitProvider: SpeedLimitProvider) extends Actor {
   def receive = {
     case x: Set[Long]         => speedLimitProvider.purgeUnknown(x)
-    case x: Seq[UnknownLimit] => speedLimitProvider.persistUnknown(x)
+    case x: Seq[UnknownSpeedLimit] => speedLimitProvider.persistUnknown(x)
     case _                    => println("speedLimitFiller: Received unknown message")
   }
 }

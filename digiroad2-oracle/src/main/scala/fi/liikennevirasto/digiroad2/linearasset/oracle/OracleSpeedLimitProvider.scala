@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
@@ -32,12 +31,12 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     }
   }
 
-  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, VVHRoadLinkWithProperties]): Seq[UnknownLimit] = {
+  private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByMmlId: Map[Long, VVHRoadLinkWithProperties]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(_.id == 0)
     generatedLimits.map { limit =>
       val roadLink = roadLinksByMmlId(limit.mmlId)
       val municipalityCode = RoadLinkUtility.municipalityCodeFromAttributes(roadLink.attributes)
-      UnknownLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass)
+      UnknownSpeedLimit(roadLink.mmlId, municipalityCode, roadLink.administrativeClass)
     }
   }
 
@@ -74,7 +73,7 @@ class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplem
     dao.getSpeedLimitLinksById(speedLimitId).headOption
   }
 
-  override def persistUnknown(limits: Seq[UnknownLimit]): Unit = {
+  override def persistUnknown(limits: Seq[UnknownSpeedLimit]): Unit = {
     withDynTransaction {
       dao.persistUnknownSpeedLimits(limits)
     }

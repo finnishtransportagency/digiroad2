@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2.linearasset.oracle
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.UnknownLimit
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
@@ -66,7 +65,7 @@ trait OracleLinearAssetDao {
     }
   }
 
-  def persistUnknownSpeedLimits(limits: Seq[UnknownLimit]): Unit = {
+  def persistUnknownSpeedLimits(limits: Seq[UnknownSpeedLimit]): Unit = {
     val statement = dynamicSession.prepareStatement("""
         insert into unknown_speed_limit (mml_id, municipality_code, administrative_class)
         select ?, ?, ?
