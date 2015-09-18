@@ -124,14 +124,12 @@
     this.saveSplit = function(splitLimit) {
       backend.splitLinearAssets(splitLinearAssets.existing.id, splitLinearAssets.splitMmlId, splitLinearAssets.splitMeasure, splitLimit.value, splitLimit.expired, function(updatedLinearAssets) {
         var existingId = splitLinearAssets.existing.id;
-        splitLinearAssets = {};
         dirty = false;
-        delete linearAssets[existingId];
+        delete linearAssets[createTempId(splitLinearAssets.existing)];
+        splitLinearAssets = {};
 
         _.each(updatedLinearAssets, function(linearAsset) {
-          linearAsset.links = [linearAsset];
-          linearAsset.sideCode = linearAsset.links[0].sideCode;
-          linearAssets[linearAsset.id] = linearAsset;
+          linearAssets[createTempId(linearAsset)] = linearAsset;
         });
 
         eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets)));

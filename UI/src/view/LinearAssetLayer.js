@@ -97,7 +97,7 @@ window.LinearAssetLayer = function(params) {
         return;
       }
 
-      var points = nearest.feature.attributes.points;
+      var points = _.map(nearest.feature.attributes.points, function(p){return new OpenLayers.Geometry.Point(p.x, p.y);});
 
       var lineString = new OpenLayers.Geometry.LineString(points);
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
