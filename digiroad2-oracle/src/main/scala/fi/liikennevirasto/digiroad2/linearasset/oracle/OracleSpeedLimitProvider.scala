@@ -8,8 +8,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
-// FIXME:
-// - move common asset functionality to asset service
 class OracleSpeedLimitProvider(eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService = RoadLinkService) extends SpeedLimitProvider {
   val dao: OracleLinearAssetDao = new OracleLinearAssetDao {
     override val roadLinkService: RoadLinkService = roadLinkServiceImplementation
