@@ -223,6 +223,18 @@ trait LinearAssetOperations {
     }
   }
 
+  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
+    withDynTransaction {
+      ids.map { id =>
+        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
+        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
+        val updatedId = valueUpdate.orElse(expirationUpdate)
+        if (updatedId.isEmpty) dynamicSession.rollback()
+        updatedId
+      }
+    }.flatten
+  }
+
   private def createWithoutTransaction(typeId: Int, mmlId: Long, value: Option[Int], expired: Boolean, sideCode: Int, startMeasure: Double, endMeasure: Double, username: String): LinearAsset = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue

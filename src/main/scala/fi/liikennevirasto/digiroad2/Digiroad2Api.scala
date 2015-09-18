@@ -457,6 +457,25 @@ with GZipSupport {
     }
   }
 
+  put("/linearassets") {
+    val user = userProvider.getCurrentUser()
+    val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
+    val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
+    val ids = (parsedBody \ "ids").extract[Seq[Long]]
+    val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
+    (expiredOption, valueOption) match {
+      case (None, None) => BadRequest("Numerical limit value or expiration not provided")
+      case (expired, value) =>
+        value.foreach(validateNumericalLimitValue)
+        val updatedIds = linearAssetService.update(ids, value.map(_.intValue()), expired.getOrElse(false), user.username)
+        updatedIds
+        // todo: validate municipality
+        // todo: create new limits
+        // todo: validate municipalities for update and new limit creation
+        // todo: return linear assets instead of ids
+    }
+  }
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val mmlId = (parsedBody \ "mmlId").extract[Long]
