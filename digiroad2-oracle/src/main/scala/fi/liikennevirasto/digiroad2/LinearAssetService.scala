@@ -26,11 +26,13 @@ case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Opt
 
 object NumericalLimitFiller {
   private val AllowedTolerance = 0.5
+  private val MaxAllowedError = 0.01
 
   private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): (PersistedLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance) Some(0.0) else None
-    val adjustedEndMeasure = if (roadLinkLength - asset.endMeasure < AllowedTolerance) Some(roadLinkLength) else None
+    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure > MaxAllowedError) Some(0.0) else None
+    val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
+    val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
     val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
       case (None, None) => Nil
       case (s, e)       => Seq(MValueAdjustment(asset.id, asset.mmlId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
