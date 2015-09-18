@@ -107,21 +107,17 @@ object SpeedLimitFiller {
     )
 
     val initialChangeSet = ChangeSet(dropSpeedLimitsWithEmptySegments(speedLimits), Nil, Nil)
-    val (fittedSpeedLimitSegments: Seq[SpeedLimit], changeSet: ChangeSet) =
-      roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
-        val (existingSegments, changeSet) = acc
-        val segments = speedLimits.getOrElse(roadLink.mmlId, Nil)
-        val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
+    roadLinks.foldLeft(Seq.empty[SpeedLimit], initialChangeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val segments = speedLimits.getOrElse(roadLink.mmlId, Nil)
+      val validSegments = segments.filterNot { segment => changeSet.droppedAssetIds.contains(segment.id) }
 
-        val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-          operation(roadLink, currentSegments, currentAdjustments)
-        }
-
-        val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
-        (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+      val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
       }
 
-    val (generatedLimits, existingLimits) = fittedSpeedLimitSegments.partition(_.id == 0)
-    (existingLimits ++ generatedLimits, changeSet)
+      val generatedSpeedLimits = generateUnknownSpeedLimitsForLink(roadLink, adjustedSegments)
+      (existingSegments ++ adjustedSegments ++ generatedSpeedLimits, segmentAdjustments)
+    }
   }
 }
