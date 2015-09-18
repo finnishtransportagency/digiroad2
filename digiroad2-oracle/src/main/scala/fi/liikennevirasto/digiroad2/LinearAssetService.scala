@@ -215,16 +215,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(id: Long, value: Option[Int], expired: Boolean, username: String): Option[Long] = {
-    withDynTransaction {
-      val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
-      val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
-      val updatedId = valueUpdate.orElse(expirationUpdate)
-      if (updatedId.isEmpty) dynamicSession.rollback()
-      updatedId
-    }
-  }
-
   def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String): Seq[Long] = {
     withDynTransaction {
       ids.map { id =>

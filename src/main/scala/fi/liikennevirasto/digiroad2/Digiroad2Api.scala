@@ -450,9 +450,9 @@ with GZipSupport {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        linearAssetService.update(id, value.map(_.intValue()), expired.getOrElse(false), user.username) match {
-          case Some(segmentId) => linearAssetService.getById(segmentId)
-          case None => NotFound("Linear asset " + id + " not found")
+        linearAssetService.update(Seq(id), value.map(_.intValue()), expired.getOrElse(false), user.username) match {
+          case Nil => NotFound("Linear asset " + id + " not found")
+          case segmentIds => linearAssetService.getById(segmentIds.head)
         }
     }
   }
