@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.MValueAdjustment
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.util.TestTransactions
@@ -68,10 +69,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(1l -> Seq(
       PersistedLinearAsset(1, 1, 1, Some(40000), 0.4, 9.6, None, None, None, None, false)))
-    val (filledTopology, _) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
     filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
     filledTopology.map(_.mmlId) should be(Seq(1))
     filledTopology.map(_.value) should be(Seq(Some(40000)))
+    changeSet.adjustedMValues should be (Seq(MValueAdjustment(1, 1, 0.0, 10.0)))
   }
 }

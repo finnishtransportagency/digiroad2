@@ -27,21 +27,28 @@ case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Opt
 object NumericalLimitFiller {
   private val AllowedTolerance = 0.5
 
-  private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): PersistedLinearAsset = {
+  private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): (PersistedLinearAsset, Seq[MValueAdjustment]) = {
     val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val startMeasure = if (asset.startMeasure < AllowedTolerance) 0.0 else asset.startMeasure
-    val endMeasure = if (roadLinkLength - asset.endMeasure < AllowedTolerance) roadLinkLength else asset.endMeasure
-    asset.copy(startMeasure = startMeasure, endMeasure = endMeasure)
+    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance) Some(0.0) else None
+    val adjustedEndMeasure = if (roadLinkLength - asset.endMeasure < AllowedTolerance) Some(roadLinkLength) else None
+    val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
+      case (None, None) => Nil
+      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.mmlId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
+    }
+    val adjustedAsset = asset.copy(
+      startMeasure = adjustedStartMeasure.getOrElse(asset.startMeasure),
+      endMeasure = adjustedEndMeasure.getOrElse(asset.endMeasure))
+    (adjustedAsset, mValueAdjustments)
   }
 
   private def adjustTwoWaySegments(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val twoWaySegments = assets.filter(_.sideCode == 1)
     if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
       val asset = assets.head
-      val adjustedAsset = adjustAsset(asset, roadLink)
-      (Seq(adjustedAsset), ChangeSet(Set.empty, Nil, Nil))
+      val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
+      (Seq(adjustedAsset), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
     } else {
-      (assets, ChangeSet(Set.empty, Nil, Nil))
+      (assets, changeSet)
     }
   }
 
