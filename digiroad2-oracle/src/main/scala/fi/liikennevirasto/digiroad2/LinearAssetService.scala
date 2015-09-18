@@ -221,10 +221,9 @@ trait LinearAssetOperations {
         val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
         val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
         val updatedId = valueUpdate.orElse(expirationUpdate)
-        if (updatedId.isEmpty) dynamicSession.rollback()
-        updatedId
+        updatedId.getOrElse(throw new NoSuchElementException)
       }
-    }.flatten
+    }
   }
 
   def persistMValueAdjustments(adjustments: Seq[MValueAdjustment]): Unit = {
