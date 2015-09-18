@@ -97,11 +97,8 @@ window.LinearAssetLayer = function(params) {
         return;
       }
 
-      var points = _.chain(roadCollection.get([nearest.feature.attributes.mmlId])[0].getPoints())
-        .map(function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        })
-        .value();
+      var points = nearest.feature.attributes.points;
+
       var lineString = new OpenLayers.Geometry.LineString(points);
       var split = {splitMeasure: geometryUtils.calculateMeasureAtPoint(lineString, mousePoint)};
       _.merge(split, geometryUtils.splitByPoint(nearest.feature.geometry, mousePoint));
@@ -194,7 +191,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   function createTempId(asset) {
-    return asset.mmlId.toString() + asset.startMeasure + asset.endMeasure;
+    return asset.mmlId.toString() + asset.points[0].x + asset.points[0].y;
   }
   var findUnpersistedWeightFeatures = function(id) {
     return _.filter(vectorLayer.features, function(feature) { return createTempId(feature.attributes) === id; });

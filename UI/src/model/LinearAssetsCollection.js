@@ -7,7 +7,7 @@
     var buildPayload = function(linearAssets, splitLinearAssets) {
       var payload = _.chain(linearAssets)
                      .reject(function(totalLinearAsset, id) {
-                       return id === splitLinearAssets.existing.id.toString();
+                       return id === createTempId(splitLinearAssets.existing);
                      })
                      .values()
                      .value();
@@ -29,7 +29,7 @@
     };
 
     function createTempId(asset) {
-      return asset.mmlId.toString() + asset.startMeasure + asset.endMeasure;
+      return asset.mmlId.toString() + asset.points[0].x + asset.points[0].y;
     }
     this.fetch = function(boundingBox, selectedLinearAsset) {
       var transformLinearAssets = function(linearAssets) {
@@ -47,7 +47,7 @@
         }
 
         if (splitLinearAssets.existing) {
-          eventbus.trigger(multiElementEvent('fetched'), buildPayload(linearAssets, splitLinearAssets));
+          eventbus.trigger(multiElementEvent('fetched'), _.flatten(buildPayload(linearAssets, splitLinearAssets)));
         } else {
           eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets)));
         }
@@ -88,29 +88,23 @@
       linearAssets[createTempId(linearAsset)] = linearAsset;
     };
 
-    var calculateMeasure = function(links) {
-      var geometries = _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        return new OpenLayers.Geometry.LineString(points);
+    var calculateMeasure = function(asset) {
+      var points = _.map(asset.points, function(point) {
+        return new OpenLayers.Geometry.Point(point.x, point.y);
       });
-      return _.reduce(geometries, function(acc, x) {
-        return acc + x.getLength();
-      }, 0);
+      var geometries = new OpenLayers.Geometry.LineString(points);
+      return geometries.getLength();
     };
 
     this.splitLinearAsset = function(id, mmlId, split) {
       backend.getLinearAsset(id, function(linearAsset) {
-        var splitLink = linearAsset.linearAssetLink;
+        var left = _.cloneDeep(linearAsset);
+        var right = _.cloneDeep(linearAsset);
 
-        var left = _.cloneDeep(linearAssets[id]);
-        var right = _.cloneDeep(linearAssets[id]);
+        left.points = split.firstSplitVertices;
+        right.points = split.secondSplitVertices;
 
-        left.links = [{points: split.firstSplitVertices, mmlId: mmlId}];
-        right.links = [{points: split.secondSplitVertices, mmlId: mmlId}];
-
-        if (calculateMeasure(left.links) < calculateMeasure(right.links)) {
+        if (calculateMeasure(left) < calculateMeasure(right)) {
           splitLinearAssets.created = left;
           splitLinearAssets.existing = right;
         } else {
@@ -122,7 +116,7 @@
         splitLinearAssets.splitMeasure = split.splitMeasure;
         splitLinearAssets.splitMmlId = mmlId;
         dirty = true;
-        eventbus.trigger(multiElementEvent('fetched'), buildPayload(linearAssets, splitLinearAssets));
+        eventbus.trigger(multiElementEvent('fetched'), _.flatten(buildPayload(linearAssets, splitLinearAssets)));
         eventbus.trigger(singleElementEvent('split'));
       });
     };
@@ -140,7 +134,7 @@
           linearAssets[linearAsset.id] = linearAsset;
         });
 
-        eventbus.trigger(multiElementEvent('fetched'), _.values(linearAssets));
+        eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets)));
         eventbus.trigger(singleElementEvent('saved'), (_.find(updatedLinearAssets, function(linearAsset) {
           return existingId !== linearAsset.id;
         })));
