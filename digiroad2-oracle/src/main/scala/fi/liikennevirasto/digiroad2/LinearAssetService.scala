@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
@@ -260,6 +260,19 @@ trait LinearAssetOperations {
     municipalityValidation(roadLink.municipalityCode)
     withDynTransaction {
       createWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, startMeasure, GeometryUtils.geometryLength(roadLink.geometry), username)
+    }
+  }
+
+  def create(newLinearAssets: Seq[NewLimit], typeId: Int, value: Option[Int], username: String, municipalityValidation: (Int) => Unit) = {
+    withDynTransaction {
+      newLinearAssets.map { newAsset =>
+        val sideCode = 1
+        val expired = false
+        // todo: fetch all roadlinks with single request outside transaction
+        val roadLink = roadLinkService.fetchVVHRoadlink(newAsset.mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+        municipalityValidation(roadLink.municipalityCode)
+        createWithoutTransaction(typeId, roadLink.mmlId, value, expired, sideCode, newAsset.startMeasure, newAsset.endMeasure, username)
+      }
     }
   }
 
