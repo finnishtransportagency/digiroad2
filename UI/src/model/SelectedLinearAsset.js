@@ -53,7 +53,7 @@
         var id = current.id;
         var mmlId = current.mmlId;
         if (current.expired) {
-          collection.remove(id);
+          collection.remove(current);
         }
         current = null;
         eventbus.trigger(singleElementEvent('unselected'), id, mmlId);
@@ -107,8 +107,8 @@
       current.value = originalValue;
       current.expired = originalExpired;
       if (!isNew()) {
-        collection.changeLimitValue(current.id, originalValue);
-        collection.changeExpired(current.id, originalExpired);
+        collection.changeLimitValue(current, originalValue);
+        collection.changeExpired(current, originalExpired);
       }
       dirty = false;
       eventbus.trigger(singleElementEvent('cancelled'), self);
@@ -169,7 +169,7 @@
 
     this.setExpired = function(expired) {
       if (expired != current.expired) {
-        if (!isNew()) { collection.changeExpired(current.id, expired); }
+        if (!isNew()) { collection.changeExpired(current, expired); }
         current.expired = expired;
         dirty = true;
         eventbus.trigger(singleElementEvent('expirationChanged'), self);

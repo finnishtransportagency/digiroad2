@@ -28,10 +28,13 @@
       return _.flatten(_.values(linearAssets));
     };
 
+    function createTempId(asset) {
+      return asset.mmlId.toString() + asset.startMeasure + asset.endMeasure;
+    }
     this.fetch = function(boundingBox, selectedLinearAsset) {
       var transformLinearAssets = function(linearAssets) {
         return _.chain(linearAssets)
-          .groupBy('id')
+          .groupBy(createTempId)
           .value();
       };
 
@@ -40,7 +43,7 @@
 
         if (selectedLinearAsset.exists()) {
           var selected = selectedLinearAsset.get();
-          linearAssets[selected.id] = selected;
+          linearAssets[createTempId(selected)] = selected;
         }
 
         if (splitLinearAssets.existing) {
@@ -54,35 +57,35 @@
     this.fetchLinearAsset = function(id, callback) {
       if (id) {
         backend.getLinearAsset(id, function(linearAsset) {
-          callback(_.merge({}, linearAssets[id], linearAsset));
+          callback(_.merge({}, linearAssets[createTempId(linearAsset)], linearAsset));
         });
       } else {
         callback(_.merge({}, splitLinearAssets.created));
       }
     };
 
-    this.changeLimitValue = function(id, value) {
+    this.changeLimitValue = function(asset, value) {
       if (splitLinearAssets.created) {
         splitLinearAssets.created.value = value;
       } else {
-        linearAssets[id].value = value;
+        linearAssets[createTempId(asset)].value = value;
       }
     };
 
-    this.changeExpired = function(id, expired) {
+    this.changeExpired = function(asset, expired) {
       if (splitLinearAssets.created) {
         splitLinearAssets.created.expired = expired;
       } else {
-        linearAssets[id].expired = expired;
+        linearAssets[createTempId(asset)].expired = expired;
       }
     };
 
-    this.remove = function(id) {
-      delete linearAssets[id];
+    this.remove = function(asset) {
+      delete linearAssets[createTempId(asset)];
     };
 
     this.add = function(linearAsset) {
-      linearAssets[linearAsset.id] = linearAsset;
+      linearAssets[createTempId(linearAsset)] = linearAsset;
     };
 
     var calculateMeasure = function(links) {

@@ -193,8 +193,11 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.redraw();
   };
 
-  var findUnpersistedWeightFeatures = function() {
-    return _.filter(vectorLayer.features, function(feature) { return feature.attributes.id === null; });
+  function createTempId(asset) {
+    return asset.mmlId.toString() + asset.startMeasure + asset.endMeasure;
+  }
+  var findUnpersistedWeightFeatures = function(id) {
+    return _.filter(vectorLayer.features, function(feature) { return createTempId(feature.attributes) === id; });
   };
 
   var findRoadLinkFeaturesByMmlId = function(id) {
@@ -346,7 +349,7 @@ window.LinearAssetLayer = function(params) {
   var getSelectedFeatures = function(selectedLinearAsset) {
     if (selectedLinearAsset.isNew()) {
       if (selectedLinearAsset.isDirty()) {
-        return findUnpersistedWeightFeatures();
+        return findUnpersistedWeightFeatures(createTempId(selectedLinearAsset.get()));
       } else {
         return findRoadLinkFeaturesByMmlId(selectedLinearAsset.getMmlId());
       }
