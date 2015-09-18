@@ -2,88 +2,19 @@ package fi.liikennevirasto.digiroad2
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.{DateTimePropertyFormat => DateTimeFormat}
 import fi.liikennevirasto.digiroad2.asset.oracle.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
-
-case class LinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int], points: Seq[Point], expired: Boolean,
-                       endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[String],
-                       createdBy: Option[String], createdDateTime: Option[String], typeId: Int)
-
-case class PersistedLinearAsset(id: Long, mmlId: Long, sideCode: Int, value: Option[Int],
-                         startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDateTime: Option[DateTime],
-                         modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean)
-
-object NumericalLimitFiller {
-  private val AllowedTolerance = 0.5
-  private val MaxAllowedError = 0.01
-
-  private def adjustAsset(asset: PersistedLinearAsset, roadLink: VVHRoadLinkWithProperties): (PersistedLinearAsset, Seq[MValueAdjustment]) = {
-    val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
-    val adjustedStartMeasure = if (asset.startMeasure < AllowedTolerance && asset.startMeasure > MaxAllowedError) Some(0.0) else None
-    val endMeasureDifference: Double = roadLinkLength - asset.endMeasure
-    val adjustedEndMeasure = if (endMeasureDifference < AllowedTolerance && endMeasureDifference > MaxAllowedError) Some(roadLinkLength) else None
-    val mValueAdjustments = (adjustedStartMeasure, adjustedEndMeasure) match {
-      case (None, None) => Nil
-      case (s, e)       => Seq(MValueAdjustment(asset.id, asset.mmlId, s.getOrElse(asset.startMeasure), e.getOrElse(asset.endMeasure)))
-    }
-    val adjustedAsset = asset.copy(
-      startMeasure = adjustedStartMeasure.getOrElse(asset.startMeasure),
-      endMeasure = adjustedEndMeasure.getOrElse(asset.endMeasure))
-    (adjustedAsset, mValueAdjustments)
-  }
-
-  private def adjustTwoWaySegments(roadLink: VVHRoadLinkWithProperties, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val twoWaySegments = assets.filter(_.sideCode == 1)
-    if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
-      val asset = assets.head
-      val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
-      (Seq(adjustedAsset), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
-    } else {
-      (assets, changeSet)
-    }
-  }
-
-  private def generateNonExistingLinearAssets(roadLink: VVHRoadLinkWithProperties, segmentsOnLink: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
-    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
-    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > 0.5}
-    remainders.map { segment =>
-      PersistedLinearAsset(0L, roadLink.mmlId, 1, None, segment._1, segment._2, None, None, None, None, false)
-    }
-  }
-
-  def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLinkGeometry: Seq[Point], typeId: Int): Seq[LinearAsset] = {
-    dbAssets.map { dbAsset =>
-      val points = GeometryUtils.truncateGeometry(roadLinkGeometry, dbAsset.startMeasure, dbAsset.endMeasure)
-      val endPoints = GeometryUtils.geometryEndpoints(points)
-      LinearAsset(
-        dbAsset.id, dbAsset.mmlId, dbAsset.sideCode, dbAsset.value, points, dbAsset.expired,
-        Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime.map(DateTimeFormat.print),
-        dbAsset.createdBy, dbAsset.createdDateTime.map(DateTimeFormat.print), typeId)
-    }
-  }
-
-  def fillTopology(topology: Seq[VVHRoadLinkWithProperties], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[LinearAsset], ChangeSet) = {
-    topology.foldLeft(Seq.empty[LinearAsset], ChangeSet(Set.empty, Nil, Nil)) { case (acc, roadLink) =>
-      val (existingAssets, changeSet) = acc
-      val assetsOnRoadLink = linearAssets.getOrElse(roadLink.mmlId, Nil)
-      val (adjustedAssets, assetAdjustments) = adjustTwoWaySegments(roadLink, assetsOnRoadLink, changeSet)
-
-      val generatedLinearAssets = generateNonExistingLinearAssets(roadLink, adjustedAssets)
-      (existingAssets ++ toLinearAsset(generatedLinearAssets ++ adjustedAssets, roadLink.geometry, typeId), assetAdjustments)
-    }
-  }
-}
 
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
@@ -169,8 +100,8 @@ trait LinearAssetOperations {
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
       LinearAsset(
         id, mmlId, sideCode, value, points, expired, Set(linkEndpoints._1, linkEndpoints._2),
-        modifiedBy, modifiedAt.map(DateTimeFormat.print),
-        createdBy, createdAt.map(DateTimeFormat.print), typeId)
+        modifiedBy, modifiedAt.map(DateTimePropertyFormat.print),
+        createdBy, createdAt.map(DateTimePropertyFormat.print), typeId)
     }
   }
 

@@ -4,8 +4,8 @@ import java.util.Properties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimit, SpeedLimitTimeStamps, VVHRoadLinkWithProperties}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
@@ -73,8 +73,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def extractModificationTime(timeStamps: TimeStamps): (String, String) = {
     "muokattu_viimeksi" ->
-    timeStamps.modified.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
-      .getOrElse(timeStamps.created.modificationTime.map(AssetPropertyConfiguration.DateTimePropertyFormat.print(_))
+    timeStamps.modified.modificationTime.map(DateTimePropertyFormat.print(_))
+      .getOrElse(timeStamps.created.modificationTime.map(DateTimePropertyFormat.print(_))
       .getOrElse(""))
   }
 

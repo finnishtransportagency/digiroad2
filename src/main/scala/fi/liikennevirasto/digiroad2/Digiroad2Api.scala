@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import com.newrelic.api.agent.NewRelic
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitProvider, NewLimit, RoadLinkPartitioner}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, RoadLinkPartitioner, SpeedLimitProvider}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.DateTime
@@ -27,7 +27,7 @@ with GZipSupport {
   val Never = new DateTime().plusYears(1).toString("EEE, dd MMM yyyy HH:mm:ss zzzz")
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
-  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(AssetPropertyConfiguration.DateTimePropertyFormat))}))
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ({ null }, { case d: DateTime => JString(d.toString(DateTimePropertyFormat))}))
   case object SideCodeSerializer extends CustomSerializer[SideCode](format => ({ null }, { case s: SideCode => JInt(s.value)}))
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ({ case JString(direction) => TrafficDirection(direction) }, { case t: TrafficDirection => JString(t.toString)}))
   case object LinkTypeSerializer extends CustomSerializer[LinkType](format => ({ case JInt(linkType) => LinkType(linkType.toInt) }, { case lt: LinkType => JInt(BigInt(lt.value))}))

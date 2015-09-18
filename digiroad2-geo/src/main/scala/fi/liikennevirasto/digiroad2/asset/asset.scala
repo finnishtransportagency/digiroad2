@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import fi.liikennevirasto.digiroad2.Point
-import org.joda.time.LocalDate
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.format.DateTimeFormat
 
 sealed trait LinkType
 {
@@ -106,6 +105,9 @@ case class Asset(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat
                  imageIds: Seq[String] = List(), bearing: Option[Int] = None, validityDirection: Option[Int] = None,
                  readOnly: Boolean = true, municipalityNumber: Int, validityPeriod: Option[String] = None,
                  floating: Boolean, stopTypes: Seq[Int] = List())
+object Asset {
+  val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+}
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class AssetWithProperties(id: Long, nationalId: Long, assetTypeId: Long, lon: Double, lat: Double,

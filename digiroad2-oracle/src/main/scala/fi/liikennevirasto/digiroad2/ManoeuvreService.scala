@@ -1,17 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration
 import fi.liikennevirasto.digiroad2.asset.oracle.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.collections.OracleArray
 import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.JavaConversions._
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.{StaticQuery => Q}
-import slick.jdbc.StaticQuery.interpolation
 
 case class Manoeuvre(id: Long, sourceRoadLinkId: Long, destRoadLinkId: Long, sourceMmlId: Long, destMmlId: Long, exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
 case class NewManoeuvre(sourceRoadLinkId: Long, destRoadLinkId: Long, exceptions: Seq[Int], additionalInfo: Option[String])
@@ -113,7 +112,7 @@ object ManoeuvreService {
       val (_, _, destRoadLinkId, _, _, _, _) = links.find(_._4 == LastElement).get
       val sourceMmlId = roadLinks.getOrElse(sourceRoadLinkId, RoadLinkService.getRoadLinkMmlId(sourceRoadLinkId))
       val destMmlId = roadLinks.getOrElse(destRoadLinkId, RoadLinkService.getRoadLinkMmlId(destRoadLinkId))
-      val modifiedTimeStamp = AssetPropertyConfiguration.DateTimePropertyFormat.print(modifiedDate)
+      val modifiedTimeStamp = DateTimePropertyFormat.print(modifiedDate)
 
       Manoeuvre(id, sourceRoadLinkId, destRoadLinkId, sourceMmlId, destMmlId, manoeuvreExceptionsById.getOrElse(id, Seq()), modifiedTimeStamp, modifiedBy, additionalInfo)
     }.toSeq

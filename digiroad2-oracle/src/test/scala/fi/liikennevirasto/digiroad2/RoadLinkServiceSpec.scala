@@ -1,21 +1,18 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.asset.oracle.AssetPropertyConfiguration.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.VVHRoadLinkWithProperties
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-
-import fi.liikennevirasto.digiroad2.asset._
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.driver.JdbcDriver.backend.Database
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
