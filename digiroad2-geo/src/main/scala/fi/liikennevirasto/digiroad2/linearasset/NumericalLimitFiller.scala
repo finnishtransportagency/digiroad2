@@ -48,6 +48,7 @@ object NumericalLimitFiller {
       val endPoints = GeometryUtils.geometryEndpoints(points)
       LinearAsset(
         dbAsset.id, dbAsset.mmlId, dbAsset.sideCode, dbAsset.value, points, dbAsset.expired,
+        dbAsset.startMeasure, dbAsset.endMeasure,
         Set(endPoints._1, endPoints._2), dbAsset.modifiedBy, dbAsset.modifiedDateTime.map(DateTimePropertyFormat.print),
         dbAsset.createdBy, dbAsset.createdDateTime.map(DateTimePropertyFormat.print), typeId)
     }

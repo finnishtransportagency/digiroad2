@@ -29,7 +29,7 @@ trait LinearAssetOperations {
     new BoneCPDataSource(cfg)
   }
 
-  private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
+  private def linearAssetLinkById(id: Long): Option[(Long, Long, Int, Option[Int], Double, Double, Seq[Point], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)] = {
     val linearAssets = sql"""
       select a.id, pos.mml_id, pos.side_code, s.value as value, pos.start_measure, pos.end_measure,
              a.modified_by, a.modified_date, a.created_by, a.created_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
@@ -45,7 +45,7 @@ trait LinearAssetOperations {
     linearAssets.map { case (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val roadLink = roadLinkService.fetchVVHRoadlink(mmlId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       val points = GeometryUtils.truncateGeometry(roadLink.geometry, startMeasure, endMeasure)
-      (segmentId, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
+      (segmentId, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId)
     }
   }
 
@@ -96,10 +96,10 @@ trait LinearAssetOperations {
   }
 
   private def getByIdWithoutTransaction(id: Long): Option[LinearAsset] = {
-    linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
+    linearAssetLinkById(id).map { case (_, mmlId, sideCode, value, startMeasure, endMeasure, points, modifiedBy, modifiedAt, createdBy, createdAt, expired, typeId) =>
       val linkEndpoints: (Point, Point) = GeometryUtils.geometryEndpoints(points)
       LinearAsset(
-        id, mmlId, sideCode, value, points, expired, Set(linkEndpoints._1, linkEndpoints._2),
+        id, mmlId, sideCode, value, points, expired, startMeasure, endMeasure, Set(linkEndpoints._1, linkEndpoints._2),
         modifiedBy, modifiedAt.map(DateTimePropertyFormat.print),
         createdBy, createdAt.map(DateTimePropertyFormat.print), typeId)
     }

@@ -213,6 +213,16 @@ var URLRouter = function(map, backend, models) {
         backend: backend,
         roadLayer: roadLayer
       }),
+      linearAsset: new LinearAssetLayer2({
+        map: map,
+        application: applicationModel,
+        collection: models.linearAssetsCollection2,
+        selectedSpeedLimit: models.selectedLinearAsset2,
+        geometryUtils: geometryUtils,
+        linearAsset: linearAssetsUtility,
+        backend: backend,
+        roadLayer: roadLayer
+      }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers);
 
@@ -353,6 +363,8 @@ var URLRouter = function(map, backend, models) {
     var roadCollection = new RoadCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
+    var linearAssetsCollection2 = new LinearAssetsCollection2(backend);
+    var selectedLinearAsset2 = new SelectedLinearAsset2(backend, linearAssetsCollection2);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);
@@ -372,6 +384,8 @@ var URLRouter = function(map, backend, models) {
       roadCollection: roadCollection,
       speedLimitsCollection: speedLimitsCollection,
       selectedSpeedLimit: selectedSpeedLimit,
+      linearAssetsCollection2: linearAssetsCollection2,
+      selectedLinearAsset2: selectedLinearAsset2,
       selectedLinkProperty: selectedLinkProperty,
       selectedManoeuvreSource: selectedManoeuvreSource,
       selectedMassTransitStopModel: selectedMassTransitStopModel,

@@ -140,7 +140,7 @@
     };
 
     this.getLinearAssets = _.throttle(function(boundingBox, typeId, callback) {
-      $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox, function(linearAssets) {
+      return $.getJSON('api/linearassets?typeId=' + typeId + '&bbox=' + boundingBox, function(linearAssets) {
         callback(linearAssets);
       });
     }, 1000);
