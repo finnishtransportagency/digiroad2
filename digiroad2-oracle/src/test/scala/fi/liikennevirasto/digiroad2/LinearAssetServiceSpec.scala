@@ -2,11 +2,11 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, NumericalLimitFiller, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.mockito.Mockito._
 import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
@@ -50,20 +50,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
     }
-  }
-
-  test("create non-existent linear assets on empty road links") {
-    val topology = Seq(
-      VVHRoadLinkWithProperties(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
-    val (filledTopology, _) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be(Seq(1))
-    filledTopology.map(_.value) should be(Seq(None))
-    filledTopology.map(_.id) should be(Seq(0))
-    filledTopology.map(_.mmlId) should be(Seq(1))
-    filledTopology.map(_.points) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
   }
 
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
