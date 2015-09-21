@@ -143,7 +143,7 @@
     this.cancelSplit = function() {
       dirty = false;
       splitLinearAssets = {};
-      eventbus.trigger(multiElementEvent('fetched'), _.values(linearAssets));
+      eventbus.trigger(multiElementEvent('fetched'), _.flatten(_.values(linearAssets)));
     };
 
     this.isDirty = function() {
