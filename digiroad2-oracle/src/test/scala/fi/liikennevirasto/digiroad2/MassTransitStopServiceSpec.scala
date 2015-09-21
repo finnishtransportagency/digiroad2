@@ -30,6 +30,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
     .thenReturn(Some(VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlink(388553080l))
     .thenReturn(Some(VVHRoadlink(388553080l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.fetchVVHRoadlink(1l))
+    .thenReturn(Some(VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
+    TrafficDirection.BothDirections, FeatureClass.AllOthers)))
 
   class TestMassTransitStopService(val eventbus: DigiroadEventBus) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -61,11 +64,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers {
 
   test("Get stops by bounding box") {
     runWithRollback {
-      // TODO: Remove side effects from tests so that floating state is not set during test execution and remove the fix below
-      // Make sure asset is not floating
-      sqlu"""update asset set floating = 0 where id = 300000""".execute
-      val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, BoundingRectangle(Point(374443, 6677245), Point(374444, 6677246)))
-      stops.map(_.id) should be (Seq(300000))
+      val stop = RollbackMassTransitStopService.createNew(5.0, 0.0, 1l, 2, "masstransitstopservice_spec", Nil)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(
+        userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
+      stops.map(_.id) should be(Seq(stop.id))
     }
   }
 
