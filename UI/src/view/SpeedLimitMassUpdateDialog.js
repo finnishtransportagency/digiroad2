@@ -8,7 +8,7 @@
       onCancel = options.onCancel,
       onSave = options.onSave;
 
-    var SPEED_LIMITS = [120, 100, 80, 70, 60, 50, 40, 30, 20];
+    var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
     var speedLimitOptionTags = _.map(SPEED_LIMITS, function(value) {
       var selected = value === 50 ? " selected" : "";
       return '<option value="' + value + '"' + selected + '>' + value + '</option>';
