@@ -1,10 +1,18 @@
 (function(root) {
-  root.SelectedLinearAsset2 = function(backend, collection) {
+  root.SelectedLinearAsset2 = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory) {
     var selection = [];
     var self = this;
     var dirty = false;
     var originalSpeedLimitValue = null;
     var isSeparated = false;
+
+    var singleElementEvent = function(eventName) {
+      return singleElementEventCategory + ':' + eventName;
+    };
+
+    var multiElementEvent = function(eventName) {
+      return multiElementEventCategory + ':' + eventName;
+    };
 
     this.splitSpeedLimit = function(id, split) {
       collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
@@ -12,7 +20,7 @@
         originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
         collection.setSelection(self);
-        eventbus.trigger('speedLimit:selected', self);
+        eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
 
@@ -20,9 +28,9 @@
       selection = collection.separateSpeedLimit(this.getId());
       isSeparated = true;
       dirty = true;
-      eventbus.trigger('speedLimits:fetched', collection.getAll());
-      eventbus.trigger('speedLimit:separated', self);
-      eventbus.trigger('speedLimit:selected', self);
+      eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
+      eventbus.trigger(singleElementEvent('separated'), self);
+      eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.open = function(speedLimit, singleLinkSelect) {
@@ -30,7 +38,7 @@
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
       originalSpeedLimitValue = self.getValue();
       collection.setSelection(self);
-      eventbus.trigger('speedLimit:selected', self);
+      eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.openMultiple = function(speedLimits) {
@@ -43,7 +51,7 @@
 
     this.close = function() {
       if (!_.isEmpty(selection) && !dirty) {
-        eventbus.trigger('speedLimit:unselect', self);
+        eventbus.trigger(singleElementEvent('unselect'), self);
         collection.setSelection(null);
         selection = [];
       }
@@ -54,7 +62,7 @@
     };
 
     this.saveMultiple = function(value) {
-      eventbus.trigger('speedLimit:saving');
+      eventbus.trigger(singleElementEvent('saving'));
       var partition = _.groupBy(selection, isUnknown);
       var unknownSpeedLimits = partition[true];
       var knownSpeedLimits = partition[false];
@@ -65,14 +73,14 @@
         value: value
       };
       backend.updateSpeedLimits(payload, function() {
-        eventbus.trigger('speedLimits:massUpdateSucceeded', selection.length);
+        eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
       }, function() {
-        eventbus.trigger('speedLimits:massUpdateFailed', selection.length);
+        eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
       });
     };
 
     var saveSplit = function() {
-      eventbus.trigger('speedLimit:saving');
+      eventbus.trigger(singleElementEvent('saving'));
       collection.saveSplit(function() {
         dirty = false;
         self.close();
@@ -80,7 +88,7 @@
     };
 
     var saveSeparation = function() {
-      eventbus.trigger('speedLimit:saving');
+      eventbus.trigger(singleElementEvent('saving'));
       collection.saveSeparation(function() {
         dirty = false;
         isSeparated = false;
@@ -89,7 +97,7 @@
     };
 
     var saveExisting = function() {
-      eventbus.trigger('speedLimit:saving');
+      eventbus.trigger(singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
           return { newLimits: _.map(selection, function(s) { return _.pick(s, 'mmlId', 'startMeasure', 'endMeasure'); }) };
@@ -102,7 +110,7 @@
       backend.updateSpeedLimits(payload, function(speedLimits) {
         dirty = false;
         self.close();
-        eventbus.trigger('speedLimit:saved');
+        eventbus.trigger(singleElementEvent('speedLimit:saved'));
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
@@ -139,7 +147,7 @@
     };
 
     var cancelCreation = function() {
-      eventbus.trigger('speedLimit:unselect', self);
+      eventbus.trigger(singleElementEvent('unselect'), self);
       if (isSeparated) {
         var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
         collection.replaceSegments([selection[0]], [originalSpeedLimit]);
@@ -155,7 +163,7 @@
       var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
-      eventbus.trigger('speedLimit:cancelled', self);
+      eventbus.trigger(singleElementEvent('cancelled'), self);
     };
 
     this.cancel = function() {
@@ -211,21 +219,21 @@
         var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
-        eventbus.trigger('speedLimit:valueChanged', self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setAValue = function(value) {
       if (value != selection[0].value) {
         selection[0].value = value;
-        eventbus.trigger('speedLimit:valueChanged', self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setBValue = function(value) {
       if (value != selection[1].value) {
         selection[1].value = value;
-        eventbus.trigger('speedLimit:valueChanged', self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 

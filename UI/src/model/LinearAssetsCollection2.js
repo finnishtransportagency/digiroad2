@@ -1,11 +1,19 @@
 (function(root) {
-  root.LinearAssetsCollection2 = function(backend) {
+  root.LinearAssetsCollection2 = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
     var speedLimits = [];
     var dirty = false;
     var selection = null;
     var self = this;
     var splitSpeedLimits = {};
     var separatedLimit = {};
+
+    var singleElementEvent = function(eventName) {
+      return singleElementEventCategory + ':' + eventName;
+    };
+
+    var multiElementEvent = function(eventName) {
+      return multiElementEventCategory + ':' + eventName;
+    };
 
     var maintainSelectedSpeedLimitChain = function(collection) {
       if (!selection) return collection;
@@ -34,7 +42,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getLinearAssets(boundingBox, 30, function() {}).then(function(speedLimitGroups) {
+      return backend.getLinearAssets(boundingBox, typeId, function() {}).then(function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });
@@ -45,7 +53,7 @@
           });
         }) || [];
         speedLimits = knownSpeedLimits.concat(unknownSpeedLimits);
-        eventbus.trigger('speedLimits:fetched', self.getAll());
+        eventbus.trigger(multiElementEvent('fetched'), self.getAll());
       });
     };
 
@@ -134,12 +142,12 @@
 
       dirty = true;
       callback(splitSpeedLimits);
-      eventbus.trigger('speedLimits:fetched', self.getAll());
+      eventbus.trigger(multiElementEvent('fetched'), self.getAll());
     };
 
     this.saveSplit = function(callback) {
       backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
-        eventbus.trigger('speedLimit:saved');
+        eventbus.trigger(singleElementEvent('saved'));
         splitSpeedLimits = {};
         dirty = false;
         callback();
@@ -150,8 +158,7 @@
 
     this.saveSeparation = function(callback) {
       backend.separateSpeedLimit(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, function() {
-        eventbus.trigger('speedLimit:saved');
-        separatedSpeedLimit = {};
+        eventbus.trigger(singleElementEvent('saved'));
         dirty = false;
         callback();
       }, function() {
@@ -162,8 +169,7 @@
     this.cancelCreation = function() {
       dirty = false;
       splitSpeedLimits = {};
-      separatedSpeedLimit = {};
-      eventbus.trigger('speedLimits:fetched', self.getAll());
+      eventbus.trigger(multiElementEvent('fetched'), self.getAll());
     };
 
     this.isDirty = function() {

@@ -65,7 +65,7 @@ var URLRouter = function(map, backend, models) {
 
     massTransitStopWorkList: function() {
       eventbus.trigger('workList:select', 'massTransitStop', backend.getFloatingMassTransitStops());
-    },
+    }
   });
 
   var router = new Router();
@@ -222,6 +222,8 @@ var URLRouter = function(map, backend, models) {
         linearAsset: linearAssetsUtility,
         backend: backend,
         roadLayer: roadLayer,
+        multiElementEventCategory: 'totalWeightLimits',
+        singleElementEventCategory: 'totalWeightLimit',
         style: {}
       }),
       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
@@ -364,8 +366,8 @@ var URLRouter = function(map, backend, models) {
     var roadCollection = new RoadCollection(backend);
     var speedLimitsCollection = new SpeedLimitsCollection(backend);
     var selectedSpeedLimit = new SelectedSpeedLimit(backend, speedLimitsCollection);
-    var linearAssetsCollection2 = new LinearAssetsCollection2(backend);
-    var selectedLinearAsset2 = new SelectedLinearAsset2(backend, linearAssetsCollection2);
+    var linearAssetsCollection2 = new LinearAssetsCollection2(backend, 30, 'totalWeightLimit', 'totalWeightLimits');
+    var selectedLinearAsset2 = new SelectedLinearAsset2(backend, linearAssetsCollection2, 30, 'totalWeightLimit', 'totalWeightLimits');
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var manoeuvresCollection = new ManoeuvresCollection(backend, roadCollection);

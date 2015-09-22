@@ -6,11 +6,21 @@ window.LinearAssetLayer2 = function(params) {
       geometryUtils = params.geometryUtils,
       linearAsset = params.linearAsset,
       roadLayer = params.roadLayer,
+      multiElementEventCategory = params.multiElementEventCategory,
+      singleElementEventCategory = params.singleElementEventCategory;
       style = params.style,
       layerName = 'linearAsset';
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
+
+  var singleElementEvents = function() {
+    return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
+  };
+
+  var multiElementEvent = function(eventName) {
+    return multiElementEventCategory + ':' + eventName;
+  };
 
   var SpeedLimitCutter = function(vectorLayer, collection) {
     var scissorFeatures = [];
@@ -405,16 +415,17 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   var bindEvents = function() {
-    eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
+    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'speedLimit:selected speedLimit:multiSelected', handleSpeedLimitSelected);
-    eventListener.listenTo(eventbus, 'speedLimit:saved speedLimits:massUpdateSucceeded', handleSpeedLimitSaved);
-    eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
-    eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
-    eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected', 'multiSelected'), handleSpeedLimitSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('saved'), handleSpeedLimitSaved);
+    eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleSpeedLimitSaved);
+    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), handleSpeedLimitChanged);
+    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), handleSpeedLimitCancelled);
+    eventListener.listenTo(eventbus, singleElementEvents('unselect'), handleSpeedLimitUnSelected);
     eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
-    eventListener.listenTo(eventbus, 'speedLimit:selectByMmlId', selectSpeedLimitByMmlId);
-    eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
+    eventListener.listenTo(eventbus, singleElementEvents('selectByMmlId'), selectSpeedLimitByMmlId);
+    eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
   };
 
   var handleSpeedLimitSelected = function(selectedSpeedLimit) {
