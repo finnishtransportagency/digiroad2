@@ -5,7 +5,7 @@
         return asset;
       }
       asset.points = _.map(asset.points, function(point, index, geometry) {
-	var baseOffset = -3.5;
+        var baseOffset = -3.5;
         return geometryUtils.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
       });
       return asset;
