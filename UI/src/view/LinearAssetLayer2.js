@@ -410,6 +410,10 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   var decorateSelection = function() {
+    var offsetBySideCode = function(speedLimit) {
+      return LinearAsset().offsetBySideCode(applicationModel.zoom.level, speedLimit);
+    };
+
     if (selectedSpeedLimit.exists()) {
       withoutOnSelect(function() {
         var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
