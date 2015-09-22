@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{UnknownSpeedLimit, NewLimit, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -33,6 +34,12 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
                     VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+
+  def passingMunicipalityValidation(code: Int): Unit = {}
+  def failingMunicipalityValidation(code: Int): Unit = { throw new IllegalArgumentException }
+
+  val roadLinkForSeparation = VVHRoadLinkWithProperties(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+  when(mockRoadLinkService.getRoadLinkFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
 
   test("create new speed limit") {
     runWithRollback {
@@ -85,6 +92,62 @@ class OracleSpeedLimitProviderSpec extends FunSuite with Matchers {
       provider.get(235)
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
+    }
+  }
+
+  test("separate speed limit to two") {
+    runWithRollback {
+      val createdId = provider.separate(200097, 50, 40, "test", passingMunicipalityValidation).filter(_.id != 200097).head.id
+      val createdLimit = provider.get(Seq(createdId)).head
+      val oldLimit = provider.get(Seq(200097l)).head
+
+      oldLimit.mmlId should be (388562360)
+      oldLimit.sideCode should be (SideCode.TowardsDigitizing)
+      oldLimit.value should be (Some(50))
+      oldLimit.modifiedBy should be (Some("test"))
+
+      createdLimit.mmlId should be (388562360)
+      createdLimit.sideCode should be (SideCode.AgainstDigitizing)
+      createdLimit.value should be (Some(40))
+      createdLimit.createdBy should be (Some("test"))
+    }
+  }
+
+  test("separation should call municipalityValidation") {
+    runWithRollback {
+      intercept[IllegalArgumentException] {
+        provider.separate(200097, 50, 40, "test", failingMunicipalityValidation)
+      }
+    }
+  }
+
+  test("speed limit separation fails if no speed limit is found") {
+    runWithRollback {
+      intercept[NoSuchElementException] {
+        provider.separate(0, 50, 40, "test", passingMunicipalityValidation)
+      }
+    }
+  }
+
+  test("speed limit separation fails if speed limit is one way") {
+    val roadLink = VVHRoadLinkWithProperties(388551862, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
+    when(mockRoadLinkService.getRoadLinkFromVVH(388551862l)).thenReturn(Some(roadLink))
+
+    runWithRollback {
+      intercept[IllegalArgumentException] {
+        provider.separate(300388, 50, 40, "test", passingMunicipalityValidation)
+      }
+    }
+  }
+
+  test("speed limit separation fails if road link is one way") {
+    val roadLink = VVHRoadLinkWithProperties(1068804929, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
+    when(mockRoadLinkService.getRoadLinkFromVVH(1068804929l)).thenReturn(Some(roadLink))
+
+    runWithRollback {
+      intercept[IllegalArgumentException] {
+        provider.separate(200299, 50, 40, "test", passingMunicipalityValidation)
+      }
     }
   }
 }
