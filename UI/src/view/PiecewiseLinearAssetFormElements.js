@@ -13,7 +13,7 @@
           '<div class="radio">' +
             '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
           '</div>' +
-        '</div>'
+        '</div>' +
       '</div>';
     }
 
