@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, VVHRoadLinkWithProperties}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, PersistedLinearAsset, VVHRoadLinkWithProperties}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -49,6 +49,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val limit = PassThroughService.getById(11111)
       limit.get.value should be (Some(2000))
       limit.get.expired should be (false)
+    }
+  }
+
+  test("Create new linear asset") {
+    runWithRollback {
+      val newAssets = PassThroughService.create(Seq(NewLimit(388562360l, 0, 20)), 30, Some(1000), "testuser")
+      newAssets.length should be(1)
+      val asset = PassThroughService.getById(newAssets.head.id)
+      asset.get.value should be (Some(1000))
+      asset.get.expired should be (false)
     }
   }
 
