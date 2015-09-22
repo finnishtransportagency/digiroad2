@@ -47,16 +47,16 @@
         '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
         '</div>' +
         '<div class="form-group editable">' +
-        '<label class="control-label">' + editControlLabels.title + '</label>' +
-        '<p class="form-control-static ' + className + '">' + valueString() + '</p>' +
-        '<div class="choice-group">' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
-        '</div>' +
-        '<div class="radio">' +
-        '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
-        '</div>' +
-        '</div>' +
+          '<label class="control-label">' + editControlLabels.title + '</label>' +
+          '<p class="form-control-static ' + className + '">' + valueString() + '</p>' +
+          '<div class="choice-group">' +
+            '<div class="radio">' +
+              '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+            '</div>' +
+            '<div class="radio">' +
+              '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
          measureInput() +
         '</div>' +

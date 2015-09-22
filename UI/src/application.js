@@ -174,7 +174,7 @@ var URLRouter = function(map, backend, models) {
       LinearAssetForm2.initialize(
           linearAsset.selectedLinearAsset,
           linearAsset.singleElementEventCategory,
-          PiecewiseLinearAssetFormElements,
+          PiecewiseLinearAssetFormElements(linearAsset.unit, linearAsset.editControlLabels, linearAsset.className),
           linearAsset.newTitle,
           linearAsset.className,
           linearAsset.unit,

@@ -1,23 +1,32 @@
 (function(root) {
-  root.PiecewiseLinearAssetFormElements = {
-    singleValueElement: singleValueElement
-  };
+  root.PiecewiseLinearAssetFormElements = function(unit, editControlLabels, className) {
+    function singleValueElement(selectedLinearAsset, sideCode) {
+      var expiredChecked = selectedLinearAsset.isUnknown() ? 'checked' : '';
+      var nonExpiredChecked = selectedLinearAsset.isUnknown() ? '' : 'checked';
+      return '<div class="form-group editable">' +
+        '<label class="control-label">' + editControlLabels.title + '</label>' +
+        '<p class="form-control-static ' + className + '">' + valueString(selectedLinearAsset) + '</p>' +
+        '<div class="choice-group">' +
+          '<div class="radio">' +
+            '<label>' + editControlLabels.disabled + '<input type="radio" name="' + className + '" value="disabled" ' + expiredChecked + '/></label>' +
+          '</div>' +
+          '<div class="radio">' +
+            '<label>' + editControlLabels.enabled + '<input type="radio" name="' + className + '" value="enabled" ' + nonExpiredChecked + '/></label>' +
+          '</div>' +
+        '</div>'
+      '</div>';
+    }
 
-  function singleValueElement(selectedLinearAssetModel, sideCode) {
-    var SPEED_LIMITS = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
-    var defaultUnknownOptionTag = ['<option value="" style="display:none;"></option>'];
-    var speedLimitOptionTags = defaultUnknownOptionTag.concat(_.map(SPEED_LIMITS, function(value) {
-      var selected = value === selectedLinearAssetModel.getValue() ? " selected" : "";
-      return '<option value="' + value + '"' + selected + '>' + value + '</option>';
-    }));
-    var speedLimitClass = sideCode ? "speed-limit-" + sideCode : "speed-limit";
-    var template =  _.template(
-      '<div class="form-group editable">' +
-        '<% if(sideCode) { %> <span class="marker"><%- sideCode %></span> <% } %>' +
-        '<label class="control-label">Rajoitus</label>' +
-        '<p class="form-control-static">' + (selectedLinearAssetModel.getValue() || 'Tuntematon') + '</p>' +
-        '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-      '</div>');
-    return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
-  }
+    function valueString(selectedLinearAsset) {
+      if (unit) {
+        return selectedLinearAsset.getValue() ? selectedLinearAsset.getValue() + ' ' + unit : '-';
+      } else {
+        return selectedLinearAsset.isUnknown() ? 'ei ole' : 'on';
+      }
+    }
+
+    return {
+      singleValueElement: singleValueElement
+    };
+  };
 })(this);
