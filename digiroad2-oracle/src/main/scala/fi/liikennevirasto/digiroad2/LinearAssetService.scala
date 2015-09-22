@@ -16,8 +16,6 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
-case class ExistingLinearAsset(id: Long, mmlId: Long)
-
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 

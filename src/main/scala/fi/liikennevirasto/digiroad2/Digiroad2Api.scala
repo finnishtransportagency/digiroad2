@@ -14,6 +14,8 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
+case class ExistingLinearAsset(id: Long, mmlId: Long)
+
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitProvider: SpeedLimitProvider,
                    val massTransitStopService: MassTransitStopService,
