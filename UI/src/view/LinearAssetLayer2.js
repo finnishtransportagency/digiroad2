@@ -318,6 +318,7 @@ window.LinearAssetLayer2 = function(params) {
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
     vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
     drawSpeedLimits(selectedSpeedLimit.get());
+    decorateSelection();
   };
 
   var handleSpeedLimitCancelled = function() {
@@ -401,6 +402,7 @@ window.LinearAssetLayer2 = function(params) {
 
     var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits);
+    decorateSelection();
   };
 
   var drawSpeedLimits = function(speedLimits) {
@@ -416,7 +418,9 @@ window.LinearAssetLayer2 = function(params) {
     vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
     vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
     vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
+  };
 
+  var decorateSelection = function() {
     if (selectedSpeedLimit.exists()) {
       withoutOnSelect(function() {
         var feature = _.find(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
