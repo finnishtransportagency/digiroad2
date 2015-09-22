@@ -166,8 +166,6 @@ var URLRouter = function(map, backend, models) {
     var mapOverlay = new MapOverlay($('.container'));
 
     if (withTileMaps) { new TileMapCollection(map); }
-    var geometryUtils = new GeometryUtils();
-    var linearAssetsUtility = new LinearAsset(geometryUtils);
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
     new LinkPropertyForm(models.selectedLinkProperty);
@@ -189,8 +187,8 @@ var URLRouter = function(map, backend, models) {
         collection: asset.collection,
         selectedSpeedLimit: models.selectedLinearAsset2,
         roadCollection: models.roadCollection,
-        geometryUtils: geometryUtils,
-        linearAsset: linearAssetsUtility,
+        geometryUtils: new GeometryUtils(),
+        linearAsset: LinearAsset(),
         roadLayer: roadLayer,
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
@@ -202,15 +200,15 @@ var URLRouter = function(map, backend, models) {
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, geometryUtils, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, new GeometryUtils(), models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
       massTransitStop: new AssetLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
       speedLimit: new SpeedLimitLayer({
         map: map,
         application: applicationModel,
         collection: models.speedLimitsCollection,
         selectedSpeedLimit: models.selectedSpeedLimit,
-        geometryUtils: geometryUtils,
-        linearAsset: linearAssetsUtility,
+        geometryUtils: new GeometryUtils(),
+        linearAsset: LinearAsset(),
         backend: backend,
         roadLayer: roadLayer
       }),
@@ -219,14 +217,14 @@ var URLRouter = function(map, backend, models) {
         application: applicationModel,
         collection: models.linearAssetsCollection2,
         selectedSpeedLimit: models.selectedLinearAsset2,
-        geometryUtils: geometryUtils,
-        linearAsset: linearAssetsUtility,
+        geometryUtils: new GeometryUtils(),
+        linearAsset: LinearAsset(),
         roadLayer: roadLayer,
         multiElementEventCategory: 'totalWeightLimits',
         singleElementEventCategory: 'totalWeightLimit',
         style: SpeedLimitStyle(applicationModel)
       }),
-      manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, geometryUtils, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+      manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, new GeometryUtils(), models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
     }, linearAssetLayers);
 
     var mapPluginsContainer = $('#map-plugins');

@@ -406,18 +406,7 @@ window.LinearAssetLayer2 = function(params) {
   };
 
   var drawSpeedLimits = function(speedLimits) {
-    var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-    var offsetBySideCode = function(speedLimit) {
-      return linearAsset.offsetBySideCode(map.getZoom(), speedLimit);
-    };
-    var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
-    var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
-    var highSpeedLimits = speedLimitsSplitAt70kmh[true];
-
-    vectorLayer.addFeatures(lineFeatures(lowSpeedLimits));
-    vectorLayer.addFeatures(dottedLineFeatures(highSpeedLimits));
-    vectorLayer.addFeatures(limitSigns(speedLimitsWithAdjustments));
+    vectorLayer.addFeatures(style.renderFeatures(speedLimits));
   };
 
   var decorateSelection = function() {
@@ -440,40 +429,6 @@ window.LinearAssetLayer2 = function(params) {
     selectControl.onSelect = function() {};
     f();
     selectControl.onSelect = speedLimitOnSelect;
-  };
-
-  var dottedLineFeatures = function(speedLimits) {
-    var solidLines = lineFeatures(speedLimits);
-    var dottedOverlay = lineFeatures(_.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'overlay' }); }));
-    return solidLines.concat(dottedOverlay);
-  };
-
-  var isUnknown = function(speedLimit) {
-    return !_.isNumber(speedLimit.value);
-  };
-
-  var limitSigns = function(speedLimits) {
-    return _.map(speedLimits, function(speedLimit) {
-      var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
-      });
-      var road = new OpenLayers.Geometry.LineString(points);
-      var signPosition = geometryUtils.calculateMidpointOfLineString(road);
-      var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-      var attributes = _.merge(_.cloneDeep(speedLimit), type);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
-    });
-  };
-
-  var lineFeatures = function(speedLimits) {
-    return _.map(speedLimits, function(speedLimit) {
-      var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
-      });
-      var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-      var attributes = _.merge(_.cloneDeep(speedLimit), type);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
-    });
   };
 
   var reset = function() {
