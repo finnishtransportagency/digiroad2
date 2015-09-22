@@ -444,16 +444,15 @@ with GZipSupport {
     val expiredOption: Option[Boolean] = (parsedBody \ "expired").extractOpt[Boolean]
     val valueOption: Option[BigInt] = (parsedBody \ "value").extractOpt[BigInt]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val ids = (parsedBody \ "ids").extract[Seq[Long]]
+    val existingAssets = (parsedBody \ "existing").extract[Seq[ExistingLinearAsset]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     (expiredOption, valueOption) match {
       case (None, None) => BadRequest("Numerical limit value or expiration not provided")
       case (expired, value) =>
         value.foreach(validateNumericalLimitValue)
-        val updatedIds = linearAssetService.update(ids, value.map(_.intValue()), expired.getOrElse(false), user.username, validateUserMunicipalityAccess(user))
+        val updatedIds = linearAssetService.update(existingAssets, value.map(_.intValue()), expired.getOrElse(false), user.username, validateUserMunicipalityAccess(user))
         val created = linearAssetService.create(newLimits, typeId, value.map(_.intValue()), user.username, validateUserMunicipalityAccess(user))
         updatedIds ++ created.map(_.id)
-        // todo: return linear assets instead of ids
     }
   }
 

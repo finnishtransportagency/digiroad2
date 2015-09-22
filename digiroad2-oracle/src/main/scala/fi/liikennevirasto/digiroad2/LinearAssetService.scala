@@ -16,6 +16,8 @@ import slick.jdbc.StaticQuery.interpolation
 
 import scala.slick.jdbc.{StaticQuery => Q}
 
+case class ExistingLinearAsset(id: Long, mmlId: Long)
+
 trait LinearAssetOperations {
   val valuePropertyId: String = "mittarajoitus"
 
@@ -139,16 +141,15 @@ trait LinearAssetOperations {
     }
   }
 
-  def update(ids: Seq[Long], value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
-    withDynTransaction {
-      val mmlIds = ids.map(getByIdWithoutTransaction).flatten.map(_.mmlId)
-      roadLinkService.fetchVVHRoadlinks(mmlIds.toSet)
-        .map(_.municipalityCode)
-        .foreach(municipalityValidation)
+  def update(existingAssets: Seq[ExistingLinearAsset], value: Option[Int], expired: Boolean, username: String, municipalityValidation: Int => Unit): Seq[Long] = {
+    roadLinkService.fetchVVHRoadlinks(existingAssets.map(_.mmlId).toSet)
+      .map(_.municipalityCode)
+      .foreach(municipalityValidation)
 
-      ids.map { id =>
-        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(id, _, username))
-        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(id, expired, username)
+    withDynTransaction {
+      existingAssets.map { existingAsset =>
+        val valueUpdate: Option[Long] = value.flatMap(updateLinearAssetValue(existingAsset.id, _, username))
+        val expirationUpdate: Option[Long] = updateLinearAssetExpiration(existingAsset.id, expired, username)
         val updatedId = valueUpdate.orElse(expirationUpdate)
         updatedId.getOrElse(throw new NoSuchElementException)
       }
