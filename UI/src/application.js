@@ -193,7 +193,7 @@ var URLRouter = function(map, backend, models) {
         layerName: asset.layerName,
         multiElementEventCategory: asset.multiElementEventCategory,
         singleElementEventCategory: asset.singleElementEventCategory,
-        style: SpeedLimitStyle(applicationModel)
+        style: PiecewiseLinearAssetStyle(applicationModel)
       });
       return acc;
     }, {});
